@@ -2,7 +2,7 @@
 
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
-[![Stable](https://img.shields.io/badge/release-5.1.2-green.svg)]()
+[![STABLE](https://img.shields.io/badge/branch-STABLE-green.svg)]()
 
 ## Project Status / Fork Note
 
