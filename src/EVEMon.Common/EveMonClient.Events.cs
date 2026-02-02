@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Notifications;
 using EVEMon.Common.Serialization.PatchXml;
@@ -12,12 +13,36 @@ namespace EVEMon.Common
 {
     public static partial class EveMonClient
     {
+        #region Timer Tick Counter
+
+        /// <summary>
+        /// Counter for tiered timer system.
+        /// </summary>
+        private static int s_tickCounter;
+
+        #endregion
+
         #region Events firing
 
         /// <summary>
-        /// Occurs every second.
+        /// Occurs every second. Use sparingly - prefer tiered events below.
         /// </summary>
         public static event EventHandler TimerTick;
+
+        /// <summary>
+        /// Occurs every second. Use for skill countdowns and visible UI updates only.
+        /// </summary>
+        public static event EventHandler SecondTick;
+
+        /// <summary>
+        /// Occurs every 5 seconds. Use for API cache checks and moderate-frequency updates.
+        /// </summary>
+        public static event EventHandler FiveSecondTick;
+
+        /// <summary>
+        /// Occurs every 30 seconds. Use for background tasks like settings save checks.
+        /// </summary>
+        public static event EventHandler ThirtySecondTick;
 
         /// <summary>
         /// Occurs when the scheduler entries changed.
@@ -133,6 +158,18 @@ namespace EVEMon.Common
         /// Occurs when a character skill queue has been updated.
         /// </summary>
         public static event EventHandler<CharacterChangedEventArgs> CharacterSkillQueueUpdated;
+
+        /// <summary>
+        /// Occurs when multiple characters have been updated within a coalesce window (100ms).
+        /// Subscribe to this instead of CharacterUpdated for batch UI updates.
+        /// </summary>
+        public static event EventHandler<CharacterBatchEventArgs> CharactersBatchUpdated;
+
+        /// <summary>
+        /// Occurs when multiple skill queues have been updated within a coalesce window (100ms).
+        /// Subscribe to this instead of CharacterSkillQueueUpdated for batch UI updates.
+        /// </summary>
+        public static event EventHandler<CharacterBatchEventArgs> SkillQueuesBatchUpdated;
 
         /// <summary>
         /// Occurs when a character standings have been updated.
@@ -361,14 +398,35 @@ namespace EVEMon.Common
 
         /// <summary>
         /// Fires the timer tick event to notify the subscribers.
+        /// Uses tiered system to reduce overhead for 100+ character scenarios.
         /// </summary>
         internal static void UpdateOnOneSecondTick()
         {
             if (Closed)
                 return;
 
-            // Fires the event for subscribers
+            // Increment tick counter
+            s_tickCounter++;
+
+            // Fire legacy TimerTick for backward compatibility (will be deprecated)
             TimerTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Fire tiered events
+            // SecondTick - every 1 second (skill countdowns, visible UI)
+            SecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // FiveSecondTick - every 5 seconds (API checks, cache expiry)
+            if (s_tickCounter % 5 == 0)
+            {
+                FiveSecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+            }
+
+            // ThirtySecondTick - every 30 seconds (background tasks)
+            if (s_tickCounter % 30 == 0)
+            {
+                ThirtySecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                s_tickCounter = 0; // Reset to prevent overflow
+            }
         }
 
         /// <summary>
@@ -591,7 +649,12 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
+
+            // Fire individual event for backward compatibility
             CharacterUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Queue for batched event (coalesces rapid updates)
+            s_updateBatcher?.QueueCharacterUpdate(character);
         }
 
         /// <summary>
@@ -634,7 +697,12 @@ namespace EVEMon.Common
             Trace(character.Name);
             character.UpdateAccountStatus();
             Settings.Save();
+
+            // Fire individual event for backward compatibility
             CharacterSkillQueueUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Queue for batched event (coalesces rapid updates)
+            s_updateBatcher?.QueueSkillQueueUpdate(character);
         }
 
         /// <summary>
@@ -1272,6 +1340,35 @@ namespace EVEMon.Common
         internal static void OnPricesDownloaded(object pricesFeed, string errormessage)
         {
             ItemPricesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+        }
+
+        #endregion
+
+
+        #region Event Coalescing
+
+        /// <summary>
+        /// Called when the update batcher has collected character updates ready to fire.
+        /// </summary>
+        private static void OnBatchedCharacterUpdatesReady(object sender, CharacterBatchEventArgs e)
+        {
+            if (Closed)
+                return;
+
+            Trace($"Batched update for {e.Count} characters");
+            CharactersBatchUpdated?.ThreadSafeInvoke(null, e);
+        }
+
+        /// <summary>
+        /// Called when the update batcher has collected skill queue updates ready to fire.
+        /// </summary>
+        private static void OnBatchedSkillQueueUpdatesReady(object sender, CharacterBatchEventArgs e)
+        {
+            if (Closed)
+                return;
+
+            Trace($"Batched skill queue update for {e.Count} characters");
+            SkillQueuesBatchUpdated?.ThreadSafeInvoke(null, e);
         }
 
         #endregion

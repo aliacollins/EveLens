@@ -144,6 +144,10 @@ namespace EVEMon
 			this.noCharactersLabel = new System.Windows.Forms.Label();
 			this.mainLoadingThrobber = new EVEMon.Common.Controls.Throbber();
 			this.notificationList = new EVEMon.Controls.NotificationList();
+			this.pnlWarningBanner = new System.Windows.Forms.Panel();
+			this.lblWarningBanner = new System.Windows.Forms.Label();
+			this.lnkWarningAction = new System.Windows.Forms.LinkLabel();
+			this.btnCloseBanner = new System.Windows.Forms.Button();
 			this.trayIconContextMenuStrip.SuspendLayout();
 			this.statusStrip.SuspendLayout();
 			this.mainMenuBar.SuspendLayout();
@@ -279,23 +283,23 @@ namespace EVEMon
 			this.tsDatafilesLoadingProgressBar.Size = new System.Drawing.Size(100, 16);
 			this.tsDatafilesLoadingProgressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
 			this.tsDatafilesLoadingProgressBar.ToolTipText = "Loading data files";
-			// 
+			//
 			// saveFileDialog
-			// 
-			this.saveFileDialog.DefaultExt = "bak";
-			this.saveFileDialog.FileName = "settings.xml.bak";
-			this.saveFileDialog.Filter = "EVEMon Settings Backup Files (*.bak)|*.bak";
+			//
+			this.saveFileDialog.DefaultExt = "json";
+			this.saveFileDialog.FileName = "evemon-backup.json";
+			this.saveFileDialog.Filter = "EVEMon JSON Backup (*.json)|*.json|EVEMon XML Backup (*.xml;*.bak)|*.xml;*.bak|All Files (*.*)|*.*";
 			this.saveFileDialog.RestoreDirectory = true;
-			this.saveFileDialog.Title = "Backup EVEMon settings file";
-			// 
+			this.saveFileDialog.Title = "Export EVEMon settings";
+			//
 			// openFileDialog
-			// 
-			this.openFileDialog.DefaultExt = "bak";
-			this.openFileDialog.FileName = "settings.xml.bak";
-			this.openFileDialog.Filter = "EVEMon Settings Backup Files (*.bak)|*.bak";
+			//
+			this.openFileDialog.DefaultExt = "json";
+			this.openFileDialog.FileName = "evemon-backup.json";
+			this.openFileDialog.Filter = "EVEMon Backup Files (*.json;*.xml;*.bak)|*.json;*.xml;*.bak|EVEMon JSON Backup (*.json)|*.json|EVEMon XML Backup (*.xml;*.bak)|*.xml;*.bak|All Files (*.*)|*.*";
 			this.openFileDialog.RestoreDirectory = true;
 			this.openFileDialog.ShowHelp = true;
-			this.openFileDialog.Title = "Restore EVEMon settings file";
+			this.openFileDialog.Title = "Import EVEMon settings";
 			// 
 			// mainMenuBar
 			// 
@@ -1109,7 +1113,7 @@ namespace EVEMon
 			this.tabLoadingLabel.Name = "tabLoadingLabel";
 			this.tabLoadingLabel.Size = new System.Drawing.Size(600, 503);
 			this.tabLoadingLabel.TabIndex = 7;
-			this.tabLoadingLabel.Text = "Loading...\r\n\r\nPlease Wait.";
+			this.tabLoadingLabel.Text = "Fetching API data...\r\n\r\nPlease wait.";
 			this.tabLoadingLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// noCharactersLabel
@@ -1147,9 +1151,58 @@ namespace EVEMon
 			this.notificationList.Name = "notificationList";
 			this.notificationList.Size = new System.Drawing.Size(600, 72);
 			this.notificationList.TabIndex = 6;
-			// 
+			//
+			// pnlWarningBanner
+			//
+			this.pnlWarningBanner.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(240)))), ((int)(((byte)(200)))));
+			this.pnlWarningBanner.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.pnlWarningBanner.Controls.Add(this.btnCloseBanner);
+			this.pnlWarningBanner.Controls.Add(this.lnkWarningAction);
+			this.pnlWarningBanner.Controls.Add(this.lblWarningBanner);
+			this.pnlWarningBanner.Dock = System.Windows.Forms.DockStyle.Top;
+			this.pnlWarningBanner.Location = new System.Drawing.Point(0, 49);
+			this.pnlWarningBanner.Name = "pnlWarningBanner";
+			this.pnlWarningBanner.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
+			this.pnlWarningBanner.Size = new System.Drawing.Size(600, 32);
+			this.pnlWarningBanner.TabIndex = 7;
+			this.pnlWarningBanner.Visible = false;
+			//
+			// lblWarningBanner
+			//
+			this.lblWarningBanner.AutoSize = true;
+			this.lblWarningBanner.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
+			this.lblWarningBanner.Location = new System.Drawing.Point(8, 8);
+			this.lblWarningBanner.Name = "lblWarningBanner";
+			this.lblWarningBanner.Size = new System.Drawing.Size(200, 13);
+			this.lblWarningBanner.TabIndex = 0;
+			this.lblWarningBanner.Text = "Some ESI keys need to be re-authenticated.";
+			//
+			// lnkWarningAction
+			//
+			this.lnkWarningAction.AutoSize = true;
+			this.lnkWarningAction.Location = new System.Drawing.Point(220, 8);
+			this.lnkWarningAction.Name = "lnkWarningAction";
+			this.lnkWarningAction.Size = new System.Drawing.Size(85, 13);
+			this.lnkWarningAction.TabIndex = 1;
+			this.lnkWarningAction.TabStop = true;
+			this.lnkWarningAction.Text = "Manage ESI Keys";
+			//
+			// btnCloseBanner
+			//
+			this.btnCloseBanner.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnCloseBanner.FlatAppearance.BorderSize = 0;
+			this.btnCloseBanner.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnCloseBanner.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.btnCloseBanner.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(0)))));
+			this.btnCloseBanner.Location = new System.Drawing.Point(572, 4);
+			this.btnCloseBanner.Name = "btnCloseBanner";
+			this.btnCloseBanner.Size = new System.Drawing.Size(22, 22);
+			this.btnCloseBanner.TabIndex = 2;
+			this.btnCloseBanner.Text = "X";
+			this.btnCloseBanner.UseVisualStyleBackColor = true;
+			//
 			// MainWindow
-			// 
+			//
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(600, 646);
@@ -1159,6 +1212,7 @@ namespace EVEMon
 			this.Controls.Add(this.noCharactersLabel);
 			this.Controls.Add(this.notificationList);
 			this.Controls.Add(this.statusStrip);
+			this.Controls.Add(this.pnlWarningBanner);
 			this.Controls.Add(this.mainToolBar);
 			this.Controls.Add(this.mainMenuBar);
 			this.MainMenuStrip = this.mainMenuBar;
@@ -1296,5 +1350,9 @@ namespace EVEMon
         private System.Windows.Forms.ToolStripSeparator secondSeparator;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem blankCreatorToolStripMenuItem;
+        private System.Windows.Forms.Panel pnlWarningBanner;
+        private System.Windows.Forms.Label lblWarningBanner;
+        private System.Windows.Forms.LinkLabel lnkWarningAction;
+        private System.Windows.Forms.Button btnCloseBanner;
     }
 }

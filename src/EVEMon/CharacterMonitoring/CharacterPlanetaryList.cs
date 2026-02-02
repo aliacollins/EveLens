@@ -193,7 +193,7 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Tick += refresh_TimerTick;
             m_refreshTimer.Interval = 1000;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.CharacterPlanetaryColoniesUpdated += EveMonClient_CharacterPlanetaryColoniesUpdated;
             EveMonClient.CharacterPlanetaryLayoutUpdated += EveMonClient_CharacterPlanetaryLayoutUpdated;
             EveMonClient.CharacterPlaneteryPinsCompleted += EveMonClient_CharacterPlaneteryPinsCompleted;
@@ -209,7 +209,7 @@ namespace EVEMon.CharacterMonitoring
         {
             m_refreshTimer.Dispose();
 
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.CharacterPlanetaryColoniesUpdated -= EveMonClient_CharacterPlanetaryColoniesUpdated;
             EveMonClient.CharacterPlanetaryLayoutUpdated -= EveMonClient_CharacterPlanetaryLayoutUpdated;
             EveMonClient.CharacterPlaneteryPinsCompleted -= EveMonClient_CharacterPlaneteryPinsCompleted;

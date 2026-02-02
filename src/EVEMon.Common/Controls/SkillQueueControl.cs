@@ -37,7 +37,8 @@ namespace EVEMon.Common.Controls
             m_toolTip = new InfiniteDisplayToolTip(this);
 
             Disposed += OnDisposed;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            // SecondTick - skill queue countdown display
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
         }
@@ -50,7 +51,7 @@ namespace EVEMon.Common.Controls
         private void OnDisposed(object sender, EventArgs e)
         {
             Disposed -= OnDisposed;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
             m_toolTip.Dispose();

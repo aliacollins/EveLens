@@ -24,7 +24,7 @@ namespace EVEMon.Common.Models.Collections
         {
             m_ccpCharacter = ccpCharacter;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -37,7 +37,7 @@ namespace EVEMon.Common.Models.Collections
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
         }
 
         /// <summary>

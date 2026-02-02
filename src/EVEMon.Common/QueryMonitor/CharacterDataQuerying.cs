@@ -38,6 +38,26 @@ namespace EVEMon.Common.QueryMonitor
         // Responses from the market order history results since we handle it manually
         private ResponseParams m_orderHistoryResponse;
 
+        // Staggered startup fields - prevents all characters from querying at once
+        private static int s_characterStartupIndex = 0;
+        private static readonly Random s_random = new Random();
+        private readonly DateTime m_startupDelayUntil;
+        private bool m_startupDelayCompleted = false;
+
+        /// <summary>
+        /// Delay between each character's startup queries (in milliseconds).
+        /// 75ms per character means 100 characters = 7.5 second stagger window.
+        /// Note: ESI rate limiting is per applicationID:characterID pair, so this stagger
+        /// is primarily to prevent network saturation and reduce CPU/memory spikes,
+        /// not for rate limiting purposes.
+        /// </summary>
+        private const int StartupDelayPerCharacterMs = 75;
+
+        /// <summary>
+        /// Additional random jitter to prevent synchronized bursts (0 to this value).
+        /// </summary>
+        private const int StartupRandomJitterMs = 250;
+
         #endregion
 
 
@@ -55,6 +75,25 @@ namespace EVEMon.Common.QueryMonitor
             m_attrResponse = null;
             m_orderHistoryResponse = null;
             m_lastQueue = null;
+
+            // Calculate staggered startup delay to prevent all characters querying at once
+            // Each character gets a progressively later start time
+            // BUT: If ForceUpdateBasicFeatures is set, this is a newly added character - skip the delay
+            if (ccpCharacter.ForceUpdateBasicFeatures)
+            {
+                // New character added manually - fetch immediately
+                m_startupDelayUntil = DateTime.UtcNow;
+                m_startupDelayCompleted = true;
+                EveMonClient.Trace($"CharacterDataQuerying - {ccpCharacter.Name} is new, skipping startup delay");
+            }
+            else
+            {
+                int characterIndex = System.Threading.Interlocked.Increment(ref s_characterStartupIndex);
+                int baseDelayMs = characterIndex * StartupDelayPerCharacterMs;
+                int jitterMs = s_random.Next(StartupRandomJitterMs);
+                m_startupDelayUntil = DateTime.UtcNow.AddMilliseconds(baseDelayMs + jitterMs);
+                EveMonClient.Trace($"CharacterDataQuerying - {ccpCharacter.Name} startup delayed until {m_startupDelayUntil:HH:mm:ss.fff} (index {characterIndex})");
+            }
 
             // Add the monitors in an order as they will appear in the throbber menu
             CharacterSheetMonitor = new CharacterQueryMonitor<EsiAPICharacterSheet>(
@@ -196,11 +235,14 @@ namespace EVEMon.Common.QueryMonitor
                     m_basicFeaturesMonitors.Add(monitor);
                     // If force update is selected, update basic features only
                     if (ccpCharacter.ForceUpdateBasicFeatures)
+                    {
+                        monitor.Enabled = true;  // Enable immediately for new characters
                         monitor.ForceUpdate(true);
+                    }
                 }
             }
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -248,7 +290,7 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
 
             // Unsubscribe events in monitors
             foreach (var monitor in m_characterQueryMonitors)
@@ -302,7 +344,10 @@ namespace EVEMon.Common.QueryMonitor
             var target = m_ccpCharacter;
             // Character may have been deleted since we queried
             if (target != null)
+            {
+                EveMonClient.Trace($"CharacterSheet updated - {target.Name} no longer cached");
                 target.Import(result);
+            }
         }
 
         /// <summary>
@@ -863,6 +908,20 @@ namespace EVEMon.Common.QueryMonitor
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void EveMonClient_TimerTick(object sender, EventArgs e)
         {
+            // Check if startup delay has passed (staggered startup to prevent API burst)
+            if (!m_startupDelayCompleted)
+            {
+                if (DateTime.UtcNow < m_startupDelayUntil)
+                {
+                    // Still in startup delay - keep monitors disabled
+                    return;
+                }
+
+                // Startup delay completed - allow monitors to run
+                m_startupDelayCompleted = true;
+                EveMonClient.Trace($"CharacterDataQuerying - {m_ccpCharacter.Name} startup delay completed, monitors enabled");
+            }
+
             // If character is monitored enable the basic feature monitoring
             foreach (var monitor in m_basicFeaturesMonitors)
                 monitor.Enabled = m_ccpCharacter.Monitored;

@@ -45,6 +45,16 @@ namespace EVEMon.CharacterMonitoring
         private bool m_isUpdatingColumns;
         private bool m_init;
 
+        // Virtual mode support for large lists
+        private List<Asset> m_virtualModeItems;
+        private bool m_isVirtualMode;
+
+        /// <summary>
+        /// Threshold for enabling virtual mode. Lists larger than this will use virtual mode
+        /// when not using groups (virtual mode doesn't support ListView groups).
+        /// </summary>
+        private const int VirtualModeThreshold = 500;
+
         #endregion
 
 
@@ -74,6 +84,7 @@ namespace EVEMon.CharacterMonitoring
             lvAssets.MouseDown += listView_MouseDown;
             lvAssets.MouseMove += listView_MouseMove;
             lvAssets.MouseLeave += listView_MouseLeave;
+            lvAssets.RetrieveVirtualItem += listView_RetrieveVirtualItem;
         }
 
         #endregion
@@ -189,7 +200,7 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvAssets);
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.CharacterAssetsUpdated += EveMonClient_CharacterAssetsUpdated;
             EveMonClient.CharacterInfoUpdated += EveMonClient_CharacterInfoUpdated;
             EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
@@ -208,7 +219,7 @@ namespace EVEMon.CharacterMonitoring
         {
             m_tooltip.Dispose();
 
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.CharacterAssetsUpdated -= EveMonClient_CharacterAssetsUpdated;
             EveMonClient.CharacterInfoUpdated -= EveMonClient_CharacterInfoUpdated;
             EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
@@ -502,26 +513,70 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="assets">The assets.</param>
         private Task UpdateNoGroupContentAsync(IEnumerable<Asset> assets)
-            => TaskHelper.RunCPUBoundTaskAsync(() =>
+        {
+            var assetList = assets.ToList();
+            bool useVirtualMode = assetList.Count > VirtualModeThreshold;
+
+            if (useVirtualMode)
             {
-                return assets.Select(asset => new
+                // Use virtual mode for large lists - items created on demand
+                return TaskHelper.RunCPUBoundTaskAsync(() =>
                 {
-                    asset,
-                    item = new ListViewItem(asset.Item.Name)
+                    // Sort the assets in memory
+                    var comparer = new AssetComparer(m_sortCriteria, m_sortAscending);
+                    assetList.Sort(comparer);
+                    return assetList;
+                }).ContinueWith(task =>
+                {
+                    // Switch to virtual mode
+                    if (!m_isVirtualMode)
                     {
-                        UseItemStyleForSubItems = false,
-                        Tag = asset
+                        m_isVirtualMode = true;
+                        lvAssets.VirtualMode = true;
+                        // Clear the item sorter - we handle sorting ourselves in virtual mode
+                        lvAssets.ListViewItemSorter = null;
                     }
-                }).Select(x => CreateSubItems(x.asset, x.item)).ToArray();
 
-            }).ContinueWith(task =>
+                    m_virtualModeItems = task.Result;
+                    lvAssets.Groups.Clear();
+                    lvAssets.VirtualListSize = m_virtualModeItems.Count;
+
+                    EveMonClient.Trace($"CharacterAssetsList - Virtual mode enabled for {m_virtualModeItems.Count} items");
+
+                }, EveMonClient.CurrentSynchronizationContext);
+            }
+            else
             {
-                lvAssets.Groups.Clear();
-                lvAssets.Items.Clear();
+                // Use normal mode for smaller lists
+                return TaskHelper.RunCPUBoundTaskAsync(() =>
+                {
+                    return assetList.Select(asset => new
+                    {
+                        asset,
+                        item = new ListViewItem(asset.Item.Name)
+                        {
+                            UseItemStyleForSubItems = false,
+                            Tag = asset
+                        }
+                    }).Select(x => CreateSubItems(x.asset, x.item)).ToArray();
 
-                lvAssets.Items.AddRange(task.Result);
+                }).ContinueWith(task =>
+                {
+                    // Switch back to normal mode if needed
+                    if (m_isVirtualMode)
+                    {
+                        m_isVirtualMode = false;
+                        lvAssets.VirtualMode = false;
+                        m_virtualModeItems = null;
+                    }
 
-            }, EveMonClient.CurrentSynchronizationContext);
+                    lvAssets.Groups.Clear();
+                    lvAssets.Items.Clear();
+                    lvAssets.Items.AddRange(task.Result);
+
+                }, EveMonClient.CurrentSynchronizationContext);
+            }
+        }
 
         /// <summary>
         /// Updates the content of the listview.
@@ -562,6 +617,14 @@ namespace EVEMon.CharacterMonitoring
 
             }).ContinueWith(task =>
             {
+                // Disable virtual mode when using groups (virtual mode doesn't support ListView groups)
+                if (m_isVirtualMode)
+                {
+                    m_isVirtualMode = false;
+                    lvAssets.VirtualMode = false;
+                    m_virtualModeItems = null;
+                }
+
                 lvAssets.Items.Clear();
                 lvAssets.Groups.Clear();
 
@@ -634,8 +697,20 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateSort()
         {
-            lvAssets.ListViewItemSorter = new ListViewItemComparerByTag<Asset>(
-                new AssetComparer(m_sortCriteria, m_sortAscending));
+            if (m_isVirtualMode && m_virtualModeItems != null)
+            {
+                // In virtual mode, sort the underlying list and refresh the view
+                var comparer = new AssetComparer(m_sortCriteria, m_sortAscending);
+                m_virtualModeItems.Sort(comparer);
+                // Force the ListView to refresh all visible items
+                lvAssets.Invalidate();
+            }
+            else
+            {
+                // Normal mode - use ListViewItemSorter
+                lvAssets.ListViewItemSorter = new ListViewItemComparerByTag<Asset>(
+                    new AssetComparer(m_sortCriteria, m_sortAscending));
+            }
 
             UpdateSortVisualFeedback();
         }
@@ -937,6 +1012,33 @@ namespace EVEMon.CharacterMonitoring
                         lvAssets.SelectAll();
                     break;
             }
+        }
+
+        /// <summary>
+        /// Handles the RetrieveVirtualItem event for virtual mode.
+        /// Creates list view items on demand for better performance with large lists.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The event arguments containing the item index.</param>
+        private void listView_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
+        {
+            if (!m_isVirtualMode || m_virtualModeItems == null || e.ItemIndex >= m_virtualModeItems.Count)
+            {
+                // Create a placeholder item if something goes wrong
+                e.Item = new ListViewItem("Loading...");
+                return;
+            }
+
+            var asset = m_virtualModeItems[e.ItemIndex];
+            var item = new ListViewItem(asset.Item?.Name ?? "Unknown")
+            {
+                UseItemStyleForSubItems = false,
+                Tag = asset
+            };
+
+            // Create the subitems
+            CreateSubItems(asset, item);
+            e.Item = item;
         }
 
         /// <summary>

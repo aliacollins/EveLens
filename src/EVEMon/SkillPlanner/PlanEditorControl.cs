@@ -98,7 +98,7 @@ namespace EVEMon.SkillPlanner
             EveMonClient.ItemPricesUpdated += EveMonClient_ItemPricesUpdated;
             EveMonClient.PlanChanged += EveMonClient_PlanChanged;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
             Disposed += OnDisposed;
         }
@@ -148,7 +148,7 @@ namespace EVEMon.SkillPlanner
             EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
             EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
             Disposed -= OnDisposed;
         }
@@ -373,12 +373,13 @@ namespace EVEMon.SkillPlanner
         {
             DisplayPlan.RebuildPlanFrom(m_plan, true);
 
-            // Share the remapping points
+            // Share the remapping points and booster points
             PlanEntry[] srcEntries = m_plan.ToArray();
             PlanEntry[] destEntries = DisplayPlan.ToArray();
             for (int i = 0; i < srcEntries.Length; i++)
             {
                 destEntries[i].Remapping = srcEntries[i].Remapping;
+                destEntries[i].BoosterPoint = srcEntries[i].BoosterPoint;
             }
 
             // Apply the sort
@@ -592,7 +593,8 @@ namespace EVEMon.SkillPlanner
             }
 
             // Update every column
-            lvi.UseItemStyleForSubItems = m_pluggable == null;
+            bool hasBoosterInjections = Plan?.HasBoosterInjectionPoints ?? false;
+            lvi.UseItemStyleForSubItems = m_pluggable == null && !hasBoosterInjections;
             for (int columnIndex = 0; columnIndex < lvSkills.Columns.Count; columnIndex++)
             {
                 // Regular columns (not pluggable-dependent)
@@ -693,6 +695,13 @@ namespace EVEMon.SkillPlanner
                 }
 
                 DisplayPlan.UpdateStatistics(scratchpad, true, true);
+
+                // When there are booster injection points, calculate OldTrainingTime (baseline without boosters)
+                // so the "Time Saved" column shows accurate time differences
+                if (DisplayPlan.HasBoosterInjectionPoints)
+                {
+                    DisplayPlan.UpdateOldTrainingTimes();
+                }
             }
         }
 
@@ -731,7 +740,10 @@ namespace EVEMon.SkillPlanner
             switch (column)
             {
                 case PlanColumn.SkillName:
-                    return entry.ToString();
+                    string skillName = entry.ToString();
+                    if (entry.BoosterPoint != null)
+                        skillName += $" [+{entry.BoosterPoint.Bonus} Booster, {entry.BoosterPoint.DurationHours}h]";
+                    return skillName;
                 case PlanColumn.PlanGroup:
                     return entry.PlanGroupsDescription;
                 case PlanColumn.TrainingTime:
@@ -808,11 +820,16 @@ namespace EVEMon.SkillPlanner
                     ColumnHeader header = lvSkills.Columns.Add(column.Column.GetHeader(), column.Width);
                     header.Tag = column;
 
-                    // Add a temporary column when there is a pluggable (implants calc, attributes optimizer, etc)
-                    if (m_pluggable == null || column.Column != PlanColumn.TrainingTime)
+                    // Add a diff column when there is a pluggable (implants calc, attributes optimizer, etc)
+                    // or when there are booster injection points in the plan
+                    bool hasBoosterInjections = Plan?.HasBoosterInjectionPoints ?? false;
+                    if ((m_pluggable == null && !hasBoosterInjections) || column.Column != PlanColumn.TrainingTime)
                         continue;
 
-                    header = lvSkills.Columns.Add(PluggableColumn, "Diff with Calc Atts", -2);
+                    string columnHeader = hasBoosterInjections && m_pluggable == null
+                        ? "Time Saved"
+                        : "Diff with Calc Atts";
+                    header = lvSkills.Columns.Add(PluggableColumn, columnHeader, -2);
                     header.Tag = null;
                 }
 
@@ -1563,6 +1580,16 @@ namespace EVEMon.SkillPlanner
             {
                 miMarkOwned.Text = @"Mark as owned";
                 miMarkOwned.Visible = false;
+            }
+
+            // "Inject Booster Here" - show when a single skill entry is selected
+            if (entry != null && lvSkills.SelectedItems.Count == 1)
+            {
+                boosterMenuSeparator.Visible = true;
+                miInjectBooster.Visible = true;
+                miInjectBooster.Text = entry.BoosterPoint != null
+                    ? "Remove Booster Injection"
+                    : "Inject Booster Here...";
             }
         }
 
@@ -2361,6 +2388,49 @@ namespace EVEMon.SkillPlanner
                 // Add a remapping point
                 originalEntry.Remapping = originalEntry.Remapping ?? new RemappingPoint();
             }
+        }
+
+        /// <summary>
+        /// Context menu > Inject Booster Here.
+        /// Toggles a booster injection point on the selected skill entry.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void miInjectBooster_Click(object sender, EventArgs e)
+        {
+            if (lvSkills.SelectedIndices.Count == 0)
+                return;
+
+            ListViewItem item = lvSkills.SelectedItems[0];
+            PlanEntry entry = item.Tag as PlanEntry;
+            if (entry == null)
+                return;
+
+            PlanEntry originalEntry = GetOriginalEntry(entry);
+
+            // If already has a booster, remove it
+            if (originalEntry.BoosterPoint != null)
+            {
+                originalEntry.BoosterPoint = null;
+                UpdateDisplayPlan();
+                UpdateListColumns();
+                UpdateStatusBar();
+                return;
+            }
+
+            // Show dialog to get booster details
+            using (BoosterInjectionWindow dialog = new BoosterInjectionWindow())
+            {
+                if (dialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                originalEntry.BoosterPoint = new BoosterPoint(dialog.BoosterBonus, dialog.DurationHours);
+            }
+
+            // Trigger plan update to recalculate times with booster
+            UpdateDisplayPlan();
+            UpdateListColumns();
+            UpdateStatusBar();
         }
 
         /// <summary>

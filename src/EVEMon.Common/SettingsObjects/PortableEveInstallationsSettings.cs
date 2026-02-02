@@ -14,10 +14,22 @@ namespace EVEMon.Common.SettingsObjects
         }
 
         /// <summary>
-        /// Gets the portable eve client installations.
+        /// Gets or sets the portable eve client installations.
         /// </summary>
         [XmlArray("eveClientInstallations")]
         [XmlArrayItem("eveClientInstallation")]
-        public Collection<SerializablePortableEveInstallation> EVEClients => m_eveClients;
+        public Collection<SerializablePortableEveInstallation> EVEClients
+        {
+            get => m_eveClients;
+            set
+            {
+                m_eveClients.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value)
+                        m_eveClients.Add(item);
+                }
+            }
+        }
     }
 }

@@ -780,7 +780,11 @@ namespace EVEMon.Common.Models
             Birthday = serial.Birthday;
             Race = serial.Race.ToString().UnderscoresToDashes();
             Bloodline = serial.BloodLine.ToString().UnderscoresToDashes();
-            Ancestry = serial.Ancestry.ToString().UnderscoresToSpaces();
+            // Show empty string for Unknown/Undefined ancestry instead of displaying "Unknown"
+            Ancestry = serial.Ancestry == Enumerations.Ancestry.Unknown ||
+                       serial.Ancestry == Enumerations.Ancestry.Undefined
+                       ? string.Empty
+                       : serial.Ancestry.ToString().UnderscoresToSpaces();
             Gender = serial.Gender.ToTitleCase();
             CorporationID = serial.CorporationID;
             AllianceID = serial.AllianceID;
@@ -915,42 +919,31 @@ namespace EVEMon.Common.Models
         /// <returns>The detected booster bonus, or 0 if no booster detected.</returns>
         private int DetectBoosterFromAttributes(int intel, int perc, int will, int chr, int mem)
         {
-            // Calculate what the base would be for each attribute (total - implant bonus)
-            var attributeValues = new[]
-            {
-                (intel, CurrentImplants[EveAttribute.Intelligence]?.Bonus ?? 0),
-                (perc, CurrentImplants[EveAttribute.Perception]?.Bonus ?? 0),
-                (will, CurrentImplants[EveAttribute.Willpower]?.Bonus ?? 0),
-                (chr, CurrentImplants[EveAttribute.Charisma]?.Bonus ?? 0),
-                (mem, CurrentImplants[EveAttribute.Memory]?.Bonus ?? 0)
-            };
+            // Get implant bonuses
+            long implantIntel = CurrentImplants[EveAttribute.Intelligence]?.Bonus ?? 0;
+            long implantPerc = CurrentImplants[EveAttribute.Perception]?.Bonus ?? 0;
+            long implantWill = CurrentImplants[EveAttribute.Willpower]?.Bonus ?? 0;
+            long implantChr = CurrentImplants[EveAttribute.Charisma]?.Bonus ?? 0;
+            long implantMem = CurrentImplants[EveAttribute.Memory]?.Bonus ?? 0;
 
-            // Check each attribute: calculatedBase = total - implantBonus
-            // If calculatedBase > MaxBaseAttributePoints (27), there's a booster
-            int maxExcess = 0;
-            int minExcess = int.MaxValue;
-            bool boosterDetected = false;
+            // Total base attribute points is always 99 for all characters:
+            // 5 attributes × 17 base + 14 spare points = 99
+            // Formula: total = base + implant + booster (for each attribute)
+            // Sum: sum(total) = sum(base) + sum(implant) + 5*booster
+            // Since sum(base) = 99: booster = (sum(total) - 99 - sum(implant)) / 5
+            const int TotalBasePoints = 99;
+            int totalAttributes = intel + perc + will + chr + mem;
+            long totalImplants = implantIntel + implantPerc + implantWill + implantChr + implantMem;
 
-            foreach (var (total, implantBonus) in attributeValues)
-            {
-                int calculatedBase = total - (int)implantBonus;
-                int excess = calculatedBase - EveConstants.MaxBaseAttributePoints;
+            int calculatedBooster = (totalAttributes - TotalBasePoints - (int)totalImplants) / 5;
 
-                if (excess > 0)
-                {
-                    boosterDetected = true;
-                    maxExcess = Math.Max(maxExcess, excess);
-                    minExcess = Math.Min(minExcess, excess);
-                }
-            }
-
-            if (!boosterDetected)
+            // Sanity check: booster should be 0-12 (max known cerebral accelerator)
+            if (calculatedBooster < 0)
                 return 0;
+            if (calculatedBooster > EveConstants.MaxBoosterBonus)
+                return EveConstants.MaxBoosterBonus;
 
-            // Since boosters apply uniformly, use the minimum excess as the booster bonus
-            // (to be conservative - the character might have lower base attributes)
-            // However, use max if all attributes show the same excess (more accurate)
-            return (minExcess == maxExcess) ? maxExcess : minExcess;
+            return calculatedBooster;
         }
 
         /// <summary>
@@ -1097,7 +1090,10 @@ namespace EVEMon.Common.Models
             Birthday = serial.Birthday;
             Race = serial.Race;
             Bloodline = serial.BloodLine;
-            Ancestry = serial.Ancestry;
+            // Show empty for Unknown/Undefined ancestry
+            Ancestry = serial.Ancestry == "Unknown" || serial.Ancestry == "Undefined"
+                       ? string.Empty
+                       : serial.Ancestry;
             Gender = serial.Gender;
             CorporationName = serial.CorporationName;
             CorporationID = serial.CorporationID;

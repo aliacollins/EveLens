@@ -296,6 +296,18 @@ namespace EVEMon.Common.SettingsObjects
         /// </value>
         [XmlArray("confirmedTips")]
         [XmlArrayItem("tip")]
-        public Collection<string> ConfirmedTips => m_confirmedTips;
+        public Collection<string> ConfirmedTips
+        {
+            get => m_confirmedTips;
+            set
+            {
+                m_confirmedTips.Clear();
+                if (value != null)
+                {
+                    foreach (var tip in value)
+                        m_confirmedTips.Add(tip);
+                }
+            }
+        }
     }
 }

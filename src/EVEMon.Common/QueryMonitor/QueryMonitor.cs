@@ -52,7 +52,8 @@ namespace EVEMon.Common.QueryMonitor
 
             NetworkMonitor.Register(this);
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            // Use FiveSecondTick - API cache expiry is typically minutes/hours
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -190,7 +191,7 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         public void Dispose()
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
         }
 
         /// <summary>

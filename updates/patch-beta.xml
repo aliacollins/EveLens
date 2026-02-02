@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Beta Update Channel
+  This file is checked by EVEMon BETA builds for updates.
+  Update this file when releasing new beta versions.
+-->
+<evemon>
+  <releases>
+    <release>
+      <date>2026-01-13</date>
+      <version>5.1.2.1</version>
+      <url>https://github.com/aliacollins/evemon/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/beta/EVEMon-install-5.1.2.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EVEMon Beta Update Available
+
+A new beta build is available for testing.
+
+Check GitHub releases for changelog.]]></message>
+    </release>
+  </releases>
+  <datafiles>
+  </datafiles>
+</evemon>

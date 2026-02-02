@@ -265,14 +265,41 @@ namespace EVEMon.About
 
             panel.Controls.Add(new Label
             {
-                Text = "Active Developer\nISK donations welcome",
+                Text = "Active Developer",
                 Font = new Font("Segoe UI", 8),
                 ForeColor = _subtextColor,
                 Location = new Point(15, y),
                 AutoSize = true,
                 BackColor = Color.Transparent
             });
-            y += 40;
+            y += 25;
+
+            // Divider line
+            AddDivider(panel, y);
+            y += 15;
+
+            // Donation note
+            panel.Controls.Add(new Label
+            {
+                Text = "SUPPORT EVEMon",
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                ForeColor = _accentColor,
+                Location = new Point(15, y),
+                AutoSize = true,
+                BackColor = Color.Transparent
+            });
+            y += 20;
+
+            panel.Controls.Add(new Label
+            {
+                Text = "I don't accept donations.\nPlease donate to Peter Han\nor the original EVEMonDevTeam\nwho built this tool.",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = _subtextColor,
+                Location = new Point(15, y),
+                AutoSize = true,
+                BackColor = Color.Transparent
+            });
+            y += 60;
 
             // Divider line
             AddDivider(panel, y);
@@ -385,6 +412,38 @@ namespace EVEMon.About
                 panel.Controls.Add(new Label
                 {
                     Text = api,
+                    Font = new Font("Segoe UI", 8),
+                    ForeColor = _subtextColor,
+                    Location = new Point(15, y),
+                    AutoSize = true,
+                    BackColor = Color.Transparent
+                });
+                y += 18;
+            }
+            y += 10;
+
+            // Divider
+            AddDivider(panel, y);
+            y += 15;
+
+            // Build Tools section
+            panel.Controls.Add(new Label
+            {
+                Text = "BUILD TOOLS",
+                Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                ForeColor = _accentColor,
+                Location = new Point(15, y),
+                AutoSize = true,
+                BackColor = Color.Transparent
+            });
+            y += 20;
+
+            var buildTools = new[] { ".NET 8.0 - Runtime", "Inno Setup 6 - Installer" };
+            foreach (var tool in buildTools)
+            {
+                panel.Controls.Add(new Label
+                {
+                    Text = tool,
                     Font = new Font("Segoe UI", 8),
                     ForeColor = _subtextColor,
                     Location = new Point(15, y),

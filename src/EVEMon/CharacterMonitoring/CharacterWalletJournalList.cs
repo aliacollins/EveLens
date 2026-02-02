@@ -174,7 +174,7 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.RefTypesUpdated += EveMonClient_RefTypesUpdated;
             EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
             EveMonClient.CharacterWalletJournalUpdated += EveMonClient_CharacterWalletJournalUpdated;
@@ -188,7 +188,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object sender, EventArgs e)
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.RefTypesUpdated -= EveMonClient_RefTypesUpdated;
             EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
             EveMonClient.CharacterWalletJournalUpdated -= EveMonClient_CharacterWalletJournalUpdated;

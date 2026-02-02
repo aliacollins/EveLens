@@ -10,6 +10,29 @@ namespace EVEMon.Common.Helpers
 {
     public static class AttributesOptimizer
     {
+        #region Helper Methods
+
+        /// <summary>
+        /// Applies the simulated booster bonus from the plan to a scratchpad.
+        /// </summary>
+        /// <param name="scratchpad">The scratchpad to modify.</param>
+        /// <param name="plan">The plan containing booster settings.</param>
+        private static void ApplyPlanBoosterBonus(CharacterScratchpad scratchpad, BasePlan plan)
+        {
+            if (!plan.HasBoosterSimulation)
+                return;
+
+            int boosterBonus = plan.SimulatedBoosterBonus;
+            scratchpad.Memory.BoosterBonus = boosterBonus;
+            scratchpad.Charisma.BoosterBonus = boosterBonus;
+            scratchpad.Intelligence.BoosterBonus = boosterBonus;
+            scratchpad.Perception.BoosterBonus = boosterBonus;
+            scratchpad.Willpower.BoosterBonus = boosterBonus;
+        }
+
+        #endregion
+
+
         #region Computations
 
         /// <summary>
@@ -129,6 +152,7 @@ namespace EVEMon.Common.Helpers
             plan.ThrowIfNull(nameof(plan));
 
             CharacterScratchpad scratchpad = new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet));
+            ApplyPlanBoosterBonus(scratchpad, plan);
             Collection<RemappingResult> remappingList = new Collection<RemappingResult>();
             Collection<ISkillLevel> list = new Collection<ISkillLevel>();
 
@@ -163,7 +187,9 @@ namespace EVEMon.Common.Helpers
         {
             plan.ThrowIfNull(nameof(plan));
 
-            RemappingResult remapping = new RemappingResult(new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet)));
+            CharacterScratchpad scratchpad = new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet));
+            ApplyPlanBoosterBonus(scratchpad, plan);
+            RemappingResult remapping = new RemappingResult(scratchpad);
 
             // Scroll through the entries and split it into remappings
             foreach (PlanEntry entry in plan)
@@ -191,6 +217,7 @@ namespace EVEMon.Common.Helpers
 
             // Create a character without any skill
             CharacterScratchpad scratchpad = new CharacterScratchpad(character.After(plan.ChosenImplantSet));
+            ApplyPlanBoosterBonus(scratchpad, plan);
             scratchpad.ClearSkills();
 
             // Create a new plan

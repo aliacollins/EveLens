@@ -38,7 +38,8 @@ namespace EVEMon.Common.Service
         /// </summary>
         static EveIDToName()
         {
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            // Use ThirtySecondTick - batch name resolution is a background task
+            EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
         }
 
         #region Helpers

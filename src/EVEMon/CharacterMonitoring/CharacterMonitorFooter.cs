@@ -55,7 +55,7 @@ namespace EVEMon.CharacterMonitoring
             }
 
             // Subscribe events
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
             EveMonClient.CharacterSkillQueueUpdated += EveMonClient_CharacterSkillQueueUpdated;
@@ -84,7 +84,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object sender, EventArgs e)
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
             EveMonClient.CharacterSkillQueueUpdated -= EveMonClient_CharacterSkillQueueUpdated;

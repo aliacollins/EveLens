@@ -103,7 +103,7 @@ namespace EVEMon.CharacterMonitoring
 
             EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
         }
 
@@ -116,7 +116,7 @@ namespace EVEMon.CharacterMonitoring
         {
             EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             Disposed -= OnDisposed;
         }
 

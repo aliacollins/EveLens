@@ -850,37 +850,42 @@ namespace EVEMon.SkillPlanner
 
             int entriesCount = m_plan.Count();
 
-            // Create a fresh scratchpad directly from the character to avoid stale state issues
-            CharacterScratchpad calcScratchpad = new CharacterScratchpad(m_character);
-
-            // Apply implants from chosen set
-            if (m_plan.ChosenImplantSet != null)
-            {
-                for (int i = 0; i < 5; i++)
-                {
-                    EveAttribute attr = (EveAttribute)i;
-                    calcScratchpad[attr].ImplantBonus = m_plan.ChosenImplantSet[attr].Bonus;
-                }
-            }
-
             bool showBoosterIndicator = false;
             int boosterBonus = 0;
+            TimeSpan trainingTime;
 
-            // Apply booster if active
-            if (m_plan.HasBoosterSimulation)
+            // Check for booster injection points (the new per-skill boosters)
+            if (m_plan.HasBoosterInjectionPoints)
             {
-                boosterBonus = m_plan.SimulatedBoosterBonus;
-                calcScratchpad.Memory.BoosterBonus = boosterBonus;
-                calcScratchpad.Charisma.BoosterBonus = boosterBonus;
-                calcScratchpad.Intelligence.BoosterBonus = boosterBonus;
-                calcScratchpad.Perception.BoosterBonus = boosterBonus;
-                calcScratchpad.Willpower.BoosterBonus = boosterBonus;
-                showBoosterIndicator = true;
-            }
+                // Use the plan's TotalTrainingTime which accounts for booster injection points
+                trainingTime = planEditor.DisplayPlan.TotalTrainingTime;
 
-            // Train entries directly on our scratchpad (use m_plan to avoid DisplayPlan timing issues)
-            calcScratchpad.TrainEntries(m_plan, true);
-            TimeSpan trainingTime = calcScratchpad.TrainingTime;
+                var firstBooster = m_plan.FirstBoosterInjectionPoint;
+                if (firstBooster != null)
+                {
+                    boosterBonus = firstBooster.Bonus;
+                    showBoosterIndicator = true;
+                }
+            }
+            else
+            {
+                // No booster injection points - calculate normally
+                CharacterScratchpad calcScratchpad = new CharacterScratchpad(m_character);
+
+                // Apply implants from chosen set
+                if (m_plan.ChosenImplantSet != null)
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        EveAttribute attr = (EveAttribute)i;
+                        calcScratchpad[attr].ImplantBonus = m_plan.ChosenImplantSet[attr].Bonus;
+                    }
+                }
+
+                // Train entries directly on our scratchpad
+                calcScratchpad.TrainEntries(m_plan, true);
+                trainingTime = calcScratchpad.TrainingTime;
+            }
 
             UpdateSkillStatusLabel(false, entriesCount, m_plan.UniqueSkillsCount);
             UpdateTimeStatusLabel(false, entriesCount, trainingTime, showBoosterIndicator, boosterBonus);
@@ -1376,6 +1381,49 @@ namespace EVEMon.SkillPlanner
             {
                 MessageBox.Show(R.ErrorClipboardImport, @"Not a Skill Set",
                     MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            }
+        }
+
+        /// <summary>
+        /// Handle keyboard shortcuts. Ctrl+Shift+D exports validation data.
+        /// </summary>
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // Ctrl+Shift+D - Export validation data for debugging
+            if (keyData == (Keys.Control | Keys.Shift | Keys.D))
+            {
+                ExportValidationData();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        /// <summary>
+        /// Exports plan calculation data to a CSV file for external validation.
+        /// </summary>
+        private void ExportValidationData()
+        {
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.Filter = @"CSV Files (*.csv)|*.csv";
+                dialog.FileName = $"plan_validation_{m_plan.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                dialog.Title = @"Export Validation Data";
+
+                if (dialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                try
+                {
+                    planEditor.DisplayPlan.ExportValidationData(dialog.FileName);
+                    MessageBox.Show($"Validation data exported to:\n{dialog.FileName}\n\n" +
+                        "Use tools/validate_training_time.py to verify calculations.",
+                        @"Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to export: {ex.Message}",
+                        @"Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

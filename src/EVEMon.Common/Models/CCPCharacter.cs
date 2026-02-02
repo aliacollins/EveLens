@@ -98,7 +98,7 @@ namespace EVEMon.Common.Models
             EveMonClient.CharacterPlaneteryPinsCompleted += EveMonClient_CharacterPlaneteryPinsCompleted;
             EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
             EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         /// <summary>
@@ -111,6 +111,7 @@ namespace EVEMon.Common.Models
         {
             Import(serial);
             m_lastAPIUpdates = serial.LastUpdates.ToList();
+            ForceUpdateBasicFeatures = true;  // Force immediate ESI refresh on startup
         }
 
         /// <summary>
@@ -533,7 +534,7 @@ namespace EVEMon.Common.Models
             EveMonClient.CharacterPlaneteryPinsCompleted -= EveMonClient_CharacterPlaneteryPinsCompleted;
             EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
             EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
 
             // Unsubscribe events
             SkillQueue.Dispose();

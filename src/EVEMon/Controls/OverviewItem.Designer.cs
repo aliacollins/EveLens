@@ -37,6 +37,7 @@ namespace EVEMon.Controls
             this.lblSkillInTraining = new EVEMon.Controls.OverviewLabel();
             this.lblRemainingTime = new EVEMon.Controls.OverviewLabel();
             this.lblBalance = new EVEMon.Controls.OverviewLabel();
+            this.lblESIKeyWarning = new EVEMon.Controls.OverviewLabel();
             this.SuspendLayout();
             // 
             // pbCharacterPortrait
@@ -134,7 +135,7 @@ namespace EVEMon.Controls
             this.lblRemainingTime.Text = "10d 12h 35m 24s";
             // 
             // lblBalance
-            // 
+            //
             this.lblBalance.AutoEllipsis = true;
             this.lblBalance.BackColor = System.Drawing.Color.Transparent;
             this.lblBalance.Enabled = false;
@@ -144,7 +145,21 @@ namespace EVEMon.Controls
             this.lblBalance.Size = new System.Drawing.Size(185, 14);
             this.lblBalance.TabIndex = 3;
             this.lblBalance.Text = "124,534,125,453.02 ISK";
-            // 
+            //
+            // lblESIKeyWarning
+            //
+            this.lblESIKeyWarning.AutoEllipsis = true;
+            this.lblESIKeyWarning.BackColor = System.Drawing.Color.Transparent;
+            this.lblESIKeyWarning.Enabled = false;
+            this.lblESIKeyWarning.ForeColor = System.Drawing.Color.OrangeRed;
+            this.lblESIKeyWarning.Location = new System.Drawing.Point(9, 101);
+            this.lblESIKeyWarning.Name = "lblESIKeyWarning";
+            this.lblESIKeyWarning.Size = new System.Drawing.Size(92, 13);
+            this.lblESIKeyWarning.TabIndex = 9;
+            this.lblESIKeyWarning.Text = "No API Key";
+            this.lblESIKeyWarning.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.lblESIKeyWarning.Visible = false;
+            //
             // OverviewItem
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -157,6 +172,7 @@ namespace EVEMon.Controls
             this.Controls.Add(this.lblSkillInTraining);
             this.Controls.Add(this.lblRemainingTime);
             this.Controls.Add(this.lblBalance);
+            this.Controls.Add(this.lblESIKeyWarning);
             this.Controls.Add(this.pbCharacterPortrait);
             this.ForeColor = System.Drawing.SystemColors.ControlText;
             this.Name = "OverviewItem";
@@ -176,5 +192,6 @@ namespace EVEMon.Controls
         private OverviewLabel lblCompletionTime;
         private OverviewLabel lblSkillQueueTrainingTime;
         private OverviewLabel lblExtraInfo;
+        private OverviewLabel lblESIKeyWarning;
     }
 }

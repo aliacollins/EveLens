@@ -42,7 +42,7 @@ namespace EVEMon.SettingsUI
             // Client events
             EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
             EveMonClient.ServerStatusUpdated += EveMonClient_ServerStatusUpdated;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace EVEMon.SettingsUI
 
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
             EveMonClient.ServerStatusUpdated -= EveMonClient_ServerStatusUpdated;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
         }
 
         #endregion

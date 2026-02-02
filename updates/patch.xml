@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  STABLE Update Channel
+  This file is checked by EVEMon STABLE builds for updates.
+-->
 <evemon>
   <releases>
     <release>
-      <date>2026-01-05</date>
-      <version>5.1.1.0</version>
-      <url>https://github.com/aliacollins/evemon/releases/tag/v5.1.1</url>
-      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/v5.1.1/EVEMon-5.1.1-win-x64.zip</autopatchurl>
-      <autopatchargs></autopatchargs>
-      <message><![CDATA[EVEMon v5.1.1 - Important Update
+      <date>2026-02-02</date>
+      <version>5.1.2.0</version>
+      <url>https://github.com/aliacollins/evemon/releases/tag/v5.1.2</url>
+      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/v5.1.2/EVEMon-install-5.1.2.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EVEMon 5.1.2
 
-FIXES:
-- Settings now save correctly between restarts
-- Certificate Browser deprecated - use Ship Browser for Masteries
-
-This update fixes critical bugs. Please update.]]></message>
+First stable release with .NET 8 migration, auto-update, performance improvements]]></message>
     </release>
   </releases>
   <datafiles>

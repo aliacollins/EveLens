@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ALPHA Update Channel
+  This file is checked by EVEMon ALPHA builds for updates.
+-->
+<evemon>
+  <releases>
+    <release>
+      <date>2026-01-13</date>
+      <version>5.1.2.10</version>
+      <url>https://github.com/aliacollins/evemon/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/alpha/EVEMon-install-5.1.2.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EVEMon 5.1.2-alpha.10
+
+Cumulative alpha release - see release notes for all changes]]></message>
+    </release>
+  </releases>
+  <datafiles>
+  </datafiles>
+</evemon>

@@ -67,7 +67,7 @@ namespace EVEMon.CharacterMonitoring
             multiPanel.SelectionChange += multiPanel_SelectionChange;
 
             // Subscribe events
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.CharacterAssetsUpdated += EveMonClient_UpdatePageControls;
             EveMonClient.MarketOrdersUpdated += EveMonClient_UpdatePageControls;
@@ -133,7 +133,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object sender, EventArgs e)
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.ESIKeyInfoUpdated -= EveMonClient_APIKeyInfoUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.CharacterAssetsUpdated -= EveMonClient_UpdatePageControls;

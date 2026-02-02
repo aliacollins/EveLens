@@ -29,12 +29,24 @@ namespace EVEMon.Common.SettingsObjects
         }
 
         /// <summary>
-        /// Gets the columns.
+        /// Gets or sets the columns.
         /// </summary>
         /// <value>The columns.</value>
         [XmlArray("columns")]
         [XmlArrayItem("column")]
-        public Collection<EveNotificationColumnSettings> Columns => m_columns;
+        public Collection<EveNotificationColumnSettings> Columns
+        {
+            get => m_columns;
+            set
+            {
+                m_columns.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value)
+                        m_columns.Add(item);
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets the reading pane position.

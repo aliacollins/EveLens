@@ -147,6 +147,10 @@ namespace EVEMon.Common.Models
                 if (entry.Remapping != null)
                     serialEntry.Remapping = entry.Remapping.Export();
 
+                // Booster injection point
+                if (entry.BoosterPoint != null)
+                    serialEntry.Booster = entry.BoosterPoint.Export();
+
                 serial.Entries.Add(serialEntry);
             }
 

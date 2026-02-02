@@ -232,3 +232,6 @@ publish/
 *.zip
 *-Setup.exe
 .claude
+
+# Internal documentation (not for public release yet)
+docs/

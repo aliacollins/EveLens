@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.VisualStyles;
 using EVEMon.Common;
@@ -142,8 +143,9 @@ namespace EVEMon.Controls
             EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
             EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
             EveMonClient.CharacterLabelChanged += EveMonClient_CharacterLabelChanged;
+            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
             Disposed += OnDisposed;
 
             UpdateOnSettingsChanged();
@@ -162,8 +164,9 @@ namespace EVEMon.Controls
             EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
             EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
             EveMonClient.CharacterLabelChanged -= EveMonClient_CharacterLabelChanged;
+            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
             Disposed -= OnDisposed;
         }
 
@@ -381,8 +384,36 @@ namespace EVEMon.Controls
                 m_hasSkillQueueTrainingTime = false;
             }
             UpdateExtraData();
+            UpdateESIKeyWarning();
             // Adjusts all the controls layout
             PerformCustomLayout(m_isTooltip);
+        }
+
+        /// <summary>
+        /// Updates the ESI key warning indicator.
+        /// </summary>
+        private void UpdateESIKeyWarning()
+        {
+            var ccpCharacter = Character as CCPCharacter;
+            if (ccpCharacter == null)
+            {
+                lblESIKeyWarning.Visible = false;
+                return;
+            }
+
+            // Check if character has no ESI keys or any key has an error
+            bool hasNoKeys = !ccpCharacter.Identity.ESIKeys.Any();
+            bool hasKeyError = ccpCharacter.Identity.ESIKeys.Any(key => key.HasError);
+
+            lblESIKeyWarning.Visible = hasNoKeys || hasKeyError;
+            if (hasNoKeys)
+            {
+                lblESIKeyWarning.Text = "No API Key";
+            }
+            else if (hasKeyError)
+            {
+                lblESIKeyWarning.Text = "API Key Error";
+            }
         }
 
         /// <summary>
@@ -570,6 +601,17 @@ namespace EVEMon.Controls
         {
             if (e.Character == Character)
                 UpdateContent();
+        }
+
+        /// <summary>
+        /// When ESI key info is updated, refresh the warning indicator.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void EveMonClient_ESIKeyInfoUpdated(object sender, EventArgs e)
+        {
+            if (Visible)
+                UpdateESIKeyWarning();
         }
 
         /// <summary>

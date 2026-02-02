@@ -190,6 +190,7 @@ namespace EVEMon.Common.Models
 
         /// <summary>
         /// Helper method for fetching paginated items.
+        /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
         /// <typeparam name="T">The subtype to deserialize (the deserialized type being
         /// <see cref="CCPAPIResult{T}" />). It must be a collection type of U!</typeparam>
@@ -208,11 +209,15 @@ namespace EVEMon.Common.Models
             Uri pageUrl = GetESIUrl(method, data, page);
             // Create RequestParams manually to zero out the ETag/Expiry since it was already
             // checked
-            Util.DownloadJsonAsync<T>(pageUrl, new RequestParams(null, data.PostData)
+            var pageParams = new RequestParams(null, data.PostData)
             {
                 Authentication = data.Token,
                 AcceptEncoded = SupportsCompressedResponse
-            }).ContinueWith(task =>
+            };
+
+            var queue = EveMonClient.ApiRequestQueue;
+
+            Action<Task<JsonResult<T>>> handleResult = task =>
             {
                 var esiResult = GetESIResult(task.Result);
                 object callbackState = state.State;
@@ -232,12 +237,24 @@ namespace EVEMon.Common.Models
                         // Go to the next page
                         QueryEsiPageHelper(method, callback, data, state.NextPage());
                 }
-            });
+            };
+
+            if (queue != null)
+            {
+                queue.EnqueueAsync(async () =>
+                    await Util.DownloadJsonAsync<T>(pageUrl, pageParams).ConfigureAwait(false)
+                ).ContinueWith(handleResult);
+            }
+            else
+            {
+                Util.DownloadJsonAsync<T>(pageUrl, pageParams).ContinueWith(handleResult);
+            }
         }
 
         /// <summary>
         /// Asynchronously queries this method, fetching all pages if necessary, with the
         /// provided request data.
+        /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
         /// <typeparam name="T">The subtype to deserialize (the deserialized type being
         /// <see cref="CCPAPIResult{T}" />). It must be a collection type of U!</typeparam>
@@ -256,7 +273,10 @@ namespace EVEMon.Common.Models
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
 
             Uri url = GetESIUrl(method, data);
-            Util.DownloadJsonAsync<T>(url, GetRequestParams(data)).ContinueWith(task =>
+            var requestParams = GetRequestParams(data);
+            var queue = EveMonClient.ApiRequestQueue;
+
+            Action<Task<JsonResult<T>>> handleResult = task =>
             {
                 var esiResult = GetESIResult(task.Result);
                 // Check page count
@@ -268,11 +288,23 @@ namespace EVEMon.Common.Models
                 else
                     // Invokes the callback
                     Dispatcher.Invoke(() => callback.Invoke(esiResult, state));
-            });
+            };
+
+            if (queue != null)
+            {
+                queue.EnqueueAsync(async () =>
+                    await Util.DownloadJsonAsync<T>(url, requestParams).ConfigureAwait(false)
+                ).ContinueWith(handleResult);
+            }
+            else
+            {
+                Util.DownloadJsonAsync<T>(url, requestParams).ContinueWith(handleResult);
+            }
         }
 
         /// <summary>
         /// Asynchronously queries this method with the provided request data.
+        /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
         /// <typeparam name="T">The subtype to deserialize (the deserialized type being
         /// <see cref="CCPAPIResult{T}" />).</typeparam>
@@ -290,11 +322,27 @@ namespace EVEMon.Common.Models
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
 
             Uri url = GetESIUrl(method, data);
-            Util.DownloadJsonAsync<T>(url, GetRequestParams(data)).ContinueWith(task =>
+            var requestParams = GetRequestParams(data);
+            var queue = EveMonClient.ApiRequestQueue;
+
+            if (queue != null)
             {
-                // Invokes the callback
-                Dispatcher.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
-            });
+                queue.EnqueueAsync(async () =>
+                    await Util.DownloadJsonAsync<T>(url, requestParams).ConfigureAwait(false)
+                ).ContinueWith(task =>
+                {
+                    // Invokes the callback
+                    Dispatcher.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
+                });
+            }
+            else
+            {
+                Util.DownloadJsonAsync<T>(url, requestParams).ContinueWith(task =>
+                {
+                    // Invokes the callback
+                    Dispatcher.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
+                });
+            }
         }
 
         #endregion
@@ -305,6 +353,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Asynchronously queries this method with the provided request data.
         /// Returns a Task instead of using callbacks for modern async/await patterns.
+        /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
         /// <typeparam name="T">The subtype to deserialize.</typeparam>
         /// <param name="method">The method to query.</param>
@@ -314,14 +363,32 @@ namespace EVEMon.Common.Models
         public async Task<EsiResult<T>> QueryEsiAsync<T>(Enum method, ESIParams data) where T : class
         {
             Uri url = GetESIUrl(method, data);
-            var jsonResult = await Util.DownloadJsonAsync<T>(url, GetRequestParams(data))
-                .ConfigureAwait(false);
+            var requestParams = GetRequestParams(data);
+
+            // Route through the API request queue for rate limiting
+            var queue = EveMonClient.ApiRequestQueue;
+            JsonResult<T> jsonResult;
+
+            if (queue != null)
+            {
+                jsonResult = await queue.EnqueueAsync(async () =>
+                    await Util.DownloadJsonAsync<T>(url, requestParams).ConfigureAwait(false)
+                ).ConfigureAwait(false);
+            }
+            else
+            {
+                // Fallback if queue not initialized (shouldn't happen in normal operation)
+                jsonResult = await Util.DownloadJsonAsync<T>(url, requestParams)
+                    .ConfigureAwait(false);
+            }
+
             return GetESIResult(jsonResult);
         }
 
         /// <summary>
         /// Asynchronously queries this method, fetching all pages if necessary, with the
         /// provided request data. Returns a Task instead of using callbacks.
+        /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
         /// <typeparam name="T">The subtype to deserialize. It must be a collection type of U!</typeparam>
         /// <typeparam name="U">The item type to deserialize.</typeparam>
@@ -333,8 +400,24 @@ namespace EVEMon.Common.Models
             where T : List<U> where U : class
         {
             Uri url = GetESIUrl(method, data);
-            var jsonResult = await Util.DownloadJsonAsync<T>(url, GetRequestParams(data))
-                .ConfigureAwait(false);
+            var requestParams = GetRequestParams(data);
+
+            // Route through the API request queue for rate limiting
+            var queue = EveMonClient.ApiRequestQueue;
+            JsonResult<T> jsonResult;
+
+            if (queue != null)
+            {
+                jsonResult = await queue.EnqueueAsync(async () =>
+                    await Util.DownloadJsonAsync<T>(url, requestParams).ConfigureAwait(false)
+                ).ConfigureAwait(false);
+            }
+            else
+            {
+                jsonResult = await Util.DownloadJsonAsync<T>(url, requestParams)
+                    .ConfigureAwait(false);
+            }
+
             var esiResult = GetESIResult(jsonResult);
 
             // Check page count
@@ -354,6 +437,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Helper method for fetching remaining pages asynchronously.
         /// Returns null on success, or the error result if any page fails.
+        /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
         private async Task<EsiResult<T>> FetchRemainingPagesAsync<T, U>(Enum method, ESIParams data,
             EsiResult<T> firstResult, int totalPages) where T : List<U> where U : class
@@ -365,11 +449,25 @@ namespace EVEMon.Common.Models
                 AcceptEncoded = SupportsCompressedResponse
             };
 
+            var queue = EveMonClient.ApiRequestQueue;
+
             for (int page = 2; page <= totalPages; page++)
             {
                 Uri pageUrl = GetESIUrl(method, data, page);
-                var jsonResult = await Util.DownloadJsonAsync<T>(pageUrl, pageParams)
-                    .ConfigureAwait(false);
+                JsonResult<T> jsonResult;
+
+                if (queue != null)
+                {
+                    jsonResult = await queue.EnqueueAsync(async () =>
+                        await Util.DownloadJsonAsync<T>(pageUrl, pageParams).ConfigureAwait(false)
+                    ).ConfigureAwait(false);
+                }
+                else
+                {
+                    jsonResult = await Util.DownloadJsonAsync<T>(pageUrl, pageParams)
+                        .ConfigureAwait(false);
+                }
+
                 var pageResult = GetESIResult(jsonResult);
 
                 if (pageResult.HasError)

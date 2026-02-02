@@ -54,7 +54,9 @@ namespace EVEMon.Common
             PortableEveInstallations = new PortableEveInstallationsSettings();
             CloudStorageServiceProvider = new CloudStorageServiceProviderSettings();
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            // Use ThirtySecondTick instead of TimerTick for save checks
+            // Saves are already delayed by 10 seconds, so checking every 30s is sufficient
+            EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
         }
 
         // Default ESI credentials for EVEMon - registered by Alia Collins
@@ -477,6 +479,9 @@ Click OK to continue.";
         /// </summary>
         public static async Task ResetAsync()
         {
+            // Clear JSON files (they'll be recreated empty on next save)
+            SettingsFileManager.ClearAllJsonFiles();
+
             s_settings = new SerializableSettings();
 
             IsRestoring = true;
@@ -676,6 +681,8 @@ Click OK to continue.";
         /// <returns></returns>
         public static SerializableSettings Export()
         {
+            EveMonClient.Trace("begin");
+
             SerializableSettings serial = new SerializableSettings
             {
                 SSOClientID = SSOClientID,
@@ -699,10 +706,13 @@ Click OK to continue.";
             };
 
             serial.Characters.AddRange(EveMonClient.Characters.Export());
+            EveMonClient.Trace($"{serial.Characters.Count} characters exported");
             serial.ESIKeys.AddRange(EveMonClient.ESIKeys.Export());
             serial.Plans.AddRange(EveMonClient.Characters.ExportPlans());
+            EveMonClient.Trace($"{serial.Plans.Count} plans exported");
             serial.MonitoredCharacters.AddRange(EveMonClient.MonitoredCharacters.Export());
 
+            EveMonClient.Trace("done");
             return serial;
         }
 
@@ -717,31 +727,119 @@ Click OK to continue.";
         internal static int Revision => Version.Parse(EveMonClient.FileVersionInfo.FileVersion).Revision;
 
         /// <summary>
+        /// Gets whether the settings are currently using JSON format (source of truth).
+        /// When true, saves go only to JSON. When false, saves go to XML (migration not complete).
+        /// </summary>
+        public static bool UsingJsonFormat { get; private set; }
+
+        /// <summary>
         /// Initialization for the EVEMon client settings.
         /// </summary>
         /// <remarks>
-        /// Will attempt to fetch and initialize settings from a storage server, if user has specified so.
-        /// Otherwise attempts to initialize from a locally stored file.
+        /// Settings loading priority:
+        /// 1. JSON format (config.json) - primary if exists
+        /// 2. XML format (settings.xml) - fallback, will migrate to JSON
+        /// 3. Cloud storage - if configured
+        /// 4. Fresh install - create new settings
         /// </remarks>
         public static void Initialize()
         {
-            // Deserialize the local settings file to determine
-            // which cloud storage service provider should be used
-            s_settings = TryDeserializeFromFile();
+            EveMonClient.Trace("begin");
 
-            // Try to download the settings file from the cloud
-            CloudStorageServiceAPIFile settingsFile = s_settings?.CloudStorageServiceProvider?.Provider?.DownloadSettingsFile();
+            // Priority 1: Check if JSON settings exist (new format - source of truth)
+            if (SettingsFileManager.JsonSettingsExist())
+            {
+                EveMonClient.Trace("JSON settings found, loading from JSON format");
+                s_settings = SettingsFileManager.LoadToSerializableSettingsAsync().GetAwaiter().GetResult();
 
-            // If a settings file was downloaded try to deserialize it
-            s_settings = settingsFile != null
-                ? TryDeserializeFromFileContent(settingsFile.FileContent)
-                : s_settings;
+                if (s_settings != null)
+                {
+                    UsingJsonFormat = true;
+                    EveMonClient.Trace($"Loaded from JSON: {s_settings.Characters.Count} characters");
+                }
+                else
+                {
+                    EveMonClient.Trace("JSON load failed, falling back to XML");
+                }
+            }
+
+            // Priority 2: Fall back to XML if JSON didn't work
+            if (s_settings == null)
+            {
+                EveMonClient.Trace("Loading from XML format");
+                s_settings = TryDeserializeFromFile();
+                EveMonClient.Trace("TryDeserializeFromFile done");
+
+                // Try to download the settings file from the cloud
+                CloudStorageServiceAPIFile settingsFile = s_settings?.CloudStorageServiceProvider?.Provider?.DownloadSettingsFile();
+                if (settingsFile != null)
+                {
+                    EveMonClient.Trace("Cloud settings downloaded, deserializing");
+                    s_settings = TryDeserializeFromFileContent(settingsFile.FileContent);
+                }
+            }
 
             // Loading settings
             // If there are none, we create them from scratch
             IsRestoring = true;
             Import();
             IsRestoring = false;
+
+            // If we loaded from XML, migrate to JSON format
+            // After migration completes, JSON becomes source of truth
+            if (!UsingJsonFormat && s_settings != null)
+            {
+                TryMigrateToJsonAsync(s_settings).ContinueWith(t =>
+                {
+                    if (t.IsCompletedSuccessfully && SettingsFileManager.JsonSettingsExist())
+                    {
+                        UsingJsonFormat = true;
+                        EveMonClient.Trace("Migration complete - JSON is now source of truth");
+                    }
+                });
+            }
+
+            EveMonClient.Trace($"done - UsingJsonFormat={UsingJsonFormat}");
+        }
+
+        /// <summary>
+        /// Attempts to migrate settings from XML to the new JSON file structure.
+        /// This runs in the background and doesn't block initialization.
+        /// </summary>
+        /// <param name="settings">The deserialized XML settings.</param>
+        private static async Task TryMigrateToJsonAsync(SerializableSettings settings)
+        {
+            try
+            {
+                // Check if migration is needed
+                if (!SettingsFileManager.NeedsMigration())
+                {
+                    if (SettingsFileManager.JsonSettingsExist())
+                    {
+                        EveMonClient.Trace("JSON settings already exist, no migration needed");
+                    }
+                    else if (!SettingsFileManager.LegacySettingsExist())
+                    {
+                        EveMonClient.Trace("No legacy settings to migrate");
+                    }
+                    return;
+                }
+
+                if (settings == null)
+                {
+                    EveMonClient.Trace("No settings to migrate");
+                    return;
+                }
+
+                EveMonClient.Trace("Starting migration from XML to JSON format");
+                await SettingsFileManager.MigrateFromXmlAsync(settings);
+                EveMonClient.Trace("Migration to JSON complete");
+            }
+            catch (Exception ex)
+            {
+                // Migration failure is not critical - we still have the XML file
+                EveMonClient.Trace($"Migration to JSON failed (non-critical): {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -792,22 +890,128 @@ Click OK to continue.";
 
         /// <summary>
         /// Asynchronously restores the settings from the specified file.
+        /// Supports both JSON (.json) and XML (.xml) backup formats.
         /// </summary>
         /// <param name="filename">The fully qualified filename of the settings file to load</param>
         /// <returns>The Settings object loaded</returns>
         public static async Task RestoreAsync(string filename)
         {
-            // Try deserialize
-            s_settings = TryDeserializeFromBackupFile(filename, false);
+            const string Caption = "Restore Settings";
+            string extension = Path.GetExtension(filename).ToLowerInvariant();
 
-            // Loading from file failed, we abort and keep our current settings
-            if (s_settings == null)
-                return;
+            if (extension == ".json" && SettingsFileManager.IsJsonBackupFile(filename))
+            {
+                // Restore from JSON backup format
+                bool success = await SettingsFileManager.ImportBackupAsync(filename);
+                if (!success)
+                {
+                    EveMonClient.Trace("Failed to import JSON backup");
+                    return;
+                }
+
+                // Load from the imported JSON files
+                EveMonClient.Trace("JSON backup imported - loading settings from JSON files");
+                s_settings = await SettingsFileManager.LoadToSerializableSettingsAsync();
+
+                if (s_settings == null)
+                {
+                    EveMonClient.Trace("Failed to load from imported JSON backup");
+                    MessageBox.Show("Failed to load the imported backup. The backup file may be corrupted.",
+                        Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // JSON is now our source of truth
+                UsingJsonFormat = true;
+                EveMonClient.Trace($"Restored from JSON backup: {s_settings.Characters.Count} characters");
+            }
+            else
+            {
+                // Restore from XML backup format
+                // First, read file content to check for fork migration
+                string fileContent = null;
+                try
+                {
+                    fileContent = File.ReadAllText(filename);
+                }
+                catch (Exception ex)
+                {
+                    EveMonClient.Trace($"RestoreAsync: Failed to read backup file: {ex.Message}");
+                    MessageBox.Show($"Failed to read the backup file: {ex.Message}",
+                        Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Check for fork migration (user restoring from peterhaneve or other fork)
+                var migration = DetectForkMigration(fileContent);
+
+                if (migration.MigrationDetected)
+                {
+                    EveMonClient.Trace($"RestoreAsync: Fork migration detected in backup - fork={migration.DetectedForkId}, revision={migration.DetectedRevision}");
+
+                    // Warn user and clear ESI keys from the content before deserializing
+                    string message = @"This backup appears to be from a different version of EVEMon.
+
+The ESI authentication tokens in this backup won't work with this version of EVEMon (they're tied to the original application).
+
+Your skill plans and settings will be restored, but you'll need to re-add your characters:
+  1. Go to File → Add Character
+  2. Log in with your EVE account
+
+Do you want to continue?";
+
+                    DialogResult result = MessageBox.Show(message, "Restore from Different Fork",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (result != DialogResult.Yes)
+                    {
+                        EveMonClient.Trace("RestoreAsync: User cancelled fork migration restore");
+                        return;
+                    }
+
+                    // Clear ESI keys from the content
+                    fileContent = Regex.Replace(fileContent,
+                        @"<esiKeys>.*?</esiKeys>",
+                        "<esiKeys></esiKeys>",
+                        RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+                    MigrationFromOtherForkDetected = true;
+                }
+
+                // Deserialize the (possibly modified) content
+                s_settings = Util.DeserializeXmlFromString<SerializableSettings>(fileContent);
+
+                // Loading from file failed, we abort and keep our current settings
+                if (s_settings == null)
+                {
+                    EveMonClient.Trace("RestoreAsync: Failed to deserialize backup");
+                    MessageBox.Show("Failed to load the backup file. The file may be corrupted or in an incompatible format.",
+                        Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                EveMonClient.Trace($"RestoreAsync: Loaded XML backup with {s_settings.Characters.Count} characters");
+
+                // Clear JSON files - they'll be recreated from restored XML
+                SettingsFileManager.ClearAllJsonFiles();
+
+                // Immediately migrate restored settings to JSON
+                await TryMigrateToJsonAsync(s_settings);
+
+                // JSON is now our source of truth
+                if (SettingsFileManager.JsonSettingsExist())
+                {
+                    UsingJsonFormat = true;
+                    EveMonClient.Trace("RestoreAsync: Migrated to JSON - JSON is now source of truth");
+                }
+            }
 
             IsRestoring = true;
             Import();
             await ImportDataAsync();
             IsRestoring = false;
+
+            EveMonClient.Trace($"RestoreAsync: Complete - UsingJsonFormat={UsingJsonFormat}");
         }
 
         /// <summary>
@@ -1020,27 +1224,35 @@ Click OK to continue.";
             if (Revision == settings.Revision)
                 return;
 
+            int oldRevision = settings.Revision;
+            EveMonClient.Trace($"CheckSettingsVersion: Revision mismatch - settings={oldRevision}, current={Revision}");
+
             DialogResult backupSettings =
                 MessageBox.Show($"The current EVEMon settings file is from a previous version.{Environment.NewLine}" +
                                 @"Backup the current file before proceeding (recommended)?",
                     @"EVEMon version changed", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
                     MessageBoxDefaultButton.Button1);
 
-            if (backupSettings != DialogResult.Yes)
-                return;
-
-            using (SaveFileDialog fileDialog = new SaveFileDialog())
+            if (backupSettings == DialogResult.Yes)
             {
-                fileDialog.Title = @"Settings file backup";
-                fileDialog.Filter = @"Settings Backup Files (*.bak)|*.bak";
-                fileDialog.FileName = $"EVEMon_Settings_{settings.Revision}.xml.bak";
-                fileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+                using (SaveFileDialog fileDialog = new SaveFileDialog())
+                {
+                    fileDialog.Title = @"Settings file backup";
+                    fileDialog.Filter = @"Settings Backup Files (*.bak)|*.bak";
+                    fileDialog.FileName = $"EVEMon_Settings_{oldRevision}.xml.bak";
+                    fileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 
-                if (fileDialog.ShowDialog() != DialogResult.OK)
-                    return;
-
-                FileHelper.CopyOrWarnTheUser(EveMonClient.SettingsFileNameFullPath, fileDialog.FileName);
+                    if (fileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        FileHelper.CopyOrWarnTheUser(EveMonClient.SettingsFileNameFullPath, fileDialog.FileName);
+                    }
+                }
             }
+
+            // IMPORTANT: Update the revision in settings to current version
+            // This prevents the backup prompt from appearing on every startup
+            settings.Revision = Revision;
+            EveMonClient.Trace($"CheckSettingsVersion: Updated revision from {oldRevision} to {Revision}");
         }
 
         /// <summary>
@@ -1080,6 +1292,12 @@ Click OK to continue.";
         /// <summary>
         /// Saves settings immediately.
         /// </summary>
+        /// <remarks>
+        /// When UsingJsonFormat is true (JSON is source of truth):
+        ///   - Saves only to JSON files (fast, no XML overhead)
+        /// When UsingJsonFormat is false (migration in progress):
+        ///   - Saves to both XML and JSON (ensures compatibility)
+        /// </remarks>
         public static async Task SaveImmediateAsync()
         {
             // Prevents the saving if we are restoring the settings at that time
@@ -1090,35 +1308,98 @@ Click OK to continue.";
             s_savePending = false;
             s_nextSaveTime = DateTime.UtcNow.AddSeconds(10);
 
+            EveMonClient.Trace($"begin - UsingJsonFormat={UsingJsonFormat}");
+
             try
             {
+                // Export settings on UI thread (required for collection access)
                 SerializableSettings settings = Export();
+                EveMonClient.Trace("Export done");
 
-                // Save in settings file
-                await FileHelper.OverwriteOrWarnTheUserAsync(EveMonClient.SettingsFileNameFullPath,
-                    async fs =>
+                if (UsingJsonFormat)
+                {
+                    // JSON is source of truth - save only to JSON (faster)
+                    await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
+                    EveMonClient.Trace("JSON save complete (JSON-only mode)");
+                }
+                else
+                {
+                    // Migration in progress - save to both XML and JSON
+                    // Serialize to MemoryStream on background thread to avoid UI freeze
+                    byte[] serializedData = await Task.Run(() =>
                     {
-                        XmlSerializer xs = new XmlSerializer(typeof(SerializableSettings));
-                        xs.Serialize(fs, settings);
-                        await fs.FlushAsync();
-                        return true;
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            XmlSerializer xs = new XmlSerializer(typeof(SerializableSettings));
+                            xs.Serialize(ms, settings);
+                            return ms.ToArray();
+                        }
                     });
+                    EveMonClient.Trace($"Serialized {serializedData.Length} bytes to XML");
+
+                    // Write to XML file (atomic via temp file)
+                    await FileHelper.OverwriteOrWarnTheUserAsync(EveMonClient.SettingsFileNameFullPath,
+                        async fs =>
+                        {
+                            await fs.WriteAsync(serializedData, 0, serializedData.Length);
+                            await fs.FlushAsync();
+                            return true;
+                        });
+                    EveMonClient.Trace("XML file written");
+
+                    // Also save to JSON format (keeps JSON files in sync with XML)
+                    await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
+                    EveMonClient.Trace("JSON save complete (dual-write mode)");
+                }
             }
             catch (Exception exception)
             {
+                EveMonClient.Trace($"Error: {exception.Message}");
                 ExceptionHandler.LogException(exception, true);
             }
         }
 
         /// <summary>
-        /// Copies the current Settings file to the specified location.
+        /// Exports settings to the specified location.
+        /// Supports both JSON (.json) and XML (.xml) formats based on file extension.
         /// </summary>
         /// <param name="copyFileName">The fully qualified filename of the destination file</param>
         public static async Task CopySettingsAsync(string copyFileName)
         {
-            // Ensure we have the latest settings saved
-            await SaveImmediateAsync();
-            FileHelper.CopyOrWarnTheUser(EveMonClient.SettingsFileNameFullPath, copyFileName);
+            // Export current in-memory settings (always fresh)
+            SerializableSettings settings = Export();
+
+            // Check file extension to determine format
+            string extension = Path.GetExtension(copyFileName).ToLowerInvariant();
+            if (extension == ".json")
+            {
+                // Export to JSON backup format
+                await SettingsFileManager.ExportBackupAsync(copyFileName, settings);
+                EveMonClient.Trace($"CopySettingsAsync: Exported to JSON backup: {copyFileName}");
+            }
+            else
+            {
+                // Export to XML format - serialize current settings, don't copy potentially stale file
+                byte[] serializedData = await Task.Run(() =>
+                {
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        XmlSerializer xs = new XmlSerializer(typeof(SerializableSettings));
+                        xs.Serialize(ms, settings);
+                        return ms.ToArray();
+                    }
+                });
+
+                await FileHelper.OverwriteOrWarnTheUserAsync(copyFileName,
+                    async fs =>
+                    {
+                        await fs.WriteAsync(serializedData, 0, serializedData.Length);
+                        await fs.FlushAsync();
+                        return true;
+                    });
+
+                EveMonClient.Trace($"CopySettingsAsync: Exported {serializedData.Length} bytes to XML backup: {copyFileName}");
+            }
         }
 
         #endregion

@@ -235,7 +235,7 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Tick += refresh_TimerTick;
             m_refreshTimer.Interval = 1000;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.IndustryJobsUpdated += EveMonClient_IndustryJobsUpdated;
             EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
             EveMonClient.CharacterIndustryJobsCompleted += EveMonClient_CharacterIndustryJobsCompleted;
@@ -253,7 +253,7 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip.Dispose();
             m_refreshTimer.Dispose();
 
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.IndustryJobsUpdated -= EveMonClient_IndustryJobsUpdated;
             EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
             EveMonClient.CharacterIndustryJobsCompleted -= EveMonClient_CharacterIndustryJobsCompleted;

@@ -56,6 +56,8 @@ namespace EVEMon.SkillPlanner
             this.miCopySelectedToClipboard = new System.Windows.Forms.ToolStripMenuItem();
             this.copyMenuSeparator = new System.Windows.Forms.ToolStripSeparator();
             this.miPlanGroups = new System.Windows.Forms.ToolStripMenuItem();
+            this.boosterMenuSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.miInjectBooster = new System.Windows.Forms.ToolStripMenuItem();
             this.sfdSave = new System.Windows.Forms.SaveFileDialog();
             this.tmrAutoRefresh = new System.Windows.Forms.Timer(this.components);
             this.tsPlan = new System.Windows.Forms.ToolStrip();
@@ -127,7 +129,9 @@ namespace EVEMon.SkillPlanner
             this.markOwnedMenuSeaprator,
             this.miCopyTo,
             this.copyMenuSeparator,
-            this.miPlanGroups});
+            this.miPlanGroups,
+            this.boosterMenuSeparator,
+            this.miInjectBooster});
             this.contextMenu.Name = "cmsContextMenu";
             this.contextMenu.Size = new System.Drawing.Size(217, 254);
             this.contextMenu.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenu_Opening);
@@ -293,11 +297,23 @@ namespace EVEMon.SkillPlanner
             this.copyMenuSeparator.Size = new System.Drawing.Size(213, 6);
             // 
             // miPlanGroups
-            // 
+            //
             this.miPlanGroups.Name = "miPlanGroups";
             this.miPlanGroups.Size = new System.Drawing.Size(216, 22);
             this.miPlanGroups.Text = "Select entries from group...";
-            // 
+            //
+            // boosterMenuSeparator
+            //
+            this.boosterMenuSeparator.Name = "boosterMenuSeparator";
+            this.boosterMenuSeparator.Size = new System.Drawing.Size(213, 6);
+            //
+            // miInjectBooster
+            //
+            this.miInjectBooster.Name = "miInjectBooster";
+            this.miInjectBooster.Size = new System.Drawing.Size(216, 22);
+            this.miInjectBooster.Text = "Inject Booster Here...";
+            this.miInjectBooster.Click += new System.EventHandler(this.miInjectBooster_Click);
+            //
             // sfdSave
             // 
             this.sfdSave.Filter = "EVEMon Plan Format (*.emp)|*.emp|XML Format (*.xml)|*.xml|Text Format (*.txt)|*.t" +
@@ -859,5 +875,7 @@ namespace EVEMon.SkillPlanner
         private System.Windows.Forms.ToolStripSeparator markOwnedMenuSeaprator;
         private System.Windows.Forms.ToolStripMenuItem miCopyToNewPlan;
         private System.Windows.Forms.ToolStripMenuItem miCopySelectedToClipboard;
+        private System.Windows.Forms.ToolStripMenuItem miInjectBooster;
+        private System.Windows.Forms.ToolStripSeparator boosterMenuSeparator;
     }
 }

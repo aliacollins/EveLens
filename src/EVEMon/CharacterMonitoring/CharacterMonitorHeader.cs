@@ -77,7 +77,9 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
             EveMonClient.CharacterLabelChanged += EveMonClient_CharacterLabelChanged;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
+            SkillSummaryPanel.Click += SkillSummaryPanel_Click;
             Disposed += OnDisposed;
         }
 
@@ -110,7 +112,9 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
             EveMonClient.CharacterLabelChanged -= EveMonClient_CharacterLabelChanged;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
+            SkillSummaryPanel.Click -= SkillSummaryPanel_Click;
             Disposed -= OnDisposed;
         }
 
@@ -202,9 +206,11 @@ namespace EVEMon.CharacterMonitoring
 
                 CharacterPortrait.Character = m_character;
                 CharacterNameLabel.Text = m_character.AdornedName;
-                BioInfoLabel.Text = (m_character.Gender ?? "Gender") + " - " + (m_character.
-                    Race ?? "Race") + " - " + (m_character.Bloodline ?? "Bloodline") + " - " +
-                    (m_character.Ancestry ?? "Ancestry");
+                var bioInfo = (m_character.Gender ?? "Gender") + " - " + (m_character.
+                    Race ?? "Race") + " - " + (m_character.Bloodline ?? "Bloodline");
+                if (!string.IsNullOrEmpty(m_character.Ancestry))
+                    bioInfo += " - " + m_character.Ancestry;
+                BioInfoLabel.Text = bioInfo;
                 BirthdayLabel.Text = "Birthday: " + m_character.Birthday.ToLocalTime();
                 CorporationNameLabel.Text = "Corporation: " + (m_character.CorporationName ??
                     EveMonConstants.UnknownText);
@@ -216,6 +222,7 @@ namespace EVEMon.CharacterMonitoring
                 UpdateInfoControls();
                 UpdateCharacterLabel(EveMonClient.Characters.GetKnownLabels());
                 UpdateAccountStatusInfo();
+                UpdateESIKeyWarning();
             }
             finally
             {
@@ -272,6 +279,35 @@ namespace EVEMon.CharacterMonitoring
             finally
             {
                 m_updatingLabels = false;
+            }
+        }
+
+        /// <summary>
+        /// Updates the ESI key warning indicator.
+        /// </summary>
+        private void UpdateESIKeyWarning()
+        {
+            if (m_character == null)
+            {
+                ESIKeyWarningLabel.Visible = false;
+                return;
+            }
+
+            var ccpCharacter = m_character as CCPCharacter;
+            if (ccpCharacter == null)
+            {
+                ESIKeyWarningLabel.Visible = false;
+                return;
+            }
+
+            // Check if any of this character's ESI keys have errors
+            bool hasKeyError = ccpCharacter.Identity.ESIKeys.Any(key => key.HasError);
+
+            ESIKeyWarningLabel.Visible = hasKeyError;
+            if (hasKeyError)
+            {
+                ESIKeyWarningLabel.Text = "ESI Key needs re-auth";
+                ToolTip.SetToolTip(ESIKeyWarningLabel, "ESI authentication failed. Click to manage ESI keys.");
             }
         }
 
@@ -774,6 +810,17 @@ namespace EVEMon.CharacterMonitoring
             UpdateAccountStatusInfo();
         }
 
+        /// <summary>
+        /// Handles the ESIKeyInfoUpdated event of the EveMonClient control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void EveMonClient_ESIKeyInfoUpdated(object sender, EventArgs e)
+        {
+            if (Visible)
+                UpdateESIKeyWarning();
+        }
+
         #endregion
 
 
@@ -786,12 +833,34 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void CustomLabelComboBox_KeyUp(object sender, KeyEventArgs e)
         {
-            if ((e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return) && !m_updatingLabels &&
-                m_character != null)
+            if (!m_updatingLabels && m_character != null)
             {
-                m_character.Label = CustomLabelComboBox.Text;
-                e.Handled = true;
+                if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Return)
+                {
+                    // Save and hide
+                    m_character.Label = CustomLabelComboBox.Text;
+                    HideCustomLabelComboBox();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Escape)
+                {
+                    // Cancel - restore original and hide
+                    CustomLabelComboBox.Text = m_character.Label;
+                    HideCustomLabelComboBox();
+                    e.Handled = true;
+                }
             }
+        }
+
+        /// <summary>
+        /// Hides the custom label combo box and shows the link label.
+        /// </summary>
+        private void HideCustomLabelComboBox()
+        {
+            CustomLabelComboBox.Visible = false;
+            CustomLabelLink.Visible = true;
+            // Move focus to parent to ensure clean state
+            SkillSummaryPanel.Focus();
         }
 
         /// <summary>
@@ -803,6 +872,37 @@ namespace EVEMon.CharacterMonitoring
         {
             if (!m_updatingLabels && m_character != null)
                 m_character.Label = CustomLabelComboBox.Text;
+        }
+
+        /// <summary>
+        /// Occurs when the custom label combo box loses focus.
+        /// Hides the combo box and shows the link label again.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CustomLabelComboBox_Leave(object sender, EventArgs e)
+        {
+            // Save current value and hide
+            if (!m_updatingLabels && m_character != null)
+                m_character.Label = CustomLabelComboBox.Text;
+            HideCustomLabelComboBox();
+        }
+
+        /// <summary>
+        /// Occurs when user clicks on the skill summary panel.
+        /// Used to dismiss the label combo box when clicking outside it.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SkillSummaryPanel_Click(object sender, EventArgs e)
+        {
+            if (CustomLabelComboBox.Visible)
+            {
+                // Save and hide when clicking outside
+                if (!m_updatingLabels && m_character != null)
+                    m_character.Label = CustomLabelComboBox.Text;
+                HideCustomLabelComboBox();
+            }
         }
 
         /// <summary>
@@ -1035,6 +1135,20 @@ namespace EVEMon.CharacterMonitoring
             // This menu should be enabled only for CCP characters
             // Open the ESI keys management dialog since multiple keys can affect one character
             //WindowsFactory.ShowByTag<EsiKeyUpdateOrAdditionWindow, IEnumerable<ESIKey>>(m_character.Identity.ESIKeys);
+            using (EsiKeysManagementWindow window = new EsiKeysManagementWindow())
+            {
+                window.ShowDialog(this);
+            }
+        }
+
+        /// <summary>
+        /// Handles the Click event of the ESIKeyWarningLabel control.
+        /// Opens the ESI keys management dialog.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void ESIKeyWarningLabel_Click(object sender, EventArgs e)
+        {
             using (EsiKeysManagementWindow window = new EsiKeysManagementWindow())
             {
                 window.ShowDialog(this);

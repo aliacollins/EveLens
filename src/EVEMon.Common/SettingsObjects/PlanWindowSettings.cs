@@ -115,12 +115,24 @@ namespace EVEMon.Common.SettingsObjects
         public ObsoleteEntryRemovalBehaviour ObsoleteEntryRemovalBehaviour { get; set; }
 
         /// <summary>
-        /// Gets the columns.
+        /// Gets or sets the columns.
         /// </summary>
         /// <value>The columns.</value>
         [XmlArray("columns")]
         [XmlArrayItem("column")]
-        public Collection<PlanColumnSettings> Columns => m_columns;
+        public Collection<PlanColumnSettings> Columns
+        {
+            get => m_columns;
+            set
+            {
+                m_columns.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value)
+                        m_columns.Add(item);
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the default columns.

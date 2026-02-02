@@ -62,33 +62,52 @@ namespace EVEMon.Common.Data
         /// <returns></returns>
         /// <exception cref="System.IO.FileNotFoundException"></exception>
         /// <remarks>
-        /// Attempts to find a datafile  - firstly, look in the %APPDATA% folder
-        /// Then look in the Application data folder (roaming users on usb devices)
-        /// If not there, this could be a first run so copy from resources folder in installation directory
+        /// Attempts to find a datafile - checks both %APPDATA% and installation directory.
+        /// If both exist, compares MD5 to ensure cached version is up to date.
+        /// This ensures that when EVEMon is updated, new datafiles replace old cached ones.
         /// </remarks>
         internal static string GetFullPath(string filename)
         {
             string evemonDataDir = EveMonClient.EVEMonDataDir ??
                                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EVEMon");
 
-            // Look in the %APPDATA% folder
-            string filepath = $"{evemonDataDir}{Path.DirectorySeparatorChar}{filename}";
+            // Path in %APPDATA% folder
+            string cachedFilePath = $"{evemonDataDir}{Path.DirectorySeparatorChar}{filename}";
 
-            if (File.Exists(filepath))
-                return filepath;
+            // Path in installation directory ("Resources" subdirectory)
+            string installFilePath = $"{AppDomain.CurrentDomain.BaseDirectory}Resources{Path.DirectorySeparatorChar}{filename}";
 
-            // File isn't in the current folder, look in installation directory ("resources" subdirectory)
-            string baseFile = $"{AppDomain.CurrentDomain.BaseDirectory}Resources{Path.DirectorySeparatorChar}{filename}";
+            bool cachedExists = File.Exists(cachedFilePath);
+            bool installExists = File.Exists(installFilePath);
 
-            // Does not exist also ? 
-            if (!File.Exists(baseFile))
-                throw new FileNotFoundException($"{baseFile} not found!");
+            // Neither exists - error
+            if (!cachedExists && !installExists)
+                throw new FileNotFoundException($"{installFilePath} not found!");
 
-            // The file was in the installation directory, let's copy it to %APPDATA%
-            FileHelper.CopyOrWarnTheUser(baseFile, filepath);
+            // Only cached exists (shouldn't normally happen, but handle it)
+            if (cachedExists && !installExists)
+                return cachedFilePath;
 
-            // Return
-            return baseFile;
+            // Only installation exists - copy to cache and return
+            if (!cachedExists && installExists)
+            {
+                FileHelper.CopyOrWarnTheUser(installFilePath, cachedFilePath);
+                return installFilePath;
+            }
+
+            // Both exist - compare MD5 to ensure cache is up to date
+            // This is the key fix: if installation file is different (newer), update the cache
+            string cachedMD5 = Util.CreateMD5From(cachedFilePath);
+            string installMD5 = Util.CreateMD5From(installFilePath);
+
+            if (cachedMD5 != installMD5)
+            {
+                // Installation file is different (newer) - update the cache
+                System.Diagnostics.Trace.WriteLine($"Datafile: Updating cached {filename} (MD5 mismatch)");
+                FileHelper.CopyOrWarnTheUser(installFilePath, cachedFilePath);
+            }
+
+            return cachedFilePath;
         }
 
         /// <summary>

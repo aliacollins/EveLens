@@ -48,6 +48,18 @@ namespace EVEMon.Common.SettingsObjects
         /// </summary>
         /// <value>The colors.</value>
         [XmlElement("colors")]
-        public Collection<SerializableColor> Colors => m_colors;
+        public Collection<SerializableColor> Colors
+        {
+            get => m_colors;
+            set
+            {
+                m_colors.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value)
+                        m_colors.Add(item);
+                }
+            }
+        }
     }
 }

@@ -47,6 +47,7 @@ namespace EVEMon.Common.Enumerations
         Existentialists = 28,
         Puritan = 29,
         Lab_Rat = 30,
+        Undefined = 64,  // For characters who didn't pick ancestry during creation
         Unknown = 0
     }
 }

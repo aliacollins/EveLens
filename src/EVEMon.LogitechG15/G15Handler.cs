@@ -30,7 +30,7 @@ namespace EVEMon.LogitechG15
             if (EveMonClient.Closed)
                 return;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
         }
 
         #endregion

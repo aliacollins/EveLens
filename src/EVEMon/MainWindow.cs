@@ -69,6 +69,7 @@ namespace EVEMon
         private bool m_isUpdatingTabOrder;
         private bool m_isUpdateEventsSubscribed;
         private bool m_initialized;
+        private bool m_firstApiLoadNotified;
 
         #endregion
 
@@ -90,7 +91,7 @@ namespace EVEMon
 
             noCharactersLabel.Hide();
 
-            trayIcon.Text = EveMonClient.FileVersionInfo.ProductName;
+            trayIcon.Text = EveMonClient.ProductNameWithVersion;
 
             lblStatus.Text = $"EVE Time: {DateTime.UtcNow:HH:mm}";
             lblServerStatus.Text = $"|  {EveMonClient.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
@@ -206,8 +207,9 @@ namespace EVEMon
             EveMonClient.ServerStatusUpdated += EveMonClient_ServerStatusUpdated;
             EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
             EveMonClient.CharacterLabelChanged += EveMonClient_CharacterLabelChanged;
+            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
             EveMonClient.Trace("Main window - loaded", printMethod: false);
@@ -224,6 +226,22 @@ namespace EVEMon
             if (!m_initialized)
                 await InitializeData();
 
+            // Pre-release warning for alpha/beta builds
+            if (EveMonClient.IsPreReleaseVersion)
+            {
+                string versionType = EveMonClient.IsAlphaVersion ? "ALPHA" : "BETA";
+                string warningKey = $"prerelease-{EveMonClient.VersionString}";
+                string warningTitle = $"{versionType} Build Warning";
+                string warningMessage = $"You are running EVEMon {versionType} version {EveMonClient.VersionString}.\n\n" +
+                    $"This is a pre-release build intended for testing purposes. " +
+                    $"It may contain bugs, incomplete features, or unexpected behavior.\n\n" +
+                    $"Please report any issues on GitHub:\n" +
+                    $"https://github.com/aliacollins/evemon/issues\n\n" +
+                    $"Thank you for helping test EVEMon!";
+
+                TipWindow.ShowTip(this, warningKey, warningTitle, warningMessage);
+            }
+
             // Welcome message
             TipWindow.ShowTip(this, "startup", "Getting Started", Properties.Resources.
                 MessageGettingStarted);
@@ -235,6 +253,28 @@ namespace EVEMon
         /// <returns></returns>
         private async Task InitializeData()
         {
+            // If data was already loaded during splash screen, skip redundant loading
+            if (EveMonClient.IsDataLoaded)
+            {
+                EveMonClient.Trace("MainWindow - Data already loaded during splash, skipping InitializeData", printMethod: false);
+                m_initialized = true;
+
+                // Hide loading indicators
+                mainLoadingThrobber.State = ThrobberState.Stopped;
+                mainLoadingThrobber.Hide();
+                tabLoadingLabel.Hide();
+                UpdateSettingsControlsVisibility(enabled: true);
+
+                // Update tabs - characters were loaded during splash before we subscribed to events
+                UpdateTabs();
+
+                TriggerAutoShrink();
+                return;
+            }
+
+            // Fallback: Load data if not loaded during splash (shouldn't happen normally)
+            EveMonClient.Trace("MainWindow - Loading data (fallback path)", printMethod: false);
+
             // Load static data
             await GlobalDatafileCollection.LoadAsync();
 
@@ -364,7 +404,7 @@ namespace EVEMon
             EveMonClient.ServerStatusUpdated -= EveMonClient_ServerStatusUpdated;
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
         }
 
         /// <summary>
@@ -413,6 +453,90 @@ namespace EVEMon
         {
             if (!m_isUpdatingTabOrder)
                 UpdateTabs();
+        }
+
+        /// <summary>
+        /// When ESI key info is updated, refresh tab names to show/hide warning indicators.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void EveMonClient_ESIKeyInfoUpdated(object sender, EventArgs e)
+        {
+            UpdateTabNames();
+
+            // Show toast notification on first successful API load
+            if (!m_firstApiLoadNotified && m_initialized && EveMonClient.ESIKeys.Any())
+            {
+                m_firstApiLoadNotified = true;
+
+                int characterCount = EveMonClient.MonitoredCharacters.Count();
+                bool hasErrors = EveMonClient.ESIKeys.Any(key => key.HasError);
+
+                if (hasErrors)
+                {
+                    ShowApiLoadNotification(
+                        "API Connection Issue",
+                        $"Some characters could not be loaded. Check the warning indicators.",
+                        ToolTipIcon.Warning);
+                }
+                else if (characterCount > 0)
+                {
+                    ShowApiLoadNotification(
+                        "API Connected",
+                        $"Successfully loaded {characterCount} character{(characterCount == 1 ? "" : "s")}.",
+                        ToolTipIcon.Info);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Shows a balloon tip notification for API load status.
+        /// </summary>
+        private void ShowApiLoadNotification(string title, string message, ToolTipIcon icon)
+        {
+            niAlertIcon.Visible = true;
+            niAlertIcon.BalloonTipTitle = title;
+            niAlertIcon.BalloonTipText = message;
+            niAlertIcon.BalloonTipIcon = icon;
+            niAlertIcon.ShowBalloonTip(5000);
+        }
+
+        /// <summary>
+        /// Updates the tab names to reflect ESI key status changes.
+        /// </summary>
+        private void UpdateTabNames()
+        {
+            foreach (TabPage page in tcCharacterTabs.TabPages)
+            {
+                var character = page.Tag as Character;
+                if (character != null)
+                {
+                    page.Text = GetTabNameForCharacter(character);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the tab name for a character, including warning indicator if ESI key has issues.
+        /// </summary>
+        /// <param name="character">The character.</param>
+        /// <returns>The tab name with optional warning indicator.</returns>
+        private static string GetTabNameForCharacter(Character character)
+        {
+            string baseName = character.LabelPrefix + character.Name;
+
+            var ccpCharacter = character as CCPCharacter;
+            if (ccpCharacter == null)
+                return baseName;
+
+            // Check if character has no ESI keys or any key has an error
+            bool hasNoKeys = !ccpCharacter.Identity.ESIKeys.Any();
+            bool hasKeyError = ccpCharacter.Identity.ESIKeys.Any(key => key.HasError);
+
+            if (hasNoKeys || hasKeyError)
+                return "⚠ " + baseName;
+
+            return baseName;
         }
 
         /// <summary>
@@ -568,7 +692,7 @@ namespace EVEMon
             TabPage tempPage = null;
             try
             {
-                tempPage = new TabPage(character.LabelPrefix + character.Name);
+                tempPage = new TabPage(GetTabNameForCharacter(character));
                 tempPage.UseVisualStyleBackColor = true;
                 tempPage.Padding = new Padding(5);
                 tempPage.Tag = character;
@@ -1029,7 +1153,7 @@ namespace EVEMon
             // If character's trainings must be displayed in title
             if (!Settings.UI.MainWindow.ShowCharacterInfoInTitleBar)
             {
-                Text = EveMonClient.FileVersionInfo.ProductName;
+                Text = EveMonClient.ProductNameWithVersion;
                 return;
             }
 
@@ -1115,7 +1239,7 @@ namespace EVEMon
             while (builder.Length > MaxTitleLength && trimTimeSpanComponents < 3);
 
             // Adds EVEMon at the end if there is space in the title bar
-            string appSuffix = $" - {EveMonClient.FileVersionInfo.ProductName}";
+            string appSuffix = $" - {EveMonClient.ProductNameWithVersion}";
             if (builder.Length + appSuffix.Length <= MaxTitleLength)
                 builder.Append(appSuffix);
 

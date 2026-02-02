@@ -24,6 +24,7 @@ namespace EVEMon.Common.Models
         private readonly long m_level;
 
         private RemappingPoint m_remapping;
+        private BoosterPoint m_boosterPoint;
         private PlanEntryType m_entryType;
         private int m_priority;
         private string m_notes;
@@ -75,6 +76,9 @@ namespace EVEMon.Common.Models
 
             if (serial.Remapping != null)
                 m_remapping = new RemappingPoint(serial.Remapping);
+
+            if (serial.Booster != null)
+                m_boosterPoint = new BoosterPoint(serial.Booster);
         }
 
         /// <summary>
@@ -149,6 +153,20 @@ namespace EVEMon.Common.Models
             set
             {
                 m_remapping = value;
+                m_owner?.OnChanged(PlanChange.Notification);
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the booster injection point to apply before that skill is trained.
+        /// Marks where the user plans to inject a cerebral accelerator.
+        /// </summary>
+        public BoosterPoint BoosterPoint
+        {
+            get { return m_boosterPoint; }
+            set
+            {
+                m_boosterPoint = value;
                 m_owner?.OnChanged(PlanChange.Notification);
             }
         }
@@ -334,6 +352,7 @@ namespace EVEMon.Common.Models
                 m_priority = m_priority,
                 m_notes = m_notes,
                 m_remapping = m_remapping?.Clone(),
+                m_boosterPoint = m_boosterPoint?.Clone(),
                 OldTrainingTime = OldTrainingTime,
                 TrainingTime = TrainingTime
             };

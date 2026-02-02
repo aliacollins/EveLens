@@ -71,15 +71,6 @@ namespace EVEMon.SkillPlanner
             this.miJumpClone4 = new System.Windows.Forms.ToolStripMenuItem();
             this.miJumpClone5 = new System.Windows.Forms.ToolStripMenuItem();
             this.lblNotice = new System.Windows.Forms.Label();
-            this.gbBooster = new System.Windows.Forms.GroupBox();
-            this.lblBoosterDuration = new System.Windows.Forms.Label();
-            this.lblBoosterLabel = new System.Windows.Forms.Label();
-            this.nudBooster = new System.Windows.Forms.NumericUpDown();
-            this.lblDurationLabel = new System.Windows.Forms.Label();
-            this.nudDuration = new System.Windows.Forms.NumericUpDown();
-            this.lblDurationUnit = new System.Windows.Forms.Label();
-            this.lblBoosterSummary = new System.Windows.Forms.Label();
-            this.chkApplyBooster = new System.Windows.Forms.CheckBox();
             this.gbAttributes.SuspendLayout();
             this.AtrributesPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudIntelligence)).BeginInit();
@@ -87,9 +78,6 @@ namespace EVEMon.SkillPlanner
             ((System.ComponentModel.ISupportInitialize)(this.nudPerception)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMemory)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudWillpower)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nudBooster)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nudDuration)).BeginInit();
-            this.gbBooster.SuspendLayout();
             this.gbCurrentBase.SuspendLayout();
             this.gbCurrent.SuspendLayout();
             this.gbWithThisAttributes.SuspendLayout();
@@ -561,132 +549,10 @@ namespace EVEMon.SkillPlanner
             this.lblNotice.TabIndex = 6;
             this.lblNotice.Text = "Notice! This is not the active \"Implant Set\" of your character.";
             //
-            // gbBooster
-            //
-            this.gbBooster.Controls.Add(this.chkApplyBooster);
-            this.gbBooster.Controls.Add(this.lblBoosterSummary);
-            this.gbBooster.Controls.Add(this.lblDurationUnit);
-            this.gbBooster.Controls.Add(this.nudDuration);
-            this.gbBooster.Controls.Add(this.lblDurationLabel);
-            this.gbBooster.Controls.Add(this.lblBoosterDuration);
-            this.gbBooster.Controls.Add(this.lblBoosterLabel);
-            this.gbBooster.Controls.Add(this.nudBooster);
-            this.gbBooster.Location = new System.Drawing.Point(9, 219);
-            this.gbBooster.Name = "gbBooster";
-            this.gbBooster.Size = new System.Drawing.Size(534, 75);
-            this.gbBooster.TabIndex = 7;
-            this.gbBooster.TabStop = false;
-            this.gbBooster.Text = "Cerebral Accelerator (Booster)";
-            //
-            // lblBoosterDuration
-            //
-            this.lblBoosterDuration.AutoSize = true;
-            this.lblBoosterDuration.ForeColor = System.Drawing.Color.Gray;
-            this.lblBoosterDuration.Location = new System.Drawing.Point(110, 22);
-            this.lblBoosterDuration.Name = "lblBoosterDuration";
-            this.lblBoosterDuration.Size = new System.Drawing.Size(80, 13);
-            this.lblBoosterDuration.TabIndex = 2;
-            this.lblBoosterDuration.Text = "to all attributes";
-            //
-            // lblBoosterLabel
-            //
-            this.lblBoosterLabel.AutoSize = true;
-            this.lblBoosterLabel.Location = new System.Drawing.Point(6, 22);
-            this.lblBoosterLabel.Name = "lblBoosterLabel";
-            this.lblBoosterLabel.Size = new System.Drawing.Size(40, 13);
-            this.lblBoosterLabel.TabIndex = 0;
-            this.lblBoosterLabel.Text = "Bonus:";
-            //
-            // nudBooster
-            //
-            this.nudBooster.Location = new System.Drawing.Point(52, 19);
-            this.nudBooster.Maximum = new decimal(new int[] {
-            12,
-            0,
-            0,
-            0});
-            this.nudBooster.Minimum = new decimal(new int[] {
-            0,
-            0,
-            0,
-            0});
-            this.nudBooster.Name = "nudBooster";
-            this.nudBooster.Size = new System.Drawing.Size(52, 20);
-            this.nudBooster.TabIndex = 1;
-            this.nudBooster.Value = new decimal(new int[] {
-            0,
-            0,
-            0,
-            0});
-            this.nudBooster.ValueChanged += new System.EventHandler(this.nudBooster_ValueChanged);
-            //
-            // lblDurationLabel
-            //
-            this.lblDurationLabel.AutoSize = true;
-            this.lblDurationLabel.Location = new System.Drawing.Point(200, 22);
-            this.lblDurationLabel.Name = "lblDurationLabel";
-            this.lblDurationLabel.Size = new System.Drawing.Size(50, 13);
-            this.lblDurationLabel.TabIndex = 3;
-            this.lblDurationLabel.Text = "Duration:";
-            //
-            // nudDuration
-            //
-            this.nudDuration.Location = new System.Drawing.Point(256, 19);
-            this.nudDuration.Maximum = new decimal(new int[] {
-            720,
-            0,
-            0,
-            0});
-            this.nudDuration.Minimum = new decimal(new int[] {
-            0,
-            0,
-            0,
-            0});
-            this.nudDuration.Name = "nudDuration";
-            this.nudDuration.Size = new System.Drawing.Size(52, 20);
-            this.nudDuration.TabIndex = 4;
-            this.nudDuration.Value = new decimal(new int[] {
-            24,
-            0,
-            0,
-            0});
-            this.nudDuration.ValueChanged += new System.EventHandler(this.nudDuration_ValueChanged);
-            //
-            // lblDurationUnit
-            //
-            this.lblDurationUnit.AutoSize = true;
-            this.lblDurationUnit.ForeColor = System.Drawing.Color.Gray;
-            this.lblDurationUnit.Location = new System.Drawing.Point(314, 22);
-            this.lblDurationUnit.Name = "lblDurationUnit";
-            this.lblDurationUnit.Size = new System.Drawing.Size(33, 13);
-            this.lblDurationUnit.TabIndex = 5;
-            this.lblDurationUnit.Text = "hours";
-            //
-            // lblBoosterSummary
-            //
-            this.lblBoosterSummary.AutoSize = true;
-            this.lblBoosterSummary.Location = new System.Drawing.Point(6, 50);
-            this.lblBoosterSummary.Name = "lblBoosterSummary";
-            this.lblBoosterSummary.Size = new System.Drawing.Size(400, 13);
-            this.lblBoosterSummary.TabIndex = 6;
-            this.lblBoosterSummary.Text = "Set bonus and duration to see split training time (boosted + regular)";
-            //
-            // chkApplyBooster
-            //
-            this.chkApplyBooster.AutoSize = true;
-            this.chkApplyBooster.Location = new System.Drawing.Point(360, 21);
-            this.chkApplyBooster.Name = "chkApplyBooster";
-            this.chkApplyBooster.Size = new System.Drawing.Size(168, 17);
-            this.chkApplyBooster.TabIndex = 7;
-            this.chkApplyBooster.Text = "Apply to Skill Plan";
-            this.chkApplyBooster.UseVisualStyleBackColor = true;
-            this.chkApplyBooster.CheckedChanged += new System.EventHandler(this.chkApplyBooster_CheckedChanged);
-            //
             // ImplantCalculator
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.ClientSize = new System.Drawing.Size(553, 305);
-            this.Controls.Add(this.gbBooster);
+            this.ClientSize = new System.Drawing.Size(553, 225);
             this.Controls.Add(this.lblNotice);
             this.Controls.Add(this.gbWithThisAttributes);
             this.Controls.Add(this.gbCurrent);
@@ -705,10 +571,6 @@ namespace EVEMon.SkillPlanner
             ((System.ComponentModel.ISupportInitialize)(this.nudPerception)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMemory)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudWillpower)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nudBooster)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nudDuration)).EndInit();
-            this.gbBooster.ResumeLayout(false);
-            this.gbBooster.PerformLayout();
             this.gbCurrentBase.ResumeLayout(false);
             this.gbCurrentBase.PerformLayout();
             this.gbCurrent.ResumeLayout(false);
@@ -765,14 +627,5 @@ namespace EVEMon.SkillPlanner
         private System.Windows.Forms.ToolStripMenuItem miJumpClone4;
         private System.Windows.Forms.ToolStripMenuItem miJumpClone5;
         private System.Windows.Forms.Label lblNotice;
-        private System.Windows.Forms.GroupBox gbBooster;
-        private System.Windows.Forms.Label lblBoosterDuration;
-        private System.Windows.Forms.Label lblBoosterLabel;
-        private System.Windows.Forms.NumericUpDown nudBooster;
-        private System.Windows.Forms.Label lblDurationLabel;
-        private System.Windows.Forms.NumericUpDown nudDuration;
-        private System.Windows.Forms.Label lblDurationUnit;
-        private System.Windows.Forms.Label lblBoosterSummary;
-        private System.Windows.Forms.CheckBox chkApplyBooster;
     }
 }

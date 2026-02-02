@@ -73,6 +73,7 @@
 			this.CustomLabelComboBox = new System.Windows.Forms.ComboBox();
 			this.CharacterLabel = new System.Windows.Forms.Label();
 			this.AccountStatusModeComboBox = new System.Windows.Forms.ComboBox();
+			this.ESIKeyWarningLabel = new System.Windows.Forms.Label();
 			this.ToolTip = new System.Windows.Forms.ToolTip(this.components);
 			this.MainTableLayoutPanel.SuspendLayout();
 			this.AccountStatusTableLayoutPanel.SuspendLayout();
@@ -118,16 +119,17 @@
 			this.AccountStatusTableLayoutPanel.Controls.Add(this.AccountStatusLabel, 0, 0);
 			this.AccountStatusTableLayoutPanel.Controls.Add(this.AccountActivityLabel, 1, 0);
 			this.AccountStatusTableLayoutPanel.Controls.Add(this.PaidUntilLabel, 0, 1);
+			this.AccountStatusTableLayoutPanel.Controls.Add(this.ESIKeyWarningLabel, 0, 2);
 			this.AccountStatusTableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.AccountStatusTableLayoutPanel.Location = new System.Drawing.Point(0, 131);
 			this.AccountStatusTableLayoutPanel.Margin = new System.Windows.Forms.Padding(0);
 			this.AccountStatusTableLayoutPanel.Name = "AccountStatusTableLayoutPanel";
 			this.AccountStatusTableLayoutPanel.Padding = new System.Windows.Forms.Padding(0, 5, 0, 0);
-			this.AccountStatusTableLayoutPanel.RowCount = 2;
+			this.AccountStatusTableLayoutPanel.RowCount = 3;
 			this.AccountStatusTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
 			this.AccountStatusTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
-			this.AccountStatusTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-			this.AccountStatusTableLayoutPanel.Size = new System.Drawing.Size(136, 45);
+			this.AccountStatusTableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle());
+			this.AccountStatusTableLayoutPanel.Size = new System.Drawing.Size(136, 60);
 			this.AccountStatusTableLayoutPanel.TabIndex = 11;
 			// 
 			// AccountStatusLabel
@@ -160,7 +162,23 @@
 			this.PaidUntilLabel.Size = new System.Drawing.Size(126, 13);
 			this.PaidUntilLabel.TabIndex = 2;
 			this.PaidUntilLabel.Text = "dd/MM/YYYY HH:mm:ss";
-			// 
+			//
+			// ESIKeyWarningLabel
+			//
+			this.ESIKeyWarningLabel.AutoSize = true;
+			this.AccountStatusTableLayoutPanel.SetColumnSpan(this.ESIKeyWarningLabel, 2);
+			this.ESIKeyWarningLabel.ForeColor = System.Drawing.Color.OrangeRed;
+			this.ESIKeyWarningLabel.Location = new System.Drawing.Point(0, 31);
+			this.ESIKeyWarningLabel.Margin = new System.Windows.Forms.Padding(0);
+			this.ESIKeyWarningLabel.Name = "ESIKeyWarningLabel";
+			this.ESIKeyWarningLabel.Size = new System.Drawing.Size(100, 13);
+			this.ESIKeyWarningLabel.TabIndex = 3;
+			this.ESIKeyWarningLabel.Text = "ESI Key Error";
+			this.ESIKeyWarningLabel.Visible = false;
+			this.ToolTip.SetToolTip(this.ESIKeyWarningLabel, "Click to manage ESI keys");
+			this.ESIKeyWarningLabel.Cursor = System.Windows.Forms.Cursors.Hand;
+			this.ESIKeyWarningLabel.Click += new System.EventHandler(this.ESIKeyWarningLabel_Click);
+			//
 			// ThrobberFlowLayoutPanel
 			// 
 			this.ThrobberFlowLayoutPanel.AutoSize = true;
@@ -588,6 +606,7 @@
 			this.CustomLabelComboBox.Visible = false;
 			this.CustomLabelComboBox.SelectedIndexChanged += new System.EventHandler(this.CustomLabelComboBox_TextChanged);
 			this.CustomLabelComboBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.CustomLabelComboBox_KeyUp);
+			this.CustomLabelComboBox.Leave += new System.EventHandler(this.CustomLabelComboBox_Leave);
 			this.CustomLabelComboBox.Validated += new System.EventHandler(this.CustomLabelComboBox_TextChanged);
 			// 
 			// CharacterLabel
@@ -697,5 +716,6 @@
         private System.Windows.Forms.Label CharacterLabel;
         private System.Windows.Forms.LinkLabel CustomLabelLink;
         private System.Windows.Forms.ComboBox AccountStatusModeComboBox;
+        private System.Windows.Forms.Label ESIKeyWarningLabel;
     }
 }

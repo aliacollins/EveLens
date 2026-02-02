@@ -209,7 +209,7 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvContracts);
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.ContractsUpdated += EveMonClient_ContractsUpdated;
             EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
             EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
@@ -227,7 +227,7 @@ namespace EVEMon.CharacterMonitoring
         {
             m_tooltip.Dispose();
 
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.ContractsUpdated -= EveMonClient_ContractsUpdated;
             EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
             EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;

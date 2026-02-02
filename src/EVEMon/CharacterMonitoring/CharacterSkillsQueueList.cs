@@ -97,7 +97,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.CharacterSkillQueueUpdated += EveMonClient_CharacterSkillQueueUpdated;
             EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
         }
 
@@ -111,7 +111,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.CharacterSkillQueueUpdated -= EveMonClient_CharacterSkillQueueUpdated;
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
             Disposed -= OnDisposed;
         }
 

@@ -153,34 +153,6 @@ namespace EVEMon.SkillPlanner
             nudPerception.Value = characterScratchpad.Perception.EffectiveValue;
             nudMemory.Value = characterScratchpad.Memory.EffectiveValue;
 
-            // Load saved booster simulation from plan if exists, otherwise detect from character
-            if (m_plan.HasBoosterSimulation)
-            {
-                // Restore saved simulation settings
-                nudBooster.Value = m_plan.SimulatedBoosterBonus;
-                nudDuration.Value = m_plan.SimulatedBoosterDurationHours;
-                chkApplyBooster.Checked = true;
-                lblBoosterDuration.Text = $"+{m_plan.SimulatedBoosterBonus} to all (simulated)";
-            }
-            else if (m_character.HasActiveBooster)
-            {
-                var booster = m_character.ActiveBooster;
-                nudBooster.Value = booster.Bonus;
-                lblBoosterDuration.Text = $"+{booster.Bonus} to all (detected)";
-
-                // Set duration to remaining time in hours (minimum 1 hour, rounded up)
-                var remainingHours = (int)Math.Ceiling(booster.EstimatedRemainingDuration.TotalHours);
-                nudDuration.Value = Math.Max(1, Math.Min(remainingHours, 720));
-                chkApplyBooster.Checked = false;
-            }
-            else
-            {
-                nudBooster.Value = 0;
-                nudDuration.Value = 24; // Default to 24 hours
-                chkApplyBooster.Checked = false;
-                lblBoosterDuration.Text = "No booster";
-            }
-
             // If the implant set isn't the active one we notify the user
             lblNotice.Visible = m_plan.ChosenImplantSet != m_character.ImplantSets.Current;
 
@@ -219,154 +191,39 @@ namespace EVEMon.SkillPlanner
             ImplantSet noneImplantSet = m_character.ImplantSets.None;
             TimeSpan baseSpan = await UpdateTimesForCharacter(m_character.After(noneImplantSet));
 
-            // This (with booster applied for full duration if set, otherwise just implant changes)
+            // This (with modified implant values)
             CharacterScratchpad scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet));
             TimeSpan thisSpan = await UpdateTimesForCharacter(scratchpad);
-
-            // Calculate duration-aware time if booster is set
-            int boosterBonus = (int)nudBooster.Value;
-            int durationHours = (int)nudDuration.Value;
-            TimeSpan boosterDuration = TimeSpan.FromHours(durationHours);
-            TimeSpan effectiveSpan = thisSpan;
-
-            if (boosterBonus > 0 && durationHours > 0 && thisSpan > boosterDuration)
-            {
-                // Calculate what portion of training completes during booster period
-                // and what remains at normal (non-boosted) rate
-                var (boostedTime, remainingTime) = await CalculateSplitTrainingTimeAsync(boosterDuration);
-                effectiveSpan = boostedTime + remainingTime;
-
-                // Update summary label with clear explanation
-                lblBoosterSummary.ForeColor = Color.DarkGreen;
-                lblBoosterSummary.Text = $"First {durationHours}h with +{boosterBonus} bonus, then {remainingTime.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} at normal rate";
-            }
-            else if (boosterBonus > 0 && durationHours > 0)
-            {
-                // Booster lasts longer than training time - all training is boosted
-                lblBoosterSummary.ForeColor = Color.DarkGreen;
-                lblBoosterSummary.Text = $"Plan completes in {effectiveSpan.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} (all within booster duration)";
-            }
-            else if (boosterBonus > 0)
-            {
-                lblBoosterSummary.ForeColor = SystemColors.ControlText;
-                lblBoosterSummary.Text = "Set duration to see effective training time";
-            }
-            else
-            {
-                lblBoosterSummary.ForeColor = SystemColors.GrayText;
-                lblBoosterSummary.Text = "Set booster bonus to simulate cerebral accelerator";
-            }
 
             lblCurrentSpan.Text = currentSpan.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas);
             lblCurrentDate.Text = DateTime.Now.Add(currentSpan).ToString(CultureConstants.DefaultCulture);
             lblBaseSpan.Text = baseSpan.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas);
             lblBaseDate.Text = DateTime.Now.Add(baseSpan).ToString(CultureConstants.DefaultCulture);
-            lblThisSpan.Text = effectiveSpan.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas);
-            lblThisDate.Text = DateTime.Now.Add(effectiveSpan).ToString(CultureConstants.DefaultCulture);
+            lblThisSpan.Text = thisSpan.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas);
+            lblThisDate.Text = DateTime.Now.Add(thisSpan).ToString(CultureConstants.DefaultCulture);
 
             // Are the new attributes better than current (without implants) ?
-            lblComparedToBase.ForeColor = effectiveSpan > baseSpan
+            lblComparedToBase.ForeColor = thisSpan > baseSpan
                 ? Color.Red
-                : effectiveSpan < baseSpan ? Color.Green : SystemColors.ControlText;
-            lblComparedToBase.Text = effectiveSpan > baseSpan
-                ? $"{effectiveSpan.Subtract(baseSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} slower (vs no implants)"
-                : effectiveSpan < baseSpan
-                    ? $"{baseSpan.Subtract(effectiveSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} faster (vs no implants)"
+                : thisSpan < baseSpan ? Color.Green : SystemColors.ControlText;
+            lblComparedToBase.Text = thisSpan > baseSpan
+                ? $"{thisSpan.Subtract(baseSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} slower (vs no implants)"
+                : thisSpan < baseSpan
+                    ? $"{baseSpan.Subtract(thisSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} faster (vs no implants)"
                     : @"Same as no implants";
 
             // Are the new attributes better than current (with implants) ?
-            lblComparedToCurrent.ForeColor = effectiveSpan > currentSpan
+            lblComparedToCurrent.ForeColor = thisSpan > currentSpan
                 ? Color.DarkRed
-                : effectiveSpan < currentSpan ? Color.DarkGreen : SystemColors.ControlText;
-            lblComparedToCurrent.Text = effectiveSpan > currentSpan
-                ? $"{effectiveSpan.Subtract(currentSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} slower (vs current implants)"
-                : effectiveSpan < currentSpan
-                    ? $"{currentSpan.Subtract(effectiveSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} faster (vs current implants)"
+                : thisSpan < currentSpan ? Color.DarkGreen : SystemColors.ControlText;
+            lblComparedToCurrent.Text = thisSpan > currentSpan
+                ? $"{thisSpan.Subtract(currentSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} slower (vs current implants)"
+                : thisSpan < currentSpan
+                    ? $"{currentSpan.Subtract(thisSpan).ToDescriptiveText(DescriptiveTextOptions.IncludeCommas)} faster (vs current implants)"
                     : @"Same as current implants";
 
             // Update the plan's pluggable column
             m_planEditor?.ShowWithPluggable(this);
-        }
-
-        /// <summary>
-        /// Calculates split training time: how much trains during booster period vs after.
-        /// </summary>
-        /// <param name="boosterDuration">How long the booster lasts.</param>
-        /// <returns>A tuple of (boosted training time, remaining training time at normal rate).</returns>
-        private async Task<(TimeSpan boostedTime, TimeSpan remainingTime)> CalculateSplitTrainingTimeAsync(TimeSpan boosterDuration)
-        {
-            // Get the base scratchpad (with implants but without booster)
-            var baseScratchpad = m_character.After(m_plan.ChosenImplantSet);
-
-            // Get the boosted scratchpad
-            var boostedScratchpad = CreateModifiedScratchpad(baseScratchpad);
-
-            // Calculate SP that can be trained during booster period
-            // We need to iterate through the plan and calculate how much completes in the booster window
-            TimeSpan boostedTimeUsed = TimeSpan.Zero;
-            TimeSpan remainingTimeAtNormalRate = TimeSpan.Zero;
-            bool boosterExpired = false;
-
-            await TaskHelper.RunCPUBoundTaskAsync(() =>
-            {
-                foreach (var entry in m_plan)
-                {
-                    if (entry.Level == 0)
-                        continue;
-
-                    // Calculate time for this skill at boosted rate
-                    var skill = entry.Skill;
-                    var boostedTime = boostedScratchpad.GetTrainingTime(skill, entry.Level);
-
-                    if (!boosterExpired)
-                    {
-                        TimeSpan remainingBoosterTime = boosterDuration - boostedTimeUsed;
-
-                        if (boostedTime <= remainingBoosterTime)
-                        {
-                            // This skill completes entirely within booster period
-                            boostedTimeUsed += boostedTime;
-                            // Update both scratchpads to reflect trained skill
-                            boostedScratchpad.Train(skill, entry.Level);
-                            baseScratchpad.Train(skill, entry.Level);
-                        }
-                        else
-                        {
-                            // Skill spans the booster expiry
-                            boostedTimeUsed = boosterDuration; // Use all remaining booster time
-                            boosterExpired = true;
-
-                            // Calculate how much SP was trained during remaining booster time
-                            double boostedSPPerHour = boostedScratchpad.GetBaseSPPerHour(skill);
-                            double spTrainedDuringBooster = boostedSPPerHour * remainingBoosterTime.TotalHours;
-
-                            // Calculate remaining SP to train at normal rate
-                            long totalSP = skill.GetPointsRequiredForLevel(entry.Level) - boostedScratchpad.GetSkillPoints(skill);
-                            double remainingSP = totalSP - spTrainedDuringBooster;
-
-                            if (remainingSP > 0)
-                            {
-                                // Calculate time to train remaining SP at normal rate
-                                double normalSPPerHour = baseScratchpad.GetBaseSPPerHour(skill);
-                                remainingTimeAtNormalRate += TimeSpan.FromHours(remainingSP / normalSPPerHour);
-                            }
-
-                            // Update both scratchpads
-                            boostedScratchpad.Train(skill, entry.Level);
-                            baseScratchpad.Train(skill, entry.Level);
-                        }
-                    }
-                    else
-                    {
-                        // Booster already expired - train at normal rate
-                        var normalTime = baseScratchpad.GetTrainingTime(skill, entry.Level);
-                        remainingTimeAtNormalRate += normalTime;
-                        baseScratchpad.Train(skill, entry.Level);
-                    }
-                }
-            });
-
-            return (boostedTimeUsed, remainingTimeAtNormalRate);
         }
 
         /// <summary>
@@ -468,85 +325,7 @@ namespace EVEMon.SkillPlanner
         }
 
         /// <summary>
-        /// When the booster numeric box changed, we update the times on the right pane.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void nudBooster_ValueChanged(object sender, EventArgs e)
-        {
-            // Update the label to show what the booster does
-            int boosterValue = (int)nudBooster.Value;
-            if (boosterValue > 0)
-                lblBoosterDuration.Text = $"+{boosterValue} to all";
-            else
-                lblBoosterDuration.Text = "No booster";
-
-            if (!m_init)
-                return;
-
-            // Update plan if checkbox is checked
-            if (chkApplyBooster.Checked)
-            {
-                m_plan.SimulatedBoosterBonus = boosterValue;
-                m_planEditor?.ShowWithPluggable(this);
-            }
-
-            // Update all the times on the right pane
-            await UpdateTimesAsync();
-        }
-
-        /// <summary>
-        /// When the duration numeric box changed, we update the times on the right pane.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void nudDuration_ValueChanged(object sender, EventArgs e)
-        {
-            if (!m_init)
-                return;
-
-            // Update plan if checkbox is checked
-            if (chkApplyBooster.Checked)
-            {
-                m_plan.SimulatedBoosterDurationHours = (int)nudDuration.Value;
-                m_planEditor?.ShowWithPluggable(this);
-            }
-
-            // Update all the times on the right pane
-            await UpdateTimesAsync();
-        }
-
-        /// <summary>
-        /// When the Apply to Skill Plan checkbox changed, we update the plan editor.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void chkApplyBooster_CheckedChanged(object sender, EventArgs e)
-        {
-            if (!m_init)
-                return;
-
-            // Save booster settings to plan when checked, clear when unchecked
-            if (chkApplyBooster.Checked)
-            {
-                m_plan.SimulatedBoosterBonus = (int)nudBooster.Value;
-                m_plan.SimulatedBoosterDurationHours = (int)nudDuration.Value;
-            }
-            else
-            {
-                m_plan.SimulatedBoosterBonus = 0;
-                m_plan.SimulatedBoosterDurationHours = 0;
-            }
-
-            // Update the plan editor to reflect the change
-            m_planEditor?.ShowWithPluggable(this);
-
-            // Also update times display
-            await UpdateTimesAsync();
-        }
-
-        /// <summary>
-        /// Creates a scratchpad with the new implants and booster values.
+        /// Creates a scratchpad with the new implant values.
         /// </summary>
         /// <returns></returns>
         private CharacterScratchpad CreateModifiedScratchpad(BaseCharacter character)
@@ -559,17 +338,6 @@ namespace EVEMon.SkillPlanner
             scratchpad.Intelligence.ImplantBonus += (int)nudIntelligence.Value - character.Intelligence.EffectiveValue;
             scratchpad.Perception.ImplantBonus += (int)nudPerception.Value - character.Perception.EffectiveValue;
             scratchpad.Willpower.ImplantBonus += (int)nudWillpower.Value - character.Willpower.EffectiveValue;
-
-            // Apply booster bonus to all attributes
-            int boosterBonus = (int)nudBooster.Value;
-            if (boosterBonus > 0)
-            {
-                scratchpad.Memory.BoosterBonus = boosterBonus;
-                scratchpad.Charisma.BoosterBonus = boosterBonus;
-                scratchpad.Intelligence.BoosterBonus = boosterBonus;
-                scratchpad.Perception.BoosterBonus = boosterBonus;
-                scratchpad.Willpower.BoosterBonus = boosterBonus;
-            }
 
             return scratchpad;
         }
@@ -591,36 +359,11 @@ namespace EVEMon.SkillPlanner
 
             areRemappingPointsActive = true;
 
-            // Only apply booster to plan if checkbox is checked
-            CharacterScratchpad scratchpad;
-            if (chkApplyBooster.Checked)
-            {
-                scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet));
-            }
-            else
-            {
-                // Just use implant modifications without booster
-                scratchpad = CreateModifiedScratchpadWithoutBooster(m_character.After(m_plan.ChosenImplantSet));
-            }
+            // Apply implant modifications
+            CharacterScratchpad scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet));
 
             plan.UpdateStatistics(scratchpad, true, true);
             plan.UpdateOldTrainingTimes();
-        }
-
-        /// <summary>
-        /// Creates a scratchpad with implant changes only (no booster).
-        /// </summary>
-        private CharacterScratchpad CreateModifiedScratchpadWithoutBooster(BaseCharacter character)
-        {
-            CharacterScratchpad scratchpad = new CharacterScratchpad(character);
-
-            scratchpad.Memory.ImplantBonus += (int)nudMemory.Value - character.Memory.EffectiveValue;
-            scratchpad.Charisma.ImplantBonus += (int)nudCharisma.Value - character.Charisma.EffectiveValue;
-            scratchpad.Intelligence.ImplantBonus += (int)nudIntelligence.Value - character.Intelligence.EffectiveValue;
-            scratchpad.Perception.ImplantBonus += (int)nudPerception.Value - character.Perception.EffectiveValue;
-            scratchpad.Willpower.ImplantBonus += (int)nudWillpower.Value - character.Willpower.EffectiveValue;
-
-            return scratchpad;
         }
 
         /// <summary>

@@ -16,6 +16,18 @@ namespace EVEMon.Common.SettingsObjects
         [XmlArray("entries")]
         [XmlArrayItem("simple", typeof(SerializableScheduleEntry))]
         [XmlArrayItem("recurring", typeof(SerializableRecurringScheduleEntry))]
-        public Collection<SerializableScheduleEntry> Entries => m_entries;
+        public Collection<SerializableScheduleEntry> Entries
+        {
+            get => m_entries;
+            set
+            {
+                m_entries.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value)
+                        m_entries.Add(item);
+                }
+            }
+        }
     }
 }

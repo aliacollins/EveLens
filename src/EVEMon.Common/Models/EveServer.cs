@@ -28,7 +28,8 @@ namespace EVEMon.Common.Models
             m_serverStatusMonitor = new QueryMonitor<EsiAPIServerStatus>(ESIAPIGenericMethods.ServerStatus,
                  OnServerStatusMonitorUpdated) { Enabled = true };
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            // SecondTick - server time needs to track every second
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
         }
 
         /// <summary>

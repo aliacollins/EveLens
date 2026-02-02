@@ -29,7 +29,8 @@ namespace EVEMon.Common.Models
         {
             m_character = character;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            // SecondTick - skill training progress needs real-time updates
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -40,7 +41,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
         }
 
 
@@ -190,7 +191,11 @@ namespace EVEMon.Common.Models
             }
 
             // Update skills with the imported data
-            UpdateOnTimerTick();
+            // Only call UpdateOnTimerTick when NOT restoring from saved settings
+            // During restore, saved timestamps are in the past, making skills appear "completed"
+            // The timer tick will properly update once the app is running and API returns fresh data
+            if (!Settings.IsRestoring)
+                UpdateOnTimerTick();
 
             // Skills may have been removed from the queue by the timer tick method - if it is
             // empty, it is not paused

@@ -45,7 +45,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         private ESIKey()
         {
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             m_keyExpires = DateTime.MinValue;
             m_queried = false;
             m_queryPending = false;
@@ -253,7 +253,7 @@ namespace EVEMon.Common.Models
         internal void Dispose()
         {
             // Unsubscribe events
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
         }
 
         #endregion

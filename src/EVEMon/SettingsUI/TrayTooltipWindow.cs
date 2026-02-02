@@ -30,7 +30,7 @@ namespace EVEMon.SettingsUI
             if (DesignMode)
                 return;
 
-            EveMonClient.TimerTick += EveMonClient_TimerTick;
+            EveMonClient.SecondTick += EveMonClient_TimerTick;
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace EVEMon.SettingsUI
         {
             base.OnClosed(e);
 
-            EveMonClient.TimerTick -= EveMonClient_TimerTick;
+            EveMonClient.SecondTick -= EveMonClient_TimerTick;
         }
 
         #endregion
