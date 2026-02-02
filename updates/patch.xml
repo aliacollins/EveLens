@@ -1,6 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Stable Update Channel
+  This file is checked by EVEMon stable builds for updates.
+  Update this file when releasing new stable versions.
+-->
 <evemon>
   <releases>
+    <release>
+      <date>2026-02-02</date>
+      <version>5.1.2.0</version>
+      <url>https://github.com/aliacollins/evemon/releases/tag/v5.1.2</url>
+      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/v5.1.2/EVEMon-install-5.1.2.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EVEMon 5.1.2 - Major Update Available
+
+MAJOR FEATURES:
+• .NET 8 Migration - Modern framework with improved performance
+• New Installer - One-click with automatic .NET 8 download
+• Auto-Update System - Seamless background updates
+• Performance - 60%+ CPU reduction, handles 100+ characters
+• Loading Indicators - See API fetch progress
+• ESI Key Warnings - Visual alerts for expired tokens
+• Booster Simulation - Cerebral accelerator training times
+• Modern About Dialog - Dark/light theme toggle
+
+BUG FIXES:
+• Settings not saving correctly - FIXED
+• Fork migration from other versions - FIXED
+• Certificate Browser removed (CCP deprecated)
+• 30+ character crash - FIXED
+• Structure lookup spam - FIXED
+
+TECHNICAL:
+• JSON settings (auto-migrates from XML)
+• Per-character settings files
+• Version shown in window title
+
+This is a recommended update for all users.]]></message>
+    </release>
     <release>
       <date>2026-01-05</date>
       <version>5.1.1.0</version>
