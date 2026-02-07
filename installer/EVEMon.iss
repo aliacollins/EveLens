@@ -125,7 +125,15 @@ begin
   S := S + '• Characters will need to be re-added (ESI login required)' + #13#10#13#10;
 
   S := S + 'If you have an older EVEMon installation, your settings' + #13#10;
-  S := S + 'folder will be backed up automatically just in case.';
+  S := S + 'folder will be backed up automatically just in case.' + #13#10#13#10;
+
+  S := S + '─────────────────────────────────────────' + #13#10#13#10;
+
+  S := S + 'SUPPORT THE PROJECT' + #13#10#13#10;
+
+  S := S + 'I don''t accept donations. If you want to support EVEMon,' + #13#10;
+  S := S + 'please donate to Peter Han or the original EVEMonDevTeam' + #13#10;
+  S := S + 'who built this tool over many years.';
 
   Result := S;
 end;

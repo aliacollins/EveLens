@@ -79,7 +79,7 @@ gh release create "v$Version" $zipPath $installerPath --title "EVEMon v$Version"
 3. Authorize with EVE Online SSO
 
 ### Changelog
-$(git log --oneline $(git describe --tags --abbrev=0 HEAD^ 2>$null)..HEAD 2>$null || echo "Initial release")
+See README for full changelog.
 
 ---
 See [README](https://github.com/aliacollins/evemon#readme) for full documentation.
