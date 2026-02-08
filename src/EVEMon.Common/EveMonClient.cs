@@ -32,6 +32,8 @@ namespace EVEMon.Common
         private static TextWriterTraceListener s_traceListener;
         private static readonly DateTime s_startTime = DateTime.UtcNow;
 
+        internal static TimeSpan Uptime => DateTime.UtcNow - s_startTime;
+
         private static IEnumerable<string> s_defaultEvePortraitCacheFolders;
         private static bool s_initialized;
         private static string s_traceFile;
@@ -558,8 +560,7 @@ namespace EVEMon.Common
                 header = $"{declaringType?.Name}.{method.Name}";
             }
 
-            TimeSpan time = DateTime.UtcNow.Subtract(s_startTime);
-            string timeStr = $"{time.Days:#0}d {time.Hours:#0}h {time.Minutes:00}m {time.Seconds:00}s > ";
+            string timeStr = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}Z > ";
             message = string.IsNullOrWhiteSpace(message) || !printMethod ? message : $" - {message}";
             string msgStr = $"{header}{message}";
 

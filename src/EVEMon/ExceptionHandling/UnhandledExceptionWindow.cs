@@ -191,7 +191,13 @@ namespace EVEMon.ExceptionHandling
                     return;
                 }
 
-                // Fallback: save to file, clipboard, manual GitHub URL
+                // Fallback: notify user, save to file, clipboard, manual GitHub URL
+                MessageBox.Show(
+                    $"Auto-submit failed: {result.ErrorMessage}\n\n" +
+                    "The report has been saved and copied to your clipboard. " +
+                    "A GitHub issue form will open for manual submission.",
+                    "Auto-Submit Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
                 DiagnosticReportBuilder.SaveReportToFile(TechnicalDetailsTextBox.Text);
 
                 try

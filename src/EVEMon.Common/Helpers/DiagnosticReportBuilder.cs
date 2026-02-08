@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -42,7 +43,11 @@ namespace EVEMon.Common.Helpers
             {
                 AppendSystemInfo(report);
                 report.AppendLine();
-                AppendCharacterSummary(report);
+                AppendOperationalSummary(report);
+                report.AppendLine();
+                AppendESIKeyHealth(report);
+                report.AppendLine();
+                AppendSettingsState(report);
                 report.AppendLine();
                 AppendQueryMonitorStatus(report);
                 report.AppendLine();
@@ -76,7 +81,11 @@ namespace EVEMon.Common.Helpers
                 report.AppendLine(GetRecursiveStackTrace(exception));
                 report.AppendLine();
 
-                AppendCharacterSummary(report);
+                AppendOperationalSummary(report);
+                report.AppendLine();
+                AppendESIKeyHealth(report);
+                report.AppendLine();
+                AppendSettingsState(report);
                 report.AppendLine();
                 AppendQueryMonitorStatus(report);
                 report.AppendLine();
@@ -323,14 +332,32 @@ namespace EVEMon.Common.Helpers
                 Environment.Is64BitProcess.ToString());
             report.Append("Processor Count: ").AppendLine(
                 Environment.ProcessorCount.ToString());
+
+            try
+            {
+                TimeSpan uptime = EveMonClient.Uptime;
+                report.AppendLine($"Uptime: {uptime.Days}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s");
+
+                using (Process proc = Process.GetCurrentProcess())
+                {
+                    report.AppendLine($"Working Set: {proc.WorkingSet64 / (1024 * 1024)} MB");
+                    report.AppendLine($"Thread Count: {proc.Threads.Count}");
+                }
+
+                report.AppendLine($"GC Heap: {GC.GetTotalMemory(false) / (1024 * 1024)} MB");
+            }
+            catch
+            {
+                // Process info may not be available in all contexts
+            }
         }
 
         /// <summary>
-        /// Appends character/ESI key summary as counts only (no names or IDs).
+        /// Appends operational summary with counts and booleans only (no names, IDs, or game data).
         /// </summary>
-        private static void AppendCharacterSummary(StringBuilder report)
+        private static void AppendOperationalSummary(StringBuilder report)
         {
-            report.AppendLine("Character Summary:");
+            report.AppendLine("Operational Summary:");
 
             try
             {
@@ -339,11 +366,16 @@ namespace EVEMon.Common.Helpers
                 var monitored = EveMonClient.MonitoredCharacters;
 
                 int charCount = characters?.Count() ?? 0;
+                int ccpCount = characters?.OfType<CCPCharacter>().Count() ?? 0;
+                int localCount = charCount - ccpCount;
                 int esiCount = esiKeys?.Count() ?? 0;
                 int monCount = monitored?.Count() ?? 0;
 
-                report.AppendLine($"  Characters: {charCount}, ESI Keys: {esiCount}, " +
-                    $"Monitored: {monCount}");
+                report.AppendLine($"  Characters Loaded: {charCount} ({ccpCount} CCP, {localCount} local)");
+                report.AppendLine($"  ESI Keys: {esiCount}");
+                report.AppendLine($"  Monitored: {monCount}");
+                report.AppendLine($"  Data Loaded: {EveMonClient.IsDataLoaded}");
+                report.AppendLine($"  Settings Restoring: {Settings.IsRestoring}");
             }
             catch
             {
@@ -381,11 +413,24 @@ namespace EVEMon.Common.Helpers
 
                     foreach (var monitor in ccpChar.QueryMonitors)
                     {
-                        report.AppendLine($"    {monitor.Method}: " +
+                        var line = $"    {monitor.Method}: " +
                             $"Status={monitor.Status}, " +
                             $"Enabled={monitor.Enabled}, " +
                             $"LastUpdate={monitor.LastUpdate:u}, " +
-                            $"NextUpdate={monitor.NextUpdate:u}");
+                            $"NextUpdate={monitor.NextUpdate:u}";
+
+                        var result = monitor.LastResult;
+                        if (result != null && result.HasError)
+                        {
+                            if (!string.IsNullOrEmpty(result.ErrorMessage))
+                                line += $", Error=\"{result.ErrorMessage}\"";
+                            if (result.ErrorCode != 0)
+                                line += $", ErrorCode={result.ErrorCode}";
+                            if (result.ErrorType != Enumerations.CCPAPI.APIErrorType.None)
+                                line += $", ErrorType={result.ErrorType}";
+                        }
+
+                        report.AppendLine(line);
                     }
 
                     charIndex++;
@@ -394,6 +439,66 @@ namespace EVEMon.Common.Helpers
             catch
             {
                 report.AppendLine("  (error reading query monitors)");
+            }
+        }
+
+        /// <summary>
+        /// Appends per-key ESI auth status as booleans only (no tokens, IDs, or credentials).
+        /// </summary>
+        private static void AppendESIKeyHealth(StringBuilder report)
+        {
+            report.AppendLine("ESI Key Health:");
+
+            try
+            {
+                var esiKeys = EveMonClient.ESIKeys;
+                if (esiKeys == null || !esiKeys.Any())
+                {
+                    report.AppendLine("  (no keys)");
+                    return;
+                }
+
+                int keyIndex = 1;
+                foreach (var key in esiKeys)
+                {
+                    bool hasToken = !string.IsNullOrEmpty(key.RefreshToken);
+                    report.AppendLine($"  Key {keyIndex}: " +
+                        $"HasError={key.HasError}, " +
+                        $"HasToken={hasToken}, " +
+                        $"Processed={key.IsProcessed}");
+                    keyIndex++;
+                }
+            }
+            catch
+            {
+                report.AppendLine("  (unavailable)");
+            }
+        }
+
+        /// <summary>
+        /// Appends settings configuration context (format, migration state, update channel).
+        /// </summary>
+        private static void AppendSettingsState(StringBuilder report)
+        {
+            report.AppendLine("Settings:");
+
+            try
+            {
+                report.AppendLine($"  Format: {(Settings.UsingJsonFormat ? "JSON" : "XML")}");
+                report.AppendLine($"  ForkMigration: {(Settings.MigrationFromOtherForkDetected ? "Yes" : "No")}");
+
+                string channel = "Stable";
+                if (EveMonClient.IsAlphaVersion)
+                    channel = "Alpha";
+                else if (EveMonClient.IsBetaVersion)
+                    channel = "Beta";
+
+                report.AppendLine($"Update Channel: {channel}");
+                report.AppendLine($"  AutoCheck: {Settings.Updates.CheckEVEMonVersion}");
+            }
+            catch
+            {
+                report.AppendLine("  (unavailable)");
             }
         }
 
@@ -428,7 +533,10 @@ namespace EVEMon.Common.Helpers
         }
 
         /// <summary>
-        /// Appends the sanitized trace log.
+        /// Appends the filtered trace log, excluding lines that contain game-specific data
+        /// (asset locations, structure names, character names, item IDs, etc.).
+        /// Keeps operational lines: settings, datafiles, ESI auth, query monitor lifecycle,
+        /// updates, errors, and startup/shutdown events.
         /// </summary>
         private static void AppendTraceLog(StringBuilder report)
         {
@@ -438,11 +546,16 @@ namespace EVEMon.Common.Helpers
             try
             {
                 traceStream = Util.GetFileStream(EveMonClient.TraceFileNameFullPath,
-                    FileMode.Open, FileAccess.Read);
+                    FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using (StreamReader traceReader = new StreamReader(traceStream))
                 {
                     traceStream = null;
-                    report.AppendLine(traceReader.ReadToEnd().Trim());
+                    string line;
+                    while ((line = traceReader.ReadLine()) != null)
+                    {
+                        if (!IsGameDataTraceLine(line))
+                            report.AppendLine(line);
+                    }
                 }
             }
             catch (IOException)
@@ -457,6 +570,38 @@ namespace EVEMon.Common.Helpers
             {
                 traceStream?.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Returns true if a trace line contains game-specific data that should be
+        /// excluded from diagnostic reports (asset locations, structure lookups,
+        /// character details, market data, etc.).
+        /// </summary>
+        private static bool IsGameDataTraceLine(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+                return false;
+
+            return line.Contains("Asset.UpdateLocation") ||
+                   line.Contains("StructureLookup") ||
+                   line.Contains("lacks access to structure") ||
+                   line.Contains("structure is inaccessible") ||
+                   line.Contains("EveIDToName") ||
+                   line.Contains("CharacterDataQuerying") ||
+                   line.Contains("CharacterSheet updated") ||
+                   line.Contains("Booster detected") ||
+                   line.Contains("Booster re-detected") ||
+                   line.Contains("EveNotificationType") ||
+                   line.Contains("EveNotificationTextParser") ||
+                   line.Contains("Remaining ids:") ||
+                   line.Contains("ECItemPricer") ||
+                   line.Contains("FuzzworksItemPricer") ||
+                   line.Contains("EMItemPricer") ||
+                   line.Contains("ImageService") ||
+                   line.Contains("IgbTcpListener") ||
+                   line.Contains("GAnalyticsTracker") ||
+                   line.Contains("Emailer") ||
+                   line.Contains("CodeCompiler");
         }
 
         #endregion

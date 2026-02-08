@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -10,6 +12,9 @@ namespace EVEMon.Common.Service
 {
     /// <summary>
     /// Submits error/diagnostic reports to the webhook, which creates GitHub issues.
+    /// The report body is gzip-compressed and base64-encoded to stay within webhook
+    /// payload limits. The webhook server decompresses and creates a GitHub Gist,
+    /// then links the Gist in the created issue.
     /// </summary>
     public static class ReportSubmissionService
     {
@@ -20,6 +25,7 @@ namespace EVEMon.Common.Service
 
         /// <summary>
         /// Submits a report to the webhook endpoint.
+        /// The report body is gzip-compressed to avoid 413 errors.
         /// Never throws — returns a result for all outcomes.
         /// </summary>
         public static async Task<ReportSubmissionResult> SubmitReportAsync(
@@ -43,6 +49,10 @@ namespace EVEMon.Common.Service
 
                 string os = Environment.OSVersion.VersionString;
 
+                // Gzip-compress and base64-encode the report body to minimize payload size.
+                // The webhook server decompresses this and creates a GitHub Gist.
+                string compressedBody = CompressToBase64(reportBody ?? string.Empty);
+
                 var payload = new ReportPayload
                 {
                     Title = title,
@@ -50,7 +60,7 @@ namespace EVEMon.Common.Service
                     Version = version,
                     Os = os,
                     CrashSummary = crashSummary,
-                    ReportBody = reportBody
+                    ReportBodyGzip = compressedBody
                 };
 
                 string json = JsonSerializer.Serialize(payload, s_jsonOptions);
@@ -85,6 +95,20 @@ namespace EVEMon.Common.Service
             }
         }
 
+        /// <summary>
+        /// Gzip-compresses a string and returns the base64-encoded result.
+        /// </summary>
+        private static string CompressToBase64(string text)
+        {
+            byte[] raw = Encoding.UTF8.GetBytes(text);
+            using var output = new MemoryStream();
+            using (var gzip = new GZipStream(output, CompressionLevel.Optimal, leaveOpen: true))
+            {
+                gzip.Write(raw, 0, raw.Length);
+            }
+            return Convert.ToBase64String(output.ToArray());
+        }
+
         private static string TryExtractIssueUrl(string json)
         {
             try
@@ -116,7 +140,7 @@ namespace EVEMon.Common.Service
             public string Version { get; set; }
             public string Os { get; set; }
             public string CrashSummary { get; set; }
-            public string ReportBody { get; set; }
+            public string ReportBodyGzip { get; set; }
         }
     }
 
