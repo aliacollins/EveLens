@@ -41,8 +41,8 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             // Fonts
-            Font = FontFactory.GetFont("Tahoma");
-            lblScheduleWarning.Font = FontFactory.GetFont("Tahoma", FontStyle.Bold);
+            Font = FontFactory.GetFont("Segoe UI");
+            lblScheduleWarning.Font = FontFactory.GetFont("Segoe UI", FontStyle.Bold);
 
             CCPCharacter ccpCharacter = m_character as CCPCharacter;
 

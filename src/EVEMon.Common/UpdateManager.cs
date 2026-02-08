@@ -251,6 +251,10 @@ namespace EVEMon.Common
                 // Reset the most recent denied version
                 Settings.Updates.MostRecentDeniedUpgrade = string.Empty;
 
+                if (string.IsNullOrEmpty(newestRelease.TopicAddress) ||
+                    string.IsNullOrEmpty(newestRelease.PatchAddress))
+                    return;
+
                 Uri forumUrl = new Uri(newestRelease.TopicAddress);
                 Uri installerUrl = new Uri(newestRelease.PatchAddress);
                 string updateMessage = newestRelease.Message;

@@ -95,6 +95,7 @@ namespace EVEMon
 			this.forumsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.issuesFeaturesMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.readTheDocsManualToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.diagnosticReportMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.helpAboutKnownProblemsToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
 			this.aboutMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.testsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -662,6 +663,7 @@ namespace EVEMon
             this.forumsMenuItem,
             this.issuesFeaturesMenuItem,
             this.readTheDocsManualToolStripMenuItem,
+            this.diagnosticReportMenuItem,
             this.helpAboutKnownProblemsToolStripSeparator,
             this.aboutMenuItem});
 			this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
@@ -691,7 +693,14 @@ namespace EVEMon
 			this.readTheDocsManualToolStripMenuItem.Size = new System.Drawing.Size(224, 22);
 			this.readTheDocsManualToolStripMenuItem.Text = "Read The Docs (Manual)";
 			this.readTheDocsManualToolStripMenuItem.Click += new System.EventHandler(this.readTheDocsManualMenuItem_Click);
-			// 
+			//
+			// diagnosticReportMenuItem
+			//
+			this.diagnosticReportMenuItem.Name = "diagnosticReportMenuItem";
+			this.diagnosticReportMenuItem.Size = new System.Drawing.Size(224, 22);
+			this.diagnosticReportMenuItem.Text = "Submit &Diagnostic Report...";
+			this.diagnosticReportMenuItem.Click += new System.EventHandler(this.diagnosticReportMenuItem_Click);
+			//
 			// helpAboutKnownProblemsToolStripSeparator
 			// 
 			this.helpAboutKnownProblemsToolStripSeparator.Name = "helpAboutKnownProblemsToolStripSeparator";
@@ -1286,6 +1295,7 @@ namespace EVEMon
         private System.Windows.Forms.ToolStripMenuItem copySkillsToClipboardBBFormatToolStripMenuItem;
         private EVEMon.Common.Controls.TrayIcon trayIcon;
         private System.Windows.Forms.ToolStripSeparator helpAboutKnownProblemsToolStripSeparator;
+        private System.Windows.Forms.ToolStripMenuItem diagnosticReportMenuItem;
         private System.Windows.Forms.ToolStripMenuItem forumsMenuItem;
         private EVEMon.Controls.NotificationList notificationList;
         private System.Windows.Forms.NotifyIcon niAlertIcon;

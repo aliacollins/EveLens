@@ -1,0 +1,102 @@
+using System;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using EVEMon.Common;
+using EVEMon.Common.Controls;
+using EVEMon.Common.Helpers;
+using EVEMon.Common.Service;
+
+namespace EVEMon.DiagnosticReport
+{
+    /// <summary>
+    /// Displays a sanitized diagnostic report that users can review, edit, and share.
+    /// </summary>
+    public partial class DiagnosticReportWindow : EVEMonForm
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DiagnosticReportWindow"/> class.
+        /// </summary>
+        public DiagnosticReportWindow()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// Generates the diagnostic report on load.
+        /// </summary>
+        private void DiagnosticReportWindow_Load(object sender, EventArgs e)
+        {
+            ReportTextBox.Text = DiagnosticReportBuilder.BuildDiagnosticReport();
+        }
+
+        /// <summary>
+        /// Copies the report text to the clipboard.
+        /// </summary>
+        private void CopyToClipboardButton_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(ReportTextBox.Text, TextDataFormat.Text);
+                MessageBox.Show("Report copied to clipboard.", "Copy",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (ExternalException)
+            {
+                MessageBox.Show("Failed to copy to clipboard. Another application may be " +
+                    "using the clipboard.", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Submits the diagnostic report via the webhook. Falls back to the manual
+        /// save-to-file + GitHub URL flow if the webhook is unreachable.
+        /// </summary>
+        private async void OpenGitHubIssueButton_Click(object sender, EventArgs e)
+        {
+            OpenGitHubIssueButton.Enabled = false;
+            OpenGitHubIssueButton.Text = "Submitting...";
+            try
+            {
+                ReportSubmissionResult result = await ReportSubmissionService
+                    .SubmitReportAsync("Diagnostic Report", "diagnostic", ReportTextBox.Text);
+
+                if (result.Success)
+                {
+                    MessageBox.Show($"Report submitted successfully.\n\n{result.IssueUrl}",
+                        "Report Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Util.OpenURL(new Uri(result.IssueUrl));
+                    return;
+                }
+
+                // Fallback: save to file, clipboard, manual GitHub URL
+                DiagnosticReportBuilder.SaveReportToFile(ReportTextBox.Text);
+
+                try
+                {
+                    Clipboard.SetText(ReportTextBox.Text, TextDataFormat.Text);
+                }
+                catch (ExternalException)
+                {
+                    // Continue even if clipboard fails
+                }
+
+                string url = DiagnosticReportBuilder.BuildGitHubIssueUrl("Diagnostic Report");
+                Util.OpenURL(new Uri(url));
+            }
+            finally
+            {
+                OpenGitHubIssueButton.Text = "Submit Report";
+                OpenGitHubIssueButton.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Closes the window.
+        /// </summary>
+        private void CloseButton_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+    }
+}

@@ -140,13 +140,13 @@ namespace EVEMon.ExceptionHandling
             // 
             this.ReportLinkLabel.AutoSize = true;
             this.ReportLinkLabel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ReportLinkLabel.LinkArea = new System.Windows.Forms.LinkArea(31, 6);
+            this.ReportLinkLabel.LinkArea = new System.Windows.Forms.LinkArea(24, 19);
             this.ReportLinkLabel.Location = new System.Drawing.Point(49, 42);
             this.ReportLinkLabel.Name = "ReportLinkLabel";
             this.ReportLinkLabel.Size = new System.Drawing.Size(515, 30);
             this.ReportLinkLabel.TabIndex = 8;
             this.ReportLinkLabel.TabStop = true;
-            this.ReportLinkLabel.Text = "If none of that worked, please report the problem\r\n";
+            this.ReportLinkLabel.Text = "If none of that worked, submit crash report\r\n";
             this.ReportLinkLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.ReportLinkLabel.UseCompatibleTextRendering = true;
             this.ReportLinkLabel.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.llblReport_LinkClicked);

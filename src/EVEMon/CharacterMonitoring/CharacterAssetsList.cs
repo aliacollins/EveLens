@@ -73,7 +73,7 @@ namespace EVEMon.CharacterMonitoring
             estimatedCostPanel.Hide();
             noPricesFoundLabel.Hide();
 
-            noAssetsLabel.Font = FontFactory.GetFont("Tahoma", 11.25F, FontStyle.Bold);
+            noAssetsLabel.Font = FontFactory.GetFont("Segoe UI", 11.25F, FontStyle.Bold);
 
             ListViewHelper.EnableDoubleBuffer(lvAssets);
 
@@ -354,8 +354,8 @@ namespace EVEMon.CharacterMonitoring
             int scrollBarPosition = lvAssets.GetVerticalScrollBarPosition();
 
             // Store the selected item (if any) to restore it after the update
-            int selectedItem = lvAssets.SelectedItems.Count > 0 ? lvAssets.SelectedItems[0].
-                Tag.GetHashCode() : 0;
+            Asset firstSelected = GetFirstSelectedAsset();
+            int selectedItem = firstSelected?.GetHashCode() ?? 0;
 
             lvAssets.BeginUpdate();
             try
@@ -381,10 +381,24 @@ namespace EVEMon.CharacterMonitoring
                 // Restore the selected item (if any)
                 if (selectedItem > 0)
                 {
-                    foreach (ListViewItem lvItem in lvAssets.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                    if (m_isVirtualMode)
                     {
-                        lvItem.Selected = true;
+                        for (int i = 0; i < m_virtualModeItems.Count; i++)
+                        {
+                            if (m_virtualModeItems[i].GetHashCode() == selectedItem)
+                            {
+                                lvAssets.SelectedIndices.Add(i);
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        foreach (ListViewItem lvItem in lvAssets.Items.Cast<ListViewItem>().Where(
+                            lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        {
+                            lvItem.Selected = true;
+                        }
                     }
                 }
             }
@@ -808,6 +822,57 @@ namespace EVEMon.CharacterMonitoring
         #region Helper Methods
 
         /// <summary>
+        /// Gets the number of selected items, compatible with virtual mode.
+        /// </summary>
+        private int SelectedItemCount
+            => m_isVirtualMode ? lvAssets.SelectedIndices.Count : lvAssets.SelectedItems.Count;
+
+        /// <summary>
+        /// Gets the asset for the first selected item, compatible with virtual mode.
+        /// Returns null if nothing is selected.
+        /// </summary>
+        private Asset GetFirstSelectedAsset()
+        {
+            if (m_isVirtualMode)
+            {
+                if (lvAssets.SelectedIndices.Count == 0)
+                    return null;
+
+                int index = lvAssets.SelectedIndices[0];
+                return index >= 0 && index < m_virtualModeItems.Count
+                    ? m_virtualModeItems[index]
+                    : null;
+            }
+
+            return lvAssets.SelectedItems.Count > 0
+                ? lvAssets.SelectedItems[0]?.Tag as Asset
+                : null;
+        }
+
+        /// <summary>
+        /// Gets all selected assets, compatible with virtual mode.
+        /// </summary>
+        private List<Asset> GetSelectedAssets()
+        {
+            if (m_isVirtualMode)
+            {
+                var assets = new List<Asset>();
+                foreach (int index in lvAssets.SelectedIndices.Cast<int>())
+                {
+                    if (index >= 0 && index < m_virtualModeItems.Count)
+                        assets.Add(m_virtualModeItems[index]);
+                }
+                return assets;
+            }
+
+            return lvAssets.SelectedItems
+                .Cast<ListViewItem>()
+                .Select(item => item.Tag)
+                .OfType<Asset>()
+                .ToList();
+        }
+
+        /// <summary>
         /// Checks the given text matches the item.
         /// </summary>
         /// <param name="x">The x.</param>
@@ -835,14 +900,12 @@ namespace EVEMon.CharacterMonitoring
         /// <returns></returns>
         private string GetToolTipText(ListViewItem item)
         {
-            if (!item.Selected || lvAssets.SelectedItems.Count < 2)
+            if (!item.Selected || SelectedItemCount < 2)
                 return string.Empty;
 
-            List<ListViewItem> selectedItems = lvAssets.SelectedItems.Cast<ListViewItem>().ToList();
-            if (selectedItems.Any(selectedItem => selectedItem.Text != item.Text))
+            List<Asset> selectedAssets = GetSelectedAssets();
+            if (selectedAssets.Any(a => a.Item?.Name != item.Text))
                 return string.Empty;
-
-            List<Asset> selectedAssets = selectedItems.Select(selectedItem => selectedItem.Tag).OfType<Asset>().ToList();
             long sumQuantity = selectedAssets.Sum(selectedAsset => selectedAsset.Quantity);
             double sumVolume = selectedAssets.Sum(selectedAsset => selectedAsset.TotalVolume);
             int uniqueLocations = selectedAssets.Select(asset => asset.Location).Distinct().Count();
@@ -1048,11 +1111,14 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
         private void contextMenu_Opening(object sender, CancelEventArgs e)
         {
-            bool visible = lvAssets.SelectedItems.Count > 0 &&
-                  lvAssets.SelectedItems
-                      .Cast<ListViewItem>()
-                      .All(item => item != null &&
-                                   item.Text == ((Asset)lvAssets.SelectedItems[0]?.Tag)?.Item.Name);
+            Asset firstAsset = GetFirstSelectedAsset();
+            bool visible = SelectedItemCount > 0 && firstAsset?.Item != null;
+
+            if (visible)
+            {
+                string firstName = firstAsset.Item.Name;
+                visible = GetSelectedAssets().All(a => a.Item?.Name == firstName);
+            }
 
             showInBrowserMenuItem.Visible =
                 showInBrowserMenuSeparator.Visible = visible;
@@ -1060,7 +1126,7 @@ namespace EVEMon.CharacterMonitoring
             if (!visible)
                 return;
 
-            Asset asset = lvAssets.SelectedItems[0]?.Tag as Asset;
+            Asset asset = firstAsset;
 
             if (asset?.Item == null)
                 return;
@@ -1084,7 +1150,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void showInBrowserMenuItem_Click(object sender, EventArgs e)
         {
-            Asset asset = lvAssets.SelectedItems[0]?.Tag as Asset;
+            Asset asset = GetFirstSelectedAsset();
 
             if (asset?.Item == null)
                 return;

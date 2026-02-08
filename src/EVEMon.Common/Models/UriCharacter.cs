@@ -14,6 +14,17 @@ namespace EVEMon.Common.Models
         private Uri m_uri;
 
         /// <summary>
+        /// Gets the next available blank character ID, starting from BlankCharacterID.
+        /// </summary>
+        internal static long GetNextBlankCharacterID()
+        {
+            long id = BlankCharacterID;
+            while (EveMonClient.CharacterIdentities[id] != null)
+                id++;
+            return id;
+        }
+
+        /// <summary>
         /// Default constructor for new uri characters.
         /// </summary>
         /// <param name="identity">The identitiy for this character</param>
@@ -48,6 +59,10 @@ namespace EVEMon.Common.Models
             : base(identity, serial.Guid)
         {
             Import(serial);
+
+            // Clear stale file URIs from old XML-workflow blank characters
+            if (identity.CharacterID >= BlankCharacterID)
+                m_uri = null;
         }
 
         /// <summary>
@@ -60,7 +75,9 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets an adorned name, with (file), (url) or (cached) labels.
         /// </summary>
-        public override string AdornedName => $"{Name} {(m_uri.IsFile ? "(file)" : "(url)")}";
+        public override string AdornedName => m_uri != null
+            ? $"{Name} {(m_uri.IsFile ? "(file)" : "(url)")}"
+            : $"{Name} (local)";
 
         /// <summary>
         /// Gets or sets the source's name.
@@ -89,7 +106,7 @@ namespace EVEMon.Common.Models
             SerializableUriCharacter serial = new SerializableUriCharacter();
             Export(serial);
 
-            serial.Address = m_uri.AbsoluteUri;
+            serial.Address = m_uri?.AbsoluteUri;
             return serial;
         }
 
@@ -104,7 +121,7 @@ namespace EVEMon.Common.Models
 
             Import((SerializableSettingsCharacter)serial);
 
-            m_uri = new Uri(serial.Address);
+            m_uri = !string.IsNullOrEmpty(serial.Address) ? new Uri(serial.Address) : null;
 
             EveMonClient.OnCharacterUpdated(this);
         }

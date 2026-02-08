@@ -224,6 +224,12 @@ namespace EVEMon.Common.QueryMonitor
                 NotifyCharacterLoyaltyPointsError) { QueryOnStartup = true });
             m_characterQueryMonitors.ForEach(monitor => ccpCharacter.QueryMonitors.Add(monitor));
 
+            // Suppress self-ticking on all monitors — this class will drive them
+            // instead of each monitor subscribing to FiveSecondTick individually.
+            // This reduces FiveSecondTick handlers from ~27 per character to 1.
+            foreach (var monitor in m_characterQueryMonitors)
+                monitor.SuppressSelfTicking();
+
             // Enumerate the basic feature monitors into a separate list
             m_basicFeaturesMonitors = new List<IQueryMonitorEx>(m_characterQueryMonitors.Count);
             long basicFeatures = (long)CCPAPIMethodsEnum.BasicCharacterFeatures;
@@ -927,6 +933,11 @@ namespace EVEMon.Common.QueryMonitor
                 monitor.Enabled = m_ccpCharacter.Monitored;
             if (m_characterSheetUpdating)
                 FinishCharacterSheetUpdated();
+
+            // Drive all monitors' update checks from this single tick handler
+            // instead of each monitor subscribing to FiveSecondTick individually.
+            foreach (var monitor in m_characterQueryMonitors)
+                monitor.UpdateTick();
         }
 
         #endregion

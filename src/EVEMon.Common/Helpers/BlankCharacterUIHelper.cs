@@ -1,17 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Xml;
 using EVEMon.Common.Collections;
-using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
-using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
@@ -149,8 +142,6 @@ namespace EVEMon.Common.Helpers
             { DBConstants.MinmatarFrigateSkillID, 1 },
             { DBConstants.MinmatarIndustrialSkillID, 1 }
         };
-
-        private static string s_filename;
 
         #endregion
 
@@ -301,62 +292,21 @@ namespace EVEMon.Common.Helpers
         #region Public Methods
 
         /// <summary>
-        /// Saves the blank character.
+        /// Creates a blank character directly in memory and adds it to the collection.
         /// </summary>
-        /// <param name="callback">The callback.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">callback</exception>
-        public static async Task SaveAsync(Action callback)
+        public static void AddBlankCharacter()
         {
-            callback.ThrowIfNull(nameof(callback));
-
             SerializableCCPCharacter serial = CreateCharacter();
+            serial.ID = UriCharacter.GetNextBlankCharacterID();
 
-            using (SaveFileDialog fileDialog = new SaveFileDialog())
-            {
-                fileDialog.Title = @"Save Blank Character";
-                fileDialog.Filter = @"Blank Character CCPXML (*.xml) | *.xml";
-                fileDialog.FileName = $"{serial.Name}.xml";
-                fileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            // Get or create identity
+            CharacterIdentity identity = EveMonClient.CharacterIdentities[serial.ID] ??
+                EveMonClient.CharacterIdentities.Add(serial.ID, serial.Name);
 
-                DialogResult result = fileDialog.ShowDialog();
-                if (result != DialogResult.OK)
-                    return;
-
-                XmlDocument xmlDoc = (XmlDocument)Util.SerializeToXmlDocument(serial);
-                string content = Util.GetXmlStringRepresentation(xmlDoc);
-                await FileHelper.OverwriteOrWarnTheUserAsync(fileDialog.FileName,
-                    async fs =>
-                    {
-                        using (StreamWriter writer = new StreamWriter(fs, Encoding.UTF8))
-                        {
-                            await writer.WriteAsync(content);
-                            await writer.FlushAsync();
-                            await fs.FlushAsync();
-                        }
-                        return true;
-                    });
-
-                s_filename = fileDialog.FileName;
-                callback.Invoke();
-            }
-        }
-
-        /// <summary>
-        /// Adds the blank character.
-        /// </summary>
-        public static async Task AddBlankCharacterAsync(Action callback)
-        {
-            // Add blank character
-            var result = await GlobalCharacterCollection.TryAddOrUpdateFromUriAsync(new Uri(s_filename));
-
-            if (result == null || result.HasError)
-                return;
-
-            UriCharacter character = result.CreateCharacter();
-            character.Monitored = true;
-
-            callback.Invoke();
+            // Create UriCharacter with null URI (displays as "(local)")
+            var uriCharacter = new UriCharacter(identity, null, serial);
+            uriCharacter.Monitored = true;
+            EveMonClient.Characters.Add(uriCharacter);
         }
 
         #endregion

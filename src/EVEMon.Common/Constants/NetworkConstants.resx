@@ -452,7 +452,7 @@
     <value>https://peterhaneve.github.io/evemon-datafiles/</value>
   </data>
   <data name="BitBucketIssuesBase" xml:space="preserve">
-    <value>https://bitbucket.org/EVEMonDevTeam/evemon/issues</value>
+    <value>https://github.com/aliacollins/evemon/issues</value>
   </data>
   <data name="EveFlags" xml:space="preserve">
     <value>/eve/Flags.xml</value>
@@ -606,5 +606,9 @@
   </data>
   <data name="FuzzworksMarketUrl" xml:space="preserve">
     <value>https://market.fuzzwork.co.uk/aggregates/?region=10000002&amp;types=</value>
+  </data>
+  <data name="ReportWebhookUrl" xml:space="preserve">
+    <value>https://your-app.up.railway.app/api/report</value>
+    <comment>Webhook for one-click error report submission</comment>
   </data>
 </root>

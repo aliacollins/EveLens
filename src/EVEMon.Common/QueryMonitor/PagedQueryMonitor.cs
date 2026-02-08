@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EVEMon.Common.Extensions;
+using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Threading;
 
@@ -26,6 +27,12 @@ namespace EVEMon.Common.QueryMonitor
             wrapped.Callback)
         {
             this.wrapped = wrapped;
+
+            // The inner wrapped monitor also subscribed to FiveSecondTick in its own
+            // QueryMonitor constructor. Since only the outer PagedQueryMonitor should be
+            // driven (by its parent or self-ticking), suppress the inner to avoid phantom
+            // no-op handler invocations (significant at 100+ characters).
+            ((IQueryMonitorEx)wrapped).SuppressSelfTicking();
         }
 
         /// <summary>

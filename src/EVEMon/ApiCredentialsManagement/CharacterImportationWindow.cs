@@ -53,12 +53,12 @@ namespace EVEMon.ApiCredentialsManagement
             if (m_uriCharacter == null)
                 return;
 
-            if (m_uriCharacter.Uri.IsFile)
+            if (m_uriCharacter.Uri != null && m_uriCharacter.Uri.IsFile)
             {
                 fileTextBox.Text = m_uriCharacter.Uri.ToString();
                 fileRadio.Checked = true;
             }
-            else
+            else if (m_uriCharacter.Uri != null)
             {
                 urlTextBox.Text = m_uriCharacter.Uri.ToString();
                 urlRadio.Checked = true;
@@ -141,7 +141,17 @@ namespace EVEMon.ApiCredentialsManagement
 
             // Starts querying the web or the hard drive, and invokes the given callback on result
             int version = m_version;
-            var result = await GlobalCharacterCollection.TryAddOrUpdateFromUriAsync(new Uri(uri));
+
+            if (string.IsNullOrWhiteSpace(uri) || !Uri.TryCreate(uri, UriKind.Absolute, out Uri parsedUri))
+            {
+                urlThrobber.State = ThrobberState.Stopped;
+                okButton.Enabled = false;
+                errorPanel.Visible = true;
+                labelError.Text = @"Invalid URI format.";
+                return;
+            }
+
+            var result = await GlobalCharacterCollection.TryAddOrUpdateFromUriAsync(parsedUri);
             if (version != m_version)
                 return;
 

@@ -766,6 +766,10 @@ namespace EVEMon.Common.Helpers
                 JumpLastUpdateDate = xml.JumpLastUpdateDate
             };
 
+            // Preserve URI address for UriCharacters (blank/imported characters)
+            if (xml is SerializableUriCharacter uriChar)
+                data.UriAddress = uriChar.Address;
+
             // Migrate employment history
             if (xml.EmploymentHistory != null)
             {
@@ -1281,6 +1285,7 @@ namespace EVEMon.Common.Helpers
                         Name = character.Name,
                         CorporationName = character.CorporationName,
                         AllianceName = character.AllianceName,
+                        IsUriCharacter = !string.IsNullOrEmpty(character.UriAddress),
                         LastUpdated = DateTime.UtcNow
                     });
                 }
@@ -1462,7 +1467,10 @@ namespace EVEMon.Common.Helpers
 
             if (isUriCharacter)
             {
-                character = new SerializableUriCharacter();
+                character = new SerializableUriCharacter
+                {
+                    Address = json.UriAddress
+                };
             }
             else
             {
@@ -1822,6 +1830,9 @@ namespace EVEMon.Common.Helpers
         // Financial
         public decimal Balance { get; set; }
         public long HomeStationId { get; set; }
+
+        // UriCharacter source address (file path or URL for imported characters)
+        public string UriAddress { get; set; }
 
         // Character status and settings
         public string CloneState { get; set; } = "Auto";  // Auto, Alpha, Omega

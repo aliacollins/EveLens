@@ -1,0 +1,15 @@
+{
+  "name": "evemon-report-webhook",
+  "version": "1.0.0",
+  "description": "Webhook that receives EVEMon error/diagnostic reports and creates GitHub issues",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

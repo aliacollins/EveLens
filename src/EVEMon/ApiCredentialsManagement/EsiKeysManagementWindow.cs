@@ -375,13 +375,17 @@ namespace EVEMon.ApiCredentialsManagement
                     string uriText = "-";
 
                     UriCharacter uriCharacter = character as UriCharacter;
-                    if (uriCharacter != null)
+                    if (uriCharacter?.Uri != null)
                     {
                         typeText = uriCharacter.Uri.IsFile ? "File" : "Url";
                         uriText = uriCharacter.Uri.ToString();
 
                         if (isGrouping)
                             item.Group = uriCharacter.Uri.IsFile ? fileGroup : urlGroup;
+                    }
+                    else if (uriCharacter != null)
+                    {
+                        typeText = "Local";
                     }
                         // Grouping CCP characters
                     else if (isGrouping)
@@ -444,7 +448,7 @@ namespace EVEMon.ApiCredentialsManagement
                 UriCharacter uriCharacter = character as UriCharacter;
 
                 // Uri character ?
-                if (uriCharacter != null)
+                if (uriCharacter?.Uri != null)
                 {
                     if (uriCharacter.Uri.IsFile)
                         hasFileChars = true;

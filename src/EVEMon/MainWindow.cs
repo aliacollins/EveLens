@@ -86,8 +86,8 @@ namespace EVEMon
             RememberPositionKey = "MainWindow";
             notificationList.Notifications = null;
 
-            tabLoadingLabel.Font = FontFactory.GetFont("Tahoma", 11.25F, FontStyle.Bold);
-            noCharactersLabel.Font = FontFactory.GetFont("Tahoma", 11.25F, FontStyle.Bold);
+            tabLoadingLabel.Font = FontFactory.GetFont("Segoe UI", 11.25F, FontStyle.Bold);
+            noCharactersLabel.Font = FontFactory.GetFont("Segoe UI", 11.25F, FontStyle.Bold);
 
             noCharactersLabel.Hide();
 
@@ -2008,6 +2008,17 @@ namespace EVEMon
         private void readTheDocsManualMenuItem_Click(object sender, EventArgs e)
         {
             Util.OpenURL(new Uri(NetworkConstants.EVEMonManual));
+        }
+
+        /// <summary>
+        /// Help > Submit Diagnostic Report.
+        /// Open the diagnostic report window.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private void diagnosticReportMenuItem_Click(object sender, EventArgs e)
+        {
+            WindowsFactory.ShowUnique<DiagnosticReport.DiagnosticReportWindow>();
         }
 
         /// <summary>

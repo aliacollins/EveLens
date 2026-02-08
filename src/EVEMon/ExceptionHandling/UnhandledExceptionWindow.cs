@@ -1,17 +1,14 @@
 using System;
 using System.Drawing;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
-using EVEMon.Common.Data;
-using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Properties;
+using EVEMon.Common.Service;
 
 namespace EVEMon.ExceptionHandling
 {
@@ -75,59 +72,14 @@ namespace EVEMon.ExceptionHandling
             EveMonClient.StopTraceLogging();
             try
             {
-                StringBuilder exceptionReport = new StringBuilder();
-                exceptionReport.Append("EVEMon Version: ").AppendLine(EveMonClient.
-                    FileVersionInfo.FileVersion);
-                exceptionReport.Append(".NET Runtime Version: ").AppendLine(Environment.
-                    Version.ToString());
-                exceptionReport.Append("Operating System: ").AppendLine(Environment.OSVersion.
-                    VersionString.ToString());
-                exceptionReport.Append("Executable Path: ").AppendLine(Environment.CommandLine);
-                exceptionReport.AppendLine(GetRecursiveStackTrace(m_exception)).AppendLine();
-                exceptionReport.AppendLine(GetDatafileReport()).AppendLine();
-                exceptionReport.AppendLine("Diagnostic Log:").AppendLine(GetTraceLog().Trim());
-                TechnicalDetailsTextBox.Text = exceptionReport.ToString();
+                TechnicalDetailsTextBox.Text =
+                    DiagnosticReportBuilder.BuildCrashReport(m_exception);
             }
             catch (InvalidOperationException ex)
             {
                 ExceptionHandler.LogException(ex, true);
                 TechnicalDetailsTextBox.Text = Properties.Resources.ErrorBuildingError;
             }
-        }
-
-        /// <summary>
-        /// Gets the trace log.
-        /// </summary>
-        /// <returns></returns>
-        private static string GetTraceLog()
-        {
-            string trace;
-            FileStream traceStream = null;
-            try
-            {
-                traceStream = Util.GetFileStream(EveMonClient.TraceFileNameFullPath,
-                    FileMode.Open, FileAccess.Read);
-                using (StreamReader traceReader = new StreamReader(traceStream))
-                {
-                    traceStream = null;
-                    trace = traceReader.ReadToEnd();
-                }
-            }
-            catch (IOException ex)
-            {
-                ExceptionHandler.LogException(ex, true);
-                trace = Properties.Resources.ErrorNoTraceFile;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                ExceptionHandler.LogException(ex, true);
-                trace = Properties.Resources.ErrorNoTraceFile;
-            }
-            finally
-            {
-                traceStream?.Dispose();
-            }
-            return trace;
         }
 
         /// <summary>
@@ -158,56 +110,12 @@ namespace EVEMon.ExceptionHandling
         }
 
         /// <summary>
-        /// Gets the datafile report.
-        /// </summary>
-        /// <value>The datafile report.</value>
-        private static string GetDatafileReport()
-        {
-            StringBuilder datafileReport = new StringBuilder();
-
-            try
-            {
-                datafileReport.AppendLine("Datafile report:");
-
-                foreach (string datafile in Datafile.GetFilesFrom(EveMonClient.EVEMonDataDir,
-                    Datafile.DatafilesExtension))
-                {
-                    FileInfo info = new FileInfo(datafile);
-                    Datafile file = new Datafile(Path.GetFileName(datafile));
-
-                    datafileReport.AppendLine($"  {info.Name} ({info.Length / 1024}KiB - {file.MD5Sum})");
-                }
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                ExceptionHandler.LogException(ex, true);
-                datafileReport.AppendLine(Properties.Resources.ErrorNoDataFile);
-            }
-
-            return datafileReport.ToString();
-        }
-
-        /// <summary>
         /// Gets the recursive stack trace.
+        /// Delegates to DiagnosticReportBuilder for the actual implementation.
         /// </summary>
         /// <value>The recursive stack trace.</value>
         internal static string GetRecursiveStackTrace(Exception exception)
-        {
-            StringBuilder stackTraceBuilder = new StringBuilder();
-            Exception ex = exception;
-
-            stackTraceBuilder.Append(ex).AppendLine();
-
-            while (ex.InnerException != null)
-            {
-                ex = ex.InnerException;
-
-                stackTraceBuilder.AppendLine().Append(ex).AppendLine();
-            }
-
-            // Remove project local path from message
-            return stackTraceBuilder.ToString().RemoveProjectLocalPath();
-        }
+            => DiagnosticReportBuilder.GetRecursiveStackTrace(exception);
 
         #endregion
 
@@ -259,12 +167,50 @@ namespace EVEMon.ExceptionHandling
 
         /// <summary>
         /// Handles the LinkClicked event of the llblReport control.
+        /// Submits the crash report via the webhook, falling back to the manual flow.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void llblReport_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private async void llblReport_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Util.OpenURL(new Uri(NetworkConstants.BitBucketIssuesBase));
+            ReportLinkLabel.Enabled = false;
+            try
+            {
+                string type = m_exception.GetType().Name;
+                string crashSummary = $"{type}: {m_exception.Message}";
+
+                ReportSubmissionResult result = await ReportSubmissionService
+                    .SubmitReportAsync($"Crash: {type}", "crash",
+                        TechnicalDetailsTextBox.Text, crashSummary);
+
+                if (result.Success)
+                {
+                    MessageBox.Show($"Crash report submitted successfully.\n\n{result.IssueUrl}",
+                        "Report Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Util.OpenURL(new Uri(result.IssueUrl));
+                    return;
+                }
+
+                // Fallback: save to file, clipboard, manual GitHub URL
+                DiagnosticReportBuilder.SaveReportToFile(TechnicalDetailsTextBox.Text);
+
+                try
+                {
+                    Clipboard.SetText(TechnicalDetailsTextBox.Text, TextDataFormat.Text);
+                }
+                catch (ExternalException)
+                {
+                    // Continue even if clipboard fails
+                }
+
+                string url = DiagnosticReportBuilder.BuildGitHubIssueUrl(
+                    $"Crash: {type}", crashSummary);
+                Util.OpenURL(new Uri(url));
+            }
+            finally
+            {
+                ReportLinkLabel.Enabled = true;
+            }
         }
 
         /// <summary>
