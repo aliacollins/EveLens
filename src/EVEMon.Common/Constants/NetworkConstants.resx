@@ -608,7 +608,7 @@
     <value>https://market.fuzzwork.co.uk/aggregates/?region=10000002&amp;types=</value>
   </data>
   <data name="ReportWebhookUrl" xml:space="preserve">
-    <value>https://your-app.up.railway.app/api/report</value>
+    <value>https://evemon-production.up.railway.app/api/report</value>
     <comment>Webhook for one-click error report submission</comment>
   </data>
 </root>

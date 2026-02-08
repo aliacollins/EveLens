@@ -1186,7 +1186,7 @@ namespace EVEMon.Common.Constants {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to https://your-app.up.railway.app/api/report.
+        ///   Looks up a localized string similar to https://evemon-production.up.railway.app/api/report.
         /// </summary>
         public static string ReportWebhookUrl {
             get {
