@@ -583,9 +583,7 @@ namespace EVEMon.Common.Helpers
                 return false;
 
             return line.Contains("Asset.UpdateLocation") ||
-                   line.Contains("StructureLookup") ||
-                   line.Contains("lacks access to structure") ||
-                   line.Contains("structure is inaccessible") ||
+                   line.Contains("structure", StringComparison.OrdinalIgnoreCase) ||
                    line.Contains("EveIDToName") ||
                    line.Contains("CharacterDataQuerying") ||
                    line.Contains("CharacterSheet updated") ||
