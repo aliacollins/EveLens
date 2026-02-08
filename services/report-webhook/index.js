@@ -1,4 +1,5 @@
 const express = require('express');
+const zlib = require('zlib');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -6,7 +7,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = process.env.GITHUB_OWNER || 'aliacollins';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'evemon';
 
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '500kb' }));
 
 // Rate limiting: 3 requests per IP per 5-minute window
 const rateLimitMap = new Map();
@@ -56,13 +57,13 @@ app.post('/api/report', async (req, res) => {
       });
     }
 
-    const { title, reportType, version, reportBody, crashSummary } = req.body;
+    const { title, reportType, version, reportBodyGzip, crashSummary } = req.body;
 
     // Validate required fields
-    if (!title || !reportType || !version || !reportBody) {
+    if (!title || !reportType || !version || !reportBodyGzip) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: title, reportType, version, reportBody'
+        error: 'Missing required fields: title, reportType, version, reportBodyGzip'
       });
     }
 
@@ -80,12 +81,46 @@ app.post('/api/report', async (req, res) => {
       });
     }
 
-    // Truncate report body to 60K chars
-    const truncatedReport = reportBody.length > 60000
-      ? reportBody.substring(0, 60000) + '\n\n[Report truncated at 60,000 characters]'
-      : reportBody;
+    // Decompress the gzip+base64 report body
+    let reportBody;
+    try {
+      const buf = Buffer.from(reportBodyGzip, 'base64');
+      reportBody = zlib.gunzipSync(buf).toString('utf-8');
+    } catch (e) {
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to decompress reportBodyGzip: ' + e.message
+      });
+    }
 
     const os = req.body.os || 'Unknown';
+
+    // Create a GitHub Gist with the full report
+    const gistResponse = await fetch('https://api.github.com/gists', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'evemon-report-webhook'
+      },
+      body: JSON.stringify({
+        description: `EVEMon ${reportType} report - ${version}`,
+        public: false,
+        files: {
+          'diagnostic-report.txt': { content: reportBody }
+        }
+      })
+    });
+
+    let gistUrl = null;
+    if (gistResponse.ok) {
+      const gist = await gistResponse.json();
+      gistUrl = gist.html_url;
+    } else {
+      console.error(`Gist creation failed: ${gistResponse.status}`);
+    }
 
     // Build the issue body
     let issueBody = `## Environment\n`;
@@ -98,9 +133,18 @@ app.post('/api/report', async (req, res) => {
       issueBody += `\`${crashSummary}\`\n`;
     }
 
-    issueBody += `\n<details>\n<summary>Full Report</summary>\n\n`;
-    issueBody += `\`\`\`\n${truncatedReport}\n\`\`\`\n`;
-    issueBody += `</details>\n`;
+    if (gistUrl) {
+      issueBody += `\n## Full Report\n`;
+      issueBody += `[View diagnostic report](${gistUrl})\n`;
+    } else {
+      // Fallback: inline a truncated report if Gist creation failed
+      const truncated = reportBody.length > 60000
+        ? reportBody.substring(0, 60000) + '\n\n[Report truncated at 60,000 characters]'
+        : reportBody;
+      issueBody += `\n<details>\n<summary>Full Report</summary>\n\n`;
+      issueBody += `\`\`\`\n${truncated}\n\`\`\`\n`;
+      issueBody += `</details>\n`;
+    }
 
     // Determine labels
     const labels = ['bug', 'auto-reported', reportType];
