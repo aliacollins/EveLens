@@ -1,4 +1,5 @@
 using EVEMon.About;
+using EVEMon.ExceptionHandling;
 using EVEMon.ApiCredentialsManagement;
 using EVEMon.BlankCharacter;
 using EVEMon.CharacterMonitoring;
@@ -2535,13 +2536,17 @@ namespace EVEMon
         }
 
         /// <summary>
-        /// Thrown an exception just to test the exception handler is working.
+        /// Opens the crash dialog with a fake exception for UI testing.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ExceptionWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new InvalidOperationException("Test Exception");
+            var testException = new InvalidOperationException("Test Exception for UI preview");
+            using (var window = new UnhandledExceptionWindow(testException))
+            {
+                window.ShowDialog(this);
+            }
         }
 
         /// <summary>

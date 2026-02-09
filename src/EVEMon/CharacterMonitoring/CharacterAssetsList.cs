@@ -697,9 +697,19 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvAssets.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
-                    item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
-                        new[] { columnHeaderWidth }).Max() + Pad + 1;
+                int columnMaxWidth;
+                if (m_isVirtualMode)
+                {
+                    // In virtual mode, we cannot enumerate ListView.Items.
+                    // Use header width only — the column was already set to auto-resize (-2).
+                    columnMaxWidth = columnHeaderWidth + Pad + 1;
+                }
+                else
+                {
+                    columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                        item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
+                            new[] { columnHeaderWidth }).Max() + Pad + 1;
+                }
 
                 // Assign the width found
                 column.Width = columnMaxWidth;

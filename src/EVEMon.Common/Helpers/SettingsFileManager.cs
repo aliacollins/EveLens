@@ -255,7 +255,7 @@ namespace EVEMon.Common.Helpers
         #region Credentials (ESI Tokens)
 
         /// <summary>
-        /// Loads the credentials.json file and decrypts refresh tokens.
+        /// Loads the credentials.json file.
         /// </summary>
         public static async Task<JsonCredentials> LoadCredentialsAsync()
         {
@@ -271,40 +271,7 @@ namespace EVEMon.Common.Helpers
             {
                 string json = await File.ReadAllTextAsync(CredentialsFilePath);
                 var creds = JsonSerializer.Deserialize<JsonCredentials>(json, s_jsonReadOptions);
-
-                if (creds?.EsiKeys != null)
-                {
-                    int decryptedCount = 0;
-                    int failedCount = 0;
-
-                    foreach (var key in creds.EsiKeys)
-                    {
-                        if (!string.IsNullOrEmpty(key.RefreshToken))
-                        {
-                            if (CredentialProtection.TryDecrypt(key.RefreshToken, out string decrypted))
-                            {
-                                key.RefreshToken = decrypted;
-                                decryptedCount++;
-                            }
-                            else
-                            {
-                                // Decryption failed - token from different machine/user
-                                // Clear it so user will need to re-authenticate
-                                key.RefreshToken = null;
-                                failedCount++;
-                                EveMonClient.Trace($"Credential for character {key.CharacterId} needs re-authentication");
-                            }
-                        }
-                    }
-
-                    if (failedCount > 0)
-                    {
-                        EveMonClient.Trace($"Warning: {failedCount} ESI key(s) need re-authentication (credentials from different machine/user)");
-                    }
-
-                    EveMonClient.Trace($"done - loaded {creds.EsiKeys.Count} ESI keys ({decryptedCount} decrypted, {failedCount} need re-auth)");
-                }
-
+                EveMonClient.Trace($"done - loaded {creds?.EsiKeys?.Count ?? 0} ESI keys");
                 return creds ?? new JsonCredentials();
             }
             catch (Exception ex)
@@ -315,7 +282,7 @@ namespace EVEMon.Common.Helpers
         }
 
         /// <summary>
-        /// Saves the credentials.json file with encrypted refresh tokens.
+        /// Saves the credentials.json file.
         /// </summary>
         public static async Task SaveCredentialsAsync(JsonCredentials credentials)
         {
@@ -325,33 +292,12 @@ namespace EVEMon.Common.Helpers
             {
                 EnsureDirectoriesExist();
 
-                // Create a copy with encrypted tokens (don't modify the original)
-                var encryptedCreds = new JsonCredentials
-                {
-                    Version = credentials.Version,
-                    LastSaved = DateTime.UtcNow
-                };
+                if (credentials != null)
+                    credentials.LastSaved = DateTime.UtcNow;
 
-                if (credentials?.EsiKeys != null)
-                {
-                    foreach (var key in credentials.EsiKeys)
-                    {
-                        var encryptedKey = new JsonEsiKey
-                        {
-                            CharacterId = key.CharacterId,
-                            AccessMask = key.AccessMask,
-                            Monitored = key.Monitored,
-                            RefreshToken = !string.IsNullOrEmpty(key.RefreshToken)
-                                ? CredentialProtection.Encrypt(key.RefreshToken)
-                                : null
-                        };
-                        encryptedCreds.EsiKeys.Add(encryptedKey);
-                    }
-                }
-
-                string json = JsonSerializer.Serialize(encryptedCreds, s_jsonOptions);
+                string json = JsonSerializer.Serialize(credentials, s_jsonOptions);
                 await WriteFileAtomicAsync(CredentialsFilePath, json);
-                EveMonClient.Trace($"done - saved {encryptedCreds.EsiKeys.Count} ESI keys (encrypted)");
+                EveMonClient.Trace($"done - saved {credentials?.EsiKeys?.Count ?? 0} ESI keys");
             }
             catch (Exception ex)
             {
@@ -1139,13 +1085,7 @@ namespace EVEMon.Common.Helpers
 
             try
             {
-                // Migrate credentials and encrypt refresh tokens for backup security
                 var credentials = MigrateCredentials(settings);
-                foreach (var key in credentials.EsiKeys)
-                {
-                    if (!string.IsNullOrEmpty(key.RefreshToken))
-                        key.RefreshToken = CredentialProtection.Encrypt(key.RefreshToken);
-                }
 
                 var backup = new JsonBackup
                 {
@@ -1240,31 +1180,9 @@ namespace EVEMon.Common.Helpers
                     await SaveConfigAsync(backup.Config);
                 }
 
-                // Save credentials - decrypt first if needed (handles same/different machine)
+                // Save credentials
                 if (backup.Credentials != null)
                 {
-                    int needsReauth = 0;
-                    foreach (var key in backup.Credentials.EsiKeys)
-                    {
-                        if (!string.IsNullOrEmpty(key.RefreshToken))
-                        {
-                            // Try to decrypt - will return plaintext if unencrypted (legacy backup)
-                            // or decrypt if encrypted on same machine, or null if different machine
-                            if (CredentialProtection.TryDecrypt(key.RefreshToken, out string decrypted))
-                            {
-                                key.RefreshToken = decrypted;
-                            }
-                            else
-                            {
-                                // Token was encrypted on different machine - user needs to re-authenticate
-                                key.RefreshToken = null;
-                                needsReauth++;
-                            }
-                        }
-                    }
-                    if (needsReauth > 0)
-                        EveMonClient.Trace($"Import: {needsReauth} ESI key(s) need re-authentication (encrypted on different machine)");
-
                     await SaveCredentialsAsync(backup.Credentials);
                 }
 

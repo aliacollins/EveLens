@@ -29,6 +29,8 @@ namespace EVEMon.DiagnosticReport
         private void InitializeComponent()
         {
             this.InstructionLabel = new System.Windows.Forms.Label();
+            this.SubjectLabel = new System.Windows.Forms.Label();
+            this.SubjectTextBox = new System.Windows.Forms.TextBox();
             this.ReportTextBox = new System.Windows.Forms.TextBox();
             this.ButtonPanel = new System.Windows.Forms.Panel();
             this.TipLabel = new System.Windows.Forms.Label();
@@ -49,6 +51,25 @@ namespace EVEMon.DiagnosticReport
             this.InstructionLabel.TabIndex = 0;
             this.InstructionLabel.Text = "Review the diagnostic report below. Sensitive data has been removed. You may edit" +
     " before sharing.";
+            //
+            // SubjectLabel
+            //
+            this.SubjectLabel.AutoSize = true;
+            this.SubjectLabel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.SubjectLabel.Location = new System.Drawing.Point(12, 33);
+            this.SubjectLabel.Name = "SubjectLabel";
+            this.SubjectLabel.Padding = new System.Windows.Forms.Padding(0, 4, 0, 2);
+            this.SubjectLabel.Size = new System.Drawing.Size(253, 19);
+            this.SubjectLabel.TabIndex = 4;
+            this.SubjectLabel.Text = "Subject (optional):";
+            //
+            // SubjectTextBox
+            //
+            this.SubjectTextBox.Dock = System.Windows.Forms.DockStyle.Top;
+            this.SubjectTextBox.Location = new System.Drawing.Point(12, 52);
+            this.SubjectTextBox.Name = "SubjectTextBox";
+            this.SubjectTextBox.Size = new System.Drawing.Size(626, 20);
+            this.SubjectTextBox.TabIndex = 5;
             //
             // ReportTextBox
             //
@@ -126,6 +147,8 @@ namespace EVEMon.DiagnosticReport
             this.ClientSize = new System.Drawing.Size(650, 540);
             this.Controls.Add(this.ReportTextBox);
             this.Controls.Add(this.ButtonPanel);
+            this.Controls.Add(this.SubjectTextBox);
+            this.Controls.Add(this.SubjectLabel);
             this.Controls.Add(this.InstructionLabel);
             this.MinimumSize = new System.Drawing.Size(500, 400);
             this.Name = "DiagnosticReportWindow";
@@ -143,6 +166,8 @@ namespace EVEMon.DiagnosticReport
         #endregion
 
         private System.Windows.Forms.Label InstructionLabel;
+        private System.Windows.Forms.Label SubjectLabel;
+        private System.Windows.Forms.TextBox SubjectTextBox;
         private System.Windows.Forms.TextBox ReportTextBox;
         private System.Windows.Forms.Panel ButtonPanel;
         private System.Windows.Forms.Label TipLabel;

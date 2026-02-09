@@ -58,8 +58,14 @@ namespace EVEMon.DiagnosticReport
             OpenGitHubIssueButton.Text = "Submitting...";
             try
             {
+                string version = EveMonClient.FileVersionInfo?.FileVersion ?? "unknown";
+                string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+                string subject = SubjectTextBox.Text?.Trim();
+                string title = string.IsNullOrEmpty(subject)
+                    ? $"Diagnostic Report - v{version} - {timestamp}Z"
+                    : $"Diagnostic: {subject} - v{version}";
                 ReportSubmissionResult result = await ReportSubmissionService
-                    .SubmitReportAsync("Diagnostic Report", "diagnostic", ReportTextBox.Text);
+                    .SubmitReportAsync(title, "diagnostic", ReportTextBox.Text);
 
                 if (result.Success)
                 {
@@ -87,7 +93,10 @@ namespace EVEMon.DiagnosticReport
                     // Continue even if clipboard fails
                 }
 
-                string url = DiagnosticReportBuilder.BuildGitHubIssueUrl("Diagnostic Report");
+                string fallbackTitle = string.IsNullOrEmpty(subject)
+                    ? "Diagnostic Report"
+                    : $"Diagnostic: {subject}";
+                string url = DiagnosticReportBuilder.BuildGitHubIssueUrl(fallbackTitle);
                 Util.OpenURL(new Uri(url));
             }
             finally

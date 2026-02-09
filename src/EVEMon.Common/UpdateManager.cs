@@ -22,6 +22,7 @@ namespace EVEMon.Common
 
         private static bool s_checkScheduled;
         private static bool s_enabled;
+        private static int s_errorRetryCount;
 
         /// <summary>
         /// Gets or sets whether the autoupdater is enabled.
@@ -90,6 +91,17 @@ namespace EVEMon.Common
         }
 
         /// <summary>
+        /// Returns an exponentially increasing delay for error retries,
+        /// capped at 60 minutes: 1, 2, 4, 8, 16, 32, 60.
+        /// </summary>
+        private static TimeSpan GetBackoffDelay()
+        {
+            int minutes = Math.Min(60, (int)Math.Pow(2, s_errorRetryCount));
+            s_errorRetryCount++;
+            return TimeSpan.FromMinutes(minutes);
+        }
+
+        /// <summary>
         /// Schedules a check a specified time period in the future.
         /// </summary>
         /// <param name="time">Time period in the future to start check.</param>
@@ -114,8 +126,8 @@ namespace EVEMon.Common
                 EveMonClient.Trace($"UpdateManager - Error during update check: {ex.Message}",
                     printMethod: false);
                 ExceptionHandler.LogException(ex, false);
-                // Reschedule after error
-                ScheduleCheck(TimeSpan.FromMinutes(1));
+                // Reschedule after error with exponential backoff
+                ScheduleCheck(GetBackoffDelay());
             }
         }
 
@@ -140,7 +152,7 @@ namespace EVEMon.Common
             {
                 EveMonClient.Trace("UpdateManager - No network available, rescheduling",
                     printMethod: false);
-                ScheduleCheck(TimeSpan.FromMinutes(1));
+                ScheduleCheck(GetBackoffDelay());
                 return;
             }
 
@@ -202,7 +214,7 @@ namespace EVEMon.Common
                 // Logs the error and reschedule
                 EveMonClient.Trace($"UpdateManager - {result.Error.Message}",
                     printMethod: false);
-                ScheduleCheck(TimeSpan.FromMinutes(1));
+                ScheduleCheck(GetBackoffDelay());
                 return;
             }
 
@@ -218,6 +230,9 @@ namespace EVEMon.Common
             }
             finally
             {
+                // Reset backoff on successful check
+                s_errorRetryCount = 0;
+
                 EveMonClient.Trace();
 
                 // Reschedule

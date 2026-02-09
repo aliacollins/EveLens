@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -117,42 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="LatestBinariesLinkLabel.Text" xml:space="preserve">
-    <value>Use the latest snapshot binaries (beta) as the problem may have been already solved or 
-go to EVEMon's data directory (by clicking on the related button below) and delete, your settings file 
-(after you have made a backup), cache folder and data files (*.gzip),  to see if the problem persists.</value>
-  </data>
-  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="LatestBinariesPictureBox.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAL
-        DwAACw8BkvkDpQAAAAd0SU1FB9kMERAMI8ZEp7IAAAMVSURBVDhPjZMJSJRBGIZndU1dtzwqpSgoPEpT
-        1tV1vXXXvNJ0U0szRSwrtV3XsPCgwuzQpCK6wLKDgsioMFnJTok2jVQqNStJrNAuTDcLUqz+t++3LSEM
-        euH5v2G+eWe+mX+G/S0TExNjiwl4TEkU/3T+r3izWaFWHUvR2tXZcS4TCETm5uZTaIHJJ3Own2lssSll
-        RZtLrl6sed/RrEfTncZXT1paPocqFE4atdpNLBZbUVGTT7I2I936rq52rKejHfr6Oq6/5xnX0/kIo8ND
-        6G5vw5veFwOeEslcGxsbkYBktDGWnr6KeclkwlOHDgw/b2vFsb2VePm0C/qrOgz09cEwOIiRLwaOG/vB
-        NZw/8720pHC2UCjkz2ZCh8vLbq9OXob8zDQuJzUZOzZpcbRiN0Y/GdD96D4+D33EYH8fmm/UITV1pWSq
-        WPxrG2Ir0XhMiFQgTRWL5dERCJJ6PlYtVu6j9vtidS5KtRqqYBhXTldxA2/foeZkdf+46bekLs57kyLD
-        oAoLhULmiYM7t7UYUyxA4qFJU8WjICsDRbnrUFNdBX1DvaFIm2c7PmCFn5wFe3s5qpQhSIpYjACJO5oa
-        rqC1WX+E0nx5Yj+pZEtsSAA6H9xDiWYDdOfPgvrtCHOCMZ9FC8tjgvxpdS/cunQBXz8NAd++4qautksV
-        EZbv4eK0PdzfG16ujritq0P9hXMfyOZNzGN2NtYsKyfXMkIuhctse673aQeZR/Gh/zVOVFZwK6OjEO7n
-        i3hlMOc+fz4XpwjGwgXOFWROIYIIxpaGK4NjQgMak2Ki0Puimxt814frVOaujWos8ZejeP0aKOUy+Lg5
-        oViTayDLcUJLRPN+XoKUuPgZkbSNrOQErE6M4w6VlaCysADXai9hD0WqADGBcghNTRtp/H4igXAYN/Mf
-        kaWFmZlQ6BPmJ7+4PiUROwvyUL4pH0XZmViXuBT206xHKH+Zhm4lfAlLYuI2Gl+dyEpkIaWYHRXo/3CO
-        /fTGULmsy8HWdhfdl3zqDyT4R/PPN8WLz1gQ/G+aQ8wi+FKtiL9cjP0E5b9G/dnJ/fYAAAAASUVORK5C
-        YII=
-</value>
-  </data>
-  <data name="ReportPictureBox.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29m
-        dHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAFISURBVDhPpZG9SgNBFIVTCYKVD2AhPoPgM/gCPoCl
-        jbWkFgtLCwtBBAvtBJFgpZVaCAlJFJM1UbNu/jSJ/4o7czx31iwbMxEXL3ww98w9Z2ZnEwD+hVWMQ7iY
-        WUyNkk3yQfAL+2TCFrCzdVjAp6/YDq7dk7KEFMkQ2yCAzQjxldbovGrUHzW8Bw23rXHd0ijdaRQbCg6R
-        Wlg/kpDJaMDY3MqB2azR6HU0KjRf3WtcfpvPawp5LwhY2j6VgGku+wNuab7hqcbc1CjUA3OO5ow7OCD8
-        BLl+mac6TYULms+qClma0zRnXN8EJDeOJWAqDBAomEeUkGjJbdIVZYKlIo84zLYnoPsbfSJDWEvlxWOq
-        /fRueupZ0v8bbXDQqbZeusY3kvw509NE4fDy6l5OjM9k3jYjWEUaxkmJzNr2o1jFOFjFOFjFv4PEF/eL
-        DyJn8xIVAAAAAElFTkSuQmCC
-</value>
-  </data>
 </root>

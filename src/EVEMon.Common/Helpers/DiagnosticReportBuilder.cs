@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -27,6 +28,13 @@ namespace EVEMon.Common.Helpers
 
         private static readonly Regex s_longToken = new Regex(
             @"[A-Za-z0-9+/=_-]{40,}",
+            RegexOptions.Compiled);
+
+        // Catches standalone EVE entity IDs (8-20 digits) that weren't already replaced
+        // by the known-ID pass. Avoids matching version numbers (x.y.z.w), timestamps
+        // in our report format (00:00:00), and small numbers used as counts/sizes.
+        private static readonly Regex s_eveEntityId = new Regex(
+            @"(?<![.\d:])\b\d{8,20}\b(?![.\d:])",
             RegexOptions.Compiled);
 
         /// <summary>
@@ -124,8 +132,12 @@ namespace EVEMon.Common.Helpers
         }
 
         /// <summary>
-        /// Applies all sanitization rules to strip PII from text.
+        /// Applies all sanitization rules to strip PII and game data from text.
         /// Safe to call even before EveMonClient is fully initialized.
+        ///
+        /// Strategy: first collect ALL known names and IDs from the live object model,
+        /// then do longest-first string replacement, then apply regex catch-alls for
+        /// anything we missed (tokens, file paths, EVE entity IDs).
         /// </summary>
         /// <param name="text">The text to sanitize.</param>
         /// <returns>The sanitized text.</returns>
@@ -134,62 +146,141 @@ namespace EVEMon.Common.Helpers
             if (string.IsNullOrEmpty(text))
                 return text;
 
-            // 1-4: Replace character names, corp names, alliance names, character IDs, ESI key IDs
-            // Sort by longest name first to avoid partial matches
+            // ── Phase 1: Collect every known name and ID from the live model ──
+            // We build two collections:
+            //   nameReplacements: string → replacement (longest first to avoid partial matches)
+            //   idReplacements:   numeric-string → replacement
+            var nameReplacements = new List<(string original, string replacement)>();
+            var idReplacements = new HashSet<string>();
+
             try
             {
                 var characters = EveMonClient.Characters;
                 if (characters != null)
                 {
                     int charIndex = 1;
-                    // Sort by name length descending to replace longest names first
                     foreach (Character character in characters.OrderByDescending(c =>
                         c.Name?.Length ?? 0))
                     {
                         string label = $"Character_{charIndex}";
 
+                        // Character name
                         if (!string.IsNullOrEmpty(character.Name))
-                            text = text.Replace(character.Name, label);
+                            nameReplacements.Add((character.Name, label));
 
+                        // Corporation name and ID
                         if (!string.IsNullOrEmpty(character.CorporationName))
-                            text = text.Replace(character.CorporationName,
-                                $"Corporation_{charIndex}");
+                            nameReplacements.Add((character.CorporationName,
+                                $"Corporation_{charIndex}"));
+                        if (character.CorporationID > 0)
+                            idReplacements.Add(character.CorporationID.ToString());
 
+                        // Alliance name and ID
                         if (!string.IsNullOrEmpty(character.AllianceName))
-                            text = text.Replace(character.AllianceName,
-                                $"Alliance_{charIndex}");
+                            nameReplacements.Add((character.AllianceName,
+                                $"Alliance_{charIndex}"));
+                        if (character.AllianceID > 0)
+                            idReplacements.Add(character.AllianceID.ToString());
 
+                        // Character ID
                         if (character.CharacterID > 0)
-                            text = text.Replace(character.CharacterID.ToString(),
-                                "[CHAR_ID]");
+                            idReplacements.Add(character.CharacterID.ToString());
+
+                        // Employment history — corp names and IDs from past corps
+                        try
+                        {
+                            if (character.EmploymentHistory != null)
+                            {
+                                foreach (var record in character.EmploymentHistory)
+                                {
+                                    if (!string.IsNullOrEmpty(record.CorporationName))
+                                        nameReplacements.Add((record.CorporationName,
+                                            "[CORP_NAME]"));
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // EmploymentHistory may not be loaded
+                        }
+
+                        // Plan names — user-created, could contain personal info
+                        try
+                        {
+                            if (character.Plans != null)
+                            {
+                                int planIndex = 1;
+                                foreach (var plan in character.Plans)
+                                {
+                                    if (!string.IsNullOrEmpty(plan.Name))
+                                    {
+                                        nameReplacements.Add((plan.Name,
+                                            $"{label}_Plan_{planIndex}"));
+                                        planIndex++;
+                                    }
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            // Plans may not be loaded
+                        }
 
                         charIndex++;
                     }
                 }
 
+                // ESI key IDs
                 var esiKeys = EveMonClient.ESIKeys;
                 if (esiKeys != null)
                 {
                     foreach (var key in esiKeys)
                     {
                         if (key.ID > 0)
-                            text = text.Replace(key.ID.ToString(), "[ESI_KEY_ID]");
+                            idReplacements.Add(key.ID.ToString());
+                    }
+                }
+
+                // Character identities — may have IDs not yet in the Characters collection
+                var identities = EveMonClient.CharacterIdentities;
+                if (identities != null)
+                {
+                    foreach (var identity in identities)
+                    {
+                        if (identity.CharacterID > 0)
+                            idReplacements.Add(identity.CharacterID.ToString());
+
+                        if (!string.IsNullOrEmpty(identity.CharacterName))
+                            nameReplacements.Add((identity.CharacterName, "[CHAR_NAME]"));
                     }
                 }
             }
             catch
             {
-                // Characters/ESIKeys may not be initialized during early crash
+                // Collections may not be initialized during early crash
             }
 
-            // 5: Replace known SSO client ID/secret
+            // ── Phase 2: Apply name replacements (longest first) ──
+            // Sort by length descending so "Alia Collins" is replaced before "Alia"
+            nameReplacements.Sort((a, b) => b.original.Length.CompareTo(a.original.Length));
+            foreach (var (original, replacement) in nameReplacements)
+            {
+                text = text.Replace(original, replacement);
+            }
+
+            // ── Phase 3: Apply known ID replacements ──
+            foreach (string id in idReplacements)
+            {
+                text = text.Replace(id, "[EVE_ID]");
+            }
+
+            // ── Phase 4: SSO credentials ──
             try
             {
                 string ssoAppId = Constants.NetworkConstants.SSODefaultAppID;
                 if (!string.IsNullOrEmpty(ssoAppId))
                     text = text.Replace(ssoAppId, "[SSO_CLIENT_ID]");
 
-                // Also sanitize user-customized SSO credentials
                 string ssoClientId = Settings.SSOClientID;
                 if (!string.IsNullOrEmpty(ssoClientId))
                     text = text.Replace(ssoClientId, "[SSO_CLIENT_ID]");
@@ -203,13 +294,14 @@ namespace EVEMon.Common.Helpers
                 // Resource or Settings may not be available
             }
 
-            // 6: Windows user paths: C:\Users\username\ -> C:\Users\[REDACTED]\
+            // ── Phase 5: File paths and system identity ──
+            // Windows user paths: C:\Users\username\ -> C:\Users\[REDACTED]\
             text = s_windowsUserPath.Replace(text, @"C:\Users\[REDACTED]\");
 
-            // 7: UNC paths: \\server\ -> \\[REDACTED]\
+            // UNC paths: \\server\ -> \\[REDACTED]\
             text = s_uncPath.Replace(text, @"\\[REDACTED]\");
 
-            // 8: Machine name and username
+            // Machine name and Windows username
             try
             {
                 string machineName = Environment.MachineName;
@@ -225,10 +317,19 @@ namespace EVEMon.Common.Helpers
                 // Environment may throw in sandboxed contexts
             }
 
-            // 9: Long base64/token strings (40+ chars)
+            // ── Phase 6: Tokens and secrets ──
+            // Long base64/token strings (40+ alphanumeric chars)
             text = s_longToken.Replace(text, "[TOKEN_REDACTED]");
 
-            // 10: Remove project local path (existing extension method)
+            // ── Phase 7: Catch-all for EVE entity IDs we missed ──
+            // Any standalone 8-20 digit number not adjacent to dots/colons (avoids
+            // version numbers like 5.1.2.0 and timestamps like 02:39:51).
+            // At this point, known IDs are already replaced, so remaining large
+            // numbers are likely entity IDs from EveIDToName lookups, employment
+            // history corp IDs, or other game data we don't have a handle on.
+            text = s_eveEntityId.Replace(text, "[EVE_ID]");
+
+            // ── Phase 8: Project local paths ──
             text = text.RemoveProjectLocalPath();
 
             return text;
@@ -553,7 +654,7 @@ namespace EVEMon.Common.Helpers
                     string line;
                     while ((line = traceReader.ReadLine()) != null)
                     {
-                        if (!IsGameDataTraceLine(line))
+                        if (IsSafeTraceLine(line))
                             report.AppendLine(line);
                     }
                 }
@@ -573,33 +674,45 @@ namespace EVEMon.Common.Helpers
         }
 
         /// <summary>
-        /// Returns true if a trace line contains game-specific data that should be
-        /// excluded from diagnostic reports (asset locations, structure lookups,
-        /// character details, market data, etc.).
+        /// Returns true if a trace line is safe to include in diagnostic reports.
+        /// Uses a whitelist approach: only lines matching known-safe prefixes are included.
+        /// Everything else (character names, ESI key IDs, skill names, etc.) is excluded.
         /// </summary>
-        private static bool IsGameDataTraceLine(string line)
+        private static bool IsSafeTraceLine(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
                 return false;
 
-            return line.Contains("Asset.UpdateLocation") ||
-                   line.Contains("structure", StringComparison.OrdinalIgnoreCase) ||
-                   line.Contains("EveIDToName") ||
-                   line.Contains("CharacterDataQuerying") ||
-                   line.Contains("CharacterSheet updated") ||
-                   line.Contains("Booster detected") ||
-                   line.Contains("Booster re-detected") ||
-                   line.Contains("EveNotificationType") ||
-                   line.Contains("EveNotificationTextParser") ||
-                   line.Contains("Remaining ids:") ||
-                   line.Contains("ECItemPricer") ||
-                   line.Contains("FuzzworksItemPricer") ||
-                   line.Contains("EMItemPricer") ||
-                   line.Contains("ImageService") ||
-                   line.Contains("IgbTcpListener") ||
-                   line.Contains("GAnalyticsTracker") ||
-                   line.Contains("Emailer") ||
-                   line.Contains("CodeCompiler");
+            // Strip timestamp prefix to get to the content
+            // Format: "2026-02-08 12:47:00Z > MethodName - args"
+            // or:     "0d 0h 00m 05s > MethodName - args"
+            int markerIndex = line.IndexOf("> ", StringComparison.Ordinal);
+            string content = markerIndex >= 0 ? line.Substring(markerIndex + 2) : line;
+
+            return content.StartsWith("Program.Startup", StringComparison.Ordinal) ||
+                   content.StartsWith("Main loop", StringComparison.Ordinal) ||
+                   content.StartsWith("Main window", StringComparison.Ordinal) ||
+                   content.StartsWith("MainWindow", StringComparison.Ordinal) ||
+                   content.StartsWith("Closed", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.Initialize", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.Run", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.Shutdown", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.OnSettingsChanged", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.OnSchedulerChanged", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.OnServerStatusUpdated", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.OnEveIDToNameUpdated", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.OnUpdateAvailable", StringComparison.Ordinal) ||
+                   content.StartsWith("EveMonClient.OnDataUpdateAvailable", StringComparison.Ordinal) ||
+                   content.StartsWith("Settings.", StringComparison.Ordinal) ||
+                   content.StartsWith("Datafiles.Load", StringComparison.Ordinal) ||
+                   content.StartsWith("SettingsFileManager", StringComparison.Ordinal) ||
+                   content.StartsWith("QueryMonitor", StringComparison.Ordinal) ||
+                   content.StartsWith("UpdateManager", StringComparison.Ordinal) ||
+                   content.StartsWith("TimeCheck", StringComparison.Ordinal) ||
+                   content.StartsWith("CredentialProtection", StringComparison.Ordinal) ||
+                   content.StartsWith("SSOAuthentication", StringComparison.Ordinal) ||
+                   content.StartsWith("Batched update for", StringComparison.Ordinal) ||
+                   content.StartsWith("Batched skill queue update", StringComparison.Ordinal);
         }
 
         #endregion

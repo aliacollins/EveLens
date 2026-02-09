@@ -5,7 +5,6 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
-using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Properties;
 using EVEMon.Common.Service;
@@ -52,9 +51,11 @@ namespace EVEMon.ExceptionHandling
         /// <param name="e"></param>
         private void UnhandledExceptionWindow_Load(object sender, EventArgs e)
         {
-            WhatCanYouDoLabel.Font = FontFactory.GetFont("Tahoma", 10F);
-
             SetBugImage();
+
+            string context = DetectCrashContext(m_exception);
+            if (!string.IsNullOrEmpty(context))
+                UserDescriptionTextBox.Text = context;
 
             BuildExceptionMessage();
         }
@@ -117,6 +118,48 @@ namespace EVEMon.ExceptionHandling
         internal static string GetRecursiveStackTrace(Exception exception)
             => DiagnosticReportBuilder.GetRecursiveStackTrace(exception);
 
+        /// <summary>
+        /// Attempts to detect what the user was doing based on the exception stack trace.
+        /// Returns a human-readable context string, or null if unknown.
+        /// </summary>
+        private static string DetectCrashContext(Exception exception)
+        {
+            string trace = exception?.ToString() ?? string.Empty;
+
+            if (trace.Contains("AssetBrowser") || trace.Contains("AssetsList"))
+                return "Opening or browsing assets";
+            if (trace.Contains("SkillBrowser") || trace.Contains("SkillTreeDisplay"))
+                return "Browsing skills";
+            if (trace.Contains("SkillQueue"))
+                return "Viewing skill queue";
+            if (trace.Contains("PlanWindow") || trace.Contains("PlanEditor"))
+                return "Working with skill plans";
+            if (trace.Contains("MarketOrder"))
+                return "Viewing market orders";
+            if (trace.Contains("ContractBrowser") || trace.Contains("Contract"))
+                return "Viewing contracts";
+            if (trace.Contains("IndustryJob"))
+                return "Viewing industry jobs";
+            if (trace.Contains("KillReport"))
+                return "Viewing kill reports";
+            if (trace.Contains("MailMessage") || trace.Contains("EveMailBody"))
+                return "Reading EVE mail";
+            if (trace.Contains("CharacterMonitor"))
+                return "Viewing character monitor";
+            if (trace.Contains("MainWindow"))
+                return "Using main window";
+            if (trace.Contains("Settings") || trace.Contains("SettingsForm"))
+                return "Changing settings";
+            if (trace.Contains("ESIKey") || trace.Contains("EsiKey"))
+                return "Managing ESI keys";
+            if (trace.Contains("NotificationList") || trace.Contains("EveNotification"))
+                return "Viewing notifications";
+            if (trace.Contains("Calendar"))
+                return "Viewing calendar";
+
+            return null;
+        }
+
         #endregion
 
 
@@ -134,11 +177,11 @@ namespace EVEMon.ExceptionHandling
         }
 
         /// <summary>
-        /// Handles the LinkClicked event of the CopyDetailsLinkLabel control.
+        /// Handles the Click event of the CopyDetailsButton control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void CopyDetailsLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private void CopyDetailsButton_Click(object sender, EventArgs e)
         {
             try
             {
@@ -166,22 +209,27 @@ namespace EVEMon.ExceptionHandling
         }
 
         /// <summary>
-        /// Handles the LinkClicked event of the llblReport control.
+        /// Handles the Click event of the SubmitReportButton control.
         /// Submits the crash report via the webhook, falling back to the manual flow.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private async void llblReport_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private async void SubmitReportButton_Click(object sender, EventArgs e)
         {
-            ReportLinkLabel.Enabled = false;
+            SubmitReportButton.Enabled = false;
             try
             {
                 string type = m_exception.GetType().Name;
                 string crashSummary = $"{type}: {m_exception.Message}";
 
+                string version = EveMonClient.FileVersionInfo?.FileVersion ?? "unknown";
+                string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
+                string userDesc = UserDescriptionTextBox.Text?.Trim();
+                string title = string.IsNullOrEmpty(userDesc)
+                    ? $"Crash: {type} - v{version} - {timestamp}Z"
+                    : $"Crash: {userDesc} ({type}) - v{version}";
                 ReportSubmissionResult result = await ReportSubmissionService
-                    .SubmitReportAsync($"Crash: {type}", "crash",
-                        TechnicalDetailsTextBox.Text, crashSummary);
+                    .SubmitReportAsync(title, "crash", TechnicalDetailsTextBox.Text, crashSummary);
 
                 if (result.Success)
                 {
@@ -209,22 +257,25 @@ namespace EVEMon.ExceptionHandling
                     // Continue even if clipboard fails
                 }
 
+                string fallbackTitle = string.IsNullOrEmpty(userDesc)
+                    ? $"Crash: {type}"
+                    : $"Crash: {userDesc} ({type})";
                 string url = DiagnosticReportBuilder.BuildGitHubIssueUrl(
-                    $"Crash: {type}", crashSummary);
+                    fallbackTitle, crashSummary);
                 Util.OpenURL(new Uri(url));
             }
             finally
             {
-                ReportLinkLabel.Enabled = true;
+                SubmitReportButton.Enabled = true;
             }
         }
 
         /// <summary>
-        /// Handles the LinkClicked event of the llblLatestBinaries control.
+        /// Handles the LinkClicked event of the LatestBinariesLinkLabel control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void llblLatestBinaries_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LatestBinariesLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Util.OpenURL(new Uri(NetworkConstants.GitHubDownloadsBase));
         }
