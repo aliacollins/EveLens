@@ -52,6 +52,7 @@ namespace EVEMon.SettingsUI
             removeAllRadioButton.Font = FontFactory.GetFont("Tahoma", 8.25F, FontStyle.Bold);
             removeConfirmedRadioButton.Font = FontFactory.GetFont("Tahoma", 8.25F, FontStyle.Bold);
             settingsFileStorageControl.Font = FontFactory.GetFont("Tahoma", 8.25F);
+            cloudStorageServiceControl.Font = FontFactory.GetFont("Tahoma", 8.25F);
             extraInfoComboBox.SelectedIndex = 0;
 
             m_settings = Settings.Export();

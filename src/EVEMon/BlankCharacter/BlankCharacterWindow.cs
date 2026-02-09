@@ -34,7 +34,7 @@ namespace EVEMon.BlankCharacter
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
 
-            buttonOK.Text = "Save";
+            buttonOK.Text = "Create";
             buttonOK.Enabled = false;
         }
 
@@ -75,20 +75,10 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void buttonOK_Click(object sender, EventArgs e)
+        private void buttonOK_Click(object sender, EventArgs e)
         {
-            // Three choices for one button
-            switch (buttonOK.DialogResult)
-            {
-                    // Save blank character
-                case DialogResult.None:
-                    await BlankCharacterUIHelper.SaveAsync(OnCharacterSaved);
-                    break;
-                    // Add blank character
-                case DialogResult.OK:
-                    await BlankCharacterUIHelper.AddBlankCharacterAsync(OnCharacterImported);
-                    break;
-            }
+            BlankCharacterUIHelper.AddBlankCharacter();
+            Close();
         }
 
         /// <summary>
@@ -97,31 +87,6 @@ namespace EVEMon.BlankCharacter
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void buttonCancel_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-
-        #endregion
-
-
-        #region Callback Methods
-
-        /// <summary>
-        /// Called when character is saved.
-        /// </summary>
-        private void OnCharacterSaved()
-        {
-            buttonOK.Text = "Import";
-            buttonOK.DialogResult = DialogResult.OK;
-
-            // Disabling control editing
-            blankCharacterControl.Enabled = false;
-        }
-
-        /// <summary>
-        /// Called when character is imported.
-        /// </summary>
-        private void OnCharacterImported()
         {
             Close();
         }

@@ -1,4 +1,5 @@
 using EVEMon.About;
+using EVEMon.ExceptionHandling;
 using EVEMon.ApiCredentialsManagement;
 using EVEMon.BlankCharacter;
 using EVEMon.CharacterMonitoring;
@@ -86,8 +87,8 @@ namespace EVEMon
             RememberPositionKey = "MainWindow";
             notificationList.Notifications = null;
 
-            tabLoadingLabel.Font = FontFactory.GetFont("Tahoma", 11.25F, FontStyle.Bold);
-            noCharactersLabel.Font = FontFactory.GetFont("Tahoma", 11.25F, FontStyle.Bold);
+            tabLoadingLabel.Font = FontFactory.GetFont("Segoe UI", 11.25F, FontStyle.Bold);
+            noCharactersLabel.Font = FontFactory.GetFont("Segoe UI", 11.25F, FontStyle.Bold);
 
             noCharactersLabel.Hide();
 
@@ -2011,6 +2012,17 @@ namespace EVEMon
         }
 
         /// <summary>
+        /// Help > Submit Diagnostic Report.
+        /// Open the diagnostic report window.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        private void diagnosticReportMenuItem_Click(object sender, EventArgs e)
+        {
+            WindowsFactory.ShowUnique<DiagnosticReport.DiagnosticReportWindow>();
+        }
+
+        /// <summary>
         /// Help > About.
         /// Open the "about" form.
         /// </summary>
@@ -2524,13 +2536,17 @@ namespace EVEMon
         }
 
         /// <summary>
-        /// Thrown an exception just to test the exception handler is working.
+        /// Opens the crash dialog with a fake exception for UI testing.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void ExceptionWindowToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new InvalidOperationException("Test Exception");
+            var testException = new InvalidOperationException("Test Exception for UI preview");
+            using (var window = new UnhandledExceptionWindow(testException))
+            {
+                window.ShowDialog(this);
+            }
         }
 
         /// <summary>

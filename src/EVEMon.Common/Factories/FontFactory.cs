@@ -111,6 +111,10 @@ namespace EVEMon.Common.Factories
         public static Font GetFont(string familyName, float emSize, FontStyle style = FontStyle.Regular,
             GraphicsUnit unit = GraphicsUnit.Point)
         {
+            // Map legacy font names to modern equivalents for consistent rendering
+            if (string.Equals(familyName, "Tahoma", StringComparison.OrdinalIgnoreCase))
+                familyName = "Segoe UI";
+
             try
             {
                 FontFamily family = null;

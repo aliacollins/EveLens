@@ -120,6 +120,9 @@ namespace EVEMon.Controls
             m_mediumFontSize = 9.75F;
             m_bigFontSize = 11.25F;
 
+            // Set base font for the control (all child labels inherit this)
+            Font = FontFactory.GetFont("Tahoma");
+
             // Initializes fonts
             lblCharName.Font = FontFactory.GetFont("Tahoma", m_bigFontSize, FontStyle.Bold);
             lblBalance.Font = FontFactory.GetFont("Tahoma", m_mediumFontSize, FontStyle.Bold);
@@ -128,6 +131,8 @@ namespace EVEMon.Controls
             lblCompletionTime.Font = FontFactory.GetFont("Tahoma", m_regularFontSize);
             lblSkillQueueTrainingTime.Font = FontFactory.GetFont("Tahoma", m_regularFontSize);
             lblExtraInfo.Font = FontFactory.GetFont("Tahoma", m_regularFontSize);
+            lblTotalSkillPoints.Font = FontFactory.GetFont("Tahoma", m_mediumFontSize, FontStyle.Bold);
+            lblESIKeyWarning.Font = FontFactory.GetFont("Tahoma", m_regularFontSize, FontStyle.Bold);
 
             // Initializes the portrait
             pbCharacterPortrait.Hide();
@@ -401,18 +406,46 @@ namespace EVEMon.Controls
                 return;
             }
 
-            // Check if character has no ESI keys or any key has an error
-            bool hasNoKeys = !ccpCharacter.Identity.ESIKeys.Any();
+            bool hasLinkedKeys = ccpCharacter.Identity.ESIKeys.Any();
             bool hasKeyError = ccpCharacter.Identity.ESIKeys.Any(key => key.HasError);
 
-            lblESIKeyWarning.Visible = hasNoKeys || hasKeyError;
-            if (hasNoKeys)
+            if (!hasLinkedKeys)
             {
-                lblESIKeyWarning.Text = "No API Key";
+                // Key not linked to identity yet — check for unlinked keys in global
+                // collection. ESIKey.ID may not match CharacterID (XML migration stores
+                // the old key ID, not the character ID), so we look for keys that haven't
+                // been associated with any character identity yet.
+                var unlinkedKeys = EveMonClient.ESIKeys
+                    .Where(k => !k.CharacterIdentities.Any());
+                if (unlinkedKeys.Any(k => !string.IsNullOrEmpty(k.RefreshToken)))
+                {
+                    // Has token, authentication in progress
+                    lblESIKeyWarning.Text = "Connecting...";
+                    lblESIKeyWarning.ForeColor = Color.DimGray;
+                }
+                else if (unlinkedKeys.Any())
+                {
+                    // Keys exist but tokens are empty — needs re-auth
+                    lblESIKeyWarning.Text = "Re-auth Required";
+                    lblESIKeyWarning.ForeColor = Color.OrangeRed;
+                }
+                else
+                {
+                    // No unlinked keys at all
+                    lblESIKeyWarning.Text = "No API Key";
+                    lblESIKeyWarning.ForeColor = Color.OrangeRed;
+                }
+                lblESIKeyWarning.Visible = true;
             }
             else if (hasKeyError)
             {
                 lblESIKeyWarning.Text = "API Key Error";
+                lblESIKeyWarning.ForeColor = Color.OrangeRed;
+                lblESIKeyWarning.Visible = true;
+            }
+            else
+            {
+                lblESIKeyWarning.Visible = false;
             }
         }
 

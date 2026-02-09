@@ -1186,6 +1186,15 @@ namespace EVEMon.Common.Constants {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to https://evemon-production.up.railway.app/api/report.
+        /// </summary>
+        public static string ReportWebhookUrl {
+            get {
+                return ResourceManager.GetString("ReportWebhookUrl", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to grant_type=authorization_code&amp;code={0}&amp;client_id={1}&amp;code_verifier={2}.
         /// </summary>
         public static string PostDataAuthPKCE {

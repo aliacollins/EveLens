@@ -2,7 +2,7 @@
 
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
-[![STABLE](https://img.shields.io/badge/branch-STABLE-green.svg)]()
+[![ALPHA](https://img.shields.io/badge/branch-ALPHA-red.svg)]()
 
 ## Project Status / Fork Note
 
@@ -18,7 +18,7 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## Current Version: 5.1.2-alpha.11
+## Current Version: 5.1.2-alpha.12
 
 ---
 

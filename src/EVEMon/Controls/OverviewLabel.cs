@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace EVEMon.Controls
@@ -42,6 +43,8 @@ namespace EVEMon.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             //base.OnPaint(e);
+
+            e.Graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
             using (StringFormat format = new StringFormat())
             {

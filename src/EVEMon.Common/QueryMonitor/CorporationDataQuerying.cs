@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using EVEMon.Common.Enumerations;
@@ -60,6 +61,13 @@ namespace EVEMon.Common.QueryMonitor
 
             foreach (var monitor in m_corporationQueryMonitors)
                 ccpCharacter.QueryMonitors.Add(monitor);
+
+            // Suppress self-ticking on all monitors — this class will drive them
+            // instead of each monitor subscribing to FiveSecondTick individually.
+            foreach (var monitor in m_corporationQueryMonitors)
+                monitor.SuppressSelfTicking();
+
+            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -101,11 +109,22 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         internal void Dispose()
         {
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+
             // Unsubscribe events in monitors
             foreach (IQueryMonitorEx monitor in m_corporationQueryMonitors)
             {
                 monitor.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Handles the TimerTick event — drives all corporation query monitors.
+        /// </summary>
+        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        {
+            foreach (var monitor in m_corporationQueryMonitors)
+                monitor.UpdateTick();
         }
 
         #endregion

@@ -20,6 +20,13 @@ namespace EVEMon.Common
         /// </summary>
         private static int s_tickCounter;
 
+        /// <summary>
+        /// Re-entrancy guard for timer tick processing.
+        /// Prevents cascading ticks when processing takes longer than 1 second
+        /// (common with 60+ characters where hundreds of event handlers fire).
+        /// </summary>
+        private static bool s_tickProcessing;
+
         #endregion
 
         #region Events firing
@@ -405,27 +412,41 @@ namespace EVEMon.Common
             if (Closed)
                 return;
 
-            // Increment tick counter
-            s_tickCounter++;
+            // Re-entrancy guard: if the previous tick is still processing (common with 60+
+            // characters where hundreds of handlers fire synchronously), skip this tick.
+            // The DispatcherTimer will fire again in 1 second and we'll catch up then.
+            if (s_tickProcessing)
+                return;
 
-            // Fire legacy TimerTick for backward compatibility (will be deprecated)
-            TimerTick?.ThreadSafeInvoke(null, EventArgs.Empty);
-
-            // Fire tiered events
-            // SecondTick - every 1 second (skill countdowns, visible UI)
-            SecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
-
-            // FiveSecondTick - every 5 seconds (API checks, cache expiry)
-            if (s_tickCounter % 5 == 0)
+            s_tickProcessing = true;
+            try
             {
-                FiveSecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                // Increment tick counter
+                s_tickCounter++;
+
+                // Fire legacy TimerTick for backward compatibility (will be deprecated)
+                TimerTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+                // Fire tiered events
+                // SecondTick - every 1 second (skill countdowns, visible UI)
+                SecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+                // FiveSecondTick - every 5 seconds (API checks, cache expiry)
+                if (s_tickCounter % 5 == 0)
+                {
+                    FiveSecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                }
+
+                // ThirtySecondTick - every 30 seconds (background tasks)
+                if (s_tickCounter % 30 == 0)
+                {
+                    ThirtySecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                    s_tickCounter = 0; // Reset to prevent overflow
+                }
             }
-
-            // ThirtySecondTick - every 30 seconds (background tasks)
-            if (s_tickCounter % 30 == 0)
+            finally
             {
-                ThirtySecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
-                s_tickCounter = 0; // Reset to prevent overflow
+                s_tickProcessing = false;
             }
         }
 

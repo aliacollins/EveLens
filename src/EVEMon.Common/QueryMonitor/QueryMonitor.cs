@@ -431,6 +431,16 @@ namespace EVEMon.Common.QueryMonitor
             ForceUpdate(retryOnError);
         }
 
+        void IQueryMonitorEx.UpdateTick()
+        {
+            UpdateOnOneSecondTick();
+        }
+
+        void IQueryMonitorEx.SuppressSelfTicking()
+        {
+            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+        }
+
         IAPIResult IQueryMonitor.LastResult => LastResult;
 
         #endregion
