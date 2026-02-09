@@ -65,7 +65,7 @@ git push origin refs/tags/beta
 # Read README for "What's New" section (consolidated features for beta)
 $readmeContent = Get-Content "$RepoRoot\README.md" -Raw
 $recentChanges = ""
-if ($readmeContent -match "## What's New in [0-9.]+\s*([\s\S]*?)(?=\n---\n)") {
+if ($readmeContent -match "## What's New in [0-9.]+\s*([\s\S]*?)(?=\r?\n---\r?\n)") {
     $recentChanges = $Matches[1].Trim()
 }
 
