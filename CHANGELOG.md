@@ -6,6 +6,7 @@ All notable changes to EVEMon will be documented in this file.
 - Add exit code checks to git operations; abort merge on conflict
 - Fix CRLF line ending mismatch in release script README regexes
 - Fix promotion pipeline: README validation, auto-release, CHANGELOG fallback, installer link and channel marker updates
+- Fix release-stable.ps1: add RepoRoot/Push-Location, graceful installer fallback, real release notes, idempotent tag handling
 
 ## [5.1.3-alpha.1] - 2026-02-09
 - Fix #14: Virtual-mode ListView crash when opening assets with 500+ items
