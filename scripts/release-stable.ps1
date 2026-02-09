@@ -7,6 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent $ScriptDir
 
 # Validate version format
 if ($Version -notmatch '^\d+\.\d+\.\d+$') {
@@ -18,10 +20,12 @@ Write-Host "Creating stable release v$Version..." -ForegroundColor Cyan
 
 # Build fresh
 Write-Host "Building EVEMon Release..." -ForegroundColor Cyan
+Push-Location $RepoRoot
 dotnet publish "src\EVEMon\EVEMon.csproj" -c Release -r win-x64 --self-contained false -o "publish\win-x64"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
+    Pop-Location
     exit 1
 }
 
@@ -30,29 +34,50 @@ $zipPath = "publish\EVEMon-$Version-win-x64.zip"
 if (Test-Path $zipPath) { Remove-Item $zipPath }
 Compress-Archive -Path "publish\win-x64\*" -DestinationPath $zipPath
 
-# Build installer
+# Build installer (graceful fallback if Inno Setup not available)
 Write-Host "Building installer..." -ForegroundColor Cyan
-& "$PSScriptRoot\build-installer.ps1" -Version $Version -SkipBuild
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Installer build failed!" -ForegroundColor Red
-    exit 1
-}
+& "$ScriptDir\build-installer.ps1" -Version $Version -SkipBuild
 
 $installerPath = "publish\EVEMon-install-$Version.exe"
-if (-not (Test-Path $installerPath)) {
-    Write-Host "Installer not found at: $installerPath" -ForegroundColor Red
-    exit 1
+$hasInstaller = Test-Path $installerPath
+
+if (-not $hasInstaller) {
+    Write-Host "Warning: Installer build failed or Inno Setup not installed. Continuing with ZIP only." -ForegroundColor Yellow
 }
 
-# Create git tag
+# Create git tag (handle existing tag from prior attempt)
+$ErrorActionPreference = "SilentlyContinue"
+git tag -d "v$Version" 2>&1 | Out-Null
+git push origin --delete "refs/tags/v$Version" 2>&1 | Out-Null
+$ErrorActionPreference = "Stop"
+
 git tag -a "v$Version" -m "Release v$Version"
-git push origin "v$Version"
+git push origin "refs/tags/v$Version"
 
 Write-Host "Creating GitHub release..." -ForegroundColor Cyan
 
-# Upload both zip and installer
-gh release create "v$Version" $zipPath $installerPath --title "EVEMon v$Version" --notes @"
+# Read README for "What's New" section for release notes
+$readmeContent = Get-Content "$RepoRoot\README.md" -Raw
+$recentChanges = ""
+if ($readmeContent -match "## What's New in [0-9.]+\s*([\s\S]*?)(?=\r?\n---\r?\n)") {
+    $recentChanges = $Matches[1].Trim()
+}
+
+# Fallback: Read from CHANGELOG.md if README section is empty
+if (-not $recentChanges) {
+    Write-Host "README 'What's New' section not found, falling back to CHANGELOG.md" -ForegroundColor Yellow
+    $changelog = Get-Content "$RepoRoot\CHANGELOG.md" -Raw
+    if ($changelog -match "## \[$([regex]::Escape($Version))\][^\n]*\n([\s\S]*?)(?=\n## \[)") {
+        $recentChanges = $Matches[1].Trim()
+    }
+    if (-not $recentChanges) {
+        $recentChanges = "See CHANGELOG.md for details."
+    }
+}
+
+# Generate release notes file (avoids PowerShell parsing issues with markdown)
+$releaseNotesPath = "$RepoRoot\publish\release-notes-stable.md"
+$releaseNotes = @"
 ## EVEMon v$Version
 
 ### Installation Options
@@ -78,17 +103,35 @@ gh release create "v$Version" $zipPath $installerPath --title "EVEMon v$Version"
 2. Add your character via **File -> Add Character**
 3. Authorize with EVE Online SSO
 
-### Changelog
-See README for full changelog.
+---
+
+### What's New
+$recentChanges
 
 ---
 See [README](https://github.com/aliacollins/evemon#readme) for full documentation.
+
+**Report Issues:** https://github.com/aliacollins/evemon/issues
+
+**Maintainer:** Alia Collins (EVE Online) | [CapsuleerKit](https://www.capsuleerkit.com/)
 "@
+
+Set-Content -Path $releaseNotesPath -Value $releaseNotes
+
+# Delete existing release if re-running (ignore errors)
+$ErrorActionPreference = "SilentlyContinue"
+gh release delete "v$Version" --yes --repo aliacollins/evemon 2>&1 | Out-Null
+$ErrorActionPreference = "Stop"
+
+# Upload files based on what's available
+if ($hasInstaller) {
+    gh release create "v$Version" $zipPath $installerPath --title "EVEMon v$Version" --notes-file $releaseNotesPath --repo aliacollins/evemon
+} else {
+    gh release create "v$Version" $zipPath --title "EVEMon v$Version" --notes-file $releaseNotesPath --repo aliacollins/evemon
+}
+
+Pop-Location
 
 Write-Host ""
 Write-Host "Stable release v$Version created!" -ForegroundColor Green
 Write-Host "URL: https://github.com/aliacollins/evemon/releases/tag/v$Version" -ForegroundColor Yellow
-
-# Reminder about patch.xml
-Write-Host ""
-Write-Host "IMPORTANT: Don't forget to update updates/patch.xml for auto-update notifications!" -ForegroundColor Yellow
