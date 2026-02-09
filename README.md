@@ -25,7 +25,7 @@ https://github.com/mgoeppner/evemon
 ## Installation
 
 **Recommended:** Download the installer which automatically installs .NET 8 if needed:
-- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/v5.1.3)
+- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/alpha)
 
 **Manual:** Download the portable ZIP and ensure you have:
 - Windows 10/11
