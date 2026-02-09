@@ -374,7 +374,9 @@ function Invoke-GitCommit {
 
     if (-not $DryRun) {
         git add -A
+        if ($LASTEXITCODE -ne 0) { throw "git add failed (exit code $LASTEXITCODE)" }
         git commit -m $Message
+        if ($LASTEXITCODE -ne 0) { throw "git commit failed (exit code $LASTEXITCODE)" }
     }
     Write-Success "Committed: $Message"
 }
@@ -386,6 +388,7 @@ function Invoke-GitPush {
         # Use --no-verify to bypass our own pre-push hook (we're the official promote script)
         # Use explicit refs/heads/ to avoid ambiguity with tags of the same name (alpha, beta)
         git push --no-verify origin "refs/heads/${Branch}:refs/heads/${Branch}"
+        if ($LASTEXITCODE -ne 0) { throw "git push to $Branch failed (exit code $LASTEXITCODE)" }
     }
     Write-Success "Pushed to origin/$Branch"
 }
@@ -400,7 +403,13 @@ function Invoke-GitMerge {
         # Use -B to checkout as a branch (not detached HEAD) while using
         # explicit refs/heads/ to avoid ambiguity with tags of the same name
         git checkout -B $TargetBranch "refs/heads/$TargetBranch"
+        if ($LASTEXITCODE -ne 0) { throw "git checkout $TargetBranch failed (exit code $LASTEXITCODE)" }
         git merge $SourceBranch --no-ff -m "Merge $SourceBranch into $TargetBranch"
+        if ($LASTEXITCODE -ne 0) {
+            # Abort the failed merge to restore clean state
+            git merge --abort 2>$null
+            throw "Merge conflict: $SourceBranch into $TargetBranch failed. Merge aborted."
+        }
     }
     Write-Success "Merged $SourceBranch -> $TargetBranch"
 }

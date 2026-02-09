@@ -3,6 +3,7 @@
 All notable changes to EVEMon will be documented in this file.
 
 ## [Unreleased]
+- Add exit code checks to git operations; abort merge on conflict
 - Fix CRLF line ending mismatch in release script README regexes
 - Make promotion transactional: rollback all changes if any phase fails
 - Fix promotion pipeline: README validation, auto-release, CHANGELOG fallback, installer link and channel marker updates
