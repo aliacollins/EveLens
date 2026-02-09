@@ -65,7 +65,7 @@ git push origin refs/tags/alpha
 # Extract "Alpha Changelog (Cumulative)" section from README for release notes
 $readmeContent = Get-Content "$RepoRoot\README.md" -Raw
 $changelogSection = ""
-if ($readmeContent -match "## Alpha Changelog \(Cumulative\)([\s\S]*?)(?=\n---\n\n## )") {
+if ($readmeContent -match "## Alpha Changelog \(Cumulative\)([\s\S]*?)(?=\r?\n---\r?\n\r?\n## )") {
     $changelogSection = $Matches[1].Trim()
 }
 
@@ -83,7 +83,7 @@ if (-not $changelogSection) {
 
 # Extract "Features Being Tested" section
 $featuresSection = ""
-if ($readmeContent -match "## Features Being Tested([\s\S]*?)(?=\n---\n)") {
+if ($readmeContent -match "## Features Being Tested([\s\S]*?)(?=\r?\n---\r?\n)") {
     $featuresSection = $Matches[1].Trim()
 }
 if (-not $featuresSection) {
