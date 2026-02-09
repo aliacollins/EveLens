@@ -482,8 +482,10 @@ function Invoke-Promote {
         Write-Host ""
     }
 
-    # Validation
-    Write-Step "Validating..."
+    # ================================================================
+    # PHASE 1: VALIDATE - No changes made. Safe to fail at any point.
+    # ================================================================
+    Write-Step "Phase 1: Pre-flight validation..."
 
     # Check for message
     if (-not $Message) {
@@ -511,8 +513,7 @@ function Invoke-Promote {
         }
     }
 
-    # Pre-flight: Validate README structure for release scripts
-    Write-Step "Validating README structure..."
+    # Validate README structure for release scripts
     $readmeIssues = Test-ReadmeStructure $Channel
     if ($readmeIssues.Count -gt 0) {
         foreach ($issue in $readmeIssues) {
@@ -523,59 +524,97 @@ function Invoke-Promote {
     }
     Write-Success "README structure valid for $Channel release"
 
-    # Branch logic
-    Write-Step "Preparing branches..."
-
+    # Branch validation
     $targetBranch = $Channel
     if ($Channel -eq "stable") { $targetBranch = "main" }
-
-    # For alpha: can promote from any branch
-    # For beta: should come from alpha
-    # For stable: should come from beta or alpha
 
     if ($Channel -eq "beta" -and $currentBranch -ne "alpha") {
         Write-Warning "Promoting to beta from '$currentBranch' instead of 'alpha'"
     }
-
     if ($Channel -eq "stable" -and $currentBranch -notin @("alpha", "beta")) {
         Write-Warning "Promoting to stable from '$currentBranch' instead of 'alpha' or 'beta'"
     }
 
-    # Update files
-    Write-Step "Updating version files..."
-    Update-SharedAssemblyInfo $nextVersion $Channel
-    Update-Changelog $nextVersion $Message $Channel
-    Update-PatchXml $nextVersion $Channel $Message
-    Update-ReadmeVersion $nextVersion $Channel
+    Write-Success "All pre-flight checks passed"
 
-    # Commit changes
-    Write-Step "Committing changes..."
+    # ================================================================
+    # PHASE 2: MODIFY FILES - Rollback all changes on any failure.
+    # ================================================================
+    Write-Step "Phase 2: Updating version files..."
+
+    try {
+        Update-SharedAssemblyInfo $nextVersion $Channel
+        Update-Changelog $nextVersion $Message $Channel
+        Update-PatchXml $nextVersion $Channel $Message
+        Update-ReadmeVersion $nextVersion $Channel
+    } catch {
+        Write-Error "File update failed: $_"
+        if (-not $DryRun) {
+            Write-Warning "Rolling back all file changes..."
+            git checkout -- .
+            Write-Warning "Rollback complete. No files were changed."
+        }
+        exit 1
+    }
+
+    # ================================================================
+    # PHASE 3: COMMIT + PUSH - Rollback commit if push fails.
+    # ================================================================
+    Write-Step "Phase 3: Committing and pushing..."
+
     $commitMsg = switch ($Channel) {
         "alpha" { "Alpha $nextVersion`: $Message" }
         "beta" { "Beta $nextVersion`: $Message" }
         "stable" { "Release v$nextVersion" }
     }
-    Invoke-GitCommit $commitMsg
 
-    # Handle branch operations
-    Write-Step "Pushing changes..."
-
-    if ($currentBranch -ne $targetBranch) {
-        # Push source branch first (with the version update commit)
-        Write-Info "Pushing $currentBranch..."
-        Invoke-GitPush $currentBranch
-
-        # Then merge to target branch
-        Write-Info "Merging $currentBranch -> $targetBranch..."
-        Invoke-GitMerge $currentBranch $targetBranch
+    try {
+        Invoke-GitCommit $commitMsg
+    } catch {
+        Write-Error "Commit failed: $_"
+        if (-not $DryRun) {
+            Write-Warning "Rolling back file changes..."
+            git checkout -- .
+            Write-Warning "Rollback complete. No commit was created."
+        }
+        exit 1
     }
 
-    # Push target branch
-    Write-Info "Pushing $targetBranch..."
-    Invoke-GitPush $targetBranch
+    # Push and merge - if push fails before anything reaches the remote,
+    # we can undo the local commit and file changes.
+    $pushed = $false
+    try {
+        if ($currentBranch -ne $targetBranch) {
+            Write-Info "Pushing $currentBranch..."
+            Invoke-GitPush $currentBranch
+            $pushed = $true
 
-    # Build and create GitHub release
-    Write-Step "Building and creating GitHub release..."
+            Write-Info "Merging $currentBranch -> $targetBranch..."
+            Invoke-GitMerge $currentBranch $targetBranch
+        }
+
+        Write-Info "Pushing $targetBranch..."
+        Invoke-GitPush $targetBranch
+        $pushed = $true
+    } catch {
+        Write-Error "Git push/merge failed: $_"
+        if (-not $pushed -and -not $DryRun) {
+            Write-Warning "Nothing was pushed to remote. Rolling back local commit..."
+            git reset HEAD~1
+            git checkout -- .
+            Write-Warning "Rollback complete. No changes were pushed."
+        } elseif (-not $DryRun) {
+            Write-Warning "Source branch was already pushed. Manual cleanup may be needed."
+            Write-Warning "The commit on '$currentBranch' is valid - retry the merge/push manually."
+        }
+        exit 1
+    }
+
+    # ================================================================
+    # PHASE 4: RELEASE - Best-effort. Push already succeeded.
+    # ================================================================
+    Write-Step "Phase 4: Building and creating GitHub release..."
+
     $releaseScript = switch ($Channel) {
         "alpha"  { "release-alpha.ps1" }
         "beta"   { "release-beta.ps1" }
