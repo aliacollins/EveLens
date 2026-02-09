@@ -18,14 +18,14 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## Current Version: 5.1.2-alpha.12
+## Current Version: 5.1.3-alpha.1
 
 ---
 
 ## Installation
 
 **Recommended:** Download the installer which automatically installs .NET 8 if needed:
-- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/v5.1.2)
+- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/v5.1.3)
 
 **Manual:** Download the portable ZIP and ensure you have:
 - Windows 10/11
@@ -33,20 +33,25 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## What's New in 5.1.2
+## What's New in 5.1.3
 
-### alpha.11 - Credential Encryption
-- **Security**: ESI refresh tokens now encrypted with Windows DPAPI
-- Tokens locked to your Windows user account — can't be stolen
-- Backup files contain encrypted tokens (useless on other machines)
-- Automatic migration from plaintext tokens on first run
-- Re-authentication required after restoring backup on new computer
+### Bug Fixes
+- **#14 Virtual-mode ListView crash** — Fixed `InvalidOperationException` when opening assets with 500+ items
+- **#15 Font rendering quality** — ClearType rendering for overview panel, Segoe UI for footer/assets
+- **#17 60+ character tick cascade** — Reduced event handlers from ~2,760 to ~300 (89% reduction), re-entrancy guard prevents crash
 
-### alpha.10 - Version Correction
-- Fixed version numbering from 5.2.0 to 5.1.2
-- Cumulative changelog in README and release notes
+### New Features
+- **One-click crash reporting** — Secure diagnostic report pipeline with 8-phase PII sanitizer
+- **Redesigned crash dialog** — Prominent Submit Report button, Copy Details, Data Directory access
+- **ESI key status indicators** — Color-coded connection status on character overview
+- **Simplified blank character creation** — Single-click instead of save-to-XML two-step
 
-### Major Features
+### Infrastructure
+- Settings migration hardening for imported/blank characters
+- UpdateManager null guard for malformed update XML
+- Promote script fix for detached HEAD during merge
+
+### Previous (5.1.2) Features
 
 **Modern Framework (.NET 8 Migration)**
 - Migrated from .NET Framework 4.8 to .NET 8
