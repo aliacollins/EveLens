@@ -373,8 +373,9 @@ function Invoke-GitMerge {
     )
 
     if (-not $DryRun) {
-        # Use explicit refs to avoid ambiguity with tags of the same name
-        git checkout "refs/heads/$TargetBranch" --
+        # Use -B to checkout as a branch (not detached HEAD) while using
+        # explicit refs/heads/ to avoid ambiguity with tags of the same name
+        git checkout -B $TargetBranch "refs/heads/$TargetBranch"
         git merge $SourceBranch --no-ff -m "Merge $SourceBranch into $TargetBranch"
     }
     Write-Success "Merged $SourceBranch -> $TargetBranch"
