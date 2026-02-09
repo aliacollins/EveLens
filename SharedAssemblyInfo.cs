@@ -29,9 +29,9 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision (0 for stable, 1+ for beta)
 //
-[assembly: AssemblyVersion("5.1.2.11")]
-[assembly: AssemblyFileVersion("5.1.2.11")]
-[assembly: AssemblyInformationalVersion("5.1.2-alpha.11")]
+[assembly: AssemblyVersion("5.1.2.12")]
+[assembly: AssemblyFileVersion("5.1.2.12")]
+[assembly: AssemblyInformationalVersion("5.1.2-alpha.12")]
 
 // Neutral Language
 [assembly: NeutralResourcesLanguage("en-US")]

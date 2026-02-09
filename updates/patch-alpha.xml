@@ -6,14 +6,14 @@
 <evemon>
   <releases>
     <release>
-      <date>2026-01-15</date>
-      <version>5.1.2.11</version>
+      <date>2026-02-09</date>
+      <version>5.1.2.12</version>
       <url>https://github.com/aliacollins/evemon/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evemon/releases/download/alpha/EVEMon-install-5.1.2.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EVEMon 5.1.2-alpha.11
+      <message><![CDATA[EVEMon 5.1.2-alpha.12
 
-Credential encryption with DPAPI]]></message>
+Fix #14 (virtual-mode ListView crash), #15 (font rendering), #17 (60+ char tick cascade); add one-click crash reporting with PII sanitizer; redesign crash dialog; harden settings migration and update manager]]></message>
     </release>
   </releases>
   <datafiles>
