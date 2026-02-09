@@ -3,6 +3,7 @@
 All notable changes to EVEMon will be documented in this file.
 
 ## [Unreleased]
+- Promotion pipeline overhaul: transactional phases, README validation, auto-release, CHANGELOG fallback, CRLF-safe regexes
 - Add exit code checks to git operations; abort merge on conflict
 - Fix CRLF line ending mismatch in release script README regexes
 - Make promotion transactional: rollback all changes if any phase fails

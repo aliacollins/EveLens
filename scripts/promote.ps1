@@ -357,7 +357,9 @@ function Test-Build {
 # ============================================================================
 
 function Get-CurrentBranch {
-    return (git rev-parse --abbrev-ref HEAD).Trim()
+    # Use branch --show-current to avoid ambiguity when branch and tag share a name
+    # (git rev-parse --abbrev-ref returns "heads/alpha" when both branch and tag "alpha" exist)
+    return (git branch --show-current).Trim()
 }
 
 function Test-CleanWorkingTree {
