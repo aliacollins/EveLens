@@ -69,6 +69,18 @@ if ($readmeContent -match "## What's New in [0-9.]+\s*([\s\S]*?)(?=\n---\n)") {
     $recentChanges = $Matches[1].Trim()
 }
 
+# Fallback: Read from CHANGELOG.md if README section is empty
+if (-not $recentChanges) {
+    Write-Host "README 'What's New' section not found, falling back to CHANGELOG.md" -ForegroundColor Yellow
+    $changelog = Get-Content "$RepoRoot\CHANGELOG.md" -Raw
+    if ($changelog -match "## \[$([regex]::Escape($Version))\][^\n]*\n([\s\S]*?)(?=\n## \[)") {
+        $recentChanges = $Matches[1].Trim()
+    }
+    if (-not $recentChanges) {
+        $recentChanges = "See CHANGELOG.md for details."
+    }
+}
+
 # Generate release notes file
 $releaseNotesPath = "$RepoRoot\publish\release-notes-beta.md"
 $releaseNotes = @"

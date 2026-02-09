@@ -69,10 +69,25 @@ if ($readmeContent -match "## Alpha Changelog \(Cumulative\)([\s\S]*?)(?=\n---\n
     $changelogSection = $Matches[1].Trim()
 }
 
+# Fallback: Read from CHANGELOG.md if README section is empty
+if (-not $changelogSection) {
+    Write-Host "README 'Alpha Changelog' section not found, falling back to CHANGELOG.md" -ForegroundColor Yellow
+    $changelog = Get-Content "$RepoRoot\CHANGELOG.md" -Raw
+    if ($changelog -match "## \[$([regex]::Escape($Version))\][^\n]*\n([\s\S]*?)(?=\n## \[)") {
+        $changelogSection = $Matches[1].Trim()
+    }
+    if (-not $changelogSection) {
+        $changelogSection = "See CHANGELOG.md for details."
+    }
+}
+
 # Extract "Features Being Tested" section
 $featuresSection = ""
 if ($readmeContent -match "## Features Being Tested([\s\S]*?)(?=\n---\n)") {
     $featuresSection = $Matches[1].Trim()
+}
+if (-not $featuresSection) {
+    $featuresSection = "See README.md for details."
 }
 
 # Generate release notes file (avoids PowerShell parsing issues with markdown)

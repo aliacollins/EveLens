@@ -18,7 +18,7 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## Current Version: 5.1.3-alpha.1
+## Current Version: 5.1.3-alpha.2
 
 ---
 
@@ -104,13 +104,37 @@ https://github.com/mgoeppner/evemon
 
 ---
 
+## Alpha Changelog (Cumulative)
+
+- **Fix #14:** Virtual-mode ListView crash when opening assets with 500+ items
+- **Fix #15:** Font rendering quality — ClearType for overview, Segoe UI for footer/assets
+- **Fix #17:** 60+ character tick cascade — 89% handler reduction, re-entrancy guard
+- **One-click crash reporting** with 8-phase PII sanitizer and webhook pipeline
+- **Redesigned crash dialog** with prominent Submit Report button
+- **ESI key status indicators** — No API Key, Connecting, Re-auth Required, Error
+- **Simplified blank character creation** — single-click instead of save-to-XML
+- Hardened settings migration for imported/blank characters
+- Guard UpdateManager against null TopicAddress/PatchAddress
+- Fix promote.ps1 detached HEAD bug during merge to alpha/beta
+
+---
+
+## Features Being Tested
+
+- **One-click crash reporting** — Submit diagnostic reports directly from the crash dialog
+- **ESI key status indicators** — Visual connection status on character overview
+- **Performance with 60+ characters** — Reduced event handler overhead
+- **Font rendering improvements** — ClearType and modern font stack
+
+---
+
 ## Update Channels
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| **Stable** | Recommended for daily use (you are here) | [Latest Release](https://github.com/aliacollins/evemon/releases/latest) |
+| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evemon/releases/latest) |
 | Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evemon/releases/tag/beta) |
-| Alpha | Experimental features | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
+| **Alpha** | Experimental features(you are here) | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
 
 ---
 
