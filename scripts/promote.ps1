@@ -315,7 +315,7 @@ function Update-ReadmeVersion {
 
     # Update "you are here" marker in Update Channels table
     # First, remove existing marker and bold from all channel names
-    $content = $content -replace ' \(you are here\)', ''
+    $content = $content -replace '\s*\(you are here\)', ''
     $content = $content -replace '\| \*\*(Stable)\*\* \|', '| Stable |'
     $content = $content -replace '\| \*\*(Beta)\*\* \|', '| Beta |'
     $content = $content -replace '\| \*\*(Alpha)\*\* \|', '| Alpha |'
