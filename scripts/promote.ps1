@@ -548,84 +548,156 @@ function Invoke-Promote {
 
     Write-Success "All pre-flight checks passed"
 
-    # ================================================================
-    # PHASE 2: MODIFY FILES - Rollback all changes on any failure.
-    # ================================================================
-    Write-Step "Phase 2: Updating version files..."
-
-    try {
-        Update-SharedAssemblyInfo $nextVersion $Channel
-        Update-Changelog $nextVersion $Message $Channel
-        Update-PatchXml $nextVersion $Channel $Message
-        Update-ReadmeVersion $nextVersion $Channel
-    } catch {
-        Write-Error "File update failed: $_"
-        if (-not $DryRun) {
-            Write-Warning "Rolling back all file changes..."
-            git checkout -- .
-            Write-Warning "Rollback complete. No files were changed."
-        }
-        exit 1
-    }
-
-    # ================================================================
-    # PHASE 3: COMMIT + PUSH - Rollback commit if push fails.
-    # ================================================================
-    Write-Step "Phase 3: Committing and pushing..."
-
     $commitMsg = switch ($Channel) {
         "alpha" { "Alpha $nextVersion`: $Message" }
         "beta" { "Beta $nextVersion`: $Message" }
         "stable" { "Release v$nextVersion" }
     }
 
-    try {
-        Invoke-GitCommit $commitMsg
-    } catch {
-        Write-Error "Commit failed: $_"
-        if (-not $DryRun) {
-            Write-Warning "Rolling back file changes..."
-            git checkout -- .
-            Write-Warning "Rollback complete. No commit was created."
-        }
-        exit 1
-    }
+    $isCrossBranch = ($currentBranch -ne $targetBranch)
 
-    # Push and merge - if push fails before anything reaches the remote,
-    # we can undo the local commit and file changes.
-    $pushed = $false
-    try {
-        if ($currentBranch -ne $targetBranch) {
+    if ($isCrossBranch) {
+        # ================================================================
+        # CROSS-BRANCH PROMOTE (e.g., feature->alpha, alpha->beta)
+        # Merge first, then update version files on the TARGET branch.
+        # This prevents polluting the source branch with target-specific
+        # version, badge, installer link, and "you are here" changes.
+        # ================================================================
+
+        # Phase 2: Push source and merge to target
+        Write-Step "Phase 2: Merging $currentBranch -> $targetBranch..."
+
+        $pushed = $false
+        try {
+            # Commit any uncommitted changes on source branch first
+            if (-not $DryRun) {
+                $uncommitted = Get-UncommittedChanges
+                if ($uncommitted) {
+                    git add -A
+                    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
+                    git commit -m "Pre-promote: include uncommitted changes on $currentBranch"
+                    if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+                    Write-Success "Committed uncommitted changes on $currentBranch"
+                }
+            }
+
             Write-Info "Pushing $currentBranch..."
             Invoke-GitPush $currentBranch
             $pushed = $true
 
             Write-Info "Merging $currentBranch -> $targetBranch..."
             Invoke-GitMerge $currentBranch $targetBranch
+        } catch {
+            Write-Error "Merge failed: $_"
+            if (-not $pushed -and -not $DryRun) {
+                Write-Warning "Nothing was pushed. Rolling back..."
+                git reset HEAD~1 2>$null
+                git checkout -- .
+                Write-Warning "Rollback complete."
+            } elseif (-not $DryRun) {
+                Write-Warning "Source branch was pushed but merge failed."
+                Write-Warning "Resolve manually: git checkout $targetBranch && git merge $currentBranch"
+            }
+            exit 1
         }
 
-        Write-Info "Pushing $targetBranch..."
-        Invoke-GitPush $targetBranch
-        $pushed = $true
-    } catch {
-        Write-Error "Git push/merge failed: $_"
-        if (-not $pushed -and -not $DryRun) {
-            Write-Warning "Nothing was pushed to remote. Rolling back local commit..."
-            git reset HEAD~1
-            git checkout -- .
-            Write-Warning "Rollback complete. No changes were pushed."
-        } elseif (-not $DryRun) {
-            Write-Warning "Source branch was already pushed. Manual cleanup may be needed."
-            Write-Warning "The commit on '$currentBranch' is valid - retry the merge/push manually."
+        # Phase 3: Update version files on the TARGET branch and commit
+        Write-Step "Phase 3: Updating version files on $targetBranch..."
+
+        try {
+            Update-SharedAssemblyInfo $nextVersion $Channel
+            Update-Changelog $nextVersion $Message $Channel
+            Update-PatchXml $nextVersion $Channel $Message
+            Update-ReadmeVersion $nextVersion $Channel
+        } catch {
+            Write-Error "File update failed on $targetBranch`: $_"
+            if (-not $DryRun) {
+                Write-Warning "Rolling back file changes on $targetBranch..."
+                git checkout -- .
+                Write-Warning "Rollback complete. Merge is intact but version was not bumped."
+            }
+            exit 1
         }
-        exit 1
+
+        try {
+            Invoke-GitCommit $commitMsg
+        } catch {
+            Write-Error "Commit failed on $targetBranch`: $_"
+            if (-not $DryRun) {
+                Write-Warning "Rolling back file changes..."
+                git checkout -- .
+            }
+            exit 1
+        }
+
+        # Push target
+        Write-Step "Pushing $targetBranch..."
+        try {
+            Invoke-GitPush $targetBranch
+        } catch {
+            Write-Error "Push to $targetBranch failed: $_"
+            Write-Warning "Commit is local. Retry with: git push origin $targetBranch"
+            exit 1
+        }
+
+    } else {
+        # ================================================================
+        # SAME-BRANCH PROMOTE (e.g., alpha->alpha when already on alpha)
+        # Update files, commit, push - all on the current branch.
+        # ================================================================
+
+        # Phase 2: Update version files
+        Write-Step "Phase 2: Updating version files..."
+
+        try {
+            Update-SharedAssemblyInfo $nextVersion $Channel
+            Update-Changelog $nextVersion $Message $Channel
+            Update-PatchXml $nextVersion $Channel $Message
+            Update-ReadmeVersion $nextVersion $Channel
+        } catch {
+            Write-Error "File update failed: $_"
+            if (-not $DryRun) {
+                Write-Warning "Rolling back all file changes..."
+                git checkout -- .
+                Write-Warning "Rollback complete. No files were changed."
+            }
+            exit 1
+        }
+
+        # Phase 3: Commit and push
+        Write-Step "Phase 3: Committing and pushing..."
+
+        try {
+            Invoke-GitCommit $commitMsg
+        } catch {
+            Write-Error "Commit failed: $_"
+            if (-not $DryRun) {
+                Write-Warning "Rolling back file changes..."
+                git checkout -- .
+                Write-Warning "Rollback complete. No commit was created."
+            }
+            exit 1
+        }
+
+        try {
+            Write-Info "Pushing $targetBranch..."
+            Invoke-GitPush $targetBranch
+        } catch {
+            Write-Error "Push failed: $_"
+            if (-not $DryRun) {
+                Write-Warning "Rolling back local commit..."
+                git reset HEAD~1
+                git checkout -- .
+                Write-Warning "Rollback complete. No changes were pushed."
+            }
+            exit 1
+        }
     }
 
     # ================================================================
     # PHASE 4: RELEASE - Best-effort. Push already succeeded.
     # ================================================================
     Write-Step "Phase 4: Building and creating GitHub release..."
-
     $releaseScript = switch ($Channel) {
         "alpha"  { "release-alpha.ps1" }
         "beta"   { "release-beta.ps1" }
