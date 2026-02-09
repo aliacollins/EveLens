@@ -2,7 +2,7 @@
 
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
-[![BETA](https://img.shields.io/badge/branch-BETA-yellow.svg)]()
+[![ALPHA](https://img.shields.io/badge/branch-ALPHA-red.svg)]()
 
 ## Project Status / Fork Note
 
@@ -18,14 +18,14 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## Current Version: 5.1.3-beta.1
+## Current Version: 5.1.3-alpha.5
 
 ---
 
 ## Installation
 
 **Recommended:** Download the installer which automatically installs .NET 8 if needed:
-- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/beta)
+- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/alpha)
 
 **Manual:** Download the portable ZIP and ensure you have:
 - Windows 10/11
@@ -133,8 +133,8 @@ https://github.com/mgoeppner/evemon
 | Channel | Use Case | Download |
 |---------|----------|----------|
 | Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evemon/releases/latest) |
-| **Beta** | Pre-release testing(you are here) | [Beta Release](https://github.com/aliacollins/evemon/releases/tag/beta) |
-| Alpha | Experimental features(you are here)(you are here)(you are here) | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
+| Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evemon/releases/tag/beta) |
+| **Alpha** | Experimental features(you are here) | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
 
 ---
 

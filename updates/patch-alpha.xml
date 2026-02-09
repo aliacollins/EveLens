@@ -7,13 +7,13 @@
   <releases>
     <release>
       <date>2026-02-09</date>
-      <version>5.1.3.4</version>
+      <version>5.1.3.5</version>
       <url>https://github.com/aliacollins/evemon/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evemon/releases/download/alpha/EVEMon-install-5.1.3.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EVEMon 5.1.3-alpha.4
+      <message><![CDATA[EVEMon 5.1.3-alpha.5
 
-Add exit code checks to git operations; abort merge on conflict]]></message>
+Fix you-are-here marker regex to handle missing spaces]]></message>
     </release>
   </releases>
   <datafiles>
