@@ -13,7 +13,7 @@
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EVEMon 5.1.3-alpha.5
 
-Fix you-are-here marker regex to handle missing spaces]]></message>
+Fix release-stable.ps1: RepoRoot, Push-Location, graceful fallback, real release notes, idempotent tags]]></message>
     </release>
   </releases>
   <datafiles>
