@@ -305,6 +305,30 @@ function Update-ReadmeVersion {
     # Update version in "Current experimental features" section
     $content = $content -replace 'experimental features \(v[^\)]+\)', "experimental features (v$Version)"
 
+    # Update installer download link based on channel
+    $installerUrl = switch ($Channel) {
+        "alpha"  { "https://github.com/aliacollins/evemon/releases/tag/alpha" }
+        "beta"   { "https://github.com/aliacollins/evemon/releases/tag/beta" }
+        "stable" { "https://github.com/aliacollins/evemon/releases/latest" }
+    }
+    $content = $content -replace '\[EVEMon Installer\]\(https://github\.com/aliacollins/evemon/releases/[^)]+\)', "[EVEMon Installer]($installerUrl)"
+
+    # Update "you are here" marker in Update Channels table
+    # First, remove existing marker and bold from all channel names
+    $content = $content -replace ' \(you are here\)', ''
+    $content = $content -replace '\| \*\*(Stable)\*\* \|', '| Stable |'
+    $content = $content -replace '\| \*\*(Beta)\*\* \|', '| Beta |'
+    $content = $content -replace '\| \*\*(Alpha)\*\* \|', '| Alpha |'
+
+    # Bold the active channel and add "you are here" marker
+    $activeChannel = switch ($Channel) {
+        "alpha"  { "Alpha" }
+        "beta"   { "Beta" }
+        "stable" { "Stable" }
+    }
+    $replacement = "| **$activeChannel** | `$1(you are here) |"
+    $content = $content -replace "\| $activeChannel \| ([^|]+?)\s*\|", $replacement
+
     if (-not $DryRun) {
         Set-Content $file $content -NoNewline
     }
@@ -382,6 +406,58 @@ function Invoke-GitMerge {
 }
 
 # ============================================================================
+# VALIDATION
+# ============================================================================
+
+function Test-ReadmeStructure {
+    param([string]$Channel)
+
+    $readme = Get-Content (Join-Path $RepoRoot "README.md") -Raw
+    $issues = @()
+
+    if ($Channel -eq "alpha") {
+        if ($readme -notmatch "## Alpha Changelog \(Cumulative\)") {
+            $issues += "README missing '## Alpha Changelog (Cumulative)' section (required by release-alpha.ps1)"
+        }
+        if ($readme -notmatch "## Features Being Tested") {
+            $issues += "README missing '## Features Being Tested' section (required by release-alpha.ps1)"
+        }
+    }
+    if ($Channel -in @("beta", "stable")) {
+        if ($readme -notmatch "## What's New in \d+\.\d+\.\d+") {
+            $issues += "README missing '## What's New in X.Y.Z' section (required by release-beta.ps1)"
+        }
+    }
+
+    return $issues
+}
+
+function Test-GitHubRelease {
+    param(
+        [string]$Tag,
+        [string]$ExpectedVersion
+    )
+
+    try {
+        $releaseJson = gh release view $Tag --json name,tagName --repo aliacollins/evemon 2>$null
+        if (-not $releaseJson) {
+            Write-Warning "GitHub release '$Tag' not found"
+            return $false
+        }
+        $release = $releaseJson | ConvertFrom-Json
+        if ($release.name -notmatch [regex]::Escape($ExpectedVersion)) {
+            Write-Warning "GitHub release title '$($release.name)' doesn't contain '$ExpectedVersion'"
+            return $false
+        }
+        Write-Success "GitHub release verified: $($release.name)"
+        return $true
+    } catch {
+        Write-Warning "Could not verify GitHub release: $_"
+        return $false
+    }
+}
+
+# ============================================================================
 # MAIN PROMOTION LOGIC
 # ============================================================================
 
@@ -435,6 +511,18 @@ function Invoke-Promote {
         }
     }
 
+    # Pre-flight: Validate README structure for release scripts
+    Write-Step "Validating README structure..."
+    $readmeIssues = Test-ReadmeStructure $Channel
+    if ($readmeIssues.Count -gt 0) {
+        foreach ($issue in $readmeIssues) {
+            Write-Error $issue
+        }
+        Write-Error "Fix README structure before promoting. Release scripts depend on these sections."
+        exit 1
+    }
+    Write-Success "README structure valid for $Channel release"
+
     # Branch logic
     Write-Step "Preparing branches..."
 
@@ -486,6 +574,46 @@ function Invoke-Promote {
     Write-Info "Pushing $targetBranch..."
     Invoke-GitPush $targetBranch
 
+    # Build and create GitHub release
+    Write-Step "Building and creating GitHub release..."
+    $releaseScript = switch ($Channel) {
+        "alpha"  { "release-alpha.ps1" }
+        "beta"   { "release-beta.ps1" }
+        "stable" { "release-stable.ps1" }
+    }
+    $releaseScriptPath = Join-Path $ScriptDir $releaseScript
+
+    if ($DryRun) {
+        Write-Info "[DRY RUN] Would run: $releaseScript"
+    } else {
+        try {
+            if ($Channel -eq "stable") {
+                $stableVersion = $nextVersion -replace '-.*$', ''
+                & $releaseScriptPath $stableVersion
+            } else {
+                & $releaseScriptPath
+            }
+            Write-Success "Release script completed"
+        } catch {
+            Write-Warning "Release script failed: $_"
+            Write-Warning "Run manually: .\scripts\$releaseScript"
+        }
+    }
+
+    # Post-flight: Verify GitHub release exists with correct version
+    Write-Step "Verifying GitHub release..."
+    $releaseTag = switch ($Channel) {
+        "alpha"  { "alpha" }
+        "beta"   { "beta" }
+        "stable" { "v$nextVersion" }
+    }
+
+    if ($DryRun) {
+        Write-Info "[DRY RUN] Would verify GitHub release tag: $releaseTag"
+    } else {
+        Test-GitHubRelease $releaseTag $nextVersion | Out-Null
+    }
+
     # Summary
     Write-Host ""
     Write-Host "============================================" -ForegroundColor Green
@@ -495,24 +623,6 @@ function Invoke-Promote {
     Write-Host "  Version: $nextVersion" -ForegroundColor White
     Write-Host "  Branch:  $targetBranch" -ForegroundColor White
     Write-Host "  Message: $Message" -ForegroundColor White
-    Write-Host ""
-
-    Write-Host "  Next steps:" -ForegroundColor Yellow
-    switch ($Channel) {
-        "alpha" {
-            Write-Host "    1. Run: .\scripts\release-alpha.ps1" -ForegroundColor Gray
-            Write-Host "    2. This will build and upload to rolling 'alpha' release" -ForegroundColor Gray
-        }
-        "beta" {
-            Write-Host "    1. Run: .\scripts\release-beta.ps1" -ForegroundColor Gray
-            Write-Host "    2. This will build and upload to rolling 'beta' release" -ForegroundColor Gray
-        }
-        "stable" {
-            Write-Host "    1. Run: .\scripts\release-stable.ps1 $($nextVersion)" -ForegroundColor Gray
-            Write-Host "    2. This will create GitHub release v$nextVersion with installer" -ForegroundColor Gray
-        }
-    }
-
     Write-Host ""
 }
 

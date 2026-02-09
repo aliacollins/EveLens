@@ -3,6 +3,7 @@
 All notable changes to EVEMon will be documented in this file.
 
 ## [Unreleased]
+- Fix promotion pipeline: README validation, auto-release, CHANGELOG fallback, installer link and channel marker updates
 
 ## [5.1.3-alpha.1] - 2026-02-09
 - Fix #14: Virtual-mode ListView crash when opening assets with 500+ items
