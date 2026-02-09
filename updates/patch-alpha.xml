@@ -7,13 +7,13 @@
   <releases>
     <release>
       <date>2026-02-09</date>
-      <version>5.1.3.3</version>
+      <version>5.1.3.4</version>
       <url>https://github.com/aliacollins/evemon/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evemon/releases/download/alpha/EVEMon-install-5.1.3.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EVEMon 5.1.3-alpha.3
+      <message><![CDATA[EVEMon 5.1.3-alpha.4
 
-Fix CRLF line ending mismatch in release script README regexes]]></message>
+Add exit code checks to git operations; abort merge on conflict]]></message>
     </release>
   </releases>
   <datafiles>

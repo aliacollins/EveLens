@@ -18,7 +18,7 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## Current Version: 5.1.3-alpha.3
+## Current Version: 5.1.3-alpha.4
 
 ---
 
@@ -134,7 +134,7 @@ https://github.com/mgoeppner/evemon
 |---------|----------|----------|
 | Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evemon/releases/latest) |
 | Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evemon/releases/tag/beta) |
-| **Alpha** | Experimental features(you are here)(you are here) | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
+| **Alpha** | Experimental features(you are here)(you are here)(you are here) | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
 
 ---
 
