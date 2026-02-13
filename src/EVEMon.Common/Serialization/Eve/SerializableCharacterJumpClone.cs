@@ -14,7 +14,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long LocationID { get; set; }
 
         [XmlAttribute("cloneName")]
-        public string CloneNameXml
+        public string? CloneNameXml
         {
             get { return CloneName; }
             set
@@ -24,6 +24,6 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
-        public string CloneName { get; set; }
+        public string? CloneName { get; set; }
     }
 }

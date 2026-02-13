@@ -10,7 +10,7 @@ namespace EVEMon.Common.Models.Comparers
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <returns></returns>
-        public bool Equals(PlanEntry x, PlanEntry y)
+        public bool Equals(PlanEntry? x, PlanEntry? y)
         {
             // Check whether the compared objects reference the same data
             if (ReferenceEquals(x, y))

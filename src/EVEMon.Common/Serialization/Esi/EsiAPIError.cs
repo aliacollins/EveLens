@@ -10,6 +10,6 @@ namespace EVEMon.Common.Serialization.Esi
     public class EsiAPIError
     {
         [DataMember(Name = "error", IsRequired = false)]
-        public string Error { get; set; }
+        public string? Error { get; set; }
     }
 }

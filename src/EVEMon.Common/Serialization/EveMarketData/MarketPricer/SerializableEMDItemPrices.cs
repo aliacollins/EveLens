@@ -6,6 +6,6 @@ namespace EVEMon.Common.Serialization.EveMarketData.MarketPricer
     public sealed class SerializableEMDItemPrices
     {
         [XmlElement("result")]
-        public SerializableEMDItemPriceList Result { get; set; }
+        public SerializableEMDItemPriceList? Result { get; set; }
     }
 }

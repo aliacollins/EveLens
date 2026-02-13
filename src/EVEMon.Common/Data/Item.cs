@@ -16,7 +16,7 @@ namespace EVEMon.Common.Data
     public class Item
     {
         private readonly FastList<StaticSkillLevel> m_prerequisites;
-        private static Item s_unknownItem;
+        private static Item? s_unknownItem;
 
 
         #region Constructors
@@ -49,7 +49,7 @@ namespace EVEMon.Common.Data
         /// <param name="group">The group.</param>
         /// <param name="src">The source.</param>
         internal Item(MarketGroup group, SerializableBlueprint src)
-            : this(src.ID, src.Name)
+            : this(src.ID, src.Name ?? string.Empty)
         {
             Icon = src.Icon;
             MetaGroup = src.MetaGroup;
@@ -73,14 +73,14 @@ namespace EVEMon.Common.Data
         /// <param name="group">The group.</param>
         /// <param name="src">The source.</param>
         internal Item(MarketGroup group, SerializableItem src)
-            : this(src.ID, src.Name)
+            : this(src.ID, src.Name ?? string.Empty)
         {
             MarketGroup = group;
             Icon = src.Icon;
             Race = src.Race;
             FittingSlot = src.Slot == ItemSlot.None ? ItemSlot.NoSlot : src.Slot;
             Family = src.Family;
-            Description = src.Description;
+            Description = src.Description ?? "No description.";
             CategoryName = src.Category;
             GroupName = src.Group;
 
@@ -116,7 +116,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Gets this object's icon.
         /// </summary>
-        public string Icon { get; }
+        public string? Icon { get; }
 
         /// <summary>
         /// Gets this object's name
@@ -151,12 +151,12 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Gets the category this item belong to.
         /// </summary>
-        public string CategoryName { get; }
+        public string? CategoryName { get; }
 
         /// <summary>
         /// Gets the group this item belong to.
         /// </summary>
-        public string GroupName { get; }
+        public string? GroupName { get; }
 
         /// <summary>
         /// Gets the metagroup this item belong to.
@@ -166,7 +166,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Gets the market group this item belong to.
         /// </summary>
-        public MarketGroup MarketGroup { get; }
+        public MarketGroup? MarketGroup { get; }
 
         /// <summary>
         /// Gets the slot this items fit to.
@@ -176,17 +176,17 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Gets the collection of properties of this object.
         /// </summary>
-        public EvePropertyCollection Properties { get; }
+        public EvePropertyCollection? Properties { get; }
 
         /// <summary>
         /// Gets the collection of reaction info of this object.
         /// </summary>
-        public ReactionMaterialCollection ReactionMaterial { get; }
+        public ReactionMaterialCollection? ReactionMaterial { get; }
 
         /// <summary>
         /// Gets the collection of control tower fuel info of this object.
         /// </summary>
-        public ControlTowerFuelCollection ControlTowerFuel { get; }
+        public ControlTowerFuelCollection? ControlTowerFuel { get; }
 
         /// <summary>
         /// Gets the collection of skills this object must satisfy to be used.
@@ -201,11 +201,11 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Gets the skill used to reprocess those items.
         /// </summary>
-        public StaticSkill ReprocessingSkill
+        public StaticSkill? ReprocessingSkill
         {
             get
             {
-                EvePropertyValue? property = Properties[DBConstants.ReprocessingSkillPropertyID];
+                EvePropertyValue? property = Properties?[DBConstants.ReprocessingSkillPropertyID];
 
                 // Returns scrap metal processing by default
                 if (property == null)
@@ -226,7 +226,7 @@ namespace EVEMon.Common.Data
             get
             {
                 StringBuilder sb = new StringBuilder();
-                MarketGroup cat = MarketGroup;
+                MarketGroup? cat = MarketGroup;
 
                 while (cat != null)
                 {
@@ -274,8 +274,8 @@ namespace EVEMon.Common.Data
 
             // If we have a slot index, we're a fittable item
             // Now see if we can find our usage numbers
-            string cpuUsage = FindProperty(EveProperty.CPU, null);
-            string gridUsage = FindProperty(EveProperty.Powergrid, null);
+            string? cpuUsage = FindProperty(EveProperty.CPU, null);
+            string? gridUsage = FindProperty(EveProperty.Powergrid, null);
 
             double? cpuRequired = TryParseNullable(TryStripTail(cpuUsage, " tf"));
             double? gridRequired = TryParseNullable(TryStripTail(gridUsage, " MW"));
@@ -309,7 +309,7 @@ namespace EVEMon.Common.Data
         /// <param name="tail">The &quot;tail&quot; to try and remove</param>
         /// <returns>null if stripMe is null, stripMe if tail is null or stripMe doesn't
         /// end in tail, stripMe-with-tail-removed otherwise.</returns>
-        private static string TryStripTail(string stripMe, string tail)
+        private static string? TryStripTail(string? stripMe, string? tail)
         {
             if (stripMe == null)
                 return null;
@@ -327,11 +327,11 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="parseMe">The string to try and parse.</param>
         /// <returns>The string as double, or null if failed to parse.</returns>
-        private static double? TryParseNullable(string parseMe)
+        private static double? TryParseNullable(string? parseMe)
         {
             double? result = null;
             double tempValue;
-            if (parseMe.TryParseInv(out tempValue))
+            if (parseMe != null && parseMe.TryParseInv(out tempValue))
                 result = tempValue;
             return result;
         }
@@ -345,9 +345,11 @@ namespace EVEMon.Common.Data
         /// <param name="property">The property name to look for.</param>
         /// <param name="defaultValue">The value to return if the property isn't found.</param>
         /// <returns>Either the value of the named property, or the given default value.</returns>
-        private string FindProperty(EveProperty property, string defaultValue)
+        private string? FindProperty(EveProperty property, string? defaultValue)
         {
-            string result = defaultValue;
+            string? result = defaultValue;
+            if (Properties == null)
+                return result;
             foreach (EvePropertyValue prop in Properties)
             {
                 if (prop.Property != property)

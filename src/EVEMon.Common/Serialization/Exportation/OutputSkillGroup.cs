@@ -16,13 +16,13 @@ namespace EVEMon.Common.Serialization.Exportation
         }
 
         [XmlAttribute("groupName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [XmlAttribute("skillsCount")]
         public int SkillsCount { get; set; }
 
         [XmlAttribute("totalSP")]
-        public string TotalSP { get; set; }
+        public string? TotalSP { get; set; }
 
         [XmlElement("skill")]
         public Collection<OutputSkill> Skills => m_skills;

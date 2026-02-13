@@ -140,7 +140,7 @@ namespace EVEMon.SkillPlanner
             m_emptyImageList.Images.Add(new Bitmap(30, 24));
 
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
             EveMonClient.PlanChanged += EveMonClient_PlanChanged;
             Disposed += OnDisposed;
         }
@@ -153,7 +153,7 @@ namespace EVEMon.SkillPlanner
         private void OnDisposed(object sender, EventArgs e)
         {
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
             Disposed -= OnDisposed;
         }
@@ -174,12 +174,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
             if (m_plan == null)
                 return;
 
-            if (e.Character != m_plan.Character)
+            if (!e.Characters.Contains(m_plan.Character))
                 return;
 
             UpdateTree();

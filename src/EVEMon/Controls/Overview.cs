@@ -7,6 +7,7 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
@@ -60,7 +61,7 @@ namespace EVEMon.Controls
             DoubleBuffered = true;
 
             EveMonClient.MonitoredCharacterCollectionChanged += EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
 
             Disposed += OnDisposed;
@@ -86,7 +87,7 @@ namespace EVEMon.Controls
         private void OnDisposed(object sender, EventArgs e)
         {
             EveMonClient.MonitoredCharacterCollectionChanged -= EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             Disposed -= OnDisposed;
         }
@@ -384,7 +385,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
             UpdateContent();
         }

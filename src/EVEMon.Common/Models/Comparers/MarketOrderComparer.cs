@@ -37,8 +37,12 @@ namespace EVEMon.Common.Models.Comparers
         /// Greater than zero
         /// <paramref name="x"/> is greater than <paramref name="y"/>.
         /// </returns>
-        public override int Compare(MarketOrder x, MarketOrder y)
+        public override int Compare(MarketOrder? x, MarketOrder? y)
         {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
             if (m_isAscending)
                 return CompareCore(x, y);
 
@@ -61,8 +65,8 @@ namespace EVEMon.Common.Models.Comparers
         /// </returns>
         private int CompareCore(MarketOrder x, MarketOrder y)
         {
-            BuyOrder buyOrderX = x as BuyOrder;
-            BuyOrder buyOrderY = y as BuyOrder;
+            BuyOrder? buyOrderX = x as BuyOrder;
+            BuyOrder? buyOrderY = y as BuyOrder;
 
             switch (m_column)
             {

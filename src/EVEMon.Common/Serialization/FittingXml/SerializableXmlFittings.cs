@@ -6,6 +6,6 @@ namespace EVEMon.Common.Serialization.FittingXml
     public sealed class SerializableXmlFittings
     {
         [XmlElement("fitting")]
-        public SerializableXmlFitting Fitting { get; set; }
+        public SerializableXmlFitting? Fitting { get; set; }
     }
 }

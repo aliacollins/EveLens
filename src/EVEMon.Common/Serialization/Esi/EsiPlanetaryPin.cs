@@ -35,13 +35,13 @@ namespace EVEMon.Common.Serialization.Esi
         public int SchematicID { get; set; }
 
         [DataMember(Name = "extractor_details", EmitDefaultValue = false, IsRequired = false)]
-        public EsiPlanetaryExtractorDetails ExtractorDetails { get; set; }
+        public EsiPlanetaryExtractorDetails? ExtractorDetails { get; set; }
 
         [DataMember(Name = "factory_details", EmitDefaultValue = false, IsRequired = false)]
-        public EsiPlanetaryFactoryDetails FactoryDetails { get; set; }
+        public EsiPlanetaryFactoryDetails? FactoryDetails { get; set; }
 
         [DataMember(Name = "contents", EmitDefaultValue = false, IsRequired = false)]
-        public List<EsiPlanetaryContentsListItem> Contents { get; set; }
+        public List<EsiPlanetaryContentsListItem> Contents { get; set; } = new();
 
         [DataMember(Name = "last_cycle_start", EmitDefaultValue = false, IsRequired = false)]
         public string LastCycleStartJson

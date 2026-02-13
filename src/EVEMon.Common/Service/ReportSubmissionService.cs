@@ -29,7 +29,7 @@ namespace EVEMon.Common.Service
         /// Never throws — returns a result for all outcomes.
         /// </summary>
         public static async Task<ReportSubmissionResult> SubmitReportAsync(
-            string title, string reportType, string reportBody, string crashSummary = null)
+            string title, string reportType, string reportBody, string? crashSummary = null)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace EVEMon.Common.Service
                     return new ReportSubmissionResult(false, null, serverError);
                 }
 
-                string issueUrl = TryExtractIssueUrl(responseBody);
+                string? issueUrl = TryExtractIssueUrl(responseBody);
                 if (issueUrl == null)
                     return new ReportSubmissionResult(false, null, "Could not parse server response.");
 
@@ -109,7 +109,7 @@ namespace EVEMon.Common.Service
             return Convert.ToBase64String(output.ToArray());
         }
 
-        private static string TryExtractIssueUrl(string json)
+        private static string? TryExtractIssueUrl(string json)
         {
             try
             {
@@ -121,7 +121,7 @@ namespace EVEMon.Common.Service
             return null;
         }
 
-        private static string TryExtractError(string json)
+        private static string? TryExtractError(string json)
         {
             try
             {
@@ -135,12 +135,12 @@ namespace EVEMon.Common.Service
 
         private class ReportPayload
         {
-            public string Title { get; set; }
-            public string ReportType { get; set; }
-            public string Version { get; set; }
-            public string Os { get; set; }
-            public string CrashSummary { get; set; }
-            public string ReportBodyGzip { get; set; }
+            public string Title { get; set; } = string.Empty;
+            public string ReportType { get; set; } = string.Empty;
+            public string Version { get; set; } = string.Empty;
+            public string? Os { get; set; }
+            public string? CrashSummary { get; set; }
+            public string? ReportBodyGzip { get; set; }
         }
     }
 
@@ -150,10 +150,10 @@ namespace EVEMon.Common.Service
     public sealed class ReportSubmissionResult
     {
         public bool Success { get; }
-        public string IssueUrl { get; }
-        public string ErrorMessage { get; }
+        public string? IssueUrl { get; }
+        public string? ErrorMessage { get; }
 
-        public ReportSubmissionResult(bool success, string issueUrl, string errorMessage)
+        public ReportSubmissionResult(bool success, string? issueUrl, string? errorMessage)
         {
             Success = success;
             IssueUrl = issueUrl;

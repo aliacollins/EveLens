@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Constants;
@@ -7,6 +8,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.ExternalCalendar;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Scheduling;
@@ -58,7 +60,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.SecondTick += EveMonClient_TimerTick;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
-            EveMonClient.CharacterSkillQueueUpdated += EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
             Disposed += OnDisposed;
         }
 
@@ -87,7 +89,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
-            EveMonClient.CharacterSkillQueueUpdated -= EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
             Disposed -= OnDisposed;
         }
 
@@ -293,9 +295,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterSkillQueueUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != m_character)
+            if (!e.Characters.Contains(m_character))
                 return;
 
             skillQueueControl.Invalidate();

@@ -13,8 +13,8 @@ namespace EVEMon.Common.Net
         /// <param name="result">The result.</param>
         /// <param name="error">The error.</param>
         /// <param name="response">The server response data.</param>
-        public DownloadResult(T result, HttpWebClientServiceException error,
-            ResponseParams response = null)
+        public DownloadResult(T? result, HttpWebClientServiceException? error,
+            ResponseParams? response = null)
         {
             Error = error;
             Result = result;
@@ -31,12 +31,12 @@ namespace EVEMon.Common.Net
         /// Gets or sets the result.
         /// </summary>
         /// <value>The result.</value>
-        public T Result { get; }
+        public T? Result { get; }
 
         /// <summary>
         /// Gets or sets the error.
         /// </summary>
         /// <value>The error.</value>
-        public HttpWebClientServiceException Error { get; }
+        public HttpWebClientServiceException? Error { get; }
     }
 }

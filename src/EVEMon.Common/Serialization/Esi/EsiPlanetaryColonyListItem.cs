@@ -20,7 +20,7 @@ namespace EVEMon.Common.Serialization.Esi
 
         // One of: temperate, barren, oceanic, ice, gas, lava, storm, plasma
         [DataMember(Name = "planet_type")]
-        private string PlanetTypeJson { get; set; }
+        private string? PlanetTypeJson { get; set; }
 
         [IgnoreDataMember]
         public int PlanetType

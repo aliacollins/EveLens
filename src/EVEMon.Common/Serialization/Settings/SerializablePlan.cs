@@ -21,13 +21,13 @@ namespace EVEMon.Common.Serialization.Settings
         }
 
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [XmlAttribute("owner")]
         public Guid Owner { get; set; }
 
         [XmlAttribute("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [XmlElement("sorting")]
         public PlanSorting SortingPreferences { get; set; }

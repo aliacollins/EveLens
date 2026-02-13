@@ -33,13 +33,13 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "subject", EmitDefaultValue = false, IsRequired = false)]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [DataMember(Name = "labels", EmitDefaultValue = false, IsRequired = false)]
-        public List<long> Labels { get; set; }
+        public List<long> Labels { get; set; } = new();
 
         [DataMember(Name = "recipients")]
-        public List<EsiMailRecipientListItem> Recipients { get; set; }
+        public List<EsiMailRecipientListItem> Recipients { get; set; } = new();
 
         [IgnoreDataMember]
         public DateTime SentDate

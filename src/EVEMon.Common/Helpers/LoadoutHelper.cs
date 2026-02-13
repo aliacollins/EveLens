@@ -100,7 +100,7 @@ namespace EVEMon.Common.Helpers
         /// </returns>
         internal static bool IsXMLFormat(string text)
         {
-            XmlRootAttribute xmlRoot = new SerializableXmlFittings().GetType().GetCustomAttributes(
+            XmlRootAttribute? xmlRoot = new SerializableXmlFittings().GetType().GetCustomAttributes(
                 typeof(XmlRootAttribute), false).Cast<XmlRootAttribute>().FirstOrDefault();
 
             if (xmlRoot == null)
@@ -112,8 +112,9 @@ namespace EVEMon.Common.Helpers
                     return false;
             }
 
-            SerializableXmlFittings fittings = Util.DeserializeXmlFromString<SerializableXmlFittings>(text);
-            return StaticItems.ShipsMarketGroup.AllItems.Any(x => x.Name == fittings.Fitting.ShipType.Name);
+            SerializableXmlFittings? fittings = Util.DeserializeXmlFromString<SerializableXmlFittings>(text);
+            return fittings?.Fitting?.ShipType != null &&
+                StaticItems.ShipsMarketGroup.AllItems.Any(x => x.Name == fittings.Fitting.ShipType.Name);
         }
 
         /// <summary>
@@ -169,7 +170,7 @@ namespace EVEMon.Common.Helpers
                 return loadoutInfo;
 
             var listOfItems = new List<Item>();
-            Loadout loadout = null;
+            Loadout? loadout = null;
 
             foreach (string line in lines.Where(line => !string.IsNullOrEmpty(line) &&
                 !line.Contains("empty") && !line.Contains("slot")))
@@ -205,7 +206,7 @@ namespace EVEMon.Common.Helpers
                 }
 
                 // Retrieve the charge
-                string chargeName = lastComma >= 0 ? line.Substring(lastComma + 1).Trim() :
+                string? chargeName = lastComma >= 0 ? line.Substring(lastComma + 1).Trim() :
                     null;
 
                 if (string.IsNullOrEmpty(chargeName))
@@ -232,29 +233,32 @@ namespace EVEMon.Common.Helpers
         /// <returns></returns>
         public static ILoadoutInfo DeserializeXmlFormat(string text)
         {
-            SerializableXmlFittings fittings = Util.DeserializeXmlFromString<SerializableXmlFittings>(text);
+            SerializableXmlFittings? fittings = Util.DeserializeXmlFromString<SerializableXmlFittings>(text);
 
             ILoadoutInfo loadoutInfo = new LoadoutInfo();
 
             // Nothing to evaluate
-            if (fittings == null)
+            if (fittings?.Fitting?.ShipType == null)
                 return loadoutInfo;
 
             // Retrieve the ship
+            if (fittings.Fitting.ShipType.Name == null)
+                return loadoutInfo;
             loadoutInfo.Ship = StaticItems.GetItemByName(fittings.Fitting.ShipType.Name);
 
             if (loadoutInfo.Ship == null)
                 return loadoutInfo;
 
             // Special case to avoid displaying gzCLF block from Osmium
-            if (fittings.Fitting.Description.Text.StartsWith("BEGIN gzCLF BLOCK", StringComparison.InvariantCultureIgnoreCase))
+            if (fittings.Fitting.Description?.Text?.StartsWith("BEGIN gzCLF BLOCK", StringComparison.InvariantCultureIgnoreCase) == true)
                 fittings.Fitting.Description.Text = string.Empty;
 
-            Loadout loadout = new Loadout(fittings.Fitting.Name, fittings.Fitting.Description.Text);
+            Loadout loadout = new Loadout(fittings.Fitting.Name ?? string.Empty,
+                fittings.Fitting.Description?.Text ?? string.Empty);
 
             IEnumerable<Item> listOfItems = fittings.Fitting.FittingHardware
                 .Where(hardware => hardware != null && hardware.Item != null && hardware.Slot != "drone bay")
-                .Select(hardware => hardware.Item);
+                .Select(hardware => hardware.Item!);
 
             IEnumerable<SerializableXmlFittingHardware> listOfXmlDrones = fittings.Fitting.FittingHardware
                 .Where(hardware => hardware != null &&
@@ -264,6 +268,7 @@ namespace EVEMon.Common.Helpers
             var listOfDrones = new List<Item>();
             foreach (SerializableXmlFittingHardware drone in listOfXmlDrones)
             {
+                if (drone.Item == null) continue;
                 for (int i = 0; i < drone.Quantity; i++)
                 {
                     listOfDrones.Add(drone.Item);
@@ -292,7 +297,7 @@ namespace EVEMon.Common.Helpers
                 return loadoutInfo;
 
             var listOfItems = new List<Item>();
-            Loadout loadout = null;
+            Loadout? loadout = null;
 
             foreach (string line in lines.Where(line => !string.IsNullOrEmpty(line)))
             {
@@ -320,7 +325,7 @@ namespace EVEMon.Common.Helpers
                 line.Substring(line.LastIndexOf(';') + 1).TryParseInv(out quantity);
 
                 // Trim excess ammo & charges, no need to display more than the max number of modules
-                if (item.MarketGroup.BelongsIn(DBConstants.AmmosAndChargesMarketGroupID) && quantity > 8)
+                if (item.MarketGroup != null && item.MarketGroup.BelongsIn(DBConstants.AmmosAndChargesMarketGroupID) && quantity > 8)
                     quantity = 1;
 
                 for (int i = 0; i < quantity; i++)
@@ -351,28 +356,32 @@ namespace EVEMon.Common.Helpers
             if (text.Length == 0)
                 return loadoutInfo;
 
-            SerializableClfFitting clfFitting = Util.DeserializeJson<SerializableClfFitting>(text);
+            SerializableClfFitting? clfFitting = Util.DeserializeJson<SerializableClfFitting>(text);
 
             // Nothing to evaluate
             if (clfFitting == null)
                 return loadoutInfo;
 
             // Retrieve the ship
-            loadoutInfo.Ship = clfFitting.Ship.Item;
+            var clfShipItem = clfFitting.Ship?.Item;
+            if (clfShipItem == null)
+                return loadoutInfo;
+            loadoutInfo.Ship = clfShipItem;
 
             if (loadoutInfo.Ship == null)
                 return loadoutInfo;
 
-            Loadout loadout = new Loadout(clfFitting.MetaData.Title, clfFitting.MetaData.Description);
+            Loadout loadout = new Loadout(clfFitting.MetaData?.Title ?? string.Empty,
+                clfFitting.MetaData?.Description ?? string.Empty);
 
             IEnumerable<Item> listOfItems = clfFitting.Presets.SelectMany(x => x.Modules)
                 .Where(module => module != null && module.Item != null)
-                .Select(module => module.Item);
+                .Select(module => module.Item!);
 
             IEnumerable<Item> listOfCharges = clfFitting.Presets.SelectMany(x => x.Modules)
                 .SelectMany(module => module.Charges)
                 .Where(module => module != null && module.Item != null)
-                .Select(module => module.Item);
+                .Select(module => module.Item!);
 
             IEnumerable<SerializableClfFittingDroneType> listOfClfDrones = clfFitting.Drones.SelectMany(x => x.InBay)
                 .Concat(clfFitting.Drones.SelectMany(x => x.InSpace))
@@ -382,6 +391,7 @@ namespace EVEMon.Common.Helpers
             var listOfDrones = new List<Item>();
             foreach (SerializableClfFittingDroneType clfDrone in listOfClfDrones)
             {
+                if (clfDrone.Item == null) continue;
                 for (int i = 0; i < clfDrone.Quantity; i++)
                 {
                     listOfDrones.Add(clfDrone.Item);
@@ -413,6 +423,9 @@ namespace EVEMon.Common.Helpers
                 case ItemSlot.Low:
                     return OrderedSlotNames[2];
             }
+
+            if (item.MarketGroup == null)
+                return OrderedSlotNames[7];
 
             // Rig Slot
             if (item.MarketGroup.BelongsIn(DBConstants.ShipModificationsMarketGroupID))

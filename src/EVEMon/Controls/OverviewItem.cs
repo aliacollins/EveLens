@@ -9,6 +9,7 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Enumerations.UISettings;
@@ -142,10 +143,10 @@ namespace EVEMon.Controls
             lblSkillQueueTrainingTime.Text = string.Empty;
 
             // Global events
-            EveMonClient.CharacterSkillQueueUpdated += EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
             EveMonClient.MarketOrdersUpdated += EveMonClient_MarketOrdersUpdated;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
             EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.SecondTick += EveMonClient_TimerTick;
@@ -163,10 +164,10 @@ namespace EVEMon.Controls
         /// <param name="e"></param>
         private void OnDisposed(object sender, EventArgs e)
         {
-            EveMonClient.CharacterSkillQueueUpdated -= EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
             EveMonClient.MarketOrdersUpdated -= EveMonClient_MarketOrdersUpdated;
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
@@ -720,22 +721,22 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != Character)
+            if (!e.Characters.Contains(Character))
                 return;
 
             UpdateContent();
         }
 
         /// <summary>
-        /// On character skill queue changed, update everything.
+        /// On character skill queue batch changed, update everything.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterSkillQueueUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != Character)
+            if (!e.Characters.Contains(Character))
                 return;
 
             UpdateContent();

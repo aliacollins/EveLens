@@ -87,7 +87,13 @@ namespace EVEMon.Sales
             string content = String.Empty;
             try
             {
-                content = HttpWebClientService.DownloadString(parser.URL).Result;
+                // Called from BackgroundWorker.DoWork (thread pool) - blocking is safe here.
+                // Uses async method directly to avoid the [Obsolete] sync wrapper.
+#pragma warning disable VSTHRD002 // Synchronously waiting on tasks in background worker
+                var downloadResult = HttpWebClientService.DownloadStringAsync(parser.URL)
+                    .GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+                content = downloadResult.Result;
             }
             catch (HttpWebClientServiceException ex)
             {

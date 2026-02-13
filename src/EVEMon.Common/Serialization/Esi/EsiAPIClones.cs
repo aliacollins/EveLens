@@ -21,7 +21,7 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "home_location")]
-        public EsiLocationBase HomeLocation { get; set; }
+        public EsiLocationBase? HomeLocation { get; set; }
 
         // Returns the last date the character used a jump clone, in UTC
         [IgnoreDataMember]
@@ -72,6 +72,6 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "jump_clones")]
-        public List<EsiJumpCloneListItem> JumpClones { get; set; }
+        public List<EsiJumpCloneListItem> JumpClones { get; set; } = new();
     }
 }

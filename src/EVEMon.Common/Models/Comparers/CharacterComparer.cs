@@ -90,8 +90,12 @@ namespace EVEMon.Common.Models.Comparers
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        public int Compare(Character x, Character y)
+        public int Compare(Character? x, Character? y)
         {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
             // Exchange items when descending sort
             if (Order == SortOrder.Descending)
             {

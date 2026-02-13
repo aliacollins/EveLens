@@ -67,7 +67,7 @@ namespace EVEMon.Common.QueryMonitor
             foreach (var monitor in m_corporationQueryMonitors)
                 monitor.SuppressSelfTicking();
 
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            EveMonClient.QueryScheduler?.Register(this);
         }
 
         #endregion
@@ -109,7 +109,7 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            EveMonClient.QueryScheduler?.Unregister(this);
 
             // Unsubscribe events in monitors
             foreach (IQueryMonitorEx monitor in m_corporationQueryMonitors)
@@ -119,9 +119,10 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Handles the TimerTick event — drives all corporation query monitors.
+        /// Processes a single tick, driving all corporation query monitors.
+        /// Called by CentralQueryScheduler instead of subscribing to FiveSecondTick directly.
         /// </summary>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        internal void ProcessTick()
         {
             foreach (var monitor in m_corporationQueryMonitors)
                 monitor.UpdateTick();

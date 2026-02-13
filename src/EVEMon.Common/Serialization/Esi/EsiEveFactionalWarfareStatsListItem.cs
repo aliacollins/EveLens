@@ -16,10 +16,10 @@ namespace EVEMon.Common.Serialization.Esi
         public int SystemsControlled { get; set; }
 
         [DataMember(Name = "kills")]
-        public EsiEveFactionWarfareTotals Kills { get; set; }
-        
+        public EsiEveFactionWarfareTotals? Kills { get; set; }
+
         [DataMember(Name = "victory_points")]
-        public EsiEveFactionWarfareTotals VictoryPoints { get; set; }
+        public EsiEveFactionWarfareTotals? VictoryPoints { get; set; }
 
         public SerializableEveFactionalWarfareStatsListItem ToXMLItem()
         {

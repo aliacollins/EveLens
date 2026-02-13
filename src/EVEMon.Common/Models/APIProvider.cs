@@ -22,11 +22,11 @@ namespace EVEMon.Common.Models
     public sealed class APIProvider
     {
         // Called when an ESI request completes
-        public delegate void ESIRequestCallback<T>(EsiResult<T> result, object state);
+        public delegate void ESIRequestCallback<T>(EsiResult<T> result, object? state);
 
-        private static APIProvider s_ccpProvider;
-        private static APIProvider s_ccpTestProvider;
-        private static XslCompiledTransform s_rowsetsTransform;
+        private static APIProvider? s_ccpProvider;
+        private static APIProvider? s_ccpTestProvider;
+        private static XslCompiledTransform? s_rowsetsTransform;
 
         private readonly List<ESIMethod> m_methods;
         private bool m_supportsCompressedResponse;
@@ -176,9 +176,9 @@ namespace EVEMon.Common.Models
         /// and POST data/token.</returns>
         private RequestParams GetRequestParams(ESIParams data)
         {
-            return new RequestParams(data.LastResponse, data.PostData)
+            return new RequestParams(data.LastResponse, data.PostData!)
             {
-                Authentication = data.Token,
+                Authentication = data.Token!,
                 AcceptEncoded = SupportsCompressedResponse
             };
         }
@@ -209,9 +209,9 @@ namespace EVEMon.Common.Models
             Uri pageUrl = GetESIUrl(method, data, page);
             // Create RequestParams manually to zero out the ETag/Expiry since it was already
             // checked
-            var pageParams = new RequestParams(null, data.PostData)
+            var pageParams = new RequestParams(null!, data.PostData!)
             {
-                Authentication = data.Token,
+                Authentication = data.Token!,
                 AcceptEncoded = SupportsCompressedResponse
             };
 
@@ -220,7 +220,7 @@ namespace EVEMon.Common.Models
             Action<Task<JsonResult<T>>> handleResult = task =>
             {
                 var esiResult = GetESIResult(task.Result);
-                object callbackState = state.State;
+                object? callbackState = state.State;
                 if (esiResult.HasError)
                     // Invoke the callback if an error occurred
                     Dispatcher.Invoke(() => callback.Invoke(esiResult, callbackState));
@@ -229,7 +229,8 @@ namespace EVEMon.Common.Models
                     Dispatcher.Invoke(() => callback.Invoke(first, callbackState));
                 else
                 {
-                    first.Result.AddRange(esiResult.Result);
+                    if (first.Result != null && esiResult.Result != null)
+                        first.Result.AddRange(esiResult.Result);
                     if (page >= state.LastPage)
                         // All pages fetched
                         Dispatcher.Invoke(() => callback.Invoke(first, callbackState));
@@ -268,7 +269,7 @@ namespace EVEMon.Common.Models
         /// <exception cref="System.ArgumentNullException">callback; The callback cannot be
         /// null.</exception>
         public void QueryPagedEsi<T, U>(Enum method, ESIRequestCallback<T> callback,
-            ESIParams data, object state = null) where T : List<U> where U : class
+            ESIParams data, object? state = null) where T : List<U> where U : class
         {
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
 
@@ -317,7 +318,7 @@ namespace EVEMon.Common.Models
         /// <exception cref="System.ArgumentNullException">callback; The callback cannot be
         /// null.</exception>
         public void QueryEsi<T>(Enum method, ESIRequestCallback<T> callback, ESIParams
-            data, object state = null) where T : class
+            data, object? state = null) where T : class
         {
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
 
@@ -439,13 +440,13 @@ namespace EVEMon.Common.Models
         /// Returns null on success, or the error result if any page fails.
         /// Requests are queued through ApiRequestQueue for rate limiting.
         /// </summary>
-        private async Task<EsiResult<T>> FetchRemainingPagesAsync<T, U>(Enum method, ESIParams data,
+        private async Task<EsiResult<T>?> FetchRemainingPagesAsync<T, U>(Enum method, ESIParams data,
             EsiResult<T> firstResult, int totalPages) where T : List<U> where U : class
         {
             // Create RequestParams without ETag/Expiry since first page was already checked
-            var pageParams = new RequestParams(null, data.PostData)
+            var pageParams = new RequestParams(null!, data.PostData!)
             {
-                Authentication = data.Token,
+                Authentication = data.Token!,
                 AcceptEncoded = SupportsCompressedResponse
             };
 
@@ -476,7 +477,7 @@ namespace EVEMon.Common.Models
                     return pageResult;
                 }
 
-                if (pageResult.HasData)
+                if (pageResult.HasData && firstResult.Result != null && pageResult.Result != null)
                 {
                     firstResult.Result.AddRange(pageResult.Result);
                 }
@@ -532,7 +533,7 @@ namespace EVEMon.Common.Models
             /// <summary>
             /// The state object to be passed to the callback.
             /// </summary>
-            public object State { get; }
+            public object? State { get; }
 
             /// <summary>
             /// Creates the information for fetching the second page.
@@ -540,7 +541,7 @@ namespace EVEMon.Common.Models
             /// <param name="first">The result from the first page.</param>
             /// <param name="count">The number of total pages.</param>
             /// <param name="state">The state to be passed to the callback.</param>
-            public PageInfo(EsiResult<T> first, int count, object state)
+            public PageInfo(EsiResult<T> first, int count, object? state)
             {
                 first.ThrowIfNull(nameof(first));
                 if (count < 2)
@@ -604,11 +605,11 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// The GET data to be passed in as a string.
         /// </summary>
-        public string GetData;
+        public string? GetData;
         /// <summary>
         /// The POST data to be passed in as a string.
         /// </summary>
-        public string PostData;
+        public string? PostData;
         /// <summary>
         /// The last response from the server.
         /// </summary>
@@ -616,9 +617,9 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// The token to use for authentication.
         /// </summary>
-        public string Token;
+        public string? Token;
 
-        public ESIParams(ResponseParams lastResponse, string token = null)
+        public ESIParams(ResponseParams? lastResponse, string? token = null)
         {
             ParamOne = 0L;
             ParamTwo = 0L;

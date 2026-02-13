@@ -19,11 +19,11 @@ namespace EVEMon.Common.Serialization.Esi
         public int MedalID { get; set; }
 
         [DataMember(Name = "reason")]
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
 
         // One of: public, private
         [DataMember(Name = "status")]
-        public string Status { get; set; }
+        public string? Status { get; set; }
 
         [DataMember(Name = "issuer_id")]
         public int IssuerID { get; set; }
@@ -43,10 +43,10 @@ namespace EVEMon.Common.Serialization.Esi
         public int CorporationID { get; set; }
 
         [DataMember(Name = "title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [DataMember(Name = "description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         // Medal graphics are not used in EVEMon
 

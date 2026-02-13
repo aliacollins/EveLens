@@ -10,7 +10,7 @@ namespace EVEMon.Common.Serialization.Esi
         public int ProductTypeID { get; set; }
 
         [DataMember(Name = "heads")]
-        public List<EsiPlanetaryExtractorHead> Heads { get; set; }
+        public List<EsiPlanetaryExtractorHead> Heads { get; set; } = new();
 
         // in seconds
         [DataMember(Name = "cycle_time", EmitDefaultValue = false, IsRequired = false)]

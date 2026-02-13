@@ -38,8 +38,12 @@ namespace EVEMon.Common.Models.Comparers
         /// Greater than zero
         /// <paramref name="x"/> is greater than <paramref name="y"/>.
         /// </returns>
-        public override int Compare(Contract x, Contract y)
+        public override int Compare(Contract? x, Contract? y)
         {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
             if (m_isAscending)
                 return CompareCore(x, y);
 
@@ -62,8 +66,8 @@ namespace EVEMon.Common.Models.Comparers
         /// </returns>
         private int CompareCore(Contract x, Contract y)
         {
-            Station xStart = x?.StartStation, yStart = y?.StartStation, xEnd = x?.EndStation,
-                yEnd = y?.EndStation;
+            Station? xStart = x.StartStation, yStart = y.StartStation, xEnd = x.EndStation,
+                yEnd = y.EndStation;
             switch (m_column)
             {
             case ContractColumn.Status:
@@ -97,22 +101,30 @@ namespace EVEMon.Common.Models.Comparers
             case ContractColumn.Volume:
                 return x.Volume.CompareTo(y.Volume);
             case ContractColumn.StartLocation:
+                if (xStart == null && yStart == null) return 0;
+                if (xStart == null) return -1;
                 return xStart.CompareTo(yStart);
             case ContractColumn.StartRegion:
-                return xStart.SolarSystemChecked.Constellation.Region.CompareTo(yStart.
-                    SolarSystemChecked.Constellation.Region);
+                return (xStart?.SolarSystemChecked?.Constellation?.Region)?.CompareTo(
+                    yStart?.SolarSystemChecked?.Constellation?.Region) ?? 0;
             case ContractColumn.StartSolarSystem:
-                return xStart.SolarSystemChecked.CompareTo(yStart.SolarSystemChecked);
+                return xStart?.SolarSystemChecked?.CompareTo(yStart?.SolarSystemChecked) ?? 0;
             case ContractColumn.StartStation:
+                if (xStart == null && yStart == null) return 0;
+                if (xStart == null) return -1;
                 return xStart.CompareTo(yStart);
             case ContractColumn.EndLocation:
+                if (xEnd == null && yEnd == null) return 0;
+                if (xEnd == null) return -1;
                 return xEnd.CompareTo(yEnd);
             case ContractColumn.EndRegion:
-                return xEnd.SolarSystemChecked.Constellation.Region.CompareTo(yEnd.
-                    SolarSystemChecked.Constellation.Region);
+                return (xEnd?.SolarSystemChecked?.Constellation?.Region)?.CompareTo(
+                    yEnd?.SolarSystemChecked?.Constellation?.Region) ?? 0;
             case ContractColumn.EndSolarSystem:
-                return xEnd.SolarSystemChecked.CompareTo(yEnd.SolarSystemChecked);
+                return xEnd?.SolarSystemChecked?.CompareTo(yEnd?.SolarSystemChecked) ?? 0;
             case ContractColumn.EndStation:
+                if (xEnd == null && yEnd == null) return 0;
+                if (xEnd == null) return -1;
                 return xEnd.CompareTo(yEnd);
             case ContractColumn.Accepted:
                 return x.Accepted.CompareTo(y.Accepted);

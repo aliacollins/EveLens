@@ -14,7 +14,7 @@ namespace EVEMon.Common.Serialization.Eve
     {
         private readonly APIErrorType m_error;
         private readonly string m_errorMessage;
-        private readonly Exception m_exception;
+        private readonly Exception? m_exception;
 
 
         #region Constructors
@@ -26,7 +26,6 @@ namespace EVEMon.Common.Serialization.Eve
         {
             m_error = APIErrorType.None;
             m_errorMessage = string.Empty;
-            m_exception = null;
         }
 
         /// <summary>
@@ -91,7 +90,6 @@ namespace EVEMon.Common.Serialization.Eve
         {
             m_error = error;
             m_errorMessage = message;
-            m_exception = null;
         }
 
         #endregion
@@ -118,18 +116,18 @@ namespace EVEMon.Common.Serialization.Eve
         /// Gets the exception.
         /// </summary>
         /// <value>The exception.</value>
-        public Exception Exception => m_exception;
+        public Exception? Exception => m_exception;
 
         /// <summary>
         /// Gets the error message without bothering about its nature.
         /// </summary>
-        public string ErrorMessage => CCPError?.ErrorMessage ?? m_errorMessage;
+        public string? ErrorMessage => CCPError?.ErrorMessage ?? m_errorMessage;
 
         /// <summary>
         /// Gets / sets the XML document when there's no HTTP error.
         /// </summary>
         [XmlIgnore]
-        public IXPathNavigable XmlDocument { get; set; }
+        public IXPathNavigable? XmlDocument { get; set; }
 
         #endregion
 
@@ -172,10 +170,10 @@ namespace EVEMon.Common.Serialization.Eve
         public DateTime CachedUntil { get; set; }
 
         [XmlElement("error")]
-        public CCPAPIError CCPError { get; set; }
+        public CCPAPIError? CCPError { get; set; }
 
         [XmlElement("result")]
-        public T Result { get; set; }
+        public T? Result { get; set; }
 
         [XmlIgnore]
         public int ErrorCode => CCPError?.ErrorCode ?? 0;
@@ -207,7 +205,7 @@ namespace EVEMon.Common.Serialization.Eve
             }
 
             // Fix the start/end times for the results implementing synchronization
-            ISynchronizableWithLocalClock synchronizable = Result as ISynchronizableWithLocalClock;
+            ISynchronizableWithLocalClock? synchronizable = Result as ISynchronizableWithLocalClock;
 
             synchronizable?.SynchronizeWithLocalClock(drift);
         }

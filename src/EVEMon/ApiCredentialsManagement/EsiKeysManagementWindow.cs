@@ -9,6 +9,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Factories;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 
 namespace EVEMon.ApiCredentialsManagement
@@ -50,7 +51,7 @@ namespace EVEMon.ApiCredentialsManagement
             EveMonClient.ESIKeyCollectionChanged += EveMonClient_ESIKeyCollectionChanged;
             EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
             EveMonClient.CharacterCollectionChanged += EveMonClient_CharacterCollectionChanged;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
             EveMonClient.AccountStatusUpdated += EveMonClient_AccountStatusUpdated;
             Disposed += OnDisposing;
 
@@ -74,7 +75,7 @@ namespace EVEMon.ApiCredentialsManagement
             EveMonClient.ESIKeyCollectionChanged -= EveMonClient_ESIKeyCollectionChanged;
             EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
             EveMonClient.CharacterCollectionChanged -= EveMonClient_CharacterCollectionChanged;
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.AccountStatusUpdated -= EveMonClient_AccountStatusUpdated;
             Disposed -= OnDisposing;
 
@@ -137,7 +138,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
             UpdateCharactersList();
         }

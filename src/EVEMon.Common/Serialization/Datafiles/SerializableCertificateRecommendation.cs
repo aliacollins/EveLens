@@ -19,6 +19,6 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The ship.</value>
         [XmlAttribute("name")]
-        public string ShipName { get; set; }
+        public string? ShipName { get; set; }
     }
 }

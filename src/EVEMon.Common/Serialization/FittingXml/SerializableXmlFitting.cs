@@ -16,12 +16,12 @@ namespace EVEMon.Common.Serialization.FittingXml
         public Collection<SerializableXmlFittingHardware> FittingHardware => m_fittingHardwares;
 
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [XmlElement("description")]
-        public SerializableXmlFittingDescription Description { get; set; }
+        public SerializableXmlFittingDescription? Description { get; set; }
 
         [XmlElement("shipType")]
-        public SerializableXmlFittingShipType ShipType { get; set; }
+        public SerializableXmlFittingShipType? ShipType { get; set; }
     }
 }

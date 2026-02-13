@@ -94,7 +94,7 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterSkillQueueUpdated += EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.SecondTick += EveMonClient_TimerTick;
@@ -108,7 +108,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object sender, EventArgs e)
         {
-            EveMonClient.CharacterSkillQueueUpdated -= EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
@@ -866,9 +866,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterSkillQueueUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != Character)
+            if (!e.Characters.Contains(Character))
                 return;
 
             UpdateContent();

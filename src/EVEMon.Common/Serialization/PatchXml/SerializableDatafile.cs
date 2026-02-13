@@ -13,7 +13,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The name.
         /// </value>
         [XmlElement("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the date.
@@ -22,7 +22,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The date.
         /// </value>
         [XmlElement("date")]
-        public string Date { get; set; }
+        public string? Date { get; set; }
 
         /// <summary>
         /// Gets or sets the md5 sum.
@@ -31,7 +31,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The md5 sum.
         /// </value>
         [XmlElement("md5")]
-        public string MD5Sum { get; set; }
+        public string? MD5Sum { get; set; }
 
         /// <summary>
         /// Gets or sets the address.
@@ -40,7 +40,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The address.
         /// </value>
         [XmlElement("url")]
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         /// <summary>
         /// Gets or sets the message XML.
@@ -68,7 +68,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The message.
         /// </value>
         [XmlIgnore]
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance is downloaded.

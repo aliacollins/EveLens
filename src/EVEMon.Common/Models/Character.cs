@@ -16,6 +16,7 @@ using EVEMon.Common.SettingsObjects;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Service;
 using EVEMon.Common.Helpers;
+using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Models
 {
@@ -23,7 +24,7 @@ namespace EVEMon.Common.Models
     /// Represents a base class for character
     /// </summary>
     [EnforceUIThreadAffinity]
-    public abstract class Character : BaseCharacter
+    public abstract class Character : BaseCharacter, ICharacterIdentity
     {
         // Character name
         private string m_name;
@@ -482,7 +483,7 @@ namespace EVEMon.Common.Models
         /// Gets or sets the active cerebral accelerator (booster) if detected.
         /// Null if no booster is active.
         /// </summary>
-        public BoosterInfo ActiveBooster { get; private set; }
+        public BoosterInfo? ActiveBooster { get; private set; }
 
         /// <summary>
         /// Gets whether a booster is currently active.
@@ -627,7 +628,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the skill currently in training.
         /// </summary>
-        public virtual QueuedSkill CurrentlyTrainingSkill => null;
+        public virtual QueuedSkill? CurrentlyTrainingSkill => null;
 
         #endregion
 

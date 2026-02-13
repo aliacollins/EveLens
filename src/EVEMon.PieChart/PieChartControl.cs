@@ -22,12 +22,12 @@ namespace EVEMon.PieChart
         private float m_bottomMargin;
         private bool m_fitChart;
 
-        private decimal[] m_values;
-        private Color[] m_colors;
+        private decimal[] m_values = null!;
+        private Color[] m_colors = null!;
         private float m_sliceRelativeHeight;
         private float[] m_relativeSliceDisplacements = new[] { 0F };
-        private string[] m_texts;
-        private string[] m_tootips;
+        private string[] m_texts = null!;
+        private string[] m_tootips = null!;
         private ShadowStyle m_shadowStyle = ShadowStyle.GradualShadow;
         private EdgeColorType m_edgeColorType = EdgeColorType.SystemColor;
         private float m_edgeLineWidth = 1F;
@@ -40,12 +40,12 @@ namespace EVEMon.PieChart
 
         // These are used for the actual drawing. They are modified depending
         // on wether sorting by size is on or off
-        private decimal[] m_drawValues;
-        private Color[] m_drawColors;
+        private decimal[]? m_drawValues;
+        private Color[]? m_drawColors;
         private float[] m_drawRelativeSliceDisplacements = new[] { 0F };
-        private string[] m_drawToolTipTexts;
-        private string[] m_drawTexts;
-        private int[] m_sortOrder;
+        private string[]? m_drawToolTipTexts;
+        private string[]? m_drawTexts;
+        private int[] m_sortOrder = null!;
 
         /// <summary>
         /// Default AutoPopDelay of the ToolTip control.
@@ -64,9 +64,6 @@ namespace EVEMon.PieChart
         /// </summary>
         public PieChartControl()
         {
-            m_texts = null;
-            m_tootips = null;
-            PieChart = null;
             SetStyle(ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.DoubleBuffer |
                      ControlStyles.UserPaint |
@@ -82,7 +79,7 @@ namespace EVEMon.PieChart
         /// <value>
         /// The pie chart.
         /// </value>
-        public PieChart3D PieChart { get; private set; }
+        public PieChart3D? PieChart { get; private set; }
 
         /// <summary>
         /// Gets or sets colors to be used for rendering pie slices.
@@ -289,12 +286,12 @@ namespace EVEMon.PieChart
             if (m_drawColors != null && m_drawColors.Length > 0)
             {
                 PieChart = new PieChart3D(m_leftMargin, m_topMargin, width, height, m_drawValues, m_drawColors,
-                    m_sliceRelativeHeight, m_drawTexts);
+                    m_sliceRelativeHeight, m_drawTexts!);
             }
             else
             {
                 PieChart = new PieChart3D(m_leftMargin, m_topMargin, width, height, m_drawValues, m_sliceRelativeHeight,
-                    m_drawTexts);
+                    m_drawTexts!);
             }
 
             PieChart.FitToBoundingRectangle(m_fitChart);
@@ -450,7 +447,7 @@ namespace EVEMon.PieChart
         /// <summary>
         /// Event for when the graph angle changes.
         /// </summary>
-        public event EventHandler AngleChange;
+        public event EventHandler? AngleChange;
 
         /// <summary>
         /// Event for when the graph angle changes
@@ -520,11 +517,11 @@ namespace EVEMon.PieChart
                         biggest = y;
                     }
 
-                    m_drawValues[num] = values[biggest];
-                    m_drawTexts[num] = texts[biggest];
+                    m_drawValues![num] = values[biggest];
+                    m_drawTexts![num] = texts[biggest];
                     m_drawRelativeSliceDisplacements[num] = displacements[biggest];
-                    m_drawToolTipTexts[num] = tooltips[biggest];
-                    m_drawColors[num] = colours[biggest];
+                    m_drawToolTipTexts![num] = tooltips[biggest];
+                    m_drawColors![num] = colours[biggest];
                     m_sortOrder[num] = biggest;
                     values[biggest] = 0;
                 }

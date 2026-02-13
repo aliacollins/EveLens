@@ -24,7 +24,7 @@ namespace EVEMon.Common.Serialization.Eve
         /// Gets the error message without bothering about its nature.
         /// </summary>
         /// <value>The error message.</value>
-        string ErrorMessage { get; }
+        string? ErrorMessage { get; }
 
         /// <summary>
         /// Gets the error code. The meaning of this code varies depending on the source, and
@@ -36,6 +36,6 @@ namespace EVEMon.Common.Serialization.Eve
         /// Gets the exception.
         /// </summary>
         /// <value>The exception.</value>
-        Exception Exception { get; }
+        Exception? Exception { get; }
     }
 }

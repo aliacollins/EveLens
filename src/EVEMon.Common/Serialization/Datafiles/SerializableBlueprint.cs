@@ -39,14 +39,14 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the icon.
         /// </summary>
         /// <value>The icon.</value>
         [XmlAttribute("icon")]
-        public string Icon { get; set; }
+        public string? Icon { get; set; }
 
         /// <summary>
         /// Gets or sets the meta group.
@@ -130,7 +130,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The reaction outcome.</value>
         [XmlElement("reactionOutcome")]
-        public SerializableMaterialQuantity ReactionOutcome { get; set; }
+        public SerializableMaterialQuantity? ReactionOutcome { get; set; }
 
         /// <summary>
         /// Gets the prereq skill.

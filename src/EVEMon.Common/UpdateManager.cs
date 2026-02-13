@@ -221,7 +221,8 @@ namespace EVEMon.Common
             try
             {
                 // No error, let's try to deserialize
-                ScanUpdateFeed(result.Result);
+                if (result.Result != null)
+                    ScanUpdateFeed(result.Result);
             }
             catch (InvalidOperationException exc)
             {
@@ -246,11 +247,15 @@ namespace EVEMon.Common
         /// <param name="result">The result.</param>
         private static void ScanUpdateFeed(SerializablePatch result)
         {
-            Version currentVersion = Version.Parse(EveMonClient.FileVersionInfo.FileVersion);
-            SerializableRelease newestRelease = result.Releases?.FirstOrDefault(
-                release => Version.Parse(release.Version).Major == currentVersion.Major);
+            string? fileVersion = EveMonClient.FileVersionInfo.FileVersion;
+            if (fileVersion == null)
+                return;
 
-            Version newestVersion = (newestRelease != null) ? Version.Parse(newestRelease.
+            Version currentVersion = Version.Parse(fileVersion);
+            SerializableRelease? newestRelease = result.Releases?.FirstOrDefault(
+                release => release.Version != null && Version.Parse(release.Version).Major == currentVersion.Major);
+
+            Version newestVersion = (newestRelease?.Version != null) ? Version.Parse(newestRelease.
                 Version) : currentVersion;
             Version mostRecentDeniedVersion = !string.IsNullOrEmpty(Settings.Updates.
                 MostRecentDeniedUpgrade) ? new Version(Settings.Updates.
@@ -272,17 +277,17 @@ namespace EVEMon.Common
 
                 Uri forumUrl = new Uri(newestRelease.TopicAddress);
                 Uri installerUrl = new Uri(newestRelease.PatchAddress);
-                string updateMessage = newestRelease.Message;
-                string installArgs = newestRelease.InstallerArgs;
-                string md5Sum = newestRelease.MD5Sum;
-                string additionalArgs = newestRelease.AdditionalArgs;
+                string? updateMessage = newestRelease.Message;
+                string? installArgs = newestRelease.InstallerArgs;
+                string? md5Sum = newestRelease.MD5Sum;
+                string? additionalArgs = newestRelease.AdditionalArgs;
                 bool canAutoInstall = !string.IsNullOrEmpty(installerUrl.AbsoluteUri) &&
                     !string.IsNullOrEmpty(installArgs);
 
                 if (!string.IsNullOrEmpty(additionalArgs) && additionalArgs.Contains(
                     "%EVEMON_EXECUTABLE_PATH%"))
                 {
-                    string appPath = Path.GetDirectoryName(Application.ExecutablePath);
+                    string? appPath = Path.GetDirectoryName(Application.ExecutablePath);
                     installArgs = $"{installArgs} {additionalArgs}";
                     installArgs = installArgs.Replace("%EVEMON_EXECUTABLE_PATH%", appPath);
                 }
@@ -302,11 +307,12 @@ namespace EVEMon.Common
             }
 
             // Notify about a new major version
-            Version newestMajorVersion = result.Releases?.Max(release => Version.Parse(
-                release.Version)) ?? new Version();
-            SerializableRelease newestMajorRelease = result.Releases?.FirstOrDefault(release =>
-                Version.Parse(release.Version) == newestMajorVersion);
-            if (newestMajorRelease == null)
+            Version newestMajorVersion = result.Releases?
+                .Where(release => release.Version != null)
+                .Max(release => Version.Parse(release.Version!)) ?? new Version();
+            SerializableRelease? newestMajorRelease = result.Releases?.FirstOrDefault(release =>
+                release.Version != null && Version.Parse(release.Version) == newestMajorVersion);
+            if (newestMajorRelease?.Version == null)
                 return;
             newestVersion = Version.Parse(newestMajorRelease.Version);
             Version mostRecentDeniedMajorUpgrade = !string.IsNullOrEmpty(Settings.Updates.

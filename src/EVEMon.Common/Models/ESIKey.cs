@@ -46,7 +46,6 @@ namespace EVEMon.Common.Models
         /// </summary>
         private ESIKey()
         {
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             m_keyExpires = DateTime.MinValue;
             m_queried = false;
             m_queryPending = false;
@@ -254,8 +253,8 @@ namespace EVEMon.Common.Models
         /// </summary>
         internal void Dispose()
         {
-            // Unsubscribe events
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            // No event subscriptions to unsubscribe - ESIKey token refresh
+            // is driven by CentralQueryScheduler instead of per-key FiveSecondTick
         }
 
         #endregion
@@ -264,11 +263,9 @@ namespace EVEMon.Common.Models
         #region Global Events
 
         /// <summary>
-        /// Updates the API key info and account status on a timer tick.
+        /// Checks the access token for refresh. Called by CentralQueryScheduler.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        internal void ProcessTick()
         {
             CheckAccessToken();
         }

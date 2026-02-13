@@ -13,7 +13,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The date.
         /// </value>
         [XmlElement("date")]
-        public string Date { get; set; }
+        public string? Date { get; set; }
 
         /// <summary>
         /// Gets or sets the version.
@@ -22,7 +22,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The version.
         /// </value>
         [XmlElement("version")]
-        public string Version { get; set; }
+        public string? Version { get; set; }
 
         /// <summary>
         /// Gets or sets the md5 sum.
@@ -31,7 +31,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The md5 sum.
         /// </value>
         [XmlElement("md5")]
-        public string MD5Sum { get; set; }
+        public string? MD5Sum { get; set; }
 
         /// <summary>
         /// Gets or sets the topic address.
@@ -40,7 +40,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The topic address.
         /// </value>
         [XmlElement("url")]
-        public string TopicAddress { get; set; }
+        public string? TopicAddress { get; set; }
 
         /// <summary>
         /// Gets or sets the patch address.
@@ -49,7 +49,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The patch address.
         /// </value>
         [XmlElement("autopatchurl")]
-        public string PatchAddress { get; set; }
+        public string? PatchAddress { get; set; }
 
         /// <summary>
         /// Gets or sets the installer arguments.
@@ -58,7 +58,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The installer arguments.
         /// </value>
         [XmlElement("autopatchargs")]
-        public string InstallerArgs { get; set; }
+        public string? InstallerArgs { get; set; }
 
         /// <summary>
         /// Gets or sets the additional arguments.
@@ -67,7 +67,7 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The additional arguments.
         /// </value>
         [XmlElement("additionalargs")]
-        public string AdditionalArgs { get; set; }
+        public string? AdditionalArgs { get; set; }
 
         /// <summary>
         /// Gets or sets the message XML.
@@ -95,6 +95,6 @@ namespace EVEMon.Common.Serialization.PatchXml
         /// The message.
         /// </value>
         [XmlIgnore]
-        public string Message { get; set; }
+        public string? Message { get; set; }
     }
 }

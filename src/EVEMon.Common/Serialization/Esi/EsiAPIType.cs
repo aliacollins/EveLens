@@ -9,10 +9,10 @@ namespace EVEMon.Common.Serialization.Esi
         public int ID { get; set; }
 
         [DataMember(Name = "name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [DataMember(Name = "description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [DataMember(Name = "published")]
         public bool Published { get; set; }

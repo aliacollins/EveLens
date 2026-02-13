@@ -16,7 +16,7 @@ namespace EVEMon.Common.Serialization.Esi
         public int Quantity { get; set; }
 
         [DataMember(Name = "location_flag")]
-        public string EVEFlag { get; set; }
+        public string? EVEFlag { get; set; }
 
         [DataMember(Name = "is_singleton")]
         public bool Singleton { get; set; }

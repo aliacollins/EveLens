@@ -293,9 +293,9 @@ namespace EVEMon.PieChart
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void skillPieChartControl_AngleChange(object sender, EventArgs e)
+        private void skillPieChartControl_AngleChange(object? sender, EventArgs e)
         {
-            AngleChangeEventArgs angleChangeEventArgs = e as AngleChangeEventArgs;
+            AngleChangeEventArgs? angleChangeEventArgs = e as AngleChangeEventArgs;
             if (angleChangeEventArgs != null)
                 pieAngle.Value = (decimal)angleChangeEventArgs.NewAngle;
         }
@@ -339,7 +339,9 @@ namespace EVEMon.PieChart
         {
             // Retrieve the clicked segment
             MouseEventArgs ev = (MouseEventArgs)e;
-            PieChart3D pieChart3D = skillPieChartControl.PieChart;
+            PieChart3D? pieChart3D = skillPieChartControl.PieChart;
+            if (pieChart3D == null)
+                return;
             int index = pieChart3D.FindPieSliceUnderPoint(new PointF(ev.X, ev.Y));
 
             // If none clicked, we return. Otherwise we open the color picker.

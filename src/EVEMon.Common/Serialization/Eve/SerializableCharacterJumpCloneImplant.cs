@@ -11,6 +11,6 @@ namespace EVEMon.Common.Serialization.Eve
         public int TypeID { get; set; }
 
         [XmlAttribute("typeName")]
-        public string TypeName { get; set; }
+        public string? TypeName { get; set; }
     }
 }

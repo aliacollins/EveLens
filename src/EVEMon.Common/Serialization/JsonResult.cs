@@ -16,7 +16,7 @@ namespace EVEMon.Common.Serialization
         /// <summary>
         /// Default constructor.
         /// </summary>
-        public JsonResult(ResponseParams response, T result = default(T))
+        public JsonResult(ResponseParams response, T? result = default)
         {
             ErrorType = APIErrorType.None;
             Exception = null;
@@ -36,7 +36,7 @@ namespace EVEMon.Common.Serialization
             Exception = exception;
             ErrorMessage = exception?.Message ?? string.Empty;
             Response = new ResponseParams(0);
-            Result = default(T);
+            Result = default;
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace EVEMon.Common.Serialization
             Exception = null;
             ErrorMessage = message ?? string.Empty;
             Response = response;
-            Result = default(T);
+            Result = default;
         }
 
         #endregion
@@ -116,7 +116,7 @@ namespace EVEMon.Common.Serialization
         /// Gets the exception.
         /// </summary>
         /// <value>The exception.</value>
-        public Exception Exception { get; }
+        public Exception? Exception { get; }
 
         public bool HasError => Exception != null || ErrorType != APIErrorType.None;
 
@@ -134,7 +134,7 @@ namespace EVEMon.Common.Serialization
 
         public APIErrorType ErrorType { get; }
 
-        public T Result { get; set; }
+        public T? Result { get; set; }
 
         public DateTime? CurrentTime => Response.Time;
 

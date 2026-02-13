@@ -59,7 +59,7 @@ namespace EVEMon.Common.Serialization.Eve
         /// <summary>
         /// Constructor from a response and result.
         /// </summary>
-        public EsiResult(ResponseParams response, T result = default(T)) : base(response,
+        public EsiResult(ResponseParams response, T? result = default) : base(response,
             result)
         {
             CachedUntil = GetCacheTimerFromResponse(response);

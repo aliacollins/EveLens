@@ -18,20 +18,20 @@ namespace EVEMon.Common.Controls
         private int m_animationStep;
         private int m_expandedHeight;
 
-        // ContextMenu
-        private ContextMenuStrip m_contextMenuStrip;
-        private ToolStripMenuItem m_tsmiExpandCollapse;
-        private ToolStripMenuItem m_tsmiSelectAnim;
-        private ToolStripSeparator m_tsmiSeparator;
-        private ToolStripMenuItem m_tsmiNoAnim;
-        private ToolStripMenuItem m_tsmiHighAnim;
-        private ToolStripMenuItem m_tsmiMedAnim;
-        private ToolStripMenuItem m_tsmiLowAnim;
+        // ContextMenu - initialized in CreateContextMenu() called from constructor
+        private ContextMenuStrip m_contextMenuStrip = null!;
+        private ToolStripMenuItem m_tsmiExpandCollapse = null!;
+        private ToolStripMenuItem m_tsmiSelectAnim = null!;
+        private ToolStripSeparator m_tsmiSeparator = null!;
+        private ToolStripMenuItem m_tsmiNoAnim = null!;
+        private ToolStripMenuItem m_tsmiHighAnim = null!;
+        private ToolStripMenuItem m_tsmiMedAnim = null!;
+        private ToolStripMenuItem m_tsmiLowAnim = null!;
 
         // Graphics variables
-        private Bitmap m_headerImage;
-        private Bitmap m_expandImage;
-        private Bitmap m_collapseImage;
+        private Bitmap? m_headerImage;
+        private Bitmap? m_expandImage;
+        private Bitmap? m_collapseImage;
         private int m_offset;
         private const int Pad = 6;
 
@@ -186,7 +186,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nfpHeader_Paint(object sender, PaintEventArgs e)
+        private void nfpHeader_Paint(object? sender, PaintEventArgs e)
         {
             Graphics gr = e.Graphics;
             gr.SmoothingMode = SmoothingMode.AntiAlias;
@@ -230,7 +230,7 @@ namespace EVEMon.Common.Controls
         /// Gets the Header of the Panel.
         /// </summary>
         [Browsable(false)]
-        public NoFlickerPanel Header { get; private set; }
+        public NoFlickerPanel Header { get; private set; } = null!;
 
         /// <summary>
         /// Gets or sets the expanded Height of the Panel.
@@ -262,7 +262,7 @@ namespace EVEMon.Common.Controls
         /// Gets or sets the image shown in the header when Panel is collapsed. Height must be less than HeaderHeight - 4 pixels. Null to disable it.
         /// </summary>
         [Description("The image used in the header when the Panel is collapsed.")]
-        public Bitmap ImageExpand
+        public Bitmap? ImageExpand
         {
             get { return m_expandImage; }
             set
@@ -279,7 +279,7 @@ namespace EVEMon.Common.Controls
         /// Gets or sets the image shown in the header when Panel is expanded. Height must be less than HeaderHeight - 4 pixels. Null to disable it.
         /// </summary>
         [Description("The image used in the header when the Panel is expanded.")]
-        public Bitmap ImageCollapse
+        public Bitmap? ImageCollapse
         {
             get { return m_collapseImage; }
             set
@@ -435,9 +435,9 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void animationSpeedSelect_Click(object sender, EventArgs e)
+        private void animationSpeedSelect_Click(object? sender, EventArgs e)
         {
-            string choice = ((ToolStripItem)sender).Text;
+            string? choice = (sender as ToolStripItem)?.Text;
 
             switch (choice)
             {
@@ -463,7 +463,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsmiExpandCollapse_Click(object sender, EventArgs e)
+        private void tsmiExpandCollapse_Click(object? sender, EventArgs e)
         {
             SwitchStatus();
         }
@@ -513,7 +513,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        public void OnMouseClick(object sender, MouseEventArgs e)
+        public void OnMouseClick(object? sender, MouseEventArgs e)
         {
             expandablePanelControl_MouseClick(sender, e);
         }
@@ -523,7 +523,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void expandablePanelControl_MouseClick(object sender, MouseEventArgs e)
+        private void expandablePanelControl_MouseClick(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
@@ -533,9 +533,8 @@ namespace EVEMon.Common.Controls
                 int x = e.X;
                 int y = e.Y;
 
-                if (sender != this)
+                if (sender != this && sender is Control ctl)
                 {
-                    Control ctl = (Control)sender;
                     x += ctl.Bounds.X;
                     y += ctl.Bounds.Y;
                 }

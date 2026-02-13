@@ -18,17 +18,17 @@ namespace EVEMon.Common.Models
     {
         private readonly List<ContractItem> m_contractItems = new List<ContractItem>();
         private ContractState m_state;
-        private Enum m_method;
+        private Enum? m_method;
 
-        private string m_acceptor;
-        private string m_assignee;
+        private string m_acceptor = string.Empty;
+        private string m_assignee = string.Empty;
         private ICollection<ContractBid> m_bids;
-        private ResponseParams m_bidsResponse;
+        private ResponseParams? m_bidsResponse;
         private bool m_bidsPending;
         private long m_endStationID;
-        private string m_issuer;
+        private string m_issuer = string.Empty;
         private bool m_itemsPending;
-        private ResponseParams m_itemsResponse;
+        private ResponseParams? m_itemsResponse;
         private long m_startStationID;
 
         /// <summary>
@@ -50,7 +50,6 @@ namespace EVEMon.Common.Models
         {
             src.ThrowIfNull(nameof(src));
 
-            m_bidsResponse = m_itemsResponse = null;
             Character = ccpCharacter;
             PopulateContractInfo(src);
             m_state = GetState(src);
@@ -66,7 +65,6 @@ namespace EVEMon.Common.Models
         {
             src.ThrowIfNull(nameof(src));
 
-            m_bidsResponse = m_itemsResponse = null;
             Character = ccpCharacter;
             ContractType = src.ContractType;
             ID = src.ContractID;
@@ -110,12 +108,12 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the start station.
         /// </summary>
-        public Station StartStation { get; private set; }
+        public Station? StartStation { get; private set; }
 
         /// <summary>
         /// Gets the end station.
         /// </summary>
-        public Station EndStation { get; private set; }
+        public Station? EndStation { get; private set; }
 
         /// <summary>
         /// Gets the type of the contract.
@@ -133,7 +131,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the description.
         /// </summary>
-        public string Description { get; private set; }
+        public string Description { get; private set; } = string.Empty;
 
         /// <summary>
         /// Gets the issued for.
@@ -238,9 +236,9 @@ namespace EVEMon.Common.Models
             {
                 if (ContractType == ContractType.Courier)
                 {
-                    string startName = StartStation.SolarSystemChecked?.Name ??
+                    string startName = StartStation?.SolarSystemChecked?.Name ??
                         EveMonConstants.UnknownText;
-                    string endName = EndStation.SolarSystemChecked?.Name ??
+                    string endName = EndStation?.SolarSystemChecked?.Name ??
                         EveMonConstants.UnknownText;
                     return $"{startName} >> {endName} ({Math.Round(Volume)} m³)";
                 }
@@ -377,7 +375,7 @@ namespace EVEMon.Common.Models
             ID = src.ContractID;
             IssuerID = src.IssuerID;
             AssigneeID = src.AssigneeID;
-            Description = src.Title.IsEmptyOrUnknown() ? "(None)" : src.Title;
+            Description = string.IsNullOrEmpty(src.Title) || src.Title.IsEmptyOrUnknown() ? "(None)" : src.Title;
             IssuedFor = src.ForCorp ? IssuedFor.Corporation : IssuedFor.Character;
             Issued = src.DateIssued;
             Expiration = src.DateExpired;
@@ -460,10 +458,10 @@ namespace EVEMon.Common.Models
         /// </summary>
         private void GetContractData<T, U>(APIProvider.ESIRequestCallback<T> callback,
             ESIAPICorporationMethods methodCorp, ESIAPICharacterMethods methodPersonal,
-            ResponseParams response) where T : List<U> where U : class
+            ResponseParams? response) where T : List<U> where U : class
         {
             var cid = Character.Identity;
-            ESIKey key;
+            ESIKey? key;
             Enum method;
             long owner;
             // Special condition to identify corporation contracts in character query
@@ -503,7 +501,7 @@ namespace EVEMon.Common.Models
             // Notify if an error occured
             if (target.ShouldNotifyError(result, methodEnum))
                 EveMonClient.Notifications.NotifyContractItemsError(target, result);
-            if (!result.HasError && result.HasData)
+            if (!result.HasError && result.HasData && result.Result != null)
             {
                 EveMonClient.Notifications.InvalidateCharacterAPIError(target);
                 Import(result.Result);
@@ -528,7 +526,7 @@ namespace EVEMon.Common.Models
             // Notify if an error occured
             if (target.ShouldNotifyError(result, methodEnum))
                 EveMonClient.Notifications.NotifyContractBidsError(Character, result);
-            if (!result.HasError)
+            if (!result.HasError && result.Result != null)
             {
                 EveMonClient.Notifications.InvalidateCharacterAPIError(target);
                 Import(result.Result);

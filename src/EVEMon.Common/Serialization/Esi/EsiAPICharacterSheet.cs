@@ -22,10 +22,10 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [DataMember(Name = "description", EmitDefaultValue = false, IsRequired = false)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [DataMember(Name = "birthday")]
         private string BirthdayJson
@@ -73,7 +73,7 @@ namespace EVEMon.Common.Serialization.Esi
 
         // One of: female, male
         [DataMember(Name = "gender")]
-        public string Gender { get; set; }
+        public string? Gender { get; set; }
 
         [DataMember(Name = "corporation_id")]
         public long CorporationID { get; set; }

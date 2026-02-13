@@ -8,6 +8,6 @@ namespace EVEMon.Common.Serialization.Eve
         public long MessageID { get; set; }
 
         [XmlText]
-        public string MessageText { get; set; }
+        public string? MessageText { get; set; }
     }
 }

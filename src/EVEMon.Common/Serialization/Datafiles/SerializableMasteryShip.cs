@@ -30,7 +30,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets the masteries.

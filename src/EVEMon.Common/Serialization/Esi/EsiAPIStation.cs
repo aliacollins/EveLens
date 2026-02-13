@@ -11,7 +11,7 @@ namespace EVEMon.Common.Serialization.Esi
         public long ID { get; set; }
 
         [DataMember(Name = "name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [DataMember(Name = "owner", EmitDefaultValue = false, IsRequired = false)]
         public int CorporationID { get; set; }
@@ -26,7 +26,7 @@ namespace EVEMon.Common.Serialization.Esi
         public int RaceID { get; set; }
 
         [DataMember(Name = "position")]
-        public EsiPosition Position { get; set; }
+        public EsiPosition? Position { get; set; }
 
         [DataMember(Name = "reprocessing_efficiency")]
         public float ReprocessingEfficiency { get; set; }

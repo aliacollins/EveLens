@@ -11,7 +11,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The purpose.
         /// </value>
         [XmlAttribute("purpose")]
-        public string Purpose { get; set; }
+        public string? Purpose { get; set; }
 
         /// <summary>
         /// Gets or sets the min security level.
@@ -20,7 +20,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The min security level.
         /// </value>
         [XmlAttribute("minSecurityLevel")]
-        public string MinSecurityLevel { get; set; }
+        public string? MinSecurityLevel { get; set; }
 
         /// <summary>
         /// Gets or sets the faction ID.
@@ -29,7 +29,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The faction ID.
         /// </value>
         [XmlAttribute("factionID")]
-        public string FactionID { get; set; }
+        public string? FactionID { get; set; }
 
         /// <summary>
         /// Gets or sets the faction name.
@@ -38,6 +38,6 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The faction name.
         /// </value>
         [XmlAttribute("factionName")]
-        public string FactionName { get; set; }
+        public string? FactionName { get; set; }
     }
 }

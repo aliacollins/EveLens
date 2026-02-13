@@ -9,19 +9,19 @@ namespace EVEMon.Common.Serialization.FittingXml
         public int Quantity { get; set; }
 
         [XmlAttribute("slot")]
-        public string Slot { get; set; }
+        public string? Slot { get; set; }
 
         [XmlAttribute("type")]
-        public string ItemXml
+        public string? ItemXml
         {
-            get { return Item.Name; }
+            get { return Item?.Name; }
             set
             {
-                Item = StaticItems.GetItemByName(value) ?? Item.UnknownItem;
+                Item = value != null ? StaticItems.GetItemByName(value) ?? Item.UnknownItem : Item.UnknownItem;
             }
         }
 
         [XmlIgnore]
-        public Item Item { get; set; }
+        public Item? Item { get; set; }
     }
 }

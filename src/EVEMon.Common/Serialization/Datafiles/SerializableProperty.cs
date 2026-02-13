@@ -16,35 +16,35 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlElement("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the description.
         /// </summary>
         /// <value>The description.</value>
         [XmlElement("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets the default value.
         /// </summary>
         /// <value>The default value.</value>
         [XmlElement("defaultValue")]
-        public string DefaultValue { get; set; }
+        public string? DefaultValue { get; set; }
 
         /// <summary>
         /// Gets or sets the icon.
         /// </summary>
         /// <value>The icon.</value>
         [XmlElement("icon")]
-        public string Icon { get; set; }
+        public string? Icon { get; set; }
 
         /// <summary>
         /// Gets or sets the unit.
         /// </summary>
         /// <value>The unit.</value>
         [XmlElement("unit")]
-        public string Unit { get; set; }
+        public string? Unit { get; set; }
 
         /// <summary>
         /// Gets or sets the unit ID.

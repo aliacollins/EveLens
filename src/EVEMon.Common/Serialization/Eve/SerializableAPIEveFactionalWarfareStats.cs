@@ -18,7 +18,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("totals")]
-        public SerializableEveFacWarfareTotals Totals { get; set; }
+        public SerializableEveFacWarfareTotals? Totals { get; set; }
 
         [XmlArray("factions")]
         [XmlArrayItem("faction")]

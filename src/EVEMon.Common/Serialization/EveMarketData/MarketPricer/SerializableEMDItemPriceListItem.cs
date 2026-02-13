@@ -8,7 +8,7 @@ namespace EVEMon.Common.Serialization.EveMarketData.MarketPricer
         public int ID { get; set; }
 
         [XmlAttribute("buysell")]
-        public string BuySell { get; set; }
+        public string? BuySell { get; set; }
 
         [XmlAttribute("price")]
         public double Price { get; set; }

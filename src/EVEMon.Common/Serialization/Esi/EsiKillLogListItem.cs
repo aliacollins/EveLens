@@ -9,6 +9,6 @@ namespace EVEMon.Common.Serialization.Esi
         public int KillID { get; set; }
 
         [DataMember(Name = "killmail_hash")]
-        public string Hash { get; set; }
+        public string? Hash { get; set; }
     }
 }

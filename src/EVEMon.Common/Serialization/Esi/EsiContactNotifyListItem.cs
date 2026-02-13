@@ -18,7 +18,7 @@ namespace EVEMon.Common.Serialization.Esi
         public long NotificationID { get; set; }
 
         [DataMember(Name = "message", EmitDefaultValue = true, IsRequired = false)]
-        public string Message { get; set; }
+        public string? Message { get; set; }
 
         [DataMember(Name = "standing_level")]
         public double StandingLevel { get; set; }

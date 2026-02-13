@@ -19,14 +19,14 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute("agentName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the division.
         /// </summary>
         /// <value>The name of the division.</value>
         [XmlAttribute("divisionName")]
-        public string DivisionName { get; set; }
+        public string? DivisionName { get; set; }
 
         /// <summary>
         /// Gets or sets the level.
@@ -47,7 +47,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The type of the agent.</value>
         [XmlAttribute("agentType")]
-        public string AgentType { get; set; }
+        public string? AgentType { get; set; }
 
         /// <summary>
         /// Gets or sets the research skill ID.

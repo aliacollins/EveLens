@@ -10,12 +10,12 @@ namespace EVEMon.Common.Serialization.Esi
     public sealed class EsiAPIPlanetaryColony
     {
         [DataMember(Name = "links")]
-        public List<EsiPlanetaryLink> Links { get; set; }
+        public List<EsiPlanetaryLink> Links { get; set; } = new();
 
         [DataMember(Name = "pins")]
-        public List<EsiPlanetaryPin> Pins { get; set; }
+        public List<EsiPlanetaryPin> Pins { get; set; } = new();
 
         [DataMember(Name = "routes")]
-        public List<EsiPlanetaryRoute> Routes { get; set; }
+        public List<EsiPlanetaryRoute> Routes { get; set; } = new();
     }
 }

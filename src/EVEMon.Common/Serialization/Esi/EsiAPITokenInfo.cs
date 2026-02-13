@@ -15,7 +15,7 @@ namespace EVEMon.Common.Serialization.Esi
         public long CharacterID { get; set; }
         // Character name
         [DataMember(Name = "CharacterName")]
-        public string CharacterName { get; set; }
+        public string? CharacterName { get; set; }
         // Date the token expires (JSON format)
         [DataMember(Name = "ExpiresOn")]
         public string ExpiresOnString
@@ -34,7 +34,7 @@ namespace EVEMon.Common.Serialization.Esi
         }
         // Scopes authorized
         [DataMember(Name = "Scopes")]
-        private string Scopes { get; set; }
+        private string? Scopes { get; set; }
 
         // When this token expires
         private DateTime expires;
@@ -43,13 +43,13 @@ namespace EVEMon.Common.Serialization.Esi
         {
             expires = DateTime.UtcNow;
         }
-        public int CompareTo(EsiAPITokenInfo other)
+        public int CompareTo(EsiAPITokenInfo? other)
         {
             if (other == null)
                 throw new ArgumentNullException("other");
             return CharacterID.CompareTo(other.CharacterID);
         }
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             var other = obj as EsiAPITokenInfo;
             return other != null && CompareTo(other) == 0;
@@ -60,7 +60,7 @@ namespace EVEMon.Common.Serialization.Esi
         }
         public override string ToString()
         {
-            return CharacterName;
+            return CharacterName ?? string.Empty;
         }
     }
 }

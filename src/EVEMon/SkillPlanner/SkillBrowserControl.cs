@@ -62,7 +62,7 @@ namespace EVEMon.SkillPlanner
 
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.PlanChanged += EveMonClient_PlanChanged;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
             Disposed += OnDisposed;
 
             //Update the controls visibility
@@ -81,7 +81,7 @@ namespace EVEMon.SkillPlanner
         {
             EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             Disposed -= OnDisposed;
         }
 
@@ -384,9 +384,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (m_plan == null || e.Character != m_plan.Character || m_selectedSkill == null)
+            if (m_plan == null || !e.Characters.Contains(m_plan.Character) || m_selectedSkill == null)
                 return;
 
             // Update the 'Owns book' indicator 

@@ -11,9 +11,9 @@ namespace EVEMon.Common.Serialization.Esi
         public int JumpCloneID { get; set; }
 
         [DataMember(Name = "name", EmitDefaultValue = false, IsRequired = false)]
-        public string Name { get; set; }
-        
+        public string? Name { get; set; }
+
         [DataMember(Name = "implants")]
-        public List<int> Implants { get; set; }
+        public List<int> Implants { get; set; } = new();
     }
 }

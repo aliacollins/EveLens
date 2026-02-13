@@ -18,7 +18,7 @@ namespace EVEMon.Common.Serialization.Esi
         public long EventID { get; set; }
 
         [DataMember(Name = "title", EmitDefaultValue = false, IsRequired = false)]
-        public string EventTitle { get; set; }
+        public string? EventTitle { get; set; }
 
         [DataMember(Name = "importance", EmitDefaultValue = false, IsRequired = false)]
         public int Importance { get; set; }
@@ -45,6 +45,6 @@ namespace EVEMon.Common.Serialization.Esi
 
         // One of: declined, not_responded, accepted, tentative
         [DataMember(Name = "event_response", EmitDefaultValue = false, IsRequired = false)]
-        public string Response { get; set; }
+        public string? Response { get; set; }
     }
 }

@@ -74,7 +74,7 @@ namespace EVEMon.Watchdog
         private void StartEVEMonProcess()
         {
             // Find the expected path for 'EVEMon.exe'
-            string path = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string? path = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
             if (path == null)
                 return;
 

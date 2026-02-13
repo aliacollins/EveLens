@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using EVEMon.Common.Helpers;
 using EVEMon.Common;
 using EVEMon.Common.CloudStorageServices;
 using EVEMon.Common.CustomEventArgs;
@@ -56,13 +57,20 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void CloudStorageServiceControl_Load(object sender, EventArgs e)
         {
-            Font = FontFactory.GetFont("Tahoma");
-            Disposed += OnDisposed;
+            try
+            {
+                Font = FontFactory.GetFont("Tahoma");
+                Disposed += OnDisposed;
 
-            CloudStorageServiceProvider.CredentialsChecked += CloudStorageServiceProvider_CheckCredentials;
-            CloudStorageServiceProvider.SettingsReset += CloudStorageServiceProvider_SettingsReset;
+                CloudStorageServiceProvider.CredentialsChecked += CloudStorageServiceProvider_CheckCredentials;
+                CloudStorageServiceProvider.SettingsReset += CloudStorageServiceProvider_SettingsReset;
 
-            await CheckAPIAuthIsValidAsync(true);
+                await CheckAPIAuthIsValidAsync(true);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>

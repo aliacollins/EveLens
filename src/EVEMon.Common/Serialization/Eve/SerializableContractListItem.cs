@@ -29,13 +29,13 @@ namespace EVEMon.Common.Serialization.Eve
         public long EndStationID { get; set; }
 
         [XmlAttribute("type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [XmlAttribute("status")]
-        public string Status { get; set; }
+        public string? Status { get; set; }
 
         [XmlAttribute("title")]
-        public string TitleXml
+        public string? TitleXml
         {
             get { return Title; }
             set { Title = value?.HtmlDecode() ?? string.Empty; }
@@ -45,7 +45,7 @@ namespace EVEMon.Common.Serialization.Eve
         public bool ForCorp { get; set; }
 
         [XmlAttribute("availability")]
-        public string Availability { get; set; }
+        public string? Availability { get; set; }
 
         [XmlAttribute("dateIssued")]
         public string DateIssuedXml
@@ -110,7 +110,7 @@ namespace EVEMon.Common.Serialization.Eve
         public decimal Volume { get; set; }
 
         [XmlIgnore]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [XmlIgnore]
         public DateTime DateIssued { get; set; }
@@ -131,6 +131,6 @@ namespace EVEMon.Common.Serialization.Eve
         public IssuedFor IssuedFor { get; set; }
 
         [XmlIgnore]
-        public Enum APIMethod { get; set; }
+        public Enum? APIMethod { get; set; }
     }
 }

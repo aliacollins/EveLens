@@ -15,6 +15,7 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Net;
+using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.Common
@@ -28,17 +29,18 @@ namespace EVEMon.Common
     {
         #region Fields
 
-        private static StreamWriter s_traceStream;
-        private static TextWriterTraceListener s_traceListener;
+        private static StreamWriter? s_traceStream;
+        private static TextWriterTraceListener? s_traceListener;
         private static readonly DateTime s_startTime = DateTime.UtcNow;
 
         internal static TimeSpan Uptime => DateTime.UtcNow - s_startTime;
 
-        private static IEnumerable<string> s_defaultEvePortraitCacheFolders;
+        private static IEnumerable<string>? s_defaultEvePortraitCacheFolders;
         private static bool s_initialized;
-        private static string s_traceFile;
-        private static UpdateBatcher s_updateBatcher;
-        private static ApiRequestQueue s_apiRequestQueue;
+        private static string s_traceFile = null!;
+        private static UpdateBatcher? s_updateBatcher;
+        private static CentralQueryScheduler? s_queryScheduler;
+        private static ApiRequestQueue? s_apiRequestQueue;
 
         #endregion
 
@@ -79,6 +81,10 @@ namespace EVEMon.Common
             s_updateBatcher.CharactersBatchUpdated += OnBatchedCharacterUpdatesReady;
             s_updateBatcher.SkillQueuesBatchUpdated += OnBatchedSkillQueueUpdatesReady;
 
+            // Initialize the central query scheduler - drives all character/corporation
+            // querying from a single FiveSecondTick handler instead of 2N handlers
+            s_queryScheduler = new CentralQueryScheduler();
+
             // Initialize the API request queue for rate limiting
             // ESI recommends no more than 20 concurrent connections, with 50ms spacing
             s_apiRequestQueue = new ApiRequestQueue(maxConcurrent: 20, minDelayMs: 50);
@@ -107,6 +113,10 @@ namespace EVEMon.Common
             s_updateBatcher?.Dispose();
             s_updateBatcher = null;
 
+            // Dispose the query scheduler
+            s_queryScheduler?.Dispose();
+            s_queryScheduler = null;
+
             // Dispose the API request queue
             s_apiRequestQueue?.Dispose();
             s_apiRequestQueue = null;
@@ -118,12 +128,17 @@ namespace EVEMon.Common
         /// <summary>
         /// Gets the update batcher for coalescing character updates.
         /// </summary>
-        public static UpdateBatcher UpdateBatcher => s_updateBatcher;
+        public static UpdateBatcher? UpdateBatcher => s_updateBatcher;
+
+        /// <summary>
+        /// Gets the central query scheduler that drives all character/corporation querying.
+        /// </summary>
+        internal static CentralQueryScheduler? QueryScheduler => s_queryScheduler;
 
         /// <summary>
         /// Gets the API request queue for rate limiting ESI requests.
         /// </summary>
-        public static ApiRequestQueue ApiRequestQueue => s_apiRequestQueue;
+        public static ApiRequestQueue? ApiRequestQueue => s_apiRequestQueue;
 
         /// <summary>
         /// Resets collection that need to be cleared.
@@ -176,13 +191,13 @@ namespace EVEMon.Common
         /// The file version.
         /// </value>
         public static FileVersionInfo FileVersionInfo
-            => FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location);
+            => FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly()!.Location);
 
         /// <summary>
         /// Gets the full version string from AssemblyInformationalVersion (e.g., "5.2.0-alpha.1").
         /// </summary>
         public static string VersionString
-            => FileVersionInfo.ProductVersion ?? FileVersionInfo.FileVersion;
+            => FileVersionInfo.ProductVersion ?? FileVersionInfo.FileVersion ?? "0.0.0";
 
         /// <summary>
         /// Gets whether this is an alpha version.
@@ -250,12 +265,12 @@ namespace EVEMon.Common
         /// <summary>
         /// Gets or sets the portrait cache folder defined by the user.
         /// </summary>
-        public static IEnumerable<string> EvePortraitCacheFolders { get; internal set; }
+        public static IEnumerable<string> EvePortraitCacheFolders { get; internal set; } = null!;
 
         /// <summary>
         /// Gets or sets the EVE Online application data folder.
         /// </summary>
-        public static string EVEApplicationDataDir { get; private set; }
+        public static string EVEApplicationDataDir { get; private set; } = null!;
 
         /// <summary>
         /// Returns the state of the EVE database.
@@ -268,22 +283,22 @@ namespace EVEMon.Common
         /// <summary>
         /// Returns the current data storage directory.
         /// </summary>
-        public static string EVEMonDataDir { get; private set; }
+        public static string EVEMonDataDir { get; private set; } = null!;
 
         /// <summary>
         /// Returns the current cache directory.
         /// </summary>
-        public static string EVEMonCacheDir { get; private set; }
+        public static string EVEMonCacheDir { get; private set; } = null!;
 
         /// <summary>
         /// Returns the current xml cache directory.
         /// </summary>
-        public static string EVEMonXmlCacheDir { get; private set; }
+        public static string EVEMonXmlCacheDir { get; private set; } = null!;
 
         /// <summary>
         /// Returns the current image cache directory (not portraits).
         /// </summary>
-        public static string EVEMonImageCacheDir { get; private set; }
+        public static string EVEMonImageCacheDir { get; private set; } = null!;
 
         /// <summary>
         /// Returns the current portraits cache directory.
@@ -293,12 +308,12 @@ namespace EVEMon.Common
         /// This is different from the ImageService's hit cache (%APPDATA%\cache\image)
         /// or the game's portrait cache (in EVE Online folder)
         ///</remarks>
-        public static string EVEMonPortraitCacheDir { get; private set; }
+        public static string EVEMonPortraitCacheDir { get; private set; } = null!;
 
         /// <summary>
         /// Gets the name of the current settings file.
         /// </summary>
-        public static string SettingsFileName { get; private set; }
+        public static string SettingsFileName { get; private set; } = null!;
 
         /// <summary>
         /// Gets a value indicating whether cache folder in EVE default location exist.
@@ -450,17 +465,17 @@ namespace EVEMon.Common
         /// <summary>
         /// Gets an enumeration over the datafiles checksums.
         /// </summary>
-        public static GlobalDatafileCollection Datafiles { get; private set; }
+        public static GlobalDatafileCollection Datafiles { get; private set; } = null!;
 
         /// <summary>
         /// Gets the API providers collection.
         /// </summary>
-        public static GlobalAPIProviderCollection APIProviders { get; private set; }
+        public static GlobalAPIProviderCollection APIProviders { get; private set; } = null!;
 
         /// <summary>
         /// Gets the EVE server's informations.
         /// </summary>
-        public static EveServer EVEServer { get; private set; }
+        public static EveServer EVEServer { get; private set; } = null!;
 
         /// <summary>
         /// Apply some settings changes.
@@ -500,27 +515,27 @@ namespace EVEMon.Common
         /// <summary>
         /// Gets the collection of all known API keys.
         /// </summary>
-        public static GlobalAPIKeyCollection ESIKeys { get; private set; }
+        public static GlobalAPIKeyCollection ESIKeys { get; private set; } = null!;
 
         /// <summary>
         /// Gets the collection of all characters.
         /// </summary>
-        public static GlobalCharacterCollection Characters { get; private set; }
+        public static GlobalCharacterCollection Characters { get; private set; } = null!;
 
         /// <summary>
         /// Gets the collection of all known character identities. For monitored character, see <see cref="MonitoredCharacters"/>.
         /// </summary>
-        public static GlobalCharacterIdentityCollection CharacterIdentities { get; private set; }
+        public static GlobalCharacterIdentityCollection CharacterIdentities { get; private set; } = null!;
 
         /// <summary>
         /// Gets the collection of all monitored characters.
         /// </summary>
-        public static GlobalMonitoredCharacterCollection MonitoredCharacters { get; private set; }
+        public static GlobalMonitoredCharacterCollection MonitoredCharacters { get; private set; } = null!;
 
         /// <summary>
         /// Gets the collection of notifications.
         /// </summary>
-        public static GlobalNotificationCollection Notifications { get; private set; }
+        public static GlobalNotificationCollection Notifications { get; private set; } = null!;
 
         #endregion
 

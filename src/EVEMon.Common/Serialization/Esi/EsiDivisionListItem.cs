@@ -14,6 +14,6 @@ namespace EVEMon.Common.Serialization.Esi
         public int Division { get; set; }
         
         [DataMember(Name = "name", EmitDefaultValue = false, IsRequired = false)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
     }
 }

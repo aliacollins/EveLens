@@ -19,6 +19,6 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The value.</value>
         [XmlAttribute("value")]
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 }

@@ -23,7 +23,7 @@ namespace EVEMon.Common.Serialization.Esi
         public long NotificationID { get; set; }
 
         [DataMember(Name = "type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         [DataMember(Name = "sender_id")]
         public int SenderID { get; set; }
@@ -32,7 +32,7 @@ namespace EVEMon.Common.Serialization.Esi
         public bool Read { get; set; }
 
         [DataMember(Name = "text", EmitDefaultValue = false, IsRequired = false)]
-        public string NotificationText { get; set; }
+        public string? NotificationText { get; set; }
 
         [DataMember(Name = "sender_type")]
         private string SenderTypeJson

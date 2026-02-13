@@ -22,7 +22,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         private MouseState m_mouseState;
 
-        private string m_iconText;
+        private string m_iconText = string.Empty;
         private int m_mouseHoverTime;
 
 
@@ -54,10 +54,14 @@ namespace EVEMon.Common.Controls
         /// </remarks>
         [Category("Appearance"),
          Description("The icon to display in the system tray")]
-        public Icon Icon
+        public Icon? Icon
         {
             get { return notifyIcon.Icon; }
-            set { notifyIcon.Icon = new Icon(value, new Size(16, 16)); }
+            set
+            {
+                if (value != null)
+                    notifyIcon.Icon = new Icon(value, new Size(16, 16));
+            }
         }
 
         /// <summary>
@@ -95,7 +99,7 @@ namespace EVEMon.Common.Controls
         /// Exposes the value of the underlying <see cref="System.Windows.Forms.NotifyIcon.ContextMenuStrip"/> property.
         /// </remarks>
         [Category("Behaviour")]
-        public ContextMenuStrip ContextMenuStrip
+        public ContextMenuStrip? ContextMenuStrip
         {
             get { return notifyIcon.ContextMenuStrip; }
             set { notifyIcon.ContextMenuStrip = value; }
@@ -124,7 +128,7 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Propagates the NotifyIcon Click event to our subscribers.
         /// </summary>
-        private void notifyIcon_Click(object sender, EventArgs e)
+        private void notifyIcon_Click(object? sender, EventArgs e)
         {
             OnClick(e);
         }
@@ -139,7 +143,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         [Category("Action"),
          Description("Occurs when the icon is clicked")]
-        public event EventHandler Click;
+        public event EventHandler? Click;
 
         /// <summary>
         /// Raised when the mouse pointer remains stationery over the icon in the notification area.
@@ -147,14 +151,14 @@ namespace EVEMon.Common.Controls
         /// </summary>
         [Category("Mouse"),
          Description("Occurs when the mouse remains stationary inside the control for an amount of time")]
-        public event EventHandler MouseHover;
+        public event EventHandler? MouseHover;
 
         /// <summary>
         /// Raised when the mouse pointer moves away from the icon in the notification area after it has been hovering over the icon.
         /// </summary>
         [Category("Mouse"),
          Description("Occurs when the mouse leaves the visible part of the control")]
-        public event EventHandler MouseLeave;
+        public event EventHandler? MouseLeave;
 
         #endregion
 
@@ -343,7 +347,7 @@ namespace EVEMon.Common.Controls
             /// </summary>
             /// <param name="sender"></param>
             /// <param name="e"></param>
-            private void notifyIcon_MouseMove(object sender, MouseEventArgs e)
+            private void notifyIcon_MouseMove(object? sender, MouseEventArgs e)
             {
                 // Lock syncLock to ensure that further events block until
                 // we've handled this one
@@ -451,7 +455,7 @@ namespace EVEMon.Common.Controls
             /// <summary>
             /// A <see cref="System.Threading.Timer"/> used to monitor mouse hover.
             /// </summary>
-            private Timer m_timer;
+            private Timer? m_timer;
 
             /// <summary>
             /// Initialises a new instance of the <see cref="MouseState"/> class with the given trayIcon and mousePosition.
@@ -487,7 +491,7 @@ namespace EVEMon.Common.Controls
             /// otherwise we change to MouseOut.
             /// </remarks>
             /// <param name="state"></param>
-            private void HoverTimeout(object state)
+            private void HoverTimeout(object? state)
             {
                 lock (SyncLock)
                 {
@@ -527,7 +531,7 @@ namespace EVEMon.Common.Controls
                 try
                 {
                     // Mouse has moved, so reset the hover timer
-                    m_timer.Change(TrayIcon.m_mouseHoverTime, Timeout.Infinite);
+                    m_timer?.Change(TrayIcon.m_mouseHoverTime, Timeout.Infinite);
                 }
                 catch (ObjectDisposedException)
                 {
@@ -547,7 +551,7 @@ namespace EVEMon.Common.Controls
                     return;
 
                 // Dispose timer
-                m_timer.Dispose();
+                m_timer?.Dispose();
                 m_timer = null;
             }
 
@@ -577,7 +581,7 @@ namespace EVEMon.Common.Controls
         /// </remarks>
         private sealed class MouseStateHovering : MouseState, IDisposable
         {
-            private Timer m_timer;
+            private Timer? m_timer;
 
             /// <summary>
             /// Initialises a new instance of the <see cref="MouseState"/> class with the given trayIcon and mousePosition.
@@ -609,7 +613,7 @@ namespace EVEMon.Common.Controls
             /// If the mouse moves, fire the parent TrayIcon's MouseLeave event and changes state to MouseOut.
             /// </remarks>
             /// <param name="state"></param>
-            private void MouseMonitor(object state)
+            private void MouseMonitor(object? state)
             {
                 lock (SyncLock)
                 {
@@ -650,7 +654,7 @@ namespace EVEMon.Common.Controls
                     return;
 
                 // Dispose timer
-                m_timer.Dispose();
+                m_timer?.Dispose();
                 m_timer = null;
             }
 

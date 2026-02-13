@@ -55,7 +55,7 @@ namespace EVEMon.Common.Serialization.Esi
         // corporation_id, alliance_id, eve_system, industry_job_id, contract_id, planet_id,
         // system_id
         [DataMember(Name = "context_id_type", EmitDefaultValue = false, IsRequired = false)]
-        private string ContextIDType { get; set; }
+        private string? ContextIDType { get; set; }
 
         [DataMember(Name = "first_party_id", EmitDefaultValue = false, IsRequired = false)]
         public long OwnerID1 { get; set; }
@@ -70,10 +70,10 @@ namespace EVEMon.Common.Serialization.Esi
         public decimal Balance { get; set; }
 
         [DataMember(Name = "description", EmitDefaultValue = false, IsRequired = false)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [DataMember(Name = "reason", EmitDefaultValue = false, IsRequired = false)]
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
 
         [DataMember(Name = "tax_receiver_id", EmitDefaultValue = false, IsRequired = false)]
         public long TaxReceiverID { get; set; }

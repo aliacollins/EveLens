@@ -19,22 +19,22 @@ namespace EVEMon.Common.Serialization.Eve
         public int EndSP { get; set; }
 
         [XmlAttribute("startTime")]
-        public string CCPStartTime { get; set; }
+        public string? CCPStartTime { get; set; }
 
         [XmlAttribute("endTime")]
-        public string CCPEndTime { get; set; }
+        public string? CCPEndTime { get; set; }
 
         [XmlIgnore]
         public DateTime StartTime
         {
-            get { return CCPStartTime.TimeStringToDateTime(); }
+            get { return CCPStartTime?.TimeStringToDateTime() ?? DateTime.MinValue; }
             set { CCPStartTime = value.DateTimeToTimeString(); }
         }
 
         [XmlIgnore]
         public DateTime EndTime
         {
-            get { return CCPEndTime.TimeStringToDateTime(); }
+            get { return CCPEndTime?.TimeStringToDateTime() ?? DateTime.MinValue; }
             set { CCPEndTime = value.DateTimeToTimeString(); }
         }
 

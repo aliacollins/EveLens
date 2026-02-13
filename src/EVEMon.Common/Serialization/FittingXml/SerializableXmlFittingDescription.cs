@@ -5,6 +5,6 @@ namespace EVEMon.Common.Serialization.FittingXml
     public sealed class SerializableXmlFittingDescription
     {
         [XmlAttribute("value")]
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 }

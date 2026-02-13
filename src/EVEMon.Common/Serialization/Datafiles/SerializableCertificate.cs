@@ -36,7 +36,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The description.</value>
         [XmlAttribute("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets the prerequisites.

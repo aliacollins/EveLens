@@ -10,7 +10,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long CorporationID { get; set; }
 
         [XmlAttribute("corporationName")]
-        public string CorporationNameXml
+        public string? CorporationNameXml
         {
             get { return CorporationName; }
             set { CorporationName = value?.HtmlDecode() ?? string.Empty; }
@@ -28,7 +28,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
-        public string CorporationName { get; set; }
+        public string? CorporationName { get; set; }
 
         [XmlIgnore]
         public DateTime StartDate { get; set; }

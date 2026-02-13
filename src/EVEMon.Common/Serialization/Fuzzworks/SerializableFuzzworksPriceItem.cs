@@ -6,9 +6,9 @@ namespace EVEMon.Common.Serialization.Fuzzworks
     public sealed class SerializableFuzzworksPriceItem
     {
         [DataMember(Name = "buy")]
-        public SerializableFuzzworksPriceListItem Buy { get; set; }
+        public SerializableFuzzworksPriceListItem? Buy { get; set; }
 
         [DataMember(Name = "sell")]
-        public SerializableFuzzworksPriceListItem Sell { get; set; }
+        public SerializableFuzzworksPriceListItem? Sell { get; set; }
     }
 }

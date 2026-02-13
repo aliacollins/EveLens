@@ -16,7 +16,7 @@ namespace EVEMon.Common.Serialization.Esi
         public int DamageTaken { get; set; }
 
         [DataMember(Name = "items", EmitDefaultValue = false, IsRequired = false)]
-        public List<EsiKillLogItemListItem> Items { get; set; }
+        public List<EsiKillLogItemListItem>? Items { get; set; }
 
         [DataMember(Name = "position", IsRequired = false)]
         public EsiPosition Position { get; set; }

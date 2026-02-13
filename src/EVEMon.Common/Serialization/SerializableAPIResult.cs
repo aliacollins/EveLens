@@ -10,7 +10,7 @@ namespace EVEMon.Common.Serialization
         /// <value>
         /// The result.
         /// </value>
-        public T Result { get; set; }
+        public T? Result { get; set; }
 
         /// <summary>
         /// Gets or sets the error.
@@ -18,7 +18,7 @@ namespace EVEMon.Common.Serialization
         /// <value>
         /// The error.
         /// </value>
-        public SerializableAPIError Error { get; set; }
+        public SerializableAPIError? Error { get; set; }
 
         /// <summary>
         /// Gets or sets the cache expires.

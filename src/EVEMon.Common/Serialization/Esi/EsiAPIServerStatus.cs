@@ -42,7 +42,7 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "server_version")]
-        public string Version { get; set; }
+        public string? Version { get; set; }
 
         [DataMember(Name = "vip", IsRequired = false)]
         public bool VIP { get; set; }

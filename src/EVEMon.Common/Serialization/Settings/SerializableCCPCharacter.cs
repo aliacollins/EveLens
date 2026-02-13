@@ -36,10 +36,10 @@ namespace EVEMon.Common.Serialization.Settings
 		public Collection<SerializableJob> IndustryJobs { get; }
 
 		[XmlElement("eveMailMessages")]
-        public string EveMailMessagesIDs { get; set; }
+        public string? EveMailMessagesIDs { get; set; }
 
         [XmlElement("eveNotifications")]
-        public string EveNotificationsIDs { get; set; }
+        public string? EveNotificationsIDs { get; set; }
 
 		[XmlArray("lastUpdates")]
 		[XmlArrayItem("apiUpdate")]

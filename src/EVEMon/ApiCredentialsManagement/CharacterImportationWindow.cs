@@ -4,6 +4,7 @@ using System.Windows.Forms;
 
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Controls;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Models;
@@ -98,7 +99,14 @@ namespace EVEMon.ApiCredentialsManagement
         /// <param name="e"></param>
         private async void delayQueryTimer_Tick(object sender, EventArgs e)
         {
-            await TryUri(urlTextBox.Text);
+            try
+            {
+                await TryUri(urlTextBox.Text);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>

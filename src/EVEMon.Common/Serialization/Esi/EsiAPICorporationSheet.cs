@@ -19,10 +19,10 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [DataMember(Name = "ticker")]
-        public string Ticker { get; set; }
+        public string? Ticker { get; set; }
 
         [DataMember(Name = "ceo_id")]
         public long CeoID { get; set; }
@@ -57,10 +57,10 @@ namespace EVEMon.Common.Serialization.Esi
         }
 
         [DataMember(Name = "description", EmitDefaultValue = false, IsRequired = false)]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [DataMember(Name = "url", EmitDefaultValue = false, IsRequired = false)]
-        public string WebUrl { get; set; }
+        public string? WebUrl { get; set; }
 
         [DataMember(Name = "alliance_id", EmitDefaultValue = false, IsRequired = false)]
         public int AllianceID { get; set; }

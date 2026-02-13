@@ -92,8 +92,8 @@ namespace EVEMon.SkillPlanner
             tsSortPriorities.Click += tsSortPriorities_Clicked;
             cbChooseImplantSet.DropDown += cbChooseImplantSet_DropDown;
 
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
-            EveMonClient.CharacterSkillQueueUpdated += EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
+            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.CharacterImplantSetCollectionChanged += EveMonClient_CharacterImplantSetCollectionChanged;
             EveMonClient.ItemPricesUpdated += EveMonClient_ItemPricesUpdated;
             EveMonClient.PlanChanged += EveMonClient_PlanChanged;
@@ -142,8 +142,8 @@ namespace EVEMon.SkillPlanner
         private void OnDisposed(object sender, EventArgs e)
         {
             m_tooltip.Dispose();
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
-            EveMonClient.CharacterSkillQueueUpdated -= EveMonClient_CharacterSkillQueueUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
+            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.CharacterImplantSetCollectionChanged -= EveMonClient_CharacterImplantSetCollectionChanged;
             EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
             EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
@@ -232,9 +232,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != m_character || m_character == null)
+            if (m_character == null || !e.Characters.Contains(m_character))
                 return;
 
             UpdateDisplayPlan();
@@ -245,9 +245,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterSkillQueueUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != m_character || m_character == null)
+            if (m_character == null || !e.Characters.Contains(m_character))
                 return;
 
             UpdateDisplayPlan();

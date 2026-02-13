@@ -11,7 +11,7 @@ namespace EVEMon.Common.Serialization.Settings
         public long ID { get; set; }
 
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Creates a copy of this instance.

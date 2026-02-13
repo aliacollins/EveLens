@@ -41,32 +41,32 @@ namespace EVEMon.PieChart
         /// <summary>
         ///   <c>Brush</c> used to render slice top surface.
         /// </summary>
-        private Brush m_brushSurface;
+        private Brush m_brushSurface = null!;
 
         /// <summary>
         ///   <c>Brush</c> used to render slice top surface when highlighted.
         /// </summary>
-        private Brush m_brushSurfaceHighlighted;
+        private Brush m_brushSurfaceHighlighted = null!;
 
         /// <summary>
         ///   <c>Brush</c> used to render slice starting cut side.
         /// </summary>
-        private Brush m_brushStartSide;
+        private Brush m_brushStartSide = null!;
 
         /// <summary>
         ///   <c>Brush</c> used to render slice ending cut side.
         /// </summary>
-        private Brush m_brushEndSide;
+        private Brush m_brushEndSide = null!;
 
         /// <summary>
         ///   <c>Brush</c> used to render pie slice periphery (cylinder outer surface).
         /// </summary>
-        private Brush m_brushPeripherySurface;
+        private Brush m_brushPeripherySurface = null!;
 
         /// <summary>
         ///   <c>Pen</c> object used to draw pie slice edges.
         /// </summary>
-        private readonly Pen m_pen;
+        private readonly Pen m_pen = null!;
 
         /// <summary>
         ///   <c>PointF</c> corresponding to pie slice center.
@@ -413,7 +413,7 @@ namespace EVEMon.PieChart
         /// Gets or sets the text.
         /// </summary>
         /// <value>The text.</value>
-        public string Text { get; set; }
+        public string? Text { get; set; }
 
         /// <summary>
         ///   Gets or sets the bounding rectangle.

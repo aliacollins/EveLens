@@ -17,7 +17,7 @@ namespace EVEMon.Common.Serialization.Settings
         public long ID { get; set; }
 
         [XmlAttribute("key")]
-        public string Key { get; set; }
+        public string? Key { get; set; }
 
         [XmlAttribute("keyLevel")]
         public CredentialsLevel KeyLevel { get; set; }

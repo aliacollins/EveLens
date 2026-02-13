@@ -16,7 +16,7 @@ namespace EVEMon.Common.Extensions
         /// Checks whether subscribers implement <see cref="System.ComponentModel.ISynchronizeInvoke" /> to ensure we raise the
         /// event on the correct thread.
         /// </remarks>
-        public static void ThreadSafeInvoke(this EventHandler eventHandler, object sender, EventArgs e)
+        public static void ThreadSafeInvoke(this EventHandler eventHandler, object? sender, EventArgs e)
         {
             // Make sure we have some subscribers
             if (eventHandler == null)
@@ -27,7 +27,7 @@ namespace EVEMon.Common.Extensions
             {
                 // Get the object containing the subscribing method
                 // If the target doesn't implement ISyncronizeInvoke, this will be null
-                ISynchronizeInvoke sync = handler.Target as ISynchronizeInvoke;
+                ISynchronizeInvoke? sync = handler.Target as ISynchronizeInvoke;
 
                 // Check if our target requires an Invoke
                 if (sync != null && sync.InvokeRequired)
@@ -56,7 +56,7 @@ namespace EVEMon.Common.Extensions
         /// Checks whether subscribers implement <see cref="System.ComponentModel.ISynchronizeInvoke" /> to ensure we raise the
         /// event on the correct thread.
         /// </remarks>
-        public static void ThreadSafeInvoke<T>(this EventHandler<T> eventHandler, object sender, T e) where T : EventArgs
+        public static void ThreadSafeInvoke<T>(this EventHandler<T> eventHandler, object? sender, T e) where T : EventArgs
         {
             // Make sure we have some subscribers
             if (eventHandler == null)
@@ -67,7 +67,7 @@ namespace EVEMon.Common.Extensions
             {
                 // Get the object containing the subscribing method
                 // If the target doesn't implement ISyncronizeInvoke, this will be null
-                ISynchronizeInvoke sync = handler.Target as ISynchronizeInvoke;
+                ISynchronizeInvoke? sync = handler.Target as ISynchronizeInvoke;
 
                 // Check if our target requires an Invoke
                 if (sync != null && sync.InvokeRequired)

@@ -10,8 +10,8 @@ namespace EVEMon.Common.Controls
 {
     public class DraggableListView : ListView
     {
-        public event EventHandler<ListViewDragEventArgs> ListViewItemsDragging;
-        public event EventHandler<EventArgs> ListViewItemsDragged;
+        public event EventHandler<ListViewDragEventArgs>? ListViewItemsDragging;
+        public event EventHandler<EventArgs>? ListViewItemsDragged;
 
         private const string Reorder = "Reorder";
 
@@ -68,10 +68,13 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="e">The <see cref="System.Windows.Forms.DragEventArgs"/> instance containing the event data.</param>
         /// <returns></returns>
-        private static Skill GetDraggingSkill(DragEventArgs e)
+        private static Skill? GetDraggingSkill(DragEventArgs e)
         {
-            if (e.Data.GetDataPresent("System.Windows.Forms.TreeNode"))
-                return (Skill)((TreeNode)e.Data.GetData("System.Windows.Forms.TreeNode")).Tag;
+            if (e.Data?.GetDataPresent("System.Windows.Forms.TreeNode") == true)
+            {
+                var node = e.Data.GetData("System.Windows.Forms.TreeNode") as TreeNode;
+                return node?.Tag as Skill;
+            }
 
             return null;
         }
@@ -84,7 +87,7 @@ namespace EVEMon.Common.Controls
         {
             base.OnDragDrop(e);
 
-            Skill dragSkill = GetDraggingSkill(e);
+            Skill? dragSkill = GetDraggingSkill(e);
             if (dragSkill != null)
                 return;
 
@@ -97,7 +100,7 @@ namespace EVEMon.Common.Controls
                 return;
 
             Point cp = PointToClient(new Point(e.X, e.Y));
-            ListViewItem dragToItem = GetItemAt(cp.X, cp.Y);
+            ListViewItem? dragToItem = GetItemAt(cp.X, cp.Y);
             if (dragToItem == null)
                 return;
 
@@ -125,7 +128,8 @@ namespace EVEMon.Common.Controls
             // they appear in the right order after they've all been inserted
             for (int i = insertItems.Count - 1; i >= 0; i--)
             {
-                Items.Insert(dropIndex, (ListViewItem)insertItems[i]);
+                if (insertItems[i] is ListViewItem item)
+                    Items.Insert(dropIndex, item);
             }
 
             // remove the selected items
@@ -153,7 +157,7 @@ namespace EVEMon.Common.Controls
         {
             base.OnDragOver(e);
 
-            Skill dragSkill = GetDraggingSkill(e);
+            Skill? dragSkill = GetDraggingSkill(e);
             if (dragSkill != null)
                 return;
 
@@ -163,14 +167,14 @@ namespace EVEMon.Common.Controls
                 ClearDropMarker();
                 return;
             }
-            if (!e.Data.GetDataPresent(DataFormats.Text))
+            if (e.Data?.GetDataPresent(DataFormats.Text) != true)
             {
                 e.Effect = DragDropEffects.None;
                 ClearDropMarker();
                 return;
             }
             Point cp = PointToClient(new Point(e.X, e.Y));
-            ListViewItem hoverItem = GetItemAt(cp.X, cp.Y);
+            ListViewItem? hoverItem = GetItemAt(cp.X, cp.Y);
             if (hoverItem == null)
             {
                 e.Effect = DragDropEffects.None;
@@ -187,7 +191,7 @@ namespace EVEMon.Common.Controls
             }
 
             base.OnDragOver(e);
-            string text = (string)e.Data.GetData(Reorder.GetType());
+            string? text = e.Data.GetData(Reorder.GetType()) as string;
             if (string.Compare(text, Reorder, StringComparison.CurrentCulture) == 0)
             {
                 e.Effect = DragDropEffects.Move;
@@ -211,7 +215,7 @@ namespace EVEMon.Common.Controls
         {
             base.OnDragEnter(e);
 
-            Skill dragSkill = GetDraggingSkill(e);
+            Skill? dragSkill = GetDraggingSkill(e);
             if (dragSkill != null)
                 return;
 
@@ -222,7 +226,7 @@ namespace EVEMon.Common.Controls
                 return;
             }
 
-            if (!e.Data.GetDataPresent(DataFormats.Text))
+            if (e.Data?.GetDataPresent(DataFormats.Text) != true)
             {
                 e.Effect = DragDropEffects.None;
                 ClearDropMarker();
@@ -230,7 +234,7 @@ namespace EVEMon.Common.Controls
             }
 
             base.OnDragEnter(e);
-            string text = (string)e.Data.GetData(Reorder.GetType());
+            string? text = e.Data.GetData(Reorder.GetType()) as string;
             if (string.Compare(text, Reorder, StringComparison.CurrentCulture) == 0)
                 e.Effect = DragDropEffects.Move;
             else

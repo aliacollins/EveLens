@@ -10,6 +10,6 @@ namespace EVEMon.Common.Serialization.Esi
         public long ID { get; set; }
 
         [DataMember(Name = "name")]
-        public string DisplayName { get; set; }
+        public string? DisplayName { get; set; }
     }
 }

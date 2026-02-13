@@ -10,7 +10,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long StationID { get; set; }
 
         [XmlAttribute("stationName")]
-        public string StationNameXml
+        public string? StationNameXml
         {
             get { return StationName; }
             set { StationName = value?.HtmlDecode() ?? string.Empty; }
@@ -26,16 +26,16 @@ namespace EVEMon.Common.Serialization.Eve
         public int CorporationID { get; set; }
 
         [XmlAttribute("corporationName")]
-        public string CorporationNameXml
+        public string? CorporationNameXml
         {
             get { return CorporationName; }
             set { CorporationName = value?.HtmlDecode() ?? string.Empty; }
         }
 
         [XmlIgnore]
-        public string StationName { get; set; }
+        public string? StationName { get; set; }
 
         [XmlIgnore]
-        public string CorporationName { get; set; }
+        public string? CorporationName { get; set; }
     }
 }

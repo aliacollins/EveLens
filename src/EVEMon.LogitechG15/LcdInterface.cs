@@ -8,7 +8,7 @@ namespace EVEMon.LogitechG15
         private static bool s_isAvailable;
         private static bool s_lcdInterfaceInitialized;
         private static bool s_result;
-        private static string s_appName;
+        private static string s_appName = string.Empty;
 
         private static readonly ILogitechLcd s_lgLcd = LogitechLcd.NET.LogitechLcd.Instance;
 

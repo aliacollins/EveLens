@@ -71,6 +71,7 @@ namespace EVEMon
         private bool m_isUpdateEventsSubscribed;
         private bool m_initialized;
         private bool m_firstApiLoadNotified;
+        private bool m_closingAfterUpload;
 
         #endregion
 
@@ -362,10 +363,24 @@ namespace EVEMon
             // Should we actually exit ?
             if (Settings.UI.MainWindowCloseBehaviour == CloseBehaviour.Exit)
             {
-                // Prevents the closing if we are restoring the settings at that time 
+                // Prevents the closing if we are restoring the settings at that time
                 // or we are still initializing
-                // or user has set to upload to cloud storage service provider and it fails
-                e.Cancel = Settings.IsRestoring || !m_initialized || !TryUploadToCloudStorageProviderAsync().Result;
+                if (Settings.IsRestoring || !m_initialized)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+
+                // If cloud upload already completed successfully, allow close
+                if (m_closingAfterUpload)
+                {
+                    m_closingAfterUpload = false;
+                    return;
+                }
+
+                // Cancel close, perform async upload, then re-close if successful
+                e.Cancel = true;
+                PerformCloudUploadAndCloseAsync();
 
                 return;
             }
@@ -406,6 +421,8 @@ namespace EVEMon
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            EveMonClient.CharacterLabelChanged -= EveMonClient_CharacterLabelChanged;
+            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
         }
 
         /// <summary>
@@ -2501,12 +2518,25 @@ namespace EVEMon
                 lblCSSProviderStatus.Visible = true;
             }
 
-            bool success = await Settings.CloudStorageServiceProvider.Provider.UploadSettingsFileOnExitAsync()
-                .ConfigureAwait(false);
+            bool success = await Settings.CloudStorageServiceProvider.Provider.UploadSettingsFileOnExitAsync();
 
             lblCSSProviderStatus.Visible = false;
 
             return success;
+        }
+
+        /// <summary>
+        /// Performs cloud upload asynchronously, then re-triggers Close() on success.
+        /// Used by OnFormClosing to avoid blocking the UI thread with .Result.
+        /// </summary>
+        private async void PerformCloudUploadAndCloseAsync()
+        {
+            bool success = await TryUploadToCloudStorageProviderAsync();
+            if (success)
+            {
+                m_closingAfterUpload = true;
+                Close();
+            }
         }
 
         #endregion

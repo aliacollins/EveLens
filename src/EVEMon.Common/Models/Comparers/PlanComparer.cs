@@ -34,8 +34,12 @@ namespace EVEMon.Common.Models.Comparers
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        public override int Compare(Plan x, Plan y)
+        public override int Compare(Plan? x, Plan? y)
         {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
             // Swap variables for descending order
             if (Order == SortOrder.Descending)
             {
@@ -48,30 +52,21 @@ namespace EVEMon.Common.Models.Comparers
             switch (Sort)
             {
                 case PlanSort.Description:
-                    if (x != null && y != null)
-                        return string.Compare(x.Description, y.Description,
-                            StringComparison.CurrentCulture);
-                    break;
+                    return string.Compare(x.Description, y.Description,
+                        StringComparison.CurrentCulture);
                 case PlanSort.Name:
-                    if (x != null && y != null)
-                        return string.Compare(x.Name, y.Name, StringComparison.CurrentCulture);
-                    break;
+                    return string.Compare(x.Name, y.Name, StringComparison.CurrentCulture);
                 case PlanSort.Time:
-                    if (x != null && y != null)
                     {
                         TimeSpan xtime = x.TotalTrainingTime;
                         TimeSpan ytime = y.TotalTrainingTime;
                         return TimeSpan.Compare(xtime, ytime);
                     }
-                    break;
                 case PlanSort.SkillsCount:
-                    if (x != null && y != null)
-                        return x.UniqueSkillsCount - y.UniqueSkillsCount;
-                    break;
+                    return x.UniqueSkillsCount - y.UniqueSkillsCount;
                 default:
                     throw new NotImplementedException();
             }
-            return 0;
         }
     }
 }

@@ -22,6 +22,6 @@ namespace EVEMon.Common.Serialization.Esi
         public int Quantity { get; set; }
 
         [DataMember(Name = "waypoints", EmitDefaultValue = false, IsRequired = false)]
-        public List<long> Waypoints { get; set; }
+        public List<long> Waypoints { get; set; } = new();
     }
 }

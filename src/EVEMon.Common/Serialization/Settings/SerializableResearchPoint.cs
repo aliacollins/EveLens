@@ -9,13 +9,13 @@ namespace EVEMon.Common.Serialization.Settings
         public int AgentID { get; set; }
 
         [XmlAttribute("agentName")]
-        public string AgentName { get; set; }
+        public string? AgentName { get; set; }
 
         [XmlAttribute("skillID")]
         public int SkillID { get; set; }
 
         [XmlAttribute("skillName")]
-        public string SkillName { get; set; }
+        public string? SkillName { get; set; }
 
         [XmlAttribute("startDate")]
         public DateTime StartDate { get; set; }

@@ -51,15 +51,15 @@ namespace EVEMon.Common.Serialization.Esi
 
         // One of: unknown, item_exchange, auction, courier, loan
         [DataMember(Name = "type")]
-        public string Type { get; set; }
+        public string? Type { get; set; }
 
         // One of: outstanding, in_progress, finished_issuer, finished_contractor, finished,
         // cancelled, rejected, failed, deleted, reversed
         [DataMember(Name = "status")]
-        public string Status { get; set; }
+        public string? Status { get; set; }
 
         [DataMember(Name = "title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [DataMember(Name = "for_corporation")]
         public bool ForCorp { get; set; }
@@ -276,6 +276,6 @@ namespace EVEMon.Common.Serialization.Esi
 
         // Filled in by client to indicate where these contracts came from
         [IgnoreDataMember]
-        public Enum APIMethod { get; set; }
+        public Enum? APIMethod { get; set; }
     }
 }

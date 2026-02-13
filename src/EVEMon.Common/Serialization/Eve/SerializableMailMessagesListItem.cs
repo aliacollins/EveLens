@@ -24,7 +24,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long SenderID { get; set; }
 
         [XmlAttribute("senderName")]
-        public string SenderName { get; set; }
+        public string? SenderName { get; set; }
 
         [XmlAttribute("sentDate")]
         public string SentDateXml
@@ -38,7 +38,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlAttribute("title")]
-        public string TitleXml
+        public string? TitleXml
         {
             get { return Title; }
             set { Title = value?.HtmlDecode() ?? string.Empty; }
@@ -79,7 +79,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [XmlIgnore]
         public DateTime SentDate { get; set; }

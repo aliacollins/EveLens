@@ -21,13 +21,13 @@ namespace EVEMon.Common.Serialization.Esi
                 var kills = warStats.Kills;
                 var vp = warStats.VictoryPoints;
 
-                totals.KillsLastWeek += kills.LastWeek;
-                totals.KillsTotal += kills.Total;
-                totals.KillsYesterday += kills.Yesterday;
+                totals.KillsLastWeek += kills?.LastWeek ?? 0;
+                totals.KillsTotal += kills?.Total ?? 0;
+                totals.KillsYesterday += kills?.Yesterday ?? 0;
 
-                totals.VictoryPointsLastWeek += vp.LastWeek;
-                totals.VictoryPointsTotal += vp.Total;
-                totals.VictoryPointsYesterday += vp.Yesterday;
+                totals.VictoryPointsLastWeek += vp?.LastWeek ?? 0;
+                totals.VictoryPointsTotal += vp?.Total ?? 0;
+                totals.VictoryPointsYesterday += vp?.Yesterday ?? 0;
 
                 ret.FactionalWarfareStats.Add(warStats.ToXMLItem());
             }

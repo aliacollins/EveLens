@@ -18,6 +18,7 @@ namespace EVEMon.Common.Net
         /// <param name="url">The URL.</param>
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
         /// <returns></returns>
+        [Obsolete("Use DownloadXmlAsync instead. This method blocks the calling thread via .Result and can deadlock on the UI thread.")]
         public static DownloadResult<IXPathNavigable> DownloadXml(Uri url,
             RequestParams param = null) => DownloadXmlAsync(url, param).Result;
 
@@ -27,7 +28,7 @@ namespace EVEMon.Common.Net
         /// <param name="url">The URL.</param>
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
         public static async Task<DownloadResult<IXPathNavigable>> DownloadXmlAsync(Uri url,
-            RequestParams param = null)
+            RequestParams? param = null)
         {
             string urlValidationError;
             if (!IsValidURL(url, out urlValidationError))

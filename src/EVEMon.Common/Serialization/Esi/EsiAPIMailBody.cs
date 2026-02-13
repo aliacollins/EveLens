@@ -13,7 +13,7 @@ namespace EVEMon.Common.Serialization.Esi
     public sealed class EsiAPIMailBody : EsiMailBase
     {
         [DataMember(Name = "body", EmitDefaultValue = false, IsRequired = false)]
-        public string Body { get; set; }
+        public string? Body { get; set; }
 
         [DataMember(Name = "read", IsRequired = false)]
         public bool Read { get; set; }

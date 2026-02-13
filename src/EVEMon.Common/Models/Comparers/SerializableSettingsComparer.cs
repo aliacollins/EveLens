@@ -16,7 +16,7 @@ namespace EVEMon.Common.Models.Comparers
         /// <returns>
         /// true if the specified objects are equal; otherwise, false.
         /// </returns>
-        public bool Equals(SerializableSettings x, SerializableSettings y)
+        public bool Equals(SerializableSettings? x, SerializableSettings? y)
         {
             if (ReferenceEquals(x, y))
                 return true;

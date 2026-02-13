@@ -28,6 +28,6 @@ namespace EVEMon.Common.Serialization.Settings
         public long Charisma { get; set; }
 
         [XmlAttribute("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
     }
 }

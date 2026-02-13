@@ -25,7 +25,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         private sealed class CustomListBox : ListBox
         {
-            public event EventHandler<DropDownMouseMoveEventArgs> DropDownMouseMove;
+            public event EventHandler<DropDownMouseMoveEventArgs>? DropDownMouseMove;
 
             /// <summary>
             /// Constructor.
@@ -49,7 +49,7 @@ namespace EVEMon.Common.Controls
                     return;
 
                 // Enact selection.
-                ((Dropdown)Parent).ForceDeactivate(new CustomComboBoxEventArgs(true));
+                (Parent as Dropdown)?.ForceDeactivate(new CustomComboBoxEventArgs(true));
                 e.Handled = true;
             }
 
@@ -75,16 +75,16 @@ namespace EVEMon.Common.Controls
             {
                 base.OnClick(e);
                 // Enact selection.
-                ((Dropdown)Parent).ForceDeactivate(new CustomComboBoxEventArgs(true));
+                (Parent as Dropdown)?.ForceDeactivate(new CustomComboBoxEventArgs(true));
             }
         }
 
         #endregion
 
 
-        public event EventHandler<DropDownMouseMoveEventArgs> DropDownMouseMove;
-        private CustomListBox m_listBox;
-        private string m_displayText;
+        public event EventHandler<DropDownMouseMoveEventArgs>? DropDownMouseMove;
+        private CustomListBox m_listBox = null!;
+        private string? m_displayText;
 
         /// <summary>
         /// Constructor.
@@ -104,7 +104,7 @@ namespace EVEMon.Common.Controls
         /// <returns>The control to add to the popup</returns>
         protected override Control CreateContent()
         {
-            CustomListBox tempListBox = null;
+            CustomListBox? tempListBox = null;
             try
             {
                 tempListBox = new CustomListBox();
@@ -151,7 +151,7 @@ namespace EVEMon.Common.Controls
         /// Gets or sets the selected item.
         /// </summary>
         [Browsable(false)]
-        public new object SelectedItem
+        public new object? SelectedItem
         {
             get { return m_listBox.SelectedItem; }
             set { m_listBox.SelectedItem = value; }
@@ -206,7 +206,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="DropDownMouseMoveEventArgs"/> instance containing the event data.</param>
-        private void listBox_DropDownMouseMove(object sender, DropDownMouseMoveEventArgs e)
+        private void listBox_DropDownMouseMove(object? sender, DropDownMouseMoveEventArgs e)
         {
             DropDownMouseMove?.ThreadSafeInvoke(sender, e);
         }
@@ -216,7 +216,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void listBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
             m_displayText = GetTextValue();
             Invalidate();
@@ -227,7 +227,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ToolTipComboBox_DrawItem(object sender, DrawItemEventArgs e)
+        private void ToolTipComboBox_DrawItem(object? sender, DrawItemEventArgs e)
         {
             // Background
             using (Brush backBrush = new SolidBrush(BackColor))

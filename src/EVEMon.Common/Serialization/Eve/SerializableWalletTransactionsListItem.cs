@@ -19,7 +19,7 @@ namespace EVEMon.Common.Serialization.Eve
         public int TypeID { get; set; }
 
         [XmlAttribute("typeName")]
-        public string TypeName { get; set; }
+        public string? TypeName { get; set; }
 
         [XmlAttribute("price")]
         public decimal Price { get; set; }
@@ -28,7 +28,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long ClientID { get; set; }
 
         [XmlAttribute("clientName")]
-        public string ClientNameXml
+        public string? ClientNameXml
         {
             get { return ClientName; }
             set { ClientName = value?.HtmlDecode() ?? string.Empty; }
@@ -38,17 +38,17 @@ namespace EVEMon.Common.Serialization.Eve
         public long StationID { get; set; }
 
         [XmlAttribute("stationName")]
-        public string StationNameXml
+        public string? StationNameXml
         {
             get { return StationName; }
             set { StationName = value?.HtmlDecode() ?? string.Empty; }
         }
 
         [XmlAttribute("transactionType")]
-        public string TransactionType { get; set; }
+        public string? TransactionType { get; set; }
 
         [XmlAttribute("transactionFor")]
-        public string TransactionFor { get; set; }
+        public string? TransactionFor { get; set; }
 
         [XmlAttribute("transactionDateTime")]
         public string TransactionDateXml
@@ -62,10 +62,10 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
-        public string ClientName { get; set; }
+        public string? ClientName { get; set; }
 
         [XmlIgnore]
-        public string StationName { get; set; }
+        public string? StationName { get; set; }
 
         [XmlIgnore]
         public DateTime TransactionDate { get; set; }

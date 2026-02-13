@@ -23,7 +23,7 @@ namespace EVEMon.LogitechG15
         private const float G15DpiX = 46;
         private const float G15DpiY = 46;
 
-        private static LcdDisplay s_singleInstance;
+        private static LcdDisplay? s_singleInstance;
 
         private readonly Font m_defaultFont;
         private readonly Bitmap m_bmpLCD;
@@ -35,8 +35,8 @@ namespace EVEMon.LogitechG15
         private readonly Timer m_buttonPressedCheckTimer;
         private readonly float m_defaultOffset;
 
-        private CCPCharacter m_currentCharacter;
-        private CCPCharacter m_refreshCharacter;
+        private CCPCharacter? m_currentCharacter;
+        private CCPCharacter? m_refreshCharacter;
         private int m_oldButtonState;
         private DateTime m_buttonStateHld;
         private DateTime m_paintTime;
@@ -54,17 +54,17 @@ namespace EVEMon.LogitechG15
         /// <summary>
         /// Fired whenever a button has been pressed which require EVEMon to requery the API for the specified character.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> ApiUpdateRequested;
+        public static event EventHandler<CharacterChangedEventArgs>? ApiUpdateRequested;
 
         /// <summary>
         /// Fired whenever the current character changed (because of a button press).
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CurrentCharacterChanged;
+        public static event EventHandler<CharacterChangedEventArgs>? CurrentCharacterChanged;
 
         /// <summary>
         /// Fired whenever the auto cycle should change (because of a button press).
         /// </summary>
-        public static event EventHandler<CycleEventArgs> AutoCycleChanged;
+        public static event EventHandler<CycleEventArgs>? AutoCycleChanged;
 
         #endregion
 
@@ -159,15 +159,15 @@ namespace EVEMon.LogitechG15
         /// Gets or sets the first character to complete skill.
         /// </summary>
         /// <value>The first character to complete skill.</value>
-        internal CCPCharacter FirstCharacterToCompleteSkill { private get; set; }
+        internal CCPCharacter? FirstCharacterToCompleteSkill { private get; set; }
 
         /// <summary>
         /// Gets or sets the current character.
         /// </summary>
         /// <value>The current character.</value>
-        internal CCPCharacter CurrentCharacter
+        internal CCPCharacter? CurrentCharacter
         {
-            private get { return MonitoredCharacters.Contains(m_currentCharacter) ? m_currentCharacter : null; }
+            private get { return m_currentCharacter != null && MonitoredCharacters.Contains(m_currentCharacter) ? m_currentCharacter : null; }
             set { m_currentCharacter = value; }
         }
 
@@ -403,6 +403,9 @@ namespace EVEMon.LogitechG15
         /// </summary>
         private void RenderWalletBalance()
         {
+            if (CurrentCharacter == null)
+                return;
+
             decimal balance = CurrentCharacter.Balance;
             string walletBalance = $"{balance:N2} ISK";
             SizeF balanceSize = m_lcdCanvas.MeasureString(walletBalance, m_defaultFont);
@@ -427,7 +430,8 @@ namespace EVEMon.LogitechG15
         /// </summary>
         private void RenderSkillQueueInfo()
         {
-            if (CurrentCharacter.IsTraining &&
+            if (CurrentCharacter != null &&
+                CurrentCharacter.IsTraining &&
                 CurrentCharacter.SkillQueue.LessThanWarningThreshold &&
                 m_showingCycledQueueInfo)
             {
@@ -440,7 +444,7 @@ namespace EVEMon.LogitechG15
         /// </summary>
         private void RenderCompletionTime()
         {
-            if (!CurrentCharacter.IsTraining)
+            if (CurrentCharacter == null || !CurrentCharacter.IsTraining)
                 return;
 
             DateTime completionDateTime = CurrentCharacter.CurrentlyTrainingSkill.EndTime.ToLocalTime();
@@ -567,6 +571,9 @@ namespace EVEMon.LogitechG15
         /// </summary>
         private void PaintRefreshingMessage()
         {
+            if (m_refreshCharacter == null)
+                return;
+
             ClearGraphics();
             m_lcdLines.Clear();
 
@@ -611,6 +618,9 @@ namespace EVEMon.LogitechG15
         /// </summary>
         private void UpdateSkillQueueTrainingTime()
         {
+            if (CurrentCharacter == null)
+                return;
+
             TimeSpan skillQueueEndTime = CurrentCharacter.SkillQueue.EndTime.Subtract(DateTime.UtcNow);
             TimeSpan timeLeft = SkillQueue.WarningThresholdTimeSpan.Subtract(skillQueueEndTime);
 
@@ -744,7 +754,7 @@ namespace EVEMon.LogitechG15
         /// Occurs when some of the G15 screen buttons are pressed.
         /// </summary>
         /// <returns></returns>
-        private void ButtonPressedCheckTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        private void ButtonPressedCheckTimerOnElapsed(object? sender, ElapsedEventArgs elapsedEventArgs)
         {
             var pressedButtons = 0;
 

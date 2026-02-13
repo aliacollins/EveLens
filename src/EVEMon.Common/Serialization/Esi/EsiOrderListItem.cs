@@ -61,7 +61,7 @@ namespace EVEMon.Common.Serialization.Esi
         public int State { get; set; }
 
         [DataMember(Name = "state", EmitDefaultValue = false, IsRequired = false)]
-        private string StateJson
+        private string? StateJson
         {
             get
             {

@@ -13,7 +13,7 @@ namespace EVEMon.Common.Serialization.Settings
         public DateTime EndDate { get; set; }
 
         [XmlElement("title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [XmlElement("options")]
         public ScheduleEntryOptions Options { get; set; }

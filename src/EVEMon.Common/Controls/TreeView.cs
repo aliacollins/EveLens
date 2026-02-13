@@ -40,7 +40,7 @@
 //			  node becomes selected.
 //			- If in the BeforeSelect event, e.Cancel is set to true, then node 
 //			  will not be selected
-//			- SHIFT selection sometimes didn’t behave correctly. Fixed.
+//			- SHIFT selection sometimes didnï¿½t behave correctly. Fixed.
 //		04/09/2004	
 //			- SelectedNodes is no longer an array of tree nodes, but a 
 //			  SelectedNodesCollection
@@ -136,9 +136,9 @@ namespace EVEMon.Common.Controls
     [ToolboxItem(true)]
     public class TreeView : System.Windows.Forms.TreeView
     {
-        public event TreeViewEventHandler AfterDeselect;
-        public event TreeViewEventHandler BeforeDeselect;
-        public event EventHandler SelectionsChanged;
+        public event TreeViewEventHandler? AfterDeselect;
+        public event TreeViewEventHandler? BeforeDeselect;
+        public event EventHandler? SelectionsChanged;
 
         protected void OnAfterDeselect(TreeNode tn)
         {
@@ -164,7 +164,7 @@ namespace EVEMon.Common.Controls
         /// <summary> 
         /// Required designer variable.
         /// </summary>
-        private Container m_components;
+        private Container? m_components;
 
         /// <summary>
         /// Used to make sure that SelectedNode can only be used from within this class.
@@ -191,7 +191,7 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Keeps track of node that has to be pu in edit mode.
         /// </summary>
-        private TreeNode m_tnNodeToStartEditOn;
+        private TreeNode? m_tnNodeToStartEditOn;
 
         /// <summary>
         /// Remembers whether mouse click on a node was single or double click.
@@ -201,13 +201,13 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Keeps track of most recent selected node.
         /// </summary>
-        private TreeNode m_tnMostRecentSelectedNode;
+        private TreeNode? m_tnMostRecentSelectedNode;
 
         /// <summary>
         /// Keeps track of the selection mirror point; this is the last selected node without SHIFT key pressed.
         /// It is used as the mirror node during SHIFT selection.
         /// </summary>
-        private TreeNode m_tnSelectionMirrorPoint;
+        private TreeNode? m_tnSelectionMirrorPoint;
 
         /// <summary>
         /// Keeps track of the number of mouse clicks.
@@ -235,12 +235,12 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Holds node that needs to be flashed.
         /// </summary>
-        private TreeNode m_tnToFlash;
+        private TreeNode? m_tnToFlash;
 
         /// <summary>
         /// Keeps track of the first selected node when selection has begun with the keyboard.
         /// </summary>
-        private TreeNode m_tnKeysStartNode;
+        private TreeNode? m_tnKeysStartNode;
 
         #endregion
 
@@ -250,7 +250,7 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// This property is for internal use only. Use SelectedNodes instead.
         /// </summary>
-        public new TreeNode SelectedNode
+        public new TreeNode? SelectedNode
         {
             get
             {
@@ -309,7 +309,7 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Gets the last selected node.
         /// </summary>
-        public TreeNode LastSelectedNode => m_tnMostRecentSelectedNode;
+        public TreeNode? LastSelectedNode => m_tnMostRecentSelectedNode;
 
         /// <summary>
         /// Occurs when a tree node is added to the SelectedNodes collection.
@@ -355,7 +355,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void SelectedNodes_SelectedNodesCleared(object sender, EventArgs e)
+        private void SelectedNodes_SelectedNodesCleared(object? sender, EventArgs e)
         {
             m_blnSelectionChanged = false;
 
@@ -457,7 +457,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="nodeKeepSelected">Node not to touch.</param>
         /// <param name="tva">Specifies the action that caused the selection change.</param>
-        internal void UnselectAllNodesExceptNode(TreeNode nodeKeepSelected, TreeViewAction tva)
+        internal void UnselectAllNodesExceptNode(TreeNode? nodeKeepSelected, TreeViewAction tva)
         {
             // First, build list of nodes that need to be unselected
             ArrayList arrNodesToDeselect = new ArrayList();
@@ -554,7 +554,7 @@ namespace EVEMon.Common.Controls
 
                 OnBeforeDeselect(tn);
 
-                Color[] originalColors = (Color[])m_htblSelectedNodesOrigColors[tn.GetHashCode()];
+                Color[]? originalColors = m_htblSelectedNodesOrigColors[tn.GetHashCode()] as Color[];
                 if (originalColors != null)
                 {
                     m_listSelectedNodes.Remove(tn);
@@ -838,7 +838,7 @@ namespace EVEMon.Common.Controls
             }
             else
             {
-                if (tn.BackColor != SelectionBackColor)
+                if (tn.BackColor != SelectionBackColor && m_tnMostRecentSelectedNode != null)
                 {
                     using (SolidBrush brush = new SolidBrush(BackColor))
                     using (Pen pen = new Pen(brush, 1))
@@ -935,7 +935,7 @@ namespace EVEMon.Common.Controls
         /// <param name="tn">Node to check.</param>
         /// <param name="e"></param>
         /// <returns>True if we click on the plus/minus icon</returns>
-        private static bool IsPlusMinusClicked(TreeNode tn, MouseEventArgs e) => e.X < tn?.Bounds.X;
+        private static bool IsPlusMinusClicked(TreeNode? tn, MouseEventArgs e) => tn != null && e.X < tn.Bounds.X;
 
         /// <summary>
         /// Occurs when mouse is down.
@@ -996,7 +996,10 @@ namespace EVEMon.Common.Controls
                 return;
             }
 
-            TreeNode tn = m_tnToFlash;
+            TreeNode? tn = m_tnToFlash;
+            if (tn == null)
+                return;
+
             // Only flash node is it's not yet selected
             if (!IsNodeSelected(tn))
             {
@@ -1022,7 +1025,7 @@ namespace EVEMon.Common.Controls
         private void StartEdit()
         {
             Thread.Sleep(200);
-            if (!m_blnWasDoubleClick)
+            if (!m_blnWasDoubleClick && m_tnNodeToStartEditOn != null)
             {
                 m_blnInternalCall = true;
                 SelectedNode = m_tnNodeToStartEditOn;
@@ -1047,7 +1050,7 @@ namespace EVEMon.Common.Controls
         /// <param name="keys">Keys.</param>
         /// <param name="tva">TreeViewAction.</param>
         /// <param name="allowStartEdit">True if node can go to edit mode, false if not.</param>
-        public void ProcessNodeRange(TreeNode startNode, TreeNode endNode, MouseEventArgs e, Keys keys, TreeViewAction tva,
+        public void ProcessNodeRange(TreeNode? startNode, TreeNode endNode, MouseEventArgs e, Keys keys, TreeViewAction tva,
             bool allowStartEdit)
         {
             m_blnSelectionChanged = false; // prepare for OnSelectionsChanged
@@ -1159,8 +1162,11 @@ namespace EVEMon.Common.Controls
         /// <param name="startNode">The start node.</param>
         /// <param name="endNode">The end node.</param>
         /// <param name="tva">The tva.</param>
-        private void HandleShiftPressed(TreeNode startNode, TreeNode endNode, TreeViewAction tva)
+        private void HandleShiftPressed(TreeNode? startNode, TreeNode endNode, TreeViewAction tva)
         {
+            if (startNode == null)
+                return;
+
             TreeNode tnTemp;
             int intNodeLevelStart;
 
@@ -1271,8 +1277,11 @@ namespace EVEMon.Common.Controls
         /// <param name="startNode">The start node.</param>
         /// <param name="endNode">The end node.</param>
         /// <param name="tva">The tva.</param>
-        private void HandleShiftAndControlPressed(TreeNode startNode, TreeNode endNode, TreeViewAction tva)
+        private void HandleShiftAndControlPressed(TreeNode? startNode, TreeNode endNode, TreeViewAction tva)
         {
+            if (startNode == null)
+                return;
+
             TreeNode tnTemp;
             int intNodeLevelStart;
 
@@ -1391,6 +1400,9 @@ namespace EVEMon.Common.Controls
         {
             m_blnSelectionChanged = false; // prepare for OnSelectionsChanged
 
+            if (e.Node == null)
+                return;
+
             // Make sure that it's the only selected node
             SelectNode(e.Node, true, TreeViewAction.ByMouse);
             UnselectAllNodesExceptNode(e.Node, TreeViewAction.ByMouse);
@@ -1428,7 +1440,7 @@ namespace EVEMon.Common.Controls
 
             int intNumber = 0;
 
-            TreeNode tnNewlySelectedNodeWithKeys = null;
+            TreeNode? tnNewlySelectedNodeWithKeys = null;
             if (m_tnMostRecentSelectedNode != null)
             {
                 switch (e.KeyCode)
@@ -1480,7 +1492,7 @@ namespace EVEMon.Common.Controls
                         return;
                 }
             }
-            if (tnNewlySelectedNodeWithKeys != null)
+            if (tnNewlySelectedNodeWithKeys != null && m_tnMostRecentSelectedNode != null)
             {
                 SetFocusToNode(m_tnMostRecentSelectedNode, false);
                 ProcessNodeRange(m_tnKeysStartNode, tnNewlySelectedNodeWithKeys,
@@ -1493,7 +1505,7 @@ namespace EVEMon.Common.Controls
             // Ensure visibility
             if (m_tnMostRecentSelectedNode != null)
             {
-                TreeNode tnToMakeVisible = null;
+                TreeNode? tnToMakeVisible = null;
                 switch (e.KeyCode)
                 {
                     case Keys.Down:
@@ -1538,6 +1550,12 @@ namespace EVEMon.Common.Controls
         protected override void OnAfterCollapse(TreeViewEventArgs e)
         {
             m_blnSelectionChanged = false;
+
+            if (e.Node == null)
+            {
+                base.OnAfterCollapse(e);
+                return;
+            }
 
             // All child nodes should be deselected
             bool blnChildSelected = false;
@@ -1587,22 +1605,22 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Event fired when a tree node has been added to the collection.
         /// </summary>
-        internal event TreeNodeEventHandler TreeNodeAdded;
+        internal event TreeNodeEventHandler? TreeNodeAdded;
 
         /// <summary>
         /// Event fired when a tree node has been removed to the collection.
         /// </summary>
-        internal event TreeNodeEventHandler TreeNodeRemoved;
+        internal event TreeNodeEventHandler? TreeNodeRemoved;
 
         /// <summary>
         /// Event fired when a tree node has been inserted to the collection.
         /// </summary>
-        internal event TreeNodeEventHandler TreeNodeInserted;
+        internal event TreeNodeEventHandler? TreeNodeInserted;
 
         /// <summary>
         /// Event fired the collection has been cleared.
         /// </summary>
-        internal event EventHandler SelectedNodesCleared;
+        internal event EventHandler? SelectedNodesCleared;
 
         #endregion
 
@@ -1612,7 +1630,7 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// Gets tree node at specified index.
         /// </summary>
-        public TreeNode this[int index] => (TreeNode)List[index];
+        public TreeNode this[int index] => (TreeNode)List[index]!;
 
         /// <summary>
         /// Adds a tree node to the collection.
@@ -1707,7 +1725,7 @@ namespace EVEMon.Common.Controls
 
         TreeNode IList<TreeNode>.this[int index]
         {
-            get { return (TreeNode)List[index]; }
+            get { return (TreeNode)List[index]!; }
             set { }
         }
 

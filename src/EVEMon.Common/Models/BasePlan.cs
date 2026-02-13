@@ -19,9 +19,9 @@ namespace EVEMon.Common.Models
     [EnforceUIThreadAffinity]
     public abstract class BasePlan : ReadonlyCollection<PlanEntry>
     {
-        private readonly PlanEntry[] m_lookup;
-        private string m_name;
-        private string m_description;
+        private readonly PlanEntry?[] m_lookup;
+        private string m_name = string.Empty;
+        private string m_description = string.Empty;
 
         #region Constructor
 
@@ -77,7 +77,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets or sets the implant set chosen by the user.
         /// </summary>
-        public ImplantSet ChosenImplantSet { get; set; }
+        public ImplantSet? ChosenImplantSet { get; set; }
 
         /// <summary>
         /// Gets or sets the simulated booster bonus (0-12 points to all attributes).
@@ -102,7 +102,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the first booster injection point in this plan, if any.
         /// </summary>
-        public BoosterPoint FirstBoosterInjectionPoint => Items.FirstOrDefault(entry => entry.BoosterPoint != null)?.BoosterPoint;
+        public BoosterPoint? FirstBoosterInjectionPoint => Items.FirstOrDefault(entry => entry.BoosterPoint != null)?.BoosterPoint;
 
         /// <summary>
         /// Gets the owner of this plan.
@@ -194,7 +194,7 @@ namespace EVEMon.Common.Models
         /// <param name="scratchpad">The scratchpad to use for the computation, may be null.</param>
         /// <param name="applyRemappingPoints"></param>
         /// <returns></returns>
-        public TimeSpan GetTotalTime(CharacterScratchpad scratchpad, bool applyRemappingPoints)
+        public TimeSpan GetTotalTime(CharacterScratchpad? scratchpad, bool applyRemappingPoints)
         {
             // No scratchpad ? Let's create one
             if (scratchpad == null)
@@ -243,7 +243,7 @@ namespace EVEMon.Common.Models
         /// <param name="level">The level.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">skill</exception>
-        public PlanEntry GetEntry(StaticSkill skill, long level)
+        public PlanEntry? GetEntry(StaticSkill skill, long level)
         {
             skill.ThrowIfNull(nameof(skill));
 
@@ -314,7 +314,7 @@ namespace EVEMon.Common.Models
         /// <returns>The index of the matching entry when found, -1 otherwise.</returns>
         protected int IndexOf(StaticSkill skill, long level)
         {
-            PlanEntry entry = GetEntry(skill, level);
+            PlanEntry? entry = GetEntry(skill, level);
             if (entry == null)
                 return -1;
             return Items.IndexOf(entry);
@@ -686,9 +686,12 @@ namespace EVEMon.Common.Models
                 }
 
                 // Then add the item itself
-                PlanEntry entryToRemove = GetEntry(itemToRemove.Skill, itemToRemove.Level);
-                planEntries.Add(entryToRemove);
-                entriesSet.Set(entryToRemove);
+                PlanEntry? entryToRemove = GetEntry(itemToRemove.Skill, itemToRemove.Level);
+                if (entryToRemove != null)
+                {
+                    planEntries.Add(entryToRemove);
+                    entriesSet.Set(entryToRemove);
+                }
             }
 
             return planEntries;
@@ -716,7 +719,9 @@ namespace EVEMon.Common.Models
                 // Already planned ? We update the lowestPrereqPriority and skip it.
                 if (IsPlanned(itemToAdd.Skill, itemToAdd.Level))
                 {
-                    lowestPrereqPriority = Math.Max(GetEntry(itemToAdd.Skill, itemToAdd.Level).Priority, lowestPrereqPriority);
+                    var existingEntry = GetEntry(itemToAdd.Skill, itemToAdd.Level);
+                    if (existingEntry != null)
+                        lowestPrereqPriority = Math.Max(existingEntry.Priority, lowestPrereqPriority);
                     continue;
                 }
 
@@ -774,12 +779,12 @@ namespace EVEMon.Common.Models
         private PlanEntry CreateEntryToAdd(StaticSkill skill, long level, PlanEntryType type, string note,
             ref int lowestPrereqPriority)
         {
-            PlanEntry entry = GetEntry(skill, level);
+            PlanEntry? entry = GetEntry(skill, level);
 
             // So we have to create a new entry. We first check it's not already learned or something
             if (entry == null)
             {
-                return new PlanEntry(null, skill, level)
+                return new PlanEntry(skill, level)
                 {
                     Type = type,
                     Notes = note
@@ -794,7 +799,7 @@ namespace EVEMon.Common.Models
             lowestPrereqPriority = Math.Max(priority, lowestPrereqPriority);
 
             //Skill at this level is planned - just update the Note.
-            entry = new PlanEntry(null, skill, level) { Priority = priority, Type = type, Notes = note };
+            entry = new PlanEntry(skill, level) { Priority = priority, Type = type, Notes = note };
             return entry;
         }
 
@@ -900,7 +905,9 @@ namespace EVEMon.Common.Models
             if (masteryLevel.IsTrained)
                 return true;
 
-            Character character = Character as Character;
+            Character? character = Character as Character;
+            if (character == null)
+                return false;
 
             // We check every prerequisite is trained
             return !masteryLevel.Select(mcert => mcert.ToCharacter(character).GetCertificateLevel(masteryLevel.Level))
@@ -974,7 +981,7 @@ namespace EVEMon.Common.Models
             DateTime time = DateTime.Now;
 
             // Track active booster state
-            BoosterPoint activeBooster = null;
+            BoosterPoint? activeBooster = null;
             TimeSpan boosterTimeRemaining = TimeSpan.Zero;
 
             // Update the statistics
@@ -1052,7 +1059,10 @@ namespace EVEMon.Common.Models
         /// </summary>
         public void UpdateOldTrainingTimes()
         {
-            UpdateOldTrainingTimes(new CharacterScratchpad(Character.After(ChosenImplantSet)), true, true);
+            var scratchpad = ChosenImplantSet != null
+                ? new CharacterScratchpad(Character.After(ChosenImplantSet))
+                : new CharacterScratchpad(Character);
+            UpdateOldTrainingTimes(scratchpad, true, true);
         }
 
         /// <summary>
@@ -1094,8 +1104,10 @@ namespace EVEMon.Common.Models
         /// <param name="filePath">Path to save the CSV file.</param>
         public void ExportValidationData(string filePath)
         {
-            var scratchpad = new CharacterScratchpad(Character.After(ChosenImplantSet));
-            BoosterPoint activeBooster = null;
+            var scratchpad = ChosenImplantSet != null
+                ? new CharacterScratchpad(Character.After(ChosenImplantSet))
+                : new CharacterScratchpad(Character);
+            BoosterPoint? activeBooster = null;
             TimeSpan boosterTimeRemaining = TimeSpan.Zero;
             float trainingRate = Character.EffectiveCharacterStatus.GetTrainingRate();
             string cloneStatus = Character.EffectiveCharacterStatus.ToString();

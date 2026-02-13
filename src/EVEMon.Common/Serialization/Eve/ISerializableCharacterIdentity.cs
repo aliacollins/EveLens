@@ -6,12 +6,12 @@ namespace EVEMon.Common.Serialization.Eve
     public interface ISerializableCharacterIdentity
     {
         long ID { get; }
-        string Name { get; }
+        string? Name { get; }
         long CorporationID { get; }
-        string CorporationName { get; }
+        string? CorporationName { get; }
         long AllianceID { get; }
-        string AllianceName { get; }
+        string? AllianceName { get; }
         int FactionID { get; }
-        string FactionName { get; }
+        string? FactionName { get; }
     }
 }

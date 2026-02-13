@@ -20,6 +20,6 @@ namespace EVEMon.Common.Serialization.Eve
         public Collection<SerializableMailBodiesListItem> Bodies => m_bodies;
 
         [XmlElement("missingMessageIDs")]
-        public string MissingMessageIDs { get; set; }
+        public string? MissingMessageIDs { get; set; }
     }
 }

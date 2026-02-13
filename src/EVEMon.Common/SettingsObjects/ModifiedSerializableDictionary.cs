@@ -14,6 +14,7 @@ namespace EVEMon.Common.SettingsObjects
 {
     [Serializable]
     public sealed class ModifiedSerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IXmlSerializable
+        where TKey : notnull
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="EVEMon.Common.SettingsObjects.SerializableDictionary{TKey,TValue}"/> class.
@@ -55,7 +56,7 @@ namespace EVEMon.Common.SettingsObjects
         /// that is produced by the <see cref="M:System.Xml.Serialization.IXmlSerializable.WriteXml(System.Xml.XmlWriter)"/> method
         /// and consumed by the <see cref="M:System.Xml.Serialization.IXmlSerializable.ReadXml(System.Xml.XmlReader)"/> method.
         /// </returns>
-        public XmlSchema GetSchema() => null;
+        public XmlSchema? GetSchema() => null;
 
         /// <summary>
         /// Generates an object from its XML representation.
@@ -72,7 +73,7 @@ namespace EVEMon.Common.SettingsObjects
             reader.Read();
             while (reader.NodeType != XmlNodeType.EndElement)
             {
-                TValue value = default(TValue);
+                TValue? value = default;
 
                 // Does the element have attributes?
                 if (reader.HasAttributes)
@@ -84,13 +85,13 @@ namespace EVEMon.Common.SettingsObjects
                     {
                         TypeConverter converter = TypeDescriptor.GetConverter(valueType);
 
-                        string attribute = reader.GetAttribute(0);
+                        string? attribute = reader.GetAttribute(0);
 
                         if (string.IsNullOrEmpty(attribute))
                             break;
 
                         // Assign the value
-                        value = (TValue)converter.ConvertFromInvariantString(attribute);
+                        value = (TValue?)converter.ConvertFromInvariantString(attribute);
                     }
                     else
                     {
@@ -102,11 +103,11 @@ namespace EVEMon.Common.SettingsObjects
                             property => property.CanWrite && !Attribute.IsDefined(property, typeof(XmlIgnoreAttribute))))
                         {
                             // Get property name from XmlElement/XmlAttribute or use property name
-                            Attribute attr = property.GetCustomAttributes(false).Where(
+                            Attribute? attr = property.GetCustomAttributes(false).Where(
                                 x => x is XmlElementAttribute || x is XmlAttributeAttribute).Cast<Attribute>().FirstOrDefault();
 
-                            XmlElementAttribute xmlElement = attr as XmlElementAttribute;
-                            XmlAttributeAttribute xmlAttribute = attr as XmlAttributeAttribute;
+                            XmlElementAttribute? xmlElement = attr as XmlElementAttribute;
+                            XmlAttributeAttribute? xmlAttribute = attr as XmlAttributeAttribute;
 
                             string propertyName;
                             if (xmlElement != null && !string.IsNullOrWhiteSpace(xmlElement.ElementName))
@@ -118,12 +119,12 @@ namespace EVEMon.Common.SettingsObjects
 
                             TypeConverter converter = TypeDescriptor.GetConverter(property.PropertyType);
 
-                            string attribute = reader.GetAttribute(propertyName);
+                            string? attribute = reader.GetAttribute(propertyName);
 
                             if (string.IsNullOrEmpty(attribute))
                                 continue;
 
-                            object propertyValue = converter.ConvertFromInvariantString(attribute);
+                            object? propertyValue = converter.ConvertFromInvariantString(attribute);
 
                             property.SetValue(value, propertyValue, null);
                         }
@@ -134,14 +135,10 @@ namespace EVEMon.Common.SettingsObjects
 
                 TypeConverter typeConverter = TypeDescriptor.GetConverter(typeof(TKey));
 
-                TKey key = default(TKey);
-
                 // Assign the key
-                object keyValue = typeConverter.ConvertFrom(reader.Value);
-                if (keyValue != null)
-                    key = (TKey)keyValue;
-
-                Add(key, value);
+                object? keyValue = typeConverter.ConvertFrom(reader.Value);
+                if (keyValue is TKey key && value is TValue val)
+                    Add(key, val);
 
                 reader.Read();
                 reader.ReadEndElement();
@@ -176,7 +173,7 @@ namespace EVEMon.Common.SettingsObjects
             // Serialize each dictionary element as Xml
             foreach (TKey key in Keys)
             {
-                XmlRootAttribute rootAttribute =
+                XmlRootAttribute? rootAttribute =
                     valueType.GetCustomAttributes(typeof(XmlRootAttribute), false).Cast<XmlRootAttribute>().FirstOrDefault();
 
                 // Get the name specified in XmlRootAttribute or use the type name
@@ -193,23 +190,23 @@ namespace EVEMon.Common.SettingsObjects
                     string attributeName = TypeName;
 
                     // Write the value as XmlAttribute
-                    writer.WriteAttributeString(attributeName, this[key].ToString());
+                    writer.WriteAttributeString(attributeName, this[key]?.ToString() ?? string.Empty);
                 }
                 else
                 {
                     // Note: Best practice is to serialize properties instead of fields;
                     // however if you have to serialize fields use the 'GetFields()' method
-                    // and adjust the code accordingly using the 'NonSerializedAttribute' 
+                    // and adjust the code accordingly using the 'NonSerializedAttribute'
 
                     // Write each property value as XmlAttribute excluding those that have the 'XmlIgnoreAttribute'
                     foreach (PropertyInfo property in valueType.GetProperties().Where(
                         property => !Attribute.IsDefined(property, typeof(XmlIgnoreAttribute))))
                     {
-                        Attribute attribute = property.GetCustomAttributes(false).Where(
+                        Attribute? attribute = property.GetCustomAttributes(false).Where(
                             x => x is XmlElementAttribute || x is XmlAttributeAttribute).Cast<Attribute>().FirstOrDefault();
 
-                        XmlElementAttribute xmlElement = attribute as XmlElementAttribute;
-                        XmlAttributeAttribute xmlAttribute = attribute as XmlAttributeAttribute;
+                        XmlElementAttribute? xmlElement = attribute as XmlElementAttribute;
+                        XmlAttributeAttribute? xmlAttribute = attribute as XmlAttributeAttribute;
 
                         // Get the name specified in XmlElement/XmlAttribute or use the property name
                         string attributeName;
@@ -220,19 +217,19 @@ namespace EVEMon.Common.SettingsObjects
                         else
                             attributeName = property.Name;
 
-                        object propertyValue = property.GetValue(this[key], null);
+                        object? propertyValue = property.GetValue(this[key], null);
 
                         // Special condition for Boolean type (because "Boolean.ToString()" returns "True"/"False")
-                        string propertyValueString = propertyValue is bool
-                            ? XmlConvert.ToString((bool)propertyValue)
-                            : propertyValue.ToString();
+                        string? propertyValueString = propertyValue is bool boolValue
+                            ? XmlConvert.ToString(boolValue)
+                            : propertyValue?.ToString();
 
-                        writer.WriteAttributeString(attributeName, propertyValueString);
+                        writer.WriteAttributeString(attributeName, propertyValueString ?? string.Empty);
                     }
                 }
 
                 // Write the key as XmlText
-                writer.WriteValue(key.ToString());
+                writer.WriteValue(key.ToString() ?? string.Empty);
 
                 writer.WriteEndElement();
             }

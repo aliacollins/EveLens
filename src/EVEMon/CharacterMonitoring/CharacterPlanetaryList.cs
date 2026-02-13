@@ -196,7 +196,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             EveMonClient.CharacterPlanetaryColoniesUpdated += EveMonClient_CharacterPlanetaryColoniesUpdated;
             EveMonClient.CharacterPlanetaryLayoutUpdated += EveMonClient_CharacterPlanetaryLayoutUpdated;
-            EveMonClient.CharacterPlaneteryPinsCompleted += EveMonClient_CharacterPlaneteryPinsCompleted;
+            EveMonClient.CharacterPlanetaryPinsCompleted += EveMonClient_CharacterPlanetaryPinsCompleted;
             Disposed += OnDisposed;
         }
 
@@ -212,7 +212,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.CharacterPlanetaryColoniesUpdated -= EveMonClient_CharacterPlanetaryColoniesUpdated;
             EveMonClient.CharacterPlanetaryLayoutUpdated -= EveMonClient_CharacterPlanetaryLayoutUpdated;
-            EveMonClient.CharacterPlaneteryPinsCompleted -= EveMonClient_CharacterPlaneteryPinsCompleted;
+            EveMonClient.CharacterPlanetaryPinsCompleted -= EveMonClient_CharacterPlanetaryPinsCompleted;
             Disposed -= OnDisposed;
         }
 
@@ -1003,7 +1003,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanetaryPinsEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterPlaneteryPinsCompleted(object sender, PlanetaryPinsEventArgs e)
+        private void EveMonClient_CharacterPlanetaryPinsCompleted(object sender, PlanetaryPinsEventArgs e)
         {
             UpdateContent();
         }

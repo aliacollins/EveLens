@@ -9,7 +9,7 @@ namespace EVEMon.Common.Serialization.Settings
     public sealed class SerializableInvalidPlanEntry
     {
         [XmlAttribute("skill")]
-        public string SkillName { get; set; }
+        public string? SkillName { get; set; }
 
         [XmlAttribute("level")]
         public long PlannedLevel { get; set; }

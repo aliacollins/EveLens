@@ -52,7 +52,7 @@ namespace EVEMon.Common.Data
             foreach (string factionInfo in Properties.Resources.chrFactions.Split('\n'))
             {
                 string[] entries = factionInfo.Split(',');
-                NPCCorporation baseCorp = null, militiaCorp = null;
+                NPCCorporation? baseCorp = null, militiaCorp = null;
                 if (entries.Length > 9)
                 {
                     // factionID,factionName,description,raceIDs,solarSystemID,corporationID,
@@ -66,7 +66,7 @@ namespace EVEMon.Common.Data
                         baseCorp = GetCorporationByID(corpID);
                     if (entries[0].TryParseInv(out id) && !string.IsNullOrEmpty(factionName) &&
                             id > 0 && baseCorp != null)
-                        s_factionsByID.Add(id, new Faction(id, baseCorp, militiaCorp,
+                        s_factionsByID.Add(id, new Faction(id, baseCorp, militiaCorp!,
                             factionName));
                 }
             }
@@ -126,8 +126,8 @@ namespace EVEMon.Common.Data
             // Connects the systems
             foreach (SerializableJump srcJump in datafile.Jumps)
             {
-                SolarSystem a = GetSolarSystemByID(srcJump.FirstSystemID);
-                SolarSystem b = GetSolarSystemByID(srcJump.SecondSystemID);
+                SolarSystem? a = GetSolarSystemByID(srcJump.FirstSystemID);
+                SolarSystem? b = GetSolarSystemByID(srcJump.SecondSystemID);
 
                 if (a == null || b == null)
                     continue;
@@ -187,10 +187,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static Region GetRegionByID(int id)
+        public static Region? GetRegionByID(int id)
         {
-            Region result;
-            s_regionsByID.TryGetValue(id, out result);
+            s_regionsByID.TryGetValue(id, out Region? result);
             return result;
         }
         
@@ -199,10 +198,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static Constellation GetConstellationByID(int id)
+        public static Constellation? GetConstellationByID(int id)
         {
-            Constellation result;
-            s_constellationsByID.TryGetValue(id, out result);
+            s_constellationsByID.TryGetValue(id, out Constellation? result);
             return result;
         }
 
@@ -211,10 +209,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static Planet GetPlanetByID(int id)
+        public static Planet? GetPlanetByID(int id)
         {
-            Planet result;
-            s_planetsByID.TryGetValue(id, out result);
+            s_planetsByID.TryGetValue(id, out Planet? result);
             return result;
         }
 
@@ -223,10 +220,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static SolarSystem GetSolarSystemByID(int id)
+        public static SolarSystem? GetSolarSystemByID(int id)
         {
-            SolarSystem result;
-            s_solarSystemsByID.TryGetValue(id, out result);
+            s_solarSystemsByID.TryGetValue(id, out SolarSystem? result);
             return result;
         }
 
@@ -245,7 +241,7 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        public static SolarSystem GetSolarSystemByName(string name) => s_solarSystemsByID.
+        public static SolarSystem? GetSolarSystemByName(string name) => s_solarSystemsByID.
             Values.FirstOrDefault(system => system.Name == name);
 
         /// <summary>
@@ -253,10 +249,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static Station GetStationByID(long id)
+        public static Station? GetStationByID(long id)
         {
-            Station result;
-            s_stationsByID.TryGetValue(id, out result);
+            s_stationsByID.TryGetValue(id, out Station? result);
             return result;
         }
         
@@ -265,10 +260,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static NPCCorporation GetCorporationByID(int id)
+        public static NPCCorporation? GetCorporationByID(int id)
         {
-            NPCCorporation result;
-            s_corporationsByID.TryGetValue(id, out result);
+            s_corporationsByID.TryGetValue(id, out NPCCorporation? result);
             return result;
         }
         
@@ -277,10 +271,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static Agent GetAgentByID(int id)
+        public static Agent? GetAgentByID(int id)
         {
-            Agent result;
-            s_agentsByID.TryGetValue(id, out result);
+            s_agentsByID.TryGetValue(id, out Agent? result);
             return result;
         }
 
@@ -289,7 +282,7 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="name">The name.</param>
         /// <returns></returns>
-        public static Agent GetAgentByName(string name) => s_agentsByID.Values.FirstOrDefault(
+        public static Agent? GetAgentByName(string name) => s_agentsByID.Values.FirstOrDefault(
             agent => agent.Name.Equals(name, StringComparison.InvariantCulture));
 
         /// <summary>
@@ -297,10 +290,9 @@ namespace EVEMon.Common.Data
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns></returns>
-        public static Faction GetFactionByID(int id)
+        public static Faction? GetFactionByID(int id)
         {
-            Faction result;
-            s_factionsByID.TryGetValue(id, out result);
+            s_factionsByID.TryGetValue(id, out Faction? result);
             return result;
         }
 

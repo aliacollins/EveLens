@@ -12,7 +12,7 @@ namespace EVEMon.Common.Serialization.Eve
         public int ID { get; set; }
 
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [XmlAttribute("level")]
         public long Level { get; set; }

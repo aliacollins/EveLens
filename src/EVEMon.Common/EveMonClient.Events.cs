@@ -8,6 +8,8 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Notifications;
 using EVEMon.Common.Serialization.PatchXml;
+using EVEMon.Common.Services;
+using EVEMon.Core.Events;
 
 namespace EVEMon.Common
 {
@@ -32,376 +34,371 @@ namespace EVEMon.Common
         #region Events firing
 
         /// <summary>
-        /// Occurs every second. Use sparingly - prefer tiered events below.
-        /// </summary>
-        public static event EventHandler TimerTick;
-
-        /// <summary>
         /// Occurs every second. Use for skill countdowns and visible UI updates only.
         /// </summary>
-        public static event EventHandler SecondTick;
+        public static event EventHandler? SecondTick;
 
         /// <summary>
         /// Occurs every 5 seconds. Use for API cache checks and moderate-frequency updates.
         /// </summary>
-        public static event EventHandler FiveSecondTick;
+        public static event EventHandler? FiveSecondTick;
 
         /// <summary>
         /// Occurs every 30 seconds. Use for background tasks like settings save checks.
         /// </summary>
-        public static event EventHandler ThirtySecondTick;
+        public static event EventHandler? ThirtySecondTick;
 
         /// <summary>
         /// Occurs when the scheduler entries changed.
         /// </summary>
-        public static event EventHandler SchedulerChanged;
+        public static event EventHandler? SchedulerChanged;
 
         /// <summary>
         /// Occurs when the settings changed.
         /// </summary>
-        public static event EventHandler SettingsChanged;
+        public static event EventHandler? SettingsChanged;
 
         /// <summary>
         /// Occurs when the collection of ESI Keys changed.
         /// </summary>
-        public static event EventHandler ESIKeyCollectionChanged;
+        public static event EventHandler? ESIKeyCollectionChanged;
 
         /// <summary>
         /// Occurs when the ESI Keys monitored state changed.
         /// </summary>
-        public static event EventHandler ESIKeyMonitoredChanged;
+        public static event EventHandler? ESIKeyMonitoredChanged;
 
         /// <summary>
         /// Occurs when the collection of characters changed.
         /// </summary>
-        public static event EventHandler CharacterCollectionChanged;
+        public static event EventHandler? CharacterCollectionChanged;
 
         /// <summary>
         /// Occurs when a character's label is changed.
         /// </summary>
-        public static event EventHandler<LabelChangedEventArgs> CharacterLabelChanged;
+        public static event EventHandler<LabelChangedEventArgs>? CharacterLabelChanged;
 
         /// <summary>
         /// Occurs when the collection of monitored characters changed.
         /// </summary>
-        public static event EventHandler MonitoredCharacterCollectionChanged;
+        public static event EventHandler? MonitoredCharacterCollectionChanged;
 
         /// <summary>
         /// Occurs when the collection of a character implant set changed.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterImplantSetCollectionChanged;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterImplantSetCollectionChanged;
         
         /// <summary>
         /// Occurs when an account status has been updated.
         /// </summary>
-        public static event EventHandler AccountStatusUpdated;
+        public static event EventHandler? AccountStatusUpdated;
 
         /// <summary>
         /// Occurs when the conquerable station list has been updated.
         /// </summary>
-        public static event EventHandler ConquerableStationListUpdated;
+        public static event EventHandler? ConquerableStationListUpdated;
 
         /// <summary>
         /// Occurs when the EVE factional warfare statistics has been updated.
         /// </summary>
-        public static event EventHandler EveFactionalWarfareStatsUpdated;
+        public static event EventHandler? EveFactionalWarfareStatsUpdated;
 
         /// <summary>
         /// Occurs when the ESI key info have been updated.
         /// </summary>
-        public static event EventHandler ESIKeyInfoUpdated;
+        public static event EventHandler? ESIKeyInfoUpdated;
 
         /// <summary>
         /// Occurs when the EveIDToName list has been updated.
         /// </summary>
-        public static event EventHandler EveIDToNameUpdated;
+        public static event EventHandler? EveIDToNameUpdated;
 
         /// <summary>
         /// Occurs when the RefTypes list has been updated.
         /// </summary>
-        public static event EventHandler RefTypesUpdated;
+        public static event EventHandler? RefTypesUpdated;
 
         /// <summary>
         /// Occurs when the NotificationRefTypes list has been updated.
         /// </summary>
-        public static event EventHandler NotificationRefTypesUpdated;
+        public static event EventHandler? NotificationRefTypesUpdated;
 
         /// <summary>
         /// Occurs when the EveFlags list has been updated.
         /// </summary>
-        public static event EventHandler EveFlagsUpdated;
+        public static event EventHandler? EveFlagsUpdated;
 
         /// <summary>
         /// Occurs when the list of characters in an ESI key has been updated.
         /// </summary>
-        public static event EventHandler<ESIKeyInfoChangedEventArgs> CharacterListUpdated;
+        public static event EventHandler<ESIKeyInfoChangedEventArgs>? CharacterListUpdated;
 
         /// <summary>
         /// Occurs when one or many queued skills have been completed.
         /// </summary>
-        public static event EventHandler<QueuedSkillsEventArgs> QueuedSkillsCompleted;
+        public static event EventHandler<QueuedSkillsEventArgs>? QueuedSkillsCompleted;
 
         /// <summary>
         /// Occurs when one of the character's collection of plans changed.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterPlanCollectionChanged;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterPlanCollectionChanged;
 
         /// <summary>
         /// Occurs when a character's potrait has been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterPortraitUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterPortraitUpdated;
 
         /// <summary>
         /// Occurs when a character sheet has been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterUpdated;
 
         /// <summary>
         /// Occurs when a character info has been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterInfoUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterInfoUpdated;
         
         /// <summary>
         /// Occurs when a character skill queue has been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterSkillQueueUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterSkillQueueUpdated;
 
         /// <summary>
         /// Occurs when multiple characters have been updated within a coalesce window (100ms).
         /// Subscribe to this instead of CharacterUpdated for batch UI updates.
         /// </summary>
-        public static event EventHandler<CharacterBatchEventArgs> CharactersBatchUpdated;
+        public static event EventHandler<CharacterBatchEventArgs>? CharactersBatchUpdated;
 
         /// <summary>
         /// Occurs when multiple skill queues have been updated within a coalesce window (100ms).
         /// Subscribe to this instead of CharacterSkillQueueUpdated for batch UI updates.
         /// </summary>
-        public static event EventHandler<CharacterBatchEventArgs> SkillQueuesBatchUpdated;
+        public static event EventHandler<CharacterBatchEventArgs>? SkillQueuesBatchUpdated;
 
         /// <summary>
         /// Occurs when a character standings have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterStandingsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterStandingsUpdated;
 
         /// <summary>
         /// Occurs when a character factional warfare stats have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterFactionalWarfareStatsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterFactionalWarfareStatsUpdated;
 
         /// <summary>
         /// Occurs when a character assets have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterAssetsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterAssetsUpdated;
 
         /// <summary>
         /// Occurs when both personal and corporation market orders of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> MarketOrdersUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? MarketOrdersUpdated;
 
         /// <summary>
         /// Occurs when personal market orders of a character have been updated.
         /// </summary>
-        public static event EventHandler<MarketOrdersEventArgs> CharacterMarketOrdersUpdated;
+        public static event EventHandler<MarketOrdersEventArgs>? CharacterMarketOrdersUpdated;
 
         /// <summary>
         /// Occurs when corporation market orders of a character have been updated.
         /// </summary>
-        public static event EventHandler<MarketOrdersEventArgs> CorporationMarketOrdersUpdated;
+        public static event EventHandler<MarketOrdersEventArgs>? CorporationMarketOrdersUpdated;
 
         /// <summary>
         /// Occurs when both personal and corporation contracts of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> ContractsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? ContractsUpdated;
 
         /// <summary>
         /// Occurs when personal contracts of a character have been updated.
         /// </summary>
-        public static event EventHandler<ContractsEventArgs> CharacterContractsUpdated;
+        public static event EventHandler<ContractsEventArgs>? CharacterContractsUpdated;
 
         /// <summary>
         /// Occurs when corporation contracts of a character have been updated.
         /// </summary>
-        public static event EventHandler<ContractsEventArgs> CorporationContractsUpdated;
+        public static event EventHandler<ContractsEventArgs>? CorporationContractsUpdated;
 
         /// <summary>
         /// Occurs when personal contract bids of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterContractBidsDownloaded;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterContractBidsDownloaded;
 
         /// <summary>
         /// Occurs when corporation contract bids of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CorporationContractBidsDownloaded;
+        public static event EventHandler<CharacterChangedEventArgs>? CorporationContractBidsDownloaded;
 
         /// <summary>
         /// Occurs when items list of a character's contract have been downloaded.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterContractItemsDownloaded;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterContractItemsDownloaded;
 
         /// <summary>
         /// Occurs when items list of a corporation's contract have been downloaded.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CorporationContractItemsDownloaded;
+        public static event EventHandler<CharacterChangedEventArgs>? CorporationContractItemsDownloaded;
 
         /// <summary>
         /// Occurs when a character wallet journal have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterWalletJournalUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterWalletJournalUpdated;
 
         /// <summary>
         /// Occurs when a character walet transactions have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterWalletTransactionsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterWalletTransactionsUpdated;
 
         /// <summary>
         /// Occurs when industry jobs of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> IndustryJobsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? IndustryJobsUpdated;
 
         /// <summary>
         /// Occurs when industry jobs of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterIndustryJobsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterIndustryJobsUpdated;
 
         /// <summary>
         /// Occurs when industry jobs of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CorporationIndustryJobsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CorporationIndustryJobsUpdated;
 
         /// <summary>
         /// Occurs when the industry jobs of a character have been completed.
         /// </summary>
-        public static event EventHandler<IndustryJobsEventArgs> CharacterIndustryJobsCompleted;
+        public static event EventHandler<IndustryJobsEventArgs>? CharacterIndustryJobsCompleted;
 
         /// <summary>
         /// Occurs when the industry jobs of a character have been completed.
         /// </summary>
-        public static event EventHandler<IndustryJobsEventArgs> CorporationIndustryJobsCompleted;
+        public static event EventHandler<IndustryJobsEventArgs>? CorporationIndustryJobsCompleted;
 
         /// <summary>
         /// Occurs when the planetary pins of a character have been completed.
         /// </summary>
-        public static event EventHandler<PlanetaryPinsEventArgs> CharacterPlaneteryPinsCompleted;
+        public static event EventHandler<PlanetaryPinsEventArgs>? CharacterPlanetaryPinsCompleted;
 
         /// <summary>
         /// Occurs when the research points of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterResearchPointsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterResearchPointsUpdated;
 
         /// <summary>
         /// Occurs when the mail messages of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterEVEMailMessagesUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVEMailMessagesUpdated;
 
         /// <summary>
         /// Occurs when the mailing list of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterEVEMailingListsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVEMailingListsUpdated;
 
         /// <summary>
         /// Occurs when the body of a character EVE mail message has been downloaded.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterEVEMailBodyDownloaded;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVEMailBodyDownloaded;
 
         /// <summary>
         /// Occurs when the notifications of a character have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterEVENotificationsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVENotificationsUpdated;
         
         /// <summary>
         /// Occurs when the text of a character contacts have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterContactsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterContactsUpdated;
 
         /// <summary>
         /// Occurs when the text of a character medals have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterMedalsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterMedalsUpdated;
 
         /// <summary>
         /// Occurs when the text of a corporation medals have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CorporationMedalsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CorporationMedalsUpdated;
 
         /// <summary>
         /// Occurs when the text of a character upcoming calendar events have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterUpcomingCalendarEventsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterUpcomingCalendarEventsUpdated;
 
         /// <summary>
         /// Occurs when the text of a character calendar event attendees have been downloaded.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterCalendarEventAttendeesDownloaded;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterCalendarEventAttendeesDownloaded;
 
         /// <summary>
         /// Occurs when the text of a character kill logs have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterKillLogUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterKillLogUpdated;
 
         /// <summary>
         /// Occurs when the character planetary colony list has been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterPlanetaryColoniesUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterPlanetaryColoniesUpdated;
 
         /// <summary>
         /// Occurs when the character planetary colony layout has been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterPlanetaryLayoutUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterPlanetaryLayoutUpdated;
 
         /// <summary>
         /// Occurs when the character loyalty point balances have been updated.
         /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs> CharacterLoyaltyPointsUpdated;
+        public static event EventHandler<CharacterChangedEventArgs>? CharacterLoyaltyPointsUpdated;
 
         /// <summary>
         /// Occurs when a plan's name changed.
         /// </summary>
-        public static event EventHandler<PlanChangedEventArgs> PlanNameChanged;
+        public static event EventHandler<PlanChangedEventArgs>? PlanNameChanged;
 
         /// <summary>
         /// Occurs when a plan changed.
         /// </summary>
-        public static event EventHandler<PlanChangedEventArgs> PlanChanged;
+        public static event EventHandler<PlanChangedEventArgs>? PlanChanged;
 
         /// <summary>
         /// Fired every time we ping the TQ server status (update pilots online count etc).
         /// </summary>
-        public static event EventHandler<EveServerEventArgs> ServerStatusUpdated;
+        public static event EventHandler<EveServerEventArgs>? ServerStatusUpdated;
 
         /// <summary>
         /// Fired every time a notification (API errors, skill completed) is sent.
         /// </summary>
-        public static event EventHandler<NotificationEventArgs> NotificationSent;
+        public static event EventHandler<NotificationEventArgs>? NotificationSent;
 
         /// <summary>
         /// Fired every time a notification (API errors, skill completed) is invalidated.
         /// </summary>
-        public static event EventHandler<NotificationInvalidationEventArgs> NotificationInvalidated;
+        public static event EventHandler<NotificationInvalidationEventArgs>? NotificationInvalidated;
 
         /// <summary>
         /// Occurs when an application update is available.
         /// </summary>
-        public static event EventHandler<UpdateAvailableEventArgs> UpdateAvailable;
+        public static event EventHandler<UpdateAvailableEventArgs>? UpdateAvailable;
 
         /// <summary>
         /// Occurs when a data files update is available.
         /// </summary>
-        public static event EventHandler<DataUpdateAvailableEventArgs> DataUpdateAvailable;
+        public static event EventHandler<DataUpdateAvailableEventArgs>? DataUpdateAvailable;
 
         /// <summary>
         /// Occurs when the loadout feed updated.
         /// </summary>
-        public static event EventHandler<LoadoutFeedEventArgs> LoadoutFeedUpdated;
+        public static event EventHandler<LoadoutFeedEventArgs>? LoadoutFeedUpdated;
 
         /// <summary>
         /// Occurs when the loadout updated.
         /// </summary>
-        public static event EventHandler<LoadoutEventArgs> LoadoutUpdated;
+        public static event EventHandler<LoadoutEventArgs>? LoadoutUpdated;
 
         /// <summary>
         /// Occurs when item prices updated.
         /// </summary>
-        public static event EventHandler ItemPricesUpdated;
+        public static event EventHandler? ItemPricesUpdated;
 
         /// <summary>
         /// Fires the timer tick event to notify the subscribers.
@@ -423,9 +420,6 @@ namespace EVEMon.Common
             {
                 // Increment tick counter
                 s_tickCounter++;
-
-                // Fire legacy TimerTick for backward compatibility (will be deprecated)
-                TimerTick?.ThreadSafeInvoke(null, EventArgs.Empty);
 
                 // Fire tiered events
                 // SecondTick - every 1 second (skill countdowns, visible UI)
@@ -462,6 +456,9 @@ namespace EVEMon.Common
             Settings.Save();
             UpdateSettings();
             SettingsChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(SettingsChangedEvent.Instance);
         }
 
         /// <summary>
@@ -489,6 +486,9 @@ namespace EVEMon.Common
             EveMonClient.Characters.UpdateAccountStatuses();
             Settings.Save();
             ESIKeyCollectionChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -528,6 +528,9 @@ namespace EVEMon.Common
             Trace();
             Settings.Save();
             CharacterCollectionChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
         }
 
 
@@ -676,6 +679,9 @@ namespace EVEMon.Common
 
             // Queue for batched event (coalesces rapid updates)
             s_updateBatcher?.QueueCharacterUpdate(character);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -690,6 +696,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             CharacterInfoUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterInfoUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -724,6 +733,9 @@ namespace EVEMon.Common
 
             // Queue for batched event (coalesces rapid updates)
             s_updateBatcher?.QueueSkillQueueUpdate(character);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterSkillQueueUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -751,6 +763,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterStandingsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterStandingsUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -776,7 +791,11 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
+            (character as CCPCharacter)?.OnAssetsUpdated();
             CharacterAssetsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterAssetsUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -804,7 +823,11 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
+            (character as CCPCharacter)?.OnCharacterMarketOrdersUpdated(endedOrders);
             CharacterMarketOrdersUpdated?.ThreadSafeInvoke(null, new MarketOrdersEventArgs(character, endedOrders));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterMarketOrdersUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -832,7 +855,11 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
+            (character as CCPCharacter)?.OnCharacterContractsUpdated(endedContracts);
             CharacterContractsUpdated?.ThreadSafeInvoke(null, new ContractsEventArgs(character, endedContracts));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterContractsUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -911,7 +938,11 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
+            (character as CCPCharacter)?.OnCharacterIndustryJobsUpdated();
             CharacterIndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterIndustryJobsUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -924,6 +955,7 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
+            (character as CCPCharacter)?.OnCorporationIndustryJobsUpdated();
             CorporationIndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
         }
 
@@ -938,6 +970,7 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
+            (character as CCPCharacter)?.OnCharacterIndustryJobsCompleted(jobsCompleted);
             CharacterIndustryJobsCompleted?.ThreadSafeInvoke(null, new IndustryJobsEventArgs(character, jobsCompleted));
         }
 
@@ -952,7 +985,8 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterPlaneteryPinsCompleted?.ThreadSafeInvoke(null, new PlanetaryPinsEventArgs(character, pinsCompleted));
+            (character as CCPCharacter)?.OnPlanetaryPinsCompleted(pinsCompleted);
+            CharacterPlanetaryPinsCompleted?.ThreadSafeInvoke(null, new PlanetaryPinsEventArgs(character, pinsCompleted));
         }
 
         /// <summary>
@@ -966,6 +1000,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterResearchPointsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterResearchUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -980,6 +1017,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             CharacterEVEMailMessagesUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterMailUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1020,6 +1060,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             CharacterEVENotificationsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterNotificationsUpdatedEvent(character.CharacterID, character.Name));
         }
         
         /// <summary>
@@ -1033,6 +1076,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterContactsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterContactsUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1046,6 +1092,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterMedalsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterMedalsUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1072,6 +1121,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterUpcomingCalendarEventsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterCalendarUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1098,6 +1150,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterKillLogUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterKillLogUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1111,6 +1166,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterPlanetaryColoniesUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterPlanetaryUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1137,6 +1195,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterLoyaltyPointsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CharacterLoyaltyUpdatedEvent(character.CharacterID, character.Name));
         }
 
         /// <summary>
@@ -1177,6 +1238,7 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.CorporationName);
+            (character as CCPCharacter)?.OnCorporationMarketOrdersUpdated(endedOrders);
             CorporationMarketOrdersUpdated?.ThreadSafeInvoke(null, new MarketOrdersEventArgs(character, endedOrders));
         }
 
@@ -1191,6 +1253,7 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.CorporationName);
+            (character as CCPCharacter)?.OnCorporationContractsUpdated(endedContracts);
             CorporationContractsUpdated?.ThreadSafeInvoke(null, new ContractsEventArgs(character, endedContracts));
         }
 
@@ -1231,6 +1294,7 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.CorporationName);
+            (character as CCPCharacter)?.OnCorporationIndustryJobsCompleted(jobsCompleted);
             CorporationIndustryJobsCompleted?.ThreadSafeInvoke(null, new IndustryJobsEventArgs(character, jobsCompleted));
         }
 
@@ -1275,6 +1339,9 @@ namespace EVEMon.Common
 
             Trace();
             ServerStatusUpdated?.ThreadSafeInvoke(null, new EveServerEventArgs(server, previousStatus, status));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -1314,9 +1381,9 @@ namespace EVEMon.Common
         /// <param name="md5Sum">The MD5 sum.</param>
         /// <param name="canAutoInstall">if set to <c>true</c> [can auto install].</param>
         /// <param name="installArgs">The install args.</param>
-        internal static void OnUpdateAvailable(Uri forumUrl, Uri installerUrl, string updateMessage,
-            Version currentVersion, Version newestVersion, string md5Sum,
-            bool canAutoInstall, string installArgs)
+        internal static void OnUpdateAvailable(Uri? forumUrl, Uri? installerUrl, string? updateMessage,
+            Version currentVersion, Version newestVersion, string? md5Sum,
+            bool canAutoInstall, string? installArgs)
         {
             Trace($"({currentVersion} -> {newestVersion}, {canAutoInstall}, {installArgs})");
             UpdateAvailable?.ThreadSafeInvoke(null, new UpdateAvailableEventArgs(forumUrl, installerUrl, updateMessage, currentVersion,
@@ -1371,7 +1438,7 @@ namespace EVEMon.Common
         /// <summary>
         /// Called when the update batcher has collected character updates ready to fire.
         /// </summary>
-        private static void OnBatchedCharacterUpdatesReady(object sender, CharacterBatchEventArgs e)
+        private static void OnBatchedCharacterUpdatesReady(object? sender, CharacterBatchEventArgs e)
         {
             if (Closed)
                 return;
@@ -1383,7 +1450,7 @@ namespace EVEMon.Common
         /// <summary>
         /// Called when the update batcher has collected skill queue updates ready to fire.
         /// </summary>
-        private static void OnBatchedSkillQueueUpdatesReady(object sender, CharacterBatchEventArgs e)
+        private static void OnBatchedSkillQueueUpdatesReady(object? sender, CharacterBatchEventArgs e)
         {
             if (Closed)
                 return;

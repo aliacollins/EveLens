@@ -98,7 +98,7 @@ namespace EVEMon.SkillPlanner
             base.OnLoad(e);
 
             EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
         }
 
 
@@ -110,7 +110,7 @@ namespace EVEMon.SkillPlanner
         {
             base.OnFormClosing(e);
 
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
         }
 
@@ -674,9 +674,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != m_character)
+            if (!e.Characters.Contains(m_character))
                 return;
 
             UpdateContent();

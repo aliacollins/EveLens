@@ -46,7 +46,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The name.
         /// </value>
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the description.
@@ -55,7 +55,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The description.
         /// </value>
         [XmlAttribute("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets or sets the category.
@@ -64,7 +64,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The category.
         /// </value>
         [XmlAttribute("category")]
-        public string Category { get; set; }
+        public string? Category { get; set; }
 
         /// <summary>
         /// Gets or sets the group.
@@ -73,7 +73,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The group.
         /// </value>
         [XmlAttribute("group")]
-        public string Group { get; set; }
+        public string? Group { get; set; }
 
         /// <summary>
         /// Gets or sets the icon.
@@ -82,7 +82,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The icon.
         /// </value>
         [XmlAttribute("icon")]
-        public string Icon { get; set; }
+        public string? Icon { get; set; }
 
         /// <summary>
         /// Gets or sets the race.

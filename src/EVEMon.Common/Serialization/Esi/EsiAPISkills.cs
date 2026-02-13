@@ -18,6 +18,6 @@ namespace EVEMon.Common.Serialization.Esi
         public int UnallocatedSP { get; set; }
 
         [DataMember(Name = "skills")]
-        public List<EsiSkillListItem> Skills { get; set; }
+        public List<EsiSkillListItem> Skills { get; set; } = new();
     }
 }

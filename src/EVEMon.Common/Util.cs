@@ -83,7 +83,7 @@ namespace EVEMon.Common
         /// <param name="filename">The XML document to deserialize from.</param>
         /// <param name="transform">The XSL transformation to apply. May be <c>null</c>.</param>
         /// <returns>The result of the deserialization.</returns>
-        public static T DeserializeXmlFromFile<T>(string filename, XslCompiledTransform transform = null)
+        public static T? DeserializeXmlFromFile<T>(string filename, XslCompiledTransform? transform = null)
             where T : class
         {
             try
@@ -102,14 +102,14 @@ namespace EVEMon.Common
 
                         // Deserialize from the given stream
                         stream.Seek(0, SeekOrigin.Begin);
-                        return (T)xs.Deserialize(stream);
+                        return (T?)xs.Deserialize(stream);
                     }
                 }
 
                 // Deserialization without transform
                 using (Stream stream = FileHelper.OpenRead(filename, false))
                 {
-                    return (T)xs.Deserialize(stream);
+                    return (T?)xs.Deserialize(stream);
                 }
             }
             catch (XsltException exc)
@@ -138,7 +138,7 @@ namespace EVEMon.Common
         /// <param name="text">The text.</param>
         /// <param name="transform">The transform.</param>
         /// <returns>The result of the deserialization.</returns>
-        public static T DeserializeXmlFromString<T>(string text, XslCompiledTransform transform = null)
+        public static T? DeserializeXmlFromString<T>(string text, XslCompiledTransform? transform = null)
             where T : class
         {
             try
@@ -159,14 +159,14 @@ namespace EVEMon.Common
                         // Deserialize from the given stream
                         XmlSerializer xs = new XmlSerializer(typeof(T));
                         stream.Seek(0, SeekOrigin.Begin);
-                        return (T)xs.Deserialize(stream);
+                        return (T?)xs.Deserialize(stream);
                     }
                 }
 
                 using (TextReader textReader = new StringReader(text))
                 {
                     XmlSerializer xs = new XmlSerializer(typeof(T));
-                    return (T)xs.Deserialize(textReader);
+                    return (T?)xs.Deserialize(textReader);
                 }
             }
                 // An error occurred during the XSL transform
@@ -195,7 +195,7 @@ namespace EVEMon.Common
         /// <param name="filename">The datafile name</param>
         /// <param name="transform"></param>
         /// <returns></returns>
-        internal static T DeserializeDatafile<T>(string filename, XslCompiledTransform transform = null)
+        internal static T DeserializeDatafile<T>(string filename, XslCompiledTransform? transform = null)
         {
             // Gets the full path
             string path = Datafile.GetFullPath(filename);
@@ -208,7 +208,7 @@ namespace EVEMon.Common
 
                     // Deserialization without transform
                     if (transform == null)
-                        return (T)xs.Deserialize(gZipStream);
+                        return (T)xs.Deserialize(gZipStream)!;
 
                     // Deserialization with transform
                     MemoryStream memoryStream = GetMemoryStream();
@@ -222,7 +222,7 @@ namespace EVEMon.Common
 
                     // Deserialize from the given stream
                     memoryStream.Seek(0, SeekOrigin.Begin);
-                    return (T)xs.Deserialize(memoryStream);
+                    return (T)xs.Deserialize(memoryStream)!;
                 }
             }
             catch (InvalidOperationException ex)
@@ -246,7 +246,7 @@ namespace EVEMon.Common
         /// <param name="text">The text.</param>
         /// <param name="transform">The XSL transform to apply, may be null.</param>
         /// <returns>The deserialized result</returns>
-        internal static CCPAPIResult<T> DeserializeAPIResultFromString<T>(string text, XslCompiledTransform transform = null)
+        internal static CCPAPIResult<T> DeserializeAPIResultFromString<T>(string text, XslCompiledTransform? transform = null)
         {
             try
             {
@@ -268,7 +268,7 @@ namespace EVEMon.Common
         /// <param name="filename">The filename.</param>
         /// <param name="transform">The XSL transform to apply, may be null.</param>
         /// <returns>The deserialized result</returns>
-        internal static CCPAPIResult<T> DeserializeAPIResultFromFile<T>(string filename, XslCompiledTransform transform = null)
+        internal static CCPAPIResult<T> DeserializeAPIResultFromFile<T>(string filename, XslCompiledTransform? transform = null)
         {
             try
             {
@@ -291,7 +291,7 @@ namespace EVEMon.Common
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
         /// <param name="transform">The XSL transform to apply, may be null.</param>
         internal static async Task<CCPAPIResult<T>> DownloadAPIResultAsync<T>(Uri url,
-            RequestParams param = null, XslCompiledTransform transform = null)
+            RequestParams? param = null, XslCompiledTransform? transform = null)
         {
             var asyncResult = await HttpWebClientService.DownloadXmlAsync(url, param);
 
@@ -300,7 +300,7 @@ namespace EVEMon.Common
             {
                 // Was there an HTTP error ?
                 result = (asyncResult.Error != null) ? new CCPAPIResult<T>(asyncResult.Error) :
-                    DeserializeAPIResultCore<T>(asyncResult.Result, transform);
+                    DeserializeAPIResultCore<T>(asyncResult.Result!, transform);
                 // We got the result
                 return result;
             }
@@ -323,7 +323,7 @@ namespace EVEMon.Common
         /// <param name="transform">The XSL transformation to apply. May be <c>null</c>.</param>
         /// <param name="doc">The XML document to deserialize from.</param>
         /// <returns>The result of the deserialization.</returns>
-        private static CCPAPIResult<T> DeserializeAPIResultCore<T>(IXPathNavigable doc, XslCompiledTransform transform = null)
+        private static CCPAPIResult<T> DeserializeAPIResultCore<T>(IXPathNavigable doc, XslCompiledTransform? transform = null)
         {
             CCPAPIResult<T> result;
 
@@ -346,12 +346,12 @@ namespace EVEMon.Common
 
                             // Deserialize from the given stream
                             stream.Seek(0, SeekOrigin.Begin);
-                            result = (CCPAPIResult<T>)xs.Deserialize(stream);
+                            result = (CCPAPIResult<T>?)xs.Deserialize(stream) ?? new CCPAPIResult<T>();
                         }
                     }
                     // Deserialization without transform
                     else
-                        result = (CCPAPIResult<T>)xs.Deserialize(reader);
+                        result = (CCPAPIResult<T>?)xs.Deserialize(reader) ?? new CCPAPIResult<T>();
                 }
 
                 // Fix times
@@ -394,11 +394,11 @@ namespace EVEMon.Common
         /// <param name="transform">The transform.</param>
         /// <returns></returns>
         public static async Task<DownloadResult<T>> DownloadXmlAsync<T>(Uri url,
-            RequestParams param = null, XslCompiledTransform transform = null) where T : class
+            RequestParams? param = null, XslCompiledTransform? transform = null) where T : class
         {
             var asyncResult = await HttpWebClientService.DownloadXmlAsync(url, param);
-            T result = null;
-            HttpWebClientServiceException error = null;
+            T? result = null;
+            HttpWebClientServiceException? error = null;
             // Was there an HTTP error ??
             if (asyncResult.Error != null)
                 error = asyncResult.Error;
@@ -408,7 +408,7 @@ namespace EVEMon.Common
                 try
                 {
                     // Deserialize
-                    using (XmlNodeReader reader = new XmlNodeReader((XmlDocument)asyncResult.Result))
+                    using (XmlNodeReader reader = new XmlNodeReader((XmlDocument)asyncResult.Result!))
                     {
                         XmlSerializer xs = new XmlSerializer(typeof(T));
                         if (transform != null)
@@ -423,12 +423,12 @@ namespace EVEMon.Common
 
                                 // Deserialize from the given stream
                                 stream.Seek(0, SeekOrigin.Begin);
-                                result = (T)xs.Deserialize(stream);
+                                result = (T?)xs.Deserialize(stream);
                             }
                         }
                         // Deserialization without transform
                         else
-                            result = (T)xs.Deserialize(reader);
+                            result = (T?)xs.Deserialize(reader);
                     }
                 }
                 // An error occurred during the XSL transform
@@ -460,7 +460,7 @@ namespace EVEMon.Common
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
         /// <returns></returns>
         public static async Task<JsonResult<T>> DownloadJsonAsync<T>(Uri url,
-            RequestParams param = null) where T : class
+            RequestParams? param = null) where T : class
         {
             JsonResult<T> result;
             try
@@ -468,7 +468,7 @@ namespace EVEMon.Common
                 var asyncResult = await HttpWebClientService.DownloadStreamAsync<T>(url,
                     ParseJSONObject<T>, param);
                 var error = asyncResult.Error;
-                T data;
+                T? data;
                 // Was there an HTTP error?
                 if (error != null)
                     result = new JsonResult<T>(error);
@@ -478,7 +478,7 @@ namespace EVEMon.Common
                     result = new JsonResult<T>(new InvalidOperationException(
                         "null JSON response"));
                 else
-                    result = new JsonResult<T>(asyncResult.Response, data);
+                    result = new JsonResult<T>(asyncResult.Response, data!);
             }
             catch (InvalidOperationException e)
             {
@@ -623,7 +623,7 @@ namespace EVEMon.Common
             string tempFile = Path.GetTempFileName();
 
             // We decompress the gzipped stream and writes it to a temporary file
-            FileStream stream = null;
+            FileStream? stream = null;
             try
             {
                 stream = File.OpenRead(filename);
@@ -669,7 +669,7 @@ namespace EVEMon.Common
         /// mechanism for getting the root node. This takes 480 ticks
         /// as opposed to &gt; 900 for XmlDocument methods.
         /// </remarks>
-        public static string GetXmlRootElement(Uri filename)
+        public static string? GetXmlRootElement(Uri filename)
         {
             filename.ThrowIfNull(nameof(filename));
 
@@ -695,7 +695,7 @@ namespace EVEMon.Common
         /// <param name="input">The input.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public static string GetXmlRootElement(TextReader input)
+        public static string? GetXmlRootElement(TextReader input)
         {
             input.ThrowIfNull(nameof(input));
 
@@ -777,7 +777,7 @@ namespace EVEMon.Common
         /// <returns>
         /// A new memory stream
         /// </returns>
-        public static MemoryStream GetMemoryStream(byte[] buffer = null)
+        public static MemoryStream GetMemoryStream(byte[]? buffer = null)
             => buffer == null ? new MemoryStream() : new MemoryStream(buffer);
 
         /// <summary>
@@ -894,7 +894,7 @@ namespace EVEMon.Common
         /// <param name="inputData">The input data.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public static IEnumerable<byte> ZlibUncompress(byte[] inputData)
+        public static IEnumerable<byte>? ZlibUncompress(byte[] inputData)
         {
             inputData.ThrowIfNull(nameof(inputData));
 
@@ -926,7 +926,7 @@ namespace EVEMon.Common
             if (stream == null)
                 return inputStream;
 
-            byte[] data = ZlibUncompress(stream.ToArray()) as byte[];
+            byte[]? data = ZlibUncompress(stream.ToArray()) as byte[];
 
             return data == null ? inputStream : new MemoryStream(data);
         }
@@ -937,7 +937,7 @@ namespace EVEMon.Common
         /// <typeparam name="T"></typeparam>
         /// <param name="json">The json.</param>
         /// <returns></returns>
-        public static T DeserializeJson<T>(string json) where T : class
+        public static T? DeserializeJson<T>(string json) where T : class
         {
             try
             {
@@ -948,7 +948,7 @@ namespace EVEMon.Common
                         UseSimpleDictionaryFormat = true
                     };
                     var js = new DataContractJsonSerializer(typeof(T), settings);
-                    return (T)js.ReadObject(stream);
+                    return (T?)js.ReadObject(stream);
                 }
             }
             catch (InvalidOperationException exc)
@@ -1075,10 +1075,10 @@ namespace EVEMon.Common
         /// <param name="response">The response from the server.</param>
         /// <returns>The parsed object; or an EsiAPIError if that is relevant; or otherwise
         /// null</returns>
-        private static T ParseJSONObject<T>(Stream stream, ResponseParams response)
+        private static T? ParseJSONObject<T>(Stream stream, ResponseParams response)
             where T : class
         {
-            T value = default(T);
+            T? value = null;
             if (!response.IsNotModifiedResponse)
             {
                 if (!response.IsOKResponse)
@@ -1116,7 +1116,7 @@ namespace EVEMon.Common
                     // Create a serializable error for an API exception
                     throw new APIException(new SerializableAPIError()
                     {
-                        ErrorMessage = esiError.Error,
+                        ErrorMessage = esiError.Error ?? string.Empty,
                         ErrorCode = responseCode
                     });
             }

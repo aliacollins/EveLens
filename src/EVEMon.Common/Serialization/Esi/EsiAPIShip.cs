@@ -16,6 +16,6 @@ namespace EVEMon.Common.Serialization.Esi
         public long ShipItemID { get; set; }
 
         [DataMember(Name = "ship_name")]
-        public string ShipName { get; set; }
+        public string? ShipName { get; set; }
     }
 }

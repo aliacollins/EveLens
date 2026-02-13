@@ -23,19 +23,19 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the description.
         /// </summary>
         /// <value>The description.</value>
         [XmlAttribute("description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Gets the certificates.
         /// </summary>
         [XmlElement("certificate")]
-        public SerializableCertificate Certificate { get; set; }
+        public SerializableCertificate? Certificate { get; set; }
     }
 }

@@ -28,7 +28,7 @@ namespace EVEMon.Common.Serialization.Eve
         /// <value>"Character does not belong to account"</value>
         /// <value>""</value> or <value>null</value> when the operation was successful (will be one of 5 values - "characterID", "TryAgainIn", "currentTimeTQOffset" and "currentTime"
         [XmlText]
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
 
         /// <summary>
         /// Gets true when character has no corporation roles.

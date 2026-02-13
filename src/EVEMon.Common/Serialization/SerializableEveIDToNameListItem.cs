@@ -8,6 +8,6 @@ namespace EVEMon.Common.Serialization
         public long ID { get; set; }
 
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

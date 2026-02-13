@@ -1,5 +1,6 @@
 ﻿using EVEMon.Common;
 using EVEMon.Common.Constants;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.ExternalCalendar;
@@ -44,7 +45,14 @@ namespace EVEMon.SettingsUI
         {
             base.OnLoad(e);
 
-            await RequestGoogleCalendarAuthentication(true);
+            try
+            {
+                await RequestGoogleCalendarAuthentication(true);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>

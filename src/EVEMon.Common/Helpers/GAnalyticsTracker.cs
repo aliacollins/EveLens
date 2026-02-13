@@ -14,17 +14,37 @@ namespace EVEMon.Common.Helpers
 {
     public static class GAnalyticsTracker
     {
-        private static readonly GampParameters s_parameters;
+        private static GampParameters? s_parameters;
+        private static bool s_initialized;
 
         private const string DailyStartText = "Daily-Start";
 
         /// <summary>
-        /// Initializes the <see cref="GAnalyticsTracker"/> class.
+        /// Ensures the tracker parameters are initialized.
+        /// Deferred from static constructor to avoid accessing Screen.PrimaryScreen
+        /// before WinForms is fully initialized (Application.Run).
         /// </summary>
-        static GAnalyticsTracker()
+        private static void EnsureInitialized()
         {
+            if (s_initialized)
+                return;
+
+            s_initialized = true;
+
             string userAgentId = Util.Decrypt("+PzrIVxVhL3PBJcRYN2tXg==", CultureConstants.InvariantCulture.NativeName);
             string clientId = EveMonClient.IsDebugBuild ? "2" : "1";
+
+            string screenResolution = "0x0";
+            try
+            {
+                var screen = Screen.PrimaryScreen;
+                if (screen != null)
+                    screenResolution = $"{screen.WorkingArea.Width}x{screen.WorkingArea.Height}";
+            }
+            catch (Exception)
+            {
+                // Screen may not be available in headless/service contexts
+            }
 
             s_parameters = new GampParameters
             {
@@ -32,9 +52,9 @@ namespace EVEMon.Common.Helpers
                 TrackerId = $"{userAgentId}-{clientId}",
                 AnonymizeIp = true,
                 ClientId = Util.CreateSHA1SumFromMacAddress(),
-                ApplicationName = EveMonClient.FileVersionInfo.ProductName,
-                ApplicationVersion = EveMonClient.FileVersionInfo.FileVersion,
-                ScreenResolution = $"{Screen.PrimaryScreen.WorkingArea.Width}x{Screen.PrimaryScreen.WorkingArea.Height}",
+                ApplicationName = EveMonClient.FileVersionInfo.ProductName ?? string.Empty,
+                ApplicationVersion = EveMonClient.FileVersionInfo.FileVersion ?? string.Empty,
+                ScreenResolution = screenResolution,
                 UserAgent = HttpWebClientServiceState.UserAgent
             };
         }
@@ -45,7 +65,7 @@ namespace EVEMon.Common.Helpers
         /// <param name="type">The type.</param>
         /// <param name="action">The action.</param>
         /// <remarks>Default action is 'Start'</remarks>
-        public static void TrackStart(Type type, string action = null)
+        public static void TrackStart(Type type, string? action = null)
         {
             if (string.IsNullOrWhiteSpace(action))
                 action = SessionStatus.Start.ToString();
@@ -73,19 +93,26 @@ namespace EVEMon.Common.Helpers
         /// <param name="type">The type.</param>
         /// <param name="category">The category.</param>
         /// <param name="action">The action.</param>
-        private static void TrackEvent(Type type, string category, string action)
+        private static async void TrackEvent(Type type, string category, string action)
         {
             InitEvent(type, category, action);
             if (NetworkMonitor.IsNetworkAvailable)
             {
-                var result = HttpWebClientService.DownloadImage(new Uri(NetworkConstants.
-                    GoogleAnalyticsUrl), new RequestParams(BuildQueryString()));
-                if (EveMonClient.IsDebugBuild)
+                try
                 {
-                    // Trace the error (if any) and event category
-                    EveMonClient.Trace($"({category} - {action})");
-                    if (result.Error != null)
-                        EveMonClient.Trace($"{result.Error.Message}");
+                    var result = await HttpWebClientService.DownloadImageAsync(new Uri(NetworkConstants.
+                        GoogleAnalyticsUrl), new RequestParams(BuildQueryString()))
+                        .ConfigureAwait(false);
+                    if (EveMonClient.IsDebugBuild)
+                    {
+                        EveMonClient.Trace($"({category} - {action})");
+                        if (result.Error != null)
+                            EveMonClient.Trace($"{result.Error.Message}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ExceptionHandler.LogException(ex, false);
                 }
             }
             else
@@ -147,13 +174,14 @@ namespace EVEMon.Common.Helpers
         /// <param name="action">The action.</param>
         private static void InitEvent(Type type, string category, string action)
         {
-            s_parameters.HitType = GaHitType.Event;
+            EnsureInitialized();
+            s_parameters!.HitType = GaHitType.Event;
             s_parameters.ScreenName = type.Name;
             s_parameters.EventCategory = category;
             s_parameters.EventAction = action;
 
             SessionStatus status;
-            s_parameters.SessionControl = Enum.TryParse(action, true, out status)
+            s_parameters!.SessionControl = Enum.TryParse(action, true, out status)
                 ? status.ToString().ToLowerInvariant()
                 : null;
         }
@@ -187,16 +215,16 @@ namespace EVEMon.Common.Helpers
         {
             IDictionary<string, string> parametersDict = new Dictionary<string, string>();
 
-            foreach (PropertyInfo prop in s_parameters
+            foreach (PropertyInfo prop in s_parameters!
                 .GetType().GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
-                GampParameterAttribute attribute =
+                GampParameterAttribute? attribute =
                     Attribute.GetCustomAttribute(prop, typeof(GampParameterAttribute), true) as GampParameterAttribute;
 
                 if (attribute == null)
                     continue;
 
-                object value = prop.GetValue(s_parameters, null);
+                object? value = prop.GetValue(s_parameters, null);
 
                 if (value == null)
                 {
@@ -207,11 +235,11 @@ namespace EVEMon.Common.Helpers
                 }
 
                 if (prop.PropertyType.IsEnum)
-                    value = value.ToString().ToLowerInvariant();
+                    value = value.ToString()?.ToLowerInvariant();
                 else if (prop.PropertyType == typeof(bool))
                     value = Convert.ToInt32(value);
 
-                parametersDict.Add(attribute.Token, value.ToString());
+                parametersDict.Add(attribute.Token, value?.ToString() ?? string.Empty);
             }
 
             return parametersDict;
@@ -240,7 +268,7 @@ namespace EVEMon.Common.Helpers
             /// The protocol version.
             /// </value>
             [GampParameter("v", true)]
-            internal string ProtocolVersion { get; set; }
+            internal string ProtocolVersion { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the tracker identifier.
@@ -249,7 +277,7 @@ namespace EVEMon.Common.Helpers
             /// The tracker identifier.
             /// </value>
             [GampParameter("tid", true)]
-            internal string TrackerId { get; set; }
+            internal string TrackerId { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets a value indicating whether [anonymize ip].
@@ -267,7 +295,7 @@ namespace EVEMon.Common.Helpers
             /// The client identifier.
             /// </value>
             [GampParameter("cid", true)]
-            internal string ClientId { get; set; }
+            internal string ClientId { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the type of the hit.
@@ -285,7 +313,7 @@ namespace EVEMon.Common.Helpers
             /// The name of the screen.
             /// </value>
             [GampParameter("cd", true)]
-            internal string ScreenName { get; set; }
+            internal string ScreenName { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the name of the application.
@@ -294,7 +322,7 @@ namespace EVEMon.Common.Helpers
             /// The name of the application.
             /// </value>
             [GampParameter("an", true)]
-            internal string ApplicationName { get; set; }
+            internal string ApplicationName { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the control of the session.
@@ -303,7 +331,7 @@ namespace EVEMon.Common.Helpers
             /// The name of the screen.
             /// </value>
             [GampParameter("sc")]
-            internal string SessionControl { get; set; }
+            internal string? SessionControl { get; set; }
 
             /// <summary>
             /// Gets or sets the resolution of the screen.
@@ -312,7 +340,7 @@ namespace EVEMon.Common.Helpers
             /// The name of the screen.
             /// </value>
             [GampParameter("sr")]
-            internal string ScreenResolution { get; set; }
+            internal string ScreenResolution { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the application version.
@@ -321,7 +349,7 @@ namespace EVEMon.Common.Helpers
             /// The application version.
             /// </value>
             [GampParameter("av")]
-            internal string ApplicationVersion { get; set; }
+            internal string ApplicationVersion { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the event category.
@@ -330,7 +358,7 @@ namespace EVEMon.Common.Helpers
             /// The event category.
             /// </value>
             [GampParameter("ec")]
-            internal string EventCategory { get; set; }
+            internal string? EventCategory { get; set; }
 
             /// <summary>
             /// Gets or sets the event action.
@@ -339,7 +367,7 @@ namespace EVEMon.Common.Helpers
             /// The event action.
             /// </value>
             [GampParameter("ea")]
-            internal string EventAction { get; set; }
+            internal string? EventAction { get; set; }
 
             /// <summary>
             /// Gets or sets the user agent info.
@@ -348,7 +376,7 @@ namespace EVEMon.Common.Helpers
             /// The name of the screen.
             /// </value>
             [GampParameter("ua")]
-            internal string UserAgent { get; set; }
+            internal string UserAgent { get; set; } = string.Empty;
 
             /// <summary>
             /// Gets or sets the user language.

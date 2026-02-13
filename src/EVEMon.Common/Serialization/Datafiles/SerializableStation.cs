@@ -34,7 +34,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute("name")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the corporation ID.
@@ -48,7 +48,7 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name of the corporation.</value>
         [XmlAttribute("corporationName")]
-        public string CorporationName { get; set; }
+        public string? CorporationName { get; set; }
 
         /// <summary>
         /// Gets or sets the reprocessing efficiency.

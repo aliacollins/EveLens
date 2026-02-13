@@ -103,12 +103,19 @@ namespace EVEMon.SkillPlanner
         {
             base.OnLoad(e);
 
-            lvPoints.Font = FontFactory.GetFont("Arial", 9F);
-            throbber.State = ThrobberState.Rotating;
+            try
+            {
+                lvPoints.Font = FontFactory.GetFont("Arial", 9F);
+                throbber.State = ThrobberState.Rotating;
 
-            EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
+                EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
 
-            await TaskHelper.RunCPUBoundTaskAsync(() => Run());
+                await TaskHelper.RunCPUBoundTaskAsync(() => Run());
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
         
         /// <summary>

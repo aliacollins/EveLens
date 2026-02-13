@@ -20,28 +20,28 @@ namespace EVEMon.Common.QueryMonitor
     {
         #region Fields
 
-        private readonly CharacterQueryMonitor<EsiAPISkillQueue> m_charSkillQueueMonitor;
-        private readonly CharacterQueryMonitor<EsiAPISkills> m_charSkillsMonitor;
-        private readonly CharacterQueryMonitor<EsiAPIMarketOrders> m_charMarketOrdersMonitor;
-        private readonly QueryMonitor<EsiAPIContracts> m_charContractsMonitor;
-        private readonly CharacterQueryMonitor<EsiAPIIndustryJobs> m_charIndustryJobsMonitor;
-        private readonly List<IQueryMonitorEx> m_characterQueryMonitors;
-        private readonly List<IQueryMonitorEx> m_basicFeaturesMonitors;
+        private CharacterQueryMonitor<EsiAPISkillQueue> m_charSkillQueueMonitor = null!;
+        private CharacterQueryMonitor<EsiAPISkills> m_charSkillsMonitor = null!;
+        private CharacterQueryMonitor<EsiAPIMarketOrders> m_charMarketOrdersMonitor = null!;
+        private QueryMonitor<EsiAPIContracts> m_charContractsMonitor = null!;
+        private CharacterQueryMonitor<EsiAPIIndustryJobs> m_charIndustryJobsMonitor = null!;
+        private List<IQueryMonitorEx> m_characterQueryMonitors = null!;
+        private List<IQueryMonitorEx> m_basicFeaturesMonitors = null!;
         private readonly CCPCharacter m_ccpCharacter;
         private bool m_characterSheetUpdating = false;
 
         // Responses from the attribute results since we handle it manually
-        private ResponseParams m_attrResponse;
+        private ResponseParams? m_attrResponse;
         // Result from the character skill queue to handle a pathological case where skill
         // queues were not-modified but need to be re-imported due to a skills list change
-        private EsiAPISkillQueue m_lastQueue;
+        private EsiAPISkillQueue? m_lastQueue;
         // Responses from the market order history results since we handle it manually
-        private ResponseParams m_orderHistoryResponse;
+        private ResponseParams? m_orderHistoryResponse;
 
         // Staggered startup fields - prevents all characters from querying at once
         private static int s_characterStartupIndex = 0;
         private static readonly Random s_random = new Random();
-        private readonly DateTime m_startupDelayUntil;
+        private DateTime m_startupDelayUntil;
         private bool m_startupDelayCompleted = false;
 
         /// <summary>
@@ -69,16 +69,29 @@ namespace EVEMon.Common.QueryMonitor
         /// <param name="ccpCharacter">The CCP character.</param>
         internal CharacterDataQuerying(CCPCharacter ccpCharacter)
         {
-            var notifiers = EveMonClient.Notifications;
             m_ccpCharacter = ccpCharacter;
-            m_characterQueryMonitors = new List<IQueryMonitorEx>();
-            m_attrResponse = null;
-            m_orderHistoryResponse = null;
-            m_lastQueue = null;
 
-            // Calculate staggered startup delay to prevent all characters querying at once
-            // Each character gets a progressively later start time
-            // BUT: If ForceUpdateBasicFeatures is set, this is a newly added character - skip the delay
+            InitializeStartupDelay(ccpCharacter);
+
+            m_characterQueryMonitors = CreateMonitors(ccpCharacter);
+            m_characterQueryMonitors.ForEach(monitor => ccpCharacter.QueryMonitors.Add(monitor));
+
+            // Suppress self-ticking on all monitors — this class will drive them
+            // instead of each monitor subscribing to FiveSecondTick individually.
+            // This reduces FiveSecondTick handlers from ~27 per character to 1.
+            foreach (var monitor in m_characterQueryMonitors)
+                monitor.SuppressSelfTicking();
+
+            m_basicFeaturesMonitors = InitializeBasicFeaturesMonitors(ccpCharacter);
+
+            EveMonClient.QueryScheduler?.Register(this);
+        }
+
+        /// <summary>
+        /// Calculates the staggered startup delay to prevent all characters querying at once.
+        /// </summary>
+        private void InitializeStartupDelay(CCPCharacter ccpCharacter)
+        {
             if (ccpCharacter.ForceUpdateBasicFeatures)
             {
                 // New character added manually - fetch immediately
@@ -94,69 +107,79 @@ namespace EVEMon.Common.QueryMonitor
                 m_startupDelayUntil = DateTime.UtcNow.AddMilliseconds(baseDelayMs + jitterMs);
                 EveMonClient.Trace($"CharacterDataQuerying - {ccpCharacter.Name} startup delayed until {m_startupDelayUntil:HH:mm:ss.fff} (index {characterIndex})");
             }
+        }
 
-            // Add the monitors in an order as they will appear in the throbber menu
+        /// <summary>
+        /// Creates all ESI query monitors for the character.
+        /// Monitors are ordered as they appear in the throbber menu.
+        /// </summary>
+        private List<IQueryMonitorEx> CreateMonitors(CCPCharacter ccpCharacter)
+        {
+            var notifiers = EveMonClient.Notifications;
+            var monitors = new List<IQueryMonitorEx>();
+
+            // Character sheet
             CharacterSheetMonitor = new CharacterQueryMonitor<EsiAPICharacterSheet>(
                 ccpCharacter, ESIAPICharacterMethods.CharacterSheet, OnCharacterSheetUpdated,
                 notifiers.NotifyCharacterSheetError);
-            m_characterQueryMonitors.Add(CharacterSheetMonitor);
+            monitors.Add(CharacterSheetMonitor);
             // Location
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPILocation>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPILocation>(
                 ccpCharacter, ESIAPICharacterMethods.Location, OnCharacterLocationUpdated,
                 notifiers.NotifyCharacterLocationError));
             // Clones
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIClones>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIClones>(
                 ccpCharacter, ESIAPICharacterMethods.Clones, OnCharacterClonesUpdated,
                 notifiers.NotifyCharacterClonesError));
             // Implants
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<List<int>>(
+            monitors.Add(new CharacterQueryMonitor<List<int>>(
                 ccpCharacter, ESIAPICharacterMethods.Implants, OnCharacterImplantsUpdated,
                 OnCharacterImplantsFailed, true));
             // Ship
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIShip>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIShip>(
                 ccpCharacter, ESIAPICharacterMethods.Ship, OnCharacterShipUpdated,
                 notifiers.NotifyCharacterShipError));
             // Skills
             m_charSkillsMonitor = new CharacterQueryMonitor<EsiAPISkills>(
                 ccpCharacter, ESIAPICharacterMethods.Skills, OnCharacterSkillsUpdated,
                 notifiers.NotifyCharacterSkillsError);
-            m_characterQueryMonitors.Add(m_charSkillsMonitor);
+            monitors.Add(m_charSkillsMonitor);
             // Skill queue
             m_charSkillQueueMonitor = new CharacterQueryMonitor<EsiAPISkillQueue>(
                 ccpCharacter, ESIAPICharacterMethods.SkillQueue, OnSkillQueueUpdated,
                 notifiers.NotifySkillQueueError);
-            m_characterQueryMonitors.Add(m_charSkillQueueMonitor);
+            monitors.Add(m_charSkillQueueMonitor);
             // Employment history
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIEmploymentHistory>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIEmploymentHistory>(
                 ccpCharacter, ESIAPICharacterMethods.EmploymentHistory,
                 OnCharacterEmploymentUpdated, notifiers.NotifyCharacterEmploymentError));
             // Standings
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIStandings,
+            monitors.Add(new PagedQueryMonitor<EsiAPIStandings,
                 EsiStandingsListItem>(new CharacterQueryMonitor<EsiAPIStandings>(
                 ccpCharacter, ESIAPICharacterMethods.Standings, OnStandingsUpdated,
                 notifiers.NotifyCharacterStandingsError) { QueryOnStartup = true }));
             // Contacts
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIContactsList,
+            monitors.Add(new PagedQueryMonitor<EsiAPIContactsList,
                 EsiContactListItem>(new CharacterQueryMonitor<EsiAPIContactsList>(ccpCharacter,
                 ESIAPICharacterMethods.ContactList, OnContactsUpdated,
                 notifiers.NotifyCharacterContactsError) { QueryOnStartup = true }));
             // Factional warfare
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIFactionalWarfareStats>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIFactionalWarfareStats>(
                 ccpCharacter, ESIAPICharacterMethods.FactionalWarfareStats,
                 OnFactionalWarfareStatsUpdated, notifiers.
                 NotifyCharacterFactionalWarfareStatsError) { QueryOnStartup = true });
             // Medals
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIMedals,
+            monitors.Add(new PagedQueryMonitor<EsiAPIMedals,
                 EsiMedalsListItem>(new CharacterQueryMonitor<EsiAPIMedals>(ccpCharacter,
                 ESIAPICharacterMethods.Medals, OnMedalsUpdated,
                 notifiers.NotifyCharacterMedalsError) { QueryOnStartup = true }));
             // Kill log
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIKillLog,
+            monitors.Add(new PagedQueryMonitor<EsiAPIKillLog,
                 EsiKillLogListItem>(new CharacterQueryMonitor<EsiAPIKillLog>(ccpCharacter,
                 ESIAPICharacterMethods.KillLog, OnKillLogUpdated,
                 notifiers.NotifyCharacterKillLogError) { QueryOnStartup = true }));
             // Assets
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIAssetList,
+            monitors.Add(new PagedQueryMonitor<EsiAPIAssetList,
                 EsiAssetListItem>(new CharacterQueryMonitor<EsiAPIAssetList>(ccpCharacter,
                 ESIAPICharacterMethods.AssetList, OnAssetsUpdated,
                 notifiers.NotifyCharacterAssetsError) { QueryOnStartup = true }));
@@ -164,24 +187,24 @@ namespace EVEMon.Common.QueryMonitor
             m_charMarketOrdersMonitor = new CharacterQueryMonitor<EsiAPIMarketOrders>(
                 ccpCharacter, ESIAPICharacterMethods.MarketOrders, OnMarketOrdersUpdated,
                 notifiers.NotifyCharacterMarketOrdersError) { QueryOnStartup = true };
-            m_characterQueryMonitors.Add(m_charMarketOrdersMonitor);
+            monitors.Add(m_charMarketOrdersMonitor);
             // Contracts
             m_charContractsMonitor = new PagedQueryMonitor<EsiAPIContracts,
                 EsiContractListItem>(new CharacterQueryMonitor<EsiAPIContracts>(ccpCharacter,
                 ESIAPICharacterMethods.Contracts, OnContractsUpdated,
                 notifiers.NotifyCharacterContractsError) { QueryOnStartup = true });
-            m_characterQueryMonitors.Add(m_charContractsMonitor);
+            monitors.Add(m_charContractsMonitor);
             // Wallet journal
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIWalletJournal,
+            monitors.Add(new PagedQueryMonitor<EsiAPIWalletJournal,
                 EsiWalletJournalListItem>(new CharacterQueryMonitor<EsiAPIWalletJournal>(
                 ccpCharacter, ESIAPICharacterMethods.WalletJournal, OnWalletJournalUpdated,
                 notifiers.NotifyCharacterWalletJournalError) { QueryOnStartup = true }));
             // Wallet balance
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<string>(
+            monitors.Add(new CharacterQueryMonitor<string>(
                 ccpCharacter, ESIAPICharacterMethods.AccountBalance, OnWalletBalanceUpdated,
                 notifiers.NotifyCharacterBalanceError));
             // Wallet transactions
-            m_characterQueryMonitors.Add(new PagedQueryMonitor<EsiAPIWalletTransactions,
+            monitors.Add(new PagedQueryMonitor<EsiAPIWalletTransactions,
                 EsiWalletTransactionsListItem>(new CharacterQueryMonitor<
                 EsiAPIWalletTransactions>(ccpCharacter, ESIAPICharacterMethods.
                 WalletTransactions, OnWalletTransactionsUpdated, notifiers.
@@ -190,55 +213,55 @@ namespace EVEMon.Common.QueryMonitor
             m_charIndustryJobsMonitor = new CharacterQueryMonitor<EsiAPIIndustryJobs>(
                 ccpCharacter, ESIAPICharacterMethods.IndustryJobs, OnIndustryJobsUpdated,
                 notifiers.NotifyCharacterIndustryJobsError) { QueryOnStartup = true };
-            m_characterQueryMonitors.Add(m_charIndustryJobsMonitor);
+            monitors.Add(m_charIndustryJobsMonitor);
             // Research points
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIResearchPoints>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIResearchPoints>(
                 ccpCharacter, ESIAPICharacterMethods.ResearchPoints, OnResearchPointsUpdated,
                 notifiers.NotifyCharacterResearchPointsError) { QueryOnStartup = true });
             // Mail
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIMailMessages>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIMailMessages>(
                 ccpCharacter, ESIAPICharacterMethods.MailMessages, OnEVEMailMessagesUpdated,
                 notifiers.NotifyEVEMailMessagesError) { QueryOnStartup = true });
             // Mailing lists
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIMailingLists>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIMailingLists>(
                 ccpCharacter, ESIAPICharacterMethods.MailingLists, OnEveMailingListsUpdated,
                     notifiers.NotifyMailingListsError));
             // Notifications
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPINotifications>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPINotifications>(
                 ccpCharacter, ESIAPICharacterMethods.Notifications, OnEVENotificationsUpdated,
                 notifiers.NotifyEVENotificationsError) { QueryOnStartup = true });
             // Calendar
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPICalendarEvents>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPICalendarEvents>(
                 ccpCharacter, ESIAPICharacterMethods.UpcomingCalendarEvents,
                 OnUpcomingCalendarEventsUpdated, notifiers.
                 NotifyCharacterUpcomingCalendarEventsError) { QueryOnStartup = true });
             // PI
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPIPlanetaryColoniesList>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPIPlanetaryColoniesList>(
                 ccpCharacter, ESIAPICharacterMethods.PlanetaryColonies,
                 OnPlanetaryColoniesUpdated, notifiers.
                 NotifyCharacterPlanetaryColoniesError) { QueryOnStartup = true });
             // LP
-            m_characterQueryMonitors.Add(new CharacterQueryMonitor<EsiAPILoyality>(
+            monitors.Add(new CharacterQueryMonitor<EsiAPILoyality>(
                 ccpCharacter, ESIAPICharacterMethods.LoyaltyPoints,
                 OnLoyaltyPointsUpdated, notifiers.
                 NotifyCharacterLoyaltyPointsError) { QueryOnStartup = true });
-            m_characterQueryMonitors.ForEach(monitor => ccpCharacter.QueryMonitors.Add(monitor));
 
-            // Suppress self-ticking on all monitors — this class will drive them
-            // instead of each monitor subscribing to FiveSecondTick individually.
-            // This reduces FiveSecondTick handlers from ~27 per character to 1.
-            foreach (var monitor in m_characterQueryMonitors)
-                monitor.SuppressSelfTicking();
+            return monitors;
+        }
 
-            // Enumerate the basic feature monitors into a separate list
-            m_basicFeaturesMonitors = new List<IQueryMonitorEx>(m_characterQueryMonitors.Count);
+        /// <summary>
+        /// Filters monitor list to basic features and optionally force-updates them for new characters.
+        /// </summary>
+        private List<IQueryMonitorEx> InitializeBasicFeaturesMonitors(CCPCharacter ccpCharacter)
+        {
+            var basicMonitors = new List<IQueryMonitorEx>(m_characterQueryMonitors.Count);
             long basicFeatures = (long)CCPAPIMethodsEnum.BasicCharacterFeatures;
             foreach (var monitor in m_characterQueryMonitors)
             {
                 long method = (long)(ESIAPICharacterMethods)monitor.Method;
                 if (method == (method & basicFeatures))
                 {
-                    m_basicFeaturesMonitors.Add(monitor);
+                    basicMonitors.Add(monitor);
                     // If force update is selected, update basic features only
                     if (ccpCharacter.ForceUpdateBasicFeatures)
                     {
@@ -247,8 +270,7 @@ namespace EVEMon.Common.QueryMonitor
                     }
                 }
             }
-
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            return basicMonitors;
         }
 
         #endregion
@@ -260,7 +282,7 @@ namespace EVEMon.Common.QueryMonitor
         /// Gets the character sheet monitor.
         /// </summary>
         /// <value>The character sheet monitor.</value>
-        internal CharacterQueryMonitor<EsiAPICharacterSheet> CharacterSheetMonitor { get; }
+        internal CharacterQueryMonitor<EsiAPICharacterSheet> CharacterSheetMonitor { get; private set; } = null!;
 
         /// <summary>
         /// Gets or sets a value indicating whether the character market orders have been queried.
@@ -296,7 +318,7 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            EveMonClient.QueryScheduler?.Unregister(this);
 
             // Unsubscribe events in monitors
             foreach (var monitor in m_characterQueryMonitors)
@@ -457,7 +479,7 @@ namespace EVEMon.Common.QueryMonitor
             {
                 if (target.ShouldNotifyError(result, ESIAPICharacterMethods.Attributes))
                     EveMonClient.Notifications.NotifyCharacterAttributesError(target, result);
-                if (!result.HasError && result.HasData)
+                if (!result.HasError && result.HasData && result.Result != null)
                     target.Import(result.Result);
             }
         }
@@ -482,7 +504,7 @@ namespace EVEMon.Common.QueryMonitor
         {
             var target = m_ccpCharacter;
             // Character may have been deleted since we queried
-            if (target != null)
+            if (target != null && m_lastQueue != null)
                 target.Import(result, m_lastQueue);
         }
 
@@ -585,7 +607,7 @@ namespace EVEMon.Common.QueryMonitor
         /// <param name="historyResult">The history query result (may be null).</param>
         /// <param name="regularOrders">The regular orders from the first query.</param>
         /// <remarks>This method is sensitive to which "issued for" orders gets queried first</remarks>
-        private void OnMarketOrdersCompleted(EsiResult<EsiAPIMarketOrders> historyResult,
+        private void OnMarketOrdersCompleted(EsiResult<EsiAPIMarketOrders>? historyResult,
             EsiAPIMarketOrders regularOrders)
         {
             var target = m_ccpCharacter;
@@ -601,7 +623,7 @@ namespace EVEMon.Common.QueryMonitor
                 if (m_orderHistoryResponse != null)
                 {
                     m_orderHistoryResponse.Expires = null;
-                    m_orderHistoryResponse.ETag = null;
+                    m_orderHistoryResponse.ETag = null!;
                 }
                 // Add normal orders first
                 allOrders.AddRange(regularOrders);
@@ -908,11 +930,10 @@ namespace EVEMon.Common.QueryMonitor
         #region Event Handlers
 
         /// <summary>
-        /// Handles the TimerTick event of the EveMonClient control.
+        /// Processes a single tick, driving all character query monitors.
+        /// Called by CentralQueryScheduler instead of subscribing to FiveSecondTick directly.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        internal void ProcessTick()
         {
             // Check if startup delay has passed (staggered startup to prevent API burst)
             if (!m_startupDelayCompleted)

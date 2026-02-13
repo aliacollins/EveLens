@@ -27,6 +27,6 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// The name of the class.
         /// </value>
         [XmlAttribute("className")]
-        public string ClassName { get; set; }
+        public string? ClassName { get; set; }
     }
 }

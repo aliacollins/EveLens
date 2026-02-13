@@ -1214,11 +1214,18 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private async void EveMonClient_CharacterAssetsUpdated(object sender, CharacterChangedEventArgs e)
         {
-            if (Character == null || e.Character != Character)
-                return;
+            try
+            {
+                if (Character == null || e.Character != Character)
+                    return;
 
-            Assets = Character.Assets;
-            await UpdateContentAsync();
+                Assets = Character.Assets;
+                await UpdateContentAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1228,10 +1235,17 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
         {
-            if (Character == null)
-                return;
+            try
+            {
+                if (Character == null)
+                    return;
 
-            await UpdateAssetLocationAsync();
+                await UpdateAssetLocationAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1241,10 +1255,17 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void EveMonClient_EveFlagsUpdated(object sender, EventArgs e)
         {
-            if (Character == null)
-                return;
+            try
+            {
+                if (Character == null)
+                    return;
 
-            await UpdateContentAsync();
+                await UpdateContentAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1255,10 +1276,17 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>Mainly to update the jumps from charater last known location to assets.</remarks>
         private async void EveMonClient_CharacterInfoUpdated(object sender, CharacterChangedEventArgs e)
         {
-            if (Character == null || e.Character != Character)
-                return;
+            try
+            {
+                if (Character == null || e.Character != Character)
+                    return;
 
-            await UpdateAssetLocationAsync();
+                await UpdateAssetLocationAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1268,11 +1296,18 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void EveMonClient_SettingsChanged(object sender, EventArgs e)
         {
-            // No need to do this if control is not visible
-            if (!Visible)
-                return;
+            try
+            {
+                // No need to do this if control is not visible
+                if (!Visible)
+                    return;
 
-            await UpdateContentAsync();
+                await UpdateContentAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1282,7 +1317,14 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void EveMonClient_ItemPricesUpdated(object sender, EventArgs e)
         {
-            await UpdateContentAsync();
+            try
+            {
+                await UpdateContentAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         #endregion

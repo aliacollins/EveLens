@@ -22,7 +22,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long ID { get; set; }
 
         [XmlElement("name")]
-        public string NameXml
+        public string? NameXml
         {
             get { return Name; }
             set { Name = value?.HtmlDecode() ?? string.Empty; }
@@ -43,19 +43,19 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("race")]
-        public string Race { get; set; }
+        public string? Race { get; set; }
 
         [XmlElement("bloodLine")]
-        public string BloodLine { get; set; }
+        public string? BloodLine { get; set; }
 
         [XmlElement("ancestry")]
-        public string Ancestry { get; set; }
+        public string? Ancestry { get; set; }
 
         [XmlElement("gender")]
-        public string Gender { get; set; }
+        public string? Gender { get; set; }
 
         [XmlElement("corporationName")]
-        public string CorporationNameXml
+        public string? CorporationNameXml
         {
             get { return CorporationName; }
             set { CorporationName = value?.HtmlDecode() ?? string.Empty; }
@@ -65,7 +65,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long CorporationID { get; set; }
 
         [XmlElement("allianceName")]
-        public string AllianceNameXml
+        public string? AllianceNameXml
         {
             get { return AllianceName; }
             set { AllianceName = value?.HtmlDecode() ?? string.Empty; }
@@ -75,7 +75,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long AllianceID { get; set; }
 
         [XmlElement("factionName")]
-        public string FactionName { get; set; }
+        public string? FactionName { get; set; }
 
         [XmlElement("factionID")]
         public int FactionID { get; set; }
@@ -171,19 +171,19 @@ namespace EVEMon.Common.Serialization.Eve
         public decimal Balance { get; set; }
 
         [XmlElement("shipName")]
-        public string ShipName { get; set; }
+        public string? ShipName { get; set; }
 
         [XmlElement("shipTypeName")]
-        public string ShipTypeName { get; set; }
+        public string? ShipTypeName { get; set; }
 
         [XmlElement("lastKnownLocation")]
-        public SerializableLocation LastKnownLocation { get; set; }
+        public SerializableLocation? LastKnownLocation { get; set; }
 
         [XmlElement("securityStatus")]
         public double SecurityStatus { get; set; }
 
         [XmlElement("cloneStateOverride")]
-        public string CloneState { get; set; }
+        public string? CloneState { get; set; }
 
         [XmlArray("employmentHistory")]
 		[XmlArrayItem("record")]
@@ -200,19 +200,19 @@ namespace EVEMon.Common.Serialization.Eve
 		/// Gets or sets the name.
 		/// </summary>
 		[XmlIgnore]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the corporation.
         /// </summary>
         [XmlIgnore]
-        public string CorporationName { get; set; }
+        public string? CorporationName { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the alliance.
         /// </summary>
         [XmlIgnore]
-        public string AllianceName { get; set; }
+        public string? AllianceName { get; set; }
 
         /// <summary>
         /// The date and time the character was created.

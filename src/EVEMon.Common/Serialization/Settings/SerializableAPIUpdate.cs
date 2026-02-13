@@ -9,7 +9,7 @@ namespace EVEMon.Common.Serialization.Settings
     public sealed class SerializableAPIUpdate
     {
         [XmlAttribute("method")]
-        public string Method { get; set; }
+        public string? Method { get; set; }
 
         [XmlAttribute("time")]
         public DateTime Time { get; set; }

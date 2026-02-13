@@ -19,10 +19,10 @@ namespace EVEMon.Common.Serialization.Esi
         public long OwnerID { get; set; }
 
         [DataMember(Name = "owner_name")]
-        public string OwnerName { get; set; }
+        public string? OwnerName { get; set; }
 
         [DataMember(Name = "text")]
-        public string EventText { get; set; }
+        public string? EventText { get; set; }
 
         [DataMember(Name = "owner_type")]
         private string OwnerTypeJson

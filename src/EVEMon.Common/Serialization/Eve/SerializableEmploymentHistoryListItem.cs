@@ -13,7 +13,7 @@ namespace EVEMon.Common.Serialization.Eve
         public int CorporationID { get; set; }
 
         [XmlAttribute("corporationName")]
-        public string CorporationName { get; set; }
+        public string? CorporationName { get; set; }
 
         [XmlAttribute("startDate")]
         public string StartDateXml

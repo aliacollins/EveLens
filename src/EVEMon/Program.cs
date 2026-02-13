@@ -99,6 +99,11 @@ namespace EVEMon
             EveMonClient.Initialize();
             EveMonClient.Trace("Program.Startup - EveMonClient.Initialize done", printMethod: false);
 
+            // Configure dependency injection (Strangler Fig wrappers for existing static classes)
+            EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure begin", printMethod: false);
+            ServiceRegistration.Configure();
+            EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure done", printMethod: false);
+
             // Load settings (this is the slow part - must stay on UI thread for dialogs)
             s_splashScreen.UpdateProgress(25, "Loading settings...");
             EveMonClient.Trace("Program.Startup - Settings.Initialize begin", printMethod: false);
@@ -171,6 +176,10 @@ namespace EVEMon
             {
                 // Stop the one-second timer right now
                 EveMonClient.Shutdown();
+
+                // Dispose DI container
+                ServiceRegistration.Dispose();
+
                 EveMonClient.Trace("Closed", printMethod: false);
                 EveMonClient.StopTraceLogging();
             }

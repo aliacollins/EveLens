@@ -9,10 +9,10 @@ namespace EVEMon.Common.Serialization.FittingClf
         [DataMember(Name = "typeid")]
         public int TypeID
         {
-            get { return Item.ID; }
+            get { return Item?.ID ?? 0; }
             set { Item = StaticItems.GetItemByID(value) ?? Item.UnknownItem; }
         }
 
-        public Item Item { get; set; }
+        public Item? Item { get; set; }
     }
 }

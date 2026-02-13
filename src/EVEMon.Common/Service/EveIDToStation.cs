@@ -1,4 +1,5 @@
 using EVEMon.Common.Data;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Datafiles;
@@ -50,7 +51,14 @@ namespace EVEMon.Common.Service
         /// </summary>
         private static async void EveMonClient_TimerTick(object sender, EventArgs e)
         {
-            await UpdateOnOneSecondTickAsync();
+            try
+            {
+                await UpdateOnOneSecondTickAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, false);
+            }
         }
 
         /// <summary>

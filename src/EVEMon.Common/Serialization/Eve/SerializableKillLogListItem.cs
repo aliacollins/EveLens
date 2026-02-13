@@ -37,7 +37,7 @@ namespace EVEMon.Common.Serialization.Eve
         public int MoonID { get; set; }
 
         [XmlElement("victim")]
-        public SerializableKillLogVictim Victim { get; set; }
+        public SerializableKillLogVictim? Victim { get; set; }
 
         [XmlArray("attackers")]
         [XmlArrayItem("attacker")]

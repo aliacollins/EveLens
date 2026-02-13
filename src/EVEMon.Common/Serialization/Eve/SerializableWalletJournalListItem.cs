@@ -17,7 +17,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long OwnerID1 { get; set; }
 
         [XmlAttribute("ownerName1")]
-        public string OwnerName1Xml
+        public string? OwnerName1Xml
         {
             get { return OwnerName1; }
             set { OwnerName1 = value?.HtmlDecode() ?? string.Empty; }
@@ -27,7 +27,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long OwnerID2 { get; set; }
 
         [XmlAttribute("ownerName2")]
-        public string OwnerName2Xml
+        public string? OwnerName2Xml
         {
             get { return OwnerName2; }
             set { OwnerName2 = value?.HtmlDecode() ?? string.Empty; }
@@ -37,7 +37,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long ArgID1 { get; set; }
 
         [XmlAttribute("argName1")]
-        public string ArgName1 { get; set; }
+        public string? ArgName1 { get; set; }
 
         [XmlAttribute("amount")]
         public decimal Amount { get; set; }
@@ -46,7 +46,7 @@ namespace EVEMon.Common.Serialization.Eve
         public decimal Balance { get; set; }
 
         [XmlAttribute("reason")]
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
 
         [XmlAttribute("taxReceiverID")]
         public string TaxReceiverIDXml
@@ -82,10 +82,10 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
-        public string OwnerName1 { get; set; }
+        public string? OwnerName1 { get; set; }
 
         [XmlIgnore]
-        public string OwnerName2 { get; set; }
+        public string? OwnerName2 { get; set; }
 
         [XmlIgnore]
         public DateTime Date { get; set; }

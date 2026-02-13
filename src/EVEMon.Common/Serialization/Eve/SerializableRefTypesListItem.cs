@@ -8,6 +8,6 @@ namespace EVEMon.Common.Serialization.Eve
         public int ID { get; set; }
 
         [XmlAttribute("refTypeName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
     }
 }

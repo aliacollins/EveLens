@@ -28,22 +28,22 @@ namespace EVEMon.Common.CloudStorageServices
         /// <summary>
         /// Occurs when the credentials get checked with the cloud storage service provider.
         /// </summary>
-        public static event EventHandler<CloudStorageServiceProviderEventArgs> CredentialsChecked;
+        public static event EventHandler<CloudStorageServiceProviderEventArgs>? CredentialsChecked;
 
         /// <summary>
         /// Occurs when the credentials of the cloud storage service provider get reset.
         /// </summary>
-        public static event EventHandler<CloudStorageServiceProviderEventArgs> SettingsReset;
+        public static event EventHandler<CloudStorageServiceProviderEventArgs>? SettingsReset;
 
         /// <summary>
         /// Occurs when the file gets uploaded to the cloud storage service provider.
         /// </summary>
-        public static event EventHandler<CloudStorageServiceProviderEventArgs> FileUploaded;
+        public static event EventHandler<CloudStorageServiceProviderEventArgs>? FileUploaded;
 
         /// <summary>
         /// Occurs when the file gets uploaded to the cloud storage service provider.
         /// </summary>
-        public static event EventHandler<CloudStorageServiceProviderEventArgs> FileDownloaded;
+        public static event EventHandler<CloudStorageServiceProviderEventArgs>? FileDownloaded;
 
         #endregion
 
@@ -113,7 +113,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// <value>
         /// The refferal link.
         /// </value>
-        public virtual Uri RefferalLink => null;
+        public virtual Uri? RefferalLink => null;
 
         /// <summary>
         /// Gets the logo.
@@ -121,7 +121,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// <value>
         /// The logo.
         /// </value>
-        public virtual Image Logo => null;
+        public virtual Image? Logo => null;
 
         /// <summary>
         /// Gets the providers.
@@ -134,7 +134,8 @@ namespace EVEMon.Common.CloudStorageServices
                 .Where(type => typeof(CloudStorageServiceProvider).IsAssignableFrom(type) &&
                                type.GetConstructor(Type.EmptyTypes) != null)
                 .Select(type => Activator.CreateInstance(type) as CloudStorageServiceProvider)
-                .Where(provider => !string.IsNullOrWhiteSpace(provider.Name) && provider.Enabled)
+                .Where(provider => provider != null && !string.IsNullOrWhiteSpace(provider.Name) && provider.Enabled)
+                .Select(provider => provider!)
                 .OrderBy(provider => provider.Name);
 
         /// <summary>
@@ -227,10 +228,12 @@ namespace EVEMon.Common.CloudStorageServices
                 return;
 
             // Find the parent directory of the settings file
-            DirectoryInfo configFileParentDir = Directory.GetParent(Configuration.FilePath);
+            DirectoryInfo? configFileParentDir = Directory.GetParent(Configuration.FilePath);
+            if (configFileParentDir == null)
+                return;
 
             // Find the parent directory of the settings file directory
-            DirectoryInfo configFileParentParentDir = configFileParentDir.Parent;
+            DirectoryInfo? configFileParentParentDir = configFileParentDir.Parent;
 
             // Quits if there is no parent directory
             if (configFileParentParentDir == null)
@@ -321,6 +324,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// </summary>
         /// <param name="userID">The user identifier.</param>
         /// <param name="apiKey">The API key.</param>
+        [Obsolete("Use CheckAPIAuthWithCredentialsIsValidAsync instead. Blocks via .Result.")]
         public bool CheckAPIAuthWithCredentialsIsValid(uint userID, string apiKey)
             => !CheckProviderAuthWithCredentialsIsValidAsync(userID, apiKey).Result.HasError;
 
@@ -463,7 +467,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// Downloads the settings file.
         /// </summary>
         /// <returns></returns>
-        public CloudStorageServiceAPIFile DownloadSettingsFile()
+        public async Task<CloudStorageServiceAPIFile?> DownloadSettingsFileResultAsync()
         {
             if (!CloudStorageServiceSettings.Default.DownloadAlways || !HasCredentialsStored)
                 return null;
@@ -478,7 +482,7 @@ namespace EVEMon.Common.CloudStorageServices
 
             EveMonClient.Trace("Initiated");
 
-            SerializableAPIResult<CloudStorageServiceAPIFile> result = DownloadFileAsync().Result;
+            SerializableAPIResult<CloudStorageServiceAPIFile> result = await DownloadFileAsync().ConfigureAwait(false);
             FileDownloaded?.ThreadSafeInvoke(this, new CloudStorageServiceProviderEventArgs(result.Error?.ErrorMessage));
 
             if (CloudStorageServiceSettings.Default.UseImmediately)
@@ -499,7 +503,7 @@ namespace EVEMon.Common.CloudStorageServices
                 var resultText = result.HasError ? "Failed" : "Completed";
                 EveMonClient.Trace(resultText);
 
-                if (!result.HasError)
+                if (!result.HasError && result.Result != null)
                     SaveSettingsFile(result.Result);
             }
 
@@ -545,7 +549,7 @@ namespace EVEMon.Common.CloudStorageServices
             string resultText = result.HasError ? "Failed" : "Completed";
             EveMonClient.Trace($"CloudStorageServiceProvider.DownloadSettingsFileAsync - {resultText}", printMethod: false);
 
-            if (!result.HasError)
+            if (!result.HasError && result.Result != null)
                 Dispatcher.Invoke(() => SaveSettingsFile(result.Result));
         }
 
@@ -571,9 +575,11 @@ namespace EVEMon.Common.CloudStorageServices
             if (configFileParentParentDir.Parent == null || !Directory.Exists(configFileParentParentDir.Parent.FullName))
                 return;
 
+            string? productName = EveMonClient.FileVersionInfo.ProductName;
             foreach (string directory in Directory.GetDirectories(configFileParentParentDir.Parent.FullName)
                 .Where(directory => directory != configFileParentParentDir.FullName &&
-                                    directory.StartsWith(EveMonClient.FileVersionInfo.ProductName,
+                                    productName != null &&
+                                    directory.StartsWith(productName,
                                         StringComparison.OrdinalIgnoreCase)))
             {
                 // Delete the folder recursively
@@ -618,8 +624,8 @@ namespace EVEMon.Common.CloudStorageServices
         /// <param name="result">The result.</param>
         /// <param name="response">The response.</param>
         /// <returns></returns>
-        protected static async Task<SerializableAPIResult<CloudStorageServiceAPIFile>> GetMappedAPIFileAsync(
-            SerializableAPIResult<CloudStorageServiceAPIFile> result, Stream response)
+        protected static async Task<SerializableAPIResult<CloudStorageServiceAPIFile>?> GetMappedAPIFileAsync(
+            SerializableAPIResult<CloudStorageServiceAPIFile> result, Stream? response)
         {
             if (response == null)
                 return null;

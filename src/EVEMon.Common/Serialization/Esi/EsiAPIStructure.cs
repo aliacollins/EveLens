@@ -7,7 +7,7 @@ namespace EVEMon.Common.Serialization.Esi
     public sealed class EsiAPIStructure
     {
         [DataMember(Name = "name")]
-        public string StationName { get; set; }
+        public string? StationName { get; set; }
 
         [DataMember(Name = "type_id", EmitDefaultValue = false, IsRequired = false)]
         public int StationTypeID { get; set; }
@@ -16,7 +16,7 @@ namespace EVEMon.Common.Serialization.Esi
         public int SolarSystemID { get; set; }
         
         [DataMember(Name = "position", EmitDefaultValue = false, IsRequired = false)]
-        public EsiPosition Position { get; set; }
+        public EsiPosition? Position { get; set; }
 
         [DataMember(Name = "owner_id", EmitDefaultValue = false, IsRequired = false)]
         public int OwnerID { get; set; }

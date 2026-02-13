@@ -8,7 +8,7 @@ namespace EVEMon.Common.Serialization
         /// <value>
         /// The error code.
         /// </value>
-        public string ErrorCode { get; set; }
+        public string? ErrorCode { get; set; }
 
         /// <summary>
         /// Gets or sets the error message.
@@ -16,6 +16,6 @@ namespace EVEMon.Common.Serialization
         /// <value>
         /// The error message.
         /// </value>
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 }

@@ -8,10 +8,10 @@ namespace EVEMon.Common.Serialization.FittingClf
     public sealed class SerializableClfFittingMetaData
     {
         [DataMember(Name = "title")]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         [DataMember(Name = "description")]
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         [DataMember(Name = "creationdate")]
         public string CreationDateJson

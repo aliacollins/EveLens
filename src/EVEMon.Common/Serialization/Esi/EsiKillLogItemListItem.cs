@@ -24,7 +24,7 @@ namespace EVEMon.Common.Serialization.Esi
 
         // Items inside containers etc, can only be nested one deep
         [DataMember(Name = "items", EmitDefaultValue = false, IsRequired = false)]
-        public List<EsiKillLogItemListItem> Items { get; set; }
+        public List<EsiKillLogItemListItem>? Items { get; set; }
 
         public SerializableKillLogItemListItem ToXMLItem()
         {

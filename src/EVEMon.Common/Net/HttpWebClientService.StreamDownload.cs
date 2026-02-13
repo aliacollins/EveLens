@@ -16,7 +16,7 @@ namespace EVEMon.Common.Net
         /// <param name="stream">The input stream to read.</param>
         /// <param name="response">The HTTP response returned by the server.</param>
         /// <returns>The decoded value, or default(T) if none could be parsed.</returns>
-        public delegate T ParseDataDelegate<T>(Stream stream, ResponseParams response);
+        public delegate T? ParseDataDelegate<T>(Stream stream, ResponseParams response);
 
         /// <summary>
         /// Asynchronously downloads an object (streaming) from the specified url.
@@ -25,7 +25,7 @@ namespace EVEMon.Common.Net
         /// <param name="parser">The function which will parse the stream.</param>
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
         public static async Task<DownloadResult<T>> DownloadStreamAsync<T>(Uri url,
-            ParseDataDelegate<T> parser, RequestParams param)
+            ParseDataDelegate<T> parser, RequestParams? param)
         {
             string urlValidationError;
             if (!IsValidURL(url, out urlValidationError))
@@ -59,8 +59,8 @@ namespace EVEMon.Common.Net
         private static DownloadResult<T> GetResult<T>(Uri requestBaseUrl, Stream stream,
             ParseDataDelegate<T> parser, HttpResponseMessage response)
         {
-            T result = default(T);
-            HttpWebClientServiceException error = null;
+            T? result = default;
+            HttpWebClientServiceException? error = null;
             var param = new ResponseParams(response);
             if (stream == null)
                 // No stream (can this happen)?

@@ -10,6 +10,6 @@ namespace EVEMon.Common.Serialization.Esi
 
         // One of: alliance, character, corporation, mailing_list
         [DataMember(Name = "recipient_type")]
-        public string RecipientType { get; set; }
+        public string? RecipientType { get; set; }
     }
 }

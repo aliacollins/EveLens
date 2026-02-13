@@ -20,14 +20,14 @@ namespace EVEMon.Common.Serialization.Datafiles
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute("skill")]
-        public string Skill { get; set; }
+        public string? Skill { get; set; }
 
         /// <summary>
         /// Gets or sets the level.
         /// </summary>
         /// <value>The level.</value>
         [XmlAttribute("level")]
-        public string Level { get; set; }
+        public string? Level { get; set; }
 
         /// <summary>
         /// Gets or sets the grade.

@@ -101,7 +101,7 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
             EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
@@ -114,7 +114,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object sender, EventArgs e)
         {
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             Disposed -= OnDisposed;
@@ -1093,9 +1093,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
         {
-            if (e.Character != Character)
+            if (!e.Characters.Contains(Character))
                 return;
 
             UpdateContent();

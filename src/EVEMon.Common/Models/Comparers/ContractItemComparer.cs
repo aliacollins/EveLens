@@ -37,8 +37,12 @@ namespace EVEMon.Common.Models.Comparers
         /// Greater than zero
         /// <paramref name="x"/> is greater than <paramref name="y"/>.
         /// </returns>
-        public override int Compare(ContractItem x, ContractItem y)
+        public override int Compare(ContractItem? x, ContractItem? y)
         {
+            if (x == null && y == null) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+
             if (m_isAscending)
                 return CompareCore(x, y);
 

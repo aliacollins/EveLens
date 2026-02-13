@@ -22,7 +22,7 @@ namespace EVEMon.Common.Serialization.Settings
         public int ID { get; set; }
 
         [XmlAttribute("skill")]
-        public string SkillName { get; set; }
+        public string? SkillName { get; set; }
 
         [XmlAttribute("level")]
         public long Level { get; set; }
@@ -34,15 +34,15 @@ namespace EVEMon.Common.Serialization.Settings
         public PlanEntryType Type { get; set; }
 
         [XmlElement("notes")]
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         [XmlElement("group")]
         public Collection<string> PlanGroups => m_planGroups;
 
         [XmlElement("remapping")]
-        public SerializableRemappingPoint Remapping { get; set; }
+        public SerializableRemappingPoint? Remapping { get; set; }
 
         [XmlElement("booster")]
-        public SerializableBoosterPoint Booster { get; set; }
+        public SerializableBoosterPoint? Booster { get; set; }
     }
 }

@@ -43,10 +43,10 @@ namespace EVEMon.Common.Serialization.Esi
         public long WarID { get; set; }
 
         [DataMember(Name = "victim")]
-        public EsiKillLogVictim Victim { get; set; }
+        public EsiKillLogVictim? Victim { get; set; }
 
         [DataMember(Name = "attackers")]
-        public Collection<EsiKillLogAttackersListItem> Attackers { get; set; }
+        public Collection<EsiKillLogAttackersListItem> Attackers { get; set; } = new();
 
         [IgnoreDataMember]
         public DateTime KillTime

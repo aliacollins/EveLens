@@ -8,7 +8,7 @@ namespace EVEMon.Common.CustomEventArgs
         /// Constructor.
         /// </summary>
         /// <param name="errorMessage">The error message.</param>
-        public CloudStorageServiceProviderEventArgs(string errorMessage)
+        public CloudStorageServiceProviderEventArgs(string? errorMessage)
         {
             if (errorMessage != null && string.IsNullOrWhiteSpace(errorMessage))
                 errorMessage = @"An error occured.";
@@ -27,6 +27,6 @@ namespace EVEMon.Common.CustomEventArgs
         /// Gets or sets the error message.
         /// </summary>
         /// <value>The error message.</value>
-        public string ErrorMessage { get; }
+        public string? ErrorMessage { get; }
     }
 }

@@ -16,6 +16,7 @@ namespace EVEMon.Common.Net
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
+        [Obsolete("Use DownloadImageAsync instead. This method blocks the calling thread via .Result and can deadlock on the UI thread.")]
         public static DownloadResult<Image> DownloadImage(Uri url, RequestParams param = null)
             => DownloadImageAsync(url, param).Result;
 

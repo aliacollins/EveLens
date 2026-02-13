@@ -8,7 +8,7 @@ namespace EVEMon.Common.Serialization.Eve
         public int FactionID { get; set; }
 
         [XmlAttribute("factionName")]
-        public string FactionName { get; set; }
+        public string? FactionName { get; set; }
 
         [XmlAttribute("pilots")]
         public int Pilots { get; set; }

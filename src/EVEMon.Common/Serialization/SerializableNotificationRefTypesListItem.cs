@@ -8,15 +8,15 @@ namespace EVEMon.Common.Serialization
         public int TypeID { get; set; }
 
         [XmlAttribute("refTypeCode")]
-        public string TypeCode { get; set; }
+        public string? TypeCode { get; set; }
 
         [XmlAttribute("refTypeName")]
-        public string TypeName { get; set; }
+        public string? TypeName { get; set; }
 
         [XmlAttribute("subjectLayout")]
-        public string SubjectLayout { get; set; }
+        public string? SubjectLayout { get; set; }
 
         [XmlAttribute("textLayout")]
-        public string TextLayout { get; set; }
+        public string? TextLayout { get; set; }
     }
 }

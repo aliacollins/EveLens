@@ -19,7 +19,7 @@ using EVEMon.Common.Notifications;
 using EVEMon.Common.Scheduling;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.SettingsObjects;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace EVEMon.Common
 {
@@ -31,8 +31,8 @@ namespace EVEMon.Common
     {
         private static bool s_savePending;
         private static DateTime s_nextSaveTime;
-        private static XslCompiledTransform s_settingsTransform;
-        private static SerializableSettings s_settings;
+        private static XslCompiledTransform? s_settingsTransform;
+        private static SerializableSettings? s_settings;
 
         /// <summary>
         /// Static constructor.
@@ -81,7 +81,7 @@ namespace EVEMon.Common
             public bool MigrationDetected { get; set; }
             public bool NeedsForkIdAdded { get; set; }
             public bool HasEsiKeys { get; set; }
-            public string DetectedForkId { get; set; }
+            public string? DetectedForkId { get; set; }
             public int DetectedRevision { get; set; }
         }
 
@@ -107,7 +107,7 @@ namespace EVEMon.Common
             // Check for forkId attribute in the Settings root element
             var forkIdMatch = Regex.Match(fileContent, @"<Settings[^>]*\sforkId=""([^""]+)""",
                 RegexOptions.IgnoreCase);
-            string forkId = forkIdMatch.Success ? forkIdMatch.Groups[1].Value : null;
+            string? forkId = forkIdMatch.Success ? forkIdMatch.Groups[1].Value : null;
             result.DetectedForkId = forkId;
 
             // Get revision number for distinguishing forks when forkId is missing
@@ -368,11 +368,12 @@ Click OK to continue.";
                 try
                 {
                     string json = File.ReadAllText(credentialsPath);
-                    var credentials = JsonConvert.DeserializeAnonymousType(json, new { ClientID = "", ClientSecret = "" });
-                    if (!string.IsNullOrEmpty(credentials?.ClientID))
-                        SSOClientID = credentials.ClientID;
-                    if (!string.IsNullOrEmpty(credentials?.ClientSecret))
-                        SSOClientSecret = credentials.ClientSecret;
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("ClientID", out var clientId) && clientId.GetString() is string id && !string.IsNullOrEmpty(id))
+                        SSOClientID = id;
+                    if (root.TryGetProperty("ClientSecret", out var clientSecret) && clientSecret.GetString() is string secret && !string.IsNullOrEmpty(secret))
+                        SSOClientSecret = secret;
                 }
                 catch
                 {
@@ -386,9 +387,16 @@ Click OK to continue.";
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private static async void EveMonClient_TimerTick(object sender, EventArgs e)
+        private static async void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
-            await UpdateOnOneSecondTickAsync();
+            try
+            {
+                await UpdateOnOneSecondTickAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, false);
+            }
         }
 
         /// <summary>
@@ -402,12 +410,12 @@ Click OK to continue.";
         /// <summary>
         /// Gets or sets the SSO client ID.
         /// </summary>
-        public static string SSOClientID { get; private set; }
+        public static string SSOClientID { get; private set; } = null!;
 
         /// <summary>
         /// Gets or sets the SSO secret key.
         /// </summary>
-        public static string SSOClientSecret { get; private set; }
+        public static string SSOClientSecret { get; private set; } = null!;
 
         /// <summary>
         /// Gets or sets the compatibility mode.
@@ -724,7 +732,7 @@ Click OK to continue.";
         /// <summary>
         /// Gets the current assembly's revision, which is also used for files versioning.
         /// </summary>
-        internal static int Revision => Version.Parse(EveMonClient.FileVersionInfo.FileVersion).Revision;
+        internal static int Revision => Version.Parse(EveMonClient.FileVersionInfo.FileVersion ?? "0.0.0.0").Revision;
 
         /// <summary>
         /// Gets whether the settings are currently using JSON format (source of truth).
@@ -771,7 +779,8 @@ Click OK to continue.";
                 EveMonClient.Trace("TryDeserializeFromFile done");
 
                 // Try to download the settings file from the cloud
-                CloudStorageServiceAPIFile settingsFile = s_settings?.CloudStorageServiceProvider?.Provider?.DownloadSettingsFile();
+                CloudStorageServiceAPIFile? settingsFile = s_settings?.CloudStorageServiceProvider?.Provider?
+                    .DownloadSettingsFileResultAsync().GetAwaiter().GetResult();
                 if (settingsFile != null)
                 {
                     EveMonClient.Trace("Cloud settings downloaded, deserializing");
@@ -849,7 +858,7 @@ Click OK to continue.";
         /// <returns>
         ///   <c>Null</c> if we have been unable to deserialize anything, the generated settings otherwise
         /// </returns>
-        private static SerializableSettings TryDeserializeFromFileContent(string fileContent)
+        private static SerializableSettings? TryDeserializeFromFileContent(string fileContent)
         {
             if (string.IsNullOrWhiteSpace(fileContent))
                 return null;
@@ -861,8 +870,8 @@ Click OK to continue.";
 
             // Try to load from a file (when no revision found then it's a pre 1.3.0 version file)
             // Note: revision < 0 means no revision attribute; revision >= 0 is valid (including 0)
-            SerializableSettings settings = revision < 0
-                ? (SerializableSettings)UIHelper.ShowNoSupportMessage()
+            SerializableSettings? settings = revision < 0
+                ? (SerializableSettings?)UIHelper.ShowNoSupportMessage()
                 : Util.DeserializeXmlFromString<SerializableSettings>(fileContent,
                     SettingsTransform);
 
@@ -929,7 +938,7 @@ Click OK to continue.";
             {
                 // Restore from XML backup format
                 // First, read file content to check for fork migration
-                string fileContent = null;
+                string? fileContent = null;
                 try
                 {
                     fileContent = File.ReadAllText(filename);
@@ -1018,7 +1027,7 @@ Do you want to continue?";
         /// Try to deserialize the settings from a file, prompting the user for errors.
         /// </summary>
         /// <returns><c>Null</c> if we have been unable to load anything from files, the generated settings otherwise</returns>
-        private static SerializableSettings TryDeserializeFromFile()
+        private static SerializableSettings? TryDeserializeFromFile()
         {
             string settingsFile = EveMonClient.SettingsFileNameFullPath;
             string backupFile = settingsFile + ".bak";
@@ -1057,7 +1066,7 @@ Do you want to continue?";
                 }
 
                 // Revision is compatible - try to deserialize to confirm settings can be preserved
-                SerializableSettings testSettings = null;
+                SerializableSettings? testSettings = null;
                 try
                 {
                     testSettings = Util.DeserializeXmlFromString<SerializableSettings>(
@@ -1084,7 +1093,8 @@ Do you want to continue?";
 
                 // IMPORTANT: Also clear ESI keys from the in-memory settings object
                 // Otherwise they'd get written back to disk on next save
-                int esiKeyCount = testSettings.ESIKeys.Count;
+                // testSettings is guaranteed non-null here because settingsCanBePreserved was true
+                int esiKeyCount = testSettings!.ESIKeys.Count;
                 testSettings.ESIKeys.Clear();
                 EveMonClient.Trace($"Migration: Cleared {esiKeyCount} ESI keys from memory, preserved {testSettings.Plans.Count} plans");
 
@@ -1112,7 +1122,7 @@ Do you want to continue?";
             }
 
             // Deserialize the settings
-            SerializableSettings settings = Util.DeserializeXmlFromString<SerializableSettings>(
+            SerializableSettings? settings = Util.DeserializeXmlFromString<SerializableSettings>(
                 fileContent, SettingsTransform);
 
             // If the settings loaded OK, make a backup as 'last good settings' and return
@@ -1134,7 +1144,7 @@ Do you want to continue?";
         /// <returns>
         /// 	<c>Null</c> if we have been unable to load anything from files, the generated settings otherwise
         /// </returns>
-        private static SerializableSettings TryDeserializeFromBackupFile(string backupFile, bool recover = true)
+        private static SerializableSettings? TryDeserializeFromBackupFile(string backupFile, bool recover = true)
         {
             // Backup file doesn't exist
             if (!File.Exists(backupFile))
@@ -1176,8 +1186,8 @@ Do you want to continue?";
             // Get the revision number of the assembly which generated this file
             // Try to load from a file (when no revision found then it's a pre 1.3.0 version file)
             // Note: revision < 0 means no revision attribute; revision >= 0 is valid (including 0)
-            SerializableSettings settings = Util.GetRevisionNumber(backupFile) < 0
-                ? (SerializableSettings)UIHelper.ShowNoSupportMessage()
+            SerializableSettings? settings = Util.GetRevisionNumber(backupFile) < 0
+                ? (SerializableSettings?)UIHelper.ShowNoSupportMessage()
                 : Util.DeserializeXmlFromFile<SerializableSettings>(backupFile,
                     SettingsTransform);
 

@@ -3,9 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <UseWPF>true</UseWPF>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RootNamespace>EVEMon.Common</RootNamespace>
@@ -17,17 +16,18 @@
 
   <!-- NuGet Package References -->
   <ItemGroup>
-    <PackageReference Include="Dropbox.Api" Version="7.0.0" />
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.68.0.3536" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.68.0.3544" />
     <PackageReference Include="MailKit" Version="4.9.0" />
-    <PackageReference Include="Microsoft.Identity.Client" Version="4.61.3" />
-    <PackageReference Include="Nancy" Version="2.0.0" />
     <PackageReference Include="NetOfficeFw.Outlook" Version="1.9.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
     <PackageReference Include="YamlDotNet" Version="15.1.4" />
+  </ItemGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <ProjectReference Include="..\EVEMon.Core\EVEMon.Core.csproj" />
   </ItemGroup>
 
   <!-- Shared AssemblyInfo -->

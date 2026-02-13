@@ -8,9 +8,9 @@ namespace EVEMon.Common.Serialization
         public int ID { get; set; }
 
         [XmlAttribute("flagName")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [XmlAttribute("flagText")]
-        public string Text { get; set; }
+        public string? Text { get; set; }
     }
 }
