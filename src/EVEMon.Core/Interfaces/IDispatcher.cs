@@ -16,6 +16,13 @@ namespace EVEMon.Core.Interfaces
         void Invoke(Action action);
 
         /// <summary>
+        /// Post the provided delegate to the UI thread without blocking the caller.
+        /// If already on the UI thread, executes immediately.
+        /// </summary>
+        /// <param name="action">The action to invoke on the UI thread.</param>
+        void Post(Action action);
+
+        /// <summary>
         /// Schedule an action to invoke on the UI thread after a specified delay.
         /// </summary>
         /// <param name="delay">The delay before execution.</param>

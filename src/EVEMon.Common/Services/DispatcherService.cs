@@ -16,6 +16,12 @@ namespace EVEMon.Common.Services
         }
 
         /// <inheritdoc />
+        public void Post(Action action)
+        {
+            Threading.Dispatcher.Post(action);
+        }
+
+        /// <inheritdoc />
         public void Schedule(TimeSpan delay, Action action)
         {
             Threading.Dispatcher.Schedule(delay, action);

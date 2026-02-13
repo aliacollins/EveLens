@@ -123,6 +123,14 @@ namespace EVEMon.Controls
                 if (overviewItems.Count > 0)
                     CleanUp(overviewItems);
 
+                // Hide loading throbber if still active (e.g., first load with 0 characters)
+                if (labelLoading.Visible)
+                {
+                    overviewLoadingThrobber.State = ThrobberState.Stopped;
+                    overviewLoadingThrobber.Hide();
+                    labelLoading.Hide();
+                }
+
                 labelNoCharacters.Show();
 
                 return;

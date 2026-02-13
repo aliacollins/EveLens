@@ -1,21 +1,24 @@
 using System;
 using System.IO;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using EVEMon.Common.Helpers;
+using EVEMon.Common.Serialization.Settings;
 using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Services
 {
     /// <summary>
     /// Smart settings manager with save coalescing and fork migration detection.
-    /// Replaces the save logic in Settings.cs with testable, coalesced I/O.
+    /// Owns the full Export-Serialize-Write pipeline when the UseSmartSettings flag is ON.
     /// </summary>
     internal sealed class SmartSettingsManager : IDisposable
     {
         private readonly string _dataDirectory;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IDispatcher _dispatcher;
+        private readonly Func<SerializableSettings> _exportFunc;
         private readonly Timer _saveTimer;
         private readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1, 1);
         private volatile bool _dirty;
@@ -23,20 +26,12 @@ namespace EVEMon.Common.Services
         private int _saveCallCount;
         private int _actualWriteCount;
 
-        // File names matching SettingsFileManager conventions
-        private const string ConfigFileName = "config.json";
-        private const string CredentialsFileName = "credentials.json";
-
         // Save coalescing interval
         internal const int SaveCoalesceIntervalMs = 10_000; // 10 seconds
 
         // Fork detection constants (must match Settings.cs)
         internal const string OurForkId = "aliacollins";
         internal const int PeterhaneveRevisionThreshold = 1000;
-
-        // Current settings data (set via MarkDirty)
-        private object _pendingConfig;
-        private object _pendingCredentials;
 
         /// <summary>
         /// Number of times <see cref="Save"/> was called.
@@ -54,115 +49,139 @@ namespace EVEMon.Common.Services
         public bool IsDirty => _dirty;
 
         /// <summary>
-        /// Path to config.json.
+        /// Creates a new SmartSettingsManager that owns the full save pipeline.
         /// </summary>
-        public string ConfigFilePath => Path.Combine(_dataDirectory, ConfigFileName);
-
-        /// <summary>
-        /// Path to credentials.json.
-        /// </summary>
-        public string CredentialsFilePath => Path.Combine(_dataDirectory, CredentialsFileName);
-
-        /// <summary>
-        /// JSON serializer options matching SettingsFileManager.
-        /// </summary>
-        private static readonly JsonSerializerOptions s_jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-        };
-
-        public SmartSettingsManager(string dataDirectory, IEventAggregator eventAggregator)
+        /// <param name="dataDirectory">The EVEMon data directory.</param>
+        /// <param name="eventAggregator">Event aggregator for publish/subscribe.</param>
+        /// <param name="dispatcher">Dispatcher for UI thread marshaling.</param>
+        /// <param name="exportFunc">Delegate that calls Settings.Export() on the UI thread.</param>
+        public SmartSettingsManager(
+            string dataDirectory,
+            IEventAggregator eventAggregator,
+            IDispatcher dispatcher,
+            Func<SerializableSettings> exportFunc)
         {
             _dataDirectory = dataDirectory ?? throw new ArgumentNullException(nameof(dataDirectory));
             _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
+            _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
+            _exportFunc = exportFunc ?? throw new ArgumentNullException(nameof(exportFunc));
 
             if (!Directory.Exists(_dataDirectory))
                 Directory.CreateDirectory(_dataDirectory);
 
-            _saveTimer = new Timer(OnTimerElapsed, null, SaveCoalesceIntervalMs, SaveCoalesceIntervalMs);
+            // One-shot timer: fires once, then re-arms after callback completes.
+            // This prevents overlapping callbacks if PerformSaveAsync takes longer than the interval.
+            _saveTimer = new Timer(OnTimerElapsed, null, SaveCoalesceIntervalMs, Timeout.Infinite);
         }
 
         /// <summary>
         /// Marks settings as dirty. The actual write will happen on the next timer tick.
         /// This is the main entry point for save coalescing.
         /// </summary>
-        public void Save(object config = null, object credentials = null)
+        public void Save()
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(SmartSettingsManager));
 
             Interlocked.Increment(ref _saveCallCount);
-
-            if (config != null)
-                _pendingConfig = config;
-            if (credentials != null)
-                _pendingCredentials = credentials;
-
             _dirty = true;
         }
 
         /// <summary>
-        /// Immediately writes pending data, bypassing save coalescing.
+        /// Immediately performs the full save pipeline, bypassing coalescing.
         /// Used for critical saves (shutdown, explicit user action).
         /// </summary>
-        public async Task SaveImmediateAsync(object config = null, object credentials = null)
+        public async Task SaveImmediateAsync()
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(SmartSettingsManager));
 
-            if (config != null)
-                _pendingConfig = config;
-            if (credentials != null)
-                _pendingCredentials = credentials;
-
             _dirty = false;
-            await FlushAsync().ConfigureAwait(false);
+            await PerformSaveAsync().ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Timer callback - checks dirty flag and writes if needed.
+        /// Re-arms the one-shot timer for the next coalescing interval.
+        /// </summary>
+        private void RearmTimer()
+        {
+            if (!_disposed)
+            {
+                try
+                {
+                    _saveTimer.Change(SaveCoalesceIntervalMs, Timeout.Infinite);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Timer was disposed between the _disposed check and Change() call
+                }
+            }
+        }
+
+        /// <summary>
+        /// Timer callback - checks dirty flag and performs save if needed.
+        /// Uses one-shot pattern: timer fires once, callback re-arms after work completes.
+        /// This guarantees no overlapping callbacks.
         /// </summary>
         private async void OnTimerElapsed(object state)
         {
-            if (!_dirty || _disposed)
+            if (_disposed)
                 return;
+
+            if (!_dirty)
+            {
+                RearmTimer();
+                return;
+            }
 
             _dirty = false;
 
             try
             {
-                await FlushAsync().ConfigureAwait(false);
+                await PerformSaveAsync().ConfigureAwait(false);
             }
             catch
             {
                 // Mark dirty again so it retries on next tick
                 _dirty = true;
             }
+            finally
+            {
+                RearmTimer();
+            }
         }
 
         /// <summary>
-        /// Performs the actual file writes with thread safety.
+        /// Core save pipeline: Export on UI thread, then write via SettingsFileManager on background.
         /// </summary>
-        private async Task FlushAsync()
+        private async Task PerformSaveAsync()
         {
+            // Step 1: Marshal Export() to the UI thread to get a snapshot of current settings.
+            // Uses Post (non-blocking) + TaskCompletionSource to avoid blocking the thread pool
+            // thread with Send(), which can deadlock if the UI thread is waiting on thread pool work.
+            var tcs = new TaskCompletionSource<SerializableSettings>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _dispatcher.Post(() =>
+            {
+                try
+                {
+                    tcs.SetResult(_exportFunc());
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            });
+
+            SerializableSettings settings = await tcs.Task.ConfigureAwait(false);
+
+            if (settings == null)
+                return;
+
+            // Step 2: Write to disk via SettingsFileManager (runs on background thread)
             await _writeLock.WaitAsync().ConfigureAwait(false);
             try
             {
-                if (_pendingConfig != null)
-                {
-                    string json = JsonSerializer.Serialize(_pendingConfig, s_jsonOptions);
-                    await WriteFileAtomicAsync(ConfigFilePath, json).ConfigureAwait(false);
-                }
-
-                if (_pendingCredentials != null)
-                {
-                    string json = JsonSerializer.Serialize(_pendingCredentials, s_jsonOptions);
-                    await WriteFileAtomicAsync(CredentialsFilePath, json).ConfigureAwait(false);
-                }
-
+                await SettingsFileManager.SaveFromSerializableSettingsAsync(settings).ConfigureAwait(false);
                 Interlocked.Increment(ref _actualWriteCount);
                 _eventAggregator.Publish(new SettingsSavedEvent());
             }
@@ -312,18 +331,59 @@ namespace EVEMon.Common.Services
 
             _disposed = true;
 
-            // Stop the timer
+            // Stop the timer — no new callbacks will fire
             _saveTimer.Change(Timeout.Infinite, Timeout.Infinite);
             _saveTimer.Dispose();
 
-            // Flush any pending saves synchronously
-            if (_dirty)
+            // Acquire the write lock to ensure no in-flight callback is mid-write,
+            // then flush any pending dirty state, then release and dispose.
+            try
             {
-                _dirty = false;
-                FlushAsync().GetAwaiter().GetResult();
+                _writeLock.Wait();
+            }
+            catch (ObjectDisposedException)
+            {
+                return; // Already disposed by another path
             }
 
-            _writeLock.Dispose();
+            try
+            {
+                if (_dirty)
+                {
+                    _dirty = false;
+                    try
+                    {
+                        // Export on UI thread + write — runs inside the lock so no race.
+                        // Use Invoke here since Dispose is called from the UI thread
+                        // (Settings.Shutdown → Dispose), so Invoke short-circuits to direct call.
+                        SerializableSettings settings = null;
+                        try
+                        {
+                            _dispatcher.Invoke(() => settings = _exportFunc());
+                        }
+                        catch
+                        {
+                            // If Invoke fails (e.g., dispatcher already shut down), skip
+                        }
+
+                        if (settings != null)
+                        {
+                            SettingsFileManager.SaveFromSerializableSettingsAsync(settings)
+                                .GetAwaiter().GetResult();
+                            Interlocked.Increment(ref _actualWriteCount);
+                        }
+                    }
+                    catch
+                    {
+                        // Dispose must not throw — best-effort flush only
+                    }
+                }
+            }
+            finally
+            {
+                _writeLock.Release();
+                _writeLock.Dispose();
+            }
         }
 
         #endregion

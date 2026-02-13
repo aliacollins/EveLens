@@ -12,11 +12,12 @@ using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Net;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.Common.QueryMonitor
 {
-    internal sealed class CharacterDataQuerying
+    internal sealed class CharacterDataQuerying : ICharacterDataQuerying
     {
         #region Fields
 
@@ -37,6 +38,9 @@ namespace EVEMon.Common.QueryMonitor
         private EsiAPISkillQueue? m_lastQueue;
         // Responses from the market order history results since we handle it manually
         private ResponseParams? m_orderHistoryResponse;
+
+        // Adapter for SmartQueryScheduler registration (null when using CentralQueryScheduler)
+        private ScheduledQueryableAdapter? m_schedulerAdapter;
 
         // Staggered startup fields - prevents all characters from querying at once
         private static int s_characterStartupIndex = 0;
@@ -84,7 +88,16 @@ namespace EVEMon.Common.QueryMonitor
 
             m_basicFeaturesMonitors = InitializeBasicFeaturesMonitors(ccpCharacter);
 
-            EveMonClient.QueryScheduler?.Register(this);
+            if (FeatureFlags.UseSmartScheduler && EveMonClient.SmartQueryScheduler != null)
+            {
+                m_schedulerAdapter = new ScheduledQueryableAdapter(
+                    ccpCharacter.CharacterID, () => ProcessTick());
+                EveMonClient.SmartQueryScheduler.Register(m_schedulerAdapter);
+            }
+            else
+            {
+                EveMonClient.QueryScheduler?.Register(this);
+            }
         }
 
         /// <summary>
@@ -285,12 +298,17 @@ namespace EVEMon.Common.QueryMonitor
         internal CharacterQueryMonitor<EsiAPICharacterSheet> CharacterSheetMonitor { get; private set; } = null!;
 
         /// <summary>
+        /// Gets whether the character sheet monitor has an error.
+        /// </summary>
+        public bool HasCharacterSheetError => CharacterSheetMonitor?.HasError ?? false;
+
+        /// <summary>
         /// Gets or sets a value indicating whether the character market orders have been queried.
         /// </summary>
         /// <value>
         /// 	<c>true</c> if the character market orders have been queried; otherwise, <c>false</c>.
         /// </value>
-        internal bool CharacterMarketOrdersQueried => !m_charMarketOrdersMonitor.IsUpdating;
+        public bool CharacterMarketOrdersQueried => !m_charMarketOrdersMonitor.IsUpdating;
 
         /// <summary>
         /// Gets or sets a value indicating whether the character contracts have been queried.
@@ -298,7 +316,7 @@ namespace EVEMon.Common.QueryMonitor
         /// <value>
         /// 	<c>true</c> if the character contracts have been queried; otherwise, <c>false</c>.
         /// </value>
-        internal bool CharacterContractsQueried => !m_charContractsMonitor.IsUpdating;
+        public bool CharacterContractsQueried => !m_charContractsMonitor.IsUpdating;
 
         /// <summary>
         /// Gets or sets a value indicating whether the character industry jobs have been queried.
@@ -306,7 +324,7 @@ namespace EVEMon.Common.QueryMonitor
         /// <value>
         /// 	<c>true</c> if the character industry jobs have been queried; otherwise, <c>false</c>.
         /// </value>
-        internal bool CharacterIndustryJobsQueried => !m_charIndustryJobsMonitor.IsUpdating;
+        public bool CharacterIndustryJobsQueried => !m_charIndustryJobsMonitor.IsUpdating;
 
         #endregion
 
@@ -316,9 +334,17 @@ namespace EVEMon.Common.QueryMonitor
         /// <summary>
         /// Called when the object gets disposed.
         /// </summary>
-        internal void Dispose()
+        public void Dispose()
         {
-            EveMonClient.QueryScheduler?.Unregister(this);
+            if (m_schedulerAdapter != null)
+            {
+                EveMonClient.SmartQueryScheduler?.Unregister(m_schedulerAdapter);
+                m_schedulerAdapter = null;
+            }
+            else
+            {
+                EveMonClient.QueryScheduler?.Unregister(this);
+            }
 
             // Unsubscribe events in monitors
             foreach (var monitor in m_characterQueryMonitors)
@@ -933,7 +959,7 @@ namespace EVEMon.Common.QueryMonitor
         /// Processes a single tick, driving all character query monitors.
         /// Called by CentralQueryScheduler instead of subscribing to FiveSecondTick directly.
         /// </summary>
-        internal void ProcessTick()
+        public void ProcessTick()
         {
             // Check if startup delay has passed (staggered startup to prevent API burst)
             if (!m_startupDelayCompleted)

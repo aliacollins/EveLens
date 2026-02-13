@@ -22,7 +22,15 @@ namespace EVEMon.ApiCredentialsManagement
             {
                 components.Dispose();
             }
-            base.Dispose(disposing);
+            try
+            {
+                base.Dispose(disposing);
+            }
+            catch (NullReferenceException)
+            {
+                // .NET 8 WinForms bug: ListView.Unhook() throws NullReferenceException
+                // when the ListView hasn't been fully initialized before disposal.
+            }
             try
             {
                 m_server.Dispose();

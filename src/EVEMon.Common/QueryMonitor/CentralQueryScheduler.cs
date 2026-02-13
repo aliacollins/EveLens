@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace EVEMon.Common.QueryMonitor
 {
     /// <summary>
-    /// Centralized scheduler that drives all CharacterDataQuerying and CorporationDataQuerying
+    /// Centralized scheduler that drives all ICharacterDataQuerying and ICorporationDataQuerying
     /// instances from a single FiveSecondTick subscription.
     ///
     /// Before this class, each character's querying objects subscribed individually to FiveSecondTick,
@@ -12,8 +12,8 @@ namespace EVEMon.Common.QueryMonitor
     /// </summary>
     internal sealed class CentralQueryScheduler : IDisposable
     {
-        private readonly List<CharacterDataQuerying> _characterQuerying = new List<CharacterDataQuerying>();
-        private readonly List<CorporationDataQuerying> _corporationQuerying = new List<CorporationDataQuerying>();
+        private readonly List<ICharacterDataQuerying> _characterQuerying = new List<ICharacterDataQuerying>();
+        private readonly List<ICorporationDataQuerying> _corporationQuerying = new List<ICorporationDataQuerying>();
         private readonly object _lock = new object();
         private bool _disposed;
 
@@ -26,9 +26,9 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Registers a CharacterDataQuerying instance to be driven by this scheduler.
+        /// Registers a character data querying instance to be driven by this scheduler.
         /// </summary>
-        public void Register(CharacterDataQuerying querying)
+        public void Register(ICharacterDataQuerying querying)
         {
             if (querying == null || _disposed)
                 return;
@@ -41,9 +41,9 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Registers a CorporationDataQuerying instance to be driven by this scheduler.
+        /// Registers a corporation data querying instance to be driven by this scheduler.
         /// </summary>
-        public void Register(CorporationDataQuerying querying)
+        public void Register(ICorporationDataQuerying querying)
         {
             if (querying == null || _disposed)
                 return;
@@ -56,9 +56,9 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Unregisters a CharacterDataQuerying instance.
+        /// Unregisters a character data querying instance.
         /// </summary>
-        public void Unregister(CharacterDataQuerying querying)
+        public void Unregister(ICharacterDataQuerying querying)
         {
             if (querying == null)
                 return;
@@ -70,9 +70,9 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Unregisters a CorporationDataQuerying instance.
+        /// Unregisters a corporation data querying instance.
         /// </summary>
-        public void Unregister(CorporationDataQuerying querying)
+        public void Unregister(ICorporationDataQuerying querying)
         {
             if (querying == null)
                 return;
@@ -109,8 +109,8 @@ namespace EVEMon.Common.QueryMonitor
 
             // Take snapshots under lock, then iterate outside lock to avoid holding
             // the lock during potentially long query operations.
-            CharacterDataQuerying[] charSnapshot;
-            CorporationDataQuerying[] corpSnapshot;
+            ICharacterDataQuerying[] charSnapshot;
+            ICorporationDataQuerying[] corpSnapshot;
 
             lock (_lock)
             {

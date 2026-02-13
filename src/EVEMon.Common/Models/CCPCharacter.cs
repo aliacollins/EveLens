@@ -10,6 +10,7 @@ using EVEMon.Common.Models.Collections;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Service;
 using EVEMon.Common.Extensions;
@@ -29,8 +30,8 @@ namespace EVEMon.Common.Models
         private readonly List<Contract> m_endedContractsForCorporation;
         private readonly List<IndustryJob> m_jobsCompletedForCharacter;
 
-        private CharacterDataQuerying? m_characterDataQuerying;
-        private CorporationDataQuerying? m_corporationDataQuerying;
+        private ICharacterDataQuerying? m_characterDataQuerying;
+        private ICorporationDataQuerying? m_corporationDataQuerying;
         private List<SerializableAPIUpdate>? m_lastAPIUpdates;
 
         private Enum m_errorNotifiedMethod = CCPAPIMethodsEnum.None;
@@ -146,7 +147,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         public override string AdornedName => !Identity.ESIKeys.Any() || Identity.ESIKeys.All(
             apiKey => !apiKey.Monitored) || (m_characterDataQuerying != null &&
-            m_characterDataQuerying.CharacterSheetMonitor.HasError) ? $"{Name} (cached)" : Name;
+            m_characterDataQuerying.HasCharacterSheetError) ? $"{Name} (cached)" : Name;
 
         /// <summary>
         /// Gets the skill queue for this character.
@@ -762,14 +763,20 @@ namespace EVEMon.Common.Models
 
             if (m_characterDataQuerying == null && Identity.ESIKeys.Any())
             {
-                m_characterDataQuerying = new CharacterDataQuerying(this);
+                if (FeatureFlags.UseCharacterOrchestrator)
+                    m_characterDataQuerying = new Services.CharacterQueryOrchestrator(this);
+                else
+                    m_characterDataQuerying = new CharacterDataQuerying(this);
                 ResetLastAPIUpdates(m_lastAPIUpdates.Where(lastUpdate => Enum.IsDefined(
                     typeof(ESIAPICharacterMethods), lastUpdate.Method)));
             }
 
             if (m_corporationDataQuerying == null && Identity.ESIKeys.Any())
             {
-                m_corporationDataQuerying = new CorporationDataQuerying(this);
+                if (FeatureFlags.UseCharacterOrchestrator)
+                    m_corporationDataQuerying = new Services.CorporationQueryOrchestrator(this);
+                else
+                    m_corporationDataQuerying = new CorporationDataQuerying(this);
                 ResetLastAPIUpdates(m_lastAPIUpdates.Where(lastUpdate => Enum.IsDefined(
                     typeof(ESIAPICorporationMethods), lastUpdate.Method)));
             }

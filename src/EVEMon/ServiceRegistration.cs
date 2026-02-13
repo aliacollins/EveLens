@@ -38,6 +38,11 @@ namespace EVEMon
             services.AddSingleton<ICharacterRepository>(sp => AppServices.CharacterRepository);
 
             s_serviceProvider = services.BuildServiceProvider();
+
+            // Feature flags — flip to true to enable new code paths
+            FeatureFlags.UseSmartSettings = true;
+            FeatureFlags.UseSmartScheduler = true;
+            FeatureFlags.UseCharacterOrchestrator = true;
         }
 
         /// <summary>

@@ -18,6 +18,7 @@ using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Notifications;
 using EVEMon.Common.Scheduling;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using System.Text.Json;
 
@@ -33,6 +34,7 @@ namespace EVEMon.Common
         private static DateTime s_nextSaveTime;
         private static XslCompiledTransform? s_settingsTransform;
         private static SerializableSettings? s_settings;
+        private static SmartSettingsManager? s_smartSettingsManager;
 
         /// <summary>
         /// Static constructor.
@@ -808,6 +810,17 @@ Click OK to continue.";
                 });
             }
 
+            // Initialize SmartSettingsManager if feature flag is enabled
+            if (FeatureFlags.UseSmartSettings)
+            {
+                s_smartSettingsManager = new SmartSettingsManager(
+                    EveMonClient.EVEMonDataDir,
+                    AppServices.EventAggregator,
+                    AppServices.Dispatcher,
+                    () => Export());
+                EveMonClient.Trace("SmartSettingsManager initialized (feature flag ON)");
+            }
+
             EveMonClient.Trace($"done - UsingJsonFormat={UsingJsonFormat}");
         }
 
@@ -1295,8 +1308,17 @@ Do you want to continue?";
         /// </remarks>
         public static void Save()
         {
-            if (!IsRestoring)
-                s_savePending = true;
+            if (IsRestoring)
+                return;
+
+            if (FeatureFlags.UseSmartSettings && s_smartSettingsManager != null)
+            {
+                // SmartSettingsManager owns the full pipeline: Export→Serialize→Write
+                s_smartSettingsManager.Save();
+                return;
+            }
+
+            s_savePending = true;
         }
 
         /// <summary>
@@ -1313,6 +1335,13 @@ Do you want to continue?";
             // Prevents the saving if we are restoring the settings at that time
             if (IsRestoring)
                 return;
+
+            // If SmartSettingsManager is active, it owns the full pipeline exclusively
+            if (FeatureFlags.UseSmartSettings && s_smartSettingsManager != null)
+            {
+                await s_smartSettingsManager.SaveImmediateAsync();
+                return;
+            }
 
             // Reset flags
             s_savePending = false;
@@ -1411,6 +1440,16 @@ Do you want to continue?";
 
                 EveMonClient.Trace($"CopySettingsAsync: Exported {serializedData.Length} bytes to XML backup: {copyFileName}");
             }
+        }
+
+        /// <summary>
+        /// Shuts down settings services, disposing the SmartSettingsManager if active.
+        /// Called during application shutdown.
+        /// </summary>
+        internal static void Shutdown()
+        {
+            s_smartSettingsManager?.Dispose();
+            s_smartSettingsManager = null;
         }
 
         #endregion

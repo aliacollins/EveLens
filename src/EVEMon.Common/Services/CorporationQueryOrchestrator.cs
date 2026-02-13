@@ -6,13 +6,18 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Net;
-using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Esi;
-using EVEMon.Common.Services;
+using EVEMon.Common.Serialization.Eve;
 
-namespace EVEMon.Common.QueryMonitor
+namespace EVEMon.Common.Services
 {
-    internal sealed class CorporationDataQuerying : ICorporationDataQuerying
+    /// <summary>
+    /// Production-grade corporation query orchestrator that replaces CorporationDataQuerying.
+    /// Creates and drives all 4 corporation ESI query monitors for a character,
+    /// handles all callbacks, and implements ICorporationDataQuerying.
+    /// </summary>
+    internal sealed class CorporationQueryOrchestrator : ICorporationDataQuerying
     {
         #region Fields
 
@@ -29,12 +34,16 @@ namespace EVEMon.Common.QueryMonitor
 
         #region Constructor
 
-        internal CorporationDataQuerying(CCPCharacter ccpCharacter)
+        /// <summary>
+        /// Production constructor — creates real ESI monitors and callbacks.
+        /// Called from CCPCharacter when FeatureFlags.UseCharacterOrchestrator is true.
+        /// </summary>
+        internal CorporationQueryOrchestrator(CCPCharacter ccpCharacter)
         {
             m_ccpCharacter = ccpCharacter;
             m_corporationQueryMonitors = new List<IQueryMonitorEx>(4);
 
-            // Initializes the query monitors 
+            // Initializes the query monitors
             m_corpMedalsMonitor = new PagedQueryMonitor<EsiAPIMedals, EsiMedalsListItem>(
                 new CorporationQueryMonitor<EsiAPIMedals>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMedals, OnMedalsUpdated,
@@ -86,29 +95,28 @@ namespace EVEMon.Common.QueryMonitor
 
         #region Properties
 
-        /// <summary>
-        /// Gets or sets a value indicating whether the corporation market orders have been queried.
-        /// </summary>
-        /// <value>
-        /// 	<c>true</c> if the corporation market orders have been queried; otherwise, <c>false</c>.
-        /// </value>
+        /// <inheritdoc />
         public bool CorporationMarketOrdersQueried => !m_corpMarketOrdersMonitor.IsUpdating;
 
-        /// <summary>
-        /// Gets or sets a value indicating whether the corporation contracts have been queried.
-        /// </summary>
-        /// <value>
-        /// 	<c>true</c> if the corporation contracts have been queried; otherwise, <c>false</c>.
-        /// </value>
+        /// <inheritdoc />
         public bool CorporationContractsQueried => !m_corpContractsMonitor.IsUpdating;
 
-        /// <summary>
-        /// Gets or sets a value indicating whether the corporation industry jobs have been queried.
-        /// </summary>
-        /// <value>
-        /// 	<c>true</c> if the corporation industry jobs have been queried; otherwise, <c>false</c>.
-        /// </value>
+        /// <inheritdoc />
         public bool CorporationIndustryJobsQueried => !m_corpIndustryJobsMonitor.IsUpdating;
+
+        #endregion
+
+
+        #region ProcessTick
+
+        /// <summary>
+        /// Processes a single tick, driving all corporation query monitors.
+        /// </summary>
+        public void ProcessTick()
+        {
+            foreach (var monitor in m_corporationQueryMonitors)
+                monitor.UpdateTick();
+        }
 
         #endregion
 
@@ -116,7 +124,7 @@ namespace EVEMon.Common.QueryMonitor
         #region Dispose
 
         /// <summary>
-        /// Called when the object gets disposed.
+        /// Cleans up resources and unregisters from scheduler.
         /// </summary>
         public void Dispose()
         {
@@ -137,25 +145,14 @@ namespace EVEMon.Common.QueryMonitor
             }
         }
 
-        /// <summary>
-        /// Processes a single tick, driving all corporation query monitors.
-        /// Called by CentralQueryScheduler instead of subscribing to FiveSecondTick directly.
-        /// </summary>
-        public void ProcessTick()
-        {
-            foreach (var monitor in m_corporationQueryMonitors)
-                monitor.UpdateTick();
-        }
-
         #endregion
 
 
-        #region Querying
-        
+        #region Callbacks
+
         /// <summary>
         /// Processes the queried character's corporation medals.
         /// </summary>
-        /// <param name="result"></param>
         private void OnMedalsUpdated(EsiAPIMedals result)
         {
             var target = m_ccpCharacter;
@@ -171,8 +168,6 @@ namespace EVEMon.Common.QueryMonitor
         /// <summary>
         /// Processes the queried character's corporation market orders.
         /// </summary>
-        /// <param name="result"></param>
-        /// <remarks>This method is sensitive to which market orders gets queried first</remarks>
         private void OnMarketOrdersUpdated(EsiAPIMarketOrders result)
         {
             var target = m_ccpCharacter;
@@ -190,8 +185,6 @@ namespace EVEMon.Common.QueryMonitor
         /// <summary>
         /// Processes the queried character's corporation contracts.
         /// </summary>
-        /// <param name="result"></param>
-        /// <remarks>This method is sensitive to which contracts gets queried first</remarks>
         private void OnContractsUpdated(EsiAPIContracts result)
         {
             var target = m_ccpCharacter;
@@ -211,8 +204,6 @@ namespace EVEMon.Common.QueryMonitor
         /// <summary>
         /// Processes the queried character's corporation industry jobs.
         /// </summary>
-        /// <param name="result"></param>
-        /// <remarks>This method is sensitive to which "issued for" jobs gets queried first</remarks>
         private void OnIndustryJobsUpdated(EsiAPIIndustryJobs result)
         {
             var target = m_ccpCharacter;

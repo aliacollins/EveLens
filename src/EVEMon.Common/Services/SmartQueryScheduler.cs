@@ -199,9 +199,16 @@ namespace EVEMon.Common.Services
                 if (!entry.DecrementAndCheckReady())
                     continue;
 
-                entry.Queryable.ProcessTick();
-                _apiCallsInWindow++;
-                UpdateAdaptiveState(entry);
+                try
+                {
+                    entry.Queryable.ProcessTick();
+                    _apiCallsInWindow++;
+                    UpdateAdaptiveState(entry);
+                }
+                catch (Exception)
+                {
+                    // A failing monitor must not prevent the next tick from processing
+                }
             }
         }
 
@@ -248,9 +255,16 @@ namespace EVEMon.Common.Services
 
             if (entryToProcess != null)
             {
-                entryToProcess.Queryable.ProcessTick();
-                _apiCallsInWindow++;
-                UpdateAdaptiveState(entryToProcess);
+                try
+                {
+                    entryToProcess.Queryable.ProcessTick();
+                    _apiCallsInWindow++;
+                    UpdateAdaptiveState(entryToProcess);
+                }
+                catch (Exception)
+                {
+                    // A failing monitor must not prevent the next tick from processing
+                }
             }
         }
 

@@ -54,9 +54,25 @@ namespace EVEMon.Common.Threading
         }
 
         /// <summary>
+        /// Post the provided delegate to the UI thread without blocking the caller.
+        /// Unlike <see cref="Invoke"/>, this uses <see cref="SynchronizationContext.Post"/>
+        /// so the calling thread is not blocked waiting for the UI thread.
+        /// </summary>
+        /// <param name="action">The action to invoke on the UI thread.</param>
+        public static void Post(Action action)
+        {
+            if (s_uiContext == null || SynchronizationContext.Current == s_uiContext)
+                action.Invoke();
+            else
+                s_uiContext.Post(_ => action.Invoke(), null);
+        }
+
+        /// <summary>
         /// Schedule an action to invoke on the actor, by specifying the time it will be executed.
         /// Uses System.Threading.Timer instead of WinForms Timer so it works correctly
         /// when called from background threads (WinForms Timer requires a message pump).
+        /// Uses Post() (non-blocking) so the timer thread pool thread is not blocked
+        /// waiting for the UI thread, preventing potential deadlocks with concurrent Invoke() calls.
         /// </summary>
         /// <param name="time">The time at which the action will be executed.</param>
         /// <param name="action">The action to execute.</param>
@@ -66,7 +82,7 @@ namespace EVEMon.Common.Threading
             timer = new System.Threading.Timer(_ =>
             {
                 timer?.Dispose();
-                Invoke(action);
+                Post(action);
             }, null, time, System.Threading.Timeout.InfiniteTimeSpan);
         }
 
