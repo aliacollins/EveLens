@@ -5,13 +5,16 @@ using System.Windows.Forms.DataVisualization.Charting;
 using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.DetailsWindow
 {
     public partial class WalletJournalChartWindow : EVEMonForm
     {
         private readonly CCPCharacter m_ccpCharacter = null!;
+        private IDisposable? _subCharacterWalletJournalUpdated;
 
 
         #region Constructor
@@ -51,7 +54,7 @@ namespace EVEMon.DetailsWindow
 
             MinimumSize = Size;
 
-            EveMonClient.CharacterWalletJournalUpdated += EveMonClient_CharacterWalletJournalUpdated;
+            _subCharacterWalletJournalUpdated = AppServices.EventAggregator.SubscribeOnUI<CharacterWalletJournalUpdatedEvent>(this, OnCharacterWalletJournalUpdated);
             Disposed += OnDisposed;
 
             UpdateBalanceChart();
@@ -65,7 +68,7 @@ namespace EVEMon.DetailsWindow
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterWalletJournalUpdated -= EveMonClient_CharacterWalletJournalUpdated;
+            _subCharacterWalletJournalUpdated?.Dispose();
         }
 
         #endregion
@@ -78,7 +81,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterWalletJournalUpdated(object? sender, CharacterChangedEventArgs e)
+        private void OnCharacterWalletJournalUpdated(CharacterWalletJournalUpdatedEvent e)
         {
             if (m_ccpCharacter != e.Character)
                 return;

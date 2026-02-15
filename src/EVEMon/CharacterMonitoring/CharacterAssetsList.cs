@@ -14,12 +14,14 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.SkillPlanner;
 using Region = EVEMon.Common.Data.Region;
@@ -54,6 +56,12 @@ namespace EVEMon.CharacterMonitoring
         /// when not using groups (virtual mode doesn't support ListView groups).
         /// </summary>
         private const int VirtualModeThreshold = 500;
+        private IDisposable? _subAssets;
+        private IDisposable? _subCharInfo;
+        private IDisposable? _subConquerableStation;
+        private IDisposable? _subEveFlags;
+        private IDisposable? _subSettings;
+        private IDisposable? _subItemPrices;
 
         #endregion
 
@@ -200,13 +208,14 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvAssets);
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.CharacterAssetsUpdated += EveMonClient_CharacterAssetsUpdated;
-            EveMonClient.CharacterInfoUpdated += EveMonClient_CharacterInfoUpdated;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.EveFlagsUpdated += EveMonClient_EveFlagsUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.ItemPricesUpdated += EveMonClient_ItemPricesUpdated;
+            _subAssets = agg.SubscribeOnUI<CharacterAssetsUpdatedEvent>(this, e => EveMonClient_CharacterAssetsUpdated(e));
+            _subCharInfo = agg.SubscribeOnUI<CharacterInfoUpdatedEvent>(this, e => EveMonClient_CharacterInfoUpdated(e));
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
+            _subEveFlags = agg.SubscribeOnUI<EveFlagsUpdatedEvent>(this, e => EveMonClient_EveFlagsUpdated());
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
+            _subItemPrices = agg.SubscribeOnUI<ItemPricesUpdatedEvent>(this, e => EveMonClient_ItemPricesUpdated());
             Disposed += OnDisposed;
         }
 
@@ -220,12 +229,12 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip.Dispose();
 
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.CharacterAssetsUpdated -= EveMonClient_CharacterAssetsUpdated;
-            EveMonClient.CharacterInfoUpdated -= EveMonClient_CharacterInfoUpdated;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.EveFlagsUpdated -= EveMonClient_EveFlagsUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
+            _subAssets?.Dispose();
+            _subCharInfo?.Dispose();
+            _subConquerableStation?.Dispose();
+            _subEveFlags?.Dispose();
+            _subSettings?.Dispose();
+            _subItemPrices?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -1212,7 +1221,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void EveMonClient_CharacterAssetsUpdated(object? sender, CharacterChangedEventArgs e)
+        private async void EveMonClient_CharacterAssetsUpdated(CharacterAssetsUpdatedEvent e)
         {
             try
             {
@@ -1233,7 +1242,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private async void EveMonClient_ConquerableStationListUpdated()
         {
             try
             {
@@ -1253,7 +1262,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_EveFlagsUpdated(object? sender, EventArgs e)
+        private async void EveMonClient_EveFlagsUpdated()
         {
             try
             {
@@ -1274,7 +1283,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         /// <remarks>Mainly to update the jumps from charater last known location to assets.</remarks>
-        private async void EveMonClient_CharacterInfoUpdated(object? sender, CharacterChangedEventArgs e)
+        private async void EveMonClient_CharacterInfoUpdated(CharacterInfoUpdatedEvent e)
         {
             try
             {
@@ -1292,9 +1301,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Handles the SettingsChanged event of the EveMonClient control.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private async void EveMonClient_SettingsChanged()
         {
             try
             {
@@ -1313,9 +1320,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Occurs when the item prices get updated.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_ItemPricesUpdated(object? sender, EventArgs e)
+        private async void EveMonClient_ItemPricesUpdated()
         {
             try
             {

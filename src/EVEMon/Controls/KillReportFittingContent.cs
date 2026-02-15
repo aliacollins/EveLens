@@ -10,9 +10,11 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.Controls
@@ -33,6 +35,9 @@ namespace EVEMon.Controls
 
         private readonly Font m_fittingFont;
         private readonly Font m_fittingBoldFont;
+
+        private IDisposable? _subSettingsChanged;
+        private IDisposable? _subItemPricesUpdated;
 
         private KillLog m_killLog = null!;
         private Item? m_selectedItem;
@@ -97,8 +102,8 @@ namespace EVEMon.Controls
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.ItemPricesUpdated += EveMonClient_ItemPricesUpdated;
+            _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _subItemPricesUpdated = AppServices.EventAggregator.SubscribeOnUI<ItemPricesUpdatedEvent>(this, OnItemPricesUpdated);
             Disposed += OnDisposed;
         }
 
@@ -109,8 +114,8 @@ namespace EVEMon.Controls
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
+            _subSettingsChanged?.Dispose();
+            _subItemPricesUpdated?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -627,7 +632,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             // No need to do this if control is not visible
             if (!Visible)
@@ -639,9 +644,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// Occurs when the item prices get updated.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ItemPricesUpdated(object? sender, EventArgs e)
+        private void OnItemPricesUpdated(ItemPricesUpdatedEvent e)
         {
             ItemsCostLabel.Text = GetTotalCost();
         }

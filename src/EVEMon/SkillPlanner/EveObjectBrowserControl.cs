@@ -9,10 +9,12 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Collections;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -30,6 +32,9 @@ namespace EVEMon.SkillPlanner
         protected const int Pad = 3;
 
         private Plan? m_plan;
+
+        private IDisposable? _settingsChangedSub;
+        private IDisposable? _planChangedSub;
 
 
         #region Initialization
@@ -51,8 +56,8 @@ namespace EVEMon.SkillPlanner
         private void OnDisposed(object? sender, EventArgs e)
         {
             SelectControl.SelectionChanged -= OnSelectionChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
+            _settingsChangedSub?.Dispose();
+            _planChangedSub?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -75,8 +80,8 @@ namespace EVEMon.SkillPlanner
 
             // Watch for selection changes
             SelectControl.SelectionChanged += OnSelectionChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
             Disposed += OnDisposed;
 
             // Reposition the help text along side the treeview
@@ -207,7 +212,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender, PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             if ((e.Plan != m_plan) || (e.Plan.Character != m_plan.Character))
                 return;
@@ -218,9 +223,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when the settings changed.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             OnSettingsChanged();
         }

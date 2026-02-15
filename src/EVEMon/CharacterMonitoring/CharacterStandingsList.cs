@@ -9,10 +9,12 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Properties;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -37,6 +39,9 @@ namespace EVEMon.CharacterMonitoring
         private readonly Font m_standingsFont;
         private readonly Font m_standingsBoldFont;
         private readonly List<string> m_collapsedGroups = new List<string>();
+        private IDisposable? _subStandings;
+        private IDisposable? _subSettings;
+        private IDisposable? _subEveIDToName;
 
         #endregion
 
@@ -80,9 +85,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterStandingsUpdated += EveMonClient_CharacterStandingsUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
+            var agg = AppServices.EventAggregator;
+            _subStandings = agg.SubscribeOnUI<CharacterStandingsUpdatedEvent>(this, e => EveMonClient_CharacterStandingsUpdated(e));
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
         }
 
@@ -93,9 +99,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterStandingsUpdated -= EveMonClient_CharacterStandingsUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
+            _subStandings?.Dispose();
+            _subSettings?.Dispose();
+            _subEveIDToName?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -542,7 +548,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterStandingsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterStandingsUpdated(CharacterStandingsUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -556,7 +562,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }
@@ -564,9 +570,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the EVE ID to name changes we update the content.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateContent();
         }

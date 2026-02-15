@@ -14,11 +14,13 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 using R = EVEMon.Properties.Resources;
@@ -38,6 +40,10 @@ namespace EVEMon.SkillPlanner
         private Plan? m_plan;
         private Character? m_character;
         private Regex m_skill_regex = new Regex(@"(.*)\b(\d+|\w+)", RegexOptions.Compiled);
+
+        private IDisposable? _planNameChangedSub;
+        private IDisposable? _settingsChangedSub;
+        private IDisposable? _itemPricesUpdatedSub;
 
 
         #region Initialization and Lifecycle
@@ -98,9 +104,9 @@ namespace EVEMon.SkillPlanner
             m_emptyImageList.Images.Add(new Bitmap(24, 24));
 
             // Global events (unsubscribed on window closing)
-            EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.ItemPricesUpdated += EveMonClient_ItemPricesUpdated;
+            _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _itemPricesUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<ItemPricesUpdatedEvent>(this, OnItemPricesUpdated);
 
             // Compatibility mode : Mac OS
             if (Settings.Compatibility == CompatibilityMode.Wine)
@@ -145,9 +151,9 @@ namespace EVEMon.SkillPlanner
             base.OnFormClosing(e);
 
             // Unsubscribe global events
-            EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
+            _planNameChangedSub?.Dispose();
+            _settingsChangedSub?.Dispose();
+            _itemPricesUpdatedSub?.Dispose();
 
             // Save settings if this one is the last activated and up-to-date
             if (s_lastActivated == this)
@@ -715,7 +721,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ItemPricesUpdated(object? sender,EventArgs e)
+        private void OnItemPricesUpdated(ItemPricesUpdatedEvent e)
         {
             UpdateStatusBar();
         }
@@ -723,9 +729,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when a plan name changed.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanNameChanged(PlanNameChangedEvent e)
         {
             if (m_plan != e.Plan)
                 return;
@@ -736,9 +740,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when the settings changed.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlsVisibility();
         }

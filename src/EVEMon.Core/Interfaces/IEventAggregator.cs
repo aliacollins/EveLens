@@ -14,19 +14,22 @@ namespace EVEMon.Core.Interfaces
     {
         /// <summary>
         /// Subscribe to an event type with a strong reference.
-        /// The subscriber must call <see cref="Unsubscribe{TEvent}"/> to avoid leaks.
+        /// Dispose the returned token to unsubscribe, or call <see cref="Unsubscribe{TEvent}"/> directly.
         /// </summary>
         /// <typeparam name="TEvent">The event type.</typeparam>
         /// <param name="handler">The handler to invoke when the event is published.</param>
-        void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class;
+        /// <returns>A disposable token that unsubscribes when disposed.</returns>
+        IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class;
 
         /// <summary>
         /// Subscribe to an event type with a weak reference.
         /// The subscription is automatically cleaned up when the subscriber is GC'd.
+        /// Dispose the returned token to unsubscribe early.
         /// </summary>
         /// <typeparam name="TEvent">The event type.</typeparam>
         /// <param name="handler">The handler to invoke when the event is published.</param>
-        void SubscribeWeak<TEvent>(Action<TEvent> handler) where TEvent : class;
+        /// <returns>A disposable token that unsubscribes when disposed.</returns>
+        IDisposable SubscribeWeak<TEvent>(Action<TEvent> handler) where TEvent : class;
 
         /// <summary>
         /// Unsubscribe from an event type.

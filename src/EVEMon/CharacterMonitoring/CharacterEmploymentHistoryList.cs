@@ -6,9 +6,11 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -28,6 +30,9 @@ namespace EVEMon.CharacterMonitoring
 
         private readonly Font m_recordFont;
         private readonly Font m_recordBoldFont;
+        private IDisposable? _subCharInfo;
+        private IDisposable? _subEveIDToName;
+        private IDisposable? _subSettings;
 
         #endregion
 
@@ -80,9 +85,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterInfoUpdated += EveMonClient_CharacterInfoUpdated;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            var agg = AppServices.EventAggregator;
+            _subCharInfo = agg.SubscribeOnUI<CharacterInfoUpdatedEvent>(this, e => EveMonClient_CharacterInfoUpdated(e));
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             Disposed += OnDisposed;
         }
 
@@ -93,9 +99,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterInfoUpdated -= EveMonClient_CharacterInfoUpdated;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subCharInfo?.Dispose();
+            _subEveIDToName?.Dispose();
+            _subSettings?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -363,7 +369,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterInfoUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterInfoUpdated(CharacterInfoUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -375,9 +381,7 @@ namespace EVEMon.CharacterMonitoring
         /// When the settings change, we update the content.
         /// </summary>
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }
@@ -385,9 +389,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the EveIDToName updates, we refresh the content.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             // Force to redraw
             lbEmploymentHistory.Invalidate();

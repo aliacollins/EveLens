@@ -18,6 +18,8 @@ using EVEMon.Common.Factories;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Scheduling;
+using EVEMon.Common.Services;
+using EVEMon.Common.Events;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.Controls
@@ -67,6 +69,15 @@ namespace EVEMon.Controls
         private float m_regularFontSize;
         private float m_mediumFontSize;
         private float m_bigFontSize;
+
+        private IDisposable? _subSkillQueuesBatchUpdated;
+        private IDisposable? _subQueuedSkillsCompleted;
+        private IDisposable? _subMarketOrdersUpdated;
+        private IDisposable? _subCharactersBatchUpdated;
+        private IDisposable? _subSchedulerChanged;
+        private IDisposable? _subSettingsChanged;
+        private IDisposable? _subCharacterLabelChanged;
+        private IDisposable? _subESIKeyInfoUpdated;
 
         #endregion
 
@@ -143,15 +154,15 @@ namespace EVEMon.Controls
             lblSkillQueueTrainingTime.Text = string.Empty;
 
             // Global events
-            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
-            EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.MarketOrdersUpdated += EveMonClient_MarketOrdersUpdated;
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _subSkillQueuesBatchUpdated = AppServices.EventAggregator.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, OnSkillQueuesBatchUpdated);
+            _subQueuedSkillsCompleted = AppServices.EventAggregator.SubscribeOnUI<QueuedSkillsCompletedEvent>(this, OnQueuedSkillsCompleted);
+            _subMarketOrdersUpdated = AppServices.EventAggregator.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, OnMarketOrdersUpdated);
+            _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _subSchedulerChanged = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
+            _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             EveMonClient.SecondTick += EveMonClient_TimerTick;
-            EveMonClient.CharacterLabelChanged += EveMonClient_CharacterLabelChanged;
-            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
+            _subCharacterLabelChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterLabelChangedEvent>(this, OnCharacterLabelChanged);
+            _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
             Disposed += OnDisposed;
 
             UpdateOnSettingsChanged();
@@ -164,15 +175,15 @@ namespace EVEMon.Controls
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
-            EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.MarketOrdersUpdated -= EveMonClient_MarketOrdersUpdated;
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subSkillQueuesBatchUpdated?.Dispose();
+            _subQueuedSkillsCompleted?.Dispose();
+            _subMarketOrdersUpdated?.Dispose();
+            _subCharactersBatchUpdated?.Dispose();
+            _subSchedulerChanged?.Dispose();
+            _subSettingsChanged?.Dispose();
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
-            EveMonClient.CharacterLabelChanged -= EveMonClient_CharacterLabelChanged;
-            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
+            _subCharacterLabelChanged?.Dispose();
+            _subESIKeyInfoUpdated?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -631,7 +642,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterLabelChanged(object? sender, LabelChangedEventArgs e)
+        private void OnCharacterLabelChanged(CharacterLabelChangedEvent e)
         {
             if (e.Character == Character)
                 UpdateContent();
@@ -640,9 +651,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// When ESI key info is updated, refresh the warning indicator.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
+        private void OnESIKeyInfoUpdated(ESIKeyInfoUpdatedEvent e)
         {
             if (Visible)
                 UpdateESIKeyWarning();
@@ -667,7 +676,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SchedulerChanged(object? sender, EventArgs e)
+        private void OnSchedulerChanged(SchedulerChangedEvent e)
         {
             UpdateContent();
         }
@@ -675,9 +684,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// When the settings changed, update if necessary.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateOnSettingsChanged();
         }
@@ -685,9 +692,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// On skill completion.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
+        private void OnQueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -706,9 +711,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// On character market orders updated, update the balance format.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_MarketOrdersUpdated(object? sender, CharacterChangedEventArgs e)
+        private void OnMarketOrdersUpdated(MarketOrdersUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -719,9 +722,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// On character sheet changed, update everything.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -732,9 +733,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// On character skill queue batch changed, update everything.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void OnSkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
             if (!e.Characters.Contains(Character))
                 return;

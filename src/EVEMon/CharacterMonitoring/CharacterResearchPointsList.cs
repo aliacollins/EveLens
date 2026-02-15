@@ -9,12 +9,14 @@ using EVEMon.Common.Collections;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.SkillPlanner;
 
@@ -34,6 +36,8 @@ namespace EVEMon.CharacterMonitoring
         private bool m_columnsChanged;
         private bool m_isUpdatingColumns;
         private bool m_init;
+        private IDisposable? _subResearch;
+        private IDisposable? _subConquerableStation;
 
         #endregion
 
@@ -162,9 +166,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterResearchPointsUpdated += EveMonClient_CharacterResearchPointsUpdated;
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
+            _subResearch = agg.SubscribeOnUI<CharacterResearchPointsUpdatedEvent>(this, e => EveMonClient_CharacterResearchPointsUpdated(e));
             Disposed += OnDisposed;
         }
 
@@ -176,8 +181,8 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterResearchPointsUpdated -= EveMonClient_CharacterResearchPointsUpdated;
+            _subConquerableStation?.Dispose();
+            _subResearch?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -665,7 +670,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterResearchPointsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterResearchPointsUpdated(CharacterResearchPointsUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -679,7 +684,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated()
         {
             if (Character == null)
                 return;

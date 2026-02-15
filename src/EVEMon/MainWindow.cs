@@ -12,6 +12,8 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
+using EVEMon.Common.Services;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
@@ -72,6 +74,17 @@ namespace EVEMon
         private bool m_initialized;
         private bool m_firstApiLoadNotified;
         private bool m_closingAfterUpload;
+
+        private IDisposable? _subNotificationSent;
+        private IDisposable? _subNotificationInvalidated;
+        private IDisposable? _subMonitoredCharacterCollectionChanged;
+        private IDisposable? _subServerStatusUpdated;
+        private static IDisposable? s_subQueuedSkillsCompleted;
+        private IDisposable? _subSettingsChanged;
+        private IDisposable? _subCharacterLabelChanged;
+        private IDisposable? _subESIKeyInfoUpdated;
+        private IDisposable? _subUpdateAvailable;
+        private IDisposable? _subDataUpdateAvailable;
 
         #endregion
 
@@ -203,15 +216,15 @@ namespace EVEMon
             // Subscribe events
             TimeCheck.TimeCheckCompleted += TimeCheck_TimeCheckCompleted;
             GlobalDatafileCollection.LoadingProgress += GlobalDatafileCollection_LoadingProgress;
-            EveMonClient.NotificationSent += EveMonClient_NotificationSent;
-            EveMonClient.NotificationInvalidated += EveMonClient_NotificationInvalidated;
-            EveMonClient.MonitoredCharacterCollectionChanged += EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.ServerStatusUpdated += EveMonClient_ServerStatusUpdated;
-            EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _subNotificationSent = AppServices.EventAggregator.SubscribeOnUI<NotificationSentEvent>(this, OnNotificationSent);
+            _subNotificationInvalidated = AppServices.EventAggregator.SubscribeOnUI<NotificationInvalidatedEvent>(this, OnNotificationInvalidated);
+            _subMonitoredCharacterCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<MonitoredCharacterCollectionChangedEvent>(this, OnMonitoredCharacterCollectionChanged);
+            _subServerStatusUpdated = AppServices.EventAggregator.SubscribeOnUI<ServerStatusUpdatedEvent>(this, OnServerStatusUpdated);
+            s_subQueuedSkillsCompleted = AppServices.EventAggregator.Subscribe<QueuedSkillsCompletedEvent>(OnQueuedSkillsCompleted);
+            _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             EveMonClient.SecondTick += EveMonClient_TimerTick;
-            EveMonClient.CharacterLabelChanged += EveMonClient_CharacterLabelChanged;
-            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
+            _subCharacterLabelChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterLabelChangedEvent>(this, OnCharacterLabelChanged);
+            _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
             EveMonClient.Trace("Main window - loaded", printMethod: false);
@@ -414,15 +427,15 @@ namespace EVEMon
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
             TimeCheck.TimeCheckCompleted -= TimeCheck_TimeCheckCompleted;
             GlobalDatafileCollection.LoadingProgress -= GlobalDatafileCollection_LoadingProgress;
-            EveMonClient.NotificationSent -= EveMonClient_NotificationSent;
-            EveMonClient.NotificationInvalidated -= EveMonClient_NotificationInvalidated;
-            EveMonClient.MonitoredCharacterCollectionChanged -= EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.ServerStatusUpdated -= EveMonClient_ServerStatusUpdated;
-            EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subNotificationSent?.Dispose();
+            _subNotificationInvalidated?.Dispose();
+            _subMonitoredCharacterCollectionChanged?.Dispose();
+            _subServerStatusUpdated?.Dispose();
+            s_subQueuedSkillsCompleted?.Dispose();
+            _subSettingsChanged?.Dispose();
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
-            EveMonClient.CharacterLabelChanged -= EveMonClient_CharacterLabelChanged;
-            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
+            _subCharacterLabelChanged?.Dispose();
+            _subESIKeyInfoUpdated?.Dispose();
         }
 
         /// <summary>
@@ -467,7 +480,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterLabelChanged(object? sender, LabelChangedEventArgs e)
+        private void OnCharacterLabelChanged(CharacterLabelChangedEvent e)
         {
             if (!m_isUpdatingTabOrder)
                 UpdateTabs();
@@ -476,9 +489,7 @@ namespace EVEMon
         /// <summary>
         /// When ESI key info is updated, refresh tab names to show/hide warning indicators.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
+        private void OnESIKeyInfoUpdated(ESIKeyInfoUpdatedEvent e)
         {
             UpdateTabNames();
 
@@ -562,7 +573,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_MonitoredCharacterCollectionChanged(object? sender, EventArgs e)
+        private void OnMonitoredCharacterCollectionChanged(MonitoredCharacterCollectionChangedEvent e)
         {
             if (m_isUpdatingTabOrder)
                 return;
@@ -846,9 +857,9 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ServerStatusUpdated(object? sender, EveServerEventArgs e)
+        private void OnServerStatusUpdated(ServerStatusUpdatedEvent e)
         {
-            lblServerStatus.Text = $"|  {e.Server.StatusText}";
+            lblServerStatus.Text = $"|  {EveMonClient.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
         }
 
         /// <summary>
@@ -856,7 +867,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_NotificationInvalidated(object? sender, NotificationInvalidationEventArgs e)
+        private void OnNotificationInvalidated(NotificationInvalidatedEvent e)
         {
             UpdateNotifications();
         }
@@ -864,12 +875,12 @@ namespace EVEMon
         /// <summary>
         /// Update the notifications list.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_NotificationSent(object? sender, NotificationEventArgs e)
+        private void OnNotificationSent(NotificationSentEvent evt)
         {
             // Updates the notifications list of the main window
             UpdateNotifications();
+
+            var e = evt.Args;
 
             // Takes care of the tooltip
             NotificationCategorySettings catSettings = Settings.Notifications.Categories[e.Category];
@@ -1111,7 +1122,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
+        private static void OnQueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
             // Play a sound
             TryPlaySkillCompletionSound();
@@ -1328,8 +1339,10 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void OnUpdateAvailable(object? sender, UpdateAvailableEventArgs e)
+        private async void OnUpdateAvailable(UpdateAvailableEvent evt)
         {
+            var e = evt.Args;
+
             // Notify the user and prompt him
             if (m_isShowingUpdateWindow)
                 return;
@@ -1357,7 +1370,7 @@ namespace EVEMon
                 string message = $"A new version ({e.NewestVersion}) is available at " +
                     $"{NetworkConstants.EVEMonMainPage}.{Environment.NewLine}" +
                     $"{Environment.NewLine}Your current version is: {e.CurrentVersion}.";
-                    
+
                 MessageBoxCustom.Show(this, message, @"EVEMon Update Available", "Ignore this upgrade",
                     icon: MessageBoxIcon.Information);
 
@@ -1374,8 +1387,10 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void OnDataUpdateAvailable(object? sender, DataUpdateAvailableEventArgs e)
+        private async void OnDataUpdateAvailable(DataUpdateAvailableEvent evt)
         {
+            var e = evt.Args;
+
             if (m_isShowingDataUpdateWindow)
                 return;
 
@@ -2415,7 +2430,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlsVisibility();
         }
@@ -2442,15 +2457,15 @@ namespace EVEMon
 
             if (UpdateManager.Enabled && !m_isUpdateEventsSubscribed)
             {
-                EveMonClient.UpdateAvailable += OnUpdateAvailable;
-                EveMonClient.DataUpdateAvailable += OnDataUpdateAvailable;
+                _subUpdateAvailable = AppServices.EventAggregator.SubscribeOnUI<UpdateAvailableEvent>(this, OnUpdateAvailable);
+                _subDataUpdateAvailable = AppServices.EventAggregator.SubscribeOnUI<DataUpdateAvailableEvent>(this, OnDataUpdateAvailable);
                 m_isUpdateEventsSubscribed = true;
             }
 
             if (!UpdateManager.Enabled && m_isUpdateEventsSubscribed)
             {
-                EveMonClient.UpdateAvailable -= OnUpdateAvailable;
-                EveMonClient.DataUpdateAvailable -= OnDataUpdateAvailable;
+                _subUpdateAvailable?.Dispose();
+                _subDataUpdateAvailable?.Dispose();
                 m_isUpdateEventsSubscribed = false;
             }
 

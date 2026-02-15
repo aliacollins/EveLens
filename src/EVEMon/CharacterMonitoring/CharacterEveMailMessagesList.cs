@@ -11,6 +11,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
@@ -19,6 +20,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Notifications;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.DetailsWindow;
 
@@ -40,6 +42,11 @@ namespace EVEMon.CharacterMonitoring
         private bool m_columnsChanged;
         private bool m_isUpdatingColumns;
         private bool m_init;
+        private IDisposable? _subMailMessages;
+        private IDisposable? _subMailingLists;
+        private IDisposable? _subMailBody;
+        private IDisposable? _subEveIDToName;
+        private IDisposable? _subNotificationSent;
 
         #endregion
 
@@ -190,12 +197,13 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.CharacterEVEMailMessagesUpdated += EveMonClient_CharacterEVEMailMessagesUpdated;
-            EveMonClient.CharacterEVEMailingListsUpdated += EveMonClient_CharacterEVEMailingListsUpdated;
-            EveMonClient.CharacterEVEMailBodyDownloaded += EveMonClient_CharacterEVEMailBodyDownloaded;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
-            EveMonClient.NotificationSent += EveMonClient_NotificationSent;
+            _subMailMessages = agg.SubscribeOnUI<CharacterEVEMailMessagesUpdatedEvent>(this, e => EveMonClient_CharacterEVEMailMessagesUpdated(e));
+            _subMailingLists = agg.SubscribeOnUI<CharacterEVEMailingListsUpdatedEvent>(this, e => EveMonClient_CharacterEVEMailingListsUpdated(e));
+            _subMailBody = agg.SubscribeOnUI<CharacterEVEMailBodyDownloadedEvent>(this, e => EveMonClient_CharacterEVEMailBodyDownloaded(e));
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
+            _subNotificationSent = agg.SubscribeOnUI<NotificationSentEvent>(this, e => EveMonClient_NotificationSent(e.Args));
             Disposed += OnDisposed;
         }
 
@@ -207,11 +215,11 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.CharacterEVEMailMessagesUpdated -= EveMonClient_CharacterEVEMailMessagesUpdated;
-            EveMonClient.CharacterEVEMailingListsUpdated -= EveMonClient_CharacterEVEMailingListsUpdated;
-            EveMonClient.CharacterEVEMailBodyDownloaded -= EveMonClient_CharacterEVEMailBodyDownloaded;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
-            EveMonClient.NotificationSent -= EveMonClient_NotificationSent;
+            _subMailMessages?.Dispose();
+            _subMailingLists?.Dispose();
+            _subMailBody?.Dispose();
+            _subEveIDToName?.Dispose();
+            _subNotificationSent?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -852,7 +860,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterEVEMailMessagesUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailMessagesUpdated(CharacterEVEMailMessagesUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -866,7 +874,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterEVEMailingListsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailingListsUpdated(CharacterEVEMailingListsUpdatedEvent e)
         {
             UpdateColumns();
         }
@@ -876,7 +884,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterEVEMailBodyDownloaded(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailBodyDownloaded(CharacterEVEMailBodyDownloadedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -889,7 +897,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateColumns();
         }
@@ -897,9 +905,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Handles the NotificationSent event of the EveMonClient control.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EVEMon.Common.Notifications.NotificationEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_NotificationSent(object? sender, NotificationEventArgs e)
+        private void EveMonClient_NotificationSent(NotificationEventArgs e)
         {
             if (Character == null)
                 return;

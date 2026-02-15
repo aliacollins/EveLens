@@ -3,8 +3,10 @@ using System.Linq;
 using EVEMon.Common;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Events;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.LogitechG15
 {
@@ -17,6 +19,8 @@ namespace EVEMon.LogitechG15
     {
         private static LcdDisplay? s_lcd;
         private static bool s_startupError;
+        private static IDisposable? s_subQueuedSkillsCompleted;
+        private static IDisposable? s_subSettingsChanged;
 
 
         #region Initialize
@@ -102,8 +106,8 @@ namespace EVEMon.LogitechG15
                 UpdateFromSettings();
 
                 // Subscribe to events of the EVEMon client
-                EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
-                EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+                s_subQueuedSkillsCompleted = AppServices.EventAggregator.Subscribe<QueuedSkillsCompletedEvent>(OnQueuedSkillsCompleted);
+                s_subSettingsChanged = AppServices.EventAggregator.Subscribe<SettingsChangedEvent>(OnSettingsChanged);
 
                 // Subscribe to events which occur of G15 buttons pressed
                 LcdDisplay.ApiUpdateRequested += LcdDisplay_APIUpdateRequested;
@@ -137,8 +141,8 @@ namespace EVEMon.LogitechG15
                 s_lcd = null;
 
                 // Unsubscribe to events of the EVEMon client
-                EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
-                EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+                s_subQueuedSkillsCompleted?.Dispose();
+                s_subSettingsChanged?.Dispose();
 
                 // Unsubscribe to events which occur of G15 buttons pressed
                 LcdDisplay.ApiUpdateRequested -= LcdDisplay_APIUpdateRequested;
@@ -196,7 +200,7 @@ namespace EVEMon.LogitechG15
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
+        private static void OnQueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
             s_lcd?.SkillCompleted(e.Character, e.CompletedSkills.Count);
         }
@@ -204,9 +208,7 @@ namespace EVEMon.LogitechG15
         /// <summary>
         /// Update the preferences when the settings change.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private static void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private static void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateFromSettings();
         }

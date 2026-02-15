@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Services
@@ -20,7 +21,7 @@ namespace EVEMon.Common.Services
             = new ConcurrentDictionary<Type, List<SubscriptionBase>>();
 
         /// <inheritdoc />
-        public void Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class
+        public IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
@@ -30,10 +31,12 @@ namespace EVEMon.Common.Services
             {
                 subs.Add(new StrongSubscription<TEvent>(handler));
             }
+
+            return new SubscriptionToken(() => Unsubscribe(handler));
         }
 
         /// <inheritdoc />
-        public void SubscribeWeak<TEvent>(Action<TEvent> handler) where TEvent : class
+        public IDisposable SubscribeWeak<TEvent>(Action<TEvent> handler) where TEvent : class
         {
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
@@ -43,6 +46,8 @@ namespace EVEMon.Common.Services
             {
                 subs.Add(new WeakSubscription<TEvent>(handler));
             }
+
+            return new SubscriptionToken(() => Unsubscribe(handler));
         }
 
         /// <inheritdoc />
@@ -117,7 +122,14 @@ namespace EVEMon.Common.Services
 
             public override void Invoke(object eventData)
             {
-                _handler((TEvent)eventData);
+                try
+                {
+                    _handler((TEvent)eventData);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"EventAggregator handler error: {ex}");
+                }
             }
         }
 
@@ -166,17 +178,39 @@ namespace EVEMon.Common.Services
 
             public override void Invoke(object eventData)
             {
-                if (_targetRef == null)
+                try
                 {
-                    // Static method
-                    _method.Invoke(null, new[] { eventData });
-                    return;
-                }
+                    if (_targetRef == null)
+                    {
+                        // Static method
+                        _method.Invoke(null, new[] { eventData });
+                        return;
+                    }
 
-                if (_targetRef.TryGetTarget(out var target))
-                {
-                    _method.Invoke(target, new[] { eventData });
+                    if (_targetRef.TryGetTarget(out var target))
+                    {
+                        _method.Invoke(target, new[] { eventData });
+                    }
                 }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"EventAggregator handler error: {ex}");
+                }
+            }
+        }
+
+        private sealed class SubscriptionToken : IDisposable
+        {
+            private Action? _unsubscribe;
+
+            public SubscriptionToken(Action unsubscribe)
+            {
+                _unsubscribe = unsubscribe;
+            }
+
+            public void Dispose()
+            {
+                Interlocked.Exchange(ref _unsubscribe, null)?.Invoke();
             }
         }
 

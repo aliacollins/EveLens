@@ -10,10 +10,12 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Properties;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -38,6 +40,9 @@ namespace EVEMon.CharacterMonitoring
         private readonly Font m_contactsFont;
         private readonly Font m_contactsBoldFont;
         private readonly List<string> m_collapsedGroups = new List<string>();
+        private IDisposable? _subContacts;
+        private IDisposable? _subSettings;
+        private IDisposable? _subEveIDToName;
 
         #endregion
 
@@ -96,9 +101,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterContactsUpdated += EveMonClient_CharacterContactsUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
+            var agg = AppServices.EventAggregator;
+            _subContacts = agg.SubscribeOnUI<CharacterContactsUpdatedEvent>(this, e => EveMonClient_CharacterContactsUpdated(e));
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
 
             ShowAllContacts = true;
@@ -111,9 +117,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterContactsUpdated -= EveMonClient_CharacterContactsUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
+            _subContacts?.Dispose();
+            _subSettings?.Dispose();
+            _subEveIDToName?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -568,7 +574,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterContactsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterContactsUpdated(CharacterContactsUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -580,19 +586,15 @@ namespace EVEMon.CharacterMonitoring
         /// When the settings change we update the content.
         /// </summary>
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }
 
         /// <summary>
-        /// When ID to namae is updated we update the content.
+        /// When ID to name is updated we update the content.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateContent();
         }

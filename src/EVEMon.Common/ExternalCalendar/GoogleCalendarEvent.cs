@@ -208,7 +208,7 @@ namespace EVEMon.Common.ExternalCalendar
                 request.TimeMaxDateTimeOffset = EndDate;
                 request.Q = Subject;
 
-                Events events = await request.ExecuteAsync();
+                Google.Apis.Calendar.v3.Data.Events events = await request.ExecuteAsync();
 
                 foreach (Event @event in events.Items
                     .Where(entry => entry.Summary == Subject))

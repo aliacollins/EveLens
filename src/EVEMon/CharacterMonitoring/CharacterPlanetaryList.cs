@@ -12,12 +12,14 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.SkillPlanner;
 
@@ -41,6 +43,9 @@ namespace EVEMon.CharacterMonitoring
         private bool m_init;
 
         private int m_columnTTCDisplayIndex;
+        private IDisposable? _subColonies;
+        private IDisposable? _subLayout;
+        private IDisposable? _subPinsCompleted;
 
         #endregion
 
@@ -193,10 +198,11 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Tick += refresh_TimerTick;
             m_refreshTimer.Interval = 1000;
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.CharacterPlanetaryColoniesUpdated += EveMonClient_CharacterPlanetaryColoniesUpdated;
-            EveMonClient.CharacterPlanetaryLayoutUpdated += EveMonClient_CharacterPlanetaryLayoutUpdated;
-            EveMonClient.CharacterPlanetaryPinsCompleted += EveMonClient_CharacterPlanetaryPinsCompleted;
+            _subColonies = agg.SubscribeOnUI<CharacterPlanetaryColoniesUpdatedEvent>(this, e => EveMonClient_CharacterPlanetaryColoniesUpdated(e));
+            _subLayout = agg.SubscribeOnUI<CharacterPlanetaryLayoutUpdatedEvent>(this, e => EveMonClient_CharacterPlanetaryLayoutUpdated(e));
+            _subPinsCompleted = agg.SubscribeOnUI<CharacterPlanetaryPinsCompletedEvent>(this, e => EveMonClient_CharacterPlanetaryPinsCompleted());
             Disposed += OnDisposed;
         }
 
@@ -210,9 +216,9 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Dispose();
 
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.CharacterPlanetaryColoniesUpdated -= EveMonClient_CharacterPlanetaryColoniesUpdated;
-            EveMonClient.CharacterPlanetaryLayoutUpdated -= EveMonClient_CharacterPlanetaryLayoutUpdated;
-            EveMonClient.CharacterPlanetaryPinsCompleted -= EveMonClient_CharacterPlanetaryPinsCompleted;
+            _subColonies?.Dispose();
+            _subLayout?.Dispose();
+            _subPinsCompleted?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -976,7 +982,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterPlanetaryColoniesUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterPlanetaryColoniesUpdated(CharacterPlanetaryColoniesUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -989,7 +995,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterPlanetaryLayoutUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterPlanetaryLayoutUpdated(CharacterPlanetaryLayoutUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1003,7 +1009,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanetaryPinsEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterPlanetaryPinsCompleted(object? sender, PlanetaryPinsEventArgs e)
+        private void EveMonClient_CharacterPlanetaryPinsCompleted()
         {
             UpdateContent();
         }

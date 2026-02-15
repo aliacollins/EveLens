@@ -13,12 +13,14 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.SkillPlanner;
 
@@ -56,6 +58,10 @@ namespace EVEMon.CharacterMonitoring
             m_remoteReactionsRange;
 
         private JobsIssued m_activeManufacturing, m_activeResearch, m_activeReactions;
+        private IDisposable? _subIndustryJobs;
+        private IDisposable? _subConquerableStation;
+        private IDisposable? _subJobsCompleted;
+        private IDisposable? _subEveIDToName;
 
         #endregion
 
@@ -235,11 +241,12 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Tick += refresh_TimerTick;
             m_refreshTimer.Interval = 1000;
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.IndustryJobsUpdated += EveMonClient_IndustryJobsUpdated;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterIndustryJobsCompleted += EveMonClient_CharacterIndustryJobsCompleted;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
+            _subIndustryJobs = agg.SubscribeOnUI<IndustryJobsUpdatedEvent>(this, e => EveMonClient_IndustryJobsUpdated(e));
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
+            _subJobsCompleted = agg.SubscribeOnUI<CharacterIndustryJobsCompletedEvent>(this, e => EveMonClient_CharacterIndustryJobsCompleted());
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
         }
 
@@ -254,10 +261,10 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Dispose();
 
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.IndustryJobsUpdated -= EveMonClient_IndustryJobsUpdated;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterIndustryJobsCompleted -= EveMonClient_CharacterIndustryJobsCompleted;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
+            _subIndustryJobs?.Dispose();
+            _subConquerableStation?.Dispose();
+            _subJobsCompleted?.Dispose();
+            _subEveIDToName?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -1089,7 +1096,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="IndustryJobsEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterIndustryJobsCompleted(object? sender, IndustryJobsEventArgs e)
+        private void EveMonClient_CharacterIndustryJobsCompleted()
         {
             UpdateContent();
         }
@@ -1099,7 +1106,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateContent();
         }
@@ -1107,9 +1114,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the industry jobs are updated, update the list and the expandable panel info.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_IndustryJobsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_IndustryJobsUpdated(IndustryJobsUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1158,7 +1163,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated()
         {
             if (Character == null)
                 return;

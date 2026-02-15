@@ -10,10 +10,12 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -36,6 +38,10 @@ namespace EVEMon.SkillPlanner
         private ILoadoutInfo? m_loadoutInfo;
         private string? m_clipboardText;
         private bool m_allExpanded;
+
+        private IDisposable? _charsBatchUpdatedSub;
+        private IDisposable? _planChangedSub;
+        private IDisposable? _planNameChangedSub;
 
         #endregion
 
@@ -63,9 +69,9 @@ namespace EVEMon.SkillPlanner
 
             Plan = plan;
 
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
-            EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
+            _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
         }
 
         #endregion
@@ -102,9 +108,9 @@ namespace EVEMon.SkillPlanner
         {
             base.OnFormClosing(e);
 
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
-            EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
+            _charsBatchUpdatedSub?.Dispose();
+            _planChangedSub?.Dispose();
+            _planNameChangedSub?.Dispose();
         }
 
         #endregion
@@ -142,7 +148,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             if (e.Plan == m_plan)
                 UpdatePlanStatus();
@@ -151,9 +157,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// When the character changed, we need to update training time and such.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (e.Characters.Contains(m_character))
                 UpdatePlanStatus();
@@ -162,9 +166,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when a plan name changed.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanNameChanged(PlanNameChangedEvent e)
         {
             if (e.Plan == m_plan)
                 UpdateExplanationLabel();

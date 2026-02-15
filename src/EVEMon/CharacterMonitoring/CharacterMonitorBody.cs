@@ -11,11 +11,13 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Notifications;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.DetailsWindow;
 
@@ -28,6 +30,20 @@ namespace EVEMon.CharacterMonitoring
         private readonly List<ToolStripButton> m_advancedFeatures = new List<ToolStripButton>();
         private ToolStripItem[] m_preferenceMenu = null!;
         private Character m_character = null!;
+        private IDisposable? _subSettings;
+        private IDisposable? _subAssets;
+        private IDisposable? _subMarketOrders;
+        private IDisposable? _subContracts;
+        private IDisposable? _subWalletJournal;
+        private IDisposable? _subWalletTransactions;
+        private IDisposable? _subIndustryJobs;
+        private IDisposable? _subPlanetary;
+        private IDisposable? _subResearch;
+        private IDisposable? _subMailMessages;
+        private IDisposable? _subNotifications;
+        private IDisposable? _subNotificationSent;
+        private IDisposable? _subNotificationInvalidated;
+        private IDisposable? _subESIKeyInfo;
 
         #endregion
 
@@ -67,20 +83,21 @@ namespace EVEMon.CharacterMonitoring
             multiPanel.SelectionChange += multiPanel_SelectionChange;
 
             // Subscribe events
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.CharacterAssetsUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.MarketOrdersUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.ContractsUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterWalletJournalUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterWalletTransactionsUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.IndustryJobsUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterPlanetaryColoniesUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterResearchPointsUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterEVEMailMessagesUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterEVENotificationsUpdated += EveMonClient_UpdatePageControls;
-            EveMonClient.NotificationSent += EveMonClient_NotificationSent;
-            EveMonClient.NotificationInvalidated += EveMonClient_NotificationInvalidated;
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
+            _subAssets = agg.SubscribeOnUI<CharacterAssetsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subMarketOrders = agg.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subContracts = agg.SubscribeOnUI<ContractsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subWalletJournal = agg.SubscribeOnUI<CharacterWalletJournalUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subWalletTransactions = agg.SubscribeOnUI<CharacterWalletTransactionsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subIndustryJobs = agg.SubscribeOnUI<IndustryJobsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subPlanetary = agg.SubscribeOnUI<CharacterPlanetaryColoniesUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subResearch = agg.SubscribeOnUI<CharacterResearchPointsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subMailMessages = agg.SubscribeOnUI<CharacterEVEMailMessagesUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subNotifications = agg.SubscribeOnUI<CharacterEVENotificationsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subNotificationSent = agg.SubscribeOnUI<NotificationSentEvent>(this, e => EveMonClient_NotificationSent(e.Args));
+            _subNotificationInvalidated = agg.SubscribeOnUI<NotificationInvalidatedEvent>(this, e => EveMonClient_NotificationInvalidated(e.Args));
             Disposed += OnDisposed;
 
 
@@ -134,20 +151,20 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_APIKeyInfoUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.CharacterAssetsUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.MarketOrdersUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.ContractsUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterWalletJournalUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterWalletTransactionsUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.IndustryJobsUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterPlanetaryColoniesUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterResearchPointsUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterEVEMailMessagesUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.CharacterEVENotificationsUpdated -= EveMonClient_UpdatePageControls;
-            EveMonClient.NotificationSent -= EveMonClient_NotificationSent;
-            EveMonClient.NotificationInvalidated -= EveMonClient_NotificationInvalidated;
+            _subESIKeyInfo?.Dispose();
+            _subSettings?.Dispose();
+            _subAssets?.Dispose();
+            _subMarketOrders?.Dispose();
+            _subContracts?.Dispose();
+            _subWalletJournal?.Dispose();
+            _subWalletTransactions?.Dispose();
+            _subIndustryJobs?.Dispose();
+            _subPlanetary?.Dispose();
+            _subResearch?.Dispose();
+            _subMailMessages?.Dispose();
+            _subNotifications?.Dispose();
+            _subNotificationSent?.Dispose();
+            _subNotificationInvalidated?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -473,7 +490,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_APIKeyInfoUpdated(object? sender, EventArgs e)
+        private void EveMonClient_APIKeyInfoUpdated()
         {
             UpdateFeaturesMenu();
         }
@@ -483,7 +500,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateInfrequentControls();
         }
@@ -493,9 +510,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_UpdatePageControls(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_UpdatePageControls(Character character)
         {
-            if (e.Character != m_character)
+            if (character != m_character)
                 return;
 
             UpdatePageControls();
@@ -506,7 +523,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.Notifications.NotificationInvalidationEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_NotificationInvalidated(object? sender, NotificationInvalidationEventArgs e)
+        private void EveMonClient_NotificationInvalidated(NotificationInvalidationEventArgs e)
         {
             UpdateNotifications();
         }
@@ -516,7 +533,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void EveMonClient_NotificationSent(object? sender, NotificationEventArgs e)
+        private void EveMonClient_NotificationSent(NotificationEventArgs e)
         {
             UpdateNotifications();
         }
@@ -1648,7 +1665,7 @@ namespace EVEMon.CharacterMonitoring
                 skillQueueIcon.Visible = employmentIcon.Visible = false;
 
             // Subscribe event
-            EveMonClient.ESIKeyInfoUpdated += EveMonClient_APIKeyInfoUpdated;
+            _subESIKeyInfo = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, e => EveMonClient_APIKeyInfoUpdated());
         }
 
         /// <summary>

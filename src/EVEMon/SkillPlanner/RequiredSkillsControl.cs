@@ -9,10 +9,12 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -25,6 +27,8 @@ namespace EVEMon.SkillPlanner
         private Item? m_object;
         private Plan? m_plan;
         private bool m_allExpanded;
+
+        private IDisposable? _planChangedSub;
 
 
         #region Object Lifecycle
@@ -40,7 +44,7 @@ namespace EVEMon.SkillPlanner
             tvSkillList.MouseMove += tvSkillList_MouseMove;
 
             Disposed += OnDisposed;
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
         }
 
         /// <summary>
@@ -51,15 +55,13 @@ namespace EVEMon.SkillPlanner
         private void OnDisposed(object? sender,EventArgs e)
         {
             Disposed -= OnDisposed;
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
+            _planChangedSub?.Dispose();
         }
 
         /// <summary>
         /// Occurs when the plan changes, when update the display.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             UpdateDisplay();
         }

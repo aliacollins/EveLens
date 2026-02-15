@@ -7,9 +7,11 @@ using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Data;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharactersComparison
 {
@@ -17,6 +19,9 @@ namespace EVEMon.CharactersComparison
     {
         private readonly List<Character> m_selectedCharacters = new List<Character>();
         private Timer m_tmrSelect = null!;
+
+        private IDisposable? _subMonitoredCharacterCollectionChanged;
+        private IDisposable? _subCharacterCollectionChanged;
 
 
         #region Constructor
@@ -326,8 +331,8 @@ namespace EVEMon.CharactersComparison
             cbFilter.SelectedIndex = 0;
             chCharacters.Width = lvCharacterList.ClientSize.Width;
 
-            EveMonClient.MonitoredCharacterCollectionChanged += EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.CharacterCollectionChanged += EveMonClient_CharacterCollectionChanged;
+            _subMonitoredCharacterCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<MonitoredCharacterCollectionChangedEvent>(this, OnMonitoredCharacterCollectionChanged);
+            _subCharacterCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterCollectionChangedEvent>(this, OnCharacterCollectionChanged);
             Disposed += OnDisposed;
 
             UpdateCharacterList();
@@ -341,17 +346,15 @@ namespace EVEMon.CharactersComparison
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.MonitoredCharacterCollectionChanged -= EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.CharacterCollectionChanged -= EveMonClient_CharacterCollectionChanged;
+            _subMonitoredCharacterCollectionChanged?.Dispose();
+            _subCharacterCollectionChanged?.Dispose();
             Disposed -= OnDisposed;
         }
 
         /// <summary>
-        /// Handles the MonitoredCharacterCollectionChanged event of the EveMonClient control.
+        /// Handles the MonitoredCharacterCollectionChanged event.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_MonitoredCharacterCollectionChanged(object? sender, EventArgs e)
+        private void OnMonitoredCharacterCollectionChanged(MonitoredCharacterCollectionChangedEvent e)
         {
             if (cbFilter.SelectedIndex != 1)
                 return;
@@ -361,11 +364,9 @@ namespace EVEMon.CharactersComparison
         }
 
         /// <summary>
-        /// Handles the CharacterCollectionChanged event of the EveMonClient control.
+        /// Handles the CharacterCollectionChanged event.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterCollectionChanged(object? sender, EventArgs e)
+        private void OnCharacterCollectionChanged(CharacterCollectionChangedEvent e)
         {
             UpdateCharacterList();
             UpdateSelectedItems();

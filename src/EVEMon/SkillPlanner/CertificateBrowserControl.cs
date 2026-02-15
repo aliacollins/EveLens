@@ -9,11 +9,13 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -22,6 +24,9 @@ namespace EVEMon.SkillPlanner
         private CertificateClass? m_selectedCertificate;
         private Plan? m_plan;
         private const int HPad = 40;
+
+        private IDisposable? _planChangedSub;
+        private IDisposable? _settingsChangedSub;
 
         /// <summary>
         /// Constructor
@@ -53,8 +58,8 @@ namespace EVEMon.SkillPlanner
 
             certSelectControl.SelectionChanged += certSelectControl_SelectionChanged;
 
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             Disposed += OnDisposed;
 
             // Reposition the help text along side the treeview
@@ -75,8 +80,8 @@ namespace EVEMon.SkillPlanner
         {
             certSelectControl.SelectionChanged -= certSelectControl_SelectionChanged;
 
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _planChangedSub?.Dispose();
+            _settingsChangedSub?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -424,7 +429,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender, PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             if (e.Plan == m_plan)
                 UpdateEligibility();
@@ -433,9 +438,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// When the settings changes, we need to update.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlVisibility();
         }

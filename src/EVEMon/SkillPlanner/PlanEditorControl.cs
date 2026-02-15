@@ -16,12 +16,14 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Scheduling;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.NotificationWindow;
 
@@ -68,6 +70,15 @@ namespace EVEMon.SkillPlanner
         // Tooltip
         private readonly InfiniteDisplayToolTip m_tooltip;
 
+        // EventAggregator subscriptions
+        private IDisposable? _charsBatchUpdatedSub;
+        private IDisposable? _skillQueuesBatchUpdatedSub;
+        private IDisposable? _implantSetCollectionChangedSub;
+        private IDisposable? _itemPricesUpdatedSub;
+        private IDisposable? _planChangedSub;
+        private IDisposable? _settingsChangedSub;
+        private IDisposable? _schedulerChangedSub;
+
         #endregion
 
 
@@ -92,14 +103,14 @@ namespace EVEMon.SkillPlanner
             tsSortPriorities.Click += tsSortPriorities_Clicked;
             cbChooseImplantSet.DropDown += cbChooseImplantSet_DropDown;
 
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
-            EveMonClient.CharacterImplantSetCollectionChanged += EveMonClient_CharacterImplantSetCollectionChanged;
-            EveMonClient.ItemPricesUpdated += EveMonClient_ItemPricesUpdated;
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _skillQueuesBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, OnSkillQueuesBatchUpdated);
+            _implantSetCollectionChangedSub = AppServices.EventAggregator.SubscribeOnUI<CharacterImplantSetCollectionChangedEvent>(this, OnCharacterImplantSetCollectionChanged);
+            _itemPricesUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<ItemPricesUpdatedEvent>(this, OnItemPricesUpdated);
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
+            _schedulerChangedSub = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
             Disposed += OnDisposed;
         }
 
@@ -142,14 +153,14 @@ namespace EVEMon.SkillPlanner
         private void OnDisposed(object? sender,EventArgs e)
         {
             m_tooltip.Dispose();
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
-            EveMonClient.CharacterImplantSetCollectionChanged -= EveMonClient_CharacterImplantSetCollectionChanged;
-            EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _charsBatchUpdatedSub?.Dispose();
+            _skillQueuesBatchUpdatedSub?.Dispose();
+            _implantSetCollectionChangedSub?.Dispose();
+            _itemPricesUpdatedSub?.Dispose();
+            _planChangedSub?.Dispose();
+            _settingsChangedSub?.Dispose();
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
+            _schedulerChangedSub?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -232,7 +243,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (m_character == null || !e.Characters.Contains(m_character))
                 return;
@@ -243,9 +254,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// When the character skill queue change, update everything.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object? sender,CharacterBatchEventArgs e)
+        private void OnSkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
             if (m_character == null || !e.Characters.Contains(m_character))
                 return;
@@ -256,9 +265,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when global item prices are loaded (this updates the skill injector costs).
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ItemPricesUpdated(object? sender,EventArgs e)
+        private void OnItemPricesUpdated(ItemPricesUpdatedEvent e)
         {
             UpdateStatusBar();
         }
@@ -268,7 +275,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void EveMonClient_CharacterImplantSetCollectionChanged(object? sender,EventArgs e)
+        private async void OnCharacterImplantSetCollectionChanged(CharacterImplantSetCollectionChangedEvent e)
         {
             if (m_character == null)
                 return;
@@ -283,7 +290,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             if (e.Plan != Plan || Plan == null)
                 return;
@@ -293,12 +300,10 @@ namespace EVEMon.SkillPlanner
         }
 
         /// <summary>
-        /// When the settings changed, implant sets, the highlights and such may be different. 
+        /// When the settings changed, implant sets, the highlights and such may be different.
         /// Entries are still the same but we may need to update implant sets, highlights and others.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             if (Plan == null)
                 return;
@@ -307,12 +312,10 @@ namespace EVEMon.SkillPlanner
         }
 
         /// <summary>
-        /// When the scheduler changed, the blocking highlights may be different. 
+        /// When the scheduler changed, the blocking highlights may be different.
         /// Entries are still the same but we may need to update the blocking highlights.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SchedulerChanged(object? sender,EventArgs e)
+        private void OnSchedulerChanged(SchedulerChangedEvent e)
         {
             if (Plan == null)
                 return;

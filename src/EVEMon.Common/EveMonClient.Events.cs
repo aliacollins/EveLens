@@ -10,6 +10,7 @@ using EVEMon.Common.Notifications;
 using EVEMon.Common.Serialization.PatchXml;
 using EVEMon.Common.Services;
 using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common
 {
@@ -459,6 +460,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(SettingsChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.SettingsChangedEvent.Instance);
         }
 
         /// <summary>
@@ -472,6 +474,9 @@ namespace EVEMon.Common
             Trace();
             Settings.Save();
             SchedulerChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
         }
 
         /// <summary>
@@ -489,6 +494,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -502,6 +508,9 @@ namespace EVEMon.Common
             Trace();
             Settings.Save();
             ESIKeyMonitoredChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyMonitoredChangedEvent.Instance);
         }
 
         /// <summary>
@@ -515,6 +524,9 @@ namespace EVEMon.Common
             Trace();
             Settings.Save();
             MonitoredCharacterCollectionChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -531,6 +543,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.CharacterCollectionChangedEvent.Instance);
         }
 
 
@@ -544,6 +557,9 @@ namespace EVEMon.Common
 
             Trace();
             ConquerableStationListUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.ConquerableStationListUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -556,6 +572,9 @@ namespace EVEMon.Common
 
             Trace();
             EveFactionalWarfareStatsUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.EveFactionalWarfareStatsUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -568,6 +587,9 @@ namespace EVEMon.Common
 
             Trace();
             EveIDToNameUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.EveIDToNameUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -580,6 +602,9 @@ namespace EVEMon.Common
 
             Trace();
             RefTypesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.RefTypesUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -592,6 +617,9 @@ namespace EVEMon.Common
 
             Trace();
             NotificationRefTypesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.NotificationRefTypesUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -604,6 +632,9 @@ namespace EVEMon.Common
 
             Trace();
             EveFlagsUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.EveFlagsUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -618,6 +649,9 @@ namespace EVEMon.Common
             Trace(esiKey.ToString());
             Settings.Save();
             ESIKeyInfoUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -633,6 +667,9 @@ namespace EVEMon.Common
             Characters.UpdateAccountStatuses();
             Settings.Save();
             AccountStatusUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.AccountStatusUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -647,8 +684,11 @@ namespace EVEMon.Common
             Trace(esiKey.ToString());
             Settings.Save();
             CharacterListUpdated?.ThreadSafeInvoke(null, new ESIKeyInfoChangedEventArgs(esiKey));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterListUpdatedEvent(esiKey));
         }
-        
+
         /// <summary>
         /// Called when the character implant set collection changed.
         /// </summary>
@@ -660,6 +700,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             CharacterImplantSetCollectionChanged?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(character));
         }
 
         /// <summary>
@@ -682,6 +725,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(character));
         }
 
         /// <summary>
@@ -699,6 +743,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterInfoUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterInfoUpdatedEvent(character));
         }
 
         /// <summary>
@@ -713,6 +758,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             CharacterLabelChanged?.ThreadSafeInvoke(null, new LabelChangedEventArgs(character,
                 Characters.GetKnownLabels()));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterLabelChangedEvent(character, Characters.GetKnownLabels()));
         }
 
         /// <summary>
@@ -736,6 +784,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterSkillQueueUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterSkillQueueUpdatedEvent(character));
         }
 
         /// <summary>
@@ -750,6 +799,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             QueuedSkillsCompleted?.ThreadSafeInvoke(null, new QueuedSkillsEventArgs(character, skillsCompleted));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.QueuedSkillsCompletedEvent(character, skillsCompleted));
         }
 
         /// <summary>
@@ -766,6 +818,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterStandingsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterStandingsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -779,6 +832,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterFactionalWarfareStatsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterFactionalWarfareStatsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -796,6 +852,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterAssetsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterAssetsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -810,6 +867,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             MarketOrdersUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.MarketOrdersUpdatedEvent(character));
         }
 
         /// <summary>
@@ -828,6 +888,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterMarketOrdersUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterMarketOrdersUpdatedEvent(character, endedOrders));
         }
 
         /// <summary>
@@ -842,6 +903,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             ContractsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.ContractsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -860,6 +924,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterContractsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContractsEndedEvent(character, endedContracts));
         }
 
         /// <summary>
@@ -873,6 +938,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterContractBidsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContractBidsDownloadedEvent(character));
         }
 
         /// <summary>
@@ -886,6 +954,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterContractItemsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContractItemsDownloadedEvent(character));
         }
 
         /// <summary>
@@ -899,6 +970,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterWalletJournalUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletJournalUpdatedEvent(character));
         }
 
         /// <summary>
@@ -912,6 +986,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterWalletTransactionsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletTransactionsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -926,6 +1003,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             IndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.IndustryJobsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -943,6 +1023,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterIndustryJobsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.IndustryJobsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -957,6 +1038,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             (character as CCPCharacter)?.OnCorporationIndustryJobsUpdated();
             CorporationIndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationIndustryJobsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -972,6 +1056,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             (character as CCPCharacter)?.OnCharacterIndustryJobsCompleted(jobsCompleted);
             CharacterIndustryJobsCompleted?.ThreadSafeInvoke(null, new IndustryJobsEventArgs(character, jobsCompleted));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterIndustryJobsCompletedEvent(character, jobsCompleted));
         }
 
         /// <summary>
@@ -987,6 +1074,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             (character as CCPCharacter)?.OnPlanetaryPinsCompleted(pinsCompleted);
             CharacterPlanetaryPinsCompleted?.ThreadSafeInvoke(null, new PlanetaryPinsEventArgs(character, pinsCompleted));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryPinsCompletedEvent(character, pinsCompleted));
         }
 
         /// <summary>
@@ -1003,6 +1093,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterResearchUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterResearchPointsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1020,6 +1111,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterMailUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailMessagesUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1033,6 +1125,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterEVEMailingListsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailingListsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1046,6 +1141,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterEVEMailBodyDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailBodyDownloadedEvent(character));
         }
 
         /// <summary>
@@ -1063,8 +1161,9 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterNotificationsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVENotificationsUpdatedEvent(character));
         }
-        
+
         /// <summary>
         /// Called when the character contacts updated.
         /// </summary>
@@ -1079,6 +1178,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterContactsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContactsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1095,6 +1195,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterMedalsUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterMedalsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1108,6 +1209,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CorporationMedalsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationMedalsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1124,6 +1228,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterCalendarUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpcomingCalendarEventsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1137,6 +1242,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterCalendarEventAttendeesDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterCalendarEventAttendeesDownloadedEvent(character));
         }
 
         /// <summary>
@@ -1153,6 +1261,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterKillLogUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterKillLogUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1169,6 +1278,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterPlanetaryUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryColoniesUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1182,6 +1292,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterPlanetaryLayoutUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryLayoutUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1198,6 +1311,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterLoyaltyUpdatedEvent(character.CharacterID, character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterLoyaltyPointsUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1211,6 +1325,9 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             CharacterPortraitUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPortraitUpdatedEvent(character));
         }
 
         /// <summary>
@@ -1225,6 +1342,9 @@ namespace EVEMon.Common
             Trace(character.Name);
             Settings.Save();
             CharacterPlanCollectionChanged?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanCollectionChangedEvent(character));
         }
 
         /// <summary>
@@ -1240,6 +1360,9 @@ namespace EVEMon.Common
             Trace(character.CorporationName);
             (character as CCPCharacter)?.OnCorporationMarketOrdersUpdated(endedOrders);
             CorporationMarketOrdersUpdated?.ThreadSafeInvoke(null, new MarketOrdersEventArgs(character, endedOrders));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationMarketOrdersEndedEvent(character, endedOrders));
         }
 
         /// <summary>
@@ -1255,6 +1378,9 @@ namespace EVEMon.Common
             Trace(character.CorporationName);
             (character as CCPCharacter)?.OnCorporationContractsUpdated(endedContracts);
             CorporationContractsUpdated?.ThreadSafeInvoke(null, new ContractsEventArgs(character, endedContracts));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractsEndedEvent(character, endedContracts));
         }
 
         /// <summary>
@@ -1268,6 +1394,9 @@ namespace EVEMon.Common
 
             Trace(character.CorporationName);
             CorporationContractBidsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractBidsDownloadedEvent(character));
         }
 
         /// <summary>
@@ -1281,6 +1410,9 @@ namespace EVEMon.Common
 
             Trace(character.CorporationName);
             CorporationContractItemsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractItemsDownloadedEvent(character));
         }
 
         /// <summary>
@@ -1296,6 +1428,9 @@ namespace EVEMon.Common
             Trace(character.CorporationName);
             (character as CCPCharacter)?.OnCorporationIndustryJobsCompleted(jobsCompleted);
             CorporationIndustryJobsCompleted?.ThreadSafeInvoke(null, new IndustryJobsEventArgs(character, jobsCompleted));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CorporationIndustryJobsCompletedEvent(character, jobsCompleted));
         }
 
         /// <summary>
@@ -1310,6 +1445,9 @@ namespace EVEMon.Common
             Trace(plan.Name);
             Settings.Save();
             PlanChanged?.ThreadSafeInvoke(null, new PlanChangedEventArgs(plan));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.PlanChangedEvent(plan));
         }
 
         /// <summary>
@@ -1324,6 +1462,9 @@ namespace EVEMon.Common
             Trace(plan.Name);
             Settings.Save();
             PlanNameChanged?.ThreadSafeInvoke(null, new PlanChangedEventArgs(plan));
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.PlanNameChangedEvent(plan));
         }
 
         /// <summary>
@@ -1342,6 +1483,7 @@ namespace EVEMon.Common
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.ServerStatusUpdatedEvent.Instance);
         }
 
         /// <summary>
@@ -1355,6 +1497,9 @@ namespace EVEMon.Common
 
             Trace(notification.ToString());
             NotificationSent?.ThreadSafeInvoke(null, notification);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.NotificationSentEvent(notification));
         }
 
         /// <summary>
@@ -1368,6 +1513,9 @@ namespace EVEMon.Common
 
             Trace();
             NotificationInvalidated?.ThreadSafeInvoke(null, args);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.NotificationInvalidatedEvent(args));
         }
 
         /// <summary>
@@ -1386,8 +1534,12 @@ namespace EVEMon.Common
             bool canAutoInstall, string? installArgs)
         {
             Trace($"({currentVersion} -> {newestVersion}, {canAutoInstall}, {installArgs})");
-            UpdateAvailable?.ThreadSafeInvoke(null, new UpdateAvailableEventArgs(forumUrl, installerUrl, updateMessage, currentVersion,
-                newestVersion, md5Sum, canAutoInstall, installArgs));
+            var updateArgs = new UpdateAvailableEventArgs(forumUrl, installerUrl, updateMessage, currentVersion,
+                newestVersion, md5Sum, canAutoInstall, installArgs);
+            UpdateAvailable?.ThreadSafeInvoke(null, updateArgs);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.UpdateAvailableEvent(updateArgs));
         }
 
         /// <summary>
@@ -1397,7 +1549,11 @@ namespace EVEMon.Common
         internal static void OnDataUpdateAvailable(Collection<SerializableDatafile> changedFiles)
         {
             Trace($"(ChangedFiles = {changedFiles.Count})");
-            DataUpdateAvailable?.ThreadSafeInvoke(null, new DataUpdateAvailableEventArgs(changedFiles));
+            var dataUpdateArgs = new DataUpdateAvailableEventArgs(changedFiles);
+            DataUpdateAvailable?.ThreadSafeInvoke(null, dataUpdateArgs);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.DataUpdateAvailableEvent(dataUpdateArgs));
         }
 
         /// <summary>
@@ -1407,7 +1563,11 @@ namespace EVEMon.Common
         /// <param name="errorMessage">The error message.</param>
         internal static void OnLoadoutsFeedDownloaded(object loadoutFeed, string errorMessage)
         {
-            LoadoutFeedUpdated?.ThreadSafeInvoke(null, new LoadoutFeedEventArgs(loadoutFeed, errorMessage));
+            var feedArgs = new LoadoutFeedEventArgs(loadoutFeed, errorMessage);
+            LoadoutFeedUpdated?.ThreadSafeInvoke(null, feedArgs);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.LoadoutFeedUpdatedEvent(feedArgs));
         }
 
         /// <summary>
@@ -1417,7 +1577,11 @@ namespace EVEMon.Common
         /// <param name="errorMessage">The error message.</param>
         internal static void OnLoadoutDownloaded(object loadout, string errorMessage)
         {
-            LoadoutUpdated?.ThreadSafeInvoke(null, new LoadoutEventArgs(loadout, errorMessage));
+            var loadoutArgs = new LoadoutEventArgs(loadout, errorMessage);
+            LoadoutUpdated?.ThreadSafeInvoke(null, loadoutArgs);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.LoadoutUpdatedEvent(loadoutArgs));
         }
 
         /// <summary>
@@ -1428,6 +1592,9 @@ namespace EVEMon.Common
         internal static void OnPricesDownloaded(object pricesFeed, string errormessage)
         {
             ItemPricesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(CommonEvents.ItemPricesUpdatedEvent.Instance);
         }
 
         #endregion
@@ -1445,6 +1612,9 @@ namespace EVEMon.Common
 
             Trace($"Batched update for {e.Count} characters");
             CharactersBatchUpdated?.ThreadSafeInvoke(null, e);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharactersBatchUpdatedEvent(e.Characters));
         }
 
         /// <summary>
@@ -1457,6 +1627,9 @@ namespace EVEMon.Common
 
             Trace($"Batched skill queue update for {e.Count} characters");
             SkillQueuesBatchUpdated?.ThreadSafeInvoke(null, e);
+
+            // Bridge to EventAggregator for new code
+            AppServices.EventAggregator?.Publish(new CommonEvents.SkillQueuesBatchUpdatedEvent(e.Characters));
         }
 
         #endregion

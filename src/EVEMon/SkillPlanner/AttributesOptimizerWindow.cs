@@ -8,11 +8,13 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.SkillPlanner
@@ -42,6 +44,8 @@ namespace EVEMon.SkillPlanner
         // Variables for manual edition of a plan
         private RemappingPoint? m_manuallyEditedRemappingPoint;
         private RemappingResult? m_remapping;
+
+        private IDisposable? _planNameChangedSub;
 
         #endregion
 
@@ -108,7 +112,7 @@ namespace EVEMon.SkillPlanner
                 lvPoints.Font = FontFactory.GetFont("Arial", 9F);
                 throbber.State = ThrobberState.Rotating;
 
-                EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
+                _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
 
                 await TaskHelper.RunCPUBoundTaskAsync(() => Run());
             }
@@ -126,7 +130,7 @@ namespace EVEMon.SkillPlanner
         {
             base.OnFormClosing(e);
 
-            EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
+            _planNameChangedSub?.Dispose();
         }
 
         #endregion
@@ -507,7 +511,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object? sender, PlanChangedEventArgs e)
+        private void OnPlanNameChanged(PlanNameChangedEvent e)
         {
             if (m_plan != e.Plan)
                 return;

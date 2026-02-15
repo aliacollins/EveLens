@@ -10,11 +10,13 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.CharacterMonitoring
@@ -43,6 +45,9 @@ namespace EVEMon.CharacterMonitoring
         private object m_lastTooltipItem = null!;
         private BlinkAction m_blinkAction;
         private QueuedSkill m_selectedSkill = null!;
+        private IDisposable? _subSkillQueuesBatch;
+        private IDisposable? _subQueuedSkillsCompleted;
+        private IDisposable? _subSettings;
 
         #endregion
 
@@ -94,9 +99,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
-            EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            var agg = AppServices.EventAggregator;
+            _subSkillQueuesBatch = agg.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, e => EveMonClient_SkillQueuesBatchUpdated(e));
+            _subQueuedSkillsCompleted = agg.SubscribeOnUI<QueuedSkillsCompletedEvent>(this, e => EveMonClient_QueuedSkillsCompleted(e));
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             EveMonClient.SecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
         }
@@ -108,9 +114,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
-            EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subSkillQueuesBatch?.Dispose();
+            _subQueuedSkillsCompleted?.Dispose();
+            _subSettings?.Dispose();
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
             Disposed -= OnDisposed;
         }
@@ -866,7 +872,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -879,7 +885,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
+        private void EveMonClient_QueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -892,7 +898,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }

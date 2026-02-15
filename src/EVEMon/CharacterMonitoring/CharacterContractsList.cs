@@ -13,12 +13,14 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.DetailsWindow;
 using EVEMon.SkillPlanner;
@@ -43,6 +45,11 @@ namespace EVEMon.CharacterMonitoring
         private bool m_isUpdatingColumns;
         private bool m_columnsChanged;
         private bool m_init;
+        private IDisposable? _subContracts;
+        private IDisposable? _subEveIDToName;
+        private IDisposable? _subConquerableStation;
+        private IDisposable? _subCharContractItems;
+        private IDisposable? _subCorpContractItems;
 
         #endregion
 
@@ -209,12 +216,13 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvContracts);
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.ContractsUpdated += EveMonClient_ContractsUpdated;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterContractItemsDownloaded += EveMonClient_ContractItemsDownloaded;
-            EveMonClient.CorporationContractItemsDownloaded += EveMonClient_ContractItemsDownloaded;
+            _subContracts = agg.SubscribeOnUI<ContractsUpdatedEvent>(this, e => EveMonClient_ContractsUpdated(e));
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
+            _subCharContractItems = agg.SubscribeOnUI<CharacterContractItemsDownloadedEvent>(this, e => EveMonClient_ContractItemsDownloaded(e.Character));
+            _subCorpContractItems = agg.SubscribeOnUI<CorporationContractItemsDownloadedEvent>(this, e => EveMonClient_ContractItemsDownloaded(e.Character));
             Disposed += OnDisposed;
         }
 
@@ -228,11 +236,11 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip.Dispose();
 
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.ContractsUpdated -= EveMonClient_ContractsUpdated;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterContractItemsDownloaded -= EveMonClient_ContractItemsDownloaded;
-            EveMonClient.CorporationContractItemsDownloaded -= EveMonClient_ContractItemsDownloaded;
+            _subContracts?.Dispose();
+            _subEveIDToName?.Dispose();
+            _subConquerableStation?.Dispose();
+            _subCharContractItems?.Dispose();
+            _subCorpContractItems?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -1055,7 +1063,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.ContractsEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ContractsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_ContractsUpdated(ContractsUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1069,9 +1077,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ContractItemsDownloaded(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_ContractItemsDownloaded(Character character)
         {
-            if (Character == null || e.Character != Character)
+            if (Character == null || character != Character)
                 return;
 
             UpdateContent();
@@ -1080,9 +1088,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the EveIDToName list updates, update the list.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateColumns();
         }
@@ -1090,9 +1096,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When Conquerable Station List updates, update the list.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated()
         {
             if (Character == null)
                 return;

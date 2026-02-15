@@ -8,10 +8,12 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -20,6 +22,9 @@ namespace EVEMon.CharacterMonitoring
         #region Fields
 
         private FactionalWarfareStats m_charFacWarStats = null!;
+        private IDisposable? _subCharFWStats;
+        private IDisposable? _subEveFWStats;
+        private IDisposable? _subSettings;
 
         #endregion
 
@@ -63,9 +68,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterFactionalWarfareStatsUpdated += EveMonClient_CharacterFactionalWarfareStatsUpdated;
-            EveMonClient.EveFactionalWarfareStatsUpdated += EveMonClient_EveFactionalWarfareStatsUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            var agg = AppServices.EventAggregator;
+            _subCharFWStats = agg.SubscribeOnUI<CharacterFactionalWarfareStatsUpdatedEvent>(this, e => EveMonClient_CharacterFactionalWarfareStatsUpdated(e));
+            _subEveFWStats = agg.SubscribeOnUI<EveFactionalWarfareStatsUpdatedEvent>(this, e => EveMonClient_EveFactionalWarfareStatsUpdated());
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             Disposed += OnDisposed;
         }
 
@@ -76,9 +82,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterFactionalWarfareStatsUpdated -= EveMonClient_CharacterFactionalWarfareStatsUpdated;
-            EveMonClient.EveFactionalWarfareStatsUpdated -= EveMonClient_EveFactionalWarfareStatsUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subCharFWStats?.Dispose();
+            _subEveFWStats?.Dispose();
+            _subSettings?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -454,7 +460,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterFactionalWarfareStatsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterFactionalWarfareStatsUpdated(CharacterFactionalWarfareStatsUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -467,7 +473,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveFactionalWarfareStatsUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveFactionalWarfareStatsUpdated()
         {
             UpdateContent();
         }
@@ -478,7 +484,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }

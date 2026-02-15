@@ -12,12 +12,14 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.CharacterMonitoring
@@ -37,6 +39,9 @@ namespace EVEMon.CharacterMonitoring
         private bool m_columnsChanged;
         private bool m_isUpdatingColumns;
         private bool m_init;
+        private IDisposable? _subConquerableStation;
+        private IDisposable? _subWalletTransactions;
+        private IDisposable? _subEveIDToName;
 
         #endregion
 
@@ -175,10 +180,11 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterWalletTransactionsUpdated += EveMonClient_CharacterWalletTransactionsUpdated;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
+            _subWalletTransactions = agg.SubscribeOnUI<CharacterWalletTransactionsUpdatedEvent>(this, e => EveMonClient_CharacterWalletTransactionsUpdated(e));
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
         }
 
@@ -190,9 +196,9 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterWalletTransactionsUpdated -= EveMonClient_CharacterWalletTransactionsUpdated;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
+            _subConquerableStation?.Dispose();
+            _subWalletTransactions?.Dispose();
+            _subEveIDToName?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -758,7 +764,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterWalletTransactionsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterWalletTransactionsUpdated(CharacterWalletTransactionsUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -772,7 +778,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated()
         {
             foreach (WalletTransaction walletTransaction in m_list)
             {
@@ -787,7 +793,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateColumns();
         }

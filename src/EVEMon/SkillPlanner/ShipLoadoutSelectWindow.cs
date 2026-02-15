@@ -10,10 +10,12 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using SortOrder = System.Windows.Forms.SortOrder;
 
 namespace EVEMon.SkillPlanner
@@ -32,7 +34,13 @@ namespace EVEMon.SkillPlanner
         private Plan? m_plan;
 
         private bool m_allExpanded;
-        
+
+        private IDisposable? _planChangedSub;
+        private IDisposable? _planNameChangedSub;
+        private IDisposable? _settingsChangedSub;
+        private IDisposable? _loadoutUpdatedSub;
+        private IDisposable? _loadoutFeedUpdatedSub;
+
         #endregion
 
 
@@ -135,11 +143,11 @@ namespace EVEMon.SkillPlanner
                 return;
 
             // Subscribe global events
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
-            EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.LoadoutUpdated += EveMonClient_LoadoutUpdated;
-            EveMonClient.LoadoutFeedUpdated += EveMonClient_LoadoutFeedUpdated;
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
+            _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _loadoutUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<LoadoutUpdatedEvent>(this, OnLoadoutUpdated);
+            _loadoutFeedUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<LoadoutFeedUpdatedEvent>(this, OnLoadoutFeedUpdated);
         }
 
         /// <summary>
@@ -151,11 +159,11 @@ namespace EVEMon.SkillPlanner
             base.OnFormClosing(e);
 
             // Unsubscribe global events
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
-            EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.LoadoutUpdated -= EveMonClient_LoadoutUpdated;
-            EveMonClient.LoadoutFeedUpdated -= EveMonClient_LoadoutFeedUpdated;
+            _planChangedSub?.Dispose();
+            _planNameChangedSub?.Dispose();
+            _settingsChangedSub?.Dispose();
+            _loadoutUpdatedSub?.Dispose();
+            _loadoutFeedUpdatedSub?.Dispose();
         }
 
         #endregion
@@ -504,7 +512,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             if (e.Plan == m_plan)
                 UpdatePlanningControls();
@@ -513,9 +521,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when the settings changed.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlsVisibility();
         }
@@ -523,30 +529,23 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when the loadout feed from the provider updated.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        /// <exception cref="System.NotImplementedException"></exception>
-        private void EveMonClient_LoadoutFeedUpdated(object? sender,LoadoutFeedEventArgs e)
+        private void OnLoadoutFeedUpdated(LoadoutFeedUpdatedEvent e)
         {
-            UpdateLoadoutFeedInfo(e);
+            UpdateLoadoutFeedInfo(e.Args);
         }
 
         /// <summary>
         /// Occurs when the loadout from the provider updated.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="LoadoutEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_LoadoutUpdated(object? sender,LoadoutEventArgs e)
+        private void OnLoadoutUpdated(LoadoutUpdatedEvent e)
         {
-            UpdateLoadoutInfo(e);
+            UpdateLoadoutInfo(e.Args);
         }
 
         /// <summary>
         /// Occurs when a plan name changed.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanNameChanged(PlanNameChangedEvent e)
         {
             if (e.Plan == m_plan)
                 UpdateTitle();

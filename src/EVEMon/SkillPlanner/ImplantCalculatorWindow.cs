@@ -9,10 +9,12 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -27,6 +29,8 @@ namespace EVEMon.SkillPlanner
         private Plan m_plan = null!;
 
         private bool m_init;
+
+        private IDisposable? _planNameChangedSub;
 
 
         #region Constructor
@@ -84,7 +88,7 @@ namespace EVEMon.SkillPlanner
                 }
             }
 
-            EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
+            _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
 
             m_init = true;
         }
@@ -97,7 +101,7 @@ namespace EVEMon.SkillPlanner
         {
             base.OnFormClosing(e);
 
-            EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
+            _planNameChangedSub?.Dispose();
         }
 
         #endregion
@@ -389,7 +393,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object? sender, PlanChangedEventArgs e)
+        private void OnPlanNameChanged(PlanNameChangedEvent e)
         {
             if (m_plan != e.Plan)
                 return;

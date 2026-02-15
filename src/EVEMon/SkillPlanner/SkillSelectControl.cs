@@ -13,12 +13,14 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Resources.Skill_Select;
 using EVEMon.Common.Models.Collections;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.SkillPlanner
@@ -33,6 +35,8 @@ namespace EVEMon.SkillPlanner
         private Plan? m_plan;
         private bool m_init;
         private bool m_blockSelectionReentrancy;
+
+        private IDisposable? _settingsChangedSub;
 
 
         #region Constructor
@@ -162,7 +166,7 @@ namespace EVEMon.SkillPlanner
             // Initialize the filters controls
             InitializeFiltersControls();
 
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             Disposed += OnDisposed;
 
             // Updates the controls
@@ -305,15 +309,13 @@ namespace EVEMon.SkillPlanner
         private void OnDisposed(object? sender,EventArgs e)
         {
             Disposed -= OnDisposed;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _settingsChangedSub?.Dispose();
         }
 
         /// <summary>
-        /// When the settings are changed, update the display
+        /// When the settings are changed, update the display.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlVisibility();
         }

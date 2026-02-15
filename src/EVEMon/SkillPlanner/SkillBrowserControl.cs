@@ -9,11 +9,13 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.NotificationWindow;
 
 namespace EVEMon.SkillPlanner
@@ -22,6 +24,10 @@ namespace EVEMon.SkillPlanner
     {
         private Skill? m_selectedSkill;
         private Plan? m_plan;
+
+        private IDisposable? _settingsChangedSub;
+        private IDisposable? _planChangedSub;
+        private IDisposable? _charsBatchUpdatedSub;
 
 
         #region Constructor
@@ -60,9 +66,9 @@ namespace EVEMon.SkillPlanner
             if (result.Length > 0)
                 lblHelp.Location = new Point(lblHelp.Location.X, result[0].Location.Y);
 
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
             Disposed += OnDisposed;
 
             //Update the controls visibility
@@ -79,9 +85,9 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void OnDisposed(object? sender,EventArgs e)
         {
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
+            _planChangedSub?.Dispose();
+            _settingsChangedSub?.Dispose();
+            _charsBatchUpdatedSub?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -364,7 +370,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             UpdatePlannedLevel();
         }
@@ -372,24 +378,20 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs whenever the settings changed.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlVisibility();
         }
 
         /// <summary>
-        /// Occurs whenever the settings changed.
+        /// Occurs whenever a character batch update happens.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (m_plan == null || !e.Characters.Contains(m_plan.Character) || m_selectedSkill == null)
                 return;
 
-            // Update the 'Owns book' indicator 
+            // Update the 'Owns book' indicator
             // if the indicator is not already set
             // This prevents the update on repeated requests from IGB
             if (ownsBookToolStripButton.Checked != m_selectedSkill.IsOwned)

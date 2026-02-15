@@ -8,8 +8,10 @@ using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Scheduling;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Schedule
 {
@@ -20,6 +22,7 @@ namespace EVEMon.Schedule
 
         private DateTime m_currentDate = DateTime.Now;
         private List<ScheduleEntry> m_lbEntriesData = null!;
+        private IDisposable? _subSchedulerChanged;
 
         /// <summary>
         /// Constructor
@@ -70,7 +73,7 @@ namespace EVEMon.Schedule
             calControl.Date = m_currentDate;
 
             // Subscribe to global events
-            EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
+            _subSchedulerChanged = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
         }
 
         /// <summary>
@@ -81,7 +84,7 @@ namespace EVEMon.Schedule
         {
             base.OnFormClosing(e);
 
-            EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
+            _subSchedulerChanged?.Dispose();
         }
 
 
@@ -92,7 +95,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SchedulerChanged(object? sender, EventArgs e)
+        private void OnSchedulerChanged(SchedulerChangedEvent e)
         {
             UpdateEntries();
         }

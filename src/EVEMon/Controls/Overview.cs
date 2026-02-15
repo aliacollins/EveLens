@@ -7,17 +7,23 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Controls
 {
     public partial class Overview : UserControl
     {
         public event EventHandler<CharacterChangedEventArgs>? CharacterClicked;
+
+        private IDisposable? _subMonitoredCharacterCollectionChanged;
+        private IDisposable? _subCharactersBatchUpdated;
+        private IDisposable? _subSettingsChanged;
 
         private bool m_grouping;
         private bool m_safeForWork;
@@ -60,9 +66,9 @@ namespace EVEMon.Controls
 
             DoubleBuffered = true;
 
-            EveMonClient.MonitoredCharacterCollectionChanged += EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _subMonitoredCharacterCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<MonitoredCharacterCollectionChangedEvent>(this, OnMonitoredCharacterCollectionChanged);
+            _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
 
             Disposed += OnDisposed;
         }
@@ -86,9 +92,9 @@ namespace EVEMon.Controls
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.MonitoredCharacterCollectionChanged -= EveMonClient_MonitoredCharacterCollectionChanged;
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subMonitoredCharacterCollectionChanged?.Dispose();
+            _subCharactersBatchUpdated?.Dispose();
+            _subSettingsChanged?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -383,7 +389,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_MonitoredCharacterCollectionChanged(object? sender, EventArgs e)
+        private void OnMonitoredCharacterCollectionChanged(MonitoredCharacterCollectionChangedEvent e)
         {
             UpdateContent();
         }
@@ -391,9 +397,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// When aby character updates, we update the layout.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             UpdateContent();
         }
@@ -401,9 +405,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// When the settings changed, update if necessary.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             if (labelLoading.Visible)
             {

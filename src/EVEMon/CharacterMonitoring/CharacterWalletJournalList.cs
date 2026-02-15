@@ -11,12 +11,14 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.CharacterMonitoring
@@ -36,6 +38,9 @@ namespace EVEMon.CharacterMonitoring
         private bool m_columnsChanged;
         private bool m_isUpdatingColumns;
         private bool m_init;
+        private IDisposable? _subRefTypes;
+        private IDisposable? _subEveIDToName;
+        private IDisposable? _subWalletJournal;
 
         #endregion
 
@@ -174,10 +179,11 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.RefTypesUpdated += EveMonClient_RefTypesUpdated;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
-            EveMonClient.CharacterWalletJournalUpdated += EveMonClient_CharacterWalletJournalUpdated;
+            _subRefTypes = agg.SubscribeOnUI<RefTypesUpdatedEvent>(this, e => EveMonClient_RefTypesUpdated());
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
+            _subWalletJournal = agg.SubscribeOnUI<CharacterWalletJournalUpdatedEvent>(this, e => EveMonClient_CharacterWalletJournalUpdated(e));
             Disposed += OnDisposed;
         }
 
@@ -189,9 +195,9 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.RefTypesUpdated -= EveMonClient_RefTypesUpdated;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
-            EveMonClient.CharacterWalletJournalUpdated -= EveMonClient_CharacterWalletJournalUpdated;
+            _subRefTypes?.Dispose();
+            _subEveIDToName?.Dispose();
+            _subWalletJournal?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -732,7 +738,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_RefTypesUpdated(object? sender, EventArgs e)
+        private void EveMonClient_RefTypesUpdated()
         {
             UpdateColumns();
         }
@@ -742,7 +748,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateColumns();
         }
@@ -752,7 +758,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterWalletJournalUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterWalletJournalUpdated(CharacterWalletJournalUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;

@@ -10,11 +10,13 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Properties;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -42,6 +44,10 @@ namespace EVEMon.CharacterMonitoring
         private readonly Image m_medalImage = Resources.Medal32;
         
         private object m_lastTooltipItem = null!;
+        private IDisposable? _subCharMedals;
+        private IDisposable? _subCorpMedals;
+        private IDisposable? _subEveIDToName;
+        private IDisposable? _subSettings;
 
         #endregion
 
@@ -85,10 +91,11 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterMedalsUpdated += EveMonClient_CharacterMedalsUpdated;
-            EveMonClient.CorporationMedalsUpdated += EveMonClient_CorporationMedalsUpdated;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            var agg = AppServices.EventAggregator;
+            _subCharMedals = agg.SubscribeOnUI<CharacterMedalsUpdatedEvent>(this, e => EveMonClient_CharacterMedalsUpdated(e));
+            _subCorpMedals = agg.SubscribeOnUI<CorporationMedalsUpdatedEvent>(this, e => EveMonClient_CorporationMedalsUpdated(e));
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             Disposed += OnDisposed;
         }
 
@@ -99,10 +106,10 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterMedalsUpdated -= EveMonClient_CharacterMedalsUpdated;
-            EveMonClient.CorporationMedalsUpdated -= EveMonClient_CorporationMedalsUpdated;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subCharMedals?.Dispose();
+            _subCorpMedals?.Dispose();
+            _subEveIDToName?.Dispose();
+            _subSettings?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -572,7 +579,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterMedalsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterMedalsUpdated(CharacterMedalsUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -585,7 +592,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CorporationMedalsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CorporationMedalsUpdated(CorporationMedalsUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -596,9 +603,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the EveIDToName list updates, we refresh the content.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateContent();
         }
@@ -607,9 +612,7 @@ namespace EVEMon.CharacterMonitoring
         /// When the settings change we update the content.
         /// </summary>
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }

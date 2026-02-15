@@ -7,14 +7,17 @@ using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.NotificationWindow
 {
     public partial class OwnedSkillBooksWindow : EVEMonForm
     {
         private readonly Character m_character = null!;
+        private IDisposable? _subCharacterAssetsUpdated;
 
 
         #region Constructors
@@ -60,7 +63,7 @@ namespace EVEMon.NotificationWindow
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterAssetsUpdated += EveMonClient_CharacterAssetsUpdated;
+            _subCharacterAssetsUpdated = AppServices.EventAggregator.SubscribeOnUI<CharacterAssetsUpdatedEvent>(this, OnCharacterAssetsUpdated);
             Disposed += OnDisposed;
 
             Text = string.Format(CultureConstants.DefaultCulture, Text, m_character.Name);
@@ -75,7 +78,7 @@ namespace EVEMon.NotificationWindow
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterAssetsUpdated -= EveMonClient_CharacterAssetsUpdated;
+            _subCharacterAssetsUpdated?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -237,7 +240,7 @@ namespace EVEMon.NotificationWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterAssetsUpdated(object? sender, CharacterChangedEventArgs e)
+        private void OnCharacterAssetsUpdated(CharacterAssetsUpdatedEvent e)
         {
             if (e.Character != m_character)
                 return;

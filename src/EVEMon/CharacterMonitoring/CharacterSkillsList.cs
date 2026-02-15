@@ -11,12 +11,14 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Properties;
+using EVEMon.Common.Services;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.CharacterMonitoring
@@ -55,6 +57,8 @@ namespace EVEMon.CharacterMonitoring
 
         private int m_maxGroupNameWidth;
         private Skill m_selectedSkill = null!;
+        private IDisposable? _subCharsBatch;
+        private IDisposable? _subSettings;
 
         #endregion
 
@@ -101,8 +105,9 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            var agg = AppServices.EventAggregator;
+            _subCharsBatch = agg.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, e => EveMonClient_CharactersBatchUpdated(e));
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
         }
@@ -114,8 +119,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subCharsBatch?.Dispose();
+            _subSettings?.Dispose();
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             Disposed -= OnDisposed;
         }
@@ -1093,7 +1098,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -1104,9 +1109,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the settings changed, we refresh the content (show all public skills, non-public skills, etc)
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateContent();
         }

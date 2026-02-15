@@ -11,12 +11,14 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Collections;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -52,6 +54,9 @@ namespace EVEMon.SkillPlanner
         private bool m_hasBlueprints;
         private bool m_allSkillsExpanded;
         private bool m_allObjectsExpanded;
+
+        private IDisposable? _planNameChangedSub;
+        private IDisposable? _charsBatchUpdatedSub;
 
 
         #region Constructor
@@ -97,8 +102,8 @@ namespace EVEMon.SkillPlanner
         {
             base.OnLoad(e);
 
-            EveMonClient.PlanNameChanged += EveMonClient_PlanNameChanged;
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
+            _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
         }
 
 
@@ -110,8 +115,8 @@ namespace EVEMon.SkillPlanner
         {
             base.OnFormClosing(e);
 
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.PlanNameChanged -= EveMonClient_PlanNameChanged;
+            _charsBatchUpdatedSub?.Dispose();
+            _planNameChangedSub?.Dispose();
         }
 
         #endregion
@@ -661,7 +666,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
+        private void OnPlanNameChanged(PlanNameChangedEvent e)
         {
             if (e.Plan != m_plan)
                 return;
@@ -670,11 +675,9 @@ namespace EVEMon.SkillPlanner
         }
 
         /// <summary>
-        /// occurs whenever the character is updated from CCP, skills are estimed to have completed, etc.
+        /// occurs whenever the character is updated from CCP, skills are estimated to have completed, etc.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (!e.Characters.Contains(m_character))
                 return;

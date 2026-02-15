@@ -8,15 +8,23 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Events;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.ApiCredentialsManagement
 {
     public partial class EsiKeysManagementWindow : EVEMonForm
     {
         private readonly Dictionary<Character, bool> m_monitoredCharacters = new Dictionary<Character, bool>();
+
+        private IDisposable? _subESIKeyCollectionChanged;
+        private IDisposable? _subESIKeyInfoUpdated;
+        private IDisposable? _subCharacterCollectionChanged;
+        private IDisposable? _subCharactersBatchUpdated;
+        private IDisposable? _subAccountStatusUpdated;
 
         private int m_refreshingCharactersCounter;
 
@@ -48,11 +56,11 @@ namespace EVEMon.ApiCredentialsManagement
 
             ListViewHelper.EnableDoubleBuffer(charactersListView);
 
-            EveMonClient.ESIKeyCollectionChanged += EveMonClient_ESIKeyCollectionChanged;
-            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
-            EveMonClient.CharacterCollectionChanged += EveMonClient_CharacterCollectionChanged;
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.AccountStatusUpdated += EveMonClient_AccountStatusUpdated;
+            _subESIKeyCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<ESIKeyCollectionChangedEvent>(this, OnESIKeyCollectionChanged);
+            _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
+            _subCharacterCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterCollectionChangedEvent>(this, OnCharacterCollectionChanged);
+            _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _subAccountStatusUpdated = AppServices.EventAggregator.SubscribeOnUI<AccountStatusUpdatedEvent>(this, OnAccountStatusUpdated);
             Disposed += OnDisposing;
 
             UpdateESIKeysList();
@@ -72,11 +80,11 @@ namespace EVEMon.ApiCredentialsManagement
         private void OnDisposing(object? sender, EventArgs e)
         {
             // Unsubscribe events
-            EveMonClient.ESIKeyCollectionChanged -= EveMonClient_ESIKeyCollectionChanged;
-            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
-            EveMonClient.CharacterCollectionChanged -= EveMonClient_CharacterCollectionChanged;
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.AccountStatusUpdated -= EveMonClient_AccountStatusUpdated;
+            _subESIKeyCollectionChanged?.Dispose();
+            _subESIKeyInfoUpdated?.Dispose();
+            _subCharacterCollectionChanged?.Dispose();
+            _subCharactersBatchUpdated?.Dispose();
+            _subAccountStatusUpdated?.Dispose();
             Disposed -= OnDisposing;
 
             // Update the monitored status of selected characters
@@ -105,7 +113,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ESIKeyCollectionChanged(object? sender, EventArgs e)
+        private void OnESIKeyCollectionChanged(ESIKeyCollectionChangedEvent e)
         {
             UpdateESIKeysList();
         }
@@ -113,9 +121,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// <summary>
         /// When the ESI key info updates, we update the content.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
+        private void OnESIKeyInfoUpdated(ESIKeyInfoUpdatedEvent e)
         {
             if (!Visible)
                 return;
@@ -126,9 +132,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// <summary>
         /// When the characters collection changed, we update the characters list.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharacterCollectionChanged(object? sender, EventArgs e)
+        private void OnCharacterCollectionChanged(CharacterCollectionChangedEvent e)
         {
             UpdateCharactersList();
         }
@@ -136,9 +140,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// <summary>
         /// When the character changes, the displayed names changes too.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             UpdateCharactersList();
         }
@@ -146,9 +148,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// <summary>
         /// When the account status updates, we update the content.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_AccountStatusUpdated(object? sender, EventArgs e)
+        private void OnAccountStatusUpdated(AccountStatusUpdatedEvent e)
         {
             if (!Visible)
                 return;

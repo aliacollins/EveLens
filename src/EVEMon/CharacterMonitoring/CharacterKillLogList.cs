@@ -12,6 +12,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
@@ -19,6 +20,7 @@ using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Properties;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.DetailsWindow;
 using EVEMon.SkillPlanner;
@@ -67,6 +69,9 @@ namespace EVEMon.CharacterMonitoring
 
         private string m_textFilter = string.Empty;
         private bool m_sortAscending;
+        private IDisposable? _subKillLog;
+        private IDisposable? _subSettings;
+        private IDisposable? _subEveIDToName;
 
         #endregion
 
@@ -152,9 +157,10 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            EveMonClient.CharacterKillLogUpdated += EveMonClient_CharacterKillLogUpdated;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.EveIDToNameUpdated += EveMonClient_EveIDToNameUpdated;
+            var agg = AppServices.EventAggregator;
+            _subKillLog = agg.SubscribeOnUI<CharacterKillLogUpdatedEvent>(this, e => EveMonClient_CharacterKillLogUpdated(e));
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
+            _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
         }
 
@@ -165,9 +171,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharacterKillLogUpdated -= EveMonClient_CharacterKillLogUpdated;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
+            _subKillLog?.Dispose();
+            _subSettings?.Dispose();
+            _subEveIDToName?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -1159,7 +1165,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterKillLogUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterKillLogUpdated(CharacterKillLogUpdatedEvent e)
         {
             if (e.Character != Character)
                 return;
@@ -1170,9 +1176,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// When the ID to name conversion updates, we refresh the content.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated()
         {
             UpdateKillLogView();
         }
@@ -1181,9 +1185,7 @@ namespace EVEMon.CharacterMonitoring
         /// When the settings change we update the content.
         /// </summary>
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateKillLogView();
         }

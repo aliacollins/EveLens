@@ -13,12 +13,14 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.SkillPlanner;
 
@@ -74,6 +76,8 @@ namespace EVEMon.CharacterMonitoring
 
         private decimal m_issuedForCharacterEscrowAdditionalToCover,
                         m_issuedForCorporationEscrowAdditionalToCover;
+        private IDisposable? _subMarketOrders;
+        private IDisposable? _subConquerableStation;
 
         #endregion
 
@@ -247,9 +251,10 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvOrders);
 
+            var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            EveMonClient.MarketOrdersUpdated += EveMonClient_MarketOrdersUpdated;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
+            _subMarketOrders = agg.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, e => EveMonClient_MarketOrdersUpdated(e));
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             Disposed += OnDisposed;
         }
 
@@ -263,8 +268,8 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip.Dispose();
 
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
-            EveMonClient.MarketOrdersUpdated -= EveMonClient_MarketOrdersUpdated;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
+            _subMarketOrders?.Dispose();
+            _subConquerableStation?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -1014,7 +1019,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_MarketOrdersUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_MarketOrdersUpdated(MarketOrdersUpdatedEvent e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1028,7 +1033,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated()
         {
             if (Character == null)
                 return;

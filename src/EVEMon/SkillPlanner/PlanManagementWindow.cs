@@ -8,11 +8,13 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using SortOrder = EVEMon.Common.Enumerations.SortOrder;
 
 namespace EVEMon.SkillPlanner
@@ -24,6 +26,8 @@ namespace EVEMon.SkillPlanner
     {
         private readonly PlanComparer m_columnSorter = null!;
         private readonly Character m_character = null!;
+
+        private IDisposable? _planCollectionChangedSub;
 
         /// <summary>
         /// Constructor for designer.
@@ -57,7 +61,7 @@ namespace EVEMon.SkillPlanner
 
             MinimumSize = Size;
 
-            EveMonClient.CharacterPlanCollectionChanged += EveMonClient_CharacterPlanCollectionChanged;
+            _planCollectionChangedSub = AppServices.EventAggregator.SubscribeOnUI<CharacterPlanCollectionChangedEvent>(this, OnCharacterPlanCollectionChanged);
             if (m_character != null)
                 Text = "Manage Plans: " + m_character.Name;
 
@@ -73,7 +77,7 @@ namespace EVEMon.SkillPlanner
         {
             base.OnFormClosing(e);
 
-            EveMonClient.CharacterPlanCollectionChanged -= EveMonClient_CharacterPlanCollectionChanged;
+            _planCollectionChangedSub?.Dispose();
         }
 
         /// <summary>
@@ -114,7 +118,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterPlanCollectionChanged(object? sender,CharacterChangedEventArgs e)
+        private void OnCharacterPlanCollectionChanged(CharacterPlanCollectionChangedEvent e)
         {
             UpdateContent(true);
         }

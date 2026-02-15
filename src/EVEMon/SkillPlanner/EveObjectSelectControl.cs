@@ -7,10 +7,12 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -24,6 +26,8 @@ namespace EVEMon.SkillPlanner
         private Character? m_character;
         private Plan? m_plan;
         private Timer? m_searchTextTimer;
+
+        private IDisposable? _settingsChangedSub;
 
         #region Constructor
 
@@ -162,7 +166,7 @@ namespace EVEMon.SkillPlanner
             UsabilityPredicate = SelectAll;
 
             // Subscribe the events
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             Disposed += OnDisposed;
 
             // Update the controls
@@ -190,16 +194,14 @@ namespace EVEMon.SkillPlanner
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _settingsChangedSub?.Dispose();
             Disposed -= OnDisposed;
         }
 
         /// <summary>
-        /// Handles the SettingsChanged event of the EveMonClient control.
+        /// Handles the SettingsChanged event.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateControlVisibility();
         }

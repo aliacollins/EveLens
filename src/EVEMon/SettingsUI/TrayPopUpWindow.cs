@@ -3,8 +3,10 @@ using EVEMon.Common.Collections;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
+using EVEMon.Common.Services;
 using EVEMon.Controls;
 using System;
 using System.Collections.Generic;
@@ -25,6 +27,9 @@ namespace EVEMon.SettingsUI
         private readonly Label m_eveTimeLabel = new Label();
         private readonly Label m_serverStatusLabel = new Label();
 
+        private IDisposable? _subQueuedSkillsCompleted;
+        private IDisposable? _subServerStatusUpdated;
+
 
         #region Inherited Events
 
@@ -40,8 +45,8 @@ namespace EVEMon.SettingsUI
                 return;
 
             // Client events
-            EveMonClient.QueuedSkillsCompleted += EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.ServerStatusUpdated += EveMonClient_ServerStatusUpdated;
+            _subQueuedSkillsCompleted = AppServices.EventAggregator.SubscribeOnUI<QueuedSkillsCompletedEvent>(this, OnQueuedSkillsCompleted);
+            _subServerStatusUpdated = AppServices.EventAggregator.SubscribeOnUI<ServerStatusUpdatedEvent>(this, OnServerStatusUpdated);
             EveMonClient.SecondTick += EveMonClient_TimerTick;
         }
 
@@ -53,8 +58,8 @@ namespace EVEMon.SettingsUI
         {
             base.OnFormClosing(e);
 
-            EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
-            EveMonClient.ServerStatusUpdated -= EveMonClient_ServerStatusUpdated;
+            _subQueuedSkillsCompleted?.Dispose();
+            _subServerStatusUpdated?.Dispose();
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
         }
 
@@ -404,7 +409,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ServerStatusUpdated(object? sender, EveServerEventArgs e)
+        private void OnServerStatusUpdated(ServerStatusUpdatedEvent e)
         {
             UpdateServerStatusLabel();
         }
@@ -422,9 +427,7 @@ namespace EVEMon.SettingsUI
         /// <summary>
         /// Occur when characters completed skills. We refresh the controls.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
+        private void OnQueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
             UpdateContent();
         }

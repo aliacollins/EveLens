@@ -6,18 +6,23 @@ using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.ExternalCalendar;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Scheduling;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
     internal sealed partial class CharacterMonitorFooter : UserControl
     {
         private Character m_character = null!;
+        private IDisposable? _subSettings;
+        private IDisposable? _subScheduler;
+        private IDisposable? _subSkillQueuesBatch;
 
 
         #region Constructor
@@ -57,10 +62,11 @@ namespace EVEMon.CharacterMonitoring
             }
 
             // Subscribe events
+            var agg = AppServices.EventAggregator;
             EveMonClient.SecondTick += EveMonClient_TimerTick;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.SchedulerChanged += EveMonClient_SchedulerChanged;
-            EveMonClient.SkillQueuesBatchUpdated += EveMonClient_SkillQueuesBatchUpdated;
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
+            _subScheduler = agg.SubscribeOnUI<SchedulerChangedEvent>(this, e => EveMonClient_SchedulerChanged());
+            _subSkillQueuesBatch = agg.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, e => EveMonClient_SkillQueuesBatchUpdated(e));
             Disposed += OnDisposed;
         }
 
@@ -87,9 +93,9 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.SchedulerChanged -= EveMonClient_SchedulerChanged;
-            EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
+            _subSettings?.Dispose();
+            _subScheduler?.Dispose();
+            _subSkillQueuesBatch?.Dispose();
             Disposed -= OnDisposed;
         }
 
@@ -275,7 +281,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             UpdateInfrequentControls();
         }
@@ -285,7 +291,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SchedulerChanged(object? sender, EventArgs e)
+        private void EveMonClient_SchedulerChanged()
         {
             UpdateTrainingControls();
         }
@@ -295,7 +301,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
             if (!e.Characters.Contains(m_character))
                 return;

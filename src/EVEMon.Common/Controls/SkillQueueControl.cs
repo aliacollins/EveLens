@@ -6,8 +6,10 @@ using System.Linq;
 using System.Windows.Forms;
 using EVEMon.Common.Constants;
 using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Controls
 {
@@ -25,6 +27,8 @@ namespace EVEMon.Common.Controls
         private Color m_emptyColor = Color.DimGray;
         private Color m_borderColor = Color.Gray;
         private Point m_lastLocation = new Point(-1, -1);
+        private IDisposable? _subSettingsChanged;
+        private IDisposable? _subCharacterUpdated;
 
 
         #region Constructors, disposing, global events
@@ -39,8 +43,8 @@ namespace EVEMon.Common.Controls
             Disposed += OnDisposed;
             // SecondTick - skill queue countdown display
             EveMonClient.SecondTick += EveMonClient_TimerTick;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.CharacterUpdated += EveMonClient_CharacterUpdated;
+            _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _subCharacterUpdated = AppServices.EventAggregator.SubscribeOnUI<CharacterUpdatedEvent>(this, OnCharacterUpdated);
         }
 
         /// <summary>
@@ -52,8 +56,8 @@ namespace EVEMon.Common.Controls
         {
             Disposed -= OnDisposed;
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.CharacterUpdated -= EveMonClient_CharacterUpdated;
+            _subSettingsChanged?.Dispose();
+            _subCharacterUpdated?.Dispose();
             m_toolTip.Dispose();
         }
 
@@ -76,7 +80,7 @@ namespace EVEMon.Common.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             if (Visible)
                 Invalidate();
@@ -85,9 +89,7 @@ namespace EVEMon.Common.Controls
         /// <summary>
         /// When the character changes, we invalidate the repainting.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharacterUpdated(object sender, CharacterChangedEventArgs e)
+        private void OnCharacterUpdated(CharacterUpdatedEvent e)
         {
             if (!Visible)
                 return;

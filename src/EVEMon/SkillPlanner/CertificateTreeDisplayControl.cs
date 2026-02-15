@@ -8,11 +8,13 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -36,6 +38,10 @@ namespace EVEMon.SkillPlanner
         private Font m_boldFont = null!;
 
         private bool m_allExpanded;
+
+        private IDisposable? _settingsChangedSub;
+        private IDisposable? _charsBatchUpdatedSub;
+        private IDisposable? _planChangedSub;
 
 
         #region Constructor
@@ -139,9 +145,9 @@ namespace EVEMon.SkillPlanner
             m_emptyImageList.ImageSize = new Size(30, 24);
             m_emptyImageList.Images.Add(new Bitmap(30, 24));
 
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.PlanChanged += EveMonClient_PlanChanged;
+            _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
             Disposed += OnDisposed;
         }
 
@@ -152,19 +158,16 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
+            _settingsChangedSub?.Dispose();
+            _charsBatchUpdatedSub?.Dispose();
+            _planChangedSub?.Dispose();
             Disposed -= OnDisposed;
         }
 
         /// <summary>
         /// On settings change, we update the tree.
         /// </summary>
-        /// <remarks>Relates to safe for work setting</remarks>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void OnSettingsChanged(SettingsChangedEvent e)
         {
             UpdateTree();
         }
@@ -172,9 +175,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Fired when one of the character changed (skill completion, update from CCP, etc).
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             if (m_plan == null)
                 return;
@@ -188,9 +189,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Occurs when the plan changes, we update the tree.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object? sender, PlanChangedEventArgs e)
+        private void OnPlanChanged(PlanChangedEvent e)
         {
             if ((e.Plan != m_plan) || (e.Plan.Character != m_plan.Character))
                 return;

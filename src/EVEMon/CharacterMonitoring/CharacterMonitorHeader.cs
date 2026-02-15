@@ -5,6 +5,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
@@ -12,6 +13,7 @@ using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -35,6 +37,14 @@ namespace EVEMon.CharacterMonitoring
         private string m_nextCloneJumpAtLastRedraw = null!;
         private volatile bool m_updatingLabels;
         private volatile bool m_updatingStatus;
+        private IDisposable? _subCharsBatch;
+        private IDisposable? _subCharInfo;
+        private IDisposable? _subMarketOrders;
+        private IDisposable? _subAccountStatus;
+        private IDisposable? _subConquerableStation;
+        private IDisposable? _subCharLabel;
+        private IDisposable? _subSettings;
+        private IDisposable? _subESIKeyInfo;
 
         #endregion
 
@@ -71,15 +81,16 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             // Subscribe to events
-            EveMonClient.CharactersBatchUpdated += EveMonClient_CharactersBatchUpdated;
-            EveMonClient.CharacterInfoUpdated += EveMonClient_CharacterInfoUpdated;
-            EveMonClient.MarketOrdersUpdated += EveMonClient_MarketOrdersUpdated;
-            EveMonClient.AccountStatusUpdated += EveMonClient_AccountStatusUpdated;
-            EveMonClient.ConquerableStationListUpdated += EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterLabelChanged += EveMonClient_CharacterLabelChanged;
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            var agg = AppServices.EventAggregator;
+            _subCharsBatch = agg.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, e => EveMonClient_CharactersBatchUpdated(e));
+            _subCharInfo = agg.SubscribeOnUI<CharacterInfoUpdatedEvent>(this, e => EveMonClient_CharacterInfoUpdated(e));
+            _subMarketOrders = agg.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, e => EveMonClient_MarketOrdersUpdated(e));
+            _subAccountStatus = agg.SubscribeOnUI<AccountStatusUpdatedEvent>(this, e => EveMonClient_AccountStatusUpdated());
+            _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
+            _subCharLabel = agg.SubscribeOnUI<CharacterLabelChangedEvent>(this, e => EveMonClient_CharacterLabelChanged(e));
+            _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             EveMonClient.SecondTick += EveMonClient_TimerTick;
-            EveMonClient.ESIKeyInfoUpdated += EveMonClient_ESIKeyInfoUpdated;
+            _subESIKeyInfo = agg.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, e => EveMonClient_ESIKeyInfoUpdated());
             SkillSummaryPanel.Click += SkillSummaryPanel_Click;
             Disposed += OnDisposed;
         }
@@ -106,15 +117,15 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
-            EveMonClient.CharacterInfoUpdated -= EveMonClient_CharacterInfoUpdated;
-            EveMonClient.MarketOrdersUpdated -= EveMonClient_MarketOrdersUpdated;
-            EveMonClient.AccountStatusUpdated -= EveMonClient_AccountStatusUpdated;
-            EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
-            EveMonClient.CharacterLabelChanged -= EveMonClient_CharacterLabelChanged;
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subCharsBatch?.Dispose();
+            _subCharInfo?.Dispose();
+            _subMarketOrders?.Dispose();
+            _subAccountStatus?.Dispose();
+            _subConquerableStation?.Dispose();
+            _subCharLabel?.Dispose();
+            _subSettings?.Dispose();
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
-            EveMonClient.ESIKeyInfoUpdated -= EveMonClient_ESIKeyInfoUpdated;
+            _subESIKeyInfo?.Dispose();
             SkillSummaryPanel.Click -= SkillSummaryPanel_Click;
             Disposed -= OnDisposed;
         }
@@ -725,7 +736,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LabelChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterLabelChanged(object? sender, LabelChangedEventArgs e)
+        private void EveMonClient_CharacterLabelChanged(CharacterLabelChangedEvent e)
         {
             UpdateCharacterLabel(e.AllLabels);
         }
@@ -746,7 +757,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
+        private void EveMonClient_SettingsChanged()
         {
             if (Visible)
                 UpdateInfrequentControls();
@@ -757,7 +768,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             // No need to do this if control is not visible
             if (Visible && e.Characters.Contains(m_character))
@@ -769,7 +780,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterInfoUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterInfoUpdated(CharacterInfoUpdatedEvent e)
         {
             // No need to do this if control is not visible
             if (Visible && e.Character == m_character)
@@ -781,7 +792,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated()
         {
             if (Visible)
                 UpdateInfoControls();
@@ -792,7 +803,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_MarketOrdersUpdated(object? sender, CharacterChangedEventArgs e)
+        private void EveMonClient_MarketOrdersUpdated(MarketOrdersUpdatedEvent e)
         {
             // No need to do this if control is not visible
             if (Visible && e.Character == m_character)
@@ -804,7 +815,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_AccountStatusUpdated(object? sender, EventArgs e)
+        private void EveMonClient_AccountStatusUpdated()
         {
             // If account status is added to ESI, investigate this and see if it can be done
             // only if visible
@@ -816,7 +827,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
+        private void EveMonClient_ESIKeyInfoUpdated()
         {
             if (Visible)
                 UpdateESIKeyWarning();
