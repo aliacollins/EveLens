@@ -2,6 +2,7 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Net;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 using System;
 using System.Linq;
@@ -28,7 +29,7 @@ namespace EVEMon.Common.Helpers
         public static void ScheduleCheck(TimeSpan time)
         {
             Dispatcher.Schedule(time, () => BeginCheckAsync().ConfigureAwait(false));
-            EveMonClient.Trace($"in {time}");
+            AppServices.TraceService?.Trace($"in {time}");
         }
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace EVEMon.Common.Helpers
                 return;
             }
 
-            EveMonClient.Trace();
+            AppServices.TraceService?.Trace((string)null);
 
             string ntpServer = NetworkConstants.GlobalNTPPool;// "pool.ntp.org";
             DateTime serverTimeToLocalTime;
@@ -105,7 +106,7 @@ namespace EVEMon.Common.Helpers
         /// <param name="exc">The exc.</param>
         private static void CheckFailure(Exception exc)
         {
-            EveMonClient.Trace(exc.Message);
+            AppServices.TraceService?.Trace(exc.Message);
             ScheduleCheck(TimeSpan.FromMinutes(1));
         }
 
@@ -117,7 +118,7 @@ namespace EVEMon.Common.Helpers
         /// <param name="localTime">The local time.</param>
         private static void OnCheckCompleted(bool isSynchronised, DateTime serverTimeToLocalTime, DateTime localTime)
         {
-            EveMonClient.Trace(Settings.Updates.CheckTimeOnStartup ?  "Synchronised" : "Disabled");
+            AppServices.TraceService?.Trace(Settings.Updates.CheckTimeOnStartup ?  "Synchronised" : "Disabled");
 
             TimeCheckCompleted?.ThreadSafeInvoke(null, new TimeCheckSyncEventArgs(isSynchronised, serverTimeToLocalTime, localTime));
 

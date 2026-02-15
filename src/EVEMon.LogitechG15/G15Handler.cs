@@ -31,7 +31,7 @@ namespace EVEMon.LogitechG15
         public static void Initialize()
         {
             // Quit if the client has been shut down
-            if (EveMonClient.Closed)
+            if (AppServices.Closed)
                 return;
 
             EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
@@ -101,7 +101,7 @@ namespace EVEMon.LogitechG15
                 s_lcd.SwitchState(LcdState.SplashScreen);
 
                 // Initialize the current character
-                s_lcd.CurrentCharacter = EveMonClient.MonitoredCharacters.OfType<CCPCharacter>().FirstOrDefault();
+                s_lcd.CurrentCharacter = AppServices.MonitoredCharacters.OfType<CCPCharacter>().FirstOrDefault();
 
                 UpdateFromSettings();
 
@@ -133,7 +133,7 @@ namespace EVEMon.LogitechG15
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace("failed");
+                AppServices.TraceService?.Trace("failed");
                 ExceptionHandler.LogException(ex, true);
             }
             finally
@@ -173,7 +173,7 @@ namespace EVEMon.LogitechG15
         private static void UpdateG15Data()
         {
             // First character to complete a skill
-            CCPCharacter? nextChar = EveMonClient.MonitoredCharacters.OfType<CCPCharacter>().Where(
+            CCPCharacter? nextChar = AppServices.MonitoredCharacters.OfType<CCPCharacter>().Where(
                 x => x.IsTraining).OrderBy(x => x.CurrentlyTrainingSkill.EndTime).FirstOrDefault();
 
             if (nextChar != null && s_lcd != null)

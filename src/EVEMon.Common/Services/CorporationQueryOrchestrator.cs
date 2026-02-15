@@ -9,6 +9,8 @@ using EVEMon.Common.Net;
 using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Services
 {
@@ -47,7 +49,7 @@ namespace EVEMon.Common.Services
             m_corpMedalsMonitor = new PagedQueryMonitor<EsiAPIMedals, EsiMedalsListItem>(
                 new CorporationQueryMonitor<EsiAPIMedals>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMedals, OnMedalsUpdated,
-                EveMonClient.Notifications.NotifyCorporationMedalsError,
+                AppServices.Notifications.NotifyCorporationMedalsError,
                 suppressSelfTicking: true)
                 { QueryOnStartup = true });
             // Add the monitors in an order as they will appear in the throbber menu
@@ -55,21 +57,21 @@ namespace EVEMon.Common.Services
             m_corpMarketOrdersMonitor = new PagedQueryMonitor<EsiAPIMarketOrders,
                 EsiOrderListItem>(new CorporationQueryMonitor<EsiAPIMarketOrders>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMarketOrders, OnMarketOrdersUpdated,
-                EveMonClient.Notifications.NotifyCorporationMarketOrdersError,
+                AppServices.Notifications.NotifyCorporationMarketOrdersError,
                 suppressSelfTicking: true)
                 { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpMarketOrdersMonitor);
             m_corpContractsMonitor = new PagedQueryMonitor<EsiAPIContracts,
                 EsiContractListItem>(new CorporationQueryMonitor<EsiAPIContracts>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationContracts, OnContractsUpdated,
-                EveMonClient.Notifications.NotifyCorporationContractsError,
+                AppServices.Notifications.NotifyCorporationContractsError,
                 suppressSelfTicking: true)
                 { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpContractsMonitor);
             m_corpIndustryJobsMonitor = new PagedQueryMonitor<EsiAPIIndustryJobs,
                 EsiJobListItem>(new CorporationQueryMonitor<EsiAPIIndustryJobs>(
                 ccpCharacter, ESIAPICorporationMethods.CorporationIndustryJobs,
-                OnIndustryJobsUpdated, EveMonClient.Notifications.
+                OnIndustryJobsUpdated, AppServices.Notifications.
                 NotifyCorporationIndustryJobsError, suppressSelfTicking: true) { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpIndustryJobsMonitor);
 
@@ -151,7 +153,9 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.CorporationMedals.Import(result, false);
-                EveMonClient.OnCorporationMedalsUpdated(target);
+                // CorporationMedalsUpdated
+                AppServices.TraceService?.Trace($"CorporationMedalsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CommonEvents.CorporationMedalsUpdatedEvent(target));
             }
         }
 
@@ -168,7 +172,10 @@ namespace EVEMon.Common.Services
                 var endedOrders = new LinkedList<MarketOrder>();
                 target.CorporationMarketOrders.Import(result, IssuedFor.Corporation,
                     endedOrders);
-                EveMonClient.OnCorporationMarketOrdersUpdated(target, endedOrders);
+                // CorporationMarketOrdersUpdated
+                AppServices.TraceService?.Trace($"CorporationMarketOrdersUpdated: {target.CorporationName}");
+                (target as CCPCharacter)?.OnCorporationMarketOrdersUpdated(endedOrders);
+                AppServices.EventAggregator?.Publish(new CommonEvents.CorporationMarketOrdersEndedEvent(target, endedOrders));
             }
         }
 
@@ -187,7 +194,10 @@ namespace EVEMon.Common.Services
                     contract.APIMethod = ESIAPICorporationMethods.CorporationContracts;
                 var endedContracts = new List<Contract>();
                 target.CorporationContracts.Import(result, endedContracts);
-                EveMonClient.OnCorporationContractsUpdated(target, endedContracts);
+                // CorporationContractsUpdated
+                AppServices.TraceService?.Trace($"CorporationContractsUpdated: {target.CorporationName}");
+                (target as CCPCharacter)?.OnCorporationContractsUpdated(endedContracts);
+                AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractsEndedEvent(target, endedContracts));
             }
         }
 
@@ -203,7 +213,10 @@ namespace EVEMon.Common.Services
             {
                 // Mark all jobs as corporation issued
                 target.CorporationIndustryJobs.Import(result, IssuedFor.Corporation);
-                EveMonClient.OnCorporationIndustryJobsUpdated(target);
+                // CorporationIndustryJobsUpdated
+                AppServices.TraceService?.Trace($"CorporationIndustryJobsUpdated: {target.Name}");
+                (target as CCPCharacter)?.OnCorporationIndustryJobsUpdated();
+                AppServices.EventAggregator?.Publish(new CommonEvents.CorporationIndustryJobsUpdatedEvent(target));
             }
         }
 

@@ -8,6 +8,7 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Helpers
 {
@@ -300,13 +301,13 @@ namespace EVEMon.Common.Helpers
             serial.ID = UriCharacter.GetNextBlankCharacterID();
 
             // Get or create identity
-            CharacterIdentity identity = EveMonClient.CharacterIdentities[serial.ID] ??
-                EveMonClient.CharacterIdentities.Add(serial.ID, serial.Name);
+            CharacterIdentity identity = AppServices.CharacterIdentities[serial.ID] ??
+                AppServices.CharacterIdentities.Add(serial.ID, serial.Name);
 
             // Create UriCharacter with null URI (displays as "(local)")
             var uriCharacter = new UriCharacter(identity, null, serial);
             uriCharacter.Monitored = true;
-            EveMonClient.Characters.Add(uriCharacter);
+            AppServices.Characters.Add(uriCharacter);
         }
 
         #endregion

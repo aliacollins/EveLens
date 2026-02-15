@@ -2,6 +2,7 @@ using System;
 using System.CodeDom.Compiler;
 using System.Linq;
 using System.Reflection;
+using EVEMon.Common.Services;
 using Microsoft.CSharp;
 
 namespace EVEMon.Common.Service
@@ -70,15 +71,15 @@ namespace EVEMon.Common.Service
 
                 if (!results.Errors.HasErrors)
                 {
-                    EveMonClient.Trace("Success");
+                    AppServices.TraceService?.Trace("Success");
                     return results.CompiledAssembly;
                 }
 
-                results.Errors.OfType<CompilerError>().ToList().ForEach(error => EveMonClient.Trace(error.ErrorText));
+                results.Errors.OfType<CompilerError>().ToList().ForEach(error => AppServices.TraceService?.Trace(error.ErrorText));
             }
             catch (Exception exc)
             {
-                EveMonClient.Trace("Failed");
+                AppServices.TraceService?.Trace("Failed");
                 Helpers.ExceptionHandler.LogException(exc, true);
             }
 

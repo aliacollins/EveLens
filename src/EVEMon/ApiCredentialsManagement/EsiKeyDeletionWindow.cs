@@ -8,6 +8,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.ApiCredentialsManagement
 {
@@ -108,7 +109,7 @@ namespace EVEMon.ApiCredentialsManagement
         private void deleteButton_Click(object? sender, EventArgs e)
         {
             // Remove the API key
-            EveMonClient.ESIKeys.Remove(m_apiKey);
+            AppServices.ESIKeys.Remove(m_apiKey);
 
             // Remove the characters from the collection
             foreach (CCPCharacter ccpCharacter in charactersListView.Items.Cast<ListViewItem>().Where(
@@ -116,7 +117,7 @@ namespace EVEMon.ApiCredentialsManagement
                     ccpCharacter => ccpCharacter != null).Where(
                         ccpCharacter => !ccpCharacter.Identity.ESIKeys.Any()))
             {
-                EveMonClient.Characters.Remove(ccpCharacter!);
+                AppServices.Characters.Remove(ccpCharacter!);
             }
 
             // Closes the window

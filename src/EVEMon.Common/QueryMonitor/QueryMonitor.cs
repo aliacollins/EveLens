@@ -10,8 +10,10 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.Common.Threading;
+using EVEMon.Core.Events;
 
 namespace EVEMon.Common.QueryMonitor
 {
@@ -26,6 +28,7 @@ namespace EVEMon.Common.QueryMonitor
         internal delegate void NotifyErrorCallback(CCPCharacter character, EsiResult<T> result);
 
         private readonly bool m_selfTicking;
+        private IDisposable? m_fiveSecondTickSubscription;
         private bool m_forceUpdate;
         private bool m_isCanceled;
         private bool m_retryOnForceUpdateError;
@@ -56,7 +59,8 @@ namespace EVEMon.Common.QueryMonitor
 
             // Use FiveSecondTick - API cache expiry is typically minutes/hours
             if (m_selfTicking)
-                EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+                m_fiveSecondTickSubscription = AppServices.EventAggregator?.Subscribe<FiveSecondTickEvent>(
+                    e => EveMonClient_TimerTick(null, EventArgs.Empty));
         }
 
         #endregion
@@ -101,8 +105,8 @@ namespace EVEMon.Common.QueryMonitor
         {
             get
             {
-                if (EveMonClient.APIProviders.CurrentProvider != APIProvider.DefaultProvider &&
-                    EveMonClient.APIProviders.CurrentProvider != APIProvider.TestProvider)
+                if (AppServices.APIProviders.CurrentProvider != APIProvider.DefaultProvider &&
+                    AppServices.APIProviders.CurrentProvider != APIProvider.TestProvider)
                     return true;
 
                 return DateTime.UtcNow > (LastResult?.CachedUntil ?? NextUpdate);
@@ -194,8 +198,8 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         public void Dispose()
         {
-            if (m_selfTicking)
-                EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            m_fiveSecondTickSubscription?.Dispose();
+            m_fiveSecondTickSubscription = null;
         }
 
         /// <summary>
@@ -236,7 +240,7 @@ namespace EVEMon.Common.QueryMonitor
                 else if (!NetworkMonitor.IsNetworkAvailable)
                     // No network connection
                     Status = QueryStatus.NoNetwork;
-                else if (!IsServerStatusQuery && !EveMonClient.EVEServer.IsOnline)
+                else if (!IsServerStatusQuery && !AppServices.EVEServer.IsOnline)
                 {
                     // Server is offline (downtime) - pause all queries except ServerStatus
                     Status = QueryStatus.ServerOffline;
@@ -258,7 +262,7 @@ namespace EVEMon.Common.QueryMonitor
                         var reason = EsiErrors.IsErrorCountExceeded
                             ? $"ErrorCountExceeded (resets at {EsiErrors.ErrorCountResetTime:HH:mm:ss})"
                             : $"Unknown (m_forceUpdate={m_forceUpdate}, NextUpdate={NextUpdate:HH:mm:ss}, Now={DateTime.UtcNow:HH:mm:ss})";
-                        EveMonClient.Trace($"QueryMonitor.Pending - {Method} overdue but not starting: {reason}");
+                        AppServices.TraceService?.Trace($"QueryMonitor.Pending - {Method} overdue but not starting: {reason}");
                     }
                 }
                 else
@@ -272,9 +276,9 @@ namespace EVEMon.Common.QueryMonitor
                     // Start the update
                     IsUpdating = true;
                     Status = QueryStatus.Updating;
-                    EveMonClient.Trace($"QueryMonitor.Starting - {Method}");
+                    AppServices.TraceService?.Trace($"QueryMonitor.Starting - {Method}");
                     // Fire and forget the async query - result will be handled via OnQueried
-                    _ = QueryAsyncCoreAsync(EveMonClient.APIProviders.CurrentProvider);
+                    _ = QueryAsyncCoreAsync(AppServices.APIProviders.CurrentProvider);
                 }
             }
         }
@@ -325,11 +329,11 @@ namespace EVEMon.Common.QueryMonitor
                 Callback?.Invoke(result);
 
                 // Debug: Log completion
-                EveMonClient.Trace($"QueryMonitor.OnQueried - {Method} completed, HasError={result.HasError}, NextUpdate={NextUpdate:HH:mm:ss}");
+                AppServices.TraceService?.Trace($"QueryMonitor.OnQueried - {Method} completed, HasError={result.HasError}, NextUpdate={NextUpdate:HH:mm:ss}");
             }
             else
             {
-                EveMonClient.Trace($"QueryMonitor.OnQueried - {Method} was canceled");
+                AppServices.TraceService?.Trace($"QueryMonitor.OnQueried - {Method} was canceled");
             }
         }
 
@@ -341,7 +345,7 @@ namespace EVEMon.Common.QueryMonitor
         protected void ResetUpdatingState(Exception ex = null)
         {
             var exMessage = ex?.GetBaseException().Message ?? "unknown";
-            EveMonClient.Trace($"QueryMonitor.ResetUpdatingState - {Method} exception: {exMessage}");
+            AppServices.TraceService?.Trace($"QueryMonitor.ResetUpdatingState - {Method} exception: {exMessage}");
             IsUpdating = false;
             Status = QueryStatus.Pending;
             // Set LastUpdate to current time to prevent immediate retry loop
@@ -418,8 +422,8 @@ namespace EVEMon.Common.QueryMonitor
 
         void IQueryMonitorEx.SuppressSelfTicking()
         {
-            if (m_selfTicking)
-                EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            m_fiveSecondTickSubscription?.Dispose();
+            m_fiveSecondTickSubscription = null;
         }
 
         IAPIResult IQueryMonitor.LastResult => LastResult;

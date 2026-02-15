@@ -49,8 +49,8 @@ namespace EVEMon.CharactersComparison
             try
             {
                 IEnumerable<Character> characters = cbFilter.SelectedIndex == 0
-                    ? EveMonClient.Characters.OrderBy(x => x.Name)
-                    : EveMonClient.MonitoredCharacters.OrderBy(x => x.Name);
+                    ? AppServices.Characters.OrderBy(x => x.Name)
+                    : AppServices.MonitoredCharacters.OrderBy(x => x.Name);
                 lvCharacterList.Items.Clear();
                 lvCharacterList.Items.AddRange(characters.Select(
                     character => new ListViewItem(character.Name) { Tag = character }).ToArray());

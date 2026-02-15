@@ -2,6 +2,7 @@
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using System;
 
 namespace EVEMon.Common.Models.Collections
@@ -39,7 +40,7 @@ namespace EVEMon.Common.Models.Collections
             if (m_eventCounter == 0)
             {
                 Items.Clear();
-                EveMonClient.Notifications.InvalidateAPIError();
+                AppServices.Notifications.InvalidateAPIError();
                 lock (m_counterLock)
                 {
                     m_eventCounter = events.Count;
@@ -53,7 +54,7 @@ namespace EVEMon.Common.Models.Collections
                         break;
                     // Query each individual event; maintaining etags/expiration for all of
                     // them is not really worth it
-                    EveMonClient.APIProviders.CurrentProvider.QueryEsi<EsiAPICalendarEvent>(
+                    AppServices.APIProviders.CurrentProvider.QueryEsi<EsiAPICalendarEvent>(
                         ESIAPICharacterMethods.UpcomingCalendarEventDetails,
                         OnCalendarEventDownloaded, new ESIParams()
                         {
@@ -73,7 +74,7 @@ namespace EVEMon.Common.Models.Collections
             {
                 if (target.ShouldNotifyError(result, ESIAPICharacterMethods.
                         UpcomingCalendarEventDetails))
-                    EveMonClient.Notifications.NotifyCharacterUpcomingCalendarEventDetailsError(
+                    AppServices.Notifications.NotifyCharacterUpcomingCalendarEventDetailsError(
                         m_character, result);
                 if (!result.HasError && result.HasData)
                     Items.Add(new UpcomingCalendarEvent(target, result.Result));

@@ -6,6 +6,8 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Common.Services;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -100,7 +102,9 @@ namespace EVEMon.Common.Models.Collections
                 return;
 
             // Fires the event regarding the character's pins finished
-            EveMonClient.OnCharacterPlanetaryPinsCompleted(m_ccpCharacter, pinsCompleted);
+            AppServices.TraceService?.Trace(m_ccpCharacter.Name);
+            m_ccpCharacter.OnPlanetaryPinsCompleted(pinsCompleted);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryPinsCompletedEvent(m_ccpCharacter, pinsCompleted));
         }
 
         #endregion

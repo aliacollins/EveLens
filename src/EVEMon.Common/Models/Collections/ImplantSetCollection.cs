@@ -5,7 +5,10 @@ using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Data;
+using EVEMon.Common.Services;
 using EVEMon.Core;
+using CoreEvents = EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 using System.Globalization;
 
 namespace EVEMon.Common.Models.Collections
@@ -64,7 +67,9 @@ namespace EVEMon.Common.Models.Collections
                     return;
 
                 m_current = value;
-                EveMonClient.OnCharacterUpdated(m_character);
+                AppServices.TraceService?.Trace(m_character?.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_character.CharacterID, m_character.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_character));
             }
         }
 
@@ -77,7 +82,9 @@ namespace EVEMon.Common.Models.Collections
         {
             ImplantSet set = new ImplantSet(m_character, name);
             m_customSets.Add(set);
-            EveMonClient.OnCharacterUpdated(m_character);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_character.CharacterID, m_character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_character));
             return set;
         }
 
@@ -88,7 +95,9 @@ namespace EVEMon.Common.Models.Collections
         public void Remove(ImplantSet set)
         {
             m_customSets.Remove(set);
-            EveMonClient.OnCharacterUpdated(m_character);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_character.CharacterID, m_character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_character));
         }
 
         /// <summary>
@@ -137,7 +146,8 @@ namespace EVEMon.Common.Models.Collections
                 m_cloneSets.Add(set);
             }
 
-            EveMonClient.OnCharacterImplantSetCollectionChanged(m_character);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(m_character));
         }
 
         /// <summary>
@@ -169,7 +179,8 @@ namespace EVEMon.Common.Models.Collections
             // Imports selection
             m_current = this[serial.SelectedIndex];
 
-            EveMonClient.OnCharacterImplantSetCollectionChanged(m_character);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(m_character));
         }
 
         /// <summary>
@@ -199,7 +210,8 @@ namespace EVEMon.Common.Models.Collections
                 m_cloneSets.Add(set);
             }
 
-            EveMonClient.OnCharacterImplantSetCollectionChanged(m_character);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(m_character));
         }
 
         /// <summary>

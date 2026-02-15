@@ -13,6 +13,7 @@ using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.Common.IgbService
@@ -358,7 +359,7 @@ namespace EVEMon.Common.IgbService
             }
 
             // Character not listed in EVEMon 
-            if (EveMonClient.Characters.All(x => x.Name != characterName))
+            if (AppServices.Characters.All(x => x.Name != characterName))
             {
                 sw.WriteLine("Hello {0}, this character is not recognized by EVEMon!", characterName);
                 return;
@@ -376,11 +377,11 @@ namespace EVEMon.Common.IgbService
                 requestPath = match.Groups["request"].Value;
             }
             Character character = !String.IsNullOrEmpty(characterName)
-                ? EveMonClient.MonitoredCharacters.FirstOrDefault(x => x.Name == characterName)
+                ? AppServices.MonitoredCharacters.FirstOrDefault(x => x.Name == characterName)
                 : null;
             if (character == null)
             {
-                GenerateCharacterList(characterName, sw, EveMonClient.MonitoredCharacters);
+                GenerateCharacterList(characterName, sw, AppServices.MonitoredCharacters);
                 return;
             }
 

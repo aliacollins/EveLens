@@ -25,7 +25,7 @@ namespace EVEMon.Common.Services
             if (characterId == 0)
                 return null;
 
-            return EveMonClient.Characters.OfType<CCPCharacter>()
+            return AppServices.Characters.OfType<CCPCharacter>()
                 .FirstOrDefault(c => c.CharacterID == characterId);
         }
     }

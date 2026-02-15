@@ -8,6 +8,7 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -194,7 +195,7 @@ namespace EVEMon.Common.Service
         private static async Task SendMailAsync(NotificationSettings settings, string subject, string body)
         {
             // Trace something to the logs so we can identify the time the message was sent
-            EveMonClient.Trace($"(Subject - {subject}; Server - {settings.EmailSmtpServerAddress}:{settings.EmailPortNumber})");
+            AppServices.TraceService?.Trace($"(Subject - {subject}; Server - {settings.EmailSmtpServerAddress}:{settings.EmailPortNumber})");
 
             string sender = string.IsNullOrEmpty(settings.EmailFromAddress)
                 ? "no-reply@evemon.net"
@@ -253,7 +254,7 @@ namespace EVEMon.Common.Service
                 }
 
                 // Success notification
-                EveMonClient.Trace("Message sent.");
+                AppServices.TraceService?.Trace("Message sent.");
                 if (s_isTestMail)
                 {
                     ShowMessageBox(@"The message sent successfully. Please verify that the message was received.",
@@ -262,7 +263,7 @@ namespace EVEMon.Common.Service
             }
             catch (Exception e)
             {
-                EveMonClient.Trace("An error occurred sending email");
+                AppServices.TraceService?.Trace("An error occurred sending email");
                 ExceptionHandler.LogException(e, true);
                 ShowMessageBox(e.Message, @"EVEMon Emailer Error", MessageBoxIcon.Error);
             }

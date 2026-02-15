@@ -10,6 +10,7 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Net;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Service
 {
@@ -156,7 +157,7 @@ namespace EVEMon.Common.Service
                 return result.Result;
 
             if (result.Error.Status == HttpWebClientServiceExceptionStatus.Timeout)
-                EveMonClient.Trace(result.Error.Message);
+                AppServices.TraceService?.Trace(result.Error.Message);
             else
                 ExceptionHandler.LogException(result.Error, true);
 

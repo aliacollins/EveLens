@@ -68,7 +68,7 @@ namespace EVEMon.ApiCredentialsManagement
             AdjustLastColumn();
 
             // Selects the second page if no API key known so far
-            if (EveMonClient.Characters.Count == 0)
+            if (AppServices.Characters.Count == 0)
                 tabControl.SelectedIndex = 1;
         }
 
@@ -89,7 +89,7 @@ namespace EVEMon.ApiCredentialsManagement
 
             // Update the monitored status of selected characters
             foreach (var monitoredCharacter in m_monitoredCharacters)
-                if (EveMonClient.Characters.Contains(monitoredCharacter.Key))
+                if (AppServices.Characters.Contains(monitoredCharacter.Key))
                     monitoredCharacter.Key.Monitored = monitoredCharacter.Value;
         }
 
@@ -169,8 +169,8 @@ namespace EVEMon.ApiCredentialsManagement
             if (!Visible)
                 return;
 
-            esiKeysListBox.ESIKeys = EveMonClient.ESIKeys;
-            esiKeysMultiPanel.SelectedPage = EveMonClient.ESIKeys.Any() ? esiKeysListPage : noESIKeysPage;
+            esiKeysListBox.ESIKeys = AppServices.ESIKeys;
+            esiKeysMultiPanel.SelectedPage = AppServices.ESIKeys.Any() ? esiKeysListPage : noESIKeysPage;
         }
 
         /// <summary>
@@ -329,7 +329,7 @@ namespace EVEMon.ApiCredentialsManagement
             esiKeysListBox.Invalidate();
 
             // Make a help message appears when no characters exist
-            charactersMultiPanel.SelectedPage = EveMonClient.Characters.Count == 0 ? noCharactersPage : charactersListPage;
+            charactersMultiPanel.SelectedPage = AppServices.Characters.Count == 0 ? noCharactersPage : charactersListPage;
 
             // End of the update
             m_refreshingCharactersCounter--;
@@ -363,7 +363,7 @@ namespace EVEMon.ApiCredentialsManagement
                     ArrangeByGroup(fileGroup, apiKeyGroups, noESIKeyGroup, urlGroup);
 
                 // Add items
-                foreach (Character character in EveMonClient.Characters.OrderBy(x => x.Name))
+                foreach (Character character in AppServices.Characters.OrderBy(x => x.Name))
                 {
                     ListViewItem item = new ListViewItem { Checked = character.Monitored, Tag = character };
 
@@ -444,7 +444,7 @@ namespace EVEMon.ApiCredentialsManagement
             bool hasUrlChars = false;
 
             // Scroll through listview items to gather the groups
-            foreach (Character character in EveMonClient.Characters)
+            foreach (Character character in AppServices.Characters)
             {
                 UriCharacter? uriCharacter = character as UriCharacter;
 

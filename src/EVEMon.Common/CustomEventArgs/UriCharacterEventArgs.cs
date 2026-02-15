@@ -3,6 +3,7 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.CustomEventArgs
 {
@@ -87,7 +88,7 @@ namespace EVEMon.Common.CustomEventArgs
             var uriCharacter = m_apiResult != null ? new UriCharacter(identity, Uri, m_apiResult) :
                 new UriCharacter(identity, Uri, m_result as SerializableSettingsCharacter);
 
-            EveMonClient.Characters.Add(uriCharacter);
+            AppServices.Characters.Add(uriCharacter);
 
             return uriCharacter;
         }
@@ -120,7 +121,7 @@ namespace EVEMon.Common.CustomEventArgs
         /// <returns></returns>
         // Retrieve the identity and create one if needed
         private static CharacterIdentity GetIdentity(ISerializableCharacterIdentity character)
-            => EveMonClient.CharacterIdentities[character.ID] ??
-               EveMonClient.CharacterIdentities.Add(character.ID, character.Name);
+            => AppServices.CharacterIdentities[character.ID] ??
+               AppServices.CharacterIdentities.Add(character.ID, character.Name);
     }
 }

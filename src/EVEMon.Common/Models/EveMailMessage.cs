@@ -8,6 +8,7 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Common.Services;
 using EVEMon.Core;
 using EVEMon.Common.Net;
 using CommonEvents = EVEMon.Common.Events;
@@ -205,7 +206,7 @@ namespace EVEMon.Common.Models
                     ESIAPICharacterMethods.MailBodies);
                 m_queryPending = true;
                 if (apiKey != null)
-                    EveMonClient.APIProviders.CurrentProvider.QueryEsi<EsiAPIMailBody>(
+                    AppServices.APIProviders.CurrentProvider.QueryEsi<EsiAPIMailBody>(
                         ESIAPICharacterMethods.MailBodies, OnEVEMailBodyDownloaded,
                         new ESIParams(m_bodyResponse, apiKey.AccessToken)
                         {
@@ -226,7 +227,7 @@ namespace EVEMon.Common.Models
             m_bodyResponse = result.Response;
             // Notify if an error occured
             if (m_ccpCharacter.ShouldNotifyError(result, ESIAPICharacterMethods.MailBodies))
-                EveMonClient.Notifications.NotifyEVEMailBodiesError(m_ccpCharacter, result);
+                AppServices.Notifications.NotifyEVEMailBodiesError(m_ccpCharacter, result);
             if (result.HasData && !result.HasError && messageID != 0L && !string.IsNullOrEmpty(
                 result.Result.Body))
             {

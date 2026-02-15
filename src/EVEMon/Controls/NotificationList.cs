@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using EVEMon.ApiErrorHandling;
 using EVEMon.Common;
 using EVEMon.Common.Controls;
+using EVEMon.Common.Services;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
@@ -330,7 +331,7 @@ namespace EVEMon.Controls
                 Rectangle deleteRect = GetDeleteIconRect(rect);
                 if (e.Button == MouseButtons.Middle || e.Button == MouseButtons.Right ||
                         deleteRect.Contains(e.Location)) {
-                    EveMonClient.Notifications.Invalidate(new NotificationInvalidationEventArgs(notification!));
+                    AppServices.Notifications.Invalidate(new NotificationInvalidationEventArgs(notification!));
                     m_notifications.Remove(notification!);
                     UpdateContent();
                 }

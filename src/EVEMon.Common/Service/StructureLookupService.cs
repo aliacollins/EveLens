@@ -3,6 +3,7 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 using System;
 using System.Collections.Concurrent;
@@ -86,7 +87,7 @@ namespace EVEMon.Common.Service
             // Check cache first
             if (_cache.TryGetValue(structureId, out var cached))
             {
-                EveMonClient.Trace("StructureLookup [{0}] - CACHE HIT for {1:D} (requested by {2})",
+                AppServices.TraceService?.Trace("StructureLookup [{0}] - CACHE HIT for {1:D} (requested by {2})",
                     _requestCounter, structureId, charName);
                 return cached;
             }
@@ -103,13 +104,13 @@ namespace EVEMon.Common.Service
             switch (request.State)
             {
                 case StructureRequestState.Completed:
-                    EveMonClient.Trace("StructureLookup [{0}] - Already completed for {1:D} (requested by {2})",
+                    AppServices.TraceService?.Trace("StructureLookup [{0}] - Already completed for {1:D} (requested by {2})",
                         _requestCounter, structureId, charName);
                     return request.Result;
 
                 case StructureRequestState.Inaccessible:
                 case StructureRequestState.Destroyed:
-                    EveMonClient.Trace("StructureLookup [{0}] - Already marked {1} for {2:D} (requested by {3})",
+                    AppServices.TraceService?.Trace("StructureLookup [{0}] - Already marked {1} for {2:D} (requested by {3})",
                         _requestCounter, request.State, structureId, charName);
                     return null;
             }
@@ -118,12 +119,12 @@ namespace EVEMon.Common.Service
             if (isNew)
             {
                 int counter = Interlocked.Increment(ref _requestCounter);
-                EveMonClient.Trace("StructureLookup [{0}] - NEW REQUEST for {1:D} (requested by {2})",
+                AppServices.TraceService?.Trace("StructureLookup [{0}] - NEW REQUEST for {1:D} (requested by {2})",
                     counter, structureId, charName);
             }
             else
             {
-                EveMonClient.Trace("StructureLookup [{0}] - DEDUPLICATED request for {1:D} (requested by {2}, state={3})",
+                AppServices.TraceService?.Trace("StructureLookup [{0}] - DEDUPLICATED request for {1:D} (requested by {2}, state={3})",
                     _requestCounter, structureId, charName, request.State);
             }
 
@@ -192,7 +193,7 @@ namespace EVEMon.Common.Service
                         var delay = EsiErrors.ErrorCountResetTime - DateTime.UtcNow;
                         if (delay > TimeSpan.Zero && delay < TimeSpan.FromMinutes(5))
                         {
-                            EveMonClient.Trace("StructureLookupService - Rate limited, waiting {0:F0}s",
+                            AppServices.TraceService?.Trace("StructureLookupService - Rate limited, waiting {0:F0}s",
                                 delay.TotalSeconds);
                             await Task.Delay(delay).ConfigureAwait(false);
                         }
@@ -207,7 +208,7 @@ namespace EVEMon.Common.Service
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace("StructureLookupService - Queue processing error: {0}", ex.Message);
+                AppServices.TraceService?.Trace("StructureLookupService - Queue processing error: {0}", ex.Message);
                 ExceptionHandler.LogException(ex, false);
             }
             finally
@@ -242,7 +243,7 @@ namespace EVEMon.Common.Service
                 var candidateCharacters = GetCharactersWithCitadelAccess().ToList();
                 var untriedCharacters = request.GetUntriedCharacters(candidateCharacters).ToList();
 
-                EveMonClient.Trace("StructureLookup - Processing {0:D}: {1} candidates, {2} untried",
+                AppServices.TraceService?.Trace("StructureLookup - Processing {0:D}: {1} candidates, {2} untried",
                     structureId, candidateCharacters.Count, untriedCharacters.Count);
 
                 foreach (var character in untriedCharacters)
@@ -257,13 +258,13 @@ namespace EVEMon.Common.Service
                     if (!request.TryMarkCharacterAttempted(character.CharacterID))
                         continue;
 
-                    EveMonClient.Trace("ESI structure lookup for {0:D} using {1}",
+                    AppServices.TraceService?.Trace("ESI structure lookup for {0:D} using {1}",
                         structureId, character.Name);
 
                     try
                     {
                         // Make the ESI request
-                        var result = await EveMonClient.APIProviders.CurrentProvider
+                        var result = await AppServices.APIProviders.CurrentProvider
                             .QueryEsiAsync<EsiAPIStructure>(
                                 ESIAPIGenericMethods.CitadelInfo,
                                 new ESIParams(null, esiKey.AccessToken)
@@ -279,7 +280,7 @@ namespace EVEMon.Common.Service
                             _cache[structureId] = outpost;
                             request.Complete(outpost);
 
-                            EveMonClient.Trace("StructureLookup - SUCCESS for {0:D} = \"{1}\" (using {2})",
+                            AppServices.TraceService?.Trace("StructureLookup - SUCCESS for {0:D} = \"{1}\" (using {2})",
                                 structureId, outpost.StationName, character.Name);
 
                             // Notify on UI thread
@@ -292,32 +293,32 @@ namespace EVEMon.Common.Service
                         {
                             // Structure destroyed
                             request.SetDestroyed();
-                            EveMonClient.Trace("Structure {0:D} destroyed (404)", structureId);
+                            AppServices.TraceService?.Trace("Structure {0:D} destroyed (404)", structureId);
                             return;
                         }
 
                         if (result.ResponseCode == (int)HttpStatusCode.Forbidden)
                         {
                             // This character doesn't have access - try next character
-                            EveMonClient.Trace("Character {0} lacks access to structure {1:D}",
+                            AppServices.TraceService?.Trace("Character {0} lacks access to structure {1:D}",
                                 character.Name, structureId);
                             continue;
                         }
 
                         // Other error - log but continue trying other characters
-                        EveMonClient.Trace("ESI error for structure {0:D}: {1}",
+                        AppServices.TraceService?.Trace("ESI error for structure {0:D}: {1}",
                             structureId, result.ErrorMessage);
                     }
                     catch (Exception ex)
                     {
-                        EveMonClient.Trace("Exception looking up structure {0:D}: {1}",
+                        AppServices.TraceService?.Trace("Exception looking up structure {0:D}: {1}",
                             structureId, ex.Message);
                     }
                 }
 
                 // All characters tried, none succeeded
                 request.SetInaccessible();
-                EveMonClient.Trace("Structure {0:D} is inaccessible to all {1} characters",
+                AppServices.TraceService?.Trace("Structure {0:D} is inaccessible to all {1} characters",
                     structureId, request.TriedCharacterCount);
             }
             finally
@@ -333,7 +334,7 @@ namespace EVEMon.Common.Service
         private IEnumerable<CCPCharacter> GetCharactersWithCitadelAccess()
         {
             // Get all CCP characters
-            var allCharacters = EveMonClient.Characters.OfType<CCPCharacter>()
+            var allCharacters = AppServices.Characters.OfType<CCPCharacter>()
                 .Where(c => c.Identity?.FindAPIKeyWithAccess(ESIAPICharacterMethods.CitadelInfo) != null)
                 .ToList();
 
@@ -351,7 +352,7 @@ namespace EVEMon.Common.Service
         {
             Dispatcher.Invoke(() =>
             {
-                EveMonClient.Notifications.InvalidateAPIError();
+                AppServices.Notifications.InvalidateAPIError();
                 DataChanged?.Invoke(this, EventArgs.Empty);
             });
         }

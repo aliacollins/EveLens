@@ -80,74 +80,74 @@ namespace EVEMon
 
             // Creates a trace file
             EveMonClient.StartTraceLogging();
-            EveMonClient.Trace("Program.Startup - begin", printMethod: false);
-            EveMonClient.Trace("Program.Startup - SplashScreen displayed", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - begin", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - SplashScreen displayed", printMethod: false);
 
             // Ensures the installation file downloaded through the autoupdate is correctly deleted
             s_splashScreen.UpdateProgress(10, "Checking for updates...");
-            EveMonClient.Trace("Program.Startup - DeleteInstallationFiles begin", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - DeleteInstallationFiles begin", printMethod: false);
             UpdateManager.DeleteInstallationFiles();
-            EveMonClient.Trace("Program.Startup - DeleteInstallationFiles done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - DeleteInstallationFiles done", printMethod: false);
 
             // Upgrades the Cloud Storage Service Provider settings
             s_splashScreen.UpdateProgress(15, "Upgrading cloud settings...");
-            EveMonClient.Trace("Program.Startup - CloudStorageServiceProvider.UpgradeSettings begin", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - CloudStorageServiceProvider.UpgradeSettings begin", printMethod: false);
             CloudStorageServiceProvider.UpgradeSettings();
-            EveMonClient.Trace("Program.Startup - CloudStorageServiceProvider.UpgradeSettings done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - CloudStorageServiceProvider.UpgradeSettings done", printMethod: false);
 
             // Initialization
             s_splashScreen.UpdateProgress(20, "Initializing client...");
-            EveMonClient.Trace("Program.Startup - EveMonClient.Initialize begin", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - EveMonClient.Initialize begin", printMethod: false);
             EveMonClient.Initialize();
-            EveMonClient.Trace("Program.Startup - EveMonClient.Initialize done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - EveMonClient.Initialize done", printMethod: false);
 
             // Configure dependency injection (Strangler Fig wrappers for existing static classes)
-            EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure begin", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - ServiceRegistration.Configure begin", printMethod: false);
             ServiceRegistration.Configure();
             EVEMon.Common.Services.AppServices.SyncToServiceLocator();
 
             // Wire up the settings-save subscriber so EventAggregator events trigger Settings.Save()
             s_settingsSaveSubscriber = new SettingsSaveSubscriber(AppServices.EventAggregator);
 
-            EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - ServiceRegistration.Configure done", printMethod: false);
 
             // Load settings (this is the slow part - must stay on UI thread for dialogs)
             s_splashScreen.UpdateProgress(25, "Loading settings...");
-            EveMonClient.Trace("Program.Startup - Settings.Initialize begin", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - Settings.Initialize begin", printMethod: false);
             Settings.Initialize();
-            EveMonClient.Trace("Program.Startup - Settings.Initialize done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - Settings.Initialize done", printMethod: false);
             s_splashScreen.UpdateProgress(40, "Settings loaded");
 
             // Did something requested an exit before we entered Run() ?
             if (s_exitRequested)
             {
-                EveMonClient.Trace("Program.Startup - exit requested before Run", printMethod: false);
+                AppServices.TraceService?.Trace("Program.Startup - exit requested before Run", printMethod: false);
                 s_splashScreen.Close();
                 return;
             }
 
             // Load static datafiles (skills, items, geography, etc.)
             s_splashScreen.UpdateProgress(45, "Loading game data...");
-            EveMonClient.Trace("Program.Startup - GlobalDatafileCollection.LoadAsync begin", printMethod: false);
-            GlobalDatafileCollection.LoadAsync().Wait();
-            EveMonClient.Trace("Program.Startup - GlobalDatafileCollection.LoadAsync done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - GlobalDatafileCollection.LoadAsync begin", printMethod: false);
+            Task.Run(() => GlobalDatafileCollection.LoadAsync()).GetAwaiter().GetResult();
+            AppServices.TraceService?.Trace("Program.Startup - GlobalDatafileCollection.LoadAsync done", printMethod: false);
             s_splashScreen.UpdateProgress(65, "Game data loaded");
 
             // Load ID-to-name caches
             s_splashScreen.UpdateProgress(70, "Loading caches...");
-            EveMonClient.Trace("Program.Startup - EveIDToName/EveIDToStation.InitializeFromFile begin", printMethod: false);
-            TaskHelper.RunIOBoundTaskAsync(() => {
+            AppServices.TraceService?.Trace("Program.Startup - EveIDToName/EveIDToStation.InitializeFromFile begin", printMethod: false);
+            Task.Run(() => TaskHelper.RunIOBoundTaskAsync(() => {
                 EveIDToName.InitializeFromFile();
                 EveIDToStation.InitializeFromFile();
-            }).Wait();
-            EveMonClient.Trace("Program.Startup - EveIDToName/EveIDToStation.InitializeFromFile done", printMethod: false);
+            })).GetAwaiter().GetResult();
+            AppServices.TraceService?.Trace("Program.Startup - EveIDToName/EveIDToStation.InitializeFromFile done", printMethod: false);
             s_splashScreen.UpdateProgress(75, "Caches loaded");
 
             // Import character data
             s_splashScreen.UpdateProgress(78, "Loading characters...");
-            EveMonClient.Trace("Program.Startup - Settings.ImportDataAsync begin", printMethod: false);
-            Settings.ImportDataAsync().Wait();
-            EveMonClient.Trace("Program.Startup - Settings.ImportDataAsync done", printMethod: false);
+            AppServices.TraceService?.Trace("Program.Startup - Settings.ImportDataAsync begin", printMethod: false);
+            Task.Run(() => Settings.ImportDataAsync()).GetAwaiter().GetResult();
+            AppServices.TraceService?.Trace("Program.Startup - Settings.ImportDataAsync done", printMethod: false);
             s_splashScreen.UpdateProgress(85, "Characters loaded");
 
             // Initialize G15 (Logitech keyboard support)
@@ -161,23 +161,23 @@ namespace EVEMon
             {
                 // Create main window
                 s_splashScreen.UpdateProgress(90, "Creating main window...");
-                EveMonClient.Trace("Program.Startup - Creating MainWindow", printMethod: false);
+                AppServices.TraceService?.Trace("Program.Startup - Creating MainWindow", printMethod: false);
                 s_mainWindow = new MainWindow();
 
                 // Close splash screen
                 s_splashScreen.UpdateProgress(100, "Ready");
-                EveMonClient.Trace("Program.Startup - Closing SplashScreen", printMethod: false);
+                AppServices.TraceService?.Trace("Program.Startup - Closing SplashScreen", printMethod: false);
                 s_splashScreen.Close();
                 s_splashScreen.Dispose();
                 s_splashScreen = null!;
 
                 // Fires the main window
-                EveMonClient.Trace("Main loop - start", printMethod: false);
+                AppServices.TraceService?.Trace("Main loop - start", printMethod: false);
                 Application.Run(s_mainWindow);
-                EveMonClient.Trace("Main loop - done", printMethod: false);
+                AppServices.TraceService?.Trace("Main loop - done", printMethod: false);
 
                 // Save before we quit
-                Task.WhenAll(Settings.SaveImmediateAsync(), EveIDToName.SaveImmediateAsync()).Wait();
+                Task.Run(() => Task.WhenAll(Settings.SaveImmediateAsync(), EveIDToName.SaveImmediateAsync())).GetAwaiter().GetResult();
             }
             finally
             {
@@ -190,7 +190,7 @@ namespace EVEMon
                 // Dispose DI container
                 ServiceRegistration.Dispose();
 
-                EveMonClient.Trace("Closed", printMethod: false);
+                AppServices.TraceService?.Trace("Closed", printMethod: false);
                 EveMonClient.StopTraceLogging();
             }
         }

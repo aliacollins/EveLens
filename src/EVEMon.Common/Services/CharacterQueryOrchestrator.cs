@@ -16,6 +16,7 @@ using EVEMon.Common.Service;
 using EVEMon.Common.Threading;
 using EVEMon.Core.Events;
 using EVEMon.Core.Interfaces;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Services
 {
@@ -303,7 +304,7 @@ namespace EVEMon.Common.Services
                 // New character added manually - fetch immediately
                 m_startupDelayUntil = DateTime.UtcNow;
                 m_startupDelayCompleted = true;
-                EveMonClient.Trace($"CharacterQueryOrchestrator - {ccpCharacter.Name} is new, skipping startup delay");
+                AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {ccpCharacter.Name} is new, skipping startup delay");
             }
             else
             {
@@ -311,7 +312,7 @@ namespace EVEMon.Common.Services
                 int baseDelayMs = characterIndex * StartupDelayPerCharacterMs;
                 int jitterMs = s_random.Next(StartupRandomJitterMs);
                 m_startupDelayUntil = DateTime.UtcNow.AddMilliseconds(baseDelayMs + jitterMs);
-                EveMonClient.Trace($"CharacterQueryOrchestrator - {ccpCharacter.Name} startup delayed until {m_startupDelayUntil:HH:mm:ss.fff} (index {characterIndex})");
+                AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {ccpCharacter.Name} startup delayed until {m_startupDelayUntil:HH:mm:ss.fff} (index {characterIndex})");
             }
         }
 
@@ -321,7 +322,7 @@ namespace EVEMon.Common.Services
         /// </summary>
         private List<IQueryMonitorEx> CreateMonitors(CCPCharacter ccpCharacter)
         {
-            var notifiers = EveMonClient.Notifications;
+            var notifiers = AppServices.Notifications;
             var monitors = new List<IQueryMonitorEx>();
 
             // Character sheet
@@ -516,7 +517,7 @@ namespace EVEMon.Common.Services
 
                 // Startup delay completed - allow monitors to run
                 m_startupDelayCompleted = true;
-                EveMonClient.Trace($"CharacterQueryOrchestrator - {m_ccpCharacter!.Name} startup delay completed, monitors enabled");
+                AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {m_ccpCharacter!.Name} startup delay completed, monitors enabled");
             }
 
             // If character is monitored enable the basic feature monitoring
@@ -647,10 +648,18 @@ namespace EVEMon.Common.Services
                 if (target != null)
                 {
                     // Finally all done!
-                    EveMonClient.Notifications.InvalidateCharacterAPIError(target);
-                    EveMonClient.OnCharacterUpdated(target);
-                    EveMonClient.OnCharacterInfoUpdated(target);
-                    EveMonClient.OnCharacterImplantSetCollectionChanged(target);
+                    AppServices.Notifications.InvalidateCharacterAPIError(target);
+                    // CharacterUpdated
+                    AppServices.TraceService?.Trace($"CharacterUpdated: {target.Name}");
+                    AppServices.EventAggregator?.Publish(new CharacterUpdatedEvent(target.CharacterID, target.Name));
+                    AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(target));
+                    // CharacterInfoUpdated
+                    AppServices.TraceService?.Trace($"CharacterInfoUpdated: {target.Name}");
+                    AppServices.EventAggregator?.Publish(new CharacterInfoUpdatedEvent(target.CharacterID, target.Name));
+                    AppServices.EventAggregator?.Publish(new CommonEvents.CharacterInfoUpdatedEvent(target));
+                    // CharacterImplantSetCollectionChanged
+                    AppServices.TraceService?.Trace($"CharacterImplantSetCollectionChanged: {target.Name}");
+                    AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(target));
                     // Save character information locally
                     var doc = Util.SerializeToXmlDocument(target.Export());
                     LocalXmlCache.SaveAsync(target.Name, doc).ConfigureAwait(false);
@@ -705,7 +714,7 @@ namespace EVEMon.Common.Services
             // Character may have been deleted since we queried
             if (target != null)
             {
-                EveMonClient.Trace($"CharacterSheet updated - {target.Name} no longer cached");
+                AppServices.TraceService?.Trace($"CharacterSheet updated - {target.Name} no longer cached");
                 target.Import(result);
             }
         }
@@ -783,10 +792,10 @@ namespace EVEMon.Common.Services
                 target.SkillQueue.Import(result.CreateSkillQueue());
                 // Check if the character has less than the threshold queue length
                 if (target.IsTraining && target.SkillQueue.LessThanWarningThreshold)
-                    EveMonClient.Notifications.NotifySkillQueueThreshold(target,
+                    AppServices.Notifications.NotifySkillQueueThreshold(target,
                         Settings.UI.MainWindow.SkillQueueWarningThresholdDays);
                 else
-                    EveMonClient.Notifications.InvalidateSkillQueueThreshold(target);
+                    AppServices.Notifications.InvalidateSkillQueueThreshold(target);
             }
             else
                 m_lastQueue = null;
@@ -819,7 +828,7 @@ namespace EVEMon.Common.Services
         private void OnCharacterImplantsFailed(CCPCharacter character, EsiResult<List<int>>
             result)
         {
-            EveMonClient.Notifications.NotifyCharacterImplantsError(character, result);
+            AppServices.Notifications.NotifyCharacterImplantsError(character, result);
             var target = m_ccpCharacter;
             // Character may have been deleted since we queried
             if (target != null)
@@ -846,7 +855,7 @@ namespace EVEMon.Common.Services
                 Attributes);
             if (esiKey != null && !EsiErrors.IsErrorCountExceeded)
             {
-                var result = await EveMonClient.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPIAttributes>(
+                var result = await AppServices.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPIAttributes>(
                     ESIAPICharacterMethods.Attributes,
                     new ESIParams(m_attrResponse, esiKey.AccessToken)
                     {
@@ -869,7 +878,7 @@ namespace EVEMon.Common.Services
             if (target != null && target.Monitored)
             {
                 if (target.ShouldNotifyError(result, ESIAPICharacterMethods.Attributes))
-                    EveMonClient.Notifications.NotifyCharacterAttributesError(target, result);
+                    AppServices.Notifications.NotifyCharacterAttributesError(target, result);
                 if (!result.HasError && result.HasData && result.Result != null)
                     target.Import(result.Result);
             }
@@ -902,7 +911,7 @@ namespace EVEMon.Common.Services
                     MarketOrders);
                 if (esiKey != null && !EsiErrors.IsErrorCountExceeded)
                 {
-                    var historyResult = await EveMonClient.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPIMarketOrders>(
+                    var historyResult = await AppServices.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPIMarketOrders>(
                         ESIAPICharacterMethods.MarketOrdersHistory,
                         new ESIParams(m_orderHistoryResponse, esiKey.AccessToken)
                         {
@@ -949,11 +958,15 @@ namespace EVEMon.Common.Services
                 allOrders.SetAllIssuedBy(target.CharacterID);
                 target.CharacterMarketOrders.Import(allOrders, IssuedFor.Character,
                     endedOrders);
-                EveMonClient.OnCharacterMarketOrdersUpdated(target, endedOrders);
+                // CharacterMarketOrdersUpdated
+                AppServices.TraceService?.Trace($"CharacterMarketOrdersUpdated: {target.Name}");
+                (target as CCPCharacter)?.OnCharacterMarketOrdersUpdated(endedOrders);
+                AppServices.EventAggregator?.Publish(new CharacterMarketOrdersUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterMarketOrdersUpdatedEvent(target, endedOrders));
                 allOrders.Clear();
                 // Notify if either one failed
                 if (historyResult != null && historyResult.HasError)
-                    EveMonClient.Notifications.NotifyCharacterMarketOrdersError(target,
+                    AppServices.Notifications.NotifyCharacterMarketOrdersError(target,
                         historyResult);
             }
         }
@@ -973,7 +986,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.Standings.Import(result);
-                EveMonClient.OnCharacterStandingsUpdated(target);
+                // CharacterStandingsUpdated
+                AppServices.TraceService?.Trace($"CharacterStandingsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterStandingsUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterStandingsUpdatedEvent(target));
             }
         }
 
@@ -994,7 +1010,9 @@ namespace EVEMon.Common.Services
                 }
                 else
                     target.IsFactionalWarfareNotEnlisted = true;
-                EveMonClient.OnCharacterFactionalWarfareStatsUpdated(target);
+                // CharacterFactionalWarfareStatsUpdated
+                AppServices.TraceService?.Trace($"CharacterFactionalWarfareStatsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterFactionalWarfareStatsUpdatedEvent(target));
             }
         }
 
@@ -1009,7 +1027,11 @@ namespace EVEMon.Common.Services
                 TaskHelper.RunCPUBoundTaskAsync(() => target.Assets.Import(result)).
                     ContinueWith(_ =>
                     {
-                        EveMonClient.OnCharacterAssetsUpdated(target);
+                        // CharacterAssetsUpdated
+                        AppServices.TraceService?.Trace($"CharacterAssetsUpdated: {target.Name}");
+                        (target as CCPCharacter)?.OnAssetsUpdated();
+                        AppServices.EventAggregator?.Publish(new CharacterAssetsUpdatedEvent(target.CharacterID, target.Name));
+                        AppServices.EventAggregator?.Publish(new CommonEvents.CharacterAssetsUpdatedEvent(target));
                     }, EveMonClient.CurrentSynchronizationContext);
         }
 
@@ -1026,7 +1048,11 @@ namespace EVEMon.Common.Services
                     contract.APIMethod = ESIAPICharacterMethods.Contracts;
                 var endedContracts = new List<Contract>();
                 target.CharacterContracts.Import(result, endedContracts);
-                EveMonClient.OnCharacterContractsUpdated(target, endedContracts);
+                // CharacterContractsUpdated
+                AppServices.TraceService?.Trace($"CharacterContractsUpdated: {target.Name}");
+                (target as CCPCharacter)?.OnCharacterContractsUpdated(endedContracts);
+                AppServices.EventAggregator?.Publish(new CharacterContractsUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContractsEndedEvent(target, endedContracts));
             }
         }
 
@@ -1054,7 +1080,9 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.WalletJournal.Import(result.ToXMLItem().WalletJournal);
-                EveMonClient.OnCharacterWalletJournalUpdated(target);
+                // CharacterWalletJournalUpdated
+                AppServices.TraceService?.Trace($"CharacterWalletJournalUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletJournalUpdatedEvent(target));
             }
         }
 
@@ -1068,7 +1096,9 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.WalletTransactions.Import(result.ToXMLItem().WalletTransactions);
-                EveMonClient.OnCharacterWalletTransactionsUpdated(target);
+                // CharacterWalletTransactionsUpdated
+                AppServices.TraceService?.Trace($"CharacterWalletTransactionsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletTransactionsUpdatedEvent(target));
             }
         }
 
@@ -1082,7 +1112,11 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.CharacterIndustryJobs.Import(result, IssuedFor.Character);
-                EveMonClient.OnCharacterIndustryJobsUpdated(target);
+                // CharacterIndustryJobsUpdated
+                AppServices.TraceService?.Trace($"CharacterIndustryJobsUpdated: {target.Name}");
+                (target as CCPCharacter)?.OnCharacterIndustryJobsUpdated();
+                AppServices.EventAggregator?.Publish(new CharacterIndustryJobsUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.IndustryJobsUpdatedEvent(target));
             }
         }
 
@@ -1096,7 +1130,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.ResearchPoints.Import(result);
-                EveMonClient.OnCharacterResearchPointsUpdated(target);
+                // CharacterResearchPointsUpdated
+                AppServices.TraceService?.Trace($"CharacterResearchPointsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterResearchUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterResearchPointsUpdatedEvent(target));
             }
         }
 
@@ -1117,7 +1154,7 @@ namespace EVEMon.Common.Services
                 target.EVEMailMessages.Import(result.ToXMLItem().Messages);
                 int newMessages = target.EVEMailMessages.NewMessages;
                 if (newMessages != 0)
-                    EveMonClient.Notifications.NotifyNewEVEMailMessages(target, newMessages);
+                    AppServices.Notifications.NotifyNewEVEMailMessages(target, newMessages);
             }
         }
 
@@ -1146,7 +1183,7 @@ namespace EVEMon.Common.Services
                 target.EVENotifications.Import(result);
                 int newNotify = target.EVENotifications.NewNotifications;
                 if (newNotify != 0)
-                    EveMonClient.Notifications.NotifyNewEVENotifications(target, newNotify);
+                    AppServices.Notifications.NotifyNewEVENotifications(target, newNotify);
             }
         }
 
@@ -1165,7 +1202,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.Contacts.Import(result);
-                EveMonClient.OnCharacterContactsUpdated(target);
+                // CharacterContactsUpdated
+                AppServices.TraceService?.Trace($"CharacterContactsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterContactsUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContactsUpdatedEvent(target));
             }
         }
 
@@ -1179,7 +1219,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.CharacterMedals.Import(result, true);
-                EveMonClient.OnCharacterMedalsUpdated(target);
+                // CharacterMedalsUpdated
+                AppServices.TraceService?.Trace($"CharacterMedalsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterMedalsUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterMedalsUpdatedEvent(target));
             }
         }
 
@@ -1193,7 +1236,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.KillLog.Import(result);
-                EveMonClient.OnCharacterKillLogUpdated(m_ccpCharacter);
+                // CharacterKillLogUpdated
+                AppServices.TraceService?.Trace($"CharacterKillLogUpdated: {m_ccpCharacter.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterKillLogUpdatedEvent(m_ccpCharacter.CharacterID, m_ccpCharacter.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterKillLogUpdatedEvent(m_ccpCharacter));
             }
         }
 
@@ -1212,7 +1258,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.UpcomingCalendarEvents.Import(result);
-                EveMonClient.OnCharacterUpcomingCalendarEventsUpdated(target);
+                // CharacterUpcomingCalendarEventsUpdated
+                AppServices.TraceService?.Trace($"CharacterUpcomingCalendarEventsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterCalendarUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpcomingCalendarEventsUpdatedEvent(target));
             }
         }
 
@@ -1226,10 +1275,13 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 // Invalidate previous notifications
-                EveMonClient.Notifications.InvalidateCharacterPlanetaryPinCompleted(target);
+                AppServices.Notifications.InvalidateCharacterPlanetaryPinCompleted(target);
 
                 target.PlanetaryColonies.Import(result);
-                EveMonClient.OnCharacterPlanetaryColoniesUpdated(target);
+                // CharacterPlanetaryColoniesUpdated
+                AppServices.TraceService?.Trace($"CharacterPlanetaryColoniesUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterPlanetaryUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryColoniesUpdatedEvent(target));
             }
         }
 
@@ -1243,7 +1295,10 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.LoyaltyPoints.Import(result);
-                EveMonClient.OnCharacterLoyaltyPointsUpdated(target);
+                // CharacterLoyaltyPointsUpdated
+                AppServices.TraceService?.Trace($"CharacterLoyaltyPointsUpdated: {target.Name}");
+                AppServices.EventAggregator?.Publish(new CharacterLoyaltyUpdatedEvent(target.CharacterID, target.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterLoyaltyPointsUpdatedEvent(target));
             }
         }
 

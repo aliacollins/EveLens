@@ -2,6 +2,7 @@
 using System.Drawing;
 using EVEMon.Common;
 using EVEMon.Common.Factories;
+using EVEMon.Common.Services;
 
 namespace EVEMon.LogitechG15
 {
@@ -85,7 +86,7 @@ namespace EVEMon.LogitechG15
 
             if (Settings.G15.ShowEVETime)
             {
-                string eveTime = EveMonClient.EVEServer.ServerDateTime.ToShortTimeString();
+                string eveTime = AppServices.EVEServer.ServerDateTime.ToShortTimeString();
                 SizeF eveTimeSize = canvas.MeasureString(eveTime, m_font);
                 RectangleF eveTimeRect = new RectangleF(new PointF(left, offset), eveTimeSize);
                 left = (int)eveTimeSize.Width + Pad;

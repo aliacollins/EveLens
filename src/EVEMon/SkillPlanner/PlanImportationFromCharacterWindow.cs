@@ -4,6 +4,7 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SkillPlanner
 {
@@ -61,7 +62,7 @@ namespace EVEMon.SkillPlanner
         private void CrossPlanSelect_Load(object? sender,EventArgs e)
         {
             cbCharacter.Items.Clear();
-            foreach (Character character in EveMonClient.Characters.Where(x => x.CharacterID != TargetCharacter.CharacterID))
+            foreach (Character character in AppServices.Characters.Where(x => x.CharacterID != TargetCharacter.CharacterID))
             {
                 cbCharacter.Items.Add(character);
             }

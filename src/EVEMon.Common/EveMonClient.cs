@@ -89,6 +89,9 @@ namespace EVEMon.Common
                 s_updateBatcher?.QueueCharacterUpdate(e.Character);
             });
 
+            // Initialize the account status subscriber (reacts to ESIKey and SkillQueue events)
+            AccountStatusSubscriber.Initialize();
+
             // Initialize the query scheduler - drives all character/corporation querying.
             s_smartQueryScheduler = new SmartQueryScheduler(
                 AppServices.Dispatcher, AppServices.EsiClient);

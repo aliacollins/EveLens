@@ -7,6 +7,8 @@ using EVEMon.Common.Serialization.Esi;
 using EVEMon.Core;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Net;
+using EVEMon.Common.Services;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -118,7 +120,7 @@ namespace EVEMon.Common.Models
                     ESIAPICharacterMethods.CalendarEventAttendees);
                 m_queryPending = true;
                 if (apiKey != null)
-                    EveMonClient.APIProviders.CurrentProvider.QueryEsi
+                    AppServices.APIProviders.CurrentProvider.QueryEsi
                         <EsiAPICalendarEventAttendees>(ESIAPICharacterMethods.
                         CalendarEventAttendees, OnCalendarEventAttendeesDownloaded,
                         new ESIParams(m_attendResponse, apiKey.AccessToken)
@@ -141,7 +143,7 @@ namespace EVEMon.Common.Models
             // Notify if an error occured
             if (m_ccpCharacter.ShouldNotifyError(result, ESIAPICharacterMethods.
                     CalendarEventAttendees))
-                EveMonClient.Notifications.NotifyCharacterCalendarEventAttendeesError(
+                AppServices.Notifications.NotifyCharacterCalendarEventAttendeesError(
                     m_ccpCharacter, result);
             if (result.HasData && !result.HasError && result.Result.Count > 0)
             {
@@ -149,7 +151,8 @@ namespace EVEMon.Common.Models
                     attendee));
                 m_eventAttendees.Clear();
                 m_eventAttendees.AddRange(attendees);
-                EveMonClient.OnCharacterCalendarEventAttendeesDownloaded(m_ccpCharacter);
+                AppServices.TraceService?.Trace(m_ccpCharacter.Name);
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterCalendarEventAttendeesDownloadedEvent(m_ccpCharacter));
             }
         }
 

@@ -4,6 +4,8 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Datafiles;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
+using EVEMon.Core.Events;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,6 +28,7 @@ namespace EVEMon.Common.Service
 
         private static bool s_savePending;
         private static DateTime s_lastSaveTime;
+        private static readonly IDisposable? s_thirtySecondTickSubscription;
 
         /// <summary>
         /// Static Constructor.
@@ -33,7 +36,8 @@ namespace EVEMon.Common.Service
         static EveIDToStation()
         {
             // Use ThirtySecondTick - batch station resolution is a background task
-            EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
+            s_thirtySecondTickSubscription = AppServices.EventAggregator?.Subscribe<ThirtySecondTickEvent>(
+                e => EveMonClient_TimerTick(null, EventArgs.Empty));
             s_lookupService.DataChanged += OnLookupServiceDataChanged;
         }
 
@@ -123,7 +127,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         public static void InitializeFromFile()
         {
-            if (EveMonClient.Closed)
+            if (AppServices.Closed)
                 return;
 
             // Only load if we haven't already

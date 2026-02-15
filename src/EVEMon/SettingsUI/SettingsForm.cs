@@ -11,6 +11,7 @@ using EVEMon.Common.MarketPricer;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Resources.Skill_Select;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using Microsoft.Win32;
 using System;
@@ -608,10 +609,10 @@ namespace EVEMon.SettingsUI
             catch (System.Reflection.ReflectionTypeLoadException e)
             {
                 // Dump the loader exceptions for more debug information
-                EveMonClient.Trace("Error loading market price providers:");
+                AppServices.TraceService?.Trace("Error loading market price providers:");
                 foreach (var exception in e.LoaderExceptions)
                     if (exception != null)
-                        EveMonClient.Trace(exception.ToString(), false);
+                        AppServices.TraceService?.Trace(exception.ToString(), false);
             }
 
             var selectedItem = cbProvidersList.Items.Cast<string>()

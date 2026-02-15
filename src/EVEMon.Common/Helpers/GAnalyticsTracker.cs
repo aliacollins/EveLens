@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Net;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.Common.Helpers
@@ -105,9 +106,9 @@ namespace EVEMon.Common.Helpers
                         .ConfigureAwait(false);
                     if (EveMonClient.IsDebugBuild)
                     {
-                        EveMonClient.Trace($"({category} - {action})");
+                        AppServices.TraceService?.Trace($"({category} - {action})");
                         if (result.Error != null)
-                            EveMonClient.Trace($"{result.Error.Message}");
+                            AppServices.TraceService?.Trace($"{result.Error.Message}");
                     }
                 }
                 catch (Exception ex)
@@ -121,7 +122,7 @@ namespace EVEMon.Common.Helpers
                 Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEvent(type, category,
                     action));
                 if (EveMonClient.IsDebugBuild)
-                    EveMonClient.Trace($"in {TimeSpan.FromMinutes(1)}");
+                    AppServices.TraceService?.Trace($"in {TimeSpan.FromMinutes(1)}");
             }
         }
 
@@ -143,13 +144,13 @@ namespace EVEMon.Common.Helpers
                 {
                     if (EveMonClient.IsDebugBuild)
                     {
-                        EveMonClient.Trace($"GAnalyticsTracker.TrackEventAsync - ({category} - {action})",
+                        AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - ({category} - {action})",
                             printMethod: false);
                         if (task.Result.Error != null)
-                            EveMonClient.Trace($"GAnalyticsTracker.TrackEventAsync - {task.Result.Error.Message}",
+                            AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - {task.Result.Error.Message}",
                                 printMethod: false);
                         else
-                            EveMonClient.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromDays(1)}",
+                            AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromDays(1)}",
                                 printMethod: false);
                     }
                     Dispatcher.Schedule(TimeSpan.FromDays(1), () => TrackStart(type, DailyStartText));
@@ -161,7 +162,7 @@ namespace EVEMon.Common.Helpers
                 Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEventAsync(type,
                     category, action));
                 if (EveMonClient.IsDebugBuild)
-                    EveMonClient.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromMinutes(1)}",
+                    AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromMinutes(1)}",
                         printMethod: false);
             }
         }

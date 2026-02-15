@@ -7,6 +7,7 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using EVEMon.Core;
 using System;
 using System.Collections.Generic;
@@ -481,7 +482,7 @@ namespace EVEMon.Common.Models
             }
             // Only query if the error count has not been exceeded
             if (key != null && !EsiErrors.IsErrorCountExceeded)
-                EveMonClient.APIProviders.CurrentProvider.QueryPagedEsi<T, U>(method, callback,
+                AppServices.APIProviders.CurrentProvider.QueryPagedEsi<T, U>(method, callback,
                     new ESIParams(response, key.AccessToken)
                     {
                         ParamOne = owner,
@@ -501,10 +502,10 @@ namespace EVEMon.Common.Models
             m_itemsResponse = result.Response;
             // Notify if an error occured
             if (target.ShouldNotifyError(result, methodEnum))
-                EveMonClient.Notifications.NotifyContractItemsError(target, result);
+                AppServices.Notifications.NotifyContractItemsError(target, result);
             if (!result.HasError && result.HasData && result.Result != null)
             {
-                EveMonClient.Notifications.InvalidateCharacterAPIError(target);
+                AppServices.Notifications.InvalidateCharacterAPIError(target);
                 Import(result.Result);
                 // Fire correct event type
                 if (methodEnum is ESIAPICharacterMethods)
@@ -532,10 +533,10 @@ namespace EVEMon.Common.Models
             m_bidsResponse = result.Response;
             // Notify if an error occured
             if (target.ShouldNotifyError(result, methodEnum))
-                EveMonClient.Notifications.NotifyContractBidsError(Character, result);
+                AppServices.Notifications.NotifyContractBidsError(Character, result);
             if (!result.HasError && result.Result != null)
             {
-                EveMonClient.Notifications.InvalidateCharacterAPIError(target);
+                AppServices.Notifications.InvalidateCharacterAPIError(target);
                 Import(result.Result);
                 // Fire correct event type
                 if (methodEnum is ESIAPICharacterMethods)

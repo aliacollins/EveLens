@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Models
 {
@@ -52,7 +53,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the CCP character representing this identity, or null when there is none.
         /// </summary>
-        public CCPCharacter CCPCharacter => EveMonClient.Characters.OfType<CCPCharacter>()
+        public CCPCharacter CCPCharacter => AppServices.Characters.OfType<CCPCharacter>()
                 .FirstOrDefault(character => character.CharacterID == CharacterID);
 
         /// <summary>

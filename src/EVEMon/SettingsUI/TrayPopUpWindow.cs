@@ -98,7 +98,7 @@ namespace EVEMon.SettingsUI
         {
             get
             {
-                List<Character> characters = EveMonClient.MonitoredCharacters.ToList();
+                List<Character> characters = AppServices.MonitoredCharacters.ToList();
 
                 // Filter characters not in training ?
                 if (!Settings.UI.SystemTrayPopup.ShowCharNotTraining)
@@ -138,7 +138,7 @@ namespace EVEMon.SettingsUI
         /// <param name="character">The character.</param>
         /// <returns>The API key for characters in the same account; otherwise the default API key of the character</returns>
         private static ESIKey AccountAPIKeyOrDefault(Character character) => character.Identity.ESIKeys
-            .First(apiKey => EveMonClient.MonitoredCharacters
+            .First(apiKey => AppServices.MonitoredCharacters
                 .Any(monitoredCharacter => monitoredCharacter.Identity.ESIKeys.Contains(apiKey)));
 
         /// <summary>
@@ -384,7 +384,7 @@ namespace EVEMon.SettingsUI
                 return;
 
             if (Settings.UI.SystemTrayPopup.ShowEveTime)
-                m_eveTimeLabel.Text = $"EVE Time: {EveMonClient.EVEServer.ServerDateTime:HH:mm}";
+                m_eveTimeLabel.Text = $"EVE Time: {AppServices.EVEServer.ServerDateTime:HH:mm}";
         }
 
         /// <summary>
@@ -396,7 +396,7 @@ namespace EVEMon.SettingsUI
                 return;
 
             if (Settings.UI.SystemTrayPopup.ShowServerStatus)
-                m_serverStatusLabel.Text = EveMonClient.EVEServer.StatusText;
+                m_serverStatusLabel.Text = AppServices.EVEServer.StatusText;
         }
 
         #endregion

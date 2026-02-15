@@ -564,7 +564,7 @@ namespace EVEMon.CharacterMonitoring
                     lvAssets.Groups.Clear();
                     lvAssets.VirtualListSize = m_virtualModeItems.Count;
 
-                    EveMonClient.Trace($"CharacterAssetsList - Virtual mode enabled for {m_virtualModeItems.Count} items");
+                    AppServices.TraceService?.Trace($"CharacterAssetsList - Virtual mode enabled for {m_virtualModeItems.Count} items");
 
                 }, EveMonClient.CurrentSynchronizationContext);
             }

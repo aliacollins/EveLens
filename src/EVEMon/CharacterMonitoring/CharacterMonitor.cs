@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Models;
 using EVEMon.Common.Notifications;
+using EVEMon.Common.Services;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -71,7 +72,7 @@ namespace EVEMon.CharacterMonitoring
                                                          Behaviour = NotificationBehaviour.Overwrite,
                                                          Description = "Test Character Notification."
                                                      };
-            EveMonClient.Notifications.Notify(notification);
+            AppServices.Notifications.Notify(notification);
         }
 
         #endregion

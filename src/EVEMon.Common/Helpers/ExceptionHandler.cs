@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using EVEMon.Common.Extensions;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Helpers
 {
@@ -33,7 +34,7 @@ namespace EVEMon.Common.Helpers
         private static void LogException(Exception e, string header)
         {
             Trace.WriteLine(string.Empty);
-            EveMonClient.Trace(header);
+            AppServices.TraceService?.Trace(header);
             Trace.Indent();
             Trace.WriteLine(e.ToString().RemoveProjectLocalPath());
             Trace.WriteLine(string.Empty);

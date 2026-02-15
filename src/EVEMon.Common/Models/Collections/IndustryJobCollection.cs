@@ -4,6 +4,8 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
+using CommonEvents = EVEMon.Common.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -153,17 +155,24 @@ namespace EVEMon.Common.Models.Collections
                     if (isCorporateMonitor)
                     {
                         if (characterJobs.Count > 0)
+                        {
                             // Fire event for corporation job completion on behalf of character
-                            EveMonClient.OnCharacterIndustryJobsCompleted(m_ccpCharacter,
-                                characterJobs);
+                            AppServices.TraceService?.Trace(m_ccpCharacter.Name);
+                            m_ccpCharacter.OnCharacterIndustryJobsCompleted(characterJobs);
+                            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterIndustryJobsCompletedEvent(m_ccpCharacter, characterJobs));
+                        }
                         // Fire event for corporation job completion
-                        EveMonClient.OnCorporationIndustryJobsCompleted(m_ccpCharacter,
-                            jobsCompleted);
+                        AppServices.TraceService?.Trace(m_ccpCharacter.CorporationName);
+                        m_ccpCharacter.OnCorporationIndustryJobsCompleted(jobsCompleted);
+                        AppServices.EventAggregator?.Publish(new CommonEvents.CorporationIndustryJobsCompletedEvent(m_ccpCharacter, jobsCompleted));
                     }
                     else
+                    {
                         // Fire event for character job completion
-                        EveMonClient.OnCharacterIndustryJobsCompleted(m_ccpCharacter,
-                            jobsCompleted);
+                        AppServices.TraceService?.Trace(m_ccpCharacter.Name);
+                        m_ccpCharacter.OnCharacterIndustryJobsCompleted(jobsCompleted);
+                        AppServices.EventAggregator?.Publish(new CommonEvents.CharacterIndustryJobsCompletedEvent(m_ccpCharacter, jobsCompleted));
+                    }
                 }
             }
         }

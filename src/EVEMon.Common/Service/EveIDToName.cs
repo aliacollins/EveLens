@@ -8,7 +8,9 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
+using EVEMon.Core.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +35,7 @@ namespace EVEMon.Common.Service
 
         private static bool s_savePending;
         private static DateTime s_lastSaveTime;
+        private static readonly IDisposable? s_thirtySecondTickSubscription;
 
         /// <summary>
         /// Static Constructor.
@@ -40,7 +43,8 @@ namespace EVEMon.Common.Service
         static EveIDToName()
         {
             // Use ThirtySecondTick - batch name resolution is a background task
-            EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
+            s_thirtySecondTickSubscription = AppServices.EventAggregator?.Subscribe<ThirtySecondTickEvent>(
+                e => EveMonClient_TimerTick(null, EventArgs.Empty));
         }
 
         #region Helpers
@@ -95,7 +99,7 @@ namespace EVEMon.Common.Service
         public static void InitializeFromFile()
         {
             // Quit if the client has been shut down
-            if (EveMonClient.Closed || s_cacheList.Any())
+            if (AppServices.Closed || s_cacheList.Any())
                 return;
             // Deserialize the file
             var cache = LocalXmlCache.Load<SerializableEveIDToName>(Filename, true);
@@ -209,11 +213,11 @@ namespace EVEMon.Common.Service
                     }
                 }
                 string ids = "[ " + string.Join(",", toDo) + " ]";
-                EveMonClient.Trace("EveIDToName.FetchIDsInternalAsync - Requesting {0} IDs: {1}",
+                AppServices.TraceService?.Trace("EveIDToName.FetchIDsInternalAsync - Requesting {0} IDs: {1}",
                     toDo.Count, ids.Length > 200 ? ids.Substring(0, 200) + "..." : ids);
                 // Given the number of IDs we are requesting, it is very unlikely that the
                 // eTag or expiration will be useful
-                var result = await EveMonClient.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPICharacterNames>(
+                var result = await AppServices.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPICharacterNames>(
                     ESIAPIGenericMethods.CharacterName,
                     new ESIParams()
                     {
@@ -232,20 +236,20 @@ namespace EVEMon.Common.Service
                     // 404 means the ID doesn't exist (deleted char/corp/alliance) - not a real error
                     if (result.ResponseCode == 404)
                     {
-                        EveMonClient.Trace("EveIDToName.OnQueryAPICharacterNameUpdated - ID not found (404), marking as unknown");
+                        AppServices.TraceService?.Trace("EveIDToName.OnQueryAPICharacterNameUpdated - ID not found (404), marking as unknown");
                         // The IDs that failed are already in the cache with pending status
                         // They will show as "Unknown" which is the correct behavior
                     }
                     else
                     {
-                        EveMonClient.Trace("EveIDToName.OnQueryAPICharacterNameUpdated - Error: {0}",
+                        AppServices.TraceService?.Trace("EveIDToName.OnQueryAPICharacterNameUpdated - Error: {0}",
                             result.Exception?.Message ?? "Unknown error");
-                        EveMonClient.Notifications.NotifyCharacterNameError(result);
+                        AppServices.Notifications.NotifyCharacterNameError(result);
                     }
                 }
                 else
                 {
-                    EveMonClient.Notifications.InvalidateAPIError();
+                    AppServices.Notifications.InvalidateAPIError();
                     // This probably will never be false since we did not provide an etag
                     if (result.HasData)
                         lock (m_cache)
@@ -287,7 +291,7 @@ namespace EVEMon.Common.Service
                 }
                 // Try filling with a current character identity or corporation/alliance
                 if (string.IsNullOrEmpty(name))
-                    foreach (var character in EveMonClient.Characters)
+                    foreach (var character in AppServices.Characters)
                     {
                         string corpName = character.CorporationName, allianceName = character.
                             AllianceName;

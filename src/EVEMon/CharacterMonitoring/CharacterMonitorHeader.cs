@@ -232,7 +232,7 @@ namespace EVEMon.CharacterMonitoring
                 FormatBalance();
                 FormatAttributes();
                 UpdateInfoControls();
-                UpdateCharacterLabel(EveMonClient.Characters.GetKnownLabels());
+                UpdateCharacterLabel(AppServices.Characters.GetKnownLabels());
                 UpdateAccountStatusInfo();
                 UpdateESIKeyWarning();
             }

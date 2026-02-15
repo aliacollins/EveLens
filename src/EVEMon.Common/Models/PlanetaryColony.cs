@@ -4,6 +4,7 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Core;
 using System;
 using System.Collections.Generic;
@@ -167,7 +168,7 @@ namespace EVEMon.Common.Models
                     PlanetaryLayout);
                 m_queryPinsPending = true;
                 if (apiKey != null)
-                    EveMonClient.APIProviders.CurrentProvider.QueryEsi<EsiAPIPlanetaryColony>(
+                    AppServices.APIProviders.CurrentProvider.QueryEsi<EsiAPIPlanetaryColony>(
                         ESIAPICharacterMethods.PlanetaryLayout, OnPlanetaryPinsUpdated,
                         new ESIParams(m_layoutResponse, apiKey.AccessToken) {
                             ParamOne = Character.CharacterID,
@@ -187,11 +188,11 @@ namespace EVEMon.Common.Models
             m_layoutResponse = result.Response;
             // Notify if an error occured
             if (Character.ShouldNotifyError(result, ESIAPICharacterMethods.PlanetaryLayout))
-                EveMonClient.Notifications.NotifyCharacterPlanetaryLayoutError(Character,
+                AppServices.Notifications.NotifyCharacterPlanetaryLayoutError(Character,
                     result);
             if (!result.HasError)
             {
-                EveMonClient.Notifications.InvalidateCharacterAPIError(Character);
+                AppServices.Notifications.InvalidateCharacterAPIError(Character);
                 if (result.HasData)
                 {
                     Import(result.Result);

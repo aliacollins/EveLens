@@ -3,6 +3,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using System;
 
 namespace EVEMon.Common.CustomEventArgs
@@ -43,12 +44,12 @@ namespace EVEMon.Common.CustomEventArgs
 
                 // Only one character per ESI key
                 // Look for an existing character ID and update its name
-                CharacterIdentity identity = EveMonClient.CharacterIdentities[charId];
+                CharacterIdentity identity = AppServices.CharacterIdentities[charId];
                 if (identity != null)
                     identity.CharacterName = name;
                 else
                     // Create an identity if necessary
-                    identity = EveMonClient.CharacterIdentities.Add(charId, name);
+                    identity = AppServices.CharacterIdentities.Add(charId, name);
                 Identity = identity;
             }
         }
@@ -106,7 +107,7 @@ namespace EVEMon.Common.CustomEventArgs
         public ESIKey CreateOrUpdate()
         {
             // Checks whether this ESI key already exists to update it
-            ESIKey esiKey = EveMonClient.ESIKeys[ID];
+            ESIKey esiKey = AppServices.ESIKeys[ID];
             if (esiKey != null)
             {
                 esiKey.Update(this);
@@ -118,7 +119,7 @@ namespace EVEMon.Common.CustomEventArgs
             {
                 esiKey = new ESIKey(ID);
                 esiKey.Update(this);
-                EveMonClient.ESIKeys.Add(esiKey);
+                AppServices.ESIKeys.Add(esiKey);
             }
 
             return esiKey;

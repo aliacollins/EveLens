@@ -669,7 +669,7 @@ namespace EVEMon.SkillPlanner
         private void mFile_DropDownOpening(object? sender,EventArgs e)
         {
             // See if we have multiple characters to determine if load from character is enabled
-            miImportPlanFromCharacter.Enabled = EveMonClient.Characters.Count > 1;
+            miImportPlanFromCharacter.Enabled = AppServices.Characters.Count > 1;
             miExportPlan.Enabled = lbPlanList.SelectedItems.Count == 1;
             miSavePlans.Enabled = lbPlanList.Items.Count > 0;
         }

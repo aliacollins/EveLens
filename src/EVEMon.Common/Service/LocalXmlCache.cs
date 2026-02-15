@@ -1,6 +1,7 @@
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using System;
 using System.IO;
 using System.Text;
@@ -69,7 +70,7 @@ namespace EVEMon.Common.Service
                 // Delete file if parsing failed
                 if (parsed == null && deleteOnFail)
                 {
-                    EveMonClient.Trace("Failed to load data from file " + filename +
+                    AppServices.TraceService?.Trace("Failed to load data from file " + filename +
                         "; deleting file");
                     File.Delete(fileName);
                 }

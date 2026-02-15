@@ -2,6 +2,9 @@
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
+using CoreEvents = EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -19,7 +22,7 @@ namespace EVEMon.Common.Models
         internal static long GetNextBlankCharacterID()
         {
             long id = BlankCharacterID;
-            while (EveMonClient.CharacterIdentities[id] != null)
+            while (AppServices.CharacterIdentities[id] != null)
                 id++;
             return id;
         }
@@ -96,7 +99,9 @@ namespace EVEMon.Common.Models
                     return;
 
                 m_uri = value;
-                EveMonClient.OnCharacterUpdated(this);
+                AppServices.TraceService?.Trace(Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(CharacterID, Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(this));
             }
         }
 
@@ -126,7 +131,9 @@ namespace EVEMon.Common.Models
 
             m_uri = !string.IsNullOrEmpty(serial.Address) ? new Uri(serial.Address) : null;
 
-            EveMonClient.OnCharacterUpdated(this);
+            AppServices.TraceService?.Trace(Name);
+            AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(CharacterID, Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(this));
         }
 
         /// <summary>

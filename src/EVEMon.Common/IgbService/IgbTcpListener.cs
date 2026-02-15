@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.IgbService
 {
@@ -52,12 +53,12 @@ namespace EVEMon.Common.IgbService
                 {
                     // Null out the listener then notify the trace file and the user
                     m_listener = null;
-                    EveMonClient.Trace($"{ex.SocketErrorCode} - {ex.Message} - {ex.ErrorCode}", printMethod: false);
-                    EveMonClient.Notifications.NotifyIgbServiceException(m_listenEndpoint.Port);
+                    AppServices.TraceService?.Trace($"{ex.SocketErrorCode} - {ex.Message} - {ex.ErrorCode}", printMethod: false);
+                    AppServices.Notifications.NotifyIgbServiceException(m_listenEndpoint.Port);
                     return;
                 }
 
-                EveMonClient.Notifications.InvalidateIgbServiceException();
+                AppServices.Notifications.InvalidateIgbServiceException();
             }
         }
 

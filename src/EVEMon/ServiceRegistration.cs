@@ -1,5 +1,8 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using EVEMon.Common.Collections.Global;
+using EVEMon.Common.Interfaces;
+using EVEMon.Common.Models;
 using EVEMon.Common.Services;
 using EVEMon.Core.Interfaces;
 
@@ -30,12 +33,30 @@ namespace EVEMon
         {
             var services = new ServiceCollection();
 
-            // Register core interfaces as singletons (they wrap static classes)
+            // Core services (existing)
             services.AddSingleton<IDispatcher>(sp => AppServices.Dispatcher);
             services.AddSingleton<ISettingsProvider>(sp => AppServices.Settings);
             services.AddSingleton<IEsiClient>(sp => AppServices.EsiClient);
             services.AddSingleton<IEventAggregator>(sp => AppServices.EventAggregator);
             services.AddSingleton<ICharacterRepository>(sp => AppServices.CharacterRepository);
+
+            // Infrastructure services
+            services.AddSingleton<ITraceService>(sp => AppServices.TraceService);
+            services.AddSingleton<IApplicationPaths>(sp => AppServices.ApplicationPaths);
+            services.AddSingleton<INameResolver>(sp => AppServices.NameResolver);
+            services.AddSingleton<IStationResolver>(sp => AppServices.StationResolver);
+            services.AddSingleton<IFlagResolver>(sp => AppServices.FlagResolver);
+            services.AddSingleton<Core.Interfaces.IImageService>(sp => AppServices.ImageService);
+            services.AddSingleton<INotificationTypeResolver>(sp => AppServices.NotificationTypeResolver);
+            services.AddSingleton<IResourceProvider>(sp => AppServices.ResourceProvider);
+            services.AddSingleton<ISettingsDataStore>(sp => AppServices.DataStore);
+
+            // Global collection services
+            services.AddSingleton(sp => AppServices.Notifications);
+            services.AddSingleton(sp => AppServices.Characters);
+            services.AddSingleton(sp => AppServices.ESIKeys);
+            services.AddSingleton(sp => AppServices.MonitoredCharacters);
+            services.AddSingleton(sp => AppServices.EVEServer);
 
             s_serviceProvider = services.BuildServiceProvider();
         }

@@ -8,6 +8,9 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Constants;
+using EVEMon.Common.Services;
+using CoreEvents = EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -52,7 +55,9 @@ namespace EVEMon.Common.Models
 
                 m_name = value;
 
-                EveMonClient.OnCharacterUpdated(m_owner);
+                AppServices.TraceService?.Trace(m_owner?.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_owner.CharacterID, m_owner.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_owner));
             }
         }
 
@@ -74,7 +79,9 @@ namespace EVEMon.Common.Models
 
                 m_values[(int)slot] = value ?? new Implant(slot);
 
-                EveMonClient.OnCharacterUpdated(m_owner);
+                AppServices.TraceService?.Trace(m_owner?.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_owner.CharacterID, m_owner.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_owner));
             }
         }
 

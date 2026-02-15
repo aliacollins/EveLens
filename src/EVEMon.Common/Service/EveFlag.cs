@@ -3,6 +3,7 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -104,11 +105,11 @@ namespace EVEMon.Common.Service
         {
             if (result == null)
             {
-                EveMonClient.Trace("failed");
+                AppServices.TraceService?.Trace("failed");
                 return;
             }
 
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             s_eveFlags.Clear();
             // This is way faster to look up flags
@@ -117,7 +118,7 @@ namespace EVEMon.Common.Service
 
             s_isLoaded = true;
 
-            EveMonClient.Trace("done");
+            AppServices.TraceService?.Trace("done");
         }
 
         /// <summary>
@@ -152,7 +153,7 @@ namespace EVEMon.Common.Service
                 // Reset query pending flag
                 s_queryPending = false;
 
-                EveMonClient.Trace(result.Error.Message);
+                AppServices.TraceService?.Trace(result.Error.Message);
 
                 // Fallback
                 EnsureInitialized();

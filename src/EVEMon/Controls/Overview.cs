@@ -119,12 +119,12 @@ namespace EVEMon.Controls
         private void UpdateContent()
         {
             // User has disabled the Overview
-            if (!Settings.UI.MainWindow.ShowOverview || EveMonClient.MonitoredCharacters == null)
+            if (!Settings.UI.MainWindow.ShowOverview || AppServices.MonitoredCharacters == null)
                 return;
 
             List<OverviewItem> overviewItems = Controls.OfType<OverviewItem>().ToList();
             // Updates the visibility of the label for when no characters are loaded
-            if (!EveMonClient.MonitoredCharacters.Any())
+            if (!AppServices.MonitoredCharacters.Any())
             {
                 if (overviewItems.Count > 0)
                     CleanUp(overviewItems);
@@ -150,11 +150,11 @@ namespace EVEMon.Controls
 
             if (m_grouping)
             {
-                characters.AddRange(EveMonClient.MonitoredCharacters.Where(x => x.IsTraining));
-                characters.AddRange(EveMonClient.MonitoredCharacters.Where(x => !x.IsTraining));
+                characters.AddRange(AppServices.MonitoredCharacters.Where(x => x.IsTraining));
+                characters.AddRange(AppServices.MonitoredCharacters.Where(x => !x.IsTraining));
             }
             else
-                characters.AddRange(EveMonClient.MonitoredCharacters);
+                characters.AddRange(AppServices.MonitoredCharacters);
 
             int index = 0;
             
@@ -352,7 +352,7 @@ namespace EVEMon.Controls
                     rowIndex = 0;
                 }
 
-                labelNoCharacters.Visible = !EveMonClient.MonitoredCharacters.Any();
+                labelNoCharacters.Visible = !AppServices.MonitoredCharacters.Any();
 
                 base.AdjustFormScrollbars(true);
             }

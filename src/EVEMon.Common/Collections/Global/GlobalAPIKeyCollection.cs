@@ -5,6 +5,9 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
+using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Collections.Global
 {
@@ -46,7 +49,12 @@ namespace EVEMon.Common.Collections.Global
                 identity.ESIKeys.Remove(apiKey);
 
                 if (identity.CCPCharacter != null)
-                    EveMonClient.OnCharacterUpdated(identity.CCPCharacter);
+                {
+                    var character = identity.CCPCharacter;
+                    AppServices.TraceService?.Trace(character.Name);
+                    AppServices.EventAggregator?.Publish(new CharacterUpdatedEvent(character.CharacterID, character.Name));
+                    AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(character));
+                }
             }
 
             // Remove the API key
@@ -56,7 +64,9 @@ namespace EVEMon.Common.Collections.Global
             // Dispose
             apiKey.Dispose();
 
-            EveMonClient.OnESIKeyCollectionChanged();
+            AppServices.TraceService?.Trace("ESIKeyCollectionChanged");
+            AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -66,7 +76,9 @@ namespace EVEMon.Common.Collections.Global
         internal void Add(ESIKey apiKey)
         {
             Items.Add(apiKey.ID, apiKey);
-            EveMonClient.OnESIKeyCollectionChanged();
+            AppServices.TraceService?.Trace("ESIKeyCollectionChanged");
+            AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyCollectionChangedEvent.Instance);
         }
 
         #endregion
@@ -95,12 +107,14 @@ namespace EVEMon.Common.Collections.Global
                 }
                 catch (ArgumentException ex)
                 {
-                    EveMonClient.Trace($"An API key with id {apikey.ID} already existed; additional instance ignored.");
+                    AppServices.TraceService?.Trace($"An API key with id {apikey.ID} already existed; additional instance ignored.");
                     ExceptionHandler.LogException(ex, true);
                 }
             }
 
-            EveMonClient.OnESIKeyCollectionChanged();
+            AppServices.TraceService?.Trace("ESIKeyCollectionChanged");
+            AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyCollectionChangedEvent.Instance);
         }
 
         /// <summary>

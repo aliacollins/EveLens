@@ -54,7 +54,7 @@ namespace EVEMon.Common.Models.Collections
                 return;
 
             // Create a new CCP character
-            EveMonClient.Characters.Add(AppServices.CharacterFactory.CreateCCPCharacter(identity));
+            AppServices.Characters.Add(AppServices.CharacterFactory.CreateCCPCharacter(identity));
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace EVEMon.Common.Models.Collections
 
             // If the identity was belonging to this API key, remove the character (won't be serialized anymore !)
             if (id.ESIKeys.Contains(m_owner))
-                EveMonClient.Characters.Remove(character);
+                AppServices.Characters.Remove(character);
         }
 
         /// <summary>
@@ -86,8 +86,8 @@ namespace EVEMon.Common.Models.Collections
         {
             Items.Clear();
             foreach (CharacterIdentity id in serialIDList.Select(
-                serialID => EveMonClient.CharacterIdentities[serialID.ID] ??
-                            EveMonClient.CharacterIdentities.Add(serialID.ID, serialID.Name)))
+                serialID => AppServices.CharacterIdentities[serialID.ID] ??
+                            AppServices.CharacterIdentities.Add(serialID.ID, serialID.Name)))
             {
                 Items.Add(id);
             }

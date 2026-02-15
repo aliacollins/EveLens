@@ -6,6 +6,7 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using System;
@@ -309,7 +310,7 @@ namespace EVEMon.Common
                 result = new CCPAPIResult<T>(HttpWebClientServiceException.Exception(url, e));
 
                 ExceptionHandler.LogException(e, false);
-                EveMonClient.Trace($"Method: DownloadAPIResultAsync, url: {url.AbsoluteUri}, postdata: {param?.Content}, type: {typeof(T).Name}",
+                AppServices.TraceService?.Trace($"Method: DownloadAPIResultAsync, url: {url.AbsoluteUri}, postdata: {param?.Content}, type: {typeof(T).Name}",
                     false);
             }
 

@@ -6,6 +6,7 @@ using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -38,7 +39,7 @@ namespace EVEMon.Common.Models.Collections
             if (issuedFor == IssuedFor.Corporation)
             {
                 // Find matching character identity, if any
-                var issuer = EveMonClient.CharacterIdentities.FirstOrDefault(character =>
+                var issuer = AppServices.CharacterIdentities.FirstOrDefault(character =>
                     character.CharacterID == srcOrder.IssuedBy);
                 // If the character is monitored and has access mask to market
                 if (issuer != null && (issuer.CCPCharacter?.Monitored ?? false) && issuer.

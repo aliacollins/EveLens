@@ -4,6 +4,9 @@ using System.Linq;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
+using CoreEvents = EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -100,7 +103,9 @@ namespace EVEMon.Common.Models.Collections
             m_highestID = Items.Any() ? Items.Max(item => item.MessageID) : 0;
 
             // Fires the event regarding EVE mail messages update
-            EveMonClient.OnCharacterEVEMailMessagesUpdated(m_ccpCharacter);
+            AppServices.TraceService?.Trace(m_ccpCharacter.Name);
+            AppServices.EventAggregator?.Publish(new CoreEvents.CharacterMailUpdatedEvent(m_ccpCharacter.CharacterID, m_ccpCharacter.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailMessagesUpdatedEvent(m_ccpCharacter));
         }
 
         /// <summary>

@@ -368,7 +368,7 @@ namespace EVEMon.Common.Services
 
                         if (settings != null)
                         {
-                            SettingsFileManager.SaveFromSerializableSettingsAsync(settings)
+                            Task.Run(() => SettingsFileManager.SaveFromSerializableSettingsAsync(settings))
                                 .GetAwaiter().GetResult();
                             Interlocked.Increment(ref _actualWriteCount);
                         }

@@ -9,7 +9,9 @@ using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -50,7 +52,10 @@ namespace EVEMon.Common.Models
             {
                 m_name = value;
                 if (IsConnected)
-                    EveMonClient.OnPlanNameChanged((Plan)this);
+                {
+                    AppServices.TraceService?.Trace(m_name);
+                    AppServices.EventAggregator?.Publish(new CommonEvents.PlanNameChangedEvent((Plan)this));
+                }
             }
         }
 
@@ -64,7 +69,10 @@ namespace EVEMon.Common.Models
             {
                 m_description = value;
                 if (IsConnected)
-                    EveMonClient.OnPlanNameChanged((Plan)this);
+                {
+                    AppServices.TraceService?.Trace(m_name);
+                    AppServices.EventAggregator?.Publish(new CommonEvents.PlanNameChangedEvent((Plan)this));
+                }
             }
         }
 

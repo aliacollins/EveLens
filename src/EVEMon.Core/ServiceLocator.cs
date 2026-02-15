@@ -3,9 +3,10 @@ using EVEMon.Core.Interfaces;
 namespace EVEMon.Core
 {
     /// <summary>
-    /// Lightweight service locator in the Core assembly.
-    /// Provides interface-only access to services from any assembly layer.
-    /// Implementations are registered by EVEMon.Common at startup via AppServices.
+    /// Lightweight Core-level service access for pre-DI static data loading only
+    /// (StaticSkills, StaticBlueprints, etc.). Static data classes load BEFORE the DI
+    /// container, so they use this ServiceLocator. Everything else should use constructor
+    /// injection or AppServices.
     /// </summary>
     public static class ServiceLocator
     {

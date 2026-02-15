@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using EVEMon.Common.Attributes;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Collections.Global
 {
@@ -23,7 +25,8 @@ namespace EVEMon.Common.Collections.Global
             Items.AddRange(order);
 
             // Notify the change
-            EveMonClient.OnMonitoredCharactersChanged();
+            AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -46,7 +49,8 @@ namespace EVEMon.Common.Collections.Global
             Items.RemoveAt(oldIndex);
             Items.Insert(targetIndex, item);
 
-            EveMonClient.OnMonitoredCharactersChanged();
+            AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -62,7 +66,8 @@ namespace EVEMon.Common.Collections.Global
                     return;
 
                 Items.Add(character);
-                EveMonClient.OnMonitoredCharactersChanged();
+                AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+                AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
                 return;
             }
 
@@ -70,7 +75,8 @@ namespace EVEMon.Common.Collections.Global
                 return;
 
             Items.Remove(character);
-            EveMonClient.OnMonitoredCharactersChanged();
+            AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -83,13 +89,14 @@ namespace EVEMon.Common.Collections.Global
 
             if (!monitoredCharacters.Any())
             {
-                EveMonClient.OnMonitoredCharactersChanged();
+                AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+                AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
                 return;
             }
 
             foreach (MonitoredCharacterSettings characterSettings in monitoredCharacters)
             {
-                Character character = EveMonClient.Characters[characterSettings.CharacterGuid.ToString()];
+                Character character = AppServices.Characters[characterSettings.CharacterGuid.ToString()];
                 if (character == null)
                     continue;
 
@@ -97,7 +104,8 @@ namespace EVEMon.Common.Collections.Global
                 character.Monitored = true;
                 character.UISettings = characterSettings.Settings;
 
-                EveMonClient.OnMonitoredCharactersChanged();
+                AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+                AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
             }
         }
 

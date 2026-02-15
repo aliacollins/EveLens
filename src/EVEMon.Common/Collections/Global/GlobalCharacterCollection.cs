@@ -9,6 +9,8 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Services;
+using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Collections.Global
 {
@@ -38,7 +40,11 @@ namespace EVEMon.Common.Collections.Global
                 character.Monitored = true;
 
             if (notify)
-                EveMonClient.OnCharacterCollectionChanged();
+            {
+                AppServices.TraceService?.Trace("CharacterCollectionChanged");
+                AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
+                AppServices.EventAggregator?.Publish(CommonEvents.CharacterCollectionChangedEvent.Instance);
+            }
         }
 
         /// <summary>
@@ -59,14 +65,18 @@ namespace EVEMon.Common.Collections.Global
 
                 // Clear all the keys so that we do not get into an infinite loop
                 keys.Clear();
-                oldKeys.ForEach(esiKey => EveMonClient.ESIKeys.Remove(esiKey));
+                oldKeys.ForEach(esiKey => AppServices.ESIKeys.Remove(esiKey));
             }
 
             // Dispose
             character.Dispose();
 
             if (notify)
-                EveMonClient.OnCharacterCollectionChanged();
+            {
+                AppServices.TraceService?.Trace("CharacterCollectionChanged");
+                AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
+                AppServices.EventAggregator?.Publish(CommonEvents.CharacterCollectionChangedEvent.Instance);
+            }
         }
 
         /// <summary>
@@ -132,7 +142,7 @@ namespace EVEMon.Common.Collections.Global
         internal void Import(IEnumerable<SerializableSettingsCharacter> serial)
         {
             // Clear the API key on every identity
-            foreach (CharacterIdentity id in EveMonClient.CharacterIdentities)
+            foreach (CharacterIdentity id in AppServices.CharacterIdentities)
             {
                 id.ESIKeys.Clear();
             }
@@ -148,8 +158,8 @@ namespace EVEMon.Common.Collections.Global
             foreach (SerializableSettingsCharacter serialCharacter in serial)
             {
                 // Gets the identity or create it
-                CharacterIdentity id = EveMonClient.CharacterIdentities[serialCharacter.ID] ??
-                    EveMonClient.CharacterIdentities.Add(serialCharacter.ID, serialCharacter.Name);
+                CharacterIdentity id = AppServices.CharacterIdentities[serialCharacter.ID] ??
+                    AppServices.CharacterIdentities.Add(serialCharacter.ID, serialCharacter.Name);
 
                 // Imports the character
                 SerializableCCPCharacter ccpCharacter = serialCharacter as SerializableCCPCharacter;
@@ -163,7 +173,9 @@ namespace EVEMon.Common.Collections.Global
             }
 
             // Notify the change
-            EveMonClient.OnCharacterCollectionChanged();
+            AppServices.TraceService?.Trace("CharacterCollectionChanged");
+            AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.CharacterCollectionChangedEvent.Instance);
         }
 
         /// <summary>

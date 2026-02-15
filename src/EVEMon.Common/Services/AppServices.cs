@@ -1,4 +1,6 @@
+using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Interfaces;
+using EVEMon.Common.Models;
 using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Services
@@ -28,6 +30,60 @@ namespace EVEMon.Common.Services
         private static Core.Interfaces.IImageService s_imageService;
         private static INotificationTypeResolver s_notificationTypeResolver;
         private static IResourceProvider s_resourceProvider;
+        private static GlobalNotificationCollection s_notifications;
+        private static GlobalCharacterCollection s_characters;
+        private static GlobalAPIKeyCollection s_esiKeys;
+        private static GlobalAPIProviderCollection s_apiProviders;
+        private static GlobalCharacterIdentityCollection s_characterIdentities;
+        private static GlobalMonitoredCharacterCollection s_monitoredCharacters;
+        private static EveServer s_eveServer;
+
+        /// <summary>
+        /// Gets the notification collection.
+        /// </summary>
+        public static GlobalNotificationCollection Notifications
+            => s_notifications ?? (s_notifications = EveMonClient.Notifications);
+
+        /// <summary>
+        /// Gets the character collection.
+        /// </summary>
+        public static GlobalCharacterCollection Characters
+            => s_characters ?? (s_characters = EveMonClient.Characters);
+
+        /// <summary>
+        /// Gets the ESI key collection.
+        /// </summary>
+        public static GlobalAPIKeyCollection ESIKeys
+            => s_esiKeys ?? (s_esiKeys = EveMonClient.ESIKeys);
+
+        /// <summary>
+        /// Gets the API provider collection.
+        /// </summary>
+        public static GlobalAPIProviderCollection APIProviders
+            => s_apiProviders ?? (s_apiProviders = EveMonClient.APIProviders);
+
+        /// <summary>
+        /// Gets the character identity collection.
+        /// </summary>
+        public static GlobalCharacterIdentityCollection CharacterIdentities
+            => s_characterIdentities ?? (s_characterIdentities = EveMonClient.CharacterIdentities);
+
+        /// <summary>
+        /// Gets the monitored character collection.
+        /// </summary>
+        public static GlobalMonitoredCharacterCollection MonitoredCharacters
+            => s_monitoredCharacters ?? (s_monitoredCharacters = EveMonClient.MonitoredCharacters);
+
+        /// <summary>
+        /// Gets the EVE server status.
+        /// </summary>
+        public static EveServer EVEServer
+            => s_eveServer ?? (s_eveServer = EveMonClient.EVEServer);
+
+        /// <summary>
+        /// Gets whether the application is closed.
+        /// </summary>
+        public static bool Closed => EveMonClient.Closed;
 
         /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
@@ -138,6 +194,13 @@ namespace EVEMon.Common.Services
         internal static void SetImageService(Core.Interfaces.IImageService svc) => s_imageService = svc;
         internal static void SetNotificationTypeResolver(INotificationTypeResolver resolver) => s_notificationTypeResolver = resolver;
         internal static void SetResourceProvider(IResourceProvider provider) => s_resourceProvider = provider;
+        internal static void SetNotifications(GlobalNotificationCollection notifications) => s_notifications = notifications;
+        internal static void SetCharacters(GlobalCharacterCollection chars) => s_characters = chars;
+        internal static void SetESIKeys(GlobalAPIKeyCollection keys) => s_esiKeys = keys;
+        internal static void SetAPIProviders(GlobalAPIProviderCollection providers) => s_apiProviders = providers;
+        internal static void SetCharacterIdentities(GlobalCharacterIdentityCollection ids) => s_characterIdentities = ids;
+        internal static void SetMonitoredCharacters(GlobalMonitoredCharacterCollection chars) => s_monitoredCharacters = chars;
+        internal static void SetEVEServer(EveServer server) => s_eveServer = server;
 
         /// <summary>
         /// Syncs all service instances to the Core ServiceLocator,
@@ -179,6 +242,13 @@ namespace EVEMon.Common.Services
             s_imageService = null;
             s_notificationTypeResolver = null;
             s_resourceProvider = null;
+            s_notifications = null;
+            s_characters = null;
+            s_esiKeys = null;
+            s_apiProviders = null;
+            s_characterIdentities = null;
+            s_monitoredCharacters = null;
+            s_eveServer = null;
         }
     }
 }

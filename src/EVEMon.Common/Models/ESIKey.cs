@@ -13,6 +13,8 @@ using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Service;
 using EVEMon.Common.Services;
+using CoreEvents = EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,7 +141,8 @@ namespace EVEMon.Common.Models
             set
             {
                 m_monitored = value;
-                EveMonClient.OnESIKeyMonitoredChanged();
+                AppServices.TraceService?.Trace(ToString());
+                AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyMonitoredChangedEvent.Instance);
             }
         }
 
@@ -206,10 +209,11 @@ namespace EVEMon.Common.Models
             {
                 // If it errors out, avoid checking again for another 5 minutes
                 m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
-                EveMonClient.Notifications.NotifySSOError();
+                AppServices.Notifications.NotifySSOError();
                 HasError = true;
                 m_queryPending = false;
-                EveMonClient.OnESIKeyInfoUpdated(this);
+                AppServices.TraceService?.Trace(ToString());
+                AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
             }
             else
             {
@@ -232,16 +236,17 @@ namespace EVEMon.Common.Models
             if (result.HasError)
             {
                 HasError = true;
-                EveMonClient.Notifications.NotifyCharacterListError(this, result);
+                AppServices.Notifications.NotifyCharacterListError(this, result);
             }
             else
             {
                 HasError = false;
                 ImportIdentities(tokenInfo);
-                EveMonClient.Notifications.InvalidateAPIError();
+                AppServices.Notifications.InvalidateAPIError();
             }
             m_queryPending = false;
-            EveMonClient.OnESIKeyInfoUpdated(this);
+            AppServices.TraceService?.Trace(ToString());
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
         }
 
         #endregion
@@ -284,23 +289,23 @@ namespace EVEMon.Common.Models
         private void OnAccountStatusUpdated(JsonResult<SerializableAPIAccountStatus> result)
         {
             // Quit if the API key was deleted while it was updating
-            if (!EveMonClient.ESIKeys.Contains(this))
+            if (!AppServices.ESIKeys.Contains(this))
                 return;
             
             // Return on error
             if (result.HasError)
             {
-                EveMonClient.Notifications.NotifyAccountStatusError(this, result);
+                AppServices.Notifications.NotifyAccountStatusError(this, result);
                 return;
             }
 
-            EveMonClient.Notifications.InvalidateAccountStatusError(this);
+            AppServices.Notifications.InvalidateAccountStatusError(this);
 
             // Notifies for the account expiration
             NotifyAccountExpiration();
 
             // Fires the event regarding the account status update
-            EveMonClient.OnAccountStatusUpdated(this);
+            AppServices.EventAggregator?.Publish(CommonEvents.AccountStatusUpdatedEvent.Instance);
         }
 #endif
         
@@ -330,18 +335,18 @@ namespace EVEMon.Common.Models
             TimeSpan daysToExpire = AccountExpires.Subtract(DateTime.UtcNow);
             if (daysToExpire < TimeSpan.FromDays(7) && daysToExpire > TimeSpan.FromDays(1))
             {
-                EveMonClient.Notifications.NotifyAccountExpiration(this, AccountExpires, NotificationPriority.Information);
+                AppServices.Notifications.NotifyAccountExpiration(this, AccountExpires, NotificationPriority.Information);
                 return;
             }
 
             // Is it to expire within the day? Send a warning notification
             if (daysToExpire <= TimeSpan.FromDays(1) && daysToExpire > TimeSpan.Zero)
             {
-                EveMonClient.Notifications.NotifyAccountExpiration(this, AccountExpires, NotificationPriority.Warning);
+                AppServices.Notifications.NotifyAccountExpiration(this, AccountExpires, NotificationPriority.Warning);
                 return;
             }
 #endif
-            EveMonClient.Notifications.InvalidateAccountExpiration(this);
+            AppServices.Notifications.InvalidateAccountExpiration(this);
         }
         
         #endregion
@@ -374,7 +379,7 @@ namespace EVEMon.Common.Models
         {
             message = string.Empty;
 
-            List<ESIKey> accountsNotTraining = EveMonClient.ESIKeys.Where(
+            List<ESIKey> accountsNotTraining = AppServices.ESIKeys.Where(
                 esiKey => esiKey.CharacterIdentities.Any() && !esiKey.HasCharacterInTraining)
                 .ToList();
 
@@ -385,7 +390,7 @@ namespace EVEMon.Common.Models
             // Creates the string, scrolling through every not training account
             StringBuilder builder = new StringBuilder();
             builder.Append(accountsNotTraining.Count == 1
-                ? $"{(EveMonClient.ESIKeys.Count == 1 ? "The account" : "One of the accounts")} is not in training"
+                ? $"{(AppServices.ESIKeys.Count == 1 ? "The account" : "One of the accounts")} is not in training"
                 : "Some of the accounts are not in training.");
 
             foreach (ESIKey esiKey in accountsNotTraining)
@@ -408,7 +413,7 @@ namespace EVEMon.Common.Models
         /// <param name="tokenInfo">The ESI token info from CCP.</param>
         private void ImportIdentities(EsiAPITokenInfo tokenInfo)
         {
-            var chars = EveMonClient.CharacterIdentities.Where(id => id.ESIKeys.Contains(this));
+            var chars = AppServices.CharacterIdentities.Where(id => id.ESIKeys.Contains(this));
             long charID = tokenInfo.CharacterID;
             // Clear the API key on this character
             foreach (CharacterIdentity id in chars)
@@ -416,17 +421,23 @@ namespace EVEMon.Common.Models
 
             // Find characters who own this ESI key
             // Can match at most one character
-            CharacterIdentity cid = EveMonClient.CharacterIdentities[charID] ??
-                EveMonClient.CharacterIdentities.Add(charID, tokenInfo.CharacterName);
+            CharacterIdentity cid = AppServices.CharacterIdentities[charID] ??
+                AppServices.CharacterIdentities.Add(charID, tokenInfo.CharacterName);
             // Add the ESI key to the identity
             cid.ESIKeys.Add(this);
             if (cid.CCPCharacter != null)
+            {
                 // Notify subscribers
-                EveMonClient.OnCharacterUpdated(cid.CCPCharacter);
+                AppServices.TraceService?.Trace(cid.CCPCharacter.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(cid.CCPCharacter.CharacterID, cid.CCPCharacter.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(cid.CCPCharacter));
+            }
 
             // Fires the event regarding the character list update
-            EveMonClient.OnCharacterListUpdated(this);
-            EveMonClient.OnESIKeyCollectionChanged();
+            AppServices.TraceService?.Trace(ToString());
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterListUpdatedEvent(this));
+            AppServices.EventAggregator?.Publish(CoreEvents.ESIKeyCollectionChangedEvent.Instance);
+            AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyCollectionChangedEvent.Instance);
         }
 
         /// <summary>
@@ -479,7 +490,7 @@ namespace EVEMon.Common.Models
             CheckAccessToken();
 
             // Clear the ESI key for the currently associated identities
-            foreach (CharacterIdentity id in EveMonClient.CharacterIdentities.Where(id => id.ESIKeys.Contains(this)))
+            foreach (CharacterIdentity id in AppServices.CharacterIdentities.Where(id => id.ESIKeys.Contains(this)))
                 id.ESIKeys.Remove(this);
 
             // Assign this API key to the new identities and create CCP characters
@@ -488,10 +499,14 @@ namespace EVEMon.Common.Models
 
             // Retrieves the ccp character and create one if none
             if (cid.CCPCharacter != null)
+            {
                 // Notify subscribers
-                EveMonClient.OnCharacterUpdated(cid.CCPCharacter);
+                AppServices.TraceService?.Trace(cid.CCPCharacter.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(cid.CCPCharacter.CharacterID, cid.CCPCharacter.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(cid.CCPCharacter));
+            }
             else
-                EveMonClient.Characters.Add(AppServices.CharacterFactory.CreateCCPCharacter(cid));
+                AppServices.Characters.Add(AppServices.CharacterFactory.CreateCCPCharacter(cid));
         }
 
         #endregion

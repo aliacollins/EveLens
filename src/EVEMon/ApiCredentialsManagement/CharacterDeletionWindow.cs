@@ -9,6 +9,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
 using EVEMon.Common.Extensions;
+using EVEMon.Common.Services;
 
 namespace EVEMon.ApiCredentialsManagement
 {
@@ -54,7 +55,7 @@ namespace EVEMon.ApiCredentialsManagement
                 characterToRemoveLabel.Text, m_character.Name);
 
             // Find the API keys bind only to this character
-            m_esiKeys = EveMonClient.ESIKeys.Select(apiKey => new
+            m_esiKeys = AppServices.ESIKeys.Select(apiKey => new
             {
                 apiKey, identities = apiKey.CharacterIdentities
             }).Where(apiKey => apiKey.identities.Count() == 1 && apiKey.identities.
@@ -84,8 +85,8 @@ namespace EVEMon.ApiCredentialsManagement
         {
             // Always clear the ESI keys since keys are locked to a character
             // Note: Keep this order of removal
-            m_esiKeys.ForEach(apiKey => EveMonClient.ESIKeys.Remove(apiKey));
-            EveMonClient.Characters.Remove(m_character);
+            m_esiKeys.ForEach(apiKey => AppServices.ESIKeys.Remove(apiKey));
+            AppServices.Characters.Remove(m_character);
             Close();
         }
 

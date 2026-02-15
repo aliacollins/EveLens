@@ -12,7 +12,9 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -101,9 +103,12 @@ namespace EVEMon.Common.Models
 
             m_invalidEntries = invalidEntries.ToArray();
 
-            // Notify name or decription change
+            // Notify name or description change
             if (IsConnected)
-                EveMonClient.OnPlanNameChanged(this);
+            {
+                AppServices.TraceService?.Trace(Name);
+                AppServices.EventAggregator?.Publish(new CommonEvents.PlanNameChangedEvent(this));
+            }
         }
 
         /// <summary>
@@ -235,7 +240,10 @@ namespace EVEMon.Common.Models
 
             // Notify changes
             if ((change & PlanChange.Notification) != PlanChange.None && IsConnected)
-                EveMonClient.OnPlanChanged(this);
+            {
+                AppServices.TraceService?.Trace(Name);
+                AppServices.EventAggregator?.Publish(new CommonEvents.PlanChangedEvent(this));
+            }
         }
 
         #endregion

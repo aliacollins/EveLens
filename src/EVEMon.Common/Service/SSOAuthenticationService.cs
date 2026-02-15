@@ -4,6 +4,7 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -251,7 +252,7 @@ namespace EVEMon.Common.Service
                             UriPartial.Authority))
                         response = Util.DeserializeJson<AccessResponse>(token.RawPayload);
                     else
-                        EveMonClient.Trace("Rejecting invalid SSO token issuer: " + issuer);
+                        AppServices.TraceService?.Trace("Rejecting invalid SSO token issuer: " + issuer);
                 }
             }
             else

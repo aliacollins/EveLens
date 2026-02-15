@@ -427,7 +427,7 @@ namespace EVEMon.Controls
                 // collection. ESIKey.ID may not match CharacterID (XML migration stores
                 // the old key ID, not the character ID), so we look for keys that haven't
                 // been associated with any character identity yet.
-                var unlinkedKeys = EveMonClient.ESIKeys
+                var unlinkedKeys = AppServices.ESIKeys
                     .Where(k => !k.CharacterIdentities.Any());
                 if (unlinkedKeys.Any(k => !string.IsNullOrEmpty(k.RefreshToken)))
                 {

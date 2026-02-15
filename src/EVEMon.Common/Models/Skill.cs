@@ -8,6 +8,9 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
+using CoreEvents = EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -154,7 +157,9 @@ namespace EVEMon.Common.Models
             set
             {
                 m_owned = value;
-                EveMonClient.OnCharacterUpdated(Character);
+                AppServices.TraceService?.Trace(Character?.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(Character.CharacterID, Character.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(Character));
             }
         }
 

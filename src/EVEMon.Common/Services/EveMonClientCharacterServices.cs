@@ -4,6 +4,8 @@ using System.Linq;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
+using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Services
 {
@@ -39,17 +41,54 @@ namespace EVEMon.Common.Services
             remove => EveMonClient.EveIDToNameUpdated -= value;
         }
 
-        public void OnCharacterUpdated(Character c) => EveMonClient.OnCharacterUpdated(c);
-        public void OnMarketOrdersUpdated(Character c) => EveMonClient.OnMarketOrdersUpdated(c);
-        public void OnContractsUpdated(Character c) => EveMonClient.OnContractsUpdated(c);
-        public void OnIndustryJobsUpdated(Character c) => EveMonClient.OnIndustryJobsUpdated(c);
-        public void OnCharacterInfoUpdated(Character c) => EveMonClient.OnCharacterInfoUpdated(c);
-        public void OnCharacterSkillQueueUpdated(Character c) => EveMonClient.OnCharacterSkillQueueUpdated(c);
+        public void OnCharacterUpdated(Character c)
+        {
+            AppServices.TraceService?.Trace($"CharacterUpdated: {c.Name}");
+            AppServices.EventAggregator?.Publish(new CharacterUpdatedEvent(c.CharacterID, c.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(c));
+        }
+
+        public void OnMarketOrdersUpdated(Character c)
+        {
+            AppServices.TraceService?.Trace($"MarketOrdersUpdated: {c.Name}");
+            AppServices.EventAggregator?.Publish(new CommonEvents.MarketOrdersUpdatedEvent(c));
+        }
+
+        public void OnContractsUpdated(Character c)
+        {
+            AppServices.TraceService?.Trace($"ContractsUpdated: {c.Name}");
+            AppServices.EventAggregator?.Publish(new CommonEvents.ContractsUpdatedEvent(c));
+        }
+
+        public void OnIndustryJobsUpdated(Character c)
+        {
+            AppServices.TraceService?.Trace($"IndustryJobsUpdated: {c.Name}");
+            AppServices.EventAggregator?.Publish(new CommonEvents.IndustryJobsUpdatedEvent(c));
+        }
+
+        public void OnCharacterInfoUpdated(Character c)
+        {
+            AppServices.TraceService?.Trace($"CharacterInfoUpdated: {c.Name}");
+            AppServices.EventAggregator?.Publish(new CharacterInfoUpdatedEvent(c.CharacterID, c.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterInfoUpdatedEvent(c));
+        }
+
+        public void OnCharacterSkillQueueUpdated(Character c)
+        {
+            AppServices.TraceService?.Trace($"CharacterSkillQueueUpdated: {c.Name}");
+            c.UpdateAccountStatus();
+            AppServices.EventAggregator?.Publish(new CharacterSkillQueueUpdatedEvent(c.CharacterID, c.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterSkillQueueUpdatedEvent(c));
+        }
+
         public void OnCharacterQueuedSkillsCompleted(Character c, IEnumerable<QueuedSkill> skills)
-            => EveMonClient.OnCharacterQueuedSkillsCompleted(c, skills);
+        {
+            AppServices.TraceService?.Trace($"CharacterQueuedSkillsCompleted: {c.Name}");
+            AppServices.EventAggregator?.Publish(new CommonEvents.QueuedSkillsCompletedEvent(c, skills));
+        }
 
-        public bool AnyESIKeyUnprocessed() => EveMonClient.ESIKeys.Any(k => !k.IsProcessed);
+        public bool AnyESIKeyUnprocessed() => AppServices.ESIKeys.Any(k => !k.IsProcessed);
 
-        public GlobalNotificationCollection Notifications => EveMonClient.Notifications;
+        public GlobalNotificationCollection Notifications => AppServices.Notifications;
     }
 }

@@ -11,6 +11,7 @@ using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Scheduling;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.Common.Helpers
@@ -98,7 +99,7 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static void EnsureDirectoriesExist()
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
@@ -108,11 +109,11 @@ namespace EVEMon.Common.Helpers
                 if (!Directory.Exists(CharactersDirectory))
                     Directory.CreateDirectory(CharactersDirectory);
 
-                EveMonClient.Trace("done");
+                AppServices.TraceService?.Trace("done");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 throw;
             }
         }
@@ -145,7 +146,7 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static void ClearAllJsonFiles()
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
@@ -161,11 +162,11 @@ namespace EVEMon.Common.Helpers
                 if (Directory.Exists(CharactersDirectory))
                     Directory.Delete(CharactersDirectory, recursive: true);
 
-                EveMonClient.Trace("All JSON files cleared");
+                AppServices.TraceService?.Trace("All JSON files cleared");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error clearing JSON files: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error clearing JSON files: {ex.Message}");
             }
         }
 
@@ -175,7 +176,7 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static void ClearForReMigration()
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
@@ -187,14 +188,14 @@ namespace EVEMon.Common.Helpers
                 if (File.Exists(migratedPath) && !File.Exists(LegacySettingsFilePath))
                 {
                     File.Move(migratedPath, LegacySettingsFilePath);
-                    EveMonClient.Trace("Restored settings.xml.migrated to settings.xml");
+                    AppServices.TraceService?.Trace("Restored settings.xml.migrated to settings.xml");
                 }
 
-                EveMonClient.Trace("done - JSON cleared for re-migration");
+                AppServices.TraceService?.Trace("done - JSON cleared for re-migration");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error clearing for re-migration: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error clearing for re-migration: {ex.Message}");
             }
         }
 
@@ -207,11 +208,11 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task<JsonConfig> LoadConfigAsync()
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             if (!File.Exists(ConfigFilePath))
             {
-                EveMonClient.Trace("Config file not found, returning defaults");
+                AppServices.TraceService?.Trace("Config file not found, returning defaults");
                 return new JsonConfig();
             }
 
@@ -219,12 +220,12 @@ namespace EVEMon.Common.Helpers
             {
                 string json = await File.ReadAllTextAsync(ConfigFilePath);
                 var config = JsonSerializer.Deserialize<JsonConfig>(json, s_jsonReadOptions);
-                EveMonClient.Trace($"done - loaded {json.Length} bytes");
+                AppServices.TraceService?.Trace($"done - loaded {json.Length} bytes");
                 return config ?? new JsonConfig();
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 return new JsonConfig();
             }
         }
@@ -234,18 +235,18 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task SaveConfigAsync(JsonConfig config)
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
                 EnsureDirectoriesExist();
                 string json = JsonSerializer.Serialize(config, s_jsonOptions);
                 await WriteFileAtomicAsync(ConfigFilePath, json);
-                EveMonClient.Trace($"done - saved {json.Length} bytes");
+                AppServices.TraceService?.Trace($"done - saved {json.Length} bytes");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 throw;
             }
         }
@@ -259,11 +260,11 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task<JsonCredentials> LoadCredentialsAsync()
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             if (!File.Exists(CredentialsFilePath))
             {
-                EveMonClient.Trace("Credentials file not found, returning empty");
+                AppServices.TraceService?.Trace("Credentials file not found, returning empty");
                 return new JsonCredentials();
             }
 
@@ -271,12 +272,12 @@ namespace EVEMon.Common.Helpers
             {
                 string json = await File.ReadAllTextAsync(CredentialsFilePath);
                 var creds = JsonSerializer.Deserialize<JsonCredentials>(json, s_jsonReadOptions);
-                EveMonClient.Trace($"done - loaded {creds?.EsiKeys?.Count ?? 0} ESI keys");
+                AppServices.TraceService?.Trace($"done - loaded {creds?.EsiKeys?.Count ?? 0} ESI keys");
                 return creds ?? new JsonCredentials();
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 return new JsonCredentials();
             }
         }
@@ -286,7 +287,7 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task SaveCredentialsAsync(JsonCredentials credentials)
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
@@ -297,11 +298,11 @@ namespace EVEMon.Common.Helpers
 
                 string json = JsonSerializer.Serialize(credentials, s_jsonOptions);
                 await WriteFileAtomicAsync(CredentialsFilePath, json);
-                EveMonClient.Trace($"done - saved {credentials?.EsiKeys?.Count ?? 0} ESI keys");
+                AppServices.TraceService?.Trace($"done - saved {credentials?.EsiKeys?.Count ?? 0} ESI keys");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 throw;
             }
         }
@@ -315,11 +316,11 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task<JsonCharacterIndex> LoadCharacterIndexAsync()
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             if (!File.Exists(CharacterIndexFilePath))
             {
-                EveMonClient.Trace("Character index not found, returning empty");
+                AppServices.TraceService?.Trace("Character index not found, returning empty");
                 return new JsonCharacterIndex();
             }
 
@@ -327,12 +328,12 @@ namespace EVEMon.Common.Helpers
             {
                 string json = await File.ReadAllTextAsync(CharacterIndexFilePath);
                 var index = JsonSerializer.Deserialize<JsonCharacterIndex>(json, s_jsonReadOptions);
-                EveMonClient.Trace($"done - loaded {index?.Characters?.Count ?? 0} character entries");
+                AppServices.TraceService?.Trace($"done - loaded {index?.Characters?.Count ?? 0} character entries");
                 return index ?? new JsonCharacterIndex();
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 return new JsonCharacterIndex();
             }
         }
@@ -342,18 +343,18 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task SaveCharacterIndexAsync(JsonCharacterIndex index)
         {
-            EveMonClient.Trace("begin");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
                 EnsureDirectoriesExist();
                 string json = JsonSerializer.Serialize(index, s_jsonOptions);
                 await WriteFileAtomicAsync(CharacterIndexFilePath, json);
-                EveMonClient.Trace($"done - saved {index?.Characters?.Count ?? 0} character entries");
+                AppServices.TraceService?.Trace($"done - saved {index?.Characters?.Count ?? 0} character entries");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error: {ex.Message}");
                 throw;
             }
         }
@@ -367,12 +368,12 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static async Task<JsonCharacterData?> LoadCharacterAsync(long characterId)
         {
-            EveMonClient.Trace($"begin - character {characterId}");
+            AppServices.TraceService?.Trace($"begin - character {characterId}");
 
             string filePath = GetCharacterFilePath(characterId);
             if (!File.Exists(filePath))
             {
-                EveMonClient.Trace($"Character file not found: {characterId}");
+                AppServices.TraceService?.Trace($"Character file not found: {characterId}");
                 return null;
             }
 
@@ -380,12 +381,12 @@ namespace EVEMon.Common.Helpers
             {
                 string json = await File.ReadAllTextAsync(filePath);
                 var character = JsonSerializer.Deserialize<JsonCharacterData>(json, s_jsonReadOptions);
-                EveMonClient.Trace($"done - loaded character {characterId} ({json.Length} bytes)");
+                AppServices.TraceService?.Trace($"done - loaded character {characterId} ({json.Length} bytes)");
                 return character;
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error loading character {characterId}: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error loading character {characterId}: {ex.Message}");
                 return null;
             }
         }
@@ -398,7 +399,7 @@ namespace EVEMon.Common.Helpers
             if (character == null)
                 return;
 
-            EveMonClient.Trace($"begin - character {character.CharacterId}");
+            AppServices.TraceService?.Trace($"begin - character {character.CharacterId}");
 
             try
             {
@@ -406,11 +407,11 @@ namespace EVEMon.Common.Helpers
                 string filePath = GetCharacterFilePath(character.CharacterId);
                 string json = JsonSerializer.Serialize(character, s_jsonOptions);
                 await WriteFileAtomicAsync(filePath, json);
-                EveMonClient.Trace($"done - saved character {character.CharacterId} ({json.Length} bytes)");
+                AppServices.TraceService?.Trace($"done - saved character {character.CharacterId} ({json.Length} bytes)");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error saving character {character.CharacterId}: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error saving character {character.CharacterId}: {ex.Message}");
                 throw;
             }
         }
@@ -420,13 +421,13 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static void DeleteCharacter(long characterId)
         {
-            EveMonClient.Trace($"begin - character {characterId}");
+            AppServices.TraceService?.Trace($"begin - character {characterId}");
 
             string filePath = GetCharacterFilePath(characterId);
             if (File.Exists(filePath))
             {
                 File.Delete(filePath);
-                EveMonClient.Trace($"done - deleted character {characterId}");
+                AppServices.TraceService?.Trace($"done - deleted character {characterId}");
             }
         }
 
@@ -494,11 +495,11 @@ namespace EVEMon.Common.Helpers
         /// <param name="xmlSettings">The deserialized XML settings.</param>
         public static async Task MigrateFromXmlAsync(SerializableSettings xmlSettings)
         {
-            EveMonClient.Trace("begin - migrating from XML to JSON");
+            AppServices.TraceService?.Trace("begin - migrating from XML to JSON");
 
             if (xmlSettings == null)
             {
-                EveMonClient.Trace("No XML settings to migrate");
+                AppServices.TraceService?.Trace("No XML settings to migrate");
                 return;
             }
 
@@ -509,17 +510,17 @@ namespace EVEMon.Common.Helpers
                 // 1. Migrate config (UI settings, preferences)
                 var config = MigrateConfig(xmlSettings);
                 await SaveConfigAsync(config);
-                EveMonClient.Trace("Config migrated");
+                AppServices.TraceService?.Trace("Config migrated");
 
                 // 2. Migrate credentials (ESI keys)
                 var credentials = MigrateCredentials(xmlSettings);
                 await SaveCredentialsAsync(credentials);
-                EveMonClient.Trace($"Credentials migrated - {credentials.EsiKeys.Count} ESI keys");
+                AppServices.TraceService?.Trace($"Credentials migrated - {credentials.EsiKeys.Count} ESI keys");
 
                 // 3. Migrate characters to individual files
                 var index = await MigrateCharactersAsync(xmlSettings);
                 await SaveCharacterIndexAsync(index);
-                EveMonClient.Trace($"Characters migrated - {index.Characters.Count} characters");
+                AppServices.TraceService?.Trace($"Characters migrated - {index.Characters.Count} characters");
 
                 // 4. Rename old settings.xml to settings.xml.migrated
                 string migratedPath = LegacySettingsFilePath + ".migrated";
@@ -528,14 +529,14 @@ namespace EVEMon.Common.Helpers
                     if (File.Exists(migratedPath))
                         File.Delete(migratedPath);
                     File.Move(LegacySettingsFilePath, migratedPath);
-                    EveMonClient.Trace("Renamed settings.xml to settings.xml.migrated");
+                    AppServices.TraceService?.Trace("Renamed settings.xml to settings.xml.migrated");
                 }
 
-                EveMonClient.Trace("done - migration complete");
+                AppServices.TraceService?.Trace("done - migration complete");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error during migration: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error during migration: {ex.Message}");
                 throw;
             }
         }
@@ -925,7 +926,7 @@ namespace EVEMon.Common.Helpers
         {
             if (settings == null)
             {
-                EveMonClient.Trace("SaveFromSerializableSettingsAsync: No settings to save");
+                AppServices.TraceService?.Trace("SaveFromSerializableSettingsAsync: No settings to save");
                 return;
             }
 
@@ -951,12 +952,12 @@ namespace EVEMon.Common.Helpers
                 // Save characters
                 await SaveCharactersFromXmlAsync(settings);
 
-                EveMonClient.Trace($"SaveFromSerializableSettingsAsync: Saved {settings.Characters.Count} characters to JSON");
+                AppServices.TraceService?.Trace($"SaveFromSerializableSettingsAsync: Saved {settings.Characters.Count} characters to JSON");
             }
             catch (Exception ex)
             {
                 // Log but don't fail - XML is primary, JSON is backup
-                EveMonClient.Trace($"SaveFromSerializableSettingsAsync: Error saving JSON (non-critical): {ex.Message}");
+                AppServices.TraceService?.Trace($"SaveFromSerializableSettingsAsync: Error saving JSON (non-critical): {ex.Message}");
             }
         }
 
@@ -1048,7 +1049,7 @@ namespace EVEMon.Common.Helpers
                         try
                         {
                             File.Delete(file);
-                            EveMonClient.Trace($"Cleaned up orphaned character file: {fileName}.json");
+                            AppServices.TraceService?.Trace($"Cleaned up orphaned character file: {fileName}.json");
                         }
                         catch
                         {
@@ -1075,11 +1076,11 @@ namespace EVEMon.Common.Helpers
         /// <param name="settings">The settings to export.</param>
         public static async Task ExportBackupAsync(string filePath, SerializableSettings settings)
         {
-            EveMonClient.Trace($"begin - exporting to {filePath}");
+            AppServices.TraceService?.Trace($"begin - exporting to {filePath}");
 
             if (settings == null)
             {
-                EveMonClient.Trace("No settings to export");
+                AppServices.TraceService?.Trace("No settings to export");
                 return;
             }
 
@@ -1140,11 +1141,11 @@ namespace EVEMon.Common.Helpers
                 string json = JsonSerializer.Serialize(backup, s_jsonOptions);
                 await WriteFileAtomicAsync(filePath, json);
 
-                EveMonClient.Trace($"done - exported {backup.Characters.Count} characters to backup");
+                AppServices.TraceService?.Trace($"done - exported {backup.Characters.Count} characters to backup");
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error exporting backup: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error exporting backup: {ex.Message}");
                 throw;
             }
         }
@@ -1157,7 +1158,7 @@ namespace EVEMon.Common.Helpers
         /// <returns>True if import was successful.</returns>
         public static async Task<bool> ImportBackupAsync(string filePath)
         {
-            EveMonClient.Trace($"begin - importing from {filePath}");
+            AppServices.TraceService?.Trace($"begin - importing from {filePath}");
 
             try
             {
@@ -1166,7 +1167,7 @@ namespace EVEMon.Common.Helpers
 
                 if (backup == null)
                 {
-                    EveMonClient.Trace("Failed to deserialize backup");
+                    AppServices.TraceService?.Trace("Failed to deserialize backup");
                     return false;
                 }
 
@@ -1210,12 +1211,12 @@ namespace EVEMon.Common.Helpers
 
                 await SaveCharacterIndexAsync(index);
 
-                EveMonClient.Trace($"done - imported {backup.Characters?.Count ?? 0} characters from backup");
+                AppServices.TraceService?.Trace($"done - imported {backup.Characters?.Count ?? 0} characters from backup");
                 return true;
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error importing backup: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error importing backup: {ex.Message}");
                 return false;
             }
         }
@@ -1255,11 +1256,11 @@ namespace EVEMon.Common.Helpers
         /// <returns>SerializableSettings populated from JSON files, or null if loading fails.</returns>
         public static async Task<SerializableSettings?> LoadToSerializableSettingsAsync()
         {
-            EveMonClient.Trace("begin - loading from JSON format");
+            AppServices.TraceService?.Trace("begin - loading from JSON format");
 
             if (!JsonSettingsExist())
             {
-                EveMonClient.Trace("JSON settings don't exist");
+                AppServices.TraceService?.Trace("JSON settings don't exist");
                 return null;
             }
 
@@ -1269,7 +1270,7 @@ namespace EVEMon.Common.Helpers
                 var config = await LoadConfigAsync();
                 if (config == null)
                 {
-                    EveMonClient.Trace("Failed to load config.json");
+                    AppServices.TraceService?.Trace("Failed to load config.json");
                     return null;
                 }
 
@@ -1363,12 +1364,12 @@ namespace EVEMon.Common.Helpers
                     }
                 }
 
-                EveMonClient.Trace($"done - loaded {settings.Characters.Count} characters, {settings.Plans.Count} plans from JSON");
+                AppServices.TraceService?.Trace($"done - loaded {settings.Characters.Count} characters, {settings.Plans.Count} plans from JSON");
                 return settings;
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"Error loading from JSON: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error loading from JSON: {ex.Message}");
                 return null;
             }
         }

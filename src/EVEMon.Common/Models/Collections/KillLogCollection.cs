@@ -4,6 +4,7 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Common.Services;
 using EVEMon.Common.Constants;
 using EVEMon.Core;
 using System;
@@ -85,7 +86,7 @@ namespace EVEMon.Common.Models.Collections
             }
             if (startRequest)
             {
-                EveMonClient.Notifications.InvalidateAPIError();
+                AppServices.Notifications.InvalidateAPIError();
                 foreach (EsiKillLogListItem srcKillLog in kills)
                 {
                     if (EsiErrors.IsErrorCountExceeded)
@@ -93,7 +94,7 @@ namespace EVEMon.Common.Models.Collections
                     // Query each individual mail; while the etag would be nice storing it in
                     // the legacy XML architecture is not really worth the trouble
                     string hash = srcKillLog.Hash;
-                    EveMonClient.APIProviders.CurrentProvider.QueryEsi<EsiAPIKillMail>(
+                    AppServices.APIProviders.CurrentProvider.QueryEsi<EsiAPIKillMail>(
                         ESIAPIGenericMethods.KillMail, OnKillMailDownloaded, new ESIParams()
                         {
                             ParamOne = srcKillLog.KillID,
@@ -114,7 +115,7 @@ namespace EVEMon.Common.Models.Collections
                 if (target != null && target.Monitored)
                 {
                     if (target.ShouldNotifyError(result, ESIAPICharacterMethods.KillLog))
-                        EveMonClient.Notifications.NotifyKillMailError(result, hash);
+                        AppServices.Notifications.NotifyKillMailError(result, hash);
                     if (!result.HasError && result.HasData)
                         // Add data inside synchronization
                         m_pendingItems.Add(new KillLog(target, result.Result.ToXMLItem()));

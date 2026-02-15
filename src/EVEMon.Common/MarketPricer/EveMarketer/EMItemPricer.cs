@@ -4,6 +4,7 @@ using EVEMon.Common.Data;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.EveMarketer.MarketPricer;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -195,14 +196,14 @@ namespace EVEMon.Common.MarketPricer.EveMarketer
                 return;
 
             if (EveMonClient.IsDebugBuild)
-                EveMonClient.Trace($"Remaining ids: {string.Join(", ", s_queue)}", printMethod: false);
+                AppServices.TraceService?.Trace($"Remaining ids: {string.Join(", ", s_queue)}", printMethod: false);
 
             Loaded = true;
 
             // Reset query pending flag
             s_queryPending = false;
 
-            EveMonClient.Trace("done");
+            AppServices.TraceService?.Trace("done");
 
             EveMonClient.OnPricesDownloaded(null, string.Empty);
 
@@ -219,7 +220,7 @@ namespace EVEMon.Common.MarketPricer.EveMarketer
         {
             if (result?.Error != null)
             {
-                EveMonClient.Trace(result.Error.Message);
+                AppServices.TraceService?.Trace(result.Error.Message);
 
                 // Abort further attempts if it is a connection issue
                 if (result.Error.Status == HttpWebClientServiceExceptionStatus.Timeout ||
@@ -241,7 +242,7 @@ namespace EVEMon.Common.MarketPricer.EveMarketer
                     if (s_queue.Count < 1)
                     {
                         Loaded = true;
-                        EveMonClient.Trace("ECItemPricer.Import - done", printMethod: false);
+                        AppServices.TraceService?.Trace("ECItemPricer.Import - done", printMethod: false);
                         return false;
                     }
                 }

@@ -254,7 +254,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateFeaturesMenu()
         {
-            if (EveMonClient.ESIKeys.Any(apiKey => !apiKey.IsProcessed) || !m_character.Identity.ESIKeys.Any())
+            if (AppServices.ESIKeys.Any(apiKey => !apiKey.IsProcessed) || !m_character.Identity.ESIKeys.Any())
                 return;
 
             CCPCharacter? ccpCharacter = m_character as CCPCharacter;
@@ -466,7 +466,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateNotifications()
         {
-            notificationList.Notifications = EveMonClient.Notifications.Where(x => x.Sender == m_character);
+            notificationList.Notifications = AppServices.Notifications.Where(x => x.Sender == m_character);
             Refresh();
         }
 

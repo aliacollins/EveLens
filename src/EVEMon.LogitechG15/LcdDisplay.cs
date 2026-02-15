@@ -12,6 +12,7 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using LogitechLcd.NET;
 
 namespace EVEMon.LogitechG15
@@ -175,7 +176,7 @@ namespace EVEMon.LogitechG15
         /// Gets the monitored characters.
         /// </summary>
         /// <value>The characters.</value>
-        private static IEnumerable<CCPCharacter> MonitoredCharacters => EveMonClient.MonitoredCharacters.OfType<CCPCharacter>();
+        private static IEnumerable<CCPCharacter> MonitoredCharacters => AppServices.MonitoredCharacters.OfType<CCPCharacter>();
 
         #endregion
 

@@ -5,6 +5,9 @@ using EVEMon.Common.Interfaces;
 using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Common.Services;
+using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -17,6 +20,7 @@ namespace EVEMon.Common.Models
         private ServerStatus m_status;
         private readonly QueryMonitor<EsiAPIServerStatus> m_serverStatusMonitor;
         private DateTime m_serverDateTime = DateTime.UtcNow;
+        private readonly IDisposable m_secondTickSubscription;
 
         /// <summary>
         /// Constructor.
@@ -29,13 +33,14 @@ namespace EVEMon.Common.Models
                  OnServerStatusMonitorUpdated) { Enabled = true };
 
             // SecondTick - server time needs to track every second
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            m_secondTickSubscription = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
+                e => EveMonClient_TimerTick(null, EventArgs.Empty));
         }
 
         /// <summary>
         /// Gets the server's name.
         /// </summary>
-        private static string Name => EveMonClient.APIProviders.CurrentProvider.Url.Host !=
+        private static string Name => AppServices.APIProviders.CurrentProvider.Url.Host !=
             APIProvider.TestProvider.Url.Host ? "Tranquility" : "Singularity";
 
         /// <summary>
@@ -97,13 +102,15 @@ namespace EVEMon.Common.Models
             if (result.HasError)
             {
                 m_status = ServerStatus.Unknown;
-                EveMonClient.Notifications.NotifyServerStatusError(result);
-                EveMonClient.OnServerStatusUpdated(this, lastStatus, m_status);
+                AppServices.Notifications.NotifyServerStatusError(result);
+                AppServices.TraceService?.Trace("ServerStatusUpdated");
+                AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
+                AppServices.EventAggregator?.Publish(CommonEvents.ServerStatusUpdatedEvent.Instance);
             }
             else
             {
                 // Invalidate ESI error notifications
-                EveMonClient.Notifications.InvalidateAPIError();
+                AppServices.Notifications.InvalidateAPIError();
                 if (result.HasData)
                 {
                     // Update status and users
@@ -111,13 +118,15 @@ namespace EVEMon.Common.Models
                     m_status = (m_users < 1 || result.Result.VIP) ? ServerStatus.Offline :
                         ServerStatus.Online;
                     // Notify subscribers about update
-                    EveMonClient.OnServerStatusUpdated(this, lastStatus, m_status);
+                    AppServices.TraceService?.Trace("ServerStatusUpdated");
+                    AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
+                    AppServices.EventAggregator?.Publish(CommonEvents.ServerStatusUpdatedEvent.Instance);
                 }
                 // Send a notification if the server went up/down
                 if (lastStatus != m_status)
-                    EveMonClient.Notifications.NotifyServerStatusChanged(Name, m_status);
+                    AppServices.Notifications.NotifyServerStatusChanged(Name, m_status);
                 else
-                    EveMonClient.Notifications.InvalidateServerStatusChange();
+                    AppServices.Notifications.InvalidateServerStatusChange();
             }
         }
 

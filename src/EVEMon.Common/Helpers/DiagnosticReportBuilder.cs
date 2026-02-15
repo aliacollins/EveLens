@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using EVEMon.Common.Data;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Helpers
 {
@@ -155,7 +156,7 @@ namespace EVEMon.Common.Helpers
 
             try
             {
-                var characters = EveMonClient.Characters;
+                var characters = AppServices.Characters;
                 if (characters != null)
                 {
                     int charIndex = 1;
@@ -231,7 +232,7 @@ namespace EVEMon.Common.Helpers
                 }
 
                 // ESI key IDs
-                var esiKeys = EveMonClient.ESIKeys;
+                var esiKeys = AppServices.ESIKeys;
                 if (esiKeys != null)
                 {
                     foreach (var key in esiKeys)
@@ -242,7 +243,7 @@ namespace EVEMon.Common.Helpers
                 }
 
                 // Character identities — may have IDs not yet in the Characters collection
-                var identities = EveMonClient.CharacterIdentities;
+                var identities = AppServices.CharacterIdentities;
                 if (identities != null)
                 {
                     foreach (var identity in identities)
@@ -462,9 +463,9 @@ namespace EVEMon.Common.Helpers
 
             try
             {
-                var characters = EveMonClient.Characters;
-                var esiKeys = EveMonClient.ESIKeys;
-                var monitored = EveMonClient.MonitoredCharacters;
+                var characters = AppServices.Characters;
+                var esiKeys = AppServices.ESIKeys;
+                var monitored = AppServices.MonitoredCharacters;
 
                 int charCount = characters?.Count() ?? 0;
                 int ccpCount = characters?.OfType<CCPCharacter>().Count() ?? 0;
@@ -493,7 +494,7 @@ namespace EVEMon.Common.Helpers
 
             try
             {
-                var characters = EveMonClient.Characters;
+                var characters = AppServices.Characters;
                 if (characters == null)
                 {
                     report.AppendLine("  (unavailable)");
@@ -552,7 +553,7 @@ namespace EVEMon.Common.Helpers
 
             try
             {
-                var esiKeys = EveMonClient.ESIKeys;
+                var esiKeys = AppServices.ESIKeys;
                 if (esiKeys == null || !esiKeys.Any())
                 {
                     report.AppendLine("  (no keys)");

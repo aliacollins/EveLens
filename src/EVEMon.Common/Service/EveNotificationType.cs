@@ -3,6 +3,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -172,7 +173,7 @@ namespace EVEMon.Common.Service
         private static void Import(SerializableNotificationRefTypes result)
         {
             if (result == null)
-                EveMonClient.Trace("Could not load notification types");
+                AppServices.TraceService?.Trace("Could not load notification types");
             else
             {
                 foreach (var refType in result.Types)
@@ -215,7 +216,7 @@ namespace EVEMon.Common.Service
             s_queryPending = false;
             if (!string.IsNullOrEmpty(result.ErrorMessage))
             {
-                EveMonClient.Trace("Error loading notification types: " + result.ErrorMessage);
+                AppServices.TraceService?.Trace("Error loading notification types: " + result.ErrorMessage);
                 // Fallback
                 EnsureInitialized();
             }

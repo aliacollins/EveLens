@@ -4,6 +4,7 @@ using EVEMon.Common.Data;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Collections.Global
 {
@@ -34,7 +35,7 @@ namespace EVEMon.Common.Collections.Global
             catch (Exception ex)
             {
                 // Don't worry if we can't create MD5 maybe they have FIPS enforced
-                EveMonClient.Trace(
+                AppServices.TraceService?.Trace(
                     "Couldn't compute datafiles checksums. FIPS was enforced, the datafiles were missing, or we couldn't copy to %APPDATA%.");
                 ExceptionHandler.LogRethrowException(ex);
                 throw;
@@ -47,7 +48,7 @@ namespace EVEMon.Common.Collections.Global
         public static async Task LoadAsync()
         {
             // Quit if the client has been shut down
-            if (EveMonClient.Closed)
+            if (AppServices.Closed)
                 return;
 
             // This is the time optimal loading order
@@ -57,7 +58,7 @@ namespace EVEMon.Common.Collections.Global
             // items before blueprints, reprocessing and certificates,
             // certs before masteries)
 
-            EveMonClient.Trace("Datafiles.Load - begin", printMethod: false);
+            AppServices.TraceService?.Trace("Datafiles.Load - begin", printMethod: false);
 
             // Must always run first
             // It will have finished loading until static skills finish
@@ -85,7 +86,7 @@ namespace EVEMon.Common.Collections.Global
             // Wait for all remaining datafiles to complete
             await Task.WhenAll(blueprints, reprocessing, masteries);
 
-            EveMonClient.Trace("Datafiles.Load - done", printMethod: false);
+            AppServices.TraceService?.Trace("Datafiles.Load - done", printMethod: false);
         }
 
         /// <summary>

@@ -5,14 +5,16 @@ using EVEMon.Common.Notifications;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Collections.Global
 {
     /// <summary>
-    /// The collection used by <see cref="EveMonClient.Notifications"/>
+    /// The collection used by <see cref="AppServices.Notifications"/>
     /// </summary>
     public sealed class GlobalNotificationCollection : ReadonlyCollection<NotificationEventArgs>
     {
@@ -74,7 +76,8 @@ namespace EVEMon.Common.Collections.Global
                 break;
             }
 
-            EveMonClient.OnNotificationSent(notification);
+            AppServices.TraceService?.Trace(notification.ToString());
+            AppServices.EventAggregator?.Publish(new CommonEvents.NotificationSentEvent(notification));
         }
 
         /// <summary>
@@ -84,7 +87,10 @@ namespace EVEMon.Common.Collections.Global
         public void Invalidate(NotificationInvalidationEventArgs e)
         {
             if (InvalidateCore(e.Key))
-                EveMonClient.OnNotificationInvalidated(e);
+            {
+                AppServices.TraceService?.Trace("NotificationInvalidated");
+                AppServices.EventAggregator?.Publish(new CommonEvents.NotificationInvalidatedEvent(e));
+            }
         }
 
         /// <summary>
@@ -148,7 +154,7 @@ namespace EVEMon.Common.Collections.Global
         {
             string charName = string.Format("token {0:D}", key.ID);
             // Attempt to match the ESI key to a character name
-            var id = EveMonClient.CharacterIdentities.FirstOrDefault((charID) => charID.
+            var id = AppServices.CharacterIdentities.FirstOrDefault((charID) => charID.
                 ESIKeys.Contains(key));
             if (id != null)
                 charName = id.CharacterName;

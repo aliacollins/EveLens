@@ -109,7 +109,7 @@ namespace EVEMon
             trayIcon.Text = EveMonClient.ProductNameWithVersion;
 
             lblStatus.Text = $"EVE Time: {DateTime.UtcNow:HH:mm}";
-            lblServerStatus.Text = $"|  {EveMonClient.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
+            lblServerStatus.Text = $"|  {AppServices.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
 
             tsDatafilesLoadingProgressBar.Step =
                 (int)Math.Ceiling((double)tsDatafilesLoadingProgressBar.Maximum / EveMonClient.Datafiles.Count);
@@ -138,7 +138,7 @@ namespace EVEMon
         private static void TriggerAutoShrink()
         {
             // Quit if the client has been shut down
-            if (EveMonClient.Closed)
+            if (AppServices.Closed)
                 return;
 
             AutoShrink.Dirty(TimeSpan.FromSeconds(5).Seconds);
@@ -160,7 +160,7 @@ namespace EVEMon
             if (DesignMode)
                 return;
 
-            m_apiProviderName = EveMonClient.APIProviders?.CurrentProvider?.Name ?? string.Empty;
+            m_apiProviderName = AppServices.APIProviders?.CurrentProvider?.Name ?? string.Empty;
 
             // Collext the menu buttons that get enabled by a character
             m_characterEnabledMenuItems = new ToolStripItem[]
@@ -227,7 +227,7 @@ namespace EVEMon
             _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
 
-            EveMonClient.Trace("Main window - loaded", printMethod: false);
+            AppServices.TraceService?.Trace("Main window - loaded", printMethod: false);
         }
 
         /// <summary>
@@ -271,7 +271,7 @@ namespace EVEMon
             // If data was already loaded during splash screen, skip redundant loading
             if (EveMonClient.IsDataLoaded)
             {
-                EveMonClient.Trace("MainWindow - Data already loaded during splash, skipping InitializeData", printMethod: false);
+                AppServices.TraceService?.Trace("MainWindow - Data already loaded during splash, skipping InitializeData", printMethod: false);
                 m_initialized = true;
 
                 // Hide loading indicators
@@ -288,7 +288,7 @@ namespace EVEMon
             }
 
             // Fallback: Load data if not loaded during splash (shouldn't happen normally)
-            EveMonClient.Trace("MainWindow - Loading data (fallback path)", printMethod: false);
+            AppServices.TraceService?.Trace("MainWindow - Loading data (fallback path)", printMethod: false);
 
             // Load static data
             await GlobalDatafileCollection.LoadAsync();
@@ -494,12 +494,12 @@ namespace EVEMon
             UpdateTabNames();
 
             // Show toast notification on first successful API load
-            if (!m_firstApiLoadNotified && m_initialized && EveMonClient.ESIKeys.Any())
+            if (!m_firstApiLoadNotified && m_initialized && AppServices.ESIKeys.Any())
             {
                 m_firstApiLoadNotified = true;
 
-                int characterCount = EveMonClient.MonitoredCharacters.Count();
-                bool hasErrors = EveMonClient.ESIKeys.Any(key => key.HasError);
+                int characterCount = AppServices.MonitoredCharacters.Count();
+                bool hasErrors = AppServices.ESIKeys.Any(key => key.HasError);
 
                 if (hasErrors)
                 {
@@ -616,7 +616,7 @@ namespace EVEMon
 
                 // Rebuild the pages
                 int index = 0;
-                foreach (Character character in EveMonClient.MonitoredCharacters)
+                foreach (Character character in AppServices.MonitoredCharacters)
                 {
                     // Retrieve the current page, or null if we're past the limits
                     TabPage? currentPage = index < tcCharacterTabs.TabCount ? tcCharacterTabs.TabPages[index] : null;
@@ -777,7 +777,7 @@ namespace EVEMon
                 page => page.Tag is Character).Select(page => (Character)page.Tag!);
 
             m_isUpdatingTabOrder = true;
-            EveMonClient.MonitoredCharacters.Update(order);
+            AppServices.MonitoredCharacters.Update(order);
             m_isUpdatingTabOrder = false;
         }
 
@@ -859,7 +859,7 @@ namespace EVEMon
         /// <param name="e"></param>
         private void OnServerStatusUpdated(ServerStatusUpdatedEvent e)
         {
-            lblServerStatus.Text = $"|  {EveMonClient.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
+            lblServerStatus.Text = $"|  {AppServices.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
         }
 
         /// <summary>
@@ -952,7 +952,7 @@ namespace EVEMon
             if (WindowState == FormWindowState.Minimized)
                 return;
 
-            notificationList.Notifications = EveMonClient.Notifications.Where(x => x.Sender == null || x.SenderAPIKey != null);
+            notificationList.Notifications = AppServices.Notifications.Where(x => x.Sender == null || x.SenderAPIKey != null);
         }
 
         /// <summary>
@@ -1149,7 +1149,7 @@ namespace EVEMon
 
             charactersComparisonMenuItem.Enabled =
                 characterComparisonToolStripButton.Enabled =
-                    EveMonClient.Characters != null && EveMonClient.Characters.Any();
+                    AppServices.Characters != null && AppServices.Characters.Any();
         }
 
         /// <summary>
@@ -1166,7 +1166,7 @@ namespace EVEMon
             if (WindowState == FormWindowState.Minimized)
                 return;
 
-            DateTime serverTime = EveMonClient.EVEServer?.ServerDateTime ?? DateTime.UtcNow;
+            DateTime serverTime = AppServices.EVEServer?.ServerDateTime ?? DateTime.UtcNow;
             lblStatus.Text = $"EVE Time: {serverTime:HH:mm}";
             lblStatus.ToolTipText = $"YC{serverTime.Year - 1898} ({serverTime.Date.ToShortDateString()})";
         }
@@ -2231,7 +2231,7 @@ namespace EVEMon
         private void ClearNotifications()
         {
             // Clear the global notification collection
-            EveMonClient.Notifications.Clear();
+            AppServices.Notifications.Clear();
 
             // Clear all main window notifications
             notificationList.Notifications = null!;
@@ -2356,7 +2356,7 @@ namespace EVEMon
             HidePopup();
 
             // Create the Plans sub-menu
-            List<Character> characters = new List<Character>(EveMonClient.MonitoredCharacters);
+            List<Character> characters = new List<Character>(AppServices.MonitoredCharacters);
             characters.Sort((x, y) => string.Compare(x.Name, y.Name, StringComparison.CurrentCulture));
             foreach (Character character in characters)
             {
@@ -2441,11 +2441,11 @@ namespace EVEMon
         private void UpdateControlsVisibility()
         {
             // Quit if the client has been shut down
-            if (EveMonClient.Closed)
+            if (AppServices.Closed)
                 return;
 
             // Displays or not the 'no characters added' label
-            noCharactersLabel.Visible = !EveMonClient.MonitoredCharacters.Any();
+            noCharactersLabel.Visible = !AppServices.MonitoredCharacters.Any();
             
             // Tray icon's visibility
             trayIcon.Visible = Settings.UI.SystemTrayIcon == SystemTrayBehaviour.AlwaysVisible
@@ -2477,21 +2477,21 @@ namespace EVEMon
 
             // Whenever we switch API provider we update
             // the server status and every monitored CCP character
-            if (m_apiProviderName == EveMonClient.APIProviders.CurrentProvider.Name)
+            if (m_apiProviderName == AppServices.APIProviders.CurrentProvider.Name)
                 return;
 
             // Clear any notifications
             ClearNotifications();
 
-            m_apiProviderName = EveMonClient.APIProviders.CurrentProvider.Name;
-            EveMonClient.EVEServer.ForceUpdate();
+            m_apiProviderName = AppServices.APIProviders.CurrentProvider.Name;
+            AppServices.EVEServer.ForceUpdate();
 
-            foreach (ESIKey apiKey in EveMonClient.ESIKeys)
+            foreach (ESIKey apiKey in AppServices.ESIKeys)
             {
                 apiKey.ForceUpdate();
             }
 
-            foreach (CCPCharacter character in EveMonClient.MonitoredCharacters.OfType<CCPCharacter>())
+            foreach (CCPCharacter character in AppServices.MonitoredCharacters.OfType<CCPCharacter>())
             {
                 character.QueryMonitors.QueryEverything();
             }
@@ -2546,11 +2546,18 @@ namespace EVEMon
         /// </summary>
         private async void PerformCloudUploadAndCloseAsync()
         {
-            bool success = await TryUploadToCloudStorageProviderAsync();
-            if (success)
+            try
             {
-                m_closingAfterUpload = true;
-                Close();
+                bool success = await TryUploadToCloudStorageProviderAsync();
+                if (success)
+                {
+                    m_closingAfterUpload = true;
+                    Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
             }
         }
 
@@ -2617,7 +2624,7 @@ namespace EVEMon
                 Behaviour = NotificationBehaviour.Overwrite,
                 Description = "Test Notification"
             };
-            EveMonClient.Notifications.Notify(notification);
+            AppServices.Notifications.Notify(notification);
         }
 
         /// <summary>

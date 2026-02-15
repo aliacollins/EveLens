@@ -88,17 +88,20 @@ namespace EVEMon.Common
                 // Fire tiered events
                 // SecondTick - every 1 second (skill countdowns, visible UI)
                 SecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                AppServices.EventAggregator?.Publish(SecondTickEvent.Instance);
 
                 // FiveSecondTick - every 5 seconds (API checks, cache expiry)
                 if (s_tickCounter % 5 == 0)
                 {
                     FiveSecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                    AppServices.EventAggregator?.Publish(FiveSecondTickEvent.Instance);
                 }
 
                 // ThirtySecondTick - every 30 seconds (background tasks)
                 if (s_tickCounter % 30 == 0)
                 {
                     ThirtySecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
+                    AppServices.EventAggregator?.Publish(ThirtySecondTickEvent.Instance);
                     s_tickCounter = 0; // Reset to prevent overflow
                 }
             }

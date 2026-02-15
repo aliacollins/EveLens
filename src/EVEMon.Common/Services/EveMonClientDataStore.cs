@@ -15,28 +15,28 @@ namespace EVEMon.Common.Services
         public void ResetCollections() => EveMonClient.ResetCollections();
 
         public void ImportCharacters(IEnumerable<SerializableSettingsCharacter> characters)
-            => EveMonClient.Characters.Import(characters);
+            => AppServices.Characters.Import(characters);
 
         public void ImportESIKeys(IEnumerable<SerializableESIKey> keys)
-            => EveMonClient.ESIKeys.Import(keys);
+            => AppServices.ESIKeys.Import(keys);
 
         public void ImportPlans(ICollection<SerializablePlan> plans)
-            => EveMonClient.Characters.ImportPlans(plans);
+            => AppServices.Characters.ImportPlans(plans);
 
         public void ImportMonitoredCharacters(ICollection<MonitoredCharacterSettings> monitored)
-            => EveMonClient.MonitoredCharacters.Import(monitored);
+            => AppServices.MonitoredCharacters.Import(monitored);
 
         public IEnumerable<SerializableSettingsCharacter> ExportCharacters()
-            => EveMonClient.Characters.Export();
+            => AppServices.Characters.Export();
 
         public IEnumerable<SerializableESIKey> ExportESIKeys()
-            => EveMonClient.ESIKeys.Export();
+            => AppServices.ESIKeys.Export();
 
         public IEnumerable<SerializablePlan> ExportPlans()
-            => EveMonClient.Characters.ExportPlans();
+            => AppServices.Characters.ExportPlans();
 
         public IEnumerable<MonitoredCharacterSettings> ExportMonitoredCharacters()
-            => EveMonClient.MonitoredCharacters.Export();
+            => AppServices.MonitoredCharacters.Export();
 
         public string SettingsFilePath => EveMonClient.SettingsFileNameFullPath;
 
@@ -44,6 +44,6 @@ namespace EVEMon.Common.Services
 
         public string FileVersion => EveMonClient.FileVersionInfo?.FileVersion ?? "0.0.0.0";
 
-        public bool IsClosed => EveMonClient.Closed;
+        public bool IsClosed => AppServices.Closed;
     }
 }

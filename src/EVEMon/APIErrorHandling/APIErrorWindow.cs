@@ -1,5 +1,6 @@
 ﻿using EVEMon.Common;
 using EVEMon.Common.Controls;
+using EVEMon.Common.Services;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Helpers;
@@ -108,7 +109,7 @@ namespace EVEMon.ApiErrorHandling
                 return;
             }
 
-            EveMonClient.Notifications.Invalidate(new NotificationInvalidationEventArgs(
+            AppServices.Notifications.Invalidate(new NotificationInvalidationEventArgs(
                 m_notification));
             PerformAction(e.Action);
         }

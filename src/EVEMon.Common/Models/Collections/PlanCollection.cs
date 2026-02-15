@@ -4,6 +4,8 @@ using System.Linq;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -66,7 +68,8 @@ namespace EVEMon.Common.Models.Collections
         /// </summary>
         protected override void OnChanged()
         {
-            EveMonClient.OnCharacterPlanCollectionChanged(m_owner);
+            AppServices.TraceService?.Trace(m_owner?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanCollectionChangedEvent(m_owner));
         }
 
         /// <summary>
@@ -83,7 +86,8 @@ namespace EVEMon.Common.Models.Collections
             SetItems(newPlanList);
 
             // Fire the global event
-            EveMonClient.OnCharacterPlanCollectionChanged(m_owner);
+            AppServices.TraceService?.Trace(m_owner?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanCollectionChangedEvent(m_owner));
         }
     }
 }

@@ -8,6 +8,7 @@ using EVEMon.Common.Data;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.PatchXml;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.Common
@@ -109,7 +110,7 @@ namespace EVEMon.Common
         {
             s_checkScheduled = true;
             Dispatcher.Schedule(time, () => _ = BeginCheckWithErrorHandlingAsync());
-            EveMonClient.Trace("in " + time);
+            AppServices.TraceService?.Trace("in " + time);
         }
 
         /// <summary>
@@ -123,7 +124,7 @@ namespace EVEMon.Common
             }
             catch (Exception ex)
             {
-                EveMonClient.Trace($"UpdateManager - Error during update check: {ex.Message}",
+                AppServices.TraceService?.Trace($"UpdateManager - Error during update check: {ex.Message}",
                     printMethod: false);
                 ExceptionHandler.LogException(ex, false);
                 // Reschedule after error with exponential backoff
@@ -150,7 +151,7 @@ namespace EVEMon.Common
             // No connection? Recheck in one minute
             if (!NetworkMonitor.IsNetworkAvailable)
             {
-                EveMonClient.Trace("UpdateManager - No network available, rescheduling",
+                AppServices.TraceService?.Trace("UpdateManager - No network available, rescheduling",
                     printMethod: false);
                 ScheduleCheck(GetBackoffDelay());
                 return;
@@ -177,7 +178,7 @@ namespace EVEMon.Common
                     : baseUpdatePath.Replace(".xml", $"{channelSuffix}.xml"));
             string emergAddress = updateAddress.Replace(".xml", string.Empty) + "-emergency.xml";
 
-            EveMonClient.Trace($"UpdateManager - Checking {updateAddress} (channel: {(string.IsNullOrEmpty(channelSuffix) ? "stable" : channelSuffix.TrimStart('-'))})", printMethod: false);
+            AppServices.TraceService?.Trace($"UpdateManager - Checking {updateAddress} (channel: {(string.IsNullOrEmpty(channelSuffix) ? "stable" : channelSuffix.TrimStart('-'))})", printMethod: false);
 
             // First look up for an emergency patch
             var result = await Util.DownloadXmlAsync<SerializablePatch>(new Uri(emergAddress))
@@ -212,7 +213,7 @@ namespace EVEMon.Common
             if (result.Error != null)
             {
                 // Logs the error and reschedule
-                EveMonClient.Trace($"UpdateManager - {result.Error.Message}",
+                AppServices.TraceService?.Trace($"UpdateManager - {result.Error.Message}",
                     printMethod: false);
                 ScheduleCheck(GetBackoffDelay());
                 return;
@@ -234,7 +235,7 @@ namespace EVEMon.Common
                 // Reset backoff on successful check
                 s_errorRetryCount = 0;
 
-                EveMonClient.Trace();
+                AppServices.TraceService?.Trace((string)null);
 
                 // Reschedule
                 ScheduleCheck(s_frequency);

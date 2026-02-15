@@ -9,6 +9,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 
 namespace EVEMon.SettingsUI
 {
@@ -101,7 +102,7 @@ namespace EVEMon.SettingsUI
             m_characters.Clear();
             m_characters.AddRange(Settings.UI.SystemTrayTooltip.DisplayOrder
                                       ? TrayPopupWindow.GetCharacters
-                                      : EveMonClient.MonitoredCharacters.Where(x => x.IsTraining));
+                                      : AppServices.MonitoredCharacters.Where(x => x.IsTraining));
 
             // Assembles the tooltip format
             StringBuilder sb = new StringBuilder();

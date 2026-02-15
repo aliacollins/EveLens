@@ -5,8 +5,8 @@ using EVEMon.Core.Interfaces;
 namespace EVEMon.Common.Services
 {
     /// <summary>
-    /// Strangler Fig wrapper for <see cref="EveMonClient.Characters"/> and
-    /// <see cref="EveMonClient.MonitoredCharacters"/>.
+    /// Strangler Fig wrapper for <see cref="AppServices.Characters"/> and
+    /// <see cref="AppServices.MonitoredCharacters"/>.
     /// Implements <see cref="ICharacterRepository"/> by delegating to the existing collections.
     /// </summary>
     internal sealed class CharacterRepositoryService : ICharacterRepository
@@ -16,7 +16,7 @@ namespace EVEMon.Common.Services
         {
             get
             {
-                var chars = EveMonClient.Characters;
+                var chars = AppServices.Characters;
                 if (chars == null)
                     return new List<ICharacterIdentity>();
                 return chars.OfType<ICharacterIdentity>().ToList().AsReadOnly();
@@ -28,7 +28,7 @@ namespace EVEMon.Common.Services
         {
             get
             {
-                var monitored = EveMonClient.MonitoredCharacters;
+                var monitored = AppServices.MonitoredCharacters;
                 if (monitored == null)
                     return new List<ICharacterIdentity>();
                 return monitored.OfType<ICharacterIdentity>().ToList().AsReadOnly();
@@ -38,22 +38,22 @@ namespace EVEMon.Common.Services
         /// <inheritdoc />
         public ICharacterIdentity GetByGuid(string guid)
         {
-            return EveMonClient.Characters?[guid] as ICharacterIdentity;
+            return AppServices.Characters?[guid] as ICharacterIdentity;
         }
 
         /// <inheritdoc />
-        public int Count => EveMonClient.Characters?.Count ?? 0;
+        public int Count => AppServices.Characters?.Count ?? 0;
 
         /// <inheritdoc />
         public IEnumerable<string> GetKnownLabels()
         {
-            return EveMonClient.Characters?.GetKnownLabels() ?? Enumerable.Empty<string>();
+            return AppServices.Characters?.GetKnownLabels() ?? Enumerable.Empty<string>();
         }
 
         /// <inheritdoc />
         public bool IsMonitored(ICharacterIdentity character)
         {
-            var monitored = EveMonClient.MonitoredCharacters;
+            var monitored = AppServices.MonitoredCharacters;
             if (monitored == null || character == null)
                 return false;
             return monitored.Any(c => c.Guid == character.Guid);
@@ -65,9 +65,9 @@ namespace EVEMon.Common.Services
             if (character == null)
                 return;
             // Delegate to the real Character model's Monitored setter via the collection
-            var realCharacter = EveMonClient.Characters?[character.Guid.ToString()];
+            var realCharacter = AppServices.Characters?[character.Guid.ToString()];
             if (realCharacter != null)
-                EveMonClient.MonitoredCharacters.OnCharacterMonitoringChanged(realCharacter, value);
+                AppServices.MonitoredCharacters.OnCharacterMonitoringChanged(realCharacter, value);
         }
     }
 }
