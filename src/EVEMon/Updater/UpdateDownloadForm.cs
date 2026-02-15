@@ -12,9 +12,9 @@ namespace EVEMon.Updater
 {
     public partial class UpdateDownloadForm : EVEMonForm
     {
-        private readonly Uri m_url;
-        private readonly string m_fileName;
-        private WebClient m_client;
+        private readonly Uri m_url = null!;
+        private readonly string m_fileName = null!;
+        private WebClient m_client = null!;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UpdateDownloadForm"/> class.
@@ -98,7 +98,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="DownloadProgressChangedEventArgs" /> instance containing the event data.</param>
-        private void ProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        private void ProgressChanged(object? sender, DownloadProgressChangedEventArgs e)
         {
             if (InvokeRequired)
             {
@@ -133,7 +133,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="AsyncCompletedEventArgs"/> instance containing the event data.</param>
-        private void DownloadCompleted(object sender, AsyncCompletedEventArgs e)
+        private void DownloadCompleted(object? sender, AsyncCompletedEventArgs e)
         {
             if (InvokeRequired)
             {
@@ -163,7 +163,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btCancel_Click(object sender, EventArgs e)
+        private void btCancel_Click(object? sender, EventArgs e)
         {
             m_client?.CancelAsync();
         }

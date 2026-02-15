@@ -25,21 +25,21 @@ namespace EVEMon.DetailsWindow
     {
         #region Fields
 
-        private readonly Contract m_contract;
+        private readonly Contract m_contract = null!;
         private readonly Size m_startingSize;
-        private readonly SolarSystem m_characterLastSolarSystem;
-        private readonly IEnumerable<ContractItem> m_contractItems;
+        private readonly SolarSystem m_characterLastSolarSystem = null!;
+        private readonly IEnumerable<ContractItem> m_contractItems = null!;
 
-        private ContractItemsListView m_lvIncludedItems;
-        private ContractItemsListView m_lvNotIncludedItems;
-        private IEnumerable<SolarSystem> m_characterLastLocationToStartRoute;
-        private IEnumerable<SolarSystem> m_characterLastLocationToEndRoute;
-        private IEnumerable<SolarSystem> m_startToEndRoute;
-        private IEnumerable<SolarSystem> m_oldRoute;
-        private IEnumerable<SolarSystem> m_route;
-        private Font m_boldFont;
-        private Font m_mediumBoldFont;
-        private Font m_bigBoldFont;
+        private ContractItemsListView m_lvIncludedItems = null!;
+        private ContractItemsListView m_lvNotIncludedItems = null!;
+        private IEnumerable<SolarSystem> m_characterLastLocationToStartRoute = null!;
+        private IEnumerable<SolarSystem> m_characterLastLocationToEndRoute = null!;
+        private IEnumerable<SolarSystem> m_startToEndRoute = null!;
+        private IEnumerable<SolarSystem> m_oldRoute = null!;
+        private IEnumerable<SolarSystem> m_route = null!;
+        private Font m_boldFont = null!;
+        private Font m_mediumBoldFont = null!;
+        private Font m_bigBoldFont = null!;
         private bool m_buttonSwitch;
         private int m_height;
 
@@ -148,9 +148,9 @@ namespace EVEMon.DetailsWindow
         {
             get
             {
-                Region startStationRegion = m_contract.StartStation.SolarSystemChecked.
+                Region startStationRegion = m_contract!.StartStation!.SolarSystemChecked.
                     Constellation.Region;
-                Region characterLastKnownRegion = m_characterLastSolarSystem != null ?
+                Region? characterLastKnownRegion = m_characterLastSolarSystem != null ?
                     m_characterLastSolarSystem.Constellation.Region : null;
                 string destinationRegionText = (characterLastKnownRegion != null) ?
                     ((characterLastKnownRegion == startStationRegion) ? "(Current Region)" :
@@ -166,8 +166,8 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <value>The start to end route.</value>
         private IEnumerable<SolarSystem> GetStartToEndRoute => m_startToEndRoute ??
-            (m_startToEndRoute = m_contract.StartStation.SolarSystemChecked.GetFastestPathTo(
-            m_contract.EndStation.SolarSystemChecked, PathSearchCriteria.FewerJumps));
+            (m_startToEndRoute = m_contract!.StartStation!.SolarSystemChecked.GetFastestPathTo(
+            m_contract!.EndStation!.SolarSystemChecked, PathSearchCriteria.FewerJumps));
 
         /// <summary>
         /// Gets the character last location to start route.
@@ -175,7 +175,7 @@ namespace EVEMon.DetailsWindow
         /// <value>The character last location to start route.</value>
         private IEnumerable<SolarSystem> GetCharacterLastLocationToStartRoute =>
             m_characterLastLocationToStartRoute ?? (m_characterLastLocationToStartRoute =
-            m_characterLastSolarSystem.GetFastestPathTo(m_contract.StartStation.
+            m_characterLastSolarSystem.GetFastestPathTo(m_contract!.StartStation!.
             SolarSystemChecked, PathSearchCriteria.FewerJumps));
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace EVEMon.DetailsWindow
         /// <value>The character last location to end route.</value>
         private IEnumerable<SolarSystem> GetCharacterLastLocationToEndRoute =>
             m_characterLastLocationToEndRoute ?? (m_characterLastLocationToEndRoute =
-            m_characterLastSolarSystem.GetFastestPathTo(m_contract.EndStation.
+            m_characterLastSolarSystem.GetFastestPathTo(m_contract!.EndStation!.
             SolarSystemChecked, PathSearchCriteria.FewerJumps));
 
         #endregion
@@ -197,7 +197,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.PaintEventArgs"/> instance containing the event data.</param>
-        private void DetailsPanel_Paint(object sender, PaintEventArgs e)
+        private void DetailsPanel_Paint(object? sender, PaintEventArgs e)
         {
             // Draw the header section
             DrawHeader(e);
@@ -276,7 +276,7 @@ namespace EVEMon.DetailsWindow
 
                     // Draw additional type info when item is a blueprint
                     if (contractItem.RawQuantity < 0 &&
-                        contractItem.Item.MarketGroup.BelongsIn(DBConstants.BlueprintsMarketGroupID))
+                        contractItem.Item.MarketGroup!.BelongsIn(DBConstants.BlueprintsMarketGroupID)!)
                     {
                         string itemTypeText = $"BLUEPRINT {(contractItem.RawQuantity == -2 ? "COPY" : "ORIGINAL")}";
                         DrawText(e, string.Empty, itemTypeText, m_boldFont, true, position);
@@ -429,7 +429,7 @@ namespace EVEMon.DetailsWindow
 
             // null SolarSystem is OK here, count will be zero as expected
             int startToEndSystemJumps = GetStartToEndRoute.Count(system => system !=
-                m_contract.StartStation.SolarSystem);
+                m_contract!.StartStation!.SolarSystem);
             decimal iskPerJump = startToEndSystemJumps > 0 ? (m_contract.Reward /
                 startToEndSystemJumps) : 0;
             string iskPerJumpText = iskPerJump > 0 ?
@@ -447,7 +447,7 @@ namespace EVEMon.DetailsWindow
             DrawText(e, "Collateral", string.Empty, Font, false);
             DrawColoredText(e, text, Font, new Point(SecondIndentPosition, m_height), Color.Red);
 
-            DrawStationText(e, "Destination", m_contract.EndStation);
+            DrawStationText(e, "Destination", m_contract.EndStation!);
         }
 
         /// <summary>
@@ -465,7 +465,7 @@ namespace EVEMon.DetailsWindow
             if (m_contract.AcceptorID != 0)
                 DrawText(e, "Contractor", m_contract.Acceptor, Font);
             DrawText(e, "Status", m_contract.Status.GetDescription(), Font);
-            DrawStationText(e, "Location", m_contract.StartStation);
+            DrawStationText(e, "Location", m_contract.StartStation!);
             DrawText(e, "Issued Date",
                 m_contract.Issued.ToLocalTime().DateTimeToDotFormattedString(), Font);
 
@@ -542,7 +542,7 @@ namespace EVEMon.DetailsWindow
         private void DrawStationText(PaintEventArgs e, string labelText, Station station)
         {
             Graphics g = e.Graphics;
-            SolarSystem system = null;
+            SolarSystem? system = null;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             string secLevelText = string.Empty;
@@ -581,7 +581,7 @@ namespace EVEMon.DetailsWindow
             // Draw the sec level of the solar system, colored accordingly
             if (secLevelText != null)
                 DrawColoredText(e, secLevelText, Font, new Point(DetailsPanel.Left +
-                    SecondIndentPosition, m_height), system.SecurityLevelColor, false);
+                    SecondIndentPosition, m_height), system!.SecurityLevelColor, false);
 
             // Draw the station name
             Size stationTextSize = g.MeasureString(stationText, Font).ToSize();
@@ -664,7 +664,7 @@ namespace EVEMon.DetailsWindow
             // Draw the "jumps between start and end solar system" info text
             if (m_contract.StartStation == m_contract.EndStation || station != m_contract.
                 EndStation || (m_characterLastSolarSystem != null &&
-                m_characterLastSolarSystem == m_contract.StartStation.SolarSystem))
+                m_characterLastSolarSystem == m_contract!.StartStation!.SolarSystem))
                 return;
 
             startToEndSystemJumps = GetStartToEndRoute.Count(system =>
@@ -910,7 +910,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.PaintEventArgs"/> instance containing the event data.</param>
-        private void RoutePanel_Paint(object sender, PaintEventArgs e)
+        private void RoutePanel_Paint(object? sender, PaintEventArgs e)
         {
             if (m_route == null)
                 return;
@@ -976,7 +976,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void DetailsPanel_Click(object sender, EventArgs e)
+        private void DetailsPanel_Click(object? sender, EventArgs e)
         {
             HideRoutePanel();
         }
@@ -986,7 +986,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void ItemImage_MouseClick(object sender, MouseEventArgs e)
+        private void ItemImage_MouseClick(object? sender, MouseEventArgs e)
         {
             HideRoutePanel();
         }
@@ -996,7 +996,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void CurrentToStartLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void CurrentToStartLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             m_route = m_characterLastLocationToStartRoute;
             ShowRoutePanel();
@@ -1007,7 +1007,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void CurrentToEndLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void CurrentToEndLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             m_route = m_characterLastLocationToEndRoute;
             ShowRoutePanel();
@@ -1018,7 +1018,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void StartToEndLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void StartToEndLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             m_route = GetStartToEndRoute;
             ShowRoutePanel();
@@ -1029,7 +1029,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void BidsButton_Click(object sender, EventArgs e)
+        private void BidsButton_Click(object? sender, EventArgs e)
         {
             m_buttonSwitch = !m_buttonSwitch;
             BidsButton.Text = m_buttonSwitch ? "Hide Bids" : " Show Bids";
@@ -1098,12 +1098,12 @@ namespace EVEMon.DetailsWindow
 
         private sealed class ContractItemsListView : ListView
         {
-            private readonly IEnumerable<ContractItem> m_list;
-            private readonly Character m_character;
-            private ColumnHeader m_sortCriteria;
+            private readonly IEnumerable<ContractItem> m_list = null!;
+            private readonly Character m_character = null!;
+            private ColumnHeader m_sortCriteria = null!;
             private bool m_sortAscending = true;
-            private IContainer components;
-            private ToolStripMenuItem m_showInBrowserMenuItem;
+            private IContainer components = null!;
+            private ToolStripMenuItem m_showInBrowserMenuItem = null!;
 
 
             #region Constructors
@@ -1241,7 +1241,7 @@ namespace EVEMon.DetailsWindow
                 if (e.Button == MouseButtons.Right)
                     return;
 
-                ListViewItem item = GetItemAt(e.X, e.Y);
+                ListViewItem? item = GetItemAt(e.X, e.Y);
 
                 Cursor = item != null ? CustomCursors.ContextMenu : Cursors.Default;
             }
@@ -1270,25 +1270,25 @@ namespace EVEMon.DetailsWindow
             /// </summary>
             /// <param name="sender">The source of the event.</param>
             /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-            private void contextMenu_Opening(object sender, CancelEventArgs e)
+            private void contextMenu_Opening(object? sender, CancelEventArgs e)
             {
                 e.Cancel = SelectedItems.Count == 0;
 
                 if (e.Cancel)
                     return;
 
-                ContractItem contractItem = SelectedItems[0]?.Tag as ContractItem;
+                ContractItem? contractItem = SelectedItems[0]?.Tag as ContractItem;
 
 
                 if (contractItem?.Item == null)
                     return;
 
                 Blueprint blueprint = StaticBlueprints.GetBlueprintByID(contractItem.Item.ID);
-                Ship ship = contractItem.Item as Ship;
+                Ship? ship = contractItem.Item as Ship;
                 Skill skill = m_character.Skills[contractItem.Item.ID];
 
                 if (skill == Skill.UnknownSkill)
-                    skill = null;
+                    skill = null!;
 
                 string text = ship != null ? "Ship" : blueprint != null ? "Blueprint" : skill != null ? "Skill" : "Item";
 
@@ -1300,30 +1300,30 @@ namespace EVEMon.DetailsWindow
             /// </summary>
             /// <param name="sender">The source of the event.</param>
             /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-            private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+            private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
             {
-                ContractItem contractItem = SelectedItems[0]?.Tag as ContractItem;
+                ContractItem? contractItem = SelectedItems[0]?.Tag as ContractItem;
 
                 if (contractItem?.Item == null)
                     return;
 
-                Ship ship = contractItem.Item as Ship;
+                Ship? ship = contractItem.Item as Ship;
                 Blueprint blueprint = StaticBlueprints.GetBlueprintByID(contractItem.Item.ID);
                 Skill skill = m_character.Skills[contractItem.Item.ID];
 
                 if (skill == Skill.UnknownSkill)
-                    skill = null;
+                    skill = null!;
 
-                PlanWindow planWindow = PlanWindow.ShowPlanWindow(m_character);
+                PlanWindow? planWindow = PlanWindow.ShowPlanWindow(m_character);
 
                 if (ship != null)
-                    planWindow.ShowShipInBrowser(ship);
+                    planWindow!.ShowShipInBrowser(ship);
                 else if (blueprint != null)
-                    planWindow.ShowBlueprintInBrowser(blueprint);
+                    planWindow!.ShowBlueprintInBrowser(blueprint);
                 else if (skill != null)
-                    planWindow.ShowSkillInBrowser(skill);
+                    planWindow!.ShowSkillInBrowser(skill);
                 else
-                    planWindow.ShowItemInBrowser(contractItem.Item);
+                    planWindow!.ShowItemInBrowser(contractItem.Item);
             }
 
             #endregion
@@ -1392,7 +1392,7 @@ namespace EVEMon.DetailsWindow
                         columnHeaderWidth += SmallImageList.ImageSize.Width + Pad;
 
                     // Calculate the width of the header and the items of the column
-                    int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                    int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                         item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                             new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -1459,10 +1459,10 @@ namespace EVEMon.DetailsWindow
             /// </summary>
             /// <param name="sender"></param>
             /// <param name="e"></param>
-            private void ContractItemsListView_ColumnClick(object sender, ColumnClickEventArgs e)
+            private void ContractItemsListView_ColumnClick(object? sender, ColumnClickEventArgs e)
             {
-                ListView lvItems = (ListView)sender;
-                ColumnHeader column = lvItems.Columns[e.Column];
+                ListView? lvItems = sender as ListView;
+                ColumnHeader column = lvItems!.Columns[e.Column];
                 if (m_sortCriteria == column)
                     m_sortAscending = !m_sortAscending;
                 else

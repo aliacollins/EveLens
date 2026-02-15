@@ -39,22 +39,10 @@ namespace EVEMon.Common.Notifications
         SkillQueueRoomAvailable,
 
         /// <summary>
-        /// A certificate is claimable.
-        /// </summary>
-        [Obsolete]
-        ClaimableCertificate,
-
-        /// <summary>
         /// A character has not enough balance to fulfill its buy orders.
         /// </summary>
         [Header("Insufficient balance")]
         InsufficientBalance,
-
-        /// <summary>
-        /// A character has not enough skill points on his clone.
-        /// </summary>
-        [Obsolete]
-        InsufficientClone,
 
         /// <summary>
         /// An error occurred while the querying of the API.

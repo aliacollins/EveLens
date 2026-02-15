@@ -34,40 +34,38 @@ namespace EVEMon.Common.QueryMonitor
             m_ccpCharacter = ccpCharacter;
             m_corporationQueryMonitors = new List<IQueryMonitorEx>(4);
 
-            // Initializes the query monitors 
+            // Initializes the query monitors
             m_corpMedalsMonitor = new PagedQueryMonitor<EsiAPIMedals, EsiMedalsListItem>(
                 new CorporationQueryMonitor<EsiAPIMedals>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMedals, OnMedalsUpdated,
-                EveMonClient.Notifications.NotifyCorporationMedalsError)
+                EveMonClient.Notifications.NotifyCorporationMedalsError,
+                suppressSelfTicking: true)
                 { QueryOnStartup = true });
             // Add the monitors in an order as they will appear in the throbber menu
             m_corporationQueryMonitors.Add(m_corpMedalsMonitor);
             m_corpMarketOrdersMonitor = new PagedQueryMonitor<EsiAPIMarketOrders,
                 EsiOrderListItem>(new CorporationQueryMonitor<EsiAPIMarketOrders>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMarketOrders, OnMarketOrdersUpdated,
-                EveMonClient.Notifications.NotifyCorporationMarketOrdersError)
+                EveMonClient.Notifications.NotifyCorporationMarketOrdersError,
+                suppressSelfTicking: true)
                 { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpMarketOrdersMonitor);
             m_corpContractsMonitor = new PagedQueryMonitor<EsiAPIContracts,
                 EsiContractListItem>(new CorporationQueryMonitor<EsiAPIContracts>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationContracts, OnContractsUpdated,
-                EveMonClient.Notifications.NotifyCorporationContractsError)
+                EveMonClient.Notifications.NotifyCorporationContractsError,
+                suppressSelfTicking: true)
                 { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpContractsMonitor);
             m_corpIndustryJobsMonitor = new PagedQueryMonitor<EsiAPIIndustryJobs,
                 EsiJobListItem>(new CorporationQueryMonitor<EsiAPIIndustryJobs>(
                 ccpCharacter, ESIAPICorporationMethods.CorporationIndustryJobs,
                 OnIndustryJobsUpdated, EveMonClient.Notifications.
-                NotifyCorporationIndustryJobsError) { QueryOnStartup = true });
+                NotifyCorporationIndustryJobsError, suppressSelfTicking: true) { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpIndustryJobsMonitor);
 
             foreach (var monitor in m_corporationQueryMonitors)
                 ccpCharacter.QueryMonitors.Add(monitor);
-
-            // Suppress self-ticking on all monitors — this class will drive them
-            // instead of each monitor subscribing to FiveSecondTick individually.
-            foreach (var monitor in m_corporationQueryMonitors)
-                monitor.SuppressSelfTicking();
 
             if (FeatureFlags.UseSmartScheduler && EveMonClient.SmartQueryScheduler != null)
             {

@@ -32,7 +32,7 @@ namespace EVEMon.CharacterMonitoring
         private readonly List<ContractColumnSettings> m_columns = new List<ContractColumnSettings>();
         private readonly List<Contract> m_list = new List<Contract>();
 
-        private InfiniteDisplayToolTip m_tooltip;
+        private InfiniteDisplayToolTip m_tooltip = null!;
         private ContractGrouping m_grouping;
         private ContractColumn m_sortCriteria;
         private IssuedFor m_showIssuedFor;
@@ -83,7 +83,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="lvContracts"/> is visible.
@@ -168,7 +168,7 @@ namespace EVEMon.CharacterMonitoring
                 List<ContractColumnSettings> newColumns = new List<ContractColumnSettings>();
                 foreach (ColumnHeader header in lvContracts.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
                 {
-                    ContractColumnSettings columnSetting = m_columns.First(x => x.Column == (ContractColumn)header.Tag);
+                    ContractColumnSettings columnSetting = m_columns.First(x => x.Column == (ContractColumn)header.Tag!);
                     if (columnSetting.Width > -1)
                         columnSetting.Width = header.Width;
 
@@ -223,7 +223,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             m_tooltip.Dispose();
 
@@ -252,9 +252,9 @@ namespace EVEMon.CharacterMonitoring
 
             lvContracts.Visible = false;
 
-            Contracts = Character?.Contracts;
+            Contracts = Character?.Contracts!;
             Columns = Settings.UI.MainWindow.Contracts.Columns;
-            Grouping = Character?.UISettings.ContractsGroupBy;
+            Grouping = Character?.UISettings.ContractsGroupBy!;
             TextFilter = string.Empty;
 
             UpdateColumns();
@@ -343,7 +343,7 @@ namespace EVEMon.CharacterMonitoring
             int scrollBarPosition = lvContracts.GetVerticalScrollBarPosition();
 
             // Store the selected item (if any) to restore it after the update
-            int selectedItem = lvContracts.SelectedItems.Count > 0 ? lvContracts.
+            int selectedItem = lvContracts.SelectedItems!.Count > 0 ? lvContracts!.
                 SelectedItems[0].Tag.GetHashCode() : 0;
 
             lvContracts.BeginUpdate();
@@ -371,7 +371,7 @@ namespace EVEMon.CharacterMonitoring
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvContracts.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                     {
                         lvItem.Selected = true;
                     }
@@ -442,12 +442,12 @@ namespace EVEMon.CharacterMonitoring
                     break;
                 case ContractGrouping.StartLocation:
                     IOrderedEnumerable<IGrouping<Station, Contract>> groups8 =
-                        contracts.GroupBy(x => x.StartStation).OrderBy(x => x.Key.Name);
+                        contracts.GroupBy(x => x.StartStation)!.OrderBy(x => x!.Key!.Name)!;
                     UpdateContent(groups8);
                     break;
                 case ContractGrouping.StartLocationDesc:
                     IOrderedEnumerable<IGrouping<Station, Contract>> groups9 =
-                        contracts.GroupBy(x => x.StartStation).OrderByDescending(x => x.Key.Name);
+                        contracts.GroupBy(x => x.StartStation)!.OrderByDescending(x => x!.Key!.Name)!;
                     UpdateContent(groups9);
                     break;
             }
@@ -474,7 +474,7 @@ namespace EVEMon.CharacterMonitoring
                 else if (group.Key is DateTime)
                     groupText = ((DateTime)(object)group.Key).ToShortDateString();
                 else
-                    groupText = group.Key.ToString();
+                    groupText = group!.Key!.ToString()!;
 
                 ListViewGroup listGroup = new ListViewGroup(groupText);
                 lvContracts.Groups.Add(listGroup);
@@ -514,7 +514,7 @@ namespace EVEMon.CharacterMonitoring
             // Creates the subitems
             for (int i = 0; i < lvContracts.Columns.Count; i++)
             {
-                ContractColumn column = (ContractColumn)lvContracts.Columns[i].Tag;
+                ContractColumn column = (ContractColumn)lvContracts.Columns[i]!.Tag!;
                 SetColumn(contract, item.SubItems[i], column);
             }
 
@@ -534,14 +534,14 @@ namespace EVEMon.CharacterMonitoring
 
             string prefix = contract.ContractType == ContractType.Courier ? "Starting " :
                 string.Empty;
-            string startSS = contract.StartStation.SolarSystem?.FullLocation ??
+            string startSS = contract!.StartStation!.SolarSystem?.FullLocation ??
                 EveMonConstants.UnknownText;
             builder.Append($"{prefix}Solar System: {startSS}").AppendLine();
             builder.Append($"{prefix}Station: {contract.StartStation.Name}").AppendLine();
 
             if (contract.ContractType == ContractType.Courier)
             {
-                string endSS = contract.EndStation.SolarSystem?.FullLocation ??
+                string endSS = contract!.EndStation!.SolarSystem?.FullLocation ??
                     EveMonConstants.UnknownText;
                 builder.Append($"Ending Solar System: {endSS}").AppendLine();
                 builder.Append($"Ending Station: {contract.EndStation.Name}").AppendLine();
@@ -580,7 +580,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvContracts.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -607,7 +607,7 @@ namespace EVEMon.CharacterMonitoring
         {
             foreach (ColumnHeader columnHeader in lvContracts.Columns.Cast<ColumnHeader>())
             {
-                ContractColumn column = (ContractColumn)columnHeader.Tag;
+                ContractColumn column = (ContractColumn)columnHeader.Tag!;
                 if (m_sortCriteria == column)
                     columnHeader.ImageIndex = m_sortAscending ? 0 : 1;
                 else
@@ -634,7 +634,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="column"></param>
         private static void SetColumn(Contract contract, ListViewItem.ListViewSubItem item, ContractColumn column)
         {
-            Station start = contract.StartStation, end = contract.EndStation;
+            Station? start = contract.StartStation, end = contract.EndStation;
             switch (column)
             {
             case ContractColumn.Status:
@@ -678,30 +678,30 @@ namespace EVEMon.CharacterMonitoring
                 item.Text = FormatPrice(contract.Volume);
                 break;
             case ContractColumn.StartLocation:
-                item.Text = start.FullLocation;
+                item!.Text = start!.FullLocation;
                 break;
             case ContractColumn.StartRegion:
-                item.Text = start.SolarSystemChecked.Constellation.Region.Name;
+                item!.Text = start!.SolarSystemChecked.Constellation.Region.Name;
                 break;
             case ContractColumn.StartSolarSystem:
-                item.Text = start.SolarSystemChecked.Name;
+                item!.Text = start!.SolarSystemChecked.Name;
                 item.ForeColor = start.SolarSystemChecked.SecurityLevelColor;
                 break;
             case ContractColumn.StartStation:
-                item.Text = start.Name;
+                item!.Text = start!.Name;
                 break;
             case ContractColumn.EndLocation:
-                item.Text = end.FullLocation;
+                item!.Text = end!.FullLocation;
                 break;
             case ContractColumn.EndRegion:
-                item.Text = end.SolarSystemChecked.Constellation.Region.Name;
+                item!.Text = end!.SolarSystemChecked.Constellation.Region.Name;
                 break;
             case ContractColumn.EndSolarSystem:
-                item.Text = end.SolarSystemChecked.Name;
+                item!.Text = end!.SolarSystemChecked.Name;
                 item.ForeColor = end.SolarSystemChecked.SecurityLevelColor;
                 break;
             case ContractColumn.EndStation:
-                item.Text = end.Name;
+                item!.Text = end!.Name;
                 break;
             case ContractColumn.Issued:
                 item.Text = contract.Issued.ToLocalTime().ToShortDateString();
@@ -757,7 +757,7 @@ namespace EVEMon.CharacterMonitoring
                x.Acceptor.ToUpperInvariant().Contains(text, ignoreCase: true) ||
                x.Description.ToUpperInvariant().Contains(text, ignoreCase: true) ||
                x.Availability.GetDescription().ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.StartStation.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
+               x!.StartStation!.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
                x.StartStation.SolarSystemChecked.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
                x.StartStation.SolarSystemChecked.Constellation.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
                x.StartStation.SolarSystemChecked.Constellation.Region.Name.ToUpperInvariant().Contains(text, ignoreCase: true);
@@ -811,7 +811,7 @@ namespace EVEMon.CharacterMonitoring
                 // Fixes a bug where double clicks as the list was updating would crash
                 var contract = items[0].Tag as Contract;
                 if (contract != null && contract.ContractType == ContractType.Courier ||
-                    contract.ContractItems.Any())
+                    contract!.ContractItems.Any())
                     WindowsFactory.ShowByTag<ContractDetailsWindow, Contract>(contract);
             }
         }
@@ -826,7 +826,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvContracts);
         }
@@ -836,7 +836,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void lvContracts_DoubleClick(object sender, EventArgs e)
+        private void lvContracts_DoubleClick(object? sender, EventArgs e)
         {
             ShowContractDetails();
         }
@@ -846,7 +846,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvContracts_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void lvContracts_ColumnReordered(object? sender, ColumnReorderedEventArgs e)
         {
             m_columnsChanged = true;
         }
@@ -856,7 +856,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvContracts_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void lvContracts_ColumnWidthChanged(object? sender, ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns || m_columns.Count <= e.ColumnIndex)
                 return;
@@ -873,9 +873,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvContracts_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void lvContracts_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
-            ContractColumn column = (ContractColumn)lvContracts.Columns[e.Column].Tag;
+            ContractColumn column = (ContractColumn)lvContracts.Columns![e.Column].Tag!;
             if (m_sortCriteria == column)
                 m_sortAscending = !m_sortAscending;
             else
@@ -897,7 +897,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseDown(object sender, MouseEventArgs e)
+        private void listView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -910,14 +910,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseMove(object sender, MouseEventArgs e)
+        private void listView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
 
             lvContracts.Cursor = CustomCursors.ContextMenu;
 
-            ListViewItem item = lvContracts.GetItemAt(e.Location.X, e.Location.Y);
+            ListViewItem? item = lvContracts.GetItemAt(e.Location.X, e.Location.Y);
             if (item == null)
             {
                 m_tooltip.Hide();
@@ -932,7 +932,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void listView_MouseLeave(object sender, EventArgs e)
+        private void listView_MouseLeave(object? sender, EventArgs e)
         {
             m_tooltip.Hide();
         }
@@ -942,7 +942,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void showDetailsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void showDetailsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ShowContractDetails();
         }
@@ -952,7 +952,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
             bool visible = lvContracts.SelectedItems.Count != 0;
 
@@ -964,7 +964,7 @@ namespace EVEMon.CharacterMonitoring
             if (!visible)
                 return;
 
-            Contract contract = lvContracts.SelectedItems[0]?.Tag as Contract;
+            Contract? contract = lvContracts.SelectedItems[0]?.Tag as Contract;
 
             if (contract?.ContractItems == null)
                 return;
@@ -977,17 +977,17 @@ namespace EVEMon.CharacterMonitoring
             if (!visible)
                 return;
 
-            Item contractItem = contract.ContractItems.FirstOrDefault()?.Item;
+            Item? contractItem = contract.ContractItems.FirstOrDefault()?.Item;
 
             if (contractItem == null)
                 return;
 
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(contractItem.ID);
-            Ship ship = contractItem as Ship;
+            Ship? ship = contractItem as Ship;
             Skill skill = Character.Skills[contractItem.ID];
 
             if (skill == Skill.UnknownSkill)
-                skill = null;
+                skill = null!;
 
             string text = ship != null ? "Ship" : blueprint != null ? "Blueprint" : skill != null ? "Skill" : "Item";
 
@@ -999,32 +999,32 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
-            Contract contract = lvContracts.SelectedItems[0]?.Tag as Contract;
+            Contract? contract = lvContracts.SelectedItems[0]?.Tag as Contract;
 
-            Item contractItem = contract?.ContractItems?.FirstOrDefault()?.Item;
+            Item? contractItem = contract?.ContractItems?.FirstOrDefault()?.Item;
 
             if (contractItem == null)
                 return;
 
-            Ship ship = contractItem as Ship;
+            Ship? ship = contractItem as Ship;
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(contractItem.ID);
             Skill skill = Character.Skills[contractItem.ID];
 
             if (skill == Skill.UnknownSkill)
-                skill = null;
+                skill = null!;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(Character);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(Character);
 
             if (ship != null)
-                planWindow.ShowShipInBrowser(ship);
+                planWindow!.ShowShipInBrowser(ship);
             else if (blueprint != null)
-                planWindow.ShowBlueprintInBrowser(blueprint);
+                planWindow!.ShowBlueprintInBrowser(blueprint);
             else if (skill != null)
-                planWindow.ShowSkillInBrowser(skill);
+                planWindow!.ShowSkillInBrowser(skill);
             else
-                planWindow.ShowItemInBrowser(contractItem);
+                planWindow!.ShowItemInBrowser(contractItem);
         }
 
         # endregion
@@ -1037,7 +1037,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible || !m_columnsChanged)
                 return;
@@ -1055,7 +1055,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.ContractsEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ContractsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_ContractsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1069,7 +1069,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ContractItemsDownloaded(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_ContractItemsDownloaded(object? sender, CharacterChangedEventArgs e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1082,7 +1082,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateColumns();
         }
@@ -1092,7 +1092,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
         {
             if (Character == null)
                 return;
@@ -1122,7 +1122,7 @@ namespace EVEMon.CharacterMonitoring
             /// Gets or sets the text.
             /// </summary>
             /// <value>The text.</value>
-            public string Text { get; set; }
+            public string Text { get; set; } = null!;
         }
 
         #endregion

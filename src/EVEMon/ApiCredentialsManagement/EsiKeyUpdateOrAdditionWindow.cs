@@ -23,8 +23,8 @@ namespace EVEMon.ApiCredentialsManagement
         private readonly SSOAuthenticationService m_authService;
         private readonly bool m_updateMode;
         private bool m_keyValid;
-        private ESIKey m_esiKey;
-        private ESIKeyCreationEventArgs m_creationArgs;
+        private ESIKey m_esiKey = null!;
+        private ESIKeyCreationEventArgs m_creationArgs = null!;
         private readonly SSOWebServerHttpListener m_server;
         private readonly string m_state;
 
@@ -44,12 +44,14 @@ namespace EVEMon.ApiCredentialsManagement
         /// Constructor for editing existing ESI credentials.
         /// </summary>
         /// <param name="esiKey"></param>
+#pragma warning disable CS8618 // m_esiKey is initialized via this() with null! and then assigned
         public EsiKeyUpdateOrAdditionWindow(ESIKey esiKey)
             : this()
         {
             m_esiKey = esiKey;
             m_updateMode = m_esiKey != null;
         }
+#pragma warning restore CS8618
 
         /// <summary>
         /// Starts the SSO server.
@@ -137,7 +139,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
-        private void MultiPanel_SelectionChange(object sender, MultiPanelSelectionChangeEventArgs args)
+        private void MultiPanel_SelectionChange(object? sender, MultiPanelSelectionChangeEventArgs args)
         {
             UpdateButtons(args?.NewPage ?? MultiPanel.SelectedPage);
         }
@@ -172,7 +174,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ButtonPrevious_Click(object sender, EventArgs e)
+        private void ButtonPrevious_Click(object? sender, EventArgs e)
         {
             if (MultiPanel.SelectedPage == ResultPage)
                 MultiPanel.SelectedPage = CredentialsPage;
@@ -184,9 +186,9 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ButtonCancel_Click(object sender, EventArgs e)
+        private void ButtonCancel_Click(object? sender, EventArgs e)
         {
-            m_creationArgs = null;
+            m_creationArgs = null!;
             Close();
         }
 
@@ -195,7 +197,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ButtonNext_Click(object sender, EventArgs e)
+        private void ButtonNext_Click(object? sender, EventArgs e)
         {
             // Only works on the last page
             if (MultiPanel.SelectedPage == ResultPage)
@@ -228,9 +230,9 @@ namespace EVEMon.ApiCredentialsManagement
                 long newID = DateTime.UtcNow.ToFileTime();
                 // Are we updating existing API key?
                 if (m_updateMode)
-                    m_esiKey.TryUpdateAsync(response, OnUpdated);
+                    m_esiKey.TryUpdateAsync(response!, OnUpdated);
                 else
-                    ESIKey.TryAddOrUpdateAsync(newID, response, OnUpdated);
+                    ESIKey.TryAddOrUpdateAsync(newID, response!, OnUpdated);
             }
         }
 
@@ -252,7 +254,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// When ESI credentials have been updated.
         /// </summary>
         /// <returns></returns>
-        private void OnUpdated(object sender, ESIKeyCreationEventArgs e)
+        private void OnUpdated(object? sender, ESIKeyCreationEventArgs e)
         {
             m_creationArgs = e;
             var error = e.CCPError;
@@ -260,11 +262,11 @@ namespace EVEMon.ApiCredentialsManagement
             // Updates the picture and label for key type
             if (error != null)
             {
-                string message = error.ErrorMessage;
+                string? message = error.ErrorMessage;
                 KeyPicture.Image = Resources.KeyWrong32;
                 KeyLabel.Text = message;
                 CharactersGroupBox.Text = "Error report";
-                ResultsMultiPanel.SelectedPage = GetErrorPage(e, message);
+                ResultsMultiPanel.SelectedPage = GetErrorPage(e, message!);
                 m_keyValid = false;
             }
             else
@@ -325,9 +327,9 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void IDTextBox_TextChanged(object sender, EventArgs e)
+        private void IDTextBox_TextChanged(object? sender, EventArgs e)
         {
-            m_creationArgs = null;
+            m_creationArgs = null!;
         }
 
         /// <summary>
@@ -336,9 +338,9 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void VerificationCodeTextBox_TextChanged(object sender, EventArgs e)
+        private void VerificationCodeTextBox_TextChanged(object? sender, EventArgs e)
         {
-            m_creationArgs = null;
+            m_creationArgs = null!;
         }
         
         /// <summary>
@@ -347,7 +349,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.LinkLabelLinkClickedEventArgs"/>
         /// instance containing the event data.</param>
-        private void LoginDeniedLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LoginDeniedLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             Util.OpenURL(new Uri(NetworkConstants.CCPAccountManage));
         }
@@ -358,7 +360,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event
         /// data.</param>
-        private void ButtonESILogin_Click(object sender, EventArgs e)
+        private void ButtonESILogin_Click(object? sender, EventArgs e)
         {
             if (ModifierKeys.HasFlag(Keys.Shift)) {
                 if (m_authService != null)

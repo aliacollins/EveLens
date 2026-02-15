@@ -8,7 +8,7 @@ namespace EVEMon.Schedule
 {
     public partial class EditScheduleEntryWindow : EVEMonForm
     {
-        private ScheduleEntry m_scheduleEntry;
+        private ScheduleEntry m_scheduleEntry = null!;
 
         private DateTime m_recurringDateFrom;
         private DateTime m_recurringDateTo;
@@ -100,8 +100,8 @@ namespace EVEMon.Schedule
             tbTitle.Text = m_scheduleEntry.Title;
             SetTypeFlags(m_scheduleEntry.Options);
 
-            SimpleScheduleEntry sse = m_scheduleEntry as SimpleScheduleEntry;
-            RecurringScheduleEntry rse = m_scheduleEntry as RecurringScheduleEntry;
+            SimpleScheduleEntry? sse = m_scheduleEntry as SimpleScheduleEntry;
+            RecurringScheduleEntry? rse = m_scheduleEntry as RecurringScheduleEntry;
 
             if (sse != null)
             {
@@ -371,7 +371,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbOneTime_CheckedChanged(object sender, EventArgs e)
+        private void rbOneTime_CheckedChanged(object? sender, EventArgs e)
         {
             pnlOneTime.Enabled = rbOneTime.Checked;
 
@@ -383,7 +383,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbRecurring_CheckedChanged(object sender, EventArgs e)
+        private void rbRecurring_CheckedChanged(object? sender, EventArgs e)
         {
             pnlRecurring.Enabled = rbRecurring.Checked;
 
@@ -395,7 +395,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void cbRecurringFrequency_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbRecurringFrequency_SelectedIndexChanged(object? sender, EventArgs e)
         {
             pnlRecurMonthly.Enabled = cbRecurringFrequency.SelectedIndex == 10;
             pnlRecurWeekly.Enabled = cbRecurringFrequency.SelectedIndex >= 3 && cbRecurringFrequency.SelectedIndex <= 9;
@@ -406,7 +406,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnRecurringNoStartDate_Click(object sender, EventArgs e)
+        private void btnRecurringNoStartDate_Click(object? sender, EventArgs e)
         {
             SetRecurringDateFrom(DateTime.MinValue);
         }
@@ -416,7 +416,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnRecurringNoEndDate_Click(object sender, EventArgs e)
+        private void btnRecurringNoEndDate_Click(object? sender, EventArgs e)
         {
             SetRecurringDateTo(DateTime.MaxValue);
         }
@@ -484,7 +484,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object? sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();
@@ -495,7 +495,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnOk_Click(object sender, EventArgs e)
+        private void btnOk_Click(object? sender, EventArgs e)
         {
             m_scheduleEntry = GenerateScheduleEntry();
             DialogResult = DialogResult.OK;
@@ -508,7 +508,7 @@ namespace EVEMon.Schedule
         /// <returns></returns>
         private ScheduleEntry GenerateScheduleEntry()
         {
-            ScheduleEntry result = null;
+            ScheduleEntry? result = null;
             if (rbOneTime.Checked)
             {
                 SimpleScheduleEntry sse = new SimpleScheduleEntry
@@ -544,7 +544,7 @@ namespace EVEMon.Schedule
             }
 
             if (result == null)
-                return null;
+                return null!;
 
             result.Title = tbTitle.Text;
             result.Options = GetTypeFlags();
@@ -557,7 +557,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void buttonDebug_Click(object sender, EventArgs e)
+        private void buttonDebug_Click(object? sender, EventArgs e)
         {
             if (!btnOk.Enabled)
                 return;
@@ -571,7 +571,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbTitle_TextChanged(object sender, EventArgs e)
+        private void tbTitle_TextChanged(object? sender, EventArgs e)
         {
             ValidateData();
         }
@@ -581,7 +581,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbOneTimeStartTime_TextChanged(object sender, EventArgs e)
+        private void tbOneTimeStartTime_TextChanged(object? sender, EventArgs e)
         {
             ValidateData();
         }
@@ -591,7 +591,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbOneTimeEndTime_TextChanged(object sender, EventArgs e)
+        private void tbOneTimeEndTime_TextChanged(object? sender, EventArgs e)
         {
             ValidateData();
         }
@@ -601,7 +601,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbRecurringTimeFrom_TextChanged(object sender, EventArgs e)
+        private void tbRecurringTimeFrom_TextChanged(object? sender, EventArgs e)
         {
             ValidateData();
         }
@@ -611,7 +611,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbRecurringTimeTo_TextChanged(object sender, EventArgs e)
+        private void tbRecurringTimeTo_TextChanged(object? sender, EventArgs e)
         {
             ValidateData();
         }
@@ -621,7 +621,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnOneTimeStartDateChoose_Click(object sender, EventArgs e)
+        private void btnOneTimeStartDateChoose_Click(object? sender, EventArgs e)
         {
             m_oneTimeStartDate = GetDate(m_oneTimeStartDate);
             SetOneTimeStartDate(m_oneTimeStartDate);
@@ -633,7 +633,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnOneTimeEndDateChoose_Click(object sender, EventArgs e)
+        private void btnOneTimeEndDateChoose_Click(object? sender, EventArgs e)
         {
             m_oneTimeEndDate = GetDate(m_oneTimeEndDate);
             SetOneTimeEndDate(m_oneTimeEndDate);
@@ -645,7 +645,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnRecurringStartDateChoose_Click(object sender, EventArgs e)
+        private void btnRecurringStartDateChoose_Click(object? sender, EventArgs e)
         {
             m_recurringDateFrom = GetDate(m_recurringDateFrom);
             SetRecurringDateFrom(m_recurringDateFrom);
@@ -657,7 +657,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnRecurringEndDateChoose_Click(object sender, EventArgs e)
+        private void btnRecurringEndDateChoose_Click(object? sender, EventArgs e)
         {
             m_recurringDateTo = GetDate(m_recurringDateTo);
             SetRecurringDateTo(m_recurringDateTo);

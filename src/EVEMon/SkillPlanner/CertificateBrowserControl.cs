@@ -19,8 +19,8 @@ namespace EVEMon.SkillPlanner
 {
     public partial class CertificateBrowserControl : UserControl
     {
-        private CertificateClass m_selectedCertificate;
-        private Plan m_plan;
+        private CertificateClass? m_selectedCertificate;
+        private Plan? m_plan;
         private const int HPad = 40;
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             certSelectControl.SelectionChanged -= certSelectControl_SelectionChanged;
 
@@ -91,7 +91,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The character.
         /// </value>
-        internal Character Character
+        internal Character? Character
         {
             get { return certSelectControl.Character; }
             set
@@ -106,7 +106,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the current plan
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -129,7 +129,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The selected certificate class.
         /// </value>
-        internal CertificateClass SelectedCertificateClass
+        internal CertificateClass? SelectedCertificateClass
         {
             get { return m_selectedCertificate; }
             set
@@ -190,7 +190,7 @@ namespace EVEMon.SkillPlanner
                 ships.Add(ship.Name, ship);
             }
 
-            Label tempLabel = null;
+            Label? tempLabel = null;
             try
             {
                 tempLabel = new Label();
@@ -221,7 +221,7 @@ namespace EVEMon.SkillPlanner
                 .Select(ship =>
                 {
                     LinkLabel linkLabel;
-                    LinkLabel tempLinkLabel = null;
+                    LinkLabel? tempLinkLabel = null;
                     try
                     {
                         tempLinkLabel = new LinkLabel();
@@ -304,7 +304,7 @@ namespace EVEMon.SkillPlanner
             }
             else
             {
-                Label tempLabel = null;
+                Label? tempLabel = null;
                 try
                 {
                     tempLabel = new Label();
@@ -347,7 +347,7 @@ namespace EVEMon.SkillPlanner
             IList<CertificateLevel> eligibleCertLevel = m_selectedCertificate.Certificate.AllLevel
                 .TakeWhile(cert => m_plan.WillGrantEligibilityFor(cert)).ToList();
 
-            CertificateLevel lastEligibleCertLevel = null;
+            CertificateLevel? lastEligibleCertLevel = null;
             if (!eligibleCertLevel.Any())
                 tslbEligible.Text = @"(none)";
             else
@@ -378,12 +378,12 @@ namespace EVEMon.SkillPlanner
         /// <param name="menu">The menu to update</param>
         /// <param name="certLevel">The level represent by this menu</param>
         /// <param name="lastEligibleCertLevel">The highest eligible certificate after this plan</param>
-        private bool UpdatePlanningMenuStatus(ToolStripItem menu, CertificateLevel certLevel, CertificateLevel lastEligibleCertLevel)
+        private bool UpdatePlanningMenuStatus(ToolStripItem menu, CertificateLevel certLevel, CertificateLevel? lastEligibleCertLevel)
         {
             menu.Enabled = certLevel != null && (lastEligibleCertLevel == null || certLevel.Level > lastEligibleCertLevel.Level);
 
             if (menu.Enabled)
-                menu.Tag = m_plan.TryPlanTo(certLevel);
+                menu.Tag = m_plan!.TryPlanTo(certLevel!);
 
             return menu.Enabled;
         }
@@ -398,7 +398,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void certSelectControl_SelectionChanged(object sender, EventArgs e)
+        private void certSelectControl_SelectionChanged(object? sender, EventArgs e)
         {
             SelectedCertificateClass = certSelectControl.SelectedCertificateClass;
         }
@@ -406,12 +406,12 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Handler for the ship-links generated for the recommendations.
         /// </summary>
-        private void recommendations_MenuItem(object sender, EventArgs e)
+        private void recommendations_MenuItem(object? sender, EventArgs e)
         {
-            Item ship = ((Control)sender)?.Tag as Item;
+            Item? ship = ((Control)sender!)?.Tag as Item;
 
             // Open the ship browser
-            PlanWindow.ShowPlanWindow(certSelectControl.Character, m_plan).ShowShipInBrowser(ship);
+            PlanWindow.ShowPlanWindow(certSelectControl.Character, m_plan!)?.ShowShipInBrowser(ship!);
         }
 
         #endregion
@@ -424,7 +424,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender, PlanChangedEventArgs e)
         {
             if (e.Plan == m_plan)
                 UpdateEligibility();
@@ -435,7 +435,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateControlVisibility();
         }
@@ -450,13 +450,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsPlanToLevel_Click(object sender, EventArgs e)
+        private void tsPlanToLevel_Click(object? sender, EventArgs e)
         {
-            IPlanOperation operation = ((ToolStripMenuItem)sender).Tag as IPlanOperation;
+            IPlanOperation? operation = ((ToolStripMenuItem)sender!).Tag as IPlanOperation;
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             if (planWindow == null)
                 return;
 

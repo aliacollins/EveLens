@@ -7,7 +7,7 @@ namespace EVEMon.SkillPlanner
 {
     public partial class AttributesOptimizerOptionsWindow : EVEMonForm
     {
-        private readonly PlanEditorControl m_planEditorControl;
+        private readonly PlanEditorControl m_planEditorControl = null!;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AttributesOptimizerOptionsWindow"/> class.
@@ -41,9 +41,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void buttonRemappingPoints_Click(object sender, EventArgs e)
+        private void buttonRemappingPoints_Click(object? sender, EventArgs e)
         {
-            WindowsFactory.ShowByTag<AttributesOptimizerWindow, PlanEditorControl>(m_planEditorControl.ParentForm,
+            WindowsFactory.ShowByTag<AttributesOptimizerWindow, PlanEditorControl>(m_planEditorControl.ParentForm!,
                 m_planEditorControl, AttributeOptimizationStrategy.RemappingPoints);
 
             Close();
@@ -54,9 +54,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void buttonWholePlan_Click(object sender, EventArgs e)
+        private void buttonWholePlan_Click(object? sender, EventArgs e)
         {
-            WindowsFactory.ShowByTag<AttributesOptimizerWindow, PlanEditorControl>(m_planEditorControl.ParentForm,
+            WindowsFactory.ShowByTag<AttributesOptimizerWindow, PlanEditorControl>(m_planEditorControl.ParentForm!,
                 m_planEditorControl, AttributeOptimizationStrategy.OneYearPlan);
 
             Close();
@@ -67,9 +67,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void buttonCharacter_Click(object sender, EventArgs e)
+        private void buttonCharacter_Click(object? sender, EventArgs e)
         {
-            WindowsFactory.ShowByTag<AttributesOptimizerWindow, PlanEditorControl>(m_planEditorControl.ParentForm,
+            WindowsFactory.ShowByTag<AttributesOptimizerWindow, PlanEditorControl>(m_planEditorControl.ParentForm!,
                 m_planEditorControl, AttributeOptimizationStrategy.Character);
 
             Close();

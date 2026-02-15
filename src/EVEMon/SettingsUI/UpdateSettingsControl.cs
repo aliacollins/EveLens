@@ -21,7 +21,7 @@ namespace EVEMon.SettingsUI
 
         private readonly List<ComboBox> m_combos = new List<ComboBox>();
 
-        private UpdateSettings m_settings;
+        private UpdateSettings m_settings = null!;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UpdateSettingsControl"/> class.
@@ -51,7 +51,7 @@ namespace EVEMon.SettingsUI
 
                 foreach (ComboBox combo in m_combos)
                 {
-                    Enum method = (Enum)combo.Tag;
+                    Enum method = (Enum)combo.Tag!;
                     List<UpdatePeriod> periods = GetUpdatePeriods(method);
                     combo.SelectedIndex = Math.Max(0, periods.IndexOf(m_settings.Periods[method.ToString()]));
                 }
@@ -87,10 +87,10 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void combo_SelectedIndexChanged(object sender, EventArgs e)
+        private void combo_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            ComboBox combo = (ComboBox)sender;
-            Enum method = (Enum)combo.Tag;
+            ComboBox combo = (ComboBox)sender!;
+            Enum method = (Enum)combo.Tag!;
             List<UpdatePeriod> periods = GetUpdatePeriods(method);
 
             if (combo.SelectedIndex < 0 || combo.SelectedIndex >= periods.Count)
@@ -144,7 +144,7 @@ namespace EVEMon.SettingsUI
         /// <param name="height">The height.</param>
         private void AddComboBox(Enum method, int height)
         {
-            ComboBox tempCombo = null;
+            ComboBox? tempCombo = null;
             try
             {
                 tempCombo = new ComboBox();
@@ -184,7 +184,7 @@ namespace EVEMon.SettingsUI
         /// <param name="height">The height.</param>
         private void AddLabel(Enum method, int height)
         {
-            Label tempLabel = null;
+            Label? tempLabel = null;
             try
             {
                 tempLabel = new Label();
@@ -226,7 +226,7 @@ namespace EVEMon.SettingsUI
                 }
             }
             
-            PictureBox tempPicture = null;
+            PictureBox? tempPicture = null;
             try
             {
                 tempPicture = new PictureBox();

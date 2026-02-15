@@ -48,7 +48,7 @@ namespace EVEMon.SettingsUI
             cbTooltipDisplay.Items.Add(" -- Custom -- ");
 
             tbTooltipString.Text = m_settings.Format;
-            tbTooltipString_TextChanged(null, null);
+            tbTooltipString_TextChanged(null!, null!);
             cbTooltipOrder.Checked = m_settings.DisplayOrder;
         }
 

@@ -41,7 +41,7 @@ namespace EVEMon.About
 
         // Animation state
         private bool _isAnimating = false;
-        private Timer _fadeTimer;
+        private Timer _fadeTimer = null!;
 
         // Column width for cards (calculated at runtime)
         private int _columnWidth = 300;
@@ -121,7 +121,7 @@ namespace EVEMon.About
                     this.Opacity = 1.0;
                     _fadeTimer.Stop();
                     _fadeTimer.Dispose();
-                    _fadeTimer = null;
+                    _fadeTimer = null!;
                     _isAnimating = false;
                 }
             };

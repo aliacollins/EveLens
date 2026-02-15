@@ -41,7 +41,7 @@ namespace EVEMon.Tests.Helpers
         {
             // Arrange
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             _batcher.CharactersBatchUpdated += (_, e) => received = e;
 
             // Act
@@ -50,8 +50,8 @@ namespace EVEMon.Tests.Helpers
 
             // Assert
             received.Should().NotBeNull();
-            received.Count.Should().Be(1);
-            received.Characters.Should().Contain(character);
+            received!.Count.Should().Be(1);
+            received!.Characters.Should().Contain(character);
         }
 
         [Fact]
@@ -59,7 +59,7 @@ namespace EVEMon.Tests.Helpers
         {
             // Arrange
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             _batcher.CharactersBatchUpdated += (_, e) => received = e;
 
             // Act
@@ -69,7 +69,7 @@ namespace EVEMon.Tests.Helpers
 
             // Assert
             received.Should().NotBeNull();
-            received.Count.Should().Be(1);
+            received!.Count.Should().Be(1);
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace EVEMon.Tests.Helpers
         {
             // Arrange
             var chars = new[] { CreateDummyCharacter(), CreateDummyCharacter(), CreateDummyCharacter() };
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             _batcher.CharactersBatchUpdated += (_, e) => received = e;
 
             // Act
@@ -87,8 +87,8 @@ namespace EVEMon.Tests.Helpers
 
             // Assert
             received.Should().NotBeNull();
-            received.Count.Should().Be(3);
-            received.Characters.Should().BeEquivalentTo(chars);
+            received!.Count.Should().Be(3);
+            received!.Characters.Should().BeEquivalentTo(chars);
         }
 
         [Fact]
@@ -110,8 +110,8 @@ namespace EVEMon.Tests.Helpers
         {
             // Arrange
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs charReceived = null;
-            CharacterBatchEventArgs skillReceived = null;
+            CharacterBatchEventArgs? charReceived = null;
+            CharacterBatchEventArgs? skillReceived = null;
             _batcher.CharactersBatchUpdated += (_, e) => charReceived = e;
             _batcher.SkillQueuesBatchUpdated += (_, e) => skillReceived = e;
 
@@ -129,8 +129,8 @@ namespace EVEMon.Tests.Helpers
         {
             // Arrange
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs charReceived = null;
-            CharacterBatchEventArgs skillReceived = null;
+            CharacterBatchEventArgs? charReceived = null;
+            CharacterBatchEventArgs? skillReceived = null;
             _batcher.CharactersBatchUpdated += (_, e) => charReceived = e;
             _batcher.SkillQueuesBatchUpdated += (_, e) => skillReceived = e;
 
@@ -141,7 +141,7 @@ namespace EVEMon.Tests.Helpers
             // Assert
             charReceived.Should().BeNull("character batch should NOT fire");
             skillReceived.Should().NotBeNull("skill queue batch event should fire");
-            skillReceived.Count.Should().Be(1);
+            skillReceived!.Count.Should().Be(1);
         }
 
         [Fact]
@@ -150,7 +150,7 @@ namespace EVEMon.Tests.Helpers
             // Arrange
             var batcher = new UpdateBatcher(coalesceMs: 60000);
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             batcher.CharactersBatchUpdated += (_, e) => received = e;
 
             // Act
@@ -199,7 +199,7 @@ namespace EVEMon.Tests.Helpers
             // Arrange - use short coalesce for this test
             using var shortBatcher = new UpdateBatcher(coalesceMs: 50);
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             using var signal = new ManualResetEventSlim(false);
             shortBatcher.CharactersBatchUpdated += (_, e) =>
             {
@@ -213,18 +213,18 @@ namespace EVEMon.Tests.Helpers
             // Assert - wait up to 500ms for the auto-flush
             signal.Wait(TimeSpan.FromMilliseconds(500)).Should().BeTrue("coalesce timer should auto-flush");
             received.Should().NotBeNull();
-            received.Count.Should().Be(1);
+            received!.Count.Should().Be(1);
         }
 
         [Fact]
         public void QueueNullCharacter_IsIgnored()
         {
             // Arrange
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             _batcher.CharactersBatchUpdated += (_, e) => received = e;
 
             // Act
-            _batcher.QueueCharacterUpdate(null);
+            _batcher.QueueCharacterUpdate(null!);
             _batcher.FlushNow();
 
             // Assert
@@ -238,7 +238,7 @@ namespace EVEMon.Tests.Helpers
             // Arrange
             var batcher = new UpdateBatcher(coalesceMs: 60000);
             var character = CreateDummyCharacter();
-            CharacterBatchEventArgs received = null;
+            CharacterBatchEventArgs? received = null;
             batcher.CharactersBatchUpdated += (_, e) => received = e;
             batcher.QueueCharacterUpdate(character);
 
@@ -247,7 +247,7 @@ namespace EVEMon.Tests.Helpers
 
             // Assert
             received.Should().NotBeNull("dispose should flush pending updates");
-            received.Count.Should().Be(1);
+            received!.Count.Should().Be(1);
         }
     }
 
@@ -257,7 +257,7 @@ namespace EVEMon.Tests.Helpers
         public void Constructor_NullEnumerable_CreatesEmptyList()
         {
             // Act
-            var args = new CharacterBatchEventArgs(null);
+            var args = new CharacterBatchEventArgs(null!);
 
             // Assert
             args.Characters.Should().NotBeNull();

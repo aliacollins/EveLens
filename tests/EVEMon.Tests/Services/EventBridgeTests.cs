@@ -20,7 +20,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CharacterUpdatedEvent_NullName_DefaultsToEmpty()
         {
-            var evt = new CharacterUpdatedEvent(99, null);
+            var evt = new CharacterUpdatedEvent(99, null!);
             evt.CharacterName.Should().Be(string.Empty);
         }
 
@@ -91,13 +91,13 @@ namespace EVEMon.Tests.Services
         public void EventAggregator_PublishesAndReceives_CharacterUpdatedEvent()
         {
             IEventAggregator aggregator = new EventAggregator();
-            CharacterUpdatedEvent received = null;
+            CharacterUpdatedEvent? received = null;
             aggregator.Subscribe<CharacterUpdatedEvent>(e => received = e);
 
             aggregator.Publish(new CharacterUpdatedEvent(42, "Pilot"));
 
             received.Should().NotBeNull();
-            received.CharacterID.Should().Be(42);
+            received!.CharacterID.Should().Be(42);
             received.CharacterName.Should().Be("Pilot");
         }
 
@@ -105,7 +105,7 @@ namespace EVEMon.Tests.Services
         public void EventAggregator_PublishesAndReceives_SettingsChangedEvent()
         {
             IEventAggregator aggregator = new EventAggregator();
-            SettingsChangedEvent received = null;
+            SettingsChangedEvent? received = null;
             aggregator.Subscribe<SettingsChangedEvent>(e => received = e);
 
             aggregator.Publish(SettingsChangedEvent.Instance);
@@ -118,9 +118,9 @@ namespace EVEMon.Tests.Services
         public void DifferentEventTypes_DoNotInterfere()
         {
             IEventAggregator aggregator = new EventAggregator();
-            CharacterUpdatedEvent charReceived = null;
-            SettingsChangedEvent settingsReceived = null;
-            ServerStatusUpdatedEvent serverReceived = null;
+            CharacterUpdatedEvent? charReceived = null;
+            SettingsChangedEvent? settingsReceived = null;
+            ServerStatusUpdatedEvent? serverReceived = null;
 
             aggregator.Subscribe<CharacterUpdatedEvent>(e => charReceived = e);
             aggregator.Subscribe<SettingsChangedEvent>(e => settingsReceived = e);
@@ -137,8 +137,8 @@ namespace EVEMon.Tests.Services
         public void MultipleCharacterEventTypes_RoutedCorrectly()
         {
             IEventAggregator aggregator = new EventAggregator();
-            CharacterUpdatedEvent updatedReceived = null;
-            CharacterSkillQueueUpdatedEvent skillReceived = null;
+            CharacterUpdatedEvent? updatedReceived = null;
+            CharacterSkillQueueUpdatedEvent? skillReceived = null;
 
             aggregator.Subscribe<CharacterUpdatedEvent>(e => updatedReceived = e);
             aggregator.Subscribe<CharacterSkillQueueUpdatedEvent>(e => skillReceived = e);
@@ -147,7 +147,7 @@ namespace EVEMon.Tests.Services
 
             updatedReceived.Should().BeNull();
             skillReceived.Should().NotBeNull();
-            skillReceived.CharacterID.Should().Be(7);
+            skillReceived!.CharacterID.Should().Be(7);
             skillReceived.CharacterName.Should().Be("SkillPilot");
         }
     }

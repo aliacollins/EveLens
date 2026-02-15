@@ -19,7 +19,7 @@ namespace EVEMon.SkillPlanner
         private SolidBrush m_basePointBrush = new SolidBrush(Color.LightGray);
         private SolidBrush m_spentPointBrush = new SolidBrush(Color.LimeGreen);
         
-        private MouseEventArgs m_mouseEvent;
+        private MouseEventArgs? m_mouseEvent;
 
         private int m_points = 5;
         private int m_baseValue;
@@ -190,19 +190,19 @@ namespace EVEMon.SkillPlanner
         /// Occurs when value changing.
         /// </summary>
         [Category("Behavior")]
-        public event EventHandler<AttributeValueChangingEventArgs> ValueChanging;
+        public event EventHandler<AttributeValueChangingEventArgs>? ValueChanging;
 
         /// <summary>
         /// Occurs when value changed.
         /// </summary>
         [Category("Behavior")]
-        public event EventHandler<AttributeValueChangedEventArgs> ValueChanged;
+        public event EventHandler<AttributeValueChangedEventArgs>? ValueChanged;
 
         /// <summary>
         /// Occurs when highlighting.
         /// </summary>
         [Category("Behavior")]
-        public event EventHandler<AttributeHighlightingEventArgs> Highlighting;
+        public event EventHandler<AttributeHighlightingEventArgs>? Highlighting;
 
         /// <summary>
         /// Raises the <see cref="E:System.Windows.Forms.Control.Resize"/> event.
@@ -354,11 +354,14 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void m_timer_Tick(object sender, EventArgs e)
+        private void m_timer_Tick(object? sender, EventArgs e)
         {
             m_timer.Stop();
 
             if (!Enabled)
+                return;
+
+            if (m_mouseEvent == null)
                 return;
 
             // Actions according to mouse clicks

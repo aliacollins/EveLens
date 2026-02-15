@@ -30,7 +30,7 @@ namespace EVEMon.Common.Models
             m_character = character;
 
             // SecondTick - skill training progress needs real-time updates
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            m_character.Services.SecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -41,7 +41,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            m_character.Services.SecondTick -= EveMonClient_TimerTick;
         }
 
 
@@ -131,9 +131,9 @@ namespace EVEMon.Common.Models
                 if (skillsCompleted.Any() && !Settings.IsRestoring)
                 {
                     // Send a notification if skills were completed
-                    EveMonClient.Notifications.NotifySkillCompletion(m_character,
+                    m_character.Services.Notifications?.NotifySkillCompletion(m_character,
                         skillsCompleted);
-                    EveMonClient.OnCharacterQueuedSkillsCompleted(m_character, skillsCompleted);
+                    m_character.Services.OnCharacterQueuedSkillsCompleted(m_character, skillsCompleted);
                 }
             }
         }
@@ -203,7 +203,7 @@ namespace EVEMon.Common.Models
                 IsPaused = false;
 
             // Fires the event regarding the character skill queue update
-            EveMonClient.OnCharacterSkillQueueUpdated(m_character);
+            m_character.Services.OnCharacterSkillQueueUpdated(m_character);
         }
 
         #endregion

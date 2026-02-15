@@ -100,7 +100,7 @@ namespace EVEMon.SkillPlanner
             // Update the Mastery tab
             masteryTreeDisplayControl.MasteryShip = Character?.MasteryShips.GetMasteryShipByID(SelectedObject.ID);
 
-            ShipLoadoutSelectWindow loadoutSelect = WindowsFactory.GetByTag<ShipLoadoutSelectWindow, Character>(Character);
+            ShipLoadoutSelectWindow? loadoutSelect = WindowsFactory.GetByTag<ShipLoadoutSelectWindow, Character>(Character!);
             if (loadoutSelect != null)
                 loadoutSelect.Ship = shipSelectControl.SelectedObject;
 
@@ -146,7 +146,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender,EventArgs e)
         {
             ListViewExporter.CreateCSV(PropertiesList, true);
         }
@@ -156,13 +156,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsPlanToLevel_Click(object sender, EventArgs e)
+        private void tsPlanToLevel_Click(object? sender,EventArgs e)
         {
-            IPlanOperation operation = ((ToolStripMenuItem)sender).Tag as IPlanOperation;
+            IPlanOperation? operation = ((ToolStripMenuItem)sender!).Tag as IPlanOperation;
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             if (planWindow == null)
                 return;
 
@@ -174,15 +174,15 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void toolStripItem_Click(object sender, EventArgs e)
+        private void toolStripItem_Click(object? sender,EventArgs e)
         {
-            ToolStripMenuItem control = sender as ToolStripMenuItem;
+            ToolStripMenuItem? control = sender as ToolStripMenuItem;
 
             if (control == null)
                 return;
 
-            splitButtonLoadouts.Text = control.Text;
-            Settings.LoadoutsProvider.ProviderName = control.Text;
+            splitButtonLoadouts.Text = control!.Text;
+            Settings.LoadoutsProvider.ProviderName = control.Text!;
         }
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void splitButtonLoadouts_Click(object sender, EventArgs e)
+        private void splitButtonLoadouts_Click(object? sender,EventArgs e)
         {
             if (Character == null)
                 return;
@@ -222,7 +222,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void PropertiesList_MouseDown(object sender, MouseEventArgs e)
+        private void PropertiesList_MouseDown(object? sender,MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -235,7 +235,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void PropertiesList_MouseMove(object sender, MouseEventArgs e)
+        private void PropertiesList_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -248,10 +248,10 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void propertiesList_DoubleClick(object sender, EventArgs e)
+        private void propertiesList_DoubleClick(object? sender,EventArgs e)
         {
             // Is it a skill?
-            Skill skill = PropertiesList.FocusedItem?.Tag as Skill;
+            Skill? skill = PropertiesList.FocusedItem?.Tag as Skill;
 
             if (skill != null)
             {
@@ -260,7 +260,7 @@ namespace EVEMon.SkillPlanner
             }
 
             // Is it an item?
-            Item item = PropertiesList.FocusedItem?.Tag as Item;
+            Item? item = PropertiesList.FocusedItem?.Tag as Item;
 
             if (item != null)
                 PlanWindow.ShowPlanWindow(SelectControl.Character, Plan)?.ShowItemInBrowser(item);
@@ -271,14 +271,14 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void ItemAttributeContextMenu_Opening(object sender, CancelEventArgs e)
+        private void ItemAttributeContextMenu_Opening(object? sender,CancelEventArgs e)
         {
             // Is it a skill?
-            Skill skill = PropertiesList.FocusedItem?.Tag as Skill;
+            Skill? skill = PropertiesList.FocusedItem?.Tag as Skill;
             showInSkillBrowser.Visible = skill != null;
 
             // Is it an item?
-            Item item = PropertiesList.FocusedItem?.Tag as Item;
+            Item? item = PropertiesList.FocusedItem?.Tag as Item;
             showInItemBrowser.Visible = item != null;
 
             showInMenuSeparator.Visible = skill != null || item != null;
@@ -329,7 +329,7 @@ namespace EVEMon.SkillPlanner
             if (SelectedObject == null || Plan == null)
                 return;
 
-            MasteryShip masteryShip = masteryTreeDisplayControl.MasteryShip;
+            MasteryShip? masteryShip = masteryTreeDisplayControl.MasteryShip;
 
             if (masteryShip == null)
                 return;
@@ -338,7 +338,7 @@ namespace EVEMon.SkillPlanner
             IEnumerable<Mastery> eligibleMasteryLevel =
                 masteryShip.TakeWhile(masteryLevel => Plan.WillGrantEligibilityFor(masteryLevel)).ToList();
 
-            Mastery lastEligibleMasteryLevel = null;
+            Mastery? lastEligibleMasteryLevel = null;
             if (!eligibleMasteryLevel.Any())
             {
                 tslbEligible.Text = @"(none)";
@@ -376,14 +376,14 @@ namespace EVEMon.SkillPlanner
         /// <param name="menu">The menu to update</param>
         /// <param name="masteryLevel">The level represent by this menu</param>
         /// <param name="lastEligibleMasteryLevel">The highest eligible mastery after this plan</param>
-        private void UpdatePlanningMenuStatus(ToolStripItem menu, Mastery masteryLevel, Mastery lastEligibleMasteryLevel)
+        private void UpdatePlanningMenuStatus(ToolStripItem menu, Mastery? masteryLevel, Mastery? lastEligibleMasteryLevel)
         {
             menu.Visible = masteryLevel != null;
             menu.Enabled = masteryLevel != null &&
                            (lastEligibleMasteryLevel == null || masteryLevel.Level > lastEligibleMasteryLevel.Level);
 
             if (menu.Enabled)
-                menu.Tag = Plan.TryPlanTo(masteryLevel);
+                menu.Tag = Plan!.TryPlanTo(masteryLevel!);
         }
 
         #endregion

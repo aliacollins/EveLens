@@ -30,10 +30,10 @@ namespace EVEMon.SkillPlanner
         // Blank image list for 'Safe for work' setting
         private readonly ImageList m_emptyImageList = new ImageList();
 
-        private Plan m_plan;
-        private Character m_character;
-        private CertificateClass m_class;
-        private Font m_boldFont;
+        private Plan? m_plan;
+        private Character? m_character;
+        private CertificateClass? m_class;
+        private Font m_boldFont = null!;
 
         private bool m_allExpanded;
 
@@ -64,7 +64,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the current plan.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -81,7 +81,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the certificate class (i.e. "Core competency").
         /// </summary>
-        internal CertificateClass CertificateClass
+        internal CertificateClass? CertificateClass
         {
             get { return m_class; }
             set
@@ -98,14 +98,14 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets cert of the displayed class which contains the current selection.
         /// </summary>
-        private CertificateLevel SelectedCertificateLevel
+        private CertificateLevel? SelectedCertificateLevel
         {
             get
             {
                 TreeNode node = treeView.SelectedNode;
                 while (node != null)
                 {
-                    CertificateLevel certLevel = node.Tag as CertificateLevel;
+                    CertificateLevel? certLevel = node.Tag as CertificateLevel;
                     if (certLevel != null && certLevel.Certificate.Class == m_class)
                         return certLevel;
 
@@ -150,7 +150,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
@@ -164,7 +164,7 @@ namespace EVEMon.SkillPlanner
         /// <remarks>Relates to safe for work setting</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateTree();
         }
@@ -174,7 +174,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             if (m_plan == null)
                 return;
@@ -190,7 +190,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender, PlanChangedEventArgs e)
         {
             if ((e.Plan != m_plan) || (e.Plan.Character != m_plan.Character))
                 return;
@@ -203,13 +203,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void treeView_MouseDown(object sender, MouseEventArgs e)
+        private void treeView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 treeView.Cursor = Cursors.Default;
 
             // Perform the selection manually since the bound's width and x are incorrect in owndraw
-            TreeNode selection = null;
+            TreeNode? selection = null;
             for (TreeNode node = treeView.TopNode; node != null; node = node.NextVisibleNode)
             {
                 if (node.Bounds.Top > e.Y || node.Bounds.Bottom < e.Y)
@@ -231,7 +231,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void treeView_MouseMove(object sender, MouseEventArgs e)
+        private void treeView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -244,7 +244,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void treeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        private void treeView_NodeMouseDoubleClick(object? sender, TreeNodeMouseClickEventArgs e)
         {
             if (e.Node.Tag is CertificateLevel)
             {
@@ -270,8 +270,8 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void UpdateTree()
         {
-            CertificateLevel oldSelection = SelectedCertificateLevel;
-            TreeNode newSelection = null;
+            CertificateLevel? oldSelection = SelectedCertificateLevel;
+            TreeNode? newSelection = null;
 
             treeView.ImageList = Settings.UI.SafeForWork ? m_emptyImageList : imageList;
 
@@ -365,7 +365,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="node"></param>
         private void UpdateNode(TreeNode node)
         {
-            CertificateLevel certLevel = node.Tag as CertificateLevel;
+            CertificateLevel? certLevel = node.Tag as CertificateLevel;
 
             // The node represents a certificate
             if (certLevel != null)
@@ -414,7 +414,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void treeView_DrawNode(object sender, DrawTreeNodeEventArgs e)
+        private void treeView_DrawNode(object? sender, DrawTreeNodeEventArgs e)
         {
             // Prevents a bug that causes every item to be redrawn at the top left corner
             if (e.Bounds.Left <= 10)
@@ -428,7 +428,7 @@ namespace EVEMon.SkillPlanner
             ImageList il;
 
             // Is it a certificate level ?
-            CertificateLevel certLevel = e.Node.Tag as CertificateLevel;
+            CertificateLevel? certLevel = e.Node!.Tag as CertificateLevel;
             if (certLevel != null)
             {
                 if (!Settings.UI.SafeForWork)
@@ -520,10 +520,10 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmListSkills_Opening(object sender, CancelEventArgs e)
+        private void cmListSkills_Opening(object? sender, CancelEventArgs e)
         {
-            TreeNode node = treeView.SelectedNode;
-            CertificateLevel certLevel = node?.Tag as CertificateLevel;
+            TreeNode? node = treeView.SelectedNode;
+            CertificateLevel? certLevel = node?.Tag as CertificateLevel;
 
             planToLevel.Visible = planToLevelSeparator.Visible = m_plan != null && node != null;
 
@@ -575,23 +575,23 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsmAddToPlan_Click(object sender, EventArgs e)
+        private void tsmAddToPlan_Click(object? sender, EventArgs e)
         {
-            CertificateLevel cert = treeView.SelectedNode.Tag as CertificateLevel;
-            IPlanOperation operation;
+            CertificateLevel? cert = treeView.SelectedNode?.Tag as CertificateLevel;
+            IPlanOperation? operation;
 
             if (cert != null)
-                operation = m_plan.TryPlanTo(cert);
+                operation = m_plan!.TryPlanTo(cert);
             else
             {
-                SkillLevel prereq = (SkillLevel)treeView.SelectedNode.Tag;
-                operation = m_plan.TryPlanTo(prereq.Skill, prereq.Level);
+                SkillLevel prereq = (SkillLevel)treeView.SelectedNode!.Tag!;
+                operation = m_plan!.TryPlanTo(prereq.Skill, prereq.Level);
             }
 
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             if (planWindow == null)
                 return;
 
@@ -603,7 +603,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsmExpandSelected_Click(object sender, EventArgs e)
+        private void tsmExpandSelected_Click(object? sender, EventArgs e)
         {
             treeView.SelectedNode.Expand();
         }
@@ -613,7 +613,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsmCollapseSelected_Click(object sender, EventArgs e)
+        private void tsmCollapseSelected_Click(object? sender, EventArgs e)
         {
             treeView.SelectedNode.Collapse();
         }
@@ -623,7 +623,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsmExpandAll_Click(object sender, EventArgs e)
+        private void tsmExpandAll_Click(object? sender, EventArgs e)
         {
             treeView.ExpandAll();
             m_allExpanded = true;
@@ -634,7 +634,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsmCollapseAll_Click(object sender, EventArgs e)
+        private void tsmCollapseAll_Click(object? sender, EventArgs e)
         {
             treeView.CollapseAll();
             m_allExpanded = false;
@@ -645,13 +645,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInBrowserMenu_Click(object sender, EventArgs e)
+        private void showInBrowserMenu_Click(object? sender, EventArgs e)
         {
             var skillTag = treeView.SelectedNode?.Tag as SkillLevel;
 
             if (skillTag != null)
                 // Open the skill browser
-                PlanWindow.ShowPlanWindow(m_character, m_plan).ShowSkillInBrowser(skillTag.
+                PlanWindow.ShowPlanWindow(m_character!, m_plan!)?.ShowSkillInBrowser(skillTag.
                     Skill);
         }
 
@@ -660,13 +660,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInExplorerMenu_Click(object sender, EventArgs e)
+        private void showInExplorerMenu_Click(object? sender, EventArgs e)
         {
             var skillTag = treeView.SelectedNode?.Tag as SkillLevel;
 
             if (skillTag != null)
                 // Open the skill explorer
-                SkillExplorerWindow.ShowSkillExplorerWindow(m_character, m_plan).
+                SkillExplorerWindow.ShowSkillExplorerWindow(m_character!, m_plan!)?.
                     ShowSkillInExplorer(skillTag.Skill);
         }
 

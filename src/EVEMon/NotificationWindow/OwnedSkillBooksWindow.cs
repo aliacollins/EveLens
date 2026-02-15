@@ -14,7 +14,7 @@ namespace EVEMon.NotificationWindow
 {
     public partial class OwnedSkillBooksWindow : EVEMonForm
     {
-        private readonly Character m_character;
+        private readonly Character m_character = null!;
 
 
         #region Constructors
@@ -73,7 +73,7 @@ namespace EVEMon.NotificationWindow
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterAssetsUpdated -= EveMonClient_CharacterAssetsUpdated;
             Disposed -= OnDisposed;
@@ -93,7 +93,7 @@ namespace EVEMon.NotificationWindow
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvOwnedSkillBooks.SelectedItems.Count > 0
-                ? lvOwnedSkillBooks.SelectedItems[0].Tag.GetHashCode()
+                ? lvOwnedSkillBooks!.SelectedItems[0].Tag!.GetHashCode()
                 : 0;
 
             lvOwnedSkillBooks.BeginUpdate();
@@ -128,7 +128,7 @@ namespace EVEMon.NotificationWindow
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvOwnedSkillBooks.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                     {
                         lvItem.Selected = true;
                     }
@@ -197,7 +197,7 @@ namespace EVEMon.NotificationWindow
                     columnHeaderWidth += lvOwnedSkillBooks.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -237,7 +237,7 @@ namespace EVEMon.NotificationWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterAssetsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterAssetsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != m_character)
                 return;
@@ -255,7 +255,7 @@ namespace EVEMon.NotificationWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="ColumnWidthChangingEventArgs" /> instance containing the event data.</param>
-        private void lvOwnedSkillBooks_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
+        private void lvOwnedSkillBooks_ColumnWidthChanging(object? sender, ColumnWidthChangingEventArgs e)
         {
             e.Cancel = true;
             e.NewWidth = lvOwnedSkillBooks.Columns[e.ColumnIndex].Width;

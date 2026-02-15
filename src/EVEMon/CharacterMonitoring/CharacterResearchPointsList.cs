@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -70,7 +70,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the text filter.
@@ -108,7 +108,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <value></value>
         [Browsable(false)]
-        public Enum Grouping { get; set; }
+        public Enum Grouping { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the settings used for columns.
@@ -123,7 +123,7 @@ namespace EVEMon.CharacterMonitoring
                 List<ResearchColumnSettings> newColumns = new List<ResearchColumnSettings>();
                 foreach (ColumnHeader header in lvResearchPoints.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
                 {
-                    ResearchColumnSettings columnSetting = m_columns.First(x => x.Column == (ResearchColumn)header.Tag);
+                    ResearchColumnSettings columnSetting = m_columns.First(x => x.Column == (ResearchColumn)header.Tag!);
                     if (columnSetting.Width > -1)
                         columnSetting.Width = header.Width;
 
@@ -173,7 +173,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.ConquerableStationListUpdated -= EveMonClient_ConquerableStationListUpdated;
@@ -197,7 +197,7 @@ namespace EVEMon.CharacterMonitoring
 
             lvResearchPoints.Visible = false;
 
-            ResearchPoints = Character?.ResearchPoints;
+            ResearchPoints = Character?.ResearchPoints!;
             Columns = Settings.UI.MainWindow.Research.Columns;
             TextFilter = string.Empty;
 
@@ -285,7 +285,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvResearchPoints.SelectedItems.Count > 0 ?
-                lvResearchPoints.SelectedItems[0].Tag.GetHashCode() : 0;
+                lvResearchPoints!.SelectedItems[0]!.Tag.GetHashCode() : 0;
 
             lvResearchPoints.BeginUpdate();
             try
@@ -313,7 +313,7 @@ namespace EVEMon.CharacterMonitoring
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvResearchPoints.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                     {
                         lvItem.Selected = true;
                     }
@@ -347,7 +347,7 @@ namespace EVEMon.CharacterMonitoring
             // Creates the subitems
             for (int i = 0; i < lvResearchPoints.Columns.Count; i++)
             {
-                SetColumn(researchPoint, item.SubItems[i], (ResearchColumn)lvResearchPoints.Columns[i].Tag);
+                SetColumn(researchPoint, item.SubItems[i], (ResearchColumn)lvResearchPoints.Columns[i]!.Tag!);
             }
 
             return item;
@@ -394,7 +394,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvResearchPoints.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -421,7 +421,7 @@ namespace EVEMon.CharacterMonitoring
         {
             foreach (ColumnHeader columnHeader in lvResearchPoints.Columns.Cast<ColumnHeader>())
             {
-                ResearchColumn column = (ResearchColumn)columnHeader.Tag;
+                ResearchColumn column = (ResearchColumn)columnHeader.Tag!;
                 if (m_sortCriteria == column)
                     columnHeader.ImageIndex = m_sortAscending ? 0 : 1;
                 else
@@ -509,7 +509,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvResearchPoints);
         }
@@ -519,7 +519,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void listView_ColumnReordered(object? sender, ColumnReorderedEventArgs e)
         {
             m_columnsChanged = true;
         }
@@ -529,7 +529,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void listView_ColumnWidthChanged(object? sender, ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns || m_columns.Count <= e.ColumnIndex)
                 return;
@@ -546,9 +546,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void listView_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
-            ResearchColumn column = (ResearchColumn)lvResearchPoints.Columns[e.Column].Tag;
+            ResearchColumn column = (ResearchColumn)lvResearchPoints.Columns![e.Column].Tag!;
             if (m_sortCriteria == column)
                 m_sortAscending = !m_sortAscending;
             else
@@ -570,7 +570,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseDown(object sender, MouseEventArgs e)
+        private void listView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
                 return;
@@ -583,7 +583,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseMove(object sender, MouseEventArgs e)
+        private void listView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -596,7 +596,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
             showInSkillBrowserMenuItem.Visible =
                 showObjectInBrowserMenuItem.Visible =
@@ -608,14 +608,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
-            ToolStripItem menuItem = sender as ToolStripItem;
+            ToolStripItem? menuItem = sender as ToolStripItem;
 
             if (menuItem == null)
                 return;
 
-            ResearchPoint researchPoint = lvResearchPoints.SelectedItems[0]?.Tag as ResearchPoint;
+            ResearchPoint? researchPoint = lvResearchPoints.SelectedItems[0]?.Tag as ResearchPoint;
 
             // showInSkillBrowserMenuItem
             if (menuItem == showInSkillBrowserMenuItem)
@@ -626,7 +626,7 @@ namespace EVEMon.CharacterMonitoring
                 Skill skill = Character.Skills[researchPoint.Skill.ID];
 
                 if (skill != Skill.UnknownSkill)
-                    PlanWindow.ShowPlanWindow(Character).ShowSkillInBrowser(skill);
+                    PlanWindow.ShowPlanWindow(Character)!.ShowSkillInBrowser(skill);
 
                 return;
             }
@@ -634,7 +634,7 @@ namespace EVEMon.CharacterMonitoring
             if (researchPoint?.ResearchedItem == null)
                 return;
 
-            PlanWindow.ShowPlanWindow(Character).ShowItemInBrowser(researchPoint?.ResearchedItem);
+            PlanWindow.ShowPlanWindow(Character)!.ShowItemInBrowser(researchPoint?.ResearchedItem!);
         }
 
         # endregion
@@ -647,7 +647,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible || !m_columnsChanged)
                 return;
@@ -665,7 +665,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterResearchPointsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterResearchPointsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -679,7 +679,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
         {
             if (Character == null)
                 return;

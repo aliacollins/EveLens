@@ -21,10 +21,10 @@ namespace EVEMon.SkillPlanner
     /// </summary>
     public partial class ImplantCalculatorWindow : EVEMonForm, IPlanOrderPluggable
     {
-        private readonly PlanEditorControl m_planEditor;
+        private readonly PlanEditorControl m_planEditor = null!;
 
-        private Character m_character;
-        private Plan m_plan;
+        private Character m_character = null!;
+        private Plan m_plan = null!;
 
         private bool m_init;
 
@@ -49,7 +49,7 @@ namespace EVEMon.SkillPlanner
             : this()
         {
             m_planEditor = planEditor;
-            Plan = planEditor.Plan;
+            Plan = planEditor.Plan!;
 
             planEditor.ShowWithPluggable(this);
         }
@@ -143,9 +143,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private async Task UpdateContentAsync()
         {
-            gbAttributes.Text = $"Attributes of \"{m_plan.ChosenImplantSet.Name}\"";
+            gbAttributes.Text = $"Attributes of \"{m_plan.ChosenImplantSet!.Name}\"";
 
-            CharacterScratchpad characterScratchpad = m_plan.Character.After(m_plan.ChosenImplantSet);
+            CharacterScratchpad characterScratchpad = m_plan.Character.After(m_plan.ChosenImplantSet!);
 
             nudCharisma.Value = characterScratchpad.Charisma.EffectiveValue;
             nudWillpower.Value = characterScratchpad.Willpower.EffectiveValue;
@@ -169,7 +169,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="lblEffectiveAttribute"></param>
         private void UpdateAttributeLabels(EveAttribute attrib, int myValue, Control lblAdjust, Control lblEffectiveAttribute)
         {
-            CharacterScratchpad characterScratchpad = m_plan.Character.After(m_plan.ChosenImplantSet);
+            CharacterScratchpad characterScratchpad = m_plan.Character.After(m_plan.ChosenImplantSet!);
 
             long baseAttr = characterScratchpad[attrib].EffectiveValue - characterScratchpad[attrib].ImplantBonus;
             long adjust = myValue - baseAttr;
@@ -185,14 +185,14 @@ namespace EVEMon.SkillPlanner
         private async Task UpdateTimesAsync()
         {
             // Current (with implants)
-            TimeSpan currentSpan = await UpdateTimesForCharacter(m_character.After(m_plan.ChosenImplantSet));
+            TimeSpan currentSpan = await UpdateTimesForCharacter(m_character.After(m_plan.ChosenImplantSet!));
 
             // Current (without implants)
             ImplantSet noneImplantSet = m_character.ImplantSets.None;
             TimeSpan baseSpan = await UpdateTimesForCharacter(m_character.After(noneImplantSet));
 
             // This (with modified implant values)
-            CharacterScratchpad scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet));
+            CharacterScratchpad scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet!));
             TimeSpan thisSpan = await UpdateTimesForCharacter(scratchpad);
 
             lblCurrentSpan.Text = currentSpan.ToDescriptiveText(DescriptiveTextOptions.IncludeCommas);
@@ -244,7 +244,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void nudIntelligence_ValueChanged(object sender, EventArgs e)
+        private async void nudIntelligence_ValueChanged(object? sender, EventArgs e)
         {
             UpdateAttributeLabels(EveAttribute.Intelligence, (int)nudIntelligence.Value,
                 lblAdjustIntelligence, lblEffectiveIntelligence);
@@ -261,7 +261,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void nudCharisma_ValueChanged(object sender, EventArgs e)
+        private async void nudCharisma_ValueChanged(object? sender, EventArgs e)
         {
             UpdateAttributeLabels(EveAttribute.Charisma, (int)nudCharisma.Value,
                 lblAdjustCharisma, lblEffectiveCharisma);
@@ -278,7 +278,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void nudPerception_ValueChanged(object sender, EventArgs e)
+        private async void nudPerception_ValueChanged(object? sender, EventArgs e)
         {
             UpdateAttributeLabels(EveAttribute.Perception, (int)nudPerception.Value,
                 lblAdjustPerception, lblEffectivePerception);
@@ -295,7 +295,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void nudMemory_ValueChanged(object sender, EventArgs e)
+        private async void nudMemory_ValueChanged(object? sender, EventArgs e)
         {
             UpdateAttributeLabels(EveAttribute.Memory, (int)nudMemory.Value,
                 lblAdjustMemory, lblEffectiveMemory);
@@ -312,7 +312,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void nudWillpower_ValueChanged(object sender, EventArgs e)
+        private async void nudWillpower_ValueChanged(object? sender, EventArgs e)
         {
             UpdateAttributeLabels(EveAttribute.Willpower, (int)nudWillpower.Value,
                 lblAdjustWillpower, lblEffectiveWillpower);
@@ -360,7 +360,7 @@ namespace EVEMon.SkillPlanner
             areRemappingPointsActive = true;
 
             // Apply implant modifications
-            CharacterScratchpad scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet));
+            CharacterScratchpad scratchpad = CreateModifiedScratchpad(m_character.After(m_plan.ChosenImplantSet!));
 
             plan.UpdateStatistics(scratchpad, true, true);
             plan.UpdateOldTrainingTimes();
@@ -389,7 +389,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanNameChanged(object? sender, PlanChangedEventArgs e)
         {
             if (m_plan != e.Plan)
                 return;

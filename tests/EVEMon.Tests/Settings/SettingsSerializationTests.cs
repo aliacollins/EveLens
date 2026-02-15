@@ -239,7 +239,7 @@ namespace EVEMon.Tests.Settings
             var result = JsonSerializer.Deserialize<JsonCredentials>(json, JsonReadOptions);
 
             result.Should().NotBeNull();
-            result.Version.Should().Be(1);
+            result!.Version.Should().Be(1);
             result.EsiKeys.Should().HaveCount(2);
             result.EsiKeys[0].CharacterId.Should().Be(12345);
             result.EsiKeys[0].RefreshToken.Should().Be("token-a");
@@ -261,7 +261,7 @@ namespace EVEMon.Tests.Settings
             var result = JsonSerializer.Deserialize<JsonConfig>(json, JsonReadOptions);
 
             result.Should().NotBeNull();
-            result.ForkId.Should().Be("aliacollins");
+            result!.ForkId.Should().Be("aliacollins");
             result.ForkVersion.Should().Be("5.2.0");
         }
 
@@ -272,7 +272,7 @@ namespace EVEMon.Tests.Settings
             string json = JsonSerializer.Serialize(key, JsonWriteOptions);
             var result = JsonSerializer.Deserialize<JsonEsiKey>(json, JsonReadOptions);
 
-            result.CharacterId.Should().Be(0);
+            result!.CharacterId.Should().Be(0);
             result.AccessMask.Should().Be(0UL);
             result.Monitored.Should().BeFalse();
         }
@@ -284,7 +284,7 @@ namespace EVEMon.Tests.Settings
             string json = JsonSerializer.Serialize(creds, JsonWriteOptions);
             var result = JsonSerializer.Deserialize<JsonCredentials>(json, JsonReadOptions);
 
-            result.EsiKeys.Should().NotBeNull();
+            result!.EsiKeys.Should().NotBeNull();
             result.EsiKeys.Should().BeEmpty();
         }
 
@@ -306,7 +306,7 @@ namespace EVEMon.Tests.Settings
             string json = JsonSerializer.Serialize(creds, JsonWriteOptions);
             var result = JsonSerializer.Deserialize<JsonCredentials>(json, JsonReadOptions);
 
-            result.EsiKeys.Should().HaveCount(100);
+            result!.EsiKeys.Should().HaveCount(100);
             result.EsiKeys[50].CharacterId.Should().Be(90000050);
             result.EsiKeys[50].RefreshToken.Should().Be("token-50");
         }
@@ -327,7 +327,7 @@ namespace EVEMon.Tests.Settings
             string json = JsonSerializer.Serialize(index, JsonWriteOptions);
             var result = JsonSerializer.Deserialize<JsonCharacterIndex>(json, JsonReadOptions);
 
-            result.Characters.Should().HaveCount(2);
+            result!.Characters.Should().HaveCount(2);
             result.Characters[0].Name.Should().Be("Pilot One");
             result.Characters[1].IsUriCharacter.Should().BeTrue();
             result.MonitoredCharacterIds.Should().Contain(12345);
@@ -345,7 +345,7 @@ namespace EVEMon.Tests.Settings
             string xml = writer.ToString();
 
             using var reader = new StringReader(xml);
-            return (T)serializer.Deserialize(reader);
+            return (T)serializer.Deserialize(reader)!;
         }
 
         #endregion

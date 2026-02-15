@@ -320,15 +320,6 @@ namespace EVEMon.Common.CloudStorageServices
         }
 
         /// <summary>
-        /// Synchronously checks the API authentication with credentials is valid.
-        /// </summary>
-        /// <param name="userID">The user identifier.</param>
-        /// <param name="apiKey">The API key.</param>
-        [Obsolete("Use CheckAPIAuthWithCredentialsIsValidAsync instead. Blocks via .Result.")]
-        public bool CheckAPIAuthWithCredentialsIsValid(uint userID, string apiKey)
-            => !CheckProviderAuthWithCredentialsIsValidAsync(userID, apiKey).Result.HasError;
-
-        /// <summary>
         /// Asynchronously checks the API authentication with credentials is valid.
         /// </summary>
         /// <param name="userID">The user identifier.</param>

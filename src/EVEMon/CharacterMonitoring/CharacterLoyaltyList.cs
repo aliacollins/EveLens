@@ -57,7 +57,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         #endregion
 
@@ -86,7 +86,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterLoyaltyPointsUpdated -= EveMonClient_CharacterLoyaltyUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -170,13 +170,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbLoyalty_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbLoyalty_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbLoyalty.Items.Count)
                 return;
 
-            Loyalty loyalty = lbLoyalty.Items[e.Index] as Loyalty;
-            DrawItem(loyalty, e);
+            Loyalty? loyalty = lbLoyalty.Items[e.Index] as Loyalty;
+            DrawItem(loyalty!, e);
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbLoyalty_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbLoyalty_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -264,7 +264,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void loyalty_CorpImageUpdated(object sender, EventArgs e)
+        private void loyalty_CorpImageUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             lbLoyalty.Invalidate();
@@ -275,7 +275,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbLoyalty_MouseWheel(object sender, MouseEventArgs e)
+        private void lbLoyalty_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -291,7 +291,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -332,7 +332,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbLoyalty_MouseDown(object sender, MouseEventArgs e)
+        private void lbLoyalty_MouseDown(object? sender, MouseEventArgs e)
         {
             int index = lbLoyalty.IndexFromPoint(e.Location);
             if (index < 0 || index >= lbLoyalty.Items.Count)
@@ -360,7 +360,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterLoyaltyUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterLoyaltyUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -374,7 +374,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -384,7 +384,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateContent();
         }

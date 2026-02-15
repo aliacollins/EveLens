@@ -16,7 +16,7 @@ namespace EVEMon.ExceptionHandling
     /// </summary>
     public partial class UnhandledExceptionWindow : EVEMonForm
     {
-        private readonly Exception m_exception;
+        private readonly Exception m_exception = null!;
 
 
         #region Constructor
@@ -49,7 +49,7 @@ namespace EVEMon.ExceptionHandling
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void UnhandledExceptionWindow_Load(object sender, EventArgs e)
+        private void UnhandledExceptionWindow_Load(object? sender, EventArgs e)
         {
             SetBugImage();
 
@@ -157,7 +157,7 @@ namespace EVEMon.ExceptionHandling
             if (trace.Contains("Calendar"))
                 return "Viewing calendar";
 
-            return null;
+            return null!;
         }
 
         #endregion
@@ -170,7 +170,7 @@ namespace EVEMon.ExceptionHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void CloseButton_Click(object sender, EventArgs e)
+        private void CloseButton_Click(object? sender, EventArgs e)
         {
             DialogResult = DialogResult.OK;
             Close();
@@ -181,7 +181,7 @@ namespace EVEMon.ExceptionHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void CopyDetailsButton_Click(object sender, EventArgs e)
+        private void CopyDetailsButton_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -203,7 +203,7 @@ namespace EVEMon.ExceptionHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void DataDirectoryButton_Click(object sender, EventArgs e)
+        private void DataDirectoryButton_Click(object? sender, EventArgs e)
         {
             Util.OpenURL(new Uri(EveMonClient.EVEMonDataDir));
         }
@@ -214,7 +214,7 @@ namespace EVEMon.ExceptionHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private async void SubmitReportButton_Click(object sender, EventArgs e)
+        private async void SubmitReportButton_Click(object? sender, EventArgs e)
         {
             SubmitReportButton.Enabled = false;
             try
@@ -224,7 +224,7 @@ namespace EVEMon.ExceptionHandling
 
                 string version = EveMonClient.FileVersionInfo?.FileVersion ?? "unknown";
                 string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
-                string userDesc = UserDescriptionTextBox.Text?.Trim();
+                string? userDesc = UserDescriptionTextBox.Text?.Trim();
                 string title = string.IsNullOrEmpty(userDesc)
                     ? $"Crash: {type} - v{version} - {timestamp}Z"
                     : $"Crash: {userDesc} ({type}) - v{version}";
@@ -235,7 +235,7 @@ namespace EVEMon.ExceptionHandling
                 {
                     MessageBox.Show($"Crash report submitted successfully.\n\n{result.IssueUrl}",
                         "Report Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    Util.OpenURL(new Uri(result.IssueUrl));
+                    Util.OpenURL(new Uri(result.IssueUrl!));
                     return;
                 }
 
@@ -275,7 +275,7 @@ namespace EVEMon.ExceptionHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void LatestBinariesLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LatestBinariesLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             Util.OpenURL(new Uri(NetworkConstants.GitHubDownloadsBase));
         }

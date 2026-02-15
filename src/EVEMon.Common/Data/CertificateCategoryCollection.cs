@@ -16,6 +16,9 @@ namespace EVEMon.Common.Data
         /// <param name="character"></param>
         internal CertificateCategoryCollection(Character character)
         {
+            if (StaticCertificates.AllGroups == null)
+                return;
+
             foreach (var srcCategory in StaticCertificates.AllGroups)
             {
                 var category = new CertificateGroup(character, srcCategory);

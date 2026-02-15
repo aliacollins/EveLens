@@ -1,3 +1,4 @@
+using EVEMon.Common.Interfaces;
 using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Services
@@ -17,6 +18,7 @@ namespace EVEMon.Common.Services
         private static IEsiClient s_esiClient;
         private static IEventAggregator s_eventAggregator;
         private static ICharacterRepository s_characterRepository;
+        private static ISettingsDataStore s_dataStore;
 
         /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
@@ -49,6 +51,12 @@ namespace EVEMon.Common.Services
             => s_characterRepository ?? (s_characterRepository = new CharacterRepositoryService());
 
         /// <summary>
+        /// Gets the data store service for settings import/export.
+        /// </summary>
+        public static ISettingsDataStore DataStore
+            => s_dataStore ?? (s_dataStore = EveMonClientDataStore.Instance);
+
+        /// <summary>
         /// Replaces a service implementation (for testing or DI transition).
         /// </summary>
         internal static void SetDispatcher(IDispatcher dispatcher) => s_dispatcher = dispatcher;
@@ -56,6 +64,7 @@ namespace EVEMon.Common.Services
         internal static void SetEsiClient(IEsiClient esiClient) => s_esiClient = esiClient;
         internal static void SetEventAggregator(IEventAggregator aggregator) => s_eventAggregator = aggregator;
         internal static void SetCharacterRepository(ICharacterRepository repo) => s_characterRepository = repo;
+        internal static void SetDataStore(ISettingsDataStore store) => s_dataStore = store;
 
         /// <summary>
         /// Resets all services to their defaults (for testing).
@@ -67,6 +76,7 @@ namespace EVEMon.Common.Services
             s_esiClient = null;
             s_eventAggregator = null;
             s_characterRepository = null;
+            s_dataStore = null;
         }
     }
 }

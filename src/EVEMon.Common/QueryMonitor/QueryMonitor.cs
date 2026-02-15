@@ -25,6 +25,7 @@ namespace EVEMon.Common.QueryMonitor
         // Matches the error reporting methods in GlobalNotificationCollection
         internal delegate void NotifyErrorCallback(CCPCharacter character, EsiResult<T> result);
 
+        private readonly bool m_selfTicking;
         private bool m_forceUpdate;
         private bool m_isCanceled;
         private bool m_retryOnForceUpdateError;
@@ -38,7 +39,7 @@ namespace EVEMon.Common.QueryMonitor
         /// <param name="method">The method.</param>
         /// <param name="callback">The callback.</param>
         /// <exception cref="System.ArgumentNullException">callback;@The callback cannot be null.</exception>
-        internal QueryMonitor(Enum method, Action<EsiResult<T>> callback)
+        internal QueryMonitor(Enum method, Action<EsiResult<T>> callback, bool suppressSelfTicking = false)
         {
             // Check callback not null
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
@@ -49,11 +50,13 @@ namespace EVEMon.Common.QueryMonitor
             Method = method;
             Enabled = false;
             QueryOnStartup = false;
+            m_selfTicking = !suppressSelfTicking;
 
             NetworkMonitor.Register(this);
 
             // Use FiveSecondTick - API cache expiry is typically minutes/hours
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            if (m_selfTicking)
+                EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         #endregion
@@ -191,7 +194,8 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         public void Dispose()
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            if (m_selfTicking)
+                EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
         }
 
         /// <summary>
@@ -300,22 +304,6 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Performs the query to the provider, passing the required arguments.
-        /// </summary>
-        /// <param name="provider">The API provider to use.</param>
-        /// <param name="callback">The callback invoked on the UI thread after a result has
-        /// been queried.</param>
-        /// <exception cref="System.ArgumentNullException">provider</exception>
-        [Obsolete("Use QueryAsyncCoreAsync instead for modern async/await pattern")]
-        protected virtual void QueryAsyncCore(APIProvider provider, APIProvider.
-            ESIRequestCallback<T> callback)
-        {
-            provider.ThrowIfNull(nameof(provider));
-
-            provider.QueryEsi(Method, callback, new ESIParams(LastResult?.Response));
-        }
-
-        /// <summary>
         /// Occurs when a new result has been queried.
         /// </summary>
         /// <param name="result">The downloaded result</param>
@@ -360,14 +348,6 @@ namespace EVEMon.Common.QueryMonitor
             // The query will retry after the normal update period
             LastUpdate = DateTime.UtcNow;
         }
-
-        /// <summary>
-        /// Occurs when a new result has been queried (legacy callback version).
-        /// </summary>
-        /// <param name="result">The downloaded result</param>
-        /// <param name="state">Unused state parameter for callback compatibility</param>
-        [Obsolete("Use OnQueried(EsiResult<T>) instead")]
-        private void OnQueried(EsiResult<T> result, object state) => OnQueried(result);
 
         /// <summary>
         /// Resets the monitor with the given last update time.
@@ -438,7 +418,8 @@ namespace EVEMon.Common.QueryMonitor
 
         void IQueryMonitorEx.SuppressSelfTicking()
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            if (m_selfTicking)
+                EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
         }
 
         IAPIResult IQueryMonitor.LastResult => LastResult;

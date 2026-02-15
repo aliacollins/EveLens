@@ -28,20 +28,20 @@ namespace EVEMon.SkillPlanner
         private readonly Dictionary<AttributesOptimizerControl, RemappingResult>
             m_remappingDictionary = new Dictionary<AttributesOptimizerControl, RemappingResult>();
 
-        private readonly PlanEditorControl m_planEditor;
-        private readonly BaseCharacter m_baseCharacter;
-        private readonly Character m_character;
+        private readonly PlanEditorControl m_planEditor = null!;
+        private readonly BaseCharacter m_baseCharacter = null!;
+        private readonly Character m_character = null!;
         private readonly AttributeOptimizationStrategy m_strategy;
-        private readonly BasePlan m_plan;
+        private readonly BasePlan m_plan = null!;
 
-        private string m_description;
+        private string m_description = null!;
 
-        private CharacterScratchpad m_statisticsScratchpad;
+        private CharacterScratchpad? m_statisticsScratchpad;
         private bool m_areRemappingPointsActive;
 
         // Variables for manual edition of a plan
-        private RemappingPoint m_manuallyEditedRemappingPoint;
-        private RemappingResult m_remapping;
+        private RemappingPoint? m_manuallyEditedRemappingPoint;
+        private RemappingResult? m_remapping;
 
         #endregion
 
@@ -70,9 +70,9 @@ namespace EVEMon.SkillPlanner
             planEditorControl.ThrowIfNull(nameof(planEditorControl));
 
             m_planEditor = planEditorControl;
-            m_plan = planEditorControl.Plan;
+            m_plan = planEditorControl.Plan!;
             m_character = (Character)m_plan.Character;
-            m_baseCharacter = m_character.After(m_plan.ChosenImplantSet);
+            m_baseCharacter = m_character.After(m_plan.ChosenImplantSet!);
             m_strategy = strategy;
 
             // Update title and description
@@ -168,7 +168,7 @@ namespace EVEMon.SkillPlanner
                 .Concat(Controls.OfType<AttributesOptimizerControl>())
                 .Select(optimizerControl => optimizerControl.Controls.OfType<Label>()
                     .FirstOrDefault(label => label.Name == "labelDescription"))
-                .Where(labelDescription => labelDescription != null);
+                .Where(labelDescription => labelDescription != null)!;
 
             // Update the description in controls
             foreach (Label labelDescription in labelDescriptions)
@@ -185,8 +185,8 @@ namespace EVEMon.SkillPlanner
         private void Run(bool update = false)
         {
             // Compute best scratchpad
-            RemappingResult remapping = null;
-            ICollection<RemappingResult> remappingList = null;
+            RemappingResult? remapping = null;
+            ICollection<RemappingResult>? remappingList = null;
 
             switch (m_strategy)
             {
@@ -195,13 +195,13 @@ namespace EVEMon.SkillPlanner
                     if (update)
                     {
                         remapping = m_remapping;
-                        m_manuallyEditedRemappingPoint = remapping.Point.Clone();
+                        m_manuallyEditedRemappingPoint = remapping!.Point.Clone();
                     }
                     else
                     {
                         remapping = AttributesOptimizer.GetResultsFromRemappingPoints(m_plan).Single(
                             x => x.Point == m_manuallyEditedRemappingPoint);
-                        m_manuallyEditedRemappingPoint = m_manuallyEditedRemappingPoint.Clone();
+                        m_manuallyEditedRemappingPoint = m_manuallyEditedRemappingPoint!.Clone();
                         m_remapping = remapping;
                     }
                     remapping.Optimize(TimeSpan.MaxValue);
@@ -231,7 +231,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="remapping">An <see cref="RemappingResult"/> object</param>
         /// <param name="remappingList">List of remappings</param>
-        private void UpdateForm(RemappingResult remapping, ICollection<RemappingResult> remappingList)
+        private void UpdateForm(RemappingResult? remapping, ICollection<RemappingResult>? remappingList)
         {
             // Update the attributes
             if (remapping != null)
@@ -240,10 +240,10 @@ namespace EVEMon.SkillPlanner
                 UpdateForRemapping(remapping);
             }
             else
-                UpdateForRemappingList(remappingList);
+                UpdateForRemappingList(remappingList!);
 
             // Update the plan order's column
-            if ((remapping != null) || (remappingList.Count != 0))
+            if ((remapping != null) || (remappingList!.Count != 0))
                 m_planEditor.ShowWithPluggable(this);
 
             // Hide the throbber and the waiting message
@@ -306,7 +306,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="remappingList">List of remappings</param>
         private void UpdateSummaryInformation(ICollection<RemappingResult> remappingList)
         {
-            TimeSpan baseDuration = m_plan.GetTotalTime(m_character.After(m_plan.ChosenImplantSet), false);
+            TimeSpan baseDuration = m_plan.GetTotalTime(m_character.After(m_plan.ChosenImplantSet!), false);
             lvPoints.Items.Clear();
 
             // Add global informations
@@ -423,13 +423,13 @@ namespace EVEMon.SkillPlanner
 
             m_remappingDictionary[ctl] = remapping;
 
-            TabPage tempPage = null;
+            TabPage? tempPage = null;
             try
             {
                 tempPage = new TabPage(tabName);
                 tempPage.Controls.Add(ctl);
 
-                TabPage page = tempPage;
+                TabPage page = tempPage!;
                 tempPage = null;
 
                 tabControl.TabPages.Add(page);
@@ -448,7 +448,7 @@ namespace EVEMon.SkillPlanner
         private AttributesOptimizerControl CreateAttributesOptimizationControl(RemappingResult remapping)
         {
             AttributesOptimizerControl control;
-            AttributesOptimizerControl ctl = null;
+            AttributesOptimizerControl? ctl = null;
             try
             {
                 ctl = new AttributesOptimizerControl(m_character, m_plan, remapping, m_description);
@@ -456,7 +456,7 @@ namespace EVEMon.SkillPlanner
 
                 // For a manually edited point, we initialize the control with the attributes from the current remapping point
                 if (m_strategy == AttributeOptimizationStrategy.ManualRemappingPointEdition &&
-                    m_manuallyEditedRemappingPoint.Status == RemappingPointStatus.UpToDate)
+                    m_manuallyEditedRemappingPoint!.Status == RemappingPointStatus.UpToDate)
                     ctl.UpdateValuesFrom(m_manuallyEditedRemappingPoint);
 
                 control = ctl;
@@ -480,9 +480,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="AttributeChangedEventArgs"/> instance containing the event data.</param>
-        private void AttributesOptimizationControl_AttributeChanged(object sender, AttributeChangedEventArgs e)
+        private void AttributesOptimizationControl_AttributeChanged(object? sender, AttributeChangedEventArgs e)
         {
-            AttributesOptimizerControl control = (AttributesOptimizerControl)sender;
+            AttributesOptimizerControl control = (AttributesOptimizerControl)sender!;
 
             if (m_strategy == AttributeOptimizationStrategy.RemappingPoints)
             {
@@ -507,7 +507,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanNameChanged(object? sender, PlanChangedEventArgs e)
         {
             if (m_plan != e.Plan)
                 return;
@@ -533,11 +533,11 @@ namespace EVEMon.SkillPlanner
             areRemappingPointsActive = m_areRemappingPointsActive;
 
             if (m_areRemappingPointsActive)
-                plan.UpdateStatistics(new CharacterScratchpad(m_baseCharacter.After(plan.ChosenImplantSet)), true, true);
+                plan.UpdateStatistics(new CharacterScratchpad(m_baseCharacter.After(plan.ChosenImplantSet!)), true, true);
             else
-                plan.UpdateStatistics(m_statisticsScratchpad.Clone(), false, true);
+                plan.UpdateStatistics(m_statisticsScratchpad!.Clone(), false, true);
 
-            plan.UpdateOldTrainingTimes(new CharacterScratchpad(m_baseCharacter.After(plan.ChosenImplantSet)), false,
+            plan.UpdateOldTrainingTimes(new CharacterScratchpad(m_baseCharacter.After(plan.ChosenImplantSet!)), false,
                                         true);
         }
 

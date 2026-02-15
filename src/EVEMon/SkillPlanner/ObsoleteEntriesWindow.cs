@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using EVEMon.Common;
@@ -135,7 +135,7 @@ namespace EVEMon.SkillPlanner
         /// <exception cref="NotImplementedException"></exception>
         private void FormatListViewItem(ListViewItem lvi)
         {
-            bool confirmed = (bool)lvi.Tag;
+            bool confirmed = (bool)lvi.Tag!;
 
             switch (m_previewResult)
             {
@@ -210,7 +210,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void KeepAllButton_Click(object sender, EventArgs e)
+        private void KeepAllButton_Click(object? sender,EventArgs e)
         {
             m_result = ObsoleteEntriesAction.KeepAll;
             Close();
@@ -221,7 +221,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemoveAllButton_Click(object sender, EventArgs e)
+        private void RemoveAllButton_Click(object? sender,EventArgs e)
         {
             m_result = ObsoleteEntriesAction.RemoveAll;
             Close();
@@ -232,7 +232,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemoveConfirmedButton_Click(object sender, EventArgs e)
+        private void RemoveConfirmedButton_Click(object? sender,EventArgs e)
         {
             m_result = ObsoleteEntriesAction.RemoveConfirmed;
             Close();
@@ -243,7 +243,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void KeepAllButton_Focused(object sender, EventArgs e)
+        private void KeepAllButton_Focused(object? sender,EventArgs e)
         {
             m_previewResult = ObsoleteEntriesAction.KeepAll;
             UpdateListView();
@@ -254,7 +254,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemoveAllButton_Focused(object sender, EventArgs e)
+        private void RemoveAllButton_Focused(object? sender,EventArgs e)
         {
             m_previewResult = ObsoleteEntriesAction.RemoveAll;
             UpdateListView();
@@ -265,7 +265,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void RemoveConfirmedButton_Focused(object sender, EventArgs e)
+        private void RemoveConfirmedButton_Focused(object? sender,EventArgs e)
         {
             m_previewResult = ObsoleteEntriesAction.RemoveConfirmed;
             UpdateListView();
@@ -276,7 +276,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void AnyButton_Leave(object sender, EventArgs e)
+        private void AnyButton_Leave(object? sender,EventArgs e)
         {
             m_previewResult = ObsoleteEntriesAction.None;
             UpdateListView();

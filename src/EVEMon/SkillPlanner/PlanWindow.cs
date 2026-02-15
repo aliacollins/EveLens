@@ -30,13 +30,13 @@ namespace EVEMon.SkillPlanner
     /// </summary>
     public partial class PlanWindow : EVEMonForm
     {
-        private static PlanWindow s_lastActivated;
+        private static PlanWindow? s_lastActivated;
 
         // Blank image list for 'Safe for work' setting
         private readonly ImageList m_emptyImageList = new ImageList();
 
-        private Plan m_plan;
-        private Character m_character;
+        private Plan? m_plan;
+        private Character? m_character;
         private Regex m_skill_regex = new Regex(@"(.*)\b(\d+|\w+)", RegexOptions.Compiled);
 
 
@@ -169,13 +169,13 @@ namespace EVEMon.SkillPlanner
                 e.CloseReason != CloseReason.WindowsShutDown) // and Windows is not shutting down
             {
                 // Tell the loadout importation window we're closing down
-                WindowsFactory.GetAndCloseByTag<LoadoutImportationWindow, Character>(m_character);
+                WindowsFactory.GetAndCloseByTag<LoadoutImportationWindow, Character>(m_character!);
 
                 // Tell the ship loadout window we're closing down
-                WindowsFactory.GetAndCloseByTag<ShipLoadoutSelectWindow, Character>(m_character);
+                WindowsFactory.GetAndCloseByTag<ShipLoadoutSelectWindow, Character>(m_character!);
 
                 // Tell the skill explorer we're closing down
-                WindowsFactory.GetAndCloseByTag<SkillExplorerWindow, Character>(m_character);
+                WindowsFactory.GetAndCloseByTag<SkillExplorerWindow, Character>(m_character!);
 
                 // Tell the attributes optimization window we're closing down
                 WindowsFactory.GetAndCloseByTag<AttributesOptimizerOptionsWindow, PlanEditorControl>(planEditor);
@@ -197,7 +197,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The character.
         /// </value>
-        private Character Character
+        private Character? Character
         {
             get { return m_character; }
             set
@@ -219,7 +219,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets the plan represented by this window.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             private set
@@ -286,7 +286,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void UpdateTitle()
         {
-            Text = $"{m_character.Name} [{m_plan.Name}] - EVEMon Skill Planner";
+            Text = $"{m_character!.Name} [{m_plan!.Name}] - EVEMon Skill Planner";
         }
 
         /// <summary>
@@ -297,17 +297,17 @@ namespace EVEMon.SkillPlanner
         {
             // If the EFTLoadoutImportationForm is open, assign the new plan
             // We do the check here as we need to catch the previous plan value
-            LoadoutImportationWindow eftloadoutImportation = WindowsFactory.GetByTag<LoadoutImportationWindow, Character>(m_character);
+            LoadoutImportationWindow eftloadoutImportation = WindowsFactory.GetByTag<LoadoutImportationWindow, Character>(m_character!);
             if (eftloadoutImportation != null)
                 eftloadoutImportation.Plan = value;
 
             // If the ShipLoadoutSelectWindow is open, assign the new plan
-            ShipLoadoutSelectWindow loadoutSelect = WindowsFactory.GetByTag<ShipLoadoutSelectWindow, Character>(m_character);
+            ShipLoadoutSelectWindow loadoutSelect = WindowsFactory.GetByTag<ShipLoadoutSelectWindow, Character>(m_character!);
             if (loadoutSelect != null)
                 loadoutSelect.Plan = value;
 
             // If the SkillExplorerWindow is open, assign the new plan
-            SkillExplorerWindow skillExplorer = WindowsFactory.GetByTag<SkillExplorerWindow, Character>(m_character);
+            SkillExplorerWindow skillExplorer = WindowsFactory.GetByTag<SkillExplorerWindow, Character>(m_character!);
             if (skillExplorer != null)
                 skillExplorer.Plan = value;
         }
@@ -379,7 +379,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="character">The character.</param>
         /// <param name="plan">The plan.</param>
         /// <returns></returns>
-        internal static PlanWindow ShowPlanWindow(Character character = null, Plan plan = null)
+        internal static PlanWindow? ShowPlanWindow(Character? character = null, Plan? plan = null)
         {
             // If no character is associated, open a unique Data Browser (non-associated character)
             if (character == null && plan == null)
@@ -387,13 +387,13 @@ namespace EVEMon.SkillPlanner
 
             // Check if a Skill Planner is already open
             // (a Skill Planner has the same Tag as a Data Browser but it has a plan attached)
-            PlanWindow planWindow = WindowsFactory.GetByTag<PlanWindow, Character>(character ?? (Character)plan.Character);
+            PlanWindow planWindow = WindowsFactory.GetByTag<PlanWindow, Character>(character ?? (Character)plan!.Character);
 
             // Do we have a Skill Planner open?
             if (planWindow?.Plan != null)
             {
                 // Activate
-                planWindow = WindowsFactory.ShowByTag<PlanWindow, Character>(character ?? (Character)plan.Character);
+                planWindow = WindowsFactory.ShowByTag<PlanWindow, Character>(character ?? (Character)plan!.Character);
 
                 // If a plan was passed, assign the new plan
                 if (plan != null)
@@ -407,7 +407,7 @@ namespace EVEMon.SkillPlanner
             {
                 // Open a new Data Browser associated with the character
                 if (plan == null)
-                    return WindowsFactory.ShowByTag<PlanWindow, Character>(character);
+                    return WindowsFactory.ShowByTag<PlanWindow, Character>(character!);
 
                 // Open a new Skill Planner (use the plan as tag for the creating the window)
                 // (This should be the only time a plan is used as the tag)
@@ -420,7 +420,7 @@ namespace EVEMon.SkillPlanner
             }
 
             // Activate
-            planWindow = WindowsFactory.ShowByTag<PlanWindow, Character>(character);
+            planWindow = WindowsFactory.ShowByTag<PlanWindow, Character>(character!);
 
             // It's a Data Browser, transform it to a Skill Planner
             planWindow.Plan = plan;
@@ -568,13 +568,13 @@ namespace EVEMon.SkillPlanner
             switch (Settings.UI.PlanWindow.ObsoleteEntryRemovalBehaviour)
             {
                 case ObsoleteEntryRemovalBehaviour.AlwaysAsk:
-                    ObsoleteEntriesStatusLabel.Visible = m_plan.ContainsObsoleteEntries;
+                    ObsoleteEntriesStatusLabel.Visible = m_plan!.ContainsObsoleteEntries;
                     break;
                 case ObsoleteEntryRemovalBehaviour.RemoveAll:
-                    m_plan.CleanObsoleteEntries(ObsoleteRemovalPolicy.RemoveAll);
+                    m_plan!.CleanObsoleteEntries(ObsoleteRemovalPolicy.RemoveAll);
                     break;
                 case ObsoleteEntryRemovalBehaviour.RemoveConfirmed:
-                    m_plan.CleanObsoleteEntries(ObsoleteRemovalPolicy.ConfirmedOnly);
+                    m_plan!.CleanObsoleteEntries(ObsoleteRemovalPolicy.ConfirmedOnly);
                     ObsoleteEntriesStatusLabel.Visible = m_plan.ContainsObsoleteEntries;
                     break;
                 default:
@@ -588,7 +588,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void CheckInvalidEntries()
         {
-            if (!m_plan.ContainsInvalidEntries)
+            if (!m_plan!.ContainsInvalidEntries)
                 return;
 
             StringBuilder message = new StringBuilder();
@@ -691,9 +691,9 @@ namespace EVEMon.SkillPlanner
                     return false;
 
                 // 1st capture group will be skill name
-                string name = m.Groups[1].Value?.Trim();
+                string? name = m.Groups[1].Value?.Trim();
 
-                var skill = new StaticSkillLevel(name, level);
+                var skill = new StaticSkillLevel(name!, level);
 
                 // Did we find an actual skill?
                 if (skill.Skill == StaticSkill.UnknownStaticSkill)
@@ -715,7 +715,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ItemPricesUpdated(object sender, EventArgs e)
+        private void EveMonClient_ItemPricesUpdated(object? sender,EventArgs e)
         {
             UpdateStatusBar();
         }
@@ -725,7 +725,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
         {
             if (m_plan != e.Plan)
                 return;
@@ -738,7 +738,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
         {
             UpdateControlsVisibility();
         }
@@ -793,7 +793,7 @@ namespace EVEMon.SkillPlanner
             {
                 CostStatusLabel.ToolTipText = $"{totalcost:N2} ISK required to purchase " +
                     (selected ? "selected" : "all") +
-                    $" skill{(m_plan.UniqueSkillsCount.S())} anew";
+                    $" skill{(m_plan!.UniqueSkillsCount.S())} anew";
             }
 
             CostStatusLabel.Text = cost > 0 ? $"{cost:N2} ISK required" : "0 ISK required";
@@ -807,7 +807,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="skillPoints">The skill points.</param>
         internal void UpdateSkillPointsStatusLabel(bool selected, int skillCount, long skillPoints)
         {
-            var skillInjectorsCount = m_plan.Character.GetRequiredSkillInjectorsForSkillPoints(
+            var skillInjectorsCount = m_plan!.Character.GetRequiredSkillInjectorsForSkillPoints(
                 skillPoints);
 
             SkillPointsStatusLabel.AutoToolTip = skillPoints <= 0;
@@ -870,7 +870,7 @@ namespace EVEMon.SkillPlanner
             else
             {
                 // No booster injection points - calculate normally
-                CharacterScratchpad calcScratchpad = new CharacterScratchpad(m_character);
+                CharacterScratchpad calcScratchpad = new CharacterScratchpad(m_character!);
 
                 // Apply implants from chosen set
                 if (m_plan.ChosenImplantSet != null)
@@ -921,7 +921,7 @@ namespace EVEMon.SkillPlanner
             boostedWorking.Willpower.ImplantBonus = boostedScratchpad.Willpower.ImplantBonus;
 
             // Re-apply booster bonus to working copy (not copied by constructor)
-            int boosterBonus = m_plan.SimulatedBoosterBonus;
+            int boosterBonus = m_plan!.SimulatedBoosterBonus;
             boostedWorking.Memory.BoosterBonus = boosterBonus;
             boostedWorking.Charisma.BoosterBonus = boosterBonus;
             boostedWorking.Intelligence.BoosterBonus = boosterBonus;
@@ -994,7 +994,7 @@ namespace EVEMon.SkillPlanner
             if (list.Count == 0)
                 return;
 
-            CharacterScratchpad scratchpad = new CharacterScratchpad(m_character);
+            CharacterScratchpad scratchpad = new CharacterScratchpad(m_character!);
 
             foreach (StaticSkillLevel skill in list)
             {
@@ -1002,7 +1002,7 @@ namespace EVEMon.SkillPlanner
                 if (skill.Skill != StaticSkill.UnknownStaticSkill)
                 {
                     // Add any dependencies that the skill may have
-                    scratchpad.Train(skill.AllDependencies.Where(x => m_character.Skills[
+                    scratchpad.Train(skill.AllDependencies.Where(x => m_character!.Skills[
                         x.Skill.ID].Level < x.Level));
 
                     // Add the skill itself
@@ -1016,11 +1016,11 @@ namespace EVEMon.SkillPlanner
             foreach (var skill in scratchpad.TrainedSkills)
             {
                 // Check if skill level is already planned
-                if (!m_plan.IsPlanned(skill.Skill, skill.Level))
+                if (!m_plan!.IsPlanned(skill.Skill, skill.Level))
                 {
                     // Include skill in calculation
                     skillCountToAdd++;
-                    trainingTime = trainingTime.Add(m_character.
+                    trainingTime = trainingTime.Add(m_character!.
                         GetTrainingTime(skill.Skill, skill.Level,
                         TrainingOrigin.FromPreviousLevelOrCurrent));
                 }
@@ -1049,7 +1049,7 @@ namespace EVEMon.SkillPlanner
 
                 if (dr == DialogResult.Yes)
                 {
-                    IPlanOperation operation = m_plan.TryAddSet(scratchpad.TrainedSkills, "Paste from Clipboard");
+                    IPlanOperation operation = m_plan!.TryAddSet(scratchpad.TrainedSkills, "Paste from Clipboard");
 
                     if (operation != null)
                     {
@@ -1071,7 +1071,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbDeletePlan_Click(object sender, EventArgs e)
+        private void tsbDeletePlan_Click(object? sender,EventArgs e)
         {
             DialogResult dr = MessageBox.Show(Properties.Resources.PromptDeletePlan,
                 @"Delete Plan", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
@@ -1084,8 +1084,8 @@ namespace EVEMon.SkillPlanner
             WindowsFactory.GetAndCloseByTag<SkillExplorerWindow, PlanWindow>(this);
 
             // Remove the plan
-            int index = m_character.Plans.IndexOf(m_plan);
-            m_character.Plans.Remove(m_plan);
+            int index = m_character!.Plans.IndexOf(m_plan!);
+            m_character.Plans.Remove(m_plan!);
 
             // Choose which plan to show next
             // By default we choose the next one,
@@ -1110,7 +1110,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
+        private void tabControl_SelectedIndexChanged(object? sender,EventArgs e)
         {
             if (DesignMode || m_plan == null)
                 return;
@@ -1135,9 +1135,9 @@ namespace EVEMon.SkillPlanner
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <exception cref="NotImplementedException"></exception>
-        private void obsoleteEntriesToolStripStatusLabel_Click(object sender, EventArgs e)
+        private void obsoleteEntriesToolStripStatusLabel_Click(object? sender,EventArgs e)
         {
-            ObsoleteEntriesAction action = ObsoleteEntriesWindow.ShowDialog(m_plan);
+            ObsoleteEntriesAction action = ObsoleteEntriesWindow.ShowDialog(m_plan!);
 
             switch (action)
             {
@@ -1162,12 +1162,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void newPlanToolStripMenuItem_Click(object sender, EventArgs e)
+        private void newPlanToolStripMenuItem_Click(object? sender,EventArgs e)
         {
             if (m_character == null)
                 return;
 
-            Plan newPlan = CreateNewPlan(m_character);
+            Plan? newPlan = CreateNewPlan(m_character);
 
             if (newPlan == null)
                 return;
@@ -1181,12 +1181,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void createPlanFromSkillQueueToolStripMenuItem_Click(object sender, EventArgs e)
+        private void createPlanFromSkillQueueToolStripMenuItem_Click(object? sender,EventArgs e)
         {
             if (m_character == null)
                 return;
 
-            Plan newPlan = CreateNewPlan(m_character, EveMonConstants.CurrentSkillQueueText);
+            Plan? newPlan = CreateNewPlan(m_character, EveMonConstants.CurrentSkillQueueText);
 
             if (newPlan == null)
                 return;
@@ -1203,7 +1203,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsddbPlans_DropDownOpening(object sender, EventArgs e)
+        private void tsddbPlans_DropDownOpening(object? sender,EventArgs e)
         {
             ToolStripItem[] noTagItems = tsddbPlans.DropDownItems
                 .Cast<ToolStripItem>()
@@ -1212,10 +1212,10 @@ namespace EVEMon.SkillPlanner
             tsddbPlans.DropDownItems.Clear();
             tsddbPlans.DropDownItems.AddRange(noTagItems);
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             createPlanFromSkillQueueToolStripMenuItem.Enabled = ccpCharacter != null && ccpCharacter.SkillQueue.Any();
 
-            m_character.Plans.AddTo(
+            m_character!.Plans.AddTo(
                 tsddbPlans.DropDownItems,
                 (menuPlanItem, plan) =>
                 {
@@ -1237,7 +1237,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsddbPlans_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void tsddbPlans_DropDownItemClicked(object? sender,ToolStripItemClickedEventArgs e)
         {
             if (e.ClickedItem?.Tag == m_plan || e.ClickedItem?.Tag == null)
                 return;
@@ -1254,9 +1254,9 @@ namespace EVEMon.SkillPlanner
         /// <param name="character">The character.</param>
         /// <param name="planName">Name of the plan.</param>
         /// <returns></returns>
-        internal static Plan CreateNewPlan(Character character, string planName = null)
+        internal static Plan? CreateNewPlan(Character character, string? planName = null)
         {
-            using (NewPlanWindow npw = new NewPlanWindow { PlanName = planName })
+            using (NewPlanWindow npw = new NewPlanWindow { PlanName = planName! })
             {
                 DialogResult dr = npw.ShowDialog();
                 if (dr == DialogResult.Cancel)
@@ -1264,8 +1264,8 @@ namespace EVEMon.SkillPlanner
 
                 return new Plan(character)
                 {
-                    Name = npw.PlanName,
-                    Description = npw.PlanDescription
+                    Name = npw.PlanName!,
+                    Description = npw.PlanDescription!
                 };
             }
         }
@@ -1275,9 +1275,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void tsmiExportPlan_Click(object sender, EventArgs e)
+        private async void tsmiExportPlan_Click(object? sender,EventArgs e)
         {
-            await UIHelper.ExportPlanAsync(m_plan);
+            await UIHelper.ExportPlanAsync(m_plan!);
         }
 
         /// <summary>
@@ -1285,9 +1285,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void tsmiAfterPlanCharacter_Click(object sender, EventArgs e)
+        private async void tsmiAfterPlanCharacter_Click(object? sender,EventArgs e)
         {
-            await UIHelper.ExportCharacterAsync(m_character, m_plan);
+            await UIHelper.ExportCharacterAsync(m_character!, m_plan!);
         }
 
         /// <summary>
@@ -1295,14 +1295,14 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbLoadoutImport_Click(object sender, EventArgs e)
+        private void tsbLoadoutImport_Click(object? sender,EventArgs e)
         {
             // Opens a loadout importation window (use the plan as tag for the creating the window)
             // (This should be the only time a plan is used as the tag)
-            WindowsFactory.ShowByTag<LoadoutImportationWindow, Plan>(m_plan);
+            WindowsFactory.ShowByTag<LoadoutImportationWindow, Plan>(m_plan!);
 
             // Change the tag (we changed it to the character for window lookup)
-            WindowsFactory.ChangeTag<LoadoutImportationWindow, Plan, Character>(m_plan, m_character);
+            WindowsFactory.ChangeTag<LoadoutImportationWindow, Plan, Character>(m_plan!, m_character!);
         }
 
         /// <summary>
@@ -1310,14 +1310,14 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbCopyToClipboard_Click(object sender, EventArgs e)
+        private void tsbCopyToClipboard_Click(object? sender,EventArgs e)
         {
             // Prompt the user for settings. When null, the user cancelled
-            PlanExportSettings settings = UIHelper.PromptUserForPlanExportSettings(m_plan);
+            PlanExportSettings settings = UIHelper.PromptUserForPlanExportSettings(m_plan!);
             if (settings == null)
                 return;
 
-            string output = PlanIOHelper.ExportAsText(m_plan, settings);
+            string output = PlanIOHelper.ExportAsText(m_plan!, settings);
 
             // Copy the result to the clipboard
             try
@@ -1342,7 +1342,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbImplantCalculator_Click(object sender, EventArgs e)
+        private void tsbImplantCalculator_Click(object? sender,EventArgs e)
         {
             WindowsFactory.ShowByTag<ImplantCalculatorWindow, PlanEditorControl>(this, planEditor);
         }
@@ -1352,7 +1352,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbAttributesOptimizer_Click(object sender, EventArgs e)
+        private void tsbAttributesOptimizer_Click(object? sender,EventArgs e)
         {
             WindowsFactory.ShowByTag<AttributesOptimizerOptionsWindow, PlanEditorControl>(this, planEditor);
         }
@@ -1362,12 +1362,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbPrintPlan_Click(object sender, EventArgs e)
+        private void tsbPrintPlan_Click(object? sender,EventArgs e)
         {
-            PlanPrinter.Print(m_plan);
+            PlanPrinter.Print(m_plan!);
         }
 
-        private void tsbClipboardImport_Click(object sender, EventArgs e)
+        private void tsbClipboardImport_Click(object? sender,EventArgs e)
         {
             string clipboard = Clipboard.GetText();
 
@@ -1406,7 +1406,7 @@ namespace EVEMon.SkillPlanner
             using (SaveFileDialog dialog = new SaveFileDialog())
             {
                 dialog.Filter = @"CSV Files (*.csv)|*.csv";
-                dialog.FileName = $"plan_validation_{m_plan.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+                dialog.FileName = $"plan_validation_{m_plan!.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
                 dialog.Title = @"Export Validation Data";
 
                 if (dialog.ShowDialog() != DialogResult.OK)

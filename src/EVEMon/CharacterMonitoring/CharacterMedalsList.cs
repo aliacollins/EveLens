@@ -41,7 +41,7 @@ namespace EVEMon.CharacterMonitoring
         private readonly List<string> m_collapsedGroups = new List<string>();
         private readonly Image m_medalImage = Resources.Medal32;
         
-        private object m_lastTooltipItem;
+        private object m_lastTooltipItem = null!;
 
         #endregion
 
@@ -67,7 +67,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         #endregion
 
@@ -97,7 +97,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterMedalsUpdated -= EveMonClient_CharacterMedalsUpdated;
             EveMonClient.CorporationMedalsUpdated -= EveMonClient_CorporationMedalsUpdated;
@@ -194,13 +194,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbMedals_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbMedals_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbMedals.Items.Count)
                 return;
 
             object item = lbMedals.Items[e.Index];
-            Medal medal = item as Medal;
+            Medal? medal = item as Medal;
             if (medal != null)
                 DrawItem(medal, e);
             else
@@ -212,7 +212,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbMedals_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbMedals_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -353,7 +353,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbMedals_MouseWheel(object sender, MouseEventArgs e)
+        private void lbMedals_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -369,7 +369,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -410,7 +410,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbMedals_MouseDown(object sender, MouseEventArgs e)
+        private void lbMedals_MouseDown(object? sender, MouseEventArgs e)
         {
             int index = lbMedals.IndexFromPoint(e.Location);
             if (index < 0 || index >= lbMedals.Items.Count)
@@ -429,7 +429,7 @@ namespace EVEMon.CharacterMonitoring
 
             // For a medals group, we have to handle the collapse/expand mechanism
             object item = lbMedals.Items[index];
-            string standingsGroup = item as string;
+            string? standingsGroup = item as string;
             if (standingsGroup == null)
                 return;
 
@@ -452,7 +452,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbMedals_MouseMove(object sender, MouseEventArgs e)
+        private void lbMedals_MouseMove(object? sender, MouseEventArgs e)
         {
             for (int i = 0; i < lbMedals.Items.Count; i++)
             {
@@ -461,7 +461,7 @@ namespace EVEMon.CharacterMonitoring
                 if (!rect.Contains(e.Location))
                     continue;
 
-                Medal item = lbMedals.Items[i] as Medal;
+                Medal? item = lbMedals.Items[i] as Medal;
 
                 // Updates the tooltip
                 if (item == null)
@@ -472,7 +472,7 @@ namespace EVEMon.CharacterMonitoring
             }
 
             // If we went so far, we're not over anything
-            m_lastTooltipItem = null;
+            m_lastTooltipItem = null!;
             ttToolTip.Active = false;
         }
 
@@ -572,7 +572,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterMedalsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterMedalsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -585,7 +585,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CorporationMedalsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CorporationMedalsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -598,7 +598,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -609,7 +609,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }

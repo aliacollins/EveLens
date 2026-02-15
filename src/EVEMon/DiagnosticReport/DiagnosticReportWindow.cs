@@ -24,7 +24,7 @@ namespace EVEMon.DiagnosticReport
         /// <summary>
         /// Generates the diagnostic report on load.
         /// </summary>
-        private void DiagnosticReportWindow_Load(object sender, EventArgs e)
+        private void DiagnosticReportWindow_Load(object? sender, EventArgs e)
         {
             ReportTextBox.Text = DiagnosticReportBuilder.BuildDiagnosticReport();
         }
@@ -32,7 +32,7 @@ namespace EVEMon.DiagnosticReport
         /// <summary>
         /// Copies the report text to the clipboard.
         /// </summary>
-        private void CopyToClipboardButton_Click(object sender, EventArgs e)
+        private void CopyToClipboardButton_Click(object? sender, EventArgs e)
         {
             try
             {
@@ -52,7 +52,7 @@ namespace EVEMon.DiagnosticReport
         /// Submits the diagnostic report via the webhook. Falls back to the manual
         /// save-to-file + GitHub URL flow if the webhook is unreachable.
         /// </summary>
-        private async void OpenGitHubIssueButton_Click(object sender, EventArgs e)
+        private async void OpenGitHubIssueButton_Click(object? sender, EventArgs e)
         {
             OpenGitHubIssueButton.Enabled = false;
             OpenGitHubIssueButton.Text = "Submitting...";
@@ -60,7 +60,7 @@ namespace EVEMon.DiagnosticReport
             {
                 string version = EveMonClient.FileVersionInfo?.FileVersion ?? "unknown";
                 string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
-                string subject = SubjectTextBox.Text?.Trim();
+                string? subject = SubjectTextBox.Text?.Trim();
                 string title = string.IsNullOrEmpty(subject)
                     ? $"Diagnostic Report - v{version} - {timestamp}Z"
                     : $"Diagnostic: {subject} - v{version}";
@@ -71,7 +71,7 @@ namespace EVEMon.DiagnosticReport
                 {
                     MessageBox.Show($"Report submitted successfully.\n\n{result.IssueUrl}",
                         "Report Submitted", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    Util.OpenURL(new Uri(result.IssueUrl));
+                    Util.OpenURL(new Uri(result.IssueUrl!));
                     return;
                 }
 
@@ -109,7 +109,7 @@ namespace EVEMon.DiagnosticReport
         /// <summary>
         /// Closes the window.
         /// </summary>
-        private void CloseButton_Click(object sender, EventArgs e)
+        private void CloseButton_Click(object? sender, EventArgs e)
         {
             Close();
         }

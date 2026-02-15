@@ -220,7 +220,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbUsabilityFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbUsabilityFilter_SelectedIndexChanged(object? sender, EventArgs e)
         {
             // Update the predicate
             switch ((ObjectUsabilityFilter)cbUsabilityFilter.SelectedIndex)
@@ -266,7 +266,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbSlotFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbSlotFilter_SelectedIndexChanged(object? sender, EventArgs e)
         {
             // Update the control's content
             if (!m_init)
@@ -322,7 +322,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ccbGroupFilter_ItemCheck(object sender, ItemCheckEventArgs e)
+        private void ccbGroupFilter_ItemCheck(object? sender, ItemCheckEventArgs e)
         {
             // Update the control's content
             if (!m_init)
@@ -359,7 +359,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbCPU_CheckedChanged(object sender, EventArgs e)
+        private void cbCPU_CheckedChanged(object? sender, EventArgs e)
         {
             numCPU.Enabled = cbCPU.Checked;
             UpdateFittingPredicate();
@@ -372,7 +372,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbPowergrid_CheckedChanged(object sender, EventArgs e)
+        private void cbPowergrid_CheckedChanged(object? sender, EventArgs e)
         {
             numPowergrid.Enabled = cbPowergrid.Checked;
             UpdateFittingPredicate();
@@ -384,7 +384,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void numCPU_ValueChanged(object sender, EventArgs e)
+        private void numCPU_ValueChanged(object? sender, EventArgs e)
         {
             UpdateFittingPredicate();
             UpdateContent();
@@ -395,7 +395,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void numPowergrid_ValueChanged(object sender, EventArgs e)
+        private void numPowergrid_ValueChanged(object? sender, EventArgs e)
         {
             UpdateFittingPredicate();
             UpdateContent();
@@ -406,7 +406,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showAllGroupsCheckbox_CheckedChanged(object sender, EventArgs e)
+        private void showAllGroupsCheckbox_CheckedChanged(object? sender, EventArgs e)
         {
             UpdateContent();
 
@@ -487,13 +487,13 @@ namespace EVEMon.SkillPlanner
                     tvItems.Nodes.Add(node);
                 }
 
-                TreeNode selectedNode = null;
+                TreeNode? selectedNode = null;
 
                 // Restore the selected node (if any)
                 if (selectedItemHash > 0)
                 {
                     foreach (TreeNode node in tvItems.GetAllNodes()
-                        .Where(node => node.Tag.GetHashCode() == selectedItemHash))
+                        .Where(node => node.Tag!.GetHashCode() == selectedItemHash))
                     {
                         tvItems.SelectNodeWithTag(node.Tag);
                         selectedNode = node;
@@ -504,7 +504,7 @@ namespace EVEMon.SkillPlanner
                     return;
 
                 // Reset if the node doesn't exist anymore
-                tvItems.SelectNodeWithTag(null);
+                tvItems.SelectNodeWithTag(null!);
                 SelectedObject = null;
             }
             finally

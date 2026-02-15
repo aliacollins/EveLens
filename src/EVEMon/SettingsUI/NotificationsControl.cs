@@ -19,7 +19,7 @@ namespace EVEMon.SettingsUI
 
         private readonly List<ComboBox> m_combos = new List<ComboBox>();
         private readonly List<CheckBox> m_checkboxes = new List<CheckBox>();
-        private NotificationSettings m_settings;
+        private NotificationSettings m_settings = null!;
 
         /// <summary>
         /// Constructor
@@ -50,14 +50,14 @@ namespace EVEMon.SettingsUI
 
                 foreach (ComboBox combo in m_combos)
                 {
-                    NotificationCategory cat = (NotificationCategory)combo.Tag;
+                    NotificationCategory cat = (NotificationCategory)combo.Tag!;
                     int index = (int)m_settings.Categories[cat].ToolTipBehaviour;
                     combo.SelectedIndex = index;
                 }
 
                 foreach (CheckBox checkbox in m_checkboxes)
                 {
-                    NotificationCategory cat = (NotificationCategory)checkbox.Tag;
+                    NotificationCategory cat = (NotificationCategory)checkbox.Tag!;
                     checkbox.Checked = m_settings.Categories[cat].ShowOnMainWindow;
                 }
             }
@@ -77,10 +77,10 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void combo_SelectedIndexChanged(object sender, EventArgs e)
+        private void combo_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            ComboBox combo = (ComboBox)sender;
-            NotificationCategory cat = (NotificationCategory)combo.Tag;
+            ComboBox combo = (ComboBox)sender!;
+            NotificationCategory cat = (NotificationCategory)combo.Tag!;
             m_settings.Categories[cat].ToolTipBehaviour = (ToolTipNotificationBehaviour)combo.SelectedIndex;
         }
 
@@ -89,10 +89,10 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void checkbox_CheckedChanged(object sender, EventArgs e)
+        private void checkbox_CheckedChanged(object? sender, EventArgs e)
         {
-            CheckBox checkbox = (CheckBox)sender;
-            NotificationCategory cat = (NotificationCategory)checkbox.Tag;
+            CheckBox checkbox = (CheckBox)sender!;
+            NotificationCategory cat = (NotificationCategory)checkbox.Tag!;
             m_settings.Categories[cat].ShowOnMainWindow = checkbox.Checked;
         }
 
@@ -129,7 +129,7 @@ namespace EVEMon.SettingsUI
         /// <param name="cat">The cat.</param>
         private void AddCheckBox(int height, NotificationCategory cat)
         {
-            CheckBox tempCheckbox = null;
+            CheckBox? tempCheckbox = null;
             try
             {
                 tempCheckbox = new CheckBox();
@@ -160,7 +160,7 @@ namespace EVEMon.SettingsUI
         /// <param name="cat">The cat.</param>
         private void AddComboBox(int height, NotificationCategory cat)
         {
-            ComboBox tempCombo = null;
+            ComboBox? tempCombo = null;
             try
             {
                 tempCombo = new ComboBox();
@@ -193,7 +193,7 @@ namespace EVEMon.SettingsUI
         /// <param name="cat">The cat.</param>
         private void AddLabel(int height, NotificationCategory cat)
         {
-            Label tempLabel = null;
+            Label? tempLabel = null;
             try
             {
                 tempLabel = new Label();

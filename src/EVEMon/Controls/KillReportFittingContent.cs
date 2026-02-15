@@ -34,8 +34,8 @@ namespace EVEMon.Controls
         private readonly Font m_fittingFont;
         private readonly Font m_fittingBoldFont;
 
-        private KillLog m_killLog;
-        private Item m_selectedItem;
+        private KillLog m_killLog = null!;
+        private Item? m_selectedItem;
 
         #endregion
 
@@ -107,7 +107,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.ItemPricesUpdated -= EveMonClient_ItemPricesUpdated;
@@ -252,7 +252,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void FittingContentListBox_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void FittingContentListBox_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index >= 0)
                 e.ItemHeight = FittingDetailHeight;
@@ -263,13 +263,13 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void FittingContentListBox_DrawItem(object sender, DrawItemEventArgs e)
+        private void FittingContentListBox_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= FittingContentListBox.Items.Count)
                 return;
 
             object listItem = FittingContentListBox.Items[e.Index];
-            KillLogItem item = listItem as KillLogItem;
+            KillLogItem? item = listItem as KillLogItem;
             if (item != null)
             {
                 // If item is the same with previous item then we previously have drawn a destroyed item
@@ -418,7 +418,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void FittingContentListBox_MouseWheel(object sender, MouseEventArgs e)
+        private void FittingContentListBox_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -434,7 +434,7 @@ namespace EVEMon.Controls
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -475,14 +475,14 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void FittingContentListBox_MouseDown(object sender, MouseEventArgs e)
+        private void FittingContentListBox_MouseDown(object? sender, MouseEventArgs e)
         {
             // Retrieve the item at the given point and quit if none
             int index = FittingContentListBox.IndexFromPoint(e.Location);
             if (index < 0 || index >= FittingContentListBox.Items.Count)
                 return;
 
-            KillLogItem killLogItem = FittingContentListBox.Items[index] as KillLogItem;
+            KillLogItem? killLogItem = FittingContentListBox.Items[index] as KillLogItem;
 
             // Beware, this last index may actually means a click in the whitespace at the bottom
             // Let's deal with this special case
@@ -511,7 +511,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void FittingContentListBox_MouseMove(object sender, MouseEventArgs e)
+        private void FittingContentListBox_MouseMove(object? sender, MouseEventArgs e)
         {
             for (int i = 0; i < FittingContentListBox.Items.Count; i++)
             {
@@ -535,17 +535,17 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs" /> instance containing the event data.</param>
-        private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
+        private void contextMenuStrip_Opening(object? sender, CancelEventArgs e)
         {
             e.Cancel = m_selectedItem == null;
 
             if (e.Cancel || m_selectedItem == null)
                 return;
 
-            Ship ship = m_selectedItem as Ship;
-            Blueprint blueprint = StaticBlueprints.GetBlueprintByID(m_selectedItem.ID);
-            Skill skill = m_killLog.Character.Skills[m_selectedItem.ID];
-            
+            Ship? ship = m_selectedItem as Ship;
+            Blueprint? blueprint = StaticBlueprints.GetBlueprintByID(m_selectedItem.ID);
+            Skill? skill = m_killLog.Character.Skills[m_selectedItem.ID];
+
             if (skill == Skill.UnknownSkill)
                 skill = null;
 
@@ -560,14 +560,14 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             if (m_selectedItem == null)
                 return;
 
-            Ship ship = m_selectedItem as Ship;
-            Blueprint blueprint = StaticBlueprints.GetBlueprintByID(m_selectedItem.ID);
-            Skill skill = m_killLog.Character.Skills[m_selectedItem.ID];
+            Ship? ship = m_selectedItem as Ship;
+            Blueprint? blueprint = StaticBlueprints.GetBlueprintByID(m_selectedItem.ID);
+            Skill? skill = m_killLog.Character.Skills[m_selectedItem.ID];
 
             if (skill == Skill.UnknownSkill)
                 skill = null;
@@ -591,7 +591,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void item_KillLogItemImageUpdated(object sender, EventArgs e)
+        private void item_KillLogItemImageUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             FittingContentListBox.Invalidate();
@@ -602,7 +602,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void FittingContentListBox_Resize(object sender, EventArgs e)
+        private void FittingContentListBox_Resize(object? sender, EventArgs e)
         {
             FittingContentListBox.Invalidate();
         }
@@ -612,7 +612,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void ToggleColorKeyPictureBox_Click(object sender, EventArgs e)
+        private void ToggleColorKeyPictureBox_Click(object? sender, EventArgs e)
         {
             ColorKeyGroupBox.Visible = !ColorKeyGroupBox.Visible;
         }
@@ -627,7 +627,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             // No need to do this if control is not visible
             if (!Visible)
@@ -641,7 +641,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ItemPricesUpdated(object sender, EventArgs e)
+        private void EveMonClient_ItemPricesUpdated(object? sender, EventArgs e)
         {
             ItemsCostLabel.Text = GetTotalCost();
         }

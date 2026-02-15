@@ -20,7 +20,7 @@ namespace EVEMon.Tests
         [Fact]
         public void CharacterBatchEventArgs_NullEnumerable_ProducesEmptyList()
         {
-            var args = new CharacterBatchEventArgs(null);
+            var args = new CharacterBatchEventArgs(null!);
             args.Characters.Should().NotBeNull();
             args.Count.Should().Be(0);
         }
@@ -53,8 +53,8 @@ namespace EVEMon.Tests
             using var batcher = new UpdateBatcher(coalesceMs: 60000);
             var character = CreateDummyCharacter();
 
-            CharacterBatchEventArgs charBatch = null;
-            CharacterBatchEventArgs skillBatch = null;
+            CharacterBatchEventArgs? charBatch = null;
+            CharacterBatchEventArgs? skillBatch = null;
             batcher.CharactersBatchUpdated += (_, e) => charBatch = e;
             batcher.SkillQueuesBatchUpdated += (_, e) => skillBatch = e;
 
@@ -64,9 +64,9 @@ namespace EVEMon.Tests
             batcher.FlushNow();
 
             charBatch.Should().NotBeNull();
-            charBatch.Count.Should().Be(1);
+            charBatch!.Count.Should().Be(1);
             skillBatch.Should().NotBeNull();
-            skillBatch.Count.Should().Be(1);
+            skillBatch!.Count.Should().Be(1);
         }
 
         [Fact]
@@ -90,13 +90,13 @@ namespace EVEMon.Tests
             using var batcher = new UpdateBatcher(coalesceMs: 60000);
             var c1 = CreateDummyCharacter();
             var c2 = CreateDummyCharacter();
-            CharacterBatchEventArgs lastBatch = null;
+            CharacterBatchEventArgs? lastBatch = null;
             batcher.CharactersBatchUpdated += (_, e) => lastBatch = e;
 
             // First batch
             batcher.QueueCharacterUpdate(c1);
             batcher.FlushNow();
-            lastBatch.Count.Should().Be(1);
+            lastBatch!.Count.Should().Be(1);
 
             // Second batch
             batcher.QueueCharacterUpdate(c2);

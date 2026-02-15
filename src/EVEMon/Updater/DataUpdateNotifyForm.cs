@@ -17,7 +17,7 @@ namespace EVEMon.Updater
 {
     public partial class DataUpdateNotifyForm : EVEMonForm
     {
-        private readonly DataUpdateAvailableEventArgs m_args;
+        private readonly DataUpdateAvailableEventArgs m_args = null!;
         private bool m_formClosing;
 
         /// <summary>
@@ -48,10 +48,12 @@ namespace EVEMon.Updater
             StringBuilder changedFiles = new StringBuilder();
             StringBuilder notes = new StringBuilder();
 
+#pragma warning disable CS8602 // Collection items are never null
             foreach (SerializableDatafile versionDatafile in m_args.ChangedFiles)
             {
                 changedFiles
                     .AppendLine($"Filename: {versionDatafile.Name.PadRight(35)}\tReleased: {versionDatafile.Date}");
+#pragma warning restore CS8602
 
                 notes
                     .AppendLine(versionDatafile.Message)
@@ -84,7 +86,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnUpdate_Click(object sender, EventArgs e)
+        private void btnUpdate_Click(object? sender, EventArgs e)
         {
             DialogResult result = DialogResult.Yes;
             int changedFilesCount = m_args.ChangedFiles.Count, newCount = changedFilesCount;
@@ -132,7 +134,7 @@ namespace EVEMon.Updater
 
             foreach (SerializableDatafile versionDatafile in datafiles.Where(datafile => datafile.IsDownloaded))
             {
-                string oldFilename = Path.Combine(EveMonClient.EVEMonDataDir, versionDatafile.Name);
+                string oldFilename = Path.Combine(EveMonClient.EVEMonDataDir, versionDatafile.Name!);
                 string tempFilename = $"{oldFilename}.tmp";
 
                 Datafile downloadedDatafile = new Datafile(Path.GetFileName(tempFilename));
@@ -153,7 +155,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnLater_Click(object sender, EventArgs e)
+        private void btnLater_Click(object? sender, EventArgs e)
         {
             DialogResult = DialogResult.Abort;
         }

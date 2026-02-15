@@ -13,7 +13,7 @@ namespace EVEMon.Updater
 {
     public partial class UpdateNotifyForm : EVEMonForm
     {
-        private readonly UpdateAvailableEventArgs m_args;
+        private readonly UpdateAvailableEventArgs m_args = null!;
         private bool m_formClosing;
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnIgnore_Click(object sender, EventArgs e)
+        private void btnIgnore_Click(object? sender, EventArgs e)
         {
             DialogResult dr = MessageBox.Show(Properties.Resources.PromptIgnoreUpdate,
                 @"Ignore Update?", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
@@ -85,7 +85,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnUpdate_Click(object sender, EventArgs e)
+        private void btnUpdate_Click(object? sender, EventArgs e)
         {
             if (cbAutoInstall.Enabled && cbAutoInstall.Checked)
             {
@@ -166,7 +166,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnLater_Click(object sender, EventArgs e)
+        private void btnLater_Click(object? sender, EventArgs e)
         {
             DialogResult = DialogResult.Abort;
         }

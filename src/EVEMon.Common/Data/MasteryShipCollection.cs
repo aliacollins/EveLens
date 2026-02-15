@@ -13,6 +13,9 @@ namespace EVEMon.Common.Data
         /// <param name="character">The character.</param>
         public MasteryShipCollection(Character character)
         {
+            if (StaticMasteries.AllMasteryShips == null)
+                return;
+
             // Builds the list
             foreach (var masteryShip in StaticMasteries.AllMasteryShips)
                 if (masteryShip.Ship != null)

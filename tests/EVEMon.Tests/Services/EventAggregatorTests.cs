@@ -10,7 +10,7 @@ namespace EVEMon.Tests.Services
     {
         private class TestEvent
         {
-            public string Message { get; set; }
+            public string Message { get; set; } = "";
         }
 
         private class OtherEvent
@@ -23,7 +23,7 @@ namespace EVEMon.Tests.Services
         {
             // Arrange
             IEventAggregator aggregator = new EventAggregator();
-            TestEvent received = null;
+            TestEvent? received = null;
             aggregator.Subscribe<TestEvent>(e => received = e);
 
             // Act
@@ -31,7 +31,7 @@ namespace EVEMon.Tests.Services
 
             // Assert
             received.Should().NotBeNull();
-            received.Message.Should().Be("hello");
+            received!.Message.Should().Be("hello");
         }
 
         [Fact]
@@ -102,7 +102,7 @@ namespace EVEMon.Tests.Services
             IEventAggregator aggregator = new EventAggregator();
 
             // Act & Assert
-            Action act = () => aggregator.Subscribe<TestEvent>(null);
+            Action act = () => aggregator.Subscribe<TestEvent>(null!);
             act.Should().Throw<ArgumentNullException>();
         }
     }

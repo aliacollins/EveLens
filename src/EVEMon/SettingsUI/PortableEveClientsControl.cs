@@ -96,7 +96,7 @@ namespace EVEMon.SettingsUI
         /// <param name="height">The height.</param>
         private void AddButton(int height)
         {
-            Button tempButton = null;
+            Button? tempButton = null;
             try
             {
                 tempButton = new Button();
@@ -125,7 +125,7 @@ namespace EVEMon.SettingsUI
         /// <param name="height">The height.</param>
         private void AddTextBox(SerializablePortableEveInstallation installation, int height)
         {
-            TextBox tempTextBox = null;
+            TextBox? tempTextBox = null;
             try
             {
                 tempTextBox = new TextBox();
@@ -153,7 +153,7 @@ namespace EVEMon.SettingsUI
         /// <param name="height">The height.</param>
         private void AddIcon(int height)
         {
-            PictureBox tempPicture = null;
+            PictureBox? tempPicture = null;
             try
             {
                 tempPicture = new PictureBox();
@@ -203,7 +203,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void BrowseButton_Click(object sender, EventArgs e)
+        private void BrowseButton_Click(object? sender, EventArgs e)
         {
             using (FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog())
             {
@@ -216,7 +216,7 @@ namespace EVEMon.SettingsUI
                         eveClient => eveClient.Path == folderBrowserDialog.SelectedPath))
                     return;
 
-                TextBox textbox = Controls.OfType<TextBox>().ElementAt(Controls.OfType<Button>().IndexOf((Button)sender));
+                TextBox textbox = Controls.OfType<TextBox>().ElementAt(Controls.OfType<Button>().IndexOf((Button)sender!));
                 textbox.Text = folderBrowserDialog.SelectedPath;
 
                 ExportToSettings();
@@ -229,9 +229,9 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void DeletePictureBox_Click(object sender, EventArgs e)
+        private void DeletePictureBox_Click(object? sender, EventArgs e)
         {
-            PictureBox icon = (PictureBox)sender;
+            PictureBox icon = (PictureBox)sender!;
             int index = Controls.OfType<PictureBox>().IndexOf(icon);
 
             // Remove and dispose the controls

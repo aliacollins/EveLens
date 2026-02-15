@@ -54,7 +54,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void SettingsFileStorageControl_Load(object sender, EventArgs e)
+        private void SettingsFileStorageControl_Load(object? sender, EventArgs e)
         {
             Font = FontFactory.GetFont("Tahoma");
 
@@ -77,7 +77,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             CloudStorageServiceProvider.CredentialsChecked -= CloudStorageServiceProvider_CredentialsChecked;
             CloudStorageServiceProvider.SettingsReset -= CloudStorageServiceProvider_SettingsReset;
@@ -108,7 +108,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void alwaysUploadCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void alwaysUploadCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
             CloudStorageServiceSettings.Default.UploadAlways = alwaysUploadCheckBox.Checked;
             CloudStorageServiceSettings.Default.Save();
@@ -119,7 +119,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void alwaysDownloadCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void alwaysDownloadCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
             useImmediatelyCheckBox.Enabled = alwaysDownloadCheckBox.Checked;
             CloudStorageServiceSettings.Default.DownloadAlways = alwaysDownloadCheckBox.Checked;
@@ -131,7 +131,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void useImmediatelyCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void useImmediatelyCheckBox_CheckedChanged(object? sender, EventArgs e)
         {
             CloudStorageServiceSettings.Default.UseImmediately = useImmediatelyCheckBox.Checked;
             CloudStorageServiceSettings.Default.Save();
@@ -142,7 +142,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void uploadSettingsFileButton_Click(object sender, EventArgs e)
+        private async void uploadSettingsFileButton_Click(object? sender, EventArgs e)
         {
             ResetTextAndColor();
 
@@ -155,7 +155,7 @@ namespace EVEMon.SettingsUI
 
             await Settings.SaveImmediateAsync();
 
-            Task uploadSettingsFileAsync = Provider?.UploadSettingsFileAsync();
+            Task? uploadSettingsFileAsync = Provider?.UploadSettingsFileAsync();
             if (uploadSettingsFileAsync != null)
                 await uploadSettingsFileAsync;
         }
@@ -165,7 +165,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void downloadSettingsFileButton_Click(object sender, EventArgs e)
+        private async void downloadSettingsFileButton_Click(object? sender, EventArgs e)
         {
             ResetTextAndColor();
 
@@ -176,7 +176,7 @@ namespace EVEMon.SettingsUI
             throbber.State = ThrobberState.Rotating;
             throbber.Visible = true;
 
-            Task downloadSettingsFileAsync = Provider?.DownloadSettingsFileAsync();
+            Task? downloadSettingsFileAsync = Provider?.DownloadSettingsFileAsync();
             if (downloadSettingsFileAsync != null)
                 await downloadSettingsFileAsync;
         }
@@ -191,7 +191,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void CloudStorageServiceProvider_CredentialsChecked(object sender, CloudStorageServiceProviderEventArgs e)
+        private void CloudStorageServiceProvider_CredentialsChecked(object? sender, CloudStorageServiceProviderEventArgs e)
         {
             ResetTextAndColor();
 
@@ -203,7 +203,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void CloudStorageServiceProvider_SettingsReset(object sender, CloudStorageServiceProviderEventArgs e)
+        private void CloudStorageServiceProvider_SettingsReset(object? sender, CloudStorageServiceProviderEventArgs e)
         {
             ResetTextAndColor();
 
@@ -215,7 +215,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CloudStorageServiceProviderEventArgs"/> instance containing the event data.</param>
-        private void CloudStorageServiceProvider_FileUploaded(object sender, CloudStorageServiceProviderEventArgs e)
+        private void CloudStorageServiceProvider_FileUploaded(object? sender, CloudStorageServiceProviderEventArgs e)
         {
             s_queryPending = false;
 
@@ -231,7 +231,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CloudStorageServiceProviderEventArgs"/> instance containing the event data.</param>
-        private void CloudStorageServiceProvider_FileDownloaded(object sender, CloudStorageServiceProviderEventArgs e)
+        private void CloudStorageServiceProvider_FileDownloaded(object? sender, CloudStorageServiceProviderEventArgs e)
         {
             s_queryPending = false;
 

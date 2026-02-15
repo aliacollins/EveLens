@@ -30,11 +30,11 @@ namespace EVEMon.SkillPlanner
         private const DescriptiveTextOptions TimeFormat =
             DescriptiveTextOptions.UppercaseText | DescriptiveTextOptions.IncludeCommas;
 
-        public event EventHandler<SkillClickedEventArgs> SkillClicked;
+        public event EventHandler<SkillClickedEventArgs>? SkillClicked;
 
-        private Plan m_plan;
-        private Skill m_rootSkill;
-        private Cell m_rootCell;
+        private Plan? m_plan;
+        private Skill? m_rootSkill;
+        private Cell? m_rootCell;
         private Rectangle m_graphBounds = new Rectangle(0, 0, 10, 10);
 
         #endregion
@@ -83,7 +83,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender,EventArgs e)
         {
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
@@ -138,7 +138,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the plan this control is bound to.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -151,7 +151,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the root skill.
         /// </summary>
-        internal Skill RootSkill
+        internal Skill? RootSkill
         {
             get { return m_rootSkill; }
             set
@@ -200,7 +200,7 @@ namespace EVEMon.SkillPlanner
             if (m_rootSkill == null)
                 return;
 
-            m_graphBounds = m_rootCell.Arrange(Size);
+            m_graphBounds = m_rootCell!.Arrange(Size);
             AutoScrollMinSize = m_graphBounds.Size;
             Invalidate();
         }
@@ -237,7 +237,7 @@ namespace EVEMon.SkillPlanner
             // Draw the lines
             using (Pen linePen = new Pen(Settings.UI.SafeForWork ? SystemColors.ControlText : Color.White, 5.0F))
             {
-                foreach (Cell cell in m_rootCell.Cells)
+                foreach (Cell cell in m_rootCell!.Cells)
                 {
                     DrawLines(g, m_rootCell, cell, linePen, ofsLeft, ofsTop);
                 }
@@ -246,7 +246,7 @@ namespace EVEMon.SkillPlanner
             // Draw the cells
             using (Font boldFont = FontFactory.GetFont(Font, FontStyle.Bold))
             {
-                foreach (Cell cell in m_rootCell.AllCells)
+                foreach (Cell cell in m_rootCell!.AllCells)
                 {
                     DrawCell(g, cell, boldFont, ofsLeft, ofsTop);
                 }
@@ -296,7 +296,7 @@ namespace EVEMon.SkillPlanner
             Color reqTextColor = !Settings.UI.SafeForWork ? Color.Red : SystemColors.GrayText;
             Color prTextColor = !Settings.UI.SafeForWork ? Color.Yellow : SystemColors.ControlText;
 
-            Brush fillBrush = null;
+            Brush? fillBrush = null;
             try
             {
                 StringBuilder currentLevelText = new StringBuilder();
@@ -311,9 +311,9 @@ namespace EVEMon.SkillPlanner
                 }
 
                 // Retrieves the output and colors for the lower lines
-                string thisRequiredTime = null;
-                string requiredLevel = null;
-                string prereqTime = null;
+                string? thisRequiredTime = null;
+                string? requiredLevel = null;
+                string? prereqTime = null;
                 if (cell.RequiredLevel > 0)
                 {
                     // Third line : "Required Level : V"
@@ -362,7 +362,7 @@ namespace EVEMon.SkillPlanner
                 if (Settings.UI.SafeForWork)
                     fillBrush = new SolidBrush(SystemColors.Control);
 
-                g.FillRectangle(fillBrush, rect);
+                g.FillRectangle(fillBrush!, rect);
 
                 // Draw text (two to five lines)
                 Point drawPoint = new Point(rect.Left + 5, rect.Top + 5);
@@ -408,7 +408,7 @@ namespace EVEMon.SkillPlanner
         private static Brush GetLinearGradientBrush(Rectangle rect, Color color1, Color color2, float angle)
         {
             Brush brush;
-            Brush tempBrush = null;
+            Brush? tempBrush = null;
             try
             {
                 tempBrush = new LinearGradientBrush(rect, color1, color2, angle);
@@ -464,7 +464,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tmrSkillTick_Tick(object sender, EventArgs e)
+        private void tmrSkillTick_Tick(object? sender,EventArgs e)
         {
             Invalidate();
             CheckTraining();
@@ -481,7 +481,7 @@ namespace EVEMon.SkillPlanner
             if (e.Button == MouseButtons.Right)
                 Cursor = Cursors.Default;
 
-            Skill skill;
+            Skill? skill;
             Point mouseLocation = GetMouseLocation(e, out skill);
 
             // Fires the event when skill not null
@@ -500,7 +500,7 @@ namespace EVEMon.SkillPlanner
         {
             base.OnMouseMove(e);
 
-            Skill skill;
+            Skill? skill;
             GetMouseLocation(e, out skill);
 
             Cursor = skill == null || m_plan == null ? Cursors.Default : CustomCursors.ContextMenu;
@@ -512,7 +512,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
         /// <param name="skill">The skill.</param>
         /// <returns></returns>
-        private Point GetMouseLocation(MouseEventArgs e, out Skill skill)
+        private Point GetMouseLocation(MouseEventArgs e, out Skill? skill)
         {
             // Computes the offsets caused by scrollers
             int ofsLeft = -AutoScrollPosition.X;
@@ -521,7 +521,7 @@ namespace EVEMon.SkillPlanner
             // Checks every cell
             Point mouseLocation = e.Location;
             mouseLocation.Offset(ofsLeft, ofsTop);
-            skill = m_rootCell.AllCells.FirstOrDefault(cell => cell.Rectangle.Contains(mouseLocation))?.Skill;
+            skill = m_rootCell?.AllCells.FirstOrDefault(cell => cell.Rectangle.Contains(mouseLocation))?.Skill;
             return mouseLocation;
         }
 
@@ -552,7 +552,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
         {
             Invalidate();
         }
@@ -562,7 +562,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
         {
             if (m_plan == null)
                 return;
@@ -578,7 +578,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
         {
             Invalidate();
         }

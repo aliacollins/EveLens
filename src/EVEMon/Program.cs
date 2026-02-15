@@ -22,7 +22,7 @@ namespace EVEMon
         /// <summary>
         /// The main window of the application.
         /// </summary>
-        private static Form s_mainWindow;
+        private static Form s_mainWindow = null!;
 
         private static bool s_exitRequested;
         private static bool s_errorWindowIsShown;
@@ -39,7 +39,7 @@ namespace EVEMon
         /// <summary>
         /// The splash screen displayed during startup.
         /// </summary>
-        private static SplashScreen s_splashScreen;
+        private static SplashScreen s_splashScreen = null!;
 
         /// <summary>
         /// Starts up the application.
@@ -162,7 +162,7 @@ namespace EVEMon
                 EveMonClient.Trace("Program.Startup - Closing SplashScreen", printMethod: false);
                 s_splashScreen.Close();
                 s_splashScreen.Dispose();
-                s_splashScreen = null;
+                s_splashScreen = null!;
 
                 // Fires the main window
                 EveMonClient.Trace("Main loop - start", printMethod: false);
@@ -245,7 +245,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void ApplicationExitCallback(object sender, EventArgs e)
+        private static void ApplicationExitCallback(object? sender, EventArgs e)
         {
             s_exitRequested = true;
         }
@@ -256,9 +256,9 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private static void CurrentDomain_UnhandledException(object? sender, UnhandledExceptionEventArgs e)
         {
-            HandleUnhandledException(e.ExceptionObject as Exception);
+            HandleUnhandledException((e.ExceptionObject as Exception)!);
         }
 
         /// <summary>
@@ -267,7 +267,7 @@ namespace EVEMon
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="ResolveEventArgs"/> instance containing the event data.</param>
         /// <returns></returns>
-        private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs e) => HandleAssemblyResolve(e);
+        private static Assembly CurrentDomain_AssemblyResolve(object? sender, ResolveEventArgs e) => HandleAssemblyResolve(e);
 
         /// <summary>
         /// Handles exceptions in WinForms threads, such exceptions
@@ -277,7 +277,7 @@ namespace EVEMon
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void Application_ThreadException(object sender, ThreadExceptionEventArgs e)
+        private static void Application_ThreadException(object? sender, ThreadExceptionEventArgs e)
         {
             HandleUnhandledException(e.Exception);
         }
@@ -357,7 +357,7 @@ namespace EVEMon
             }
             catch (Exception)
             {
-                return null;
+                return null!;
             }
             return Assembly.Load(e.Name);
         }

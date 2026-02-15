@@ -14,7 +14,7 @@ namespace EVEMon.Controls
 {
     public partial class ReadingPane : UserControl
     {
-        private IEveMessage m_selectedObject;
+        private IEveMessage m_selectedObject = null!;
 
 
         #region Constructor
@@ -217,7 +217,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.PaintEventArgs"/> instance containing the event data.</param>
-        private void flPanelHeader_Paint(object sender, PaintEventArgs e)
+        private void flPanelHeader_Paint(object? sender, PaintEventArgs e)
         {
             // Calculate the height of the panel
             flPanelHeader.Height = lblMessageHeader.Height + lblSender.Height + lblSendDate.Height + lblRecipient.Height + 10;
@@ -237,11 +237,11 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.WebBrowserNavigatingEventArgs"/> instance containing the event data.</param>
-        private void wbMailBody_Navigating(object sender, WebBrowserNavigatingEventArgs e)
+        private void wbMailBody_Navigating(object? sender, WebBrowserNavigatingEventArgs e)
         {
             // We assure that the internal browser will initialize and
             // any other attempt to navigate to a non valid link will fail
-            if (e.Url.AbsoluteUri == "about:blank" && wbMailBody.DocumentText != m_selectedObject.Text)
+            if (e.Url!.AbsoluteUri == "about:blank" && wbMailBody.DocumentText != m_selectedObject.Text)
                 return;
 
             // If the link complies with HTTP or HTTPS, open the link on the system's default browser
@@ -257,7 +257,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.PreviewKeyDownEventArgs"/> instance containing the event data.</param>
-        private void wbMailBody_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        private void wbMailBody_PreviewKeyDown(object? sender, PreviewKeyDownEventArgs e)
         {
             // Disables the reload shortcut key
             wbMailBody.WebBrowserShortcutsEnabled = e.KeyData != Keys.F5;

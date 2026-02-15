@@ -80,12 +80,6 @@ namespace EVEMon.Common.QueryMonitor
             m_characterQueryMonitors = CreateMonitors(ccpCharacter);
             m_characterQueryMonitors.ForEach(monitor => ccpCharacter.QueryMonitors.Add(monitor));
 
-            // Suppress self-ticking on all monitors — this class will drive them
-            // instead of each monitor subscribing to FiveSecondTick individually.
-            // This reduces FiveSecondTick handlers from ~27 per character to 1.
-            foreach (var monitor in m_characterQueryMonitors)
-                monitor.SuppressSelfTicking();
-
             m_basicFeaturesMonitors = InitializeBasicFeaturesMonitors(ccpCharacter);
 
             if (FeatureFlags.UseSmartScheduler && EveMonClient.SmartQueryScheduler != null)
@@ -134,130 +128,131 @@ namespace EVEMon.Common.QueryMonitor
             // Character sheet
             CharacterSheetMonitor = new CharacterQueryMonitor<EsiAPICharacterSheet>(
                 ccpCharacter, ESIAPICharacterMethods.CharacterSheet, OnCharacterSheetUpdated,
-                notifiers.NotifyCharacterSheetError);
+                notifiers.NotifyCharacterSheetError, suppressSelfTicking: true);
             monitors.Add(CharacterSheetMonitor);
             // Location
             monitors.Add(new CharacterQueryMonitor<EsiAPILocation>(
                 ccpCharacter, ESIAPICharacterMethods.Location, OnCharacterLocationUpdated,
-                notifiers.NotifyCharacterLocationError));
+                notifiers.NotifyCharacterLocationError, suppressSelfTicking: true));
             // Clones
             monitors.Add(new CharacterQueryMonitor<EsiAPIClones>(
                 ccpCharacter, ESIAPICharacterMethods.Clones, OnCharacterClonesUpdated,
-                notifiers.NotifyCharacterClonesError));
+                notifiers.NotifyCharacterClonesError, suppressSelfTicking: true));
             // Implants
             monitors.Add(new CharacterQueryMonitor<List<int>>(
                 ccpCharacter, ESIAPICharacterMethods.Implants, OnCharacterImplantsUpdated,
-                OnCharacterImplantsFailed, true));
+                OnCharacterImplantsFailed, true, suppressSelfTicking: true));
             // Ship
             monitors.Add(new CharacterQueryMonitor<EsiAPIShip>(
                 ccpCharacter, ESIAPICharacterMethods.Ship, OnCharacterShipUpdated,
-                notifiers.NotifyCharacterShipError));
+                notifiers.NotifyCharacterShipError, suppressSelfTicking: true));
             // Skills
             m_charSkillsMonitor = new CharacterQueryMonitor<EsiAPISkills>(
                 ccpCharacter, ESIAPICharacterMethods.Skills, OnCharacterSkillsUpdated,
-                notifiers.NotifyCharacterSkillsError);
+                notifiers.NotifyCharacterSkillsError, suppressSelfTicking: true);
             monitors.Add(m_charSkillsMonitor);
             // Skill queue
             m_charSkillQueueMonitor = new CharacterQueryMonitor<EsiAPISkillQueue>(
                 ccpCharacter, ESIAPICharacterMethods.SkillQueue, OnSkillQueueUpdated,
-                notifiers.NotifySkillQueueError);
+                notifiers.NotifySkillQueueError, suppressSelfTicking: true);
             monitors.Add(m_charSkillQueueMonitor);
             // Employment history
             monitors.Add(new CharacterQueryMonitor<EsiAPIEmploymentHistory>(
                 ccpCharacter, ESIAPICharacterMethods.EmploymentHistory,
-                OnCharacterEmploymentUpdated, notifiers.NotifyCharacterEmploymentError));
+                OnCharacterEmploymentUpdated, notifiers.NotifyCharacterEmploymentError,
+                suppressSelfTicking: true));
             // Standings
             monitors.Add(new PagedQueryMonitor<EsiAPIStandings,
                 EsiStandingsListItem>(new CharacterQueryMonitor<EsiAPIStandings>(
                 ccpCharacter, ESIAPICharacterMethods.Standings, OnStandingsUpdated,
-                notifiers.NotifyCharacterStandingsError) { QueryOnStartup = true }));
+                notifiers.NotifyCharacterStandingsError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Contacts
             monitors.Add(new PagedQueryMonitor<EsiAPIContactsList,
                 EsiContactListItem>(new CharacterQueryMonitor<EsiAPIContactsList>(ccpCharacter,
                 ESIAPICharacterMethods.ContactList, OnContactsUpdated,
-                notifiers.NotifyCharacterContactsError) { QueryOnStartup = true }));
+                notifiers.NotifyCharacterContactsError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Factional warfare
             monitors.Add(new CharacterQueryMonitor<EsiAPIFactionalWarfareStats>(
                 ccpCharacter, ESIAPICharacterMethods.FactionalWarfareStats,
                 OnFactionalWarfareStatsUpdated, notifiers.
-                NotifyCharacterFactionalWarfareStatsError) { QueryOnStartup = true });
+                NotifyCharacterFactionalWarfareStatsError, suppressSelfTicking: true) { QueryOnStartup = true });
             // Medals
             monitors.Add(new PagedQueryMonitor<EsiAPIMedals,
                 EsiMedalsListItem>(new CharacterQueryMonitor<EsiAPIMedals>(ccpCharacter,
                 ESIAPICharacterMethods.Medals, OnMedalsUpdated,
-                notifiers.NotifyCharacterMedalsError) { QueryOnStartup = true }));
+                notifiers.NotifyCharacterMedalsError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Kill log
             monitors.Add(new PagedQueryMonitor<EsiAPIKillLog,
                 EsiKillLogListItem>(new CharacterQueryMonitor<EsiAPIKillLog>(ccpCharacter,
                 ESIAPICharacterMethods.KillLog, OnKillLogUpdated,
-                notifiers.NotifyCharacterKillLogError) { QueryOnStartup = true }));
+                notifiers.NotifyCharacterKillLogError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Assets
             monitors.Add(new PagedQueryMonitor<EsiAPIAssetList,
                 EsiAssetListItem>(new CharacterQueryMonitor<EsiAPIAssetList>(ccpCharacter,
                 ESIAPICharacterMethods.AssetList, OnAssetsUpdated,
-                notifiers.NotifyCharacterAssetsError) { QueryOnStartup = true }));
+                notifiers.NotifyCharacterAssetsError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Market orders
             m_charMarketOrdersMonitor = new CharacterQueryMonitor<EsiAPIMarketOrders>(
                 ccpCharacter, ESIAPICharacterMethods.MarketOrders, OnMarketOrdersUpdated,
-                notifiers.NotifyCharacterMarketOrdersError) { QueryOnStartup = true };
+                notifiers.NotifyCharacterMarketOrdersError, suppressSelfTicking: true) { QueryOnStartup = true };
             monitors.Add(m_charMarketOrdersMonitor);
             // Contracts
             m_charContractsMonitor = new PagedQueryMonitor<EsiAPIContracts,
                 EsiContractListItem>(new CharacterQueryMonitor<EsiAPIContracts>(ccpCharacter,
                 ESIAPICharacterMethods.Contracts, OnContractsUpdated,
-                notifiers.NotifyCharacterContractsError) { QueryOnStartup = true });
+                notifiers.NotifyCharacterContractsError, suppressSelfTicking: true) { QueryOnStartup = true });
             monitors.Add(m_charContractsMonitor);
             // Wallet journal
             monitors.Add(new PagedQueryMonitor<EsiAPIWalletJournal,
                 EsiWalletJournalListItem>(new CharacterQueryMonitor<EsiAPIWalletJournal>(
                 ccpCharacter, ESIAPICharacterMethods.WalletJournal, OnWalletJournalUpdated,
-                notifiers.NotifyCharacterWalletJournalError) { QueryOnStartup = true }));
+                notifiers.NotifyCharacterWalletJournalError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Wallet balance
             monitors.Add(new CharacterQueryMonitor<string>(
                 ccpCharacter, ESIAPICharacterMethods.AccountBalance, OnWalletBalanceUpdated,
-                notifiers.NotifyCharacterBalanceError));
+                notifiers.NotifyCharacterBalanceError, suppressSelfTicking: true));
             // Wallet transactions
             monitors.Add(new PagedQueryMonitor<EsiAPIWalletTransactions,
                 EsiWalletTransactionsListItem>(new CharacterQueryMonitor<
                 EsiAPIWalletTransactions>(ccpCharacter, ESIAPICharacterMethods.
                 WalletTransactions, OnWalletTransactionsUpdated, notifiers.
-                NotifyCharacterWalletTransactionsError) { QueryOnStartup = true }));
+                NotifyCharacterWalletTransactionsError, suppressSelfTicking: true) { QueryOnStartup = true }));
             // Industry
             m_charIndustryJobsMonitor = new CharacterQueryMonitor<EsiAPIIndustryJobs>(
                 ccpCharacter, ESIAPICharacterMethods.IndustryJobs, OnIndustryJobsUpdated,
-                notifiers.NotifyCharacterIndustryJobsError) { QueryOnStartup = true };
+                notifiers.NotifyCharacterIndustryJobsError, suppressSelfTicking: true) { QueryOnStartup = true };
             monitors.Add(m_charIndustryJobsMonitor);
             // Research points
             monitors.Add(new CharacterQueryMonitor<EsiAPIResearchPoints>(
                 ccpCharacter, ESIAPICharacterMethods.ResearchPoints, OnResearchPointsUpdated,
-                notifiers.NotifyCharacterResearchPointsError) { QueryOnStartup = true });
+                notifiers.NotifyCharacterResearchPointsError, suppressSelfTicking: true) { QueryOnStartup = true });
             // Mail
             monitors.Add(new CharacterQueryMonitor<EsiAPIMailMessages>(
                 ccpCharacter, ESIAPICharacterMethods.MailMessages, OnEVEMailMessagesUpdated,
-                notifiers.NotifyEVEMailMessagesError) { QueryOnStartup = true });
+                notifiers.NotifyEVEMailMessagesError, suppressSelfTicking: true) { QueryOnStartup = true });
             // Mailing lists
             monitors.Add(new CharacterQueryMonitor<EsiAPIMailingLists>(
                 ccpCharacter, ESIAPICharacterMethods.MailingLists, OnEveMailingListsUpdated,
-                    notifiers.NotifyMailingListsError));
+                    notifiers.NotifyMailingListsError, suppressSelfTicking: true));
             // Notifications
             monitors.Add(new CharacterQueryMonitor<EsiAPINotifications>(
                 ccpCharacter, ESIAPICharacterMethods.Notifications, OnEVENotificationsUpdated,
-                notifiers.NotifyEVENotificationsError) { QueryOnStartup = true });
+                notifiers.NotifyEVENotificationsError, suppressSelfTicking: true) { QueryOnStartup = true });
             // Calendar
             monitors.Add(new CharacterQueryMonitor<EsiAPICalendarEvents>(
                 ccpCharacter, ESIAPICharacterMethods.UpcomingCalendarEvents,
                 OnUpcomingCalendarEventsUpdated, notifiers.
-                NotifyCharacterUpcomingCalendarEventsError) { QueryOnStartup = true });
+                NotifyCharacterUpcomingCalendarEventsError, suppressSelfTicking: true) { QueryOnStartup = true });
             // PI
             monitors.Add(new CharacterQueryMonitor<EsiAPIPlanetaryColoniesList>(
                 ccpCharacter, ESIAPICharacterMethods.PlanetaryColonies,
                 OnPlanetaryColoniesUpdated, notifiers.
-                NotifyCharacterPlanetaryColoniesError) { QueryOnStartup = true });
+                NotifyCharacterPlanetaryColoniesError, suppressSelfTicking: true) { QueryOnStartup = true });
             // LP
             monitors.Add(new CharacterQueryMonitor<EsiAPILoyality>(
                 ccpCharacter, ESIAPICharacterMethods.LoyaltyPoints,
                 OnLoyaltyPointsUpdated, notifiers.
-                NotifyCharacterLoyaltyPointsError) { QueryOnStartup = true });
+                NotifyCharacterLoyaltyPointsError, suppressSelfTicking: true) { QueryOnStartup = true });
 
             return monitors;
         }

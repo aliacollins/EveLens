@@ -38,14 +38,14 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void Constructor_NullRepository_ThrowsArgumentNullException()
         {
-            Action act = () => new CharacterFactory(null, _events);
+            Action act = () => new CharacterFactory(null!, _events);
             act.Should().Throw<ArgumentNullException>().WithParameterName("repository");
         }
 
         [Fact]
         public void Constructor_NullEventAggregator_ThrowsArgumentNullException()
         {
-            Action act = () => new CharacterFactory(_repo, null);
+            Action act = () => new CharacterFactory(_repo, null!);
             act.Should().Throw<ArgumentNullException>().WithParameterName("eventAggregator");
         }
 
@@ -71,7 +71,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CreateFromSerialized_NullIdentity_ThrowsArgumentNullException()
         {
-            Action act = () => _factory.CreateFromSerialized(null, new object());
+            Action act = () => _factory.CreateFromSerialized(null!, new object());
             act.Should().Throw<ArgumentNullException>().WithParameterName("identity");
         }
 
@@ -79,7 +79,7 @@ namespace EVEMon.Tests.Services
         public void CreateFromSerialized_NullData_ThrowsArgumentNullException()
         {
             var identity = CreateMockIdentity();
-            Action act = () => _factory.CreateFromSerialized(identity, null);
+            Action act = () => _factory.CreateFromSerialized(identity, null!);
             act.Should().Throw<ArgumentNullException>().WithParameterName("serializedData");
         }
 
@@ -133,7 +133,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CreateNew_NullIdentity_ThrowsArgumentNullException()
         {
-            Action act = () => _factory.CreateNew(null);
+            Action act = () => _factory.CreateNew(null!);
             act.Should().Throw<ArgumentNullException>().WithParameterName("identity");
         }
 

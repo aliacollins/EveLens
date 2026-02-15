@@ -35,7 +35,7 @@ namespace EVEMon.SettingsUI
         private readonly SerializableSettings m_settings;
         private SerializableSettings m_oldSettings;
         private bool m_isLoading;
-        private TreeNode m_preSelect;
+        private TreeNode? m_preSelect;
 
 
         #region Constructor
@@ -118,12 +118,12 @@ namespace EVEMon.SettingsUI
             if (Environment.OSVersion.Platform == PlatformID.Unix)
             {
                 runAtStartupComboBox.Enabled = false;
-                treeView.Nodes["trayIconNode"].Remove();
+                treeView.Nodes["trayIconNode"]!.Remove();
             }
 
             // Run with Mono ?
             if (Type.GetType("Mono.Runtime") != null)
-                treeView.Nodes["generalNode"].Nodes["g15Node"].Remove();
+                treeView.Nodes["generalNode"]!.Nodes["g15Node"]!.Remove();
 
             // Cloud storage is disabled (OneDrive/Dropbox APIs need rewrite)
             treeView.Nodes["CloudStorageServiceNode"]?.Remove();
@@ -144,7 +144,7 @@ namespace EVEMon.SettingsUI
                 string tag = node.Tag?.ToString() ?? string.Empty;
                 treeView.SelectedNode = node;
                 multiPanel.SelectedPage = multiPanel.Controls.Cast<MultiPanelPage>().
-                    FirstOrDefault(page => page.Name == tag);
+                    FirstOrDefault(page => page.Name == tag)!;
             }
 
             // Misc settings
@@ -157,7 +157,7 @@ namespace EVEMon.SettingsUI
             {
                 SettingsProperty iconSettingsProperty = IconSettings.Default.Properties["Group" + i];
                 if (iconSettingsProperty != null)
-                    cbSkillIconSet.Items.Add(iconSettingsProperty.DefaultValue.ToString().Replace("_", " "));
+                    cbSkillIconSet.Items.Add(iconSettingsProperty.DefaultValue!.ToString()!.Replace("_", " "));
             }
 
             // Tray icon settings
@@ -415,7 +415,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         private void SetStartUpSettings()
         {
-            RegistryKey rk = null;
+            RegistryKey? rk = null;
             try
             {
                 rk = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, true);
@@ -580,7 +580,7 @@ namespace EVEMon.SettingsUI
             if (!runAtStartupComboBox.Enabled)
                 return;
 
-            RegistryKey rk = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, true);
+            RegistryKey? rk = Registry.CurrentUser.OpenSubKey(StartupRegistryKey, true);
             if (rk == null)
                 return;
 
@@ -857,7 +857,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="index">The index.</param>
         /// <returns></returns>
-        private static ImageList GetCustomIconSet(int index)
+        private static ImageList? GetCustomIconSet(int index)
         {
             string groupname = string.Empty;
 
@@ -866,7 +866,7 @@ namespace EVEMon.SettingsUI
                 SettingsProperty iconSettingsProperty =
                     IconSettings.Default.Properties["Group" + index];
                 if (iconSettingsProperty != null)
-                    groupname = iconSettingsProperty.DefaultValue.ToString();
+                    groupname = iconSettingsProperty.DefaultValue!.ToString()!;
             }
 
             string groupDirectory = $"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Skill_Select\\Group";
@@ -891,12 +891,12 @@ namespace EVEMon.SettingsUI
         private static ImageList GetCustomIconSet(string defaultResourcesPath, string groupResourcesPath)
         {
             ImageList customIconSet;
-            ImageList tempImageList = null;
+            ImageList? tempImageList = null;
             try
             {
                 tempImageList = new ImageList();
                 IDictionaryEnumerator basicx;
-                IResourceReader defaultGroupReader = null;
+                IResourceReader? defaultGroupReader = null;
                 tempImageList.ColorDepth = ColorDepth.Depth32Bit;
                 try
                 {
@@ -906,7 +906,7 @@ namespace EVEMon.SettingsUI
 
                     while (basicx.MoveNext())
                     {
-                        tempImageList.Images.Add(basicx.Key.ToString(), (Icon)basicx.Value);
+                        tempImageList.Images.Add(basicx.Key.ToString()!, (Icon)basicx.Value!);
                     }
                 }
                 finally
@@ -914,7 +914,7 @@ namespace EVEMon.SettingsUI
                     defaultGroupReader?.Close();
                 }
 
-                IResourceReader groupReader = null;
+                IResourceReader? groupReader = null;
                 try
                 {
                     groupReader = new ResourceReader(groupResourcesPath);
@@ -923,10 +923,10 @@ namespace EVEMon.SettingsUI
 
                     while (basicx.MoveNext())
                     {
-                        if (tempImageList.Images.ContainsKey(basicx.Key.ToString()))
-                            tempImageList.Images.RemoveByKey(basicx.Key.ToString());
+                        if (tempImageList.Images.ContainsKey(basicx.Key.ToString()!))
+                            tempImageList.Images.RemoveByKey(basicx.Key.ToString()!);
 
-                        tempImageList.Images.Add(basicx.Key.ToString(), (Icon)basicx.Value);
+                        tempImageList.Images.Add(basicx.Key.ToString()!, (Icon)basicx.Value!);
                     }
                 }
                 finally
@@ -934,7 +934,7 @@ namespace EVEMon.SettingsUI
                     groupReader?.Close();
                 }
 
-                customIconSet = tempImageList;
+                customIconSet = tempImageList!;
                 tempImageList = null;
             }
             finally
@@ -996,7 +996,7 @@ namespace EVEMon.SettingsUI
         private void treeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             multiPanel.SelectedPage = multiPanel.Controls.Cast<MultiPanelPage>().FirstOrDefault(
-                page => page.Name == (string)e.Node.Tag);
+                page => page.Name == (string?)e.Node!.Tag)!;
         }
 
         /// <summary>
@@ -1028,7 +1028,7 @@ namespace EVEMon.SettingsUI
             if (m_isLoading)
                 return;
 
-            m_settings.CloudStorageServiceProvider.ProviderName = cloudStorageProvidersComboBox.SelectedItem?.ToString();
+            m_settings.CloudStorageServiceProvider.ProviderName = cloudStorageProvidersComboBox.SelectedItem?.ToString()!;
             cloudStorageProviderLogoPictureBox.Image = m_settings.CloudStorageServiceProvider.Provider?.Logo;
             await cloudStorageServiceControl.CheckAPIAuthIsValidAsync(forceRecheck: true);
         }

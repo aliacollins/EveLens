@@ -16,7 +16,7 @@ namespace EVEMon.Controls
 {
     public partial class KillReportVictim : UserControl
     {
-        private KillLog m_killLog;
+        private KillLog m_killLog = null!;
 
 
         #region Constructor
@@ -134,7 +134,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void CopyPictureBox_Click(object sender, EventArgs e)
+        private void CopyPictureBox_Click(object? sender, EventArgs e)
         {
             KillLogExporter.CopyKillInfoToClipboard(m_killLog);
         }
@@ -144,12 +144,12 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void ShipPictureBox_MouseDown(object sender, MouseEventArgs e)
+        private void ShipPictureBox_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
 
-            PictureBox pictureBox = sender as PictureBox;
+            PictureBox? pictureBox = sender as PictureBox;
 
             if (pictureBox == null)
                 return;
@@ -166,9 +166,9 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void ShipPictureBox_MouseMove(object sender, MouseEventArgs e)
+        private void ShipPictureBox_MouseMove(object? sender, MouseEventArgs e)
         {
-            PictureBox pictureBox = sender as PictureBox;
+            PictureBox? pictureBox = sender as PictureBox;
 
             if (pictureBox == null)
                 return;
@@ -187,7 +187,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInShipBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInShipBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             Item item = StaticItems.GetItemByID(m_killLog.Victim.ShipTypeID);
 

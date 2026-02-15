@@ -16,7 +16,7 @@ namespace EVEMon.CharactersComparison
     public partial class CharactersComparisonWindow : EVEMonForm
     {
         private readonly List<Character> m_selectedCharacters = new List<Character>();
-        private Timer m_tmrSelect;
+        private Timer m_tmrSelect = null!;
 
 
         #region Constructor
@@ -242,9 +242,9 @@ namespace EVEMon.CharactersComparison
         /// <param name="values">The values.</param>
         private void AddValueForSelectedCharacters<T>(ListViewItem item, IList<string> labels, IList<T> values)
         {
-            T min = values.Any() ? values.Min() : default(T);
-            T max = values.Any() ? values.Max() : default(T);
-            bool allEqual = !values.Any() || values.All(value => value.Equals(min));
+            T? min = values.Any() ? values.Min() : default(T);
+            T? max = values.Any() ? values.Max() : default(T);
+            bool allEqual = !values.Any() || values.All(value => value!.Equals(min));
 
             // Add the value for every selected item
             for (int index = 0; index < m_selectedCharacters.Count(); index++)
@@ -253,9 +253,9 @@ namespace EVEMon.CharactersComparison
                 var subItem = new ListViewItem.ListViewSubItem(item, labels[index]);
                 if (!allEqual)
                 {
-                    if (values[index].Equals(max))
+                    if (values[index]!.Equals(max))
                         subItem.ForeColor = Color.DarkGreen;
-                    else if (values[index].Equals(min))
+                    else if (values[index]!.Equals(min))
                         subItem.ForeColor = Color.DarkRed;
 
                     item.UseItemStyleForSubItems = false;
@@ -291,7 +291,7 @@ namespace EVEMon.CharactersComparison
                 int columnHeaderWidth = TextRenderer.MeasureText(column.Text, Font).Width + Pad * 2;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = lvCharacterInfo.Columns[column.Index].ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = lvCharacterInfo!.Columns[column.Index].ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -339,7 +339,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.MonitoredCharacterCollectionChanged -= EveMonClient_MonitoredCharacterCollectionChanged;
             EveMonClient.CharacterCollectionChanged -= EveMonClient_CharacterCollectionChanged;
@@ -351,7 +351,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_MonitoredCharacterCollectionChanged(object sender, EventArgs e)
+        private void EveMonClient_MonitoredCharacterCollectionChanged(object? sender, EventArgs e)
         {
             if (cbFilter.SelectedIndex != 1)
                 return;
@@ -365,7 +365,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterCollectionChanged(object sender, EventArgs e)
+        private void EveMonClient_CharacterCollectionChanged(object? sender, EventArgs e)
         {
             UpdateCharacterList();
             UpdateSelectedItems();
@@ -376,7 +376,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void cbFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbFilter_SelectedIndexChanged(object? sender, EventArgs e)
         {
             //Settings.CharacterComparison.Filter = cbFilter.SelectedIndex;
             UpdateCharacterList();
@@ -388,7 +388,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.SplitterEventArgs"/> instance containing the event data.</param>
-        private void persistentSplitContainer_SplitterMoved(object sender, SplitterEventArgs e)
+        private void persistentSplitContainer_SplitterMoved(object? sender, SplitterEventArgs e)
         {
             chCharacters.Width = lvCharacterList.ClientSize.Width;
         }
@@ -398,7 +398,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void persistentSplitContainer_Resize(object sender, EventArgs e)
+        private void persistentSplitContainer_Resize(object? sender, EventArgs e)
         {
             chCharacters.Width = lvCharacterList.ClientSize.Width;
         }
@@ -408,7 +408,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void lvCharacterList_SelectedIndexChanged(object sender, EventArgs e)
+        private void lvCharacterList_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (m_tmrSelect.Enabled)
                 return;
@@ -421,7 +421,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tmrSelect_Tick(object sender, EventArgs e)
+        private void tmrSelect_Tick(object? sender, EventArgs e)
         {
             m_tmrSelect.Stop();
 
@@ -439,14 +439,14 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lvCharacterList_MouseDown(object sender, MouseEventArgs e)
+        private void lvCharacterList_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
 
             lvCharacterList.Cursor = Cursors.Default;
 
-            ListViewItem item = lvCharacterList.GetItemAt(e.X, e.Y);
+            ListViewItem? item = lvCharacterList.GetItemAt(e.X, e.Y);
             if (item == null)
                 return;
 
@@ -459,7 +459,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lvCharacterList_MouseMove(object sender, MouseEventArgs e)
+        private void lvCharacterList_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -474,9 +474,9 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void characterListContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void characterListContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            Character character = characterListContextMenu.Items[0].Tag as Character;
+            Character? character = characterListContextMenu.Items[0].Tag as Character;
 
             if (character == null)
                 return;
@@ -489,9 +489,9 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ToolStripItemClickedEventArgs"/> instance containing the event data.</param>
-        private async void characterListContextMenu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private async void characterListContextMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
-            Character character = e.ClickedItem.Tag as Character;
+            Character? character = e!.ClickedItem!.Tag as Character;
             characterListContextMenu.Close();
 
             if (character != null)
@@ -503,7 +503,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lvCharacterInfo_MouseDown(object sender, MouseEventArgs e)
+        private void lvCharacterInfo_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -516,7 +516,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lvCharacterInfo_MouseMove(object sender, MouseEventArgs e)
+        private void lvCharacterInfo_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -529,7 +529,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void characterInfoContextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void characterInfoContextMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
             var items = lvCharacterInfo.SelectedItems.Cast<ListViewItem>().ToList();
             bool showExportSelectedSkillsAsPlan = items.Any() && items.All(item => item.Group?.Header != "Miscellaneous");
@@ -555,12 +555,12 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ToolStripItemClickedEventArgs"/> instance containing the event data.</param>
-        private async void exportSelectedSkillsAsPlanFromToolStripMenuItem_DropDownItemClicked(object sender,
+        private async void exportSelectedSkillsAsPlanFromToolStripMenuItem_DropDownItemClicked(object? sender,
             ToolStripItemClickedEventArgs e)
         {
             characterInfoContextMenu.Close();
 
-            Character character = e.ClickedItem.Tag as Character;
+            Character? character = e!.ClickedItem!.Tag as Character;
             if (character == null)
                 return;
 
@@ -577,7 +577,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ColumnWidthChangingEventArgs"/> instance containing the event data.</param>
-        private void lvCharacterInfo_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
+        private void lvCharacterInfo_ColumnWidthChanging(object? sender, ColumnWidthChangingEventArgs e)
         {
             e.Cancel = true;
             e.NewWidth = lvCharacterInfo.Columns[e.ColumnIndex].Width;
@@ -588,7 +588,7 @@ namespace EVEMon.CharactersComparison
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvCharacterInfo);
         }

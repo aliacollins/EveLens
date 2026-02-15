@@ -25,11 +25,11 @@ namespace EVEMon.SkillPlanner
         private readonly List<StaticSkillLevel> m_prerequisites = new List<StaticSkillLevel>();
         private readonly LoadoutListSorter m_columnSorter;
 
-        private ILoadoutInfo m_loadoutInfo;
-        private Loadout m_selectedLoadout;
-        private Character m_character;
-        private Item m_ship;
-        private Plan m_plan;
+        private ILoadoutInfo? m_loadoutInfo;
+        private Loadout? m_selectedLoadout;
+        private Character? m_character;
+        private Item? m_ship;
+        private Plan? m_plan;
 
         private bool m_allExpanded;
         
@@ -86,7 +86,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the plan.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -95,7 +95,7 @@ namespace EVEMon.SkillPlanner
                     return;
 
                 m_plan = value;
-                m_character = (Character)m_plan.Character;
+                m_character = (Character)m_plan!.Character;
 
                 UpdateTitle();
                 UpdatePlanningControls();
@@ -105,7 +105,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the ship.
         /// </summary>
-        internal Item Ship
+        internal Item? Ship
         {
             get { return m_ship; }
             set
@@ -182,13 +182,13 @@ namespace EVEMon.SkillPlanner
             m_prerequisites.Clear();
 
             // Download the eve image
-            eveImage.EveItem = m_ship;
+            eveImage.EveItem = m_ship!;
 
             // Download the loadouts feed
-            Settings.LoadoutsProvider.Provider.GetLoadoutsFeedAsync(m_ship);
+            Settings.LoadoutsProvider.Provider.GetLoadoutsFeedAsync(m_ship!);
 
             // Set labels while the user wait
-            lblShipName.Text = m_ship.Name;
+            lblShipName.Text = m_ship!.Name;
             lblLoadoutName.Text = @"No Loadout Selected";
             lblAuthor.Text = string.Empty;
             lblSubmitDate.Text = string.Empty;
@@ -226,13 +226,13 @@ namespace EVEMon.SkillPlanner
                 return;
             }
 
-            m_loadoutInfo = Settings.LoadoutsProvider.Provider.DeserializeLoadoutsFeed(m_ship, e.LoadoutFeed);
+            m_loadoutInfo = Settings.LoadoutsProvider.Provider.DeserializeLoadoutsFeed(m_ship!, e.LoadoutFeed);
 
             // Are there no feeds ?
-            if (!m_loadoutInfo.Loadouts.Any())
+            if (!m_loadoutInfo!.Loadouts.Any())
             {
                 throbberLoadouts.State = ThrobberState.Strobing;
-                lblLoadouts.Text = $"There are no loadouts for {m_ship.Name}, " +
+                lblLoadouts.Text = $"There are no loadouts for {m_ship!.Name}, " +
                                    $"why not submit one to {Settings.LoadoutsProvider.Provider.Name}?";
                 return;
             }
@@ -320,10 +320,10 @@ namespace EVEMon.SkillPlanner
                 return;
             }
 
-            Settings.LoadoutsProvider.Provider.DeserializeLoadout(m_selectedLoadout, e.Loadout);
+            Settings.LoadoutsProvider.Provider.DeserializeLoadout(m_selectedLoadout!, e.Loadout);
 
             // Fill the items tree
-            BuildTreeNodes(m_selectedLoadout.Items);
+            BuildTreeNodes(m_selectedLoadout!.Items);
 
             throbberFitting.State = ThrobberState.Stopped;
             throbberFitting.SendToBack();
@@ -339,7 +339,7 @@ namespace EVEMon.SkillPlanner
         private void BuildTreeNodes(IEnumerable<Item> items)
         {
             // Add the prerequisites for the ship it self
-            m_prerequisites.AddRange(m_ship.Prerequisites);
+            m_prerequisites.AddRange(m_ship!.Prerequisites);
 
             // Add the prerequisites for each item
             foreach (IGrouping<string, Item> slotItems in items.GroupBy(LoadoutHelper.GetSlotByItem))
@@ -485,7 +485,7 @@ namespace EVEMon.SkillPlanner
                     columnHeaderWidth += lvLoadouts.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -504,7 +504,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
         {
             if (e.Plan == m_plan)
                 UpdatePlanningControls();
@@ -515,7 +515,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
         {
             UpdateControlsVisibility();
         }
@@ -526,7 +526,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        private void EveMonClient_LoadoutFeedUpdated(object sender, LoadoutFeedEventArgs e)
+        private void EveMonClient_LoadoutFeedUpdated(object? sender,LoadoutFeedEventArgs e)
         {
             UpdateLoadoutFeedInfo(e);
         }
@@ -536,7 +536,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LoadoutEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_LoadoutUpdated(object sender, LoadoutEventArgs e)
+        private void EveMonClient_LoadoutUpdated(object? sender,LoadoutEventArgs e)
         {
             UpdateLoadoutInfo(e);
         }
@@ -546,7 +546,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
         {
             if (e.Plan == m_plan)
                 UpdateTitle();
@@ -562,12 +562,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvLoadouts_Click(object sender, EventArgs e)
+        private void lvLoadouts_Click(object? sender,EventArgs e)
         {
             if (lvLoadouts.SelectedItems.Count == 0)
                 return;
 
-            Loadout loadout = (Loadout)lvLoadouts.SelectedItems[0].Tag;
+            Loadout loadout = (Loadout)lvLoadouts.SelectedItems[0].Tag!;
             DownloadLoadout(loadout);
         }
 
@@ -576,7 +576,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object? sender,EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();
@@ -587,7 +587,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvLoadouts_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void lvLoadouts_ColumnClick(object? sender,ColumnClickEventArgs e)
         {
             // Is the column we're already sorting by ? Then swap sort order
             if (e.Column == m_columnSorter.SortColumn)
@@ -614,7 +614,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void buttonForumTopic_Click(object sender, EventArgs e)
+        private void buttonForumTopic_Click(object? sender,EventArgs e)
         {
             if (m_selectedLoadout != null)
             {
@@ -631,13 +631,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnPlan_Click(object sender, EventArgs e)
+        private void btnPlan_Click(object? sender,EventArgs e)
         {
-            IPlanOperation operation = m_plan.TryAddSet(m_prerequisites, m_selectedLoadout.Name);
+            IPlanOperation? operation = m_plan!.TryAddSet(m_prerequisites, m_selectedLoadout!.Name);
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
             if (planWindow == null)
                 return;
 
@@ -650,7 +650,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tvLoadout_MouseUp(object sender, MouseEventArgs e)
+        private void tvLoadout_MouseUp(object? sender,MouseEventArgs e)
         {
             // Show menu only if the right mouse button is clicked.
             if (e.Button != MouseButtons.Right)
@@ -671,7 +671,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void tvLoadout_MouseMove(object sender, MouseEventArgs e)
+        private void tvLoadout_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -686,12 +686,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tvLoadout_DoubleClick(object sender, EventArgs e)
+        private void tvLoadout_DoubleClick(object? sender,EventArgs e)
         {
             // user double clicked an area that isn't a node
-            Item item = tvLoadout.SelectedNode?.Tag as Item;
+            Item? item = tvLoadout.SelectedNode?.Tag as Item;
 
-            PlanWindow.ShowPlanWindow(m_character, m_plan).ShowItemInBrowser(item);
+            PlanWindow.ShowPlanWindow(m_character, m_plan)?.ShowItemInBrowser(item!);
         }
 
         /// <summary>
@@ -699,15 +699,15 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void contextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void contextMenu_Opening(object? sender,System.ComponentModel.CancelEventArgs e)
         {
             e.Cancel = tvLoadout.Nodes.Count == 0;
 
             if (e.Cancel)
                 return;
 
-            TreeNode node = tvLoadout.SelectedNode;
-            Item selectedItem = node?.Tag as Item;
+            TreeNode? node = tvLoadout.SelectedNode;
+            Item? selectedItem = node?.Tag as Item;
 
             miShowInBrowser.Visible = showInMenuSeparator.Visible = selectedItem != null;
 
@@ -734,7 +734,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiCollapseSelected_Click(object sender, EventArgs e)
+        private void cmiCollapseSelected_Click(object? sender,EventArgs e)
         {
             tvLoadout.SelectedNode.Collapse();
         }
@@ -744,7 +744,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiExpandSelected_Click(object sender, EventArgs e)
+        private void cmiExpandSelected_Click(object? sender,EventArgs e)
         {
             tvLoadout.SelectedNode.Expand();
         }
@@ -754,7 +754,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiExpandAll_Click(object sender, EventArgs e)
+        private void cmiExpandAll_Click(object? sender,EventArgs e)
         {
             tvLoadout.ExpandAll();
             m_allExpanded = true;
@@ -765,7 +765,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiCollapseAll_Click(object sender, EventArgs e)
+        private void cmiCollapseAll_Click(object? sender,EventArgs e)
         {
             tvLoadout.CollapseAll();
             m_allExpanded = false;
@@ -776,9 +776,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miExportToClipboard_Click(object sender, EventArgs e)
+        private void miExportToClipboard_Click(object? sender,EventArgs e)
         {
-            LoadoutExporter.ExportToClipboard(m_loadoutInfo, m_selectedLoadout);
+            LoadoutExporter.ExportToClipboard(m_loadoutInfo!, m_selectedLoadout!);
         }
 
         #endregion
@@ -847,11 +847,11 @@ namespace EVEMon.SkillPlanner
             /// <exception cref="T:System.ArgumentException">Neither <paramref name="x"/> nor <paramref name="y"/>
             /// implements the <see cref="T:System.IComparable"/> interface.-or- <paramref name="x"/> and <paramref name="y"/>
             /// are of different types and neither one can handle comparisons with the other. </exception>
-            public int Compare(object x, object y)
+            public int Compare(object? x, object? y)
             {
                 int compareResult = 0;
-                ListViewItem a = (ListViewItem)x;
-                ListViewItem b = (ListViewItem)y;
+                ListViewItem a = (ListViewItem)x!;
+                ListViewItem b = (ListViewItem)y!;
 
                 if (OrderOfSort == SortOrder.Descending)
                 {
@@ -860,8 +860,8 @@ namespace EVEMon.SkillPlanner
                     a = tmp;
                 }
 
-                Loadout loadoutA = a.Tag as Loadout;
-                Loadout loadoutB = b.Tag as Loadout;
+                Loadout? loadoutA = a.Tag as Loadout;
+                Loadout? loadoutB = b.Tag as Loadout;
 
                 switch (SortColumn)
                 {

@@ -21,7 +21,7 @@ namespace EVEMon.SkillPlanner
 
         private Pen m_borderPen = Pens.Black;
 
-        private GraphicsPath m_borderPath;
+        private GraphicsPath? m_borderPath;
 
         private bool m_hover;
         private bool m_pressed;
@@ -50,7 +50,7 @@ namespace EVEMon.SkillPlanner
         /// Gets or sets <see cref="AttributeBarControl"/> associated with this button.
         /// </summary>
         [Category("Behavior"), DefaultValue(null)]
-        public AttributeBarControl AttributeBar { get; set; }
+        public AttributeBarControl? AttributeBar { get; set; }
 
         /// <summary>
         /// Raises the <see cref="E:System.Windows.Forms.Control.ForeColorChanged"/> event.
@@ -180,8 +180,8 @@ namespace EVEMon.SkillPlanner
                 else
                     brush = m_backgroundBrush;
 
-                e.Graphics.FillPath(brush, m_borderPath);
-                e.Graphics.DrawPath(pen, m_borderPath);
+                e.Graphics.FillPath(brush, m_borderPath!);
+                e.Graphics.DrawPath(pen, m_borderPath!);
 
                 e.Graphics.DrawLine(pen, 4, Height / 2, Width - 4, Height / 2);
 

@@ -9,7 +9,7 @@ namespace EVEMon.NotificationWindow
 {
     public partial class SkillCompletionWindow : EVEMonForm
     {
-        private SkillCompletionNotificationEventArgs m_notification;
+        private SkillCompletionNotificationEventArgs m_notification = null!;
 
         /// <summary>
         /// Constructor

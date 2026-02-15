@@ -20,8 +20,8 @@ namespace EVEMon.SkillPlanner
 {
     public partial class SkillBrowserControl : UserControl
     {
-        private Skill m_selectedSkill;
-        private Plan m_plan;
+        private Skill? m_selectedSkill;
+        private Plan? m_plan;
 
 
         #region Constructor
@@ -77,7 +77,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender,EventArgs e)
         {
             EveMonClient.PlanChanged -= EveMonClient_PlanChanged;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -96,7 +96,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The character.
         /// </value>
-        internal Character Character
+        internal Character? Character
         {
             get { return skillSelectControl.Character; }
             set
@@ -111,7 +111,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the plan this control is bound to.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -129,7 +129,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the selected skills.
         /// </summary>
-        internal Skill SelectedSkill
+        internal Skill? SelectedSkill
         {
             get { return m_selectedSkill; }
             set
@@ -316,10 +316,10 @@ namespace EVEMon.SkillPlanner
         /// Sets the plan editor's skill selector selected skill.
         /// </summary>
         /// <param name="skill">The skill.</param>
-        private void SetPlanEditorSkillSelectorSelectedSkill(Skill skill)
+        private void SetPlanEditorSkillSelectorSelectedSkill(Skill? skill)
         {
-            PlanWindow planWindow = ParentForm as PlanWindow;
-            planWindow?.SetPlanEditorSkillSelectorSelectedSkill(skill);
+            PlanWindow? planWindow = ParentForm as PlanWindow;
+            planWindow?.SetPlanEditorSkillSelectorSelectedSkill(skill!);
         }
 
         /// <summary>
@@ -329,19 +329,19 @@ namespace EVEMon.SkillPlanner
         {
             // Set button check state according to skills 'owned' property;
             // this will also trigger a check through the character's assets
-            ownsBookToolStripButton.Checked = m_selectedSkill.IsOwned | (m_selectedSkill.
+            ownsBookToolStripButton.Checked = m_selectedSkill!.IsOwned | (m_selectedSkill.
                 HasBookInAssets && !m_selectedSkill.IsKnown);
 
             skillSelectControl.UpdateContent();
 
             // Update also the skill selector of the Plan Editor
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             planWindow?.UpdatePlanEditorSkillSelection();
 
             // Update the Owned Skill books window if open
             if (m_plan != null)
-                WindowsFactory.GetByTag<OwnedSkillBooksWindow, Character>(m_plan.Character as
-                    Character)?.UpdateList();
+                WindowsFactory.GetByTag<OwnedSkillBooksWindow, Character>((m_plan!.Character as
+                    Character)!)?.UpdateList();
         }
 
         #endregion
@@ -364,7 +364,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
         {
             UpdatePlannedLevel();
         }
@@ -374,7 +374,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
         {
             UpdateControlVisibility();
         }
@@ -384,7 +384,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
         {
             if (m_plan == null || !e.Characters.Contains(m_plan.Character) || m_selectedSkill == null)
                 return;
@@ -406,7 +406,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tmrTrainingSkill_Tick(object sender, EventArgs e)
+        private void tmrTrainingSkill_Tick(object? sender,EventArgs e)
         {
             UpdateContent();
         }
@@ -416,7 +416,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void skillSelectControl_SelectedSkillChanged(object sender, EventArgs e)
+        private void skillSelectControl_SelectedSkillChanged(object? sender,EventArgs e)
         {
             SelectedSkill = skillSelectControl.SelectedSkill;
             SetPlanEditorSkillSelectorSelectedSkill(skillSelectControl.SelectedSkill);
@@ -427,10 +427,10 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ownsBookToolStripButton_CheckedChanged(object sender, EventArgs e)
+        private void ownsBookToolStripButton_CheckedChanged(object? sender,EventArgs e)
         {
             // Set skill's 'owned' property according to button check state
-            m_selectedSkill.IsOwned = ownsBookToolStripButton.Checked;
+            m_selectedSkill!.IsOwned = ownsBookToolStripButton.Checked;
 
             UpdateOwnedSkillBookControls();
         }
@@ -440,11 +440,11 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showSkillExplorerMenu_Click(object sender, EventArgs e)
+        private void showSkillExplorerMenu_Click(object? sender,EventArgs e)
         {
             // Open the skill explorer
-            SkillExplorerWindow.ShowSkillExplorerWindow(skillSelectControl.Character, m_plan).
-                ShowSkillInExplorer(m_selectedSkill);
+            SkillExplorerWindow.ShowSkillExplorerWindow(skillSelectControl.Character, m_plan)?.
+                ShowSkillInExplorer(m_selectedSkill!);
         }
 
         #endregion
@@ -457,7 +457,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void skillTreeDisplay_SkillClicked(object sender, SkillClickedEventArgs e)
+        private void skillTreeDisplay_SkillClicked(object? sender,SkillClickedEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
@@ -485,13 +485,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void planToMenu_Click(object sender, EventArgs e)
+        private void planToMenu_Click(object? sender,EventArgs e)
         {
-            IPlanOperation operation = ((ToolStripMenuItem)sender).Tag as IPlanOperation;
+            IPlanOperation? operation = ((ToolStripMenuItem)sender!).Tag as IPlanOperation;
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             if (planWindow == null)
                 return;
 

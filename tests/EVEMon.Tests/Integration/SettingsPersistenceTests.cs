@@ -41,7 +41,7 @@ namespace EVEMon.Tests.Integration
             }
         }
 
-        private SmartSettingsManager CreateManager(Func<SerializableSettings> exportFunc = null)
+        private SmartSettingsManager CreateManager(Func<SerializableSettings>? exportFunc = null)
         {
             return new SmartSettingsManager(
                 _tempDir,

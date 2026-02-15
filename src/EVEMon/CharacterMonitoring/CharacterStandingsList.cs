@@ -62,7 +62,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         #endregion
 
@@ -91,7 +91,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterStandingsUpdated -= EveMonClient_CharacterStandingsUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -184,13 +184,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbStandings_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbStandings_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbStandings.Items.Count)
                 return;
 
             object item = lbStandings.Items[e.Index];
-            Standing standing = item as Standing;
+            Standing? standing = item as Standing;
             if (standing != null)
                 DrawItem(standing, e);
             else
@@ -202,7 +202,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbStandings_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbStandings_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -355,7 +355,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void standing_StandingImageUpdated(object sender, EventArgs e)
+        private void standing_StandingImageUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             lbStandings.Invalidate();
@@ -366,7 +366,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbStandings_MouseWheel(object sender, MouseEventArgs e)
+        private void lbStandings_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -382,7 +382,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -423,7 +423,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbStandings_MouseDown(object sender, MouseEventArgs e)
+        private void lbStandings_MouseDown(object? sender, MouseEventArgs e)
         {
             int index = lbStandings.IndexFromPoint(e.Location);
             if (index < 0 || index >= lbStandings.Items.Count)
@@ -442,7 +442,7 @@ namespace EVEMon.CharacterMonitoring
 
             // For a standings group, we have to handle the collapse/expand mechanism
             object item = lbStandings.Items[index];
-            string standingsGroup = item as string;
+            string? standingsGroup = item as string;
             if (standingsGroup == null)
                 return;
 
@@ -542,7 +542,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterStandingsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterStandingsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -556,7 +556,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -566,7 +566,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateContent();
         }

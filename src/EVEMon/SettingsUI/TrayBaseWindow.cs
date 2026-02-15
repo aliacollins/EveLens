@@ -78,7 +78,7 @@ namespace EVEMon.SettingsUI
                 return;
 
             // Look'n feel
-            Font = FontFactory.GetFont(SystemFonts.MessageBoxFont.Name, SystemFonts.MessageBoxFont.SizeInPoints);
+            Font = FontFactory.GetFont(SystemFonts.MessageBoxFont!.Name, SystemFonts.MessageBoxFont.SizeInPoints);
             
             UpdateContent();
         }

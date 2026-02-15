@@ -24,7 +24,7 @@ namespace EVEMon.Common.Models.Collections
         internal IndustryJobCollection(CCPCharacter character)
         {
             m_ccpCharacter = character;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            m_ccpCharacter.Services.FiveSecondTick += EveMonClient_TimerTick;
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace EVEMon.Common.Models.Collections
         /// </summary>
         internal void Dispose()
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            m_ccpCharacter.Services.FiveSecondTick -= EveMonClient_TimerTick;
         }
 
         /// <summary>

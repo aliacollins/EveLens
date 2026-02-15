@@ -47,7 +47,7 @@ namespace EVEMon.Tests.Services
             return path;
         }
 
-        private SmartSettingsManager CreateManager(Func<SerializableSettings> exportFunc = null)
+        private SmartSettingsManager CreateManager(Func<SerializableSettings>? exportFunc = null)
         {
             return new SmartSettingsManager(
                 _tempDir,
@@ -61,7 +61,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void Constructor_NullDataDirectory_ThrowsArgumentNullException()
         {
-            Action act = () => new SmartSettingsManager(null, _mockAggregator, _mockDispatcher, () => new SerializableSettings());
+            Action act = () => new SmartSettingsManager(null!, _mockAggregator, _mockDispatcher, () => new SerializableSettings());
             act.Should().Throw<ArgumentNullException>()
                 .And.ParamName.Should().Be("dataDirectory");
         }
@@ -69,7 +69,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void Constructor_NullEventAggregator_ThrowsArgumentNullException()
         {
-            Action act = () => new SmartSettingsManager(_tempDir, null, _mockDispatcher, () => new SerializableSettings());
+            Action act = () => new SmartSettingsManager(_tempDir, null!, _mockDispatcher, () => new SerializableSettings());
             act.Should().Throw<ArgumentNullException>()
                 .And.ParamName.Should().Be("eventAggregator");
         }
@@ -77,7 +77,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void Constructor_NullDispatcher_ThrowsArgumentNullException()
         {
-            Action act = () => new SmartSettingsManager(_tempDir, _mockAggregator, null, () => new SerializableSettings());
+            Action act = () => new SmartSettingsManager(_tempDir, _mockAggregator, null!, () => new SerializableSettings());
             act.Should().Throw<ArgumentNullException>()
                 .And.ParamName.Should().Be("dispatcher");
         }
@@ -85,7 +85,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void Constructor_NullExportFunc_ThrowsArgumentNullException()
         {
-            Action act = () => new SmartSettingsManager(_tempDir, _mockAggregator, _mockDispatcher, null);
+            Action act = () => new SmartSettingsManager(_tempDir, _mockAggregator, _mockDispatcher, null!);
             act.Should().Throw<ArgumentNullException>()
                 .And.ParamName.Should().Be("exportFunc");
         }

@@ -25,7 +25,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets the selected source plan.
         /// </summary>
-        public Plan SourcePlan { get; private set; }
+        public Plan? SourcePlan { get; private set; }
 
         /// <summary>
         /// Gets the target character.
@@ -36,7 +36,7 @@ namespace EVEMon.SkillPlanner
         /// Gets the exported plan. 
         /// </summary>
         /// <remarks>This plan has not been added to the character's list and still has the same name than the source plan.</remarks>
-        public Plan TargetPlan { get; private set; }
+        public Plan? TargetPlan { get; private set; }
 
         /// <summary>
         /// Populate the plans list from the given character
@@ -58,7 +58,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Populate the character list with all characters except the target
         /// </summary>
-        private void CrossPlanSelect_Load(object sender, EventArgs e)
+        private void CrossPlanSelect_Load(object? sender,EventArgs e)
         {
             cbCharacter.Items.Clear();
             foreach (Character character in EveMonClient.Characters.Where(x => x.CharacterID != TargetCharacter.CharacterID))
@@ -66,7 +66,7 @@ namespace EVEMon.SkillPlanner
                 cbCharacter.Items.Add(character);
             }
             cbCharacter.SelectedIndex = 0;
-            PopulatePlans(cbCharacter.SelectedItem as Character);
+            PopulatePlans((cbCharacter.SelectedItem as Character)!);
         }
 
         /// <summary>
@@ -74,9 +74,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbCharacter_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbCharacter_SelectedIndexChanged(object? sender,EventArgs e)
         {
-            PopulatePlans(cbCharacter.Items[cbCharacter.SelectedIndex] as Character);
+            PopulatePlans((cbCharacter.Items[cbCharacter.SelectedIndex] as Character)!);
         }
 
         /// <summary>
@@ -84,7 +84,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbPlan_SelectedIndexChanged(object sender, EventArgs e)
+        private void lbPlan_SelectedIndexChanged(object? sender,EventArgs e)
         {
             btnLoad.Enabled = lbPlan.SelectedItems.Count == 1;
         }
@@ -94,9 +94,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnLoad_Click(object sender, EventArgs e)
+        private void btnLoad_Click(object? sender,EventArgs e)
         {
-            SourcePlan = (Plan)lbPlan.SelectedItem;
+            SourcePlan = (Plan)lbPlan.SelectedItem!;
             TargetPlan = SourcePlan.Clone(TargetCharacter);
             DialogResult = DialogResult.OK;
             Close();

@@ -56,7 +56,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterInfoUpdated -= EveMonClient_CharacterInfoUpdated;
             EveMonClient.EveIDToNameUpdated -= EveMonClient_EveIDToNameUpdated;
@@ -171,7 +171,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbEmploymentHistory_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbEmploymentHistory_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -184,7 +184,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbEmploymentHistory_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbEmploymentHistory_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbEmploymentHistory.Items.Count)
                 return;
@@ -192,7 +192,7 @@ namespace EVEMon.CharacterMonitoring
             Graphics g = e.Graphics;
 
             EmploymentRecord record = (EmploymentRecord)lbEmploymentHistory.Items[e.Index];
-            EmploymentRecord previousRecord = e.Index == 0 ? null : (EmploymentRecord)lbEmploymentHistory.Items[e.Index - 1];
+            EmploymentRecord? previousRecord = e.Index == 0 ? null : (EmploymentRecord)lbEmploymentHistory.Items[e.Index - 1];
 
             // Draw background
             g.FillRectangle(e.Index % 2 == 0 ? Brushes.White : Brushes.LightGray, e.Bounds);
@@ -290,7 +290,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void record_EmploymentRecordImageUpdated(object sender, EventArgs e)
+        private void record_EmploymentRecordImageUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             lbEmploymentHistory.Invalidate();
@@ -301,7 +301,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbEmploymentHistory_MouseWheel(object sender, MouseEventArgs e)
+        private void lbEmploymentHistory_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -317,7 +317,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -363,7 +363,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterInfoUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterInfoUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -377,7 +377,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -387,7 +387,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             lbEmploymentHistory.Invalidate();

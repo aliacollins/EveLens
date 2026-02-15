@@ -17,8 +17,8 @@ namespace EVEMon.Schedule
     public partial class CalendarControl : UserControl
     {
 
-        public event EventHandler<DaySelectedEventArgs> DayClicked;
-        public event EventHandler<DaySelectedEventArgs> DayDoubleClicked;
+        public event EventHandler<DaySelectedEventArgs> DayClicked = null!;
+        public event EventHandler<DaySelectedEventArgs> DayDoubleClicked = null!;
 
         private const double CellAspectRatio = 7.0d / 10.0d;
         private const int MaxRows = 6;
@@ -84,7 +84,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void CalendarControl_Load(object sender, EventArgs e)
+        private void CalendarControl_Load(object? sender, EventArgs e)
         {
             m_firstDayOfWeek = CultureConstants.DefaultCulture.DateTimeFormat.FirstDayOfWeek;
         }

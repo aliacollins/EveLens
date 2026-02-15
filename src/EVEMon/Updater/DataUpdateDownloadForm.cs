@@ -17,10 +17,10 @@ namespace EVEMon.Updater
 {
     public partial class DataUpdateDownloadForm : EVEMonForm
     {
-        private TableLayoutPanel m_tableLayoutPanel;
+        private TableLayoutPanel m_tableLayoutPanel = null!;
 
-        private readonly List<DataUpdateDownloadControl> m_controls;
-        private readonly List<SerializableDatafile> m_datafiles;
+        private readonly List<DataUpdateDownloadControl> m_controls = null!;
+        private readonly List<SerializableDatafile> m_datafiles = null!;
         private bool m_canceling;
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace EVEMon.Updater
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void btCancel_Click(object sender, EventArgs e)
+        private void btCancel_Click(object? sender, EventArgs e)
         {
             Cancel();
         }
@@ -147,7 +147,7 @@ namespace EVEMon.Updater
         {
             private Label m_label;
             private Label m_progressLabel;
-            private ProgressBar m_progressBar;
+            private ProgressBar m_progressBar = null!;
 
             private readonly SerializableDatafile m_datafile;
             private readonly string m_tempFilename;
@@ -161,8 +161,8 @@ namespace EVEMon.Updater
                 InitializeComponent();
 
                 m_datafile = datafile;
-                m_label.Text = $"{datafile.Name}";
-                m_progressLabel.Text = @"Downloading update...";
+                m_label!.Text = $"{datafile.Name}";
+                m_progressLabel!.Text = @"Downloading update...";
                 m_tempFilename = Path.Combine(EveMonClient.EVEMonDataDir, $"{datafile.Name}.tmp");
 
                 WebClient = HttpWebClientService.GetWebClient();
@@ -270,7 +270,7 @@ namespace EVEMon.Updater
             /// </summary>
             /// <param name="sender">The sender.</param>
             /// <param name="e">The <see cref="DownloadProgressChangedEventArgs" /> instance containing the event data.</param>
-            private void ProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+            private void ProgressChanged(object? sender, DownloadProgressChangedEventArgs e)
             {
                 if (InvokeRequired)
                 {
@@ -305,7 +305,7 @@ namespace EVEMon.Updater
             /// </summary>
             /// <param name="sender">The sender.</param>
             /// <param name="e">The <see cref="AsyncCompletedEventArgs"/> instance containing the event data.</param>
-            private void DownloadCompleted(object sender, AsyncCompletedEventArgs e)
+            private void DownloadCompleted(object? sender, AsyncCompletedEventArgs e)
             {
                 if (InvokeRequired)
                 {

@@ -18,8 +18,8 @@ namespace EVEMon.ApiCredentialsManagement
     {
         // When multiple downloads are fired, we only want to react to the latest one, this is done through versioning.
         private int m_version;
-        private UriCharacterEventArgs m_args;
-        private UriCharacter m_uriCharacter;
+        private UriCharacterEventArgs m_args = null!;
+        private UriCharacter m_uriCharacter = null!;
 
         /// <summary>
         /// Constructor for a new character creation.
@@ -71,7 +71,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void radio_CheckedChanged(object sender, EventArgs e)
+        private void radio_CheckedChanged(object? sender, EventArgs e)
         {
             urlTextBox.Enabled = urlRadio.Checked;
             urlThrobber.Enabled = urlRadio.Checked;
@@ -85,7 +85,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void urlTextBox_TextChanged(object sender, EventArgs e)
+        private void urlTextBox_TextChanged(object? sender, EventArgs e)
         {
             delayQueryTimer.Stop();
             delayQueryTimer.Start();
@@ -97,7 +97,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void delayQueryTimer_Tick(object sender, EventArgs e)
+        private async void delayQueryTimer_Tick(object? sender, EventArgs e)
         {
             try
             {
@@ -114,7 +114,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void fileButton_Click(object sender, EventArgs e)
+        private async void fileButton_Click(object? sender, EventArgs e)
         {
             using (OpenFileDialog form = new OpenFileDialog())
             {
@@ -139,7 +139,7 @@ namespace EVEMon.ApiCredentialsManagement
         private async Task TryUri(string uri)
         {
             m_version++;
-            m_args = null;
+            m_args = null!;
 
             // Update controls
             okButton.Enabled = false;
@@ -150,7 +150,7 @@ namespace EVEMon.ApiCredentialsManagement
             // Starts querying the web or the hard drive, and invokes the given callback on result
             int version = m_version;
 
-            if (string.IsNullOrWhiteSpace(uri) || !Uri.TryCreate(uri, UriKind.Absolute, out Uri parsedUri))
+            if (string.IsNullOrWhiteSpace(uri) || !Uri.TryCreate(uri, UriKind.Absolute, out Uri? parsedUri))
             {
                 urlThrobber.State = ThrobberState.Stopped;
                 okButton.Enabled = false;
@@ -185,7 +185,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void okButton_Click(object sender, EventArgs e)
+        private void okButton_Click(object? sender, EventArgs e)
         {
             // Shouldn't occur but, well...
             if (m_args == null || m_args.HasError)

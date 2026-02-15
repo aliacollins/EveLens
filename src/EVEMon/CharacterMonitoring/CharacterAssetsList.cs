@@ -33,12 +33,12 @@ namespace EVEMon.CharacterMonitoring
         private readonly List<AssetColumnSettings> m_columns = new List<AssetColumnSettings>();
         private readonly List<Asset> m_list = new List<Asset>();
 
-        private InfiniteDisplayToolTip m_tooltip;
+        private InfiniteDisplayToolTip m_tooltip = null!;
         private AssetGrouping m_grouping;
         private AssetColumn m_sortCriteria;
 
         private string m_textFilter = string.Empty;
-        private string m_totalCostLabelDefaultText;
+        private string m_totalCostLabelDefaultText = null!;
 
         private bool m_sortAscending = true;
         private bool m_columnsChanged;
@@ -46,7 +46,7 @@ namespace EVEMon.CharacterMonitoring
         private bool m_init;
 
         // Virtual mode support for large lists
-        private List<Asset> m_virtualModeItems;
+        private List<Asset> m_virtualModeItems = null!;
         private bool m_isVirtualMode;
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the text filter.
@@ -157,7 +157,7 @@ namespace EVEMon.CharacterMonitoring
                 List<AssetColumnSettings> newColumns = new List<AssetColumnSettings>();
                 foreach (ColumnHeader header in lvAssets.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
                 {
-                    AssetColumnSettings columnSetting = m_columns.First(x => x.Column == (AssetColumn)header.Tag);
+                    AssetColumnSettings columnSetting = m_columns.First(x => x.Column == (AssetColumn)header.Tag!);
                     if (columnSetting.Width > -1)
                         columnSetting.Width = header.Width;
 
@@ -215,7 +215,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             m_tooltip.Dispose();
 
@@ -250,9 +250,9 @@ namespace EVEMon.CharacterMonitoring
             estimatedCostPanel.Hide();
             noAssetsLabel.Visible = Character?.Assets.Count == 0;
             
-            Assets = Character?.Assets;
+            Assets = Character?.Assets!;
             Columns = Settings.UI.MainWindow.Assets.Columns;
-            Grouping = Character?.UISettings.AssetsGroupBy;
+            Grouping = Character?.UISettings.AssetsGroupBy!;
             TextFilter = string.Empty;
 
             await UpdateColumnsAsync();
@@ -395,7 +395,7 @@ namespace EVEMon.CharacterMonitoring
                     else
                     {
                         foreach (ListViewItem lvItem in lvAssets.Items.Cast<ListViewItem>().Where(
-                            lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                            lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                         {
                             lvItem.Selected = true;
                         }
@@ -461,22 +461,22 @@ namespace EVEMon.CharacterMonitoring
                     break;
                 case AssetGrouping.Group:
                     IOrderedEnumerable<IGrouping<string, Asset>> groups1 =
-                        assets.GroupBy(x => x.Item.GroupName).OrderBy(x => x.Key);
+                        assets.GroupBy(x => x.Item.GroupName).OrderBy(x => x.Key)!;
                     await UpdateContentAsync(groups1);
                     break;
                 case AssetGrouping.GroupDesc:
                     IOrderedEnumerable<IGrouping<string, Asset>> groups2 =
-                        assets.GroupBy(x => x.Item.GroupName).OrderByDescending(x => x.Key);
+                        assets.GroupBy(x => x.Item.GroupName).OrderByDescending(x => x.Key)!;
                     await UpdateContentAsync(groups2);
                     break;
                 case AssetGrouping.Category:
                     IOrderedEnumerable<IGrouping<string, Asset>> groups3 =
-                        assets.GroupBy(x => x.Item.CategoryName).OrderBy(x => x.Key);
+                        assets.GroupBy(x => x.Item.CategoryName).OrderBy(x => x.Key)!;
                     await UpdateContentAsync(groups3);
                     break;
                 case AssetGrouping.CategoryDesc:
                     IOrderedEnumerable<IGrouping<string, Asset>> groups4 =
-                        assets.GroupBy(x => x.Item.CategoryName).OrderByDescending(x => x.Key);
+                        assets.GroupBy(x => x.Item.CategoryName).OrderByDescending(x => x.Key)!;
                     await UpdateContentAsync(groups4);
                     break;
                 case AssetGrouping.Container:
@@ -581,7 +581,7 @@ namespace EVEMon.CharacterMonitoring
                     {
                         m_isVirtualMode = false;
                         lvAssets.VirtualMode = false;
-                        m_virtualModeItems = null;
+                        m_virtualModeItems = null!;
                     }
 
                     lvAssets.Groups.Clear();
@@ -636,7 +636,7 @@ namespace EVEMon.CharacterMonitoring
                 {
                     m_isVirtualMode = false;
                     lvAssets.VirtualMode = false;
-                    m_virtualModeItems = null;
+                    m_virtualModeItems = null!;
                 }
 
                 lvAssets.Items.Clear();
@@ -663,7 +663,7 @@ namespace EVEMon.CharacterMonitoring
             // Creates the subitems
             for (int i = 0; i < lvAssets.Columns.Count; i++)
             {
-                SetColumn(asset, item.SubItems[i], (AssetColumn)lvAssets.Columns[i].Tag);
+                SetColumn(asset, item.SubItems[i], (AssetColumn)lvAssets.Columns[i]!.Tag!);
             }
 
             return item;
@@ -706,7 +706,7 @@ namespace EVEMon.CharacterMonitoring
                 }
                 else
                 {
-                    columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                    columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                         item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                             new[] { columnHeaderWidth }).Max() + Pad + 1;
                 }
@@ -746,7 +746,7 @@ namespace EVEMon.CharacterMonitoring
         {
             foreach (ColumnHeader columnHeader in lvAssets.Columns.Cast<ColumnHeader>())
             {
-                AssetColumn column = (AssetColumn)columnHeader.Tag;
+                AssetColumn column = (AssetColumn)columnHeader.Tag!;
                 if (m_sortCriteria == column)
                     columnHeader.ImageIndex = m_sortAscending ? 0 : 1;
                 else
@@ -846,7 +846,7 @@ namespace EVEMon.CharacterMonitoring
             if (m_isVirtualMode)
             {
                 if (lvAssets.SelectedIndices.Count == 0)
-                    return null;
+                    return null!;
 
                 int index = lvAssets.SelectedIndices[0];
                 return index >= 0 && index < m_virtualModeItems.Count
@@ -891,7 +891,7 @@ namespace EVEMon.CharacterMonitoring
         /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
         /// </returns>
         private static bool IsTextMatching(Asset x, string text) => string.IsNullOrEmpty(text) ||
-            ((x.Item?.ID ?? 0) != 0 && (x.Item.Name.Contains(text, true) ||
+            ((x.Item?.ID ?? 0) != 0 && (x.Item!.Name.Contains(text, true) ||
             x.Item.GroupName.Contains(text, true) ||
             x.Item.CategoryName.Contains(text, true) ||
             x.TypeOfBlueprint.Contains(text, true))) ||
@@ -899,7 +899,7 @@ namespace EVEMon.CharacterMonitoring
             x.Flag.Contains(text, true) ||
             x.Location.Contains(text, true) ||
             ((x.SolarSystem?.ID ?? 0) != 0 &&
-                (x.SolarSystem.Name.Contains(text, true) ||
+                (x!.SolarSystem!.Name.Contains(text, true) ||
                 x.SolarSystem.Constellation.Name.Contains(text, true) ||
                 x.SolarSystem.Constellation.Region.Name.Contains(text, true)));
 
@@ -970,7 +970,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvAssets);
         }
@@ -980,7 +980,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void listView_ColumnReordered(object? sender, ColumnReorderedEventArgs e)
         {
             m_columnsChanged = true;
         }
@@ -990,7 +990,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void listView_ColumnWidthChanged(object? sender, ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns || m_columns.Count <= e.ColumnIndex)
                 return;
@@ -1007,9 +1007,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void listView_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
-            AssetColumn column = (AssetColumn)lvAssets.Columns[e.Column].Tag;
+            AssetColumn column = (AssetColumn)lvAssets.Columns![e.Column].Tag!;
             if (m_sortCriteria == column)
                 m_sortAscending = !m_sortAscending;
             else
@@ -1031,7 +1031,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseDown(object sender, MouseEventArgs e)
+        private void listView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -1044,14 +1044,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseMove(object sender, MouseEventArgs e)
+        private void listView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
 
             lvAssets.Cursor = CustomCursors.ContextMenu;
 
-            ListViewItem item = lvAssets.GetItemAt(e.Location.X, e.Location.Y);
+            ListViewItem? item = lvAssets.GetItemAt(e.Location.X, e.Location.Y);
             if (item == null)
             {
                 m_tooltip.Hide();
@@ -1066,7 +1066,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void listView_MouseLeave(object sender, EventArgs e)
+        private void listView_MouseLeave(object? sender, EventArgs e)
         {
             m_tooltip.Hide();
         }
@@ -1076,7 +1076,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_KeyDown(object sender, KeyEventArgs e)
+        private void listView_KeyDown(object? sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
             {
@@ -1093,7 +1093,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The event arguments containing the item index.</param>
-        private void listView_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
+        private void listView_RetrieveVirtualItem(object? sender, RetrieveVirtualItemEventArgs e)
         {
             if (!m_isVirtualMode || m_virtualModeItems == null || e.ItemIndex >= m_virtualModeItems.Count)
             {
@@ -1119,14 +1119,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
             Asset firstAsset = GetFirstSelectedAsset();
             bool visible = SelectedItemCount > 0 && firstAsset?.Item != null;
 
             if (visible)
             {
-                string firstName = firstAsset.Item.Name;
+                string firstName = firstAsset!.Item.Name;
                 visible = GetSelectedAssets().All(a => a.Item?.Name == firstName);
             }
 
@@ -1136,17 +1136,17 @@ namespace EVEMon.CharacterMonitoring
             if (!visible)
                 return;
 
-            Asset asset = firstAsset;
+            Asset? asset = firstAsset;
 
             if (asset?.Item == null)
                 return;
 
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(asset.Item.ID);
-            Ship ship = asset.Item as Ship;
+            Ship? ship = asset.Item as Ship;
             Skill skill = Character.Skills[asset.Item.ID];
 
             if (skill == Skill.UnknownSkill)
-                skill = null;
+                skill = null!;
 
             string text = ship != null ? "Ship" : blueprint != null ? "Blueprint" : skill != null ? "Skill" : "Item";
 
@@ -1158,30 +1158,30 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             Asset asset = GetFirstSelectedAsset();
 
             if (asset?.Item == null)
                 return;
 
-            Ship ship = asset.Item as Ship;
+            Ship? ship = asset.Item as Ship;
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(asset.Item.ID);
             Skill skill = Character.Skills[asset.Item.ID];
 
             if (skill == Skill.UnknownSkill)
-                skill = null;
+                skill = null!;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(Character);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(Character);
 
             if (ship != null)
-                planWindow.ShowShipInBrowser(ship);
+                planWindow!.ShowShipInBrowser(ship);
             else if (blueprint != null)
-                planWindow.ShowBlueprintInBrowser(blueprint);
+                planWindow!.ShowBlueprintInBrowser(blueprint);
             else if (skill != null)
-                planWindow.ShowSkillInBrowser(skill);
+                planWindow!.ShowSkillInBrowser(skill);
             else
-                planWindow.ShowItemInBrowser(asset.Item);
+                planWindow!.ShowItemInBrowser(asset.Item);
         }
 
         # endregion
@@ -1194,7 +1194,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible || !m_columnsChanged)
                 return;
@@ -1212,7 +1212,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void EveMonClient_CharacterAssetsUpdated(object sender, CharacterChangedEventArgs e)
+        private async void EveMonClient_CharacterAssetsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             try
             {
@@ -1233,7 +1233,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
+        private async void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
         {
             try
             {
@@ -1253,7 +1253,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_EveFlagsUpdated(object sender, EventArgs e)
+        private async void EveMonClient_EveFlagsUpdated(object? sender, EventArgs e)
         {
             try
             {
@@ -1274,7 +1274,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         /// <remarks>Mainly to update the jumps from charater last known location to assets.</remarks>
-        private async void EveMonClient_CharacterInfoUpdated(object sender, CharacterChangedEventArgs e)
+        private async void EveMonClient_CharacterInfoUpdated(object? sender, CharacterChangedEventArgs e)
         {
             try
             {
@@ -1294,7 +1294,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private async void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             try
             {
@@ -1315,7 +1315,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void EveMonClient_ItemPricesUpdated(object sender, EventArgs e)
+        private async void EveMonClient_ItemPricesUpdated(object? sender, EventArgs e)
         {
             try
             {

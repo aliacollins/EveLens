@@ -80,7 +80,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterEVEMailBodyDownloaded -= EveMonClient_CharacterEVEMailBodyDownloaded;
             EveMonClient.NotificationSent -= EveMonClient_NotificationSent;
@@ -93,7 +93,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void timer_Tick(object sender, EventArgs e)
+        private void timer_Tick(object? sender, EventArgs e)
         {
             m_timer.Stop();
 
@@ -107,11 +107,11 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterEVEMailBodyDownloaded(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailBodyDownloaded(object? sender, CharacterChangedEventArgs e)
         {
             throbber.State = ThrobberState.Stopped;
             throbber.Visible = false;
-            readingPane.SelectedObject = (EveMailMessage)Tag;
+            readingPane.SelectedObject = (Tag as EveMailMessage)!;
         }
         
         /// <summary>
@@ -119,9 +119,9 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.Notifications.NotificationEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_NotificationSent(object sender, NotificationEventArgs e)
+        private void EveMonClient_NotificationSent(object? sender, NotificationEventArgs e)
         {
-            APIErrorNotificationEventArgs notification = e as APIErrorNotificationEventArgs;
+            APIErrorNotificationEventArgs? notification = e as APIErrorNotificationEventArgs;
             if (notification != null)
             {
                 var eveMailBodiesResult = notification.Result as CCPAPIResult<
@@ -137,7 +137,7 @@ namespace EVEMon.DetailsWindow
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             if (Visible)
                 readingPane.UpdatePane();

@@ -19,7 +19,7 @@ namespace EVEMon.CharacterMonitoring
     {
         #region Fields
 
-        private FactionalWarfareStats m_charFacWarStats;
+        private FactionalWarfareStats m_charFacWarStats = null!;
 
         #endregion
 
@@ -45,7 +45,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         #endregion
 
@@ -74,7 +74,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterFactionalWarfareStatsUpdated -= EveMonClient_CharacterFactionalWarfareStatsUpdated;
             EveMonClient.EveFactionalWarfareStatsUpdated -= EveMonClient_EveFactionalWarfareStatsUpdated;
@@ -127,7 +127,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
             }
 
-            m_charFacWarStats = Character.FactionalWarfareStats;
+            m_charFacWarStats = Character.FactionalWarfareStats!;
 
             // Update the header controls
             UpdateHeader();
@@ -395,7 +395,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += listView.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -416,7 +416,7 @@ namespace EVEMon.CharacterMonitoring
         /// <returns></returns>
         private string GetMilitiaRank(int rank)
         {
-            switch (Character.FactionalWarfareStats.FactionID)
+            switch (Character!.FactionalWarfareStats!.FactionID)
             {
                 case DBConstants.AmarrFactionID:
                     return GetFactionMilitiaRank<AmarrMilitiaRank>(rank).GetDescription();
@@ -441,7 +441,7 @@ namespace EVEMon.CharacterMonitoring
         {
             if (rank < Enum.GetValues(typeof(T)).Length)
                 return (T)Enum.ToObject(typeof(T), rank);
-            return default(T);
+            return default(T)!;
         }
 
         #endregion
@@ -454,7 +454,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterFactionalWarfareStatsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterFactionalWarfareStatsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -467,7 +467,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveFactionalWarfareStatsUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveFactionalWarfareStatsUpdated(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -478,7 +478,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -493,7 +493,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ColumnWidthChangingEventArgs"/> instance containing the event data.</param>
-        private void lvPersonal_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
+        private void lvPersonal_ColumnWidthChanging(object? sender, ColumnWidthChangingEventArgs e)
         {
             e.Cancel = true;
             e.NewWidth = lvPersonal.Columns[e.ColumnIndex].Width;
@@ -504,7 +504,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ColumnWidthChangingEventArgs"/> instance containing the event data.</param>
-        private void lvMilitia_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
+        private void lvMilitia_ColumnWidthChanging(object? sender, ColumnWidthChangingEventArgs e)
         {
             e.Cancel = true;
             e.NewWidth = lvMilitia.Columns[e.ColumnIndex].Width;

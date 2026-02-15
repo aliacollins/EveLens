@@ -83,17 +83,17 @@ namespace EVEMon.Controls
 
             Notifications = new List<NotificationEventArgs>
             {
-                new NotificationEventArgs(null, NotificationCategory.AccountNotInTraining)
+                new NotificationEventArgs(null!, NotificationCategory.AccountNotInTraining)
                 {
                     Priority = NotificationPriority.Information,
                     Description = "Some information"
                 },
-                new NotificationEventArgs(null, NotificationCategory.AccountNotInTraining)
+                new NotificationEventArgs(null!, NotificationCategory.AccountNotInTraining)
                 {
                     Priority = NotificationPriority.Warning,
                     Description = "Some warning"
                 },
-                new NotificationEventArgs(null, NotificationCategory.AccountNotInTraining)
+                new NotificationEventArgs(null!, NotificationCategory.AccountNotInTraining)
                 { Priority = NotificationPriority.Error, Description = "Some error" }
             };
 
@@ -194,14 +194,14 @@ namespace EVEMon.Controls
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <exception cref="NotImplementedException"></exception>
-        private void listBox_DrawItem(object sender, DrawItemEventArgs e)
+        private void listBox_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= listBox.Items.Count)
                 return;
 
             Graphics g = e.Graphics;
 
-            NotificationEventArgs notification = listBox.Items[e.Index] as NotificationEventArgs;
+            NotificationEventArgs? notification = listBox.Items[e.Index] as NotificationEventArgs;
             if (notification == null)
                 return;
 
@@ -275,7 +275,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listBox_MouseMove(object sender, MouseEventArgs e)
+        private void listBox_MouseMove(object? sender, MouseEventArgs e)
         {
             int oldHoveredIndex = m_hoveredIndex;
 
@@ -304,7 +304,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listBox_MouseDown(object sender, MouseEventArgs e)
+        private void listBox_MouseDown(object? sender, MouseEventArgs e)
         {
             // First test whether the "delete" or the "magnifier" icons have been clicked
             for (int i = 0; i < listBox.Items.Count; i++)
@@ -313,7 +313,7 @@ namespace EVEMon.Controls
                 if (!rect.Contains(e.Location))
                     continue;
 
-                NotificationEventArgs notification = listBox.Items[i] as NotificationEventArgs;
+                NotificationEventArgs? notification = listBox.Items[i] as NotificationEventArgs;
 
                 // Did the click on the "magnifier" icon ?
                 if (notification != null && notification.HasDetails)
@@ -330,8 +330,8 @@ namespace EVEMon.Controls
                 Rectangle deleteRect = GetDeleteIconRect(rect);
                 if (e.Button == MouseButtons.Middle || e.Button == MouseButtons.Right ||
                         deleteRect.Contains(e.Location)) {
-                    EveMonClient.Notifications.Invalidate(new NotificationInvalidationEventArgs(notification));
-                    m_notifications.Remove(notification);
+                    EveMonClient.Notifications.Invalidate(new NotificationInvalidationEventArgs(notification!));
+                    m_notifications.Remove(notification!);
                     UpdateContent();
                 }
             }
@@ -342,7 +342,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listBox_MouseLeave(object sender, EventArgs e)
+        private void listBox_MouseLeave(object? sender, EventArgs e)
         {
             if (m_hoveredIndex == -1)
                 return;
@@ -386,7 +386,7 @@ namespace EVEMon.Controls
             float fontSize = font.Size;
 
             // Check for magnifier icon
-            NotificationEventArgs itemWithDetails = listBox.Items.OfType<NotificationEventArgs>().FirstOrDefault(x => x.HasDetails);
+            NotificationEventArgs? itemWithDetails = listBox.Items.OfType<NotificationEventArgs>().FirstOrDefault(x => x.HasDetails);
             int magnifierIconSize = itemWithDetails != null ? IconMagnifierPositionFromRight : 0;
 
             // Calculates the available text space
@@ -417,7 +417,7 @@ namespace EVEMon.Controls
         private static void ShowDetails(NotificationEventArgs notification)
         {
             // API error ?
-            APIErrorNotificationEventArgs errorNotification = notification as APIErrorNotificationEventArgs;
+            APIErrorNotificationEventArgs? errorNotification = notification as APIErrorNotificationEventArgs;
             if (errorNotification != null)
             {
                 ApiErrorWindow window = WindowsFactory.ShowByTag<ApiErrorWindow, APIErrorNotificationEventArgs>(errorNotification);
@@ -426,7 +426,7 @@ namespace EVEMon.Controls
             }
 
             // Skills Completion ?
-            SkillCompletionNotificationEventArgs skillNotifications = notification as SkillCompletionNotificationEventArgs;
+            SkillCompletionNotificationEventArgs? skillNotifications = notification as SkillCompletionNotificationEventArgs;
             if (skillNotifications != null)
             {
                 SkillCompletionWindow window =
@@ -436,7 +436,7 @@ namespace EVEMon.Controls
             }
 
             // Market orders ?
-            MarketOrdersNotificationEventArgs ordersNotification = notification as MarketOrdersNotificationEventArgs;
+            MarketOrdersNotificationEventArgs? ordersNotification = notification as MarketOrdersNotificationEventArgs;
             if (ordersNotification != null)
             {
                 MarketOrdersWindow window =
@@ -449,7 +449,7 @@ namespace EVEMon.Controls
             }
 
             // Contracts ?
-            ContractsNotificationEventArgs contractsNotification = notification as ContractsNotificationEventArgs;
+            ContractsNotificationEventArgs? contractsNotification = notification as ContractsNotificationEventArgs;
             if (contractsNotification != null)
             {
                 ContractsWindow window =
@@ -462,7 +462,7 @@ namespace EVEMon.Controls
             }
 
             // Industry jobs ?
-            IndustryJobsNotificationEventArgs jobsNotification = notification as IndustryJobsNotificationEventArgs;
+            IndustryJobsNotificationEventArgs? jobsNotification = notification as IndustryJobsNotificationEventArgs;
             if (jobsNotification != null)
             {
                 IndustryJobsWindow window =
@@ -475,7 +475,7 @@ namespace EVEMon.Controls
             }
 
             // Planetary pins ?
-            PlanetaryPinsNotificationEventArgs pinsNotification = notification as PlanetaryPinsNotificationEventArgs;
+            PlanetaryPinsNotificationEventArgs? pinsNotification = notification as PlanetaryPinsNotificationEventArgs;
             if (pinsNotification != null)
             {
                 PlanetaryPinsWindow window =
@@ -500,7 +500,7 @@ namespace EVEMon.Controls
             }
 
             // API error ?
-            APIErrorNotificationEventArgs errorNotification = notification as APIErrorNotificationEventArgs;
+            APIErrorNotificationEventArgs? errorNotification = notification as APIErrorNotificationEventArgs;
             if (errorNotification != null)
             {
                 SetToolTip(errorNotification.Result?.ErrorMessage);
@@ -508,7 +508,7 @@ namespace EVEMon.Controls
             }
 
             // Skills Completion ?
-            SkillCompletionNotificationEventArgs skillNotifications = notification as SkillCompletionNotificationEventArgs;
+            SkillCompletionNotificationEventArgs? skillNotifications = notification as SkillCompletionNotificationEventArgs;
             if (skillNotifications != null)
             {
                 SetToolTip(SkillCompletionMessage(skillNotifications));
@@ -516,7 +516,7 @@ namespace EVEMon.Controls
             }
 
             // Market orders ?
-            MarketOrdersNotificationEventArgs ordersNotification = notification as MarketOrdersNotificationEventArgs;
+            MarketOrdersNotificationEventArgs? ordersNotification = notification as MarketOrdersNotificationEventArgs;
             if (ordersNotification != null)
             {
                 SetToolTip(MarketOrdersEndedMessage(ordersNotification));
@@ -524,7 +524,7 @@ namespace EVEMon.Controls
             }
 
             // Contracts ?
-            ContractsNotificationEventArgs contractsNotification = notification as ContractsNotificationEventArgs;
+            ContractsNotificationEventArgs? contractsNotification = notification as ContractsNotificationEventArgs;
             if (contractsNotification != null)
             {
                 SetToolTip(ContractsEndedMessage(contractsNotification));
@@ -532,7 +532,7 @@ namespace EVEMon.Controls
             }
 
             // Industry jobs ?
-            IndustryJobsNotificationEventArgs jobsNotification = notification as IndustryJobsNotificationEventArgs;
+            IndustryJobsNotificationEventArgs? jobsNotification = notification as IndustryJobsNotificationEventArgs;
             if (jobsNotification != null)
             {
                 SetToolTip(IndustryJobsCompletedMessage(jobsNotification));
@@ -540,7 +540,7 @@ namespace EVEMon.Controls
             }
 
             // Planetary pins ?
-            PlanetaryPinsNotificationEventArgs pinsNotification = notification as PlanetaryPinsNotificationEventArgs;
+            PlanetaryPinsNotificationEventArgs? pinsNotification = notification as PlanetaryPinsNotificationEventArgs;
             if (pinsNotification != null)
             {
                 SetToolTip(PlanetaryPinsCompletedMessage(pinsNotification));
@@ -553,7 +553,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="active">if set to <c>true</c> [active].</param>
-        private void SetToolTip(string message = null, bool active = true)
+        private void SetToolTip(string? message = null, bool active = true)
         {
             toolTip.Active = active;
 

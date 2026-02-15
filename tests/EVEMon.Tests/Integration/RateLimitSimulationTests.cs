@@ -13,8 +13,8 @@ namespace EVEMon.Tests.Integration
     {
         private readonly IDispatcher _dispatcher;
         private readonly IEsiClient _esiClient;
-        private Action _scheduledCallback;
-        private SmartQueryScheduler _scheduler;
+        private Action? _scheduledCallback;
+        private SmartQueryScheduler? _scheduler;
 
         public RateLimitSimulationTests()
         {

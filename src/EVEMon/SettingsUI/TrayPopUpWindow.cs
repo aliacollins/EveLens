@@ -168,7 +168,7 @@ namespace EVEMon.SettingsUI
                     }
                     else
                     {
-                        FlowLayoutPanel tempAccountGroupPanel = null;
+                        FlowLayoutPanel? tempAccountGroupPanel = null;
                         try
                         {
                             tempAccountGroupPanel = new FlowLayoutPanel();
@@ -206,7 +206,7 @@ namespace EVEMon.SettingsUI
         private static OverviewItem GetOverviewItem(Character character)
         {
             OverviewItem overviewItem;
-            OverviewItem tempOverviewItem = null;
+            OverviewItem? tempOverviewItem = null;
             try
             {
                 // Creates a new page
@@ -404,7 +404,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ServerStatusUpdated(object sender, EveServerEventArgs e)
+        private void EveMonClient_ServerStatusUpdated(object? sender, EveServerEventArgs e)
         {
             UpdateServerStatusLabel();
         }
@@ -414,7 +414,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             UpdateEveTimeLabel();
         }
@@ -424,7 +424,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_QueuedSkillsCompleted(object sender, QueuedSkillsEventArgs e)
+        private void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
         {
             UpdateContent();
         }

@@ -91,7 +91,7 @@ namespace EVEMon.Schedule
             base.Dispose(disposing);
 
             EntryFont.Dispose();
-            EntryFont = null;
+            EntryFont = null!;
         }
 
         /// <summary>

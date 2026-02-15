@@ -13,16 +13,6 @@ namespace EVEMon.Common.Net
         private const string XmlAccept = "text/xml,application/xml,application/xhtml+xml;q=0.8,*/*;q=0.5";
 
         /// <summary>
-        /// Downloads an Xml document from the specified url using the specified POST data.
-        /// </summary>
-        /// <param name="url">The URL.</param>
-        /// <param name="param">The request parameters. If null, defaults will be used.</param>
-        /// <returns></returns>
-        [Obsolete("Use DownloadXmlAsync instead. This method blocks the calling thread via .Result and can deadlock on the UI thread.")]
-        public static DownloadResult<IXPathNavigable> DownloadXml(Uri url,
-            RequestParams param = null) => DownloadXmlAsync(url, param).Result;
-
-        /// <summary>
         /// Asynchronously downloads an xml file from the specified url.
         /// </summary>
         /// <param name="url">The URL.</param>

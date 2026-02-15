@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -17,7 +17,7 @@ namespace EVEMon.SkillPlanner
     /// </summary>
     public partial class PlanToOperationWindow : EVEMonForm
     {
-        private readonly IPlanOperation m_operation;
+        private readonly IPlanOperation m_operation = null!;
 
         /// <summary>
         /// Designer constructor
@@ -141,7 +141,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
-        private void rootMultiPanel_SelectionChange(object sender, MultiPanelSelectionChangeEventArgs args)
+        private void rootMultiPanel_SelectionChange(object? sender,MultiPanelSelectionChangeEventArgs args)
         {
             // When there are useless prereqs, we offer the user to remove them on a second page.
             // When there aren't any, we just have one page.
@@ -173,7 +173,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void previousButton_Click(object sender, EventArgs e)
+        private void previousButton_Click(object? sender,EventArgs e)
         {
             rootMultiPanel.SelectedPage = dependenciesSuppressionPage;
         }
@@ -183,7 +183,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nextButton_Click(object sender, EventArgs e)
+        private void nextButton_Click(object? sender,EventArgs e)
         {
             // Are we on the first page ? Then it's "Next >".
             if (nextButton.DialogResult == DialogResult.None)
@@ -207,7 +207,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cancelButton_Click(object sender, EventArgs e)
+        private void cancelButton_Click(object? sender,EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();

@@ -21,8 +21,8 @@ namespace EVEMon.ApiErrorHandling
     {
         private readonly HttpTimeoutTroubleshooter m_httpTimeoutTroubleshooter = new HttpTimeoutTroubleshooter();
 
-        private APIErrorNotificationEventArgs m_notification;
-        private ApiErrorTroubleshooter m_troubleshooter;
+        private APIErrorNotificationEventArgs m_notification = null!;
+        private ApiErrorTroubleshooter? m_troubleshooter;
         private bool m_troubleshooterUsed;
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace EVEMon.ApiErrorHandling
                         DetailsTextBox.Text = Properties.Resources.ErrorTrustFailure;
                     else if (exception != null)
                         DetailsTextBox.Text = exception.ToString();
-                    DisplayTroubleshooter(exception);
+                    DisplayTroubleshooter(exception!);
                 }
             }
         }
@@ -83,7 +83,7 @@ namespace EVEMon.ApiErrorHandling
         /// </summary>
         /// <param name="exception">The exception.</param>
         /// <returns>A troubleshooter for the error message.</returns>
-        private ApiErrorTroubleshooter GetTroubleshooter(Exception exception)
+        private ApiErrorTroubleshooter? GetTroubleshooter(Exception exception)
         {
             var httpException = exception as HttpWebClientServiceException;
             return httpException?.Status == HttpWebClientServiceExceptionStatus.Timeout ?
@@ -95,7 +95,7 @@ namespace EVEMon.ApiErrorHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="ApiErrorTroubleshooterEventArgs"/> instance containing the event data.</param>
-        private void troubleshooter_ErrorResolved(object sender, ApiErrorTroubleshooterEventArgs e)
+        private void troubleshooter_ErrorResolved(object? sender, ApiErrorTroubleshooterEventArgs e)
         {
             m_troubleshooterUsed = true;
 
@@ -182,7 +182,7 @@ namespace EVEMon.ApiErrorHandling
             if (m_troubleshooter != null)
             {
                 m_troubleshooter.Dispose();
-                m_troubleshooter = null;
+                m_troubleshooter = null!;
             }
         }
 
@@ -191,7 +191,7 @@ namespace EVEMon.ApiErrorHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void CopyToClipboardLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void CopyToClipboardLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             StringBuilder builder = new StringBuilder();
 

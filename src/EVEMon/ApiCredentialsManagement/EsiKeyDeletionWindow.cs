@@ -13,7 +13,7 @@ namespace EVEMon.ApiCredentialsManagement
 {
     public sealed partial class EsiKeyDeletionWindow : EVEMonForm
     {
-        private readonly ESIKey m_apiKey;
+        private readonly ESIKey m_apiKey = null!;
 
         /// <summary>
         /// Constructor.
@@ -90,9 +90,9 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ItemCheckEventArgs"/> instance containing the event data.</param>
-        private void charactersListView_ItemCheck(object sender, ItemCheckEventArgs e)
+        private void charactersListView_ItemCheck(object? sender, ItemCheckEventArgs e)
         {
-            CCPCharacter ccpCharacter = charactersListView.Items[e.Index].Tag as CCPCharacter;
+            CCPCharacter? ccpCharacter = charactersListView.Items[e.Index].Tag as CCPCharacter;
             if (ccpCharacter == null)
                 e.NewValue = CheckState.Checked;
 
@@ -105,18 +105,18 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void deleteButton_Click(object sender, EventArgs e)
+        private void deleteButton_Click(object? sender, EventArgs e)
         {
             // Remove the API key
             EveMonClient.ESIKeys.Remove(m_apiKey);
 
             // Remove the characters from the collection
             foreach (CCPCharacter ccpCharacter in charactersListView.Items.Cast<ListViewItem>().Where(
-                item => item.Checked).Select(item => item.Tag as CCPCharacter).Where(
+                item => item.Checked).Select(item => (item.Tag as CCPCharacter)!).Where(
                     ccpCharacter => ccpCharacter != null).Where(
                         ccpCharacter => !ccpCharacter.Identity.ESIKeys.Any()))
             {
-                EveMonClient.Characters.Remove(ccpCharacter);
+                EveMonClient.Characters.Remove(ccpCharacter!);
             }
 
             // Closes the window

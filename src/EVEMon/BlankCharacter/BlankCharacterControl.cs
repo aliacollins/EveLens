@@ -57,10 +57,10 @@ namespace EVEMon.BlankCharacter
             Ancestry.Drifters, Ancestry.Mystics, Ancestry.Retailers
         };
 
-        private Font m_amarrFont;
-        private Font m_caldariFont;
-        private Font m_gallenteFont;
-        private Font m_minmatarFont;
+        private Font m_amarrFont = null!;
+        private Font m_caldariFont = null!;
+        private Font m_gallenteFont = null!;
+        private Font m_minmatarFont = null!;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BlankCharacterControl"/> class.
@@ -75,7 +75,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void BlankCharacterControl_Load(object sender, EventArgs e)
+        private void BlankCharacterControl_Load(object? sender, EventArgs e)
         {
             ForeColor = SystemColors.GrayText;
 
@@ -224,7 +224,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbAmarr_Click(object sender, EventArgs e)
+        private void rbAmarr_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.Race = Race.Amarr;
             UpdateBloodlineControl();
@@ -235,7 +235,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbCaldari_Click(object sender, EventArgs e)
+        private void rbCaldari_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.Race = Race.Caldari;
             UpdateBloodlineControl();
@@ -246,7 +246,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbGallente_Click(object sender, EventArgs e)
+        private void rbGallente_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.Race = Race.Gallente;
             UpdateBloodlineControl();
@@ -257,7 +257,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbMinmatar_Click(object sender, EventArgs e)
+        private void rbMinmatar_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.Race = Race.Minmatar;
             UpdateBloodlineControl();
@@ -268,9 +268,9 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbBloodline1_Click(object sender, EventArgs e)
+        private void rbBloodline1_Click(object? sender, EventArgs e)
         {
-            BlankCharacterUIHelper.Bloodline = (Bloodline)pbBloodline1.Tag;
+            BlankCharacterUIHelper.Bloodline = (Bloodline)pbBloodline1.Tag!;
             UpdateAncestryControl();
         }
 
@@ -279,9 +279,9 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbBloodline2_Click(object sender, EventArgs e)
+        private void rbBloodline2_Click(object? sender, EventArgs e)
         {
-            BlankCharacterUIHelper.Bloodline = (Bloodline)pbBloodline2.Tag;
+            BlankCharacterUIHelper.Bloodline = (Bloodline)pbBloodline2.Tag!;
             UpdateAncestryControl();
         }
 
@@ -290,9 +290,9 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbBloodline3_Click(object sender, EventArgs e)
+        private void rbBloodline3_Click(object? sender, EventArgs e)
         {
-            BlankCharacterUIHelper.Bloodline = (Bloodline)pbBloodline3.Tag;
+            BlankCharacterUIHelper.Bloodline = (Bloodline)pbBloodline3.Tag!;
             UpdateAncestryControl();
         }
 
@@ -301,9 +301,9 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbAncestry1_Click(object sender, EventArgs e)
+        private void rbAncestry1_Click(object? sender, EventArgs e)
         {
-            BlankCharacterUIHelper.Ancestry = (Ancestry)lblAncestry1.Tag;
+            BlankCharacterUIHelper.Ancestry = (Ancestry)lblAncestry1.Tag!;
         }
 
         /// <summary>
@@ -311,9 +311,9 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbAncestry2_Click(object sender, EventArgs e)
+        private void rbAncestry2_Click(object? sender, EventArgs e)
         {
-            BlankCharacterUIHelper.Ancestry = (Ancestry)lblAncestry2.Tag;
+            BlankCharacterUIHelper.Ancestry = (Ancestry)lblAncestry2.Tag!;
         }
 
         /// <summary>
@@ -321,9 +321,9 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbAncestry3_Click(object sender, EventArgs e)
+        private void rbAncestry3_Click(object? sender, EventArgs e)
         {
-            BlankCharacterUIHelper.Ancestry = (Ancestry)lblAncestry3.Tag;
+            BlankCharacterUIHelper.Ancestry = (Ancestry)lblAncestry3.Tag!;
         }
 
         /// <summary>
@@ -331,7 +331,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbFemale_Click(object sender, EventArgs e)
+        private void rbFemale_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.Gender = Gender.Female;
         }
@@ -341,7 +341,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void rbMale_Click(object sender, EventArgs e)
+        private void rbMale_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.Gender = Gender.Male;
         }
@@ -351,7 +351,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbCharacterName_TextChanged(object sender, EventArgs e)
+        private void tbCharacterName_TextChanged(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.CharacterName = tbCharacterName.Text;
         }

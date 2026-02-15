@@ -128,7 +128,7 @@ namespace EVEMon.Tests.Models
             using var writer = new StringWriter();
             serializer.Serialize(writer, obj);
             using var reader = new StringReader(writer.ToString());
-            return (T)serializer.Deserialize(reader);
+            return (T)serializer.Deserialize(reader)!;
         }
     }
 }

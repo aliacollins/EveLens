@@ -27,7 +27,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Handles the Click event of the btnCancel control.
         /// </summary>
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object? sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();
@@ -36,9 +36,9 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Handles the Click event of the btnOk control.
         /// </summary>
-        private void btnOk_Click(object sender, EventArgs e)
+        private void btnOk_Click(object? sender, EventArgs e)
         {
-            BoosterBonus = (int)cbBoosterBonus.SelectedItem;
+            BoosterBonus = (int)cbBoosterBonus.SelectedItem!;
             DurationHours = (int)nudDuration.Value;
             DialogResult = DialogResult.OK;
             Close();
@@ -47,7 +47,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Handles the Shown event of the window.
         /// </summary>
-        private void BoosterInjectionWindow_Shown(object sender, EventArgs e)
+        private void BoosterInjectionWindow_Shown(object? sender, EventArgs e)
         {
             // Populate booster bonus options
             cbBoosterBonus.Items.Clear();
@@ -64,7 +64,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Handles the Format event for the booster bonus combo box.
         /// </summary>
-        private void cbBoosterBonus_Format(object sender, ListControlConvertEventArgs e)
+        private void cbBoosterBonus_Format(object? sender, ListControlConvertEventArgs e)
         {
             if (e.ListItem is int bonus)
             {

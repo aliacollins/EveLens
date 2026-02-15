@@ -22,8 +22,8 @@ namespace EVEMon.ImplantControls
         private const string PhantomSetName = "<New set>";
 
         private readonly long m_maxJumpClones;
-        private readonly Character m_character;
-        private readonly SerializableImplantSetCollection m_sets;
+        private readonly Character m_character = null!;
+        private readonly SerializableImplantSetCollection m_sets = null!;
 
         /// <summary>
         /// Labels are substituted to comboboxes for read-only sets. It's because comboboxes cannot be readonly, only disabled. 
@@ -63,7 +63,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ImpGroups_Load(object sender, EventArgs e)
+        private void ImpGroups_Load(object? sender, EventArgs e)
         {
             // Header
             headerLabel.Text = string.Format(Properties.Resources.MessageJumpCloneSkills,
@@ -118,7 +118,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             setsGrid.CellValidating -= setsGrid_CellValidating;
             setsGrid.RowsRemoved -= setsGrid_RowsRemoved;
@@ -136,7 +136,7 @@ namespace EVEMon.ImplantControls
             base.OnClosed(e);
 
             m_fakeToolTip.Close();
-            m_fakeToolTip = null;
+            m_fakeToolTip = null!;
         }
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace EVEMon.ImplantControls
         /// <param name="control">The control.</param>
         private void AddComboBoxAndLabel(IDisposable control)
         {
-            DropDownMouseMoveComboBox combo = control as DropDownMouseMoveComboBox;
+            DropDownMouseMoveComboBox? combo = control as DropDownMouseMoveComboBox;
             if (combo == null)
                 return;
 
@@ -164,7 +164,7 @@ namespace EVEMon.ImplantControls
                 combo.Items.Add(implant);
             }
 
-            Label tempLabel = null;
+            Label? tempLabel = null;
             try
             {
                 tempLabel = new Label();
@@ -191,7 +191,7 @@ namespace EVEMon.ImplantControls
         /// <param name="set"></param>
         private void AddRow(SerializableSettingsImplantSet set)
         {
-            DataGridViewRow tempRow = null;
+            DataGridViewRow? tempRow = null;
             try
             {
                 tempRow = new DataGridViewRow();
@@ -214,7 +214,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         private void UpdateSlots()
         {
-            SerializableSettingsImplantSet set = GetSelectedSet();
+            SerializableSettingsImplantSet? set = GetSelectedSet();
 
             // No set selected or row name empty?
             if (set == null || string.IsNullOrEmpty(set.Name))
@@ -227,7 +227,7 @@ namespace EVEMon.ImplantControls
                     combo.Enabled = false;
 
                     // Hide the label used for read-only sets
-                    ImplantSlots slot = (ImplantSlots)combo.Tag;
+                    ImplantSlots slot = (ImplantSlots)combo.Tag!;
                     Label label = m_labels[(int)slot];
                     label.Visible = false;
                 }
@@ -243,7 +243,7 @@ namespace EVEMon.ImplantControls
                 combo.Visible = !isReadOnly;
                 combo.Enabled = true;
 
-                ImplantSlots slot = (ImplantSlots)combo.Tag;
+                ImplantSlots slot = (ImplantSlots)combo.Tag!;
                 Implant selectedImplant = GetImplant(set, slot);
 
                 // Scroll through every implant and check whether it is the selected one.
@@ -276,7 +276,7 @@ namespace EVEMon.ImplantControls
         /// <summary>
         /// Gets the selected implant slot
         /// </summary>
-        private SerializableSettingsImplantSet GetSelectedSet() => setsGrid.SelectedRows.Count == 0 ? null : (SerializableSettingsImplantSet)setsGrid.SelectedRows[0].Tag;
+        private SerializableSettingsImplantSet? GetSelectedSet() => setsGrid.SelectedRows.Count == 0 ? null : setsGrid.SelectedRows[0].Tag as SerializableSettingsImplantSet;
 
         /// <summary>
         /// Gets the implant name for the given slot and the provided set.
@@ -287,9 +287,9 @@ namespace EVEMon.ImplantControls
         private static Implant GetImplant(SerializableSettingsImplantSet set, ImplantSlots slot)
         {
             // Invoke the property getter with the matching name through reflection
-            object implantName = typeof(SerializableSettingsImplantSet).GetProperty(slot.ToString()).GetValue(set, null);
+            object? implantName = typeof(SerializableSettingsImplantSet).GetProperty(slot.ToString())!.GetValue(set, null);
 
-            return StaticItems.GetImplants(slot)[(string)implantName];
+            return StaticItems.GetImplants(slot)[(string)implantName!];
         }
 
         /// <summary>
@@ -306,7 +306,7 @@ namespace EVEMon.ImplantControls
                 return;
 
             // Invoke the property setter with the matching name through reflection
-            typeof(SerializableSettingsImplantSet).GetProperty(slot.ToString()).SetValue(set, implant.Name, null);
+            typeof(SerializableSettingsImplantSet).GetProperty(slot.ToString())!.SetValue(set, implant.Name, null);
         }
 
         #endregion
@@ -319,7 +319,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void setsGrid_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        private void setsGrid_CellBeginEdit(object? sender, DataGridViewCellCancelEventArgs e)
         {
             // If cell is empty, replaces the content by <New set>
             DataGridViewRow row = setsGrid.Rows[e.RowIndex];
@@ -333,7 +333,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void setsGrid_SelectionChanged(object sender, EventArgs e)
+        private void setsGrid_SelectionChanged(object? sender, EventArgs e)
         {
             // Enable/disable the top buttons
             if (setsGrid.SelectedRows.Count > 0)
@@ -347,7 +347,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void setsGrid_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        private void setsGrid_CellValidating(object? sender, DataGridViewCellValidatingEventArgs e)
         {
             DataGridViewRow row = setsGrid.Rows[e.RowIndex];
             string text = e.FormattedValue?.ToString() ?? string.Empty;
@@ -371,7 +371,7 @@ namespace EVEMon.ImplantControls
 
             SerializableSettingsImplantSet set = (SerializableSettingsImplantSet)row.Tag;
             if (e.FormattedValue != null)
-                set.Name = e.FormattedValue.ToString();
+                set.Name = e.FormattedValue.ToString()!;
         }
 
         /// <summary>
@@ -379,7 +379,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void setsGrid_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        private void setsGrid_RowsRemoved(object? sender, DataGridViewRowsRemovedEventArgs e)
         {
             int index = e.RowIndex - 1 - m_sets.JumpClones.Count;
             if (index >= 0)
@@ -391,14 +391,14 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbSlotN_DropDownClosed(object sender, EventArgs e)
+        private void cbSlotN_DropDownClosed(object? sender, EventArgs e)
         {
             if (setsGrid.SelectedRows.Count != 0)
                 EnsureRowSetInitialized(setsGrid.SelectedRows[0]);
 
-            DropDownMouseMoveComboBox combo = (DropDownMouseMoveComboBox)sender;
-            ImplantSlots slot = (ImplantSlots)combo.Tag;
-            SetImplant(GetSelectedSet(), slot, (Implant)combo.SelectedItem);
+            DropDownMouseMoveComboBox? combo = sender as DropDownMouseMoveComboBox;
+            ImplantSlots slot = (ImplantSlots)combo!.Tag!;
+            SetImplant(GetSelectedSet()!, slot, (Implant)combo.SelectedItem!);
         }
 
         /// <summary>
@@ -406,7 +406,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object? sender, EventArgs e)
         {
             Close();
         }
@@ -416,9 +416,9 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnOK_Click(object sender, EventArgs e)
+        private void btnOK_Click(object? sender, EventArgs e)
         {
-            SerializableSettingsImplantSet set = GetSelectedSet();
+            SerializableSettingsImplantSet? set = GetSelectedSet();
             if (set != null && !string.IsNullOrWhiteSpace(set.Name))
                 m_character.ImplantSets.Import(m_sets);
 
@@ -435,8 +435,8 @@ namespace EVEMon.ImplantControls
                 return;
             object formattedValue = row.Cells[0].FormattedValue;
             if (formattedValue != null)
-                row.Tag = new SerializableSettingsImplantSet { Name = formattedValue.ToString() };
-            m_sets.CustomSets.Add((SerializableSettingsImplantSet)row.Tag);
+                row.Tag = new SerializableSettingsImplantSet { Name = formattedValue.ToString() ?? string.Empty };
+            m_sets.CustomSets.Add((SerializableSettingsImplantSet)row.Tag!);
         }
 
         #endregion
@@ -451,7 +451,7 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void combo_DropDownClosed(object sender, EventArgs e)
+        private void combo_DropDownClosed(object? sender, EventArgs e)
         {
             m_fakeToolTip.Hide();
         }
@@ -461,10 +461,10 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void label_MouseMove(object sender, MouseEventArgs e)
+        private void label_MouseMove(object? sender, MouseEventArgs e)
         {
-            Label label = (Label)sender;
-            Implant implant = label.Tag as Implant;
+            Label? label = sender as Label;
+            Implant? implant = label!.Tag as Implant;
             if (implant == null)
                 return;
 
@@ -481,10 +481,10 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void combo_MouseMove(object sender, MouseEventArgs e)
+        private void combo_MouseMove(object? sender, MouseEventArgs e)
         {
-            DropDownMouseMoveComboBox combo = (DropDownMouseMoveComboBox)sender;
-            Implant implant = combo.SelectedItem as Implant;
+            DropDownMouseMoveComboBox? combo = sender as DropDownMouseMoveComboBox;
+            Implant? implant = combo!.SelectedItem as Implant;
             if (implant == null)
                 return;
 
@@ -503,14 +503,14 @@ namespace EVEMon.ImplantControls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="DropDownMouseMoveEventArgs"/> instance containing the event data.</param>
-        private void combo_DropDownMouseMove(object sender, DropDownMouseMoveEventArgs e)
+        private void combo_DropDownMouseMove(object? sender, DropDownMouseMoveEventArgs e)
         {
-            Implant implant = e.Item as Implant;
+            Implant? implant = e.Item as Implant;
             if (implant == null)
                 return;
 
-            Control control = (Control)sender;
-            Point point = new Point(control.ClientRectangle.Right + 20, control.ClientRectangle.Top);
+            Control? control = sender as Control;
+            Point point = new Point(control!.ClientRectangle.Right + 20, control.ClientRectangle.Top);
 
             m_fakeToolTip.Location = control.PointToScreen(point);
             m_fakeToolTip.Implant = implant;

@@ -50,10 +50,11 @@ namespace EVEMon.Common.QueryMonitor
         /// response returned "Not Modified" or "No Data"; if false (default), no action is
         /// called if the response is empty</param>
         internal CharacterQueryMonitor(CCPCharacter character, Enum method, Action<T>
-            onSuccess, NotifyErrorCallback onFailure, bool ifNoData = false) : base(character,
+            onSuccess, NotifyErrorCallback onFailure, bool ifNoData = false,
+            bool suppressSelfTicking = false) : base(character,
             method, (result) => {
                 HandleQuery(character, method, ifNoData, result, onSuccess, onFailure);
-            })
+            }, suppressSelfTicking)
         {
         }
 

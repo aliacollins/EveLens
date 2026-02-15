@@ -44,9 +44,9 @@ namespace EVEMon.SkillPlanner
     /// </remarks>
     public partial class SkillExplorerWindow : EVEMonForm
     {
-        private Plan m_plan;
-        private Character m_character;
-        private Skill m_skill;
+        private Plan? m_plan;
+        private Character? m_character;
+        private Skill? m_skill;
         private bool m_hasItems;
         private bool m_hasShips;
         private bool m_hasBlueprints;
@@ -125,7 +125,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The plan.
         /// </value>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -134,7 +134,7 @@ namespace EVEMon.SkillPlanner
                     return;
 
                 m_plan = value;
-                m_character = (Character)m_plan.Character;
+                m_character = (Character)m_plan!.Character;
 
                 UpdatePlanName();
             }
@@ -206,7 +206,7 @@ namespace EVEMon.SkillPlanner
         private void UpdateHeader()
         {
             StringBuilder sb = new StringBuilder();
-            if (m_skill.IsTraining)
+            if (m_skill!.IsTraining)
                 sb.Append($"{m_skill.Name} - In Training ");
 
             if (m_skill.IsKnown)
@@ -341,7 +341,7 @@ namespace EVEMon.SkillPlanner
         private void AddNode(int i, SkillLevel skillLevel, IEnumerable<Skill> enabledSkills)
         {
             TreeNode levelNode = new TreeNode(skillLevel.ToString());
-            if (m_skill.Level >= i)
+            if (m_skill!.Level >= i)
                 levelNode.Text += @" (Trained)";
 
             levelNode.ForeColor = Color.DarkBlue;
@@ -393,9 +393,9 @@ namespace EVEMon.SkillPlanner
                 List<Item> items = StaticItems.AllItems
                     .Concat(StaticBlueprints.AllBlueprints)
                     // exclude skills
-                    .Where(x => x.MarketGroup.ParentGroup != null &&
+                    .Where(x => x.MarketGroup!.ParentGroup != null &&
                                 x.MarketGroup.ParentGroup.ID != DBConstants.SkillsMarketGroupID)
-                    .Where(x => x.Prerequisites.Any(y => y.Skill == m_skill.StaticData))
+                    .Where(x => x.Prerequisites.Any(y => y.Skill == m_skill!.StaticData))
                     .Where(x => !cbShowBaseOnly.Checked || x.MetaGroup == ItemMetaGroup.T1 || x.MetaGroup == ItemMetaGroup.T2)
                     .ToList();
 
@@ -406,7 +406,7 @@ namespace EVEMon.SkillPlanner
 
                     // Gets the enabled objects and check it's not empty
                     List<Item> enabledObjects = items
-                        .Where(x => x.Prerequisites.Any(y => y.Skill == m_skill.StaticData && y.Level == i))
+                        .Where(x => x.Prerequisites.Any(y => y.Skill == m_skill!.StaticData && y.Level == i))
                         .ToList();
 
                     if (!enabledObjects.Any())
@@ -437,7 +437,7 @@ namespace EVEMon.SkillPlanner
         {
             // Add a node for this skill level
             TreeNode levelNode = new TreeNode(skillLevel.ToString());
-            if (m_skill.Level >= i)
+            if (m_skill!.Level >= i)
                 levelNode.Text += @" (Trained)";
 
             levelNode.ForeColor = Color.DarkBlue;
@@ -464,18 +464,18 @@ namespace EVEMon.SkillPlanner
         {
             foreach (Ship ship in enabledObjects.OfType<Ship>().OrderBy(x => x.Name))
             {
-                levelNode.Nodes.Add(CreateNode(ship, ship.Prerequisites.ToCharacter(m_character).ToList()));
+                levelNode.Nodes.Add(CreateNode(ship, ship.Prerequisites.ToCharacter(m_character!).ToList()));
                 m_hasShips = true;
             }
 
             foreach (Blueprint blueprint in enabledObjects.OfType<Blueprint>().OrderBy(x => x.Name))
             {
                 List<BlueprintActivity> listOfActivities = blueprint.Prerequisites
-                    .Where(x => x.Skill == m_skill.StaticData && x.Level == i)
+                    .Where(x => x.Skill == m_skill!.StaticData && x.Level == i)
                     .Select(x => x.Activity).ToList();
 
                 TreeNode node = CreateNode(blueprint, blueprint.Prerequisites
-                    .Where(x => listOfActivities.Contains(x.Activity)).ToCharacter(m_character).ToList());
+                    .Where(x => listOfActivities.Contains(x.Activity)).ToCharacter(m_character!).ToList());
 
                 node.Text =
                     $"{node.Text} ({string.Join(", ", listOfActivities.Select(activity => activity.GetDescription()))})";
@@ -485,7 +485,7 @@ namespace EVEMon.SkillPlanner
 
             foreach (Item item in enabledObjects.Where(x => !(x is Ship) && !(x is Blueprint)).OrderBy(x => x.Name))
             {
-                levelNode.Nodes.Add(CreateNode(item, item.Prerequisites.ToCharacter(m_character).ToList()));
+                levelNode.Nodes.Add(CreateNode(item, item.Prerequisites.ToCharacter(m_character!).ToList()));
                 m_hasItems = true;
             }
         }
@@ -500,14 +500,14 @@ namespace EVEMon.SkillPlanner
         {
             // Add ships
             IGrouping<MarketGroup, Ship>[] shipsToAdd = enabledObjects.OfType<Ship>()
-                .GroupBy(x => x.MarketGroup.ParentGroup).ToArray();
+                .GroupBy(x => x.MarketGroup!.ParentGroup!).ToArray();
 
             foreach (IGrouping<MarketGroup, Ship> shipGroup in shipsToAdd.OrderBy(x => x.Key.Name))
             {
                 TreeNode groupNode = new TreeNode(shipGroup.Key.Name);
                 foreach (Ship ship in shipGroup.OrderBy(x => x.Name))
                 {
-                    groupNode.Nodes.Add(CreateNode(ship, ship.Prerequisites.ToCharacter(m_skill.Character).ToList()));
+                    groupNode.Nodes.Add(CreateNode(ship, ship.Prerequisites.ToCharacter(m_skill!.Character).ToList()));
                 }
                 levelNode.Nodes.Add(groupNode);
                 m_hasShips = true;
@@ -560,11 +560,11 @@ namespace EVEMon.SkillPlanner
             foreach (Blueprint blueprint in blueprints.Where(x => x.MarketGroup == blueprintMarketGroup))
             {
                 List<BlueprintActivity> listOfActivities = blueprint.Prerequisites
-                    .Where(x => x.Skill == m_skill.StaticData && x.Level == level)
+                    .Where(x => x.Skill == m_skill!.StaticData && x.Level == level)
                     .Select(x => x.Activity).ToList();
 
                 TreeNode node = CreateNode(blueprint, blueprint.Prerequisites
-                    .Where(x => listOfActivities.Contains(x.Activity)).ToCharacter(m_character).ToList());
+                    .Where(x => listOfActivities.Contains(x.Activity)).ToCharacter(m_character!).ToList());
 
                 node.Text = $"{node.Text} " +
                             $"({string.Join(", ", listOfActivities.Select(activity => activity.GetDescription()))})";
@@ -596,7 +596,7 @@ namespace EVEMon.SkillPlanner
             // Add items
             foreach (Item item in items.Where(x => x.MarketGroup == marketGroup))
             {
-                yield return CreateNode(item, item.Prerequisites.ToCharacter(m_character).ToList());
+                yield return CreateNode(item, item.Prerequisites.ToCharacter(m_character!).ToList());
             }
         }
 
@@ -661,7 +661,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanNameChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
         {
             if (e.Plan != m_plan)
                 return;
@@ -674,7 +674,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
         {
             if (!e.Characters.Contains(m_character))
                 return;
@@ -687,7 +687,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tmrAutoUpdate_Tick(object sender, EventArgs e)
+        private void tmrAutoUpdate_Tick(object? sender,EventArgs e)
         {
             UpdateHeader();
         }
@@ -701,14 +701,14 @@ namespace EVEMon.SkillPlanner
         /// Returns the currently selected skill or null if non is selected.
         /// </summary>
         /// <returns></returns>
-        private Skill GetSelectedSkill() => tvSkills.SelectedNode?.Tag as Skill;
+        private Skill? GetSelectedSkill() => tvSkills.SelectedNode?.Tag as Skill;
 
         /// <summary>
         /// When the user clicks, we check whether we must display the context menu.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void tvSkills_MouseDown(object sender, MouseEventArgs e)
+        private void tvSkills_MouseDown(object? sender,MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -727,7 +727,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void tvSkills_MouseMove(object sender, MouseEventArgs e)
+        private void tvSkills_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -742,7 +742,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void cmSkills_Opening(object sender, CancelEventArgs e)
+        private void cmSkills_Opening(object? sender,CancelEventArgs e)
         {
             if (tvSkills.GetNodeCount(true) < 2)
             {
@@ -759,7 +759,7 @@ namespace EVEMon.SkillPlanner
             tsmiSkillsExpandAll.Enabled = tsmiSkillsExpandAll.Visible = !tsmiSkillsCollapseAll.Enabled;
             
             // "Plan to N" menus
-            Skill skill = GetSelectedSkill();
+            Skill? skill = GetSelectedSkill();
 
             // Update the "show in skill explorer" menu
             showInSkillExplorerMenu.Visible = skill != null && m_skill != skill;
@@ -791,13 +791,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void planToLevelMenuItem_Click(object sender, EventArgs e)
+        private void planToLevelMenuItem_Click(object? sender,EventArgs e)
         {
-            IPlanOperation operation = ((ToolStripMenuItem)sender).Tag as IPlanOperation;
+            IPlanOperation? operation = ((ToolStripMenuItem)sender!).Tag as IPlanOperation;
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
             if (planWindow == null)
                 return;
 
@@ -809,9 +809,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInSkillExplorerMenu_Click(object sender, EventArgs e)
+        private void showInSkillExplorerMenu_Click(object? sender,EventArgs e)
         {
-            SetSkill(GetSelectedSkill());
+            SetSkill(GetSelectedSkill()!);
         }
 
         /// <summary>
@@ -819,12 +819,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInSkillBrowserMenu_Click(object sender, EventArgs e)
+        private void showInSkillBrowserMenu_Click(object? sender,EventArgs e)
         {
-            Skill skill = GetSelectedSkill();
+            Skill? skill = GetSelectedSkill();
 
             // Open the skill browser
-            PlanWindow.ShowPlanWindow(m_character, m_plan).ShowSkillInBrowser(skill);
+            PlanWindow.ShowPlanWindow(m_character, m_plan)?.ShowSkillInBrowser(skill!);
         }
 
         /// <summary>
@@ -832,7 +832,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsmiExpandAll_Click(object sender, EventArgs e)
+        private void tsmiExpandAll_Click(object? sender,EventArgs e)
         {
             tvSkills.ExpandAll();
             m_allSkillsExpanded = true;
@@ -843,7 +843,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsmiColapseAll_Click(object sender, EventArgs e)
+        private void tsmiColapseAll_Click(object? sender,EventArgs e)
         {
             tvSkills.CollapseAll();
             m_allSkillsExpanded = false;
@@ -854,9 +854,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showPrerequisitiesMenu_Click(object sender, EventArgs e)
+        private void showPrerequisitiesMenu_Click(object? sender,EventArgs e)
         {
-            Skill skill = GetSelectedSkill();
+            Skill? skill = GetSelectedSkill();
             if (skill == null)
                 return;
 
@@ -912,7 +912,7 @@ namespace EVEMon.SkillPlanner
         /// Returns the currently selected item or null if non is selected.
         /// </summary>
         /// <returns></returns>
-        private Item GetSelectedItem() => tvEntity.SelectedNode?.Tag as Item;
+        private Item? GetSelectedItem() => tvEntity.SelectedNode?.Tag as Item;
 
         /// <summary>
         /// Gets the selected item activities.
@@ -935,7 +935,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void tvEntity_MouseDown(object sender, MouseEventArgs e)
+        private void tvEntity_MouseDown(object? sender,MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -954,7 +954,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void tvEntity_MouseMove(object sender, MouseEventArgs e)
+        private void tvEntity_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -969,7 +969,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void cmEntity_Opening(object sender, CancelEventArgs e)
+        private void cmEntity_Opening(object? sender,CancelEventArgs e)
         {
             if (tvEntity.GetNodeCount(true) < 2)
             {
@@ -977,7 +977,7 @@ namespace EVEMon.SkillPlanner
                 return;
             }
 
-            Item item = GetSelectedItem();
+            Item? item = GetSelectedItem();
 
             planToObject.Visible =
                 planToObjectSeperator.Visible = m_plan != null && tvEntity.SelectedNode != null && item != null;
@@ -986,8 +986,8 @@ namespace EVEMon.SkillPlanner
 
             if (item != null)
             {
-                Blueprint blueprint = StaticBlueprints.GetBlueprintByID(item.ID);
-                Ship ship = item as Ship;
+                Blueprint? blueprint = StaticBlueprints.GetBlueprintByID(item.ID);
+                Ship? ship = item as Ship;
 
                 string text = ship != null ? "Ship" : blueprint != null ? "Blueprint" : "Item";
 
@@ -1003,10 +1003,10 @@ namespace EVEMon.SkillPlanner
             // "Add to plan" is enabled if we don't know all the prereqs 
             // and we're not already planning at least one of the unknown prereqs
             planToObject.Enabled = item != null && m_plan != null && item.Prerequisites
-                .Where(x => listOfActivities.Contains(x.Activity.GetDescription())).ToCharacter(m_character)
-                .Any(x => !x.IsTrained && !m_plan.IsPlanned(x.Skill, x.Level));
+                .Where(x => listOfActivities.Contains(x.Activity.GetDescription())).ToCharacter(m_character!)
+                .Any(x => !x.IsTrained && !m_plan!.IsPlanned(x.Skill, x.Level));
 
-            bool untrainedPrerequisitiesExists = item != null && !item.Prerequisites.ToCharacter(m_character).AreTrained();
+            bool untrainedPrerequisitiesExists = item != null && !item.Prerequisites.ToCharacter(m_character!).AreTrained();
 
             // Update the "show prerequisites" menu
             showObjectPrerequisitiesMenu.Visible = untrainedPrerequisitiesExists;
@@ -1018,22 +1018,22 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void planToObjectMenuItem_Click(object sender, EventArgs e)
+        private void planToObjectMenuItem_Click(object? sender,EventArgs e)
         {
-            Item entity = GetSelectedItem();
+            Item? entity = GetSelectedItem();
 
             if (entity == null)
                 return;
 
             List<string> listOfActivities = GetSelectedItemActivities(entity);
-            IPlanOperation operation = m_plan
+            IPlanOperation? operation = m_plan!
                 .TryAddSet(entity.Prerequisites
                     .Where(x => listOfActivities.Contains(x.Activity.GetDescription())), entity.Name);
 
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
             if (planWindow == null)
                 return;
 
@@ -1047,15 +1047,15 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsShowItemPrereqs_Click(object sender, EventArgs e)
+        private void tsShowItemPrereqs_Click(object? sender,EventArgs e)
         {
-            Item entity = GetSelectedItem();
+            Item? entity = GetSelectedItem();
             if (entity == null)
                 return;
 
             List<string> listOfActivities = GetSelectedItemActivities(entity);
             IEnumerable<SkillLevel> prereqList = CreatePrereqList(entity.Prerequisites.Where(
-                x => listOfActivities.Contains(x.Activity.GetDescription())).ToCharacter(m_character));
+                x => listOfActivities.Contains(x.Activity.GetDescription())).ToCharacter(m_character!));
 
             int index = 0;
             StringBuilder sb = new StringBuilder();
@@ -1073,7 +1073,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsmiObjectExpandAll_Click(object sender, EventArgs e)
+        private void tsmiObjectExpandAll_Click(object? sender,EventArgs e)
         {
             tvEntity.ExpandAll();
             m_allObjectsExpanded = true;
@@ -1084,7 +1084,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsmiObjectCollapseAll_Click(object sender, EventArgs e)
+        private void tsmiObjectCollapseAll_Click(object? sender,EventArgs e)
         {
             tvEntity.CollapseAll();
             m_allObjectsExpanded = false;
@@ -1100,7 +1100,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void rbShowAlpha_CheckedChanged(object sender, EventArgs e)
+        private void rbShowAlpha_CheckedChanged(object? sender,EventArgs e)
         {
             UpdateTrees();
         }
@@ -1111,7 +1111,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbShowBaseOnly_CheckedChanged(object sender, EventArgs e)
+        private void cbShowBaseOnly_CheckedChanged(object? sender,EventArgs e)
         {
             UpdateItemsTree();
         }
@@ -1121,7 +1121,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnClose_Click(object sender, EventArgs e)
+        private void btnClose_Click(object? sender,EventArgs e)
         {
             Close();
         }
@@ -1131,27 +1131,27 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tvEntity_DoubleClick(object sender, EventArgs e)
+        private void tvEntity_DoubleClick(object? sender,EventArgs e)
         {
-            Item item = GetSelectedItem();
+            Item? item = GetSelectedItem();
             if (item == null)
                 return;
 
-            Item ship = item as Ship;
+            Ship? ship = item as Ship;
             if (ship != null)
             {
-                PlanWindow.ShowPlanWindow(m_character, m_plan).ShowShipInBrowser(ship);
+                PlanWindow.ShowPlanWindow(m_character, m_plan)?.ShowShipInBrowser(ship);
                 return;
             }
 
-            Item blueprint = item as Blueprint;
+            Blueprint? blueprint = item as Blueprint;
             if (blueprint != null)
             {
-                PlanWindow.ShowPlanWindow(m_character, m_plan).ShowBlueprintInBrowser(blueprint);
+                PlanWindow.ShowPlanWindow(m_character, m_plan)?.ShowBlueprintInBrowser(blueprint);
                 return;
             }
 
-            PlanWindow.ShowPlanWindow(m_character, m_plan).ShowItemInBrowser(item);
+            PlanWindow.ShowPlanWindow(m_character, m_plan)?.ShowItemInBrowser(item);
         }
 
         /// <summary>
@@ -1159,9 +1159,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tvSkills_DoubleClick(object sender, EventArgs e)
+        private void tvSkills_DoubleClick(object? sender,EventArgs e)
         {
-            SetSkill(GetSelectedSkill());
+            SetSkill(GetSelectedSkill()!);
         }
 
         /// <summary>
@@ -1169,9 +1169,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbHistory_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbHistory_SelectedIndexChanged(object? sender,EventArgs e)
         {
-            Skill skill = (Skill)cbHistory.Items[cbHistory.SelectedIndex];
+            Skill skill = (Skill)cbHistory.Items[cbHistory.SelectedIndex]!;
             SetSkill(m_character?.Skills[skill.ID] ?? skill);
         }
 
@@ -1204,7 +1204,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="plan">The plan.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">skill</exception>
-        internal static SkillExplorerWindow ShowSkillExplorerWindow(Character character, Plan plan = null)
+        internal static SkillExplorerWindow? ShowSkillExplorerWindow(Character? character, Plan? plan = null)
         {
             // If no character is associated, open a unique Data Browser (non-associated character)
             if (character == null && plan == null)
@@ -1212,16 +1212,16 @@ namespace EVEMon.SkillPlanner
 
             // Check if a Skill Planner is already open
             // (a Skill Planner has the same Tag as a Data Browser but it has a plan attached)
-            PlanWindow planWindow = WindowsFactory.GetByTag<PlanWindow, Character>(character ?? (Character)plan.Character);
+            PlanWindow? planWindow = WindowsFactory.GetByTag<PlanWindow, Character>(character ?? (Character)plan!.Character);
 
-            SkillExplorerWindow skillExplorerWindow;
+            SkillExplorerWindow? skillExplorerWindow;
 
             // Do we have a Skill Planner open?
             if (planWindow?.Plan != null)
             {
                 // Activate
                 skillExplorerWindow =
-                    WindowsFactory.ShowByTag<SkillExplorerWindow, Character>(character ?? (Character)planWindow.Plan?.Character);
+                    WindowsFactory.ShowByTag<SkillExplorerWindow, Character>(character ?? (Character)planWindow.Plan!.Character);
 
                 // If a plan was passed, assign the new plan
                 if (plan != null)
@@ -1235,7 +1235,7 @@ namespace EVEMon.SkillPlanner
             {
                 // Open a new Skill Explorer associated with the character
                 if (plan == null)
-                    return WindowsFactory.ShowByTag<SkillExplorerWindow, Character>(character);
+                    return WindowsFactory.ShowByTag<SkillExplorerWindow, Character>(character!);
 
                 // Open a new Skill Explorer (use the plan as tag for the creating the window)
                 // (This should be the only time a plan is used as the tag)
@@ -1248,7 +1248,7 @@ namespace EVEMon.SkillPlanner
             }
 
             // Activate
-            skillExplorerWindow = WindowsFactory.ShowByTag<SkillExplorerWindow, Character>(character);
+            skillExplorerWindow = WindowsFactory.ShowByTag<SkillExplorerWindow, Character>(character!);
 
             // It's a Data Browser, transform it to a Skill Planner
             skillExplorerWindow.Plan = plan;

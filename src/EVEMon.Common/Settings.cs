@@ -186,7 +186,7 @@ namespace EVEMon.Common
         /// <returns>The modified content.</returns>
         private static string UpdateSettingsFileForMigration(string fileContent, string filePath)
         {
-            string forkVersion = EveMonClient.FileVersionInfo?.FileVersion ?? "5.1.0";
+            string forkVersion = AppServices.DataStore.FileVersion;
 
             // Clear ESI keys
             string modifiedContent = Regex.Replace(fileContent,
@@ -252,7 +252,7 @@ namespace EVEMon.Common
         /// <returns>The modified content.</returns>
         private static string AddForkIdToSettingsFile(string fileContent, string filePath)
         {
-            string forkVersion = EveMonClient.FileVersionInfo?.FileVersion ?? "5.1.0";
+            string forkVersion = AppServices.DataStore.FileVersion;
             string modifiedContent = fileContent;
             bool modified = false;
 
@@ -567,7 +567,7 @@ Click OK to continue.";
         public static async Task ImportDataAsync()
         {
             // Quit if the client has been shut down
-            if (EveMonClient.Closed)
+            if (AppServices.DataStore.IsClosed)
                 return;
 
             IsRestoring = true;
@@ -586,11 +586,11 @@ Click OK to continue.";
             if (s_settings == null)
                 s_settings = new SerializableSettings();
 
-            EveMonClient.ResetCollections();
-            EveMonClient.Characters.Import(s_settings.Characters);
-            EveMonClient.ESIKeys.Import(s_settings.ESIKeys);
-            EveMonClient.Characters.ImportPlans(s_settings.Plans);
-            EveMonClient.MonitoredCharacters.Import(s_settings.MonitoredCharacters);
+            AppServices.DataStore.ResetCollections();
+            AppServices.DataStore.ImportCharacters(s_settings.Characters);
+            AppServices.DataStore.ImportESIKeys(s_settings.ESIKeys);
+            AppServices.DataStore.ImportPlans(s_settings.Plans);
+            AppServices.DataStore.ImportMonitoredCharacters(s_settings.MonitoredCharacters);
 
             OnImportCompleted();
 
@@ -700,7 +700,7 @@ Click OK to continue.";
                 Revision = Revision,
                 Compatibility = Compatibility,
                 ForkId = OurForkId,
-                ForkVersion = EveMonClient.FileVersionInfo?.FileVersion ?? "5.1.0",
+                ForkVersion = AppServices.DataStore.FileVersion,
                 Scheduler = Scheduler.Export(),
                 Calendar = Calendar,
                 CloudStorageServiceProvider = CloudStorageServiceProvider,
@@ -715,12 +715,12 @@ Click OK to continue.";
                 UI = UI
             };
 
-            serial.Characters.AddRange(EveMonClient.Characters.Export());
+            serial.Characters.AddRange(AppServices.DataStore.ExportCharacters());
             EveMonClient.Trace($"{serial.Characters.Count} characters exported");
-            serial.ESIKeys.AddRange(EveMonClient.ESIKeys.Export());
-            serial.Plans.AddRange(EveMonClient.Characters.ExportPlans());
+            serial.ESIKeys.AddRange(AppServices.DataStore.ExportESIKeys());
+            serial.Plans.AddRange(AppServices.DataStore.ExportPlans());
             EveMonClient.Trace($"{serial.Plans.Count} plans exported");
-            serial.MonitoredCharacters.AddRange(EveMonClient.MonitoredCharacters.Export());
+            serial.MonitoredCharacters.AddRange(AppServices.DataStore.ExportMonitoredCharacters());
 
             EveMonClient.Trace("done");
             return serial;
@@ -734,7 +734,7 @@ Click OK to continue.";
         /// <summary>
         /// Gets the current assembly's revision, which is also used for files versioning.
         /// </summary>
-        internal static int Revision => Version.Parse(EveMonClient.FileVersionInfo.FileVersion ?? "0.0.0.0").Revision;
+        internal static int Revision => Version.Parse(AppServices.DataStore.FileVersion).Revision;
 
         /// <summary>
         /// Gets whether the settings are currently using JSON format (source of truth).
@@ -814,7 +814,7 @@ Click OK to continue.";
             if (FeatureFlags.UseSmartSettings)
             {
                 s_smartSettingsManager = new SmartSettingsManager(
-                    EveMonClient.EVEMonDataDir,
+                    AppServices.DataStore.DataDirectory,
                     AppServices.EventAggregator,
                     AppServices.Dispatcher,
                     () => Export());
@@ -1042,7 +1042,7 @@ Do you want to continue?";
         /// <returns><c>Null</c> if we have been unable to load anything from files, the generated settings otherwise</returns>
         private static SerializableSettings? TryDeserializeFromFile()
         {
-            string settingsFile = EveMonClient.SettingsFileNameFullPath;
+            string settingsFile = AppServices.DataStore.SettingsFilePath;
             string backupFile = settingsFile + ".bak";
 
             // If settings file doesn't exists
@@ -1170,7 +1170,7 @@ Do you want to continue?";
             if (backupInfo.Length == 0)
                 return null;
 
-            string settingsFile = EveMonClient.SettingsFileNameFullPath;
+            string settingsFile = AppServices.DataStore.SettingsFilePath;
 
             const string Caption = "Corrupt Settings";
             if (recover)
@@ -1267,7 +1267,7 @@ Do you want to continue?";
 
                     if (fileDialog.ShowDialog() == DialogResult.OK)
                     {
-                        FileHelper.CopyOrWarnTheUser(EveMonClient.SettingsFileNameFullPath, fileDialog.FileName);
+                        FileHelper.CopyOrWarnTheUser(AppServices.DataStore.SettingsFilePath, fileDialog.FileName);
                     }
                 }
             }
@@ -1378,7 +1378,7 @@ Do you want to continue?";
                     EveMonClient.Trace($"Serialized {serializedData.Length} bytes to XML");
 
                     // Write to XML file (atomic via temp file)
-                    await FileHelper.OverwriteOrWarnTheUserAsync(EveMonClient.SettingsFileNameFullPath,
+                    await FileHelper.OverwriteOrWarnTheUserAsync(AppServices.DataStore.SettingsFilePath,
                         async fs =>
                         {
                             await fs.WriteAsync(serializedData, 0, serializedData.Length);

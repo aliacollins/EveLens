@@ -50,11 +50,11 @@ namespace EVEMon.CharacterMonitoring
         private readonly Font m_skillsFont;
         private readonly Font m_boldSkillsFont;
 
-        private object m_lastTooltipItem;
+        private object m_lastTooltipItem = null!;
         private BlinkAction m_blinkAction;
 
         private int m_maxGroupNameWidth;
-        private Skill m_selectedSkill;
+        private Skill m_selectedSkill = null!;
 
         #endregion
 
@@ -83,7 +83,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal Character Character { get; set; }
+        internal Character Character { get; set; } = null!;
 
         #endregion
 
@@ -112,7 +112,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -230,13 +230,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbSkills_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbSkills_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbSkills.Items.Count)
                 return;
 
             object item = lbSkills.Items[e.Index];
-            SkillGroup skillGroup = item as SkillGroup;
+            SkillGroup? skillGroup = item as SkillGroup;
             if (skillGroup != null)
                 DrawItem(skillGroup, e);
             else
@@ -248,7 +248,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbSkills_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbSkills_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -641,7 +641,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbSkills_MouseWheel(object sender, MouseEventArgs e)
+        private void lbSkills_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (!lbSkills.VerticalScrollBarVisible())
                 return;
@@ -663,7 +663,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -704,7 +704,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbSkills_MouseDown(object sender, MouseEventArgs e)
+        private void lbSkills_MouseDown(object? sender, MouseEventArgs e)
         {
             // Retrieve the item at the given point and quit if none
             int index = lbSkills.IndexFromPoint(e.Location);
@@ -722,7 +722,7 @@ namespace EVEMon.CharacterMonitoring
 
             // For a skill group, we have to handle the collapse/expand mechanism and the tooltip
             object item = lbSkills.Items[index];
-            SkillGroup skillGroup = item as SkillGroup;
+            SkillGroup? skillGroup = item as SkillGroup;
             if (skillGroup != null)
             {
                 // Left button : expand/collapse
@@ -762,7 +762,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbSkills_MouseMove(object sender, MouseEventArgs e)
+        private void lbSkills_MouseMove(object? sender, MouseEventArgs e)
         {
             for (int i = 0; i < lbSkills.Items.Count; i++)
             {
@@ -780,7 +780,7 @@ namespace EVEMon.CharacterMonitoring
             }
 
             // If we went so far, we're not over anything
-            m_lastTooltipItem = null;
+            m_lastTooltipItem = null!;
             ttToolTip.Active = false;
             lbSkills.Cursor = Cursors.Default;
         }
@@ -790,7 +790,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
+        private void contextMenuStrip_Opening(object? sender, CancelEventArgs e)
         {
             e.Cancel = !Character.Skills.Any();
 
@@ -824,7 +824,7 @@ namespace EVEMon.CharacterMonitoring
             // Build the level options
             for (long level = skill.Level + 1; level <= 5; level++)
             {
-                ToolStripMenuItem tempMenuLevel = null;
+                ToolStripMenuItem? tempMenuLevel = null;
                 try
                 {
                     tempMenuLevel = new ToolStripMenuItem($"Level {Skill.GetRomanFromInt(level)} to");
@@ -860,7 +860,7 @@ namespace EVEMon.CharacterMonitoring
             m_lastTooltipItem = item;
 
             ttToolTip.Active = false;
-            SkillGroup skillGroup = item as SkillGroup;
+            SkillGroup? skillGroup = item as SkillGroup;
             ttToolTip.SetToolTip(lbSkills, skillGroup != null ? GetTooltip(skillGroup) : GetTooltip((Skill)item));
             ttToolTip.Active = true;
         }
@@ -1031,16 +1031,16 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void menuPlanItem_Click(object sender, EventArgs e)
+        private static void menuPlanItem_Click(object? sender, EventArgs e)
         {
-            ToolStripMenuItem planItem = (ToolStripMenuItem)sender;
-            KeyValuePair<Plan, SkillLevel> tag = (KeyValuePair<Plan, SkillLevel>)planItem.Tag;
+            ToolStripMenuItem? planItem = (ToolStripMenuItem)sender!;
+            KeyValuePair<Plan, SkillLevel> tag = (KeyValuePair<Plan, SkillLevel>)planItem!.Tag!;
 
             IPlanOperation operation = tag.Key.TryPlanTo(tag.Value.Skill, tag.Value.Level);
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
             if (planWindow == null)
                 return;
 
@@ -1052,10 +1052,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInSkillBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInSkillBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             // Open the skill browser
-            PlanWindow.ShowPlanWindow(Character).ShowSkillInBrowser(m_selectedSkill);
+            PlanWindow.ShowPlanWindow(Character)!.ShowSkillInBrowser(m_selectedSkill);
         }
 
         /// <summary>
@@ -1063,10 +1063,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInSkillExplorerMenuItem_Click(object sender, EventArgs e)
+        private void showInSkillExplorerMenuItem_Click(object? sender, EventArgs e)
         {
             // Open the skill explorer
-            SkillExplorerWindow.ShowSkillExplorerWindow(Character).ShowSkillInExplorer(m_selectedSkill);
+            SkillExplorerWindow.ShowSkillExplorerWindow(Character)!.ShowSkillInExplorer(m_selectedSkill);
         }
 
         #endregion
@@ -1079,7 +1079,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Character.IsTraining || !Visible)
                 return;
@@ -1093,7 +1093,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -1106,7 +1106,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }

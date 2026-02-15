@@ -59,7 +59,7 @@ namespace EVEMon.Tests.Services
         public void Constructor_NullScheduler_ThrowsArgumentNullException()
         {
             Action act = () => new CharacterQueryOrchestrator(
-                null, _esiClient, _events, 1L, "Test");
+                null!, _esiClient, _events, 1L, "Test");
 
             act.Should().Throw<ArgumentNullException>().WithParameterName("scheduler");
         }
@@ -68,7 +68,7 @@ namespace EVEMon.Tests.Services
         public void Constructor_NullEsiClient_ThrowsArgumentNullException()
         {
             Action act = () => new CharacterQueryOrchestrator(
-                _scheduler, null, _events, 1L, "Test");
+                _scheduler, null!, _events, 1L, "Test");
 
             act.Should().Throw<ArgumentNullException>().WithParameterName("esiClient");
         }
@@ -77,7 +77,7 @@ namespace EVEMon.Tests.Services
         public void Constructor_NullEventAggregator_ThrowsArgumentNullException()
         {
             Action act = () => new CharacterQueryOrchestrator(
-                _scheduler, _esiClient, null, 1L, "Test");
+                _scheduler, _esiClient, null!, 1L, "Test");
 
             act.Should().Throw<ArgumentNullException>().WithParameterName("eventAggregator");
         }
@@ -350,7 +350,7 @@ namespace EVEMon.Tests.Services
             totalMonitors.Should().Be(210,
                 "70 characters * 3 basic monitors each = 210 total, not 1890 (27 * 70)");
 
-            _scheduler.ReceivedWithAnyArgs(70).Register(default);
+            _scheduler.ReceivedWithAnyArgs(70).Register(default!);
 
             foreach (var orch in orchestrators)
                 orch.Dispose();

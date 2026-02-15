@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
@@ -16,18 +15,6 @@ namespace EVEMon.Common.SettingsObjects
     public sealed class ModifiedSerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IXmlSerializable
         where TKey : notnull
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="EVEMon.Common.SettingsObjects.SerializableDictionary{TKey,TValue}"/> class.
-        /// </summary>
-        /// <param name="info">The info.</param>
-        /// <param name="context">The context.</param>
-        /// <remarks>Implemented to satisfy rule CA2229</remarks>
-        [Obsolete("This constructor is obsolete and provided for legacy serialization support.")]
-        private ModifiedSerializableDictionary(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
-        }
-
         /// <summary>
         /// Default constructor.
         /// </summary>

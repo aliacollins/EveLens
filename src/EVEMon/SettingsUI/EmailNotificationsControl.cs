@@ -14,8 +14,8 @@ namespace EVEMon.SettingsUI
 {
     public partial class EmailNotificationsControl : UserControl
     {
-        private NotificationSettings m_settings;
-        private IEmailProvider m_defaultProvider;
+        private NotificationSettings m_settings = null!;
+        private IEmailProvider m_defaultProvider = null!;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmailNotificationsControl"/> class.
@@ -88,7 +88,7 @@ namespace EVEMon.SettingsUI
         internal void PopulateSettingsFromControls()
         {
             m_settings.UseEmailShortFormat = cbEmailUseShortFormat.Checked;
-            m_settings.EmailSmtpServerProvider = (string)cbbEMailServerProvider.SelectedItem;
+            m_settings.EmailSmtpServerProvider = (string?)cbbEMailServerProvider.SelectedItem;
             m_settings.EmailSmtpServerAddress = tbEmailServerAddress.Text.Trim();
 
             // Try and get a usable number out of the text box
@@ -109,7 +109,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         private void SetControls()
         {
-            IEmailProvider provider = EmailProviders.GetByKey((string)cbbEMailServerProvider.SelectedItem);
+            IEmailProvider provider = EmailProviders.GetByKey((string?)cbbEMailServerProvider.SelectedItem!);
 
             if (provider != null && provider != m_defaultProvider)
             {

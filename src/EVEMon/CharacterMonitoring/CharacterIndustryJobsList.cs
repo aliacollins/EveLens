@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -33,8 +33,8 @@ namespace EVEMon.CharacterMonitoring
         private readonly List<IndustryJobColumnSettings> m_columns = new List<IndustryJobColumnSettings>();
         private readonly List<IndustryJob> m_list = new List<IndustryJob>(32);
 
-        private InfiniteDisplayToolTip m_tooltip;
-        private Timer m_refreshTimer;
+        private InfiniteDisplayToolTip m_tooltip = null!;
+        private Timer m_refreshTimer = null!;
         private IndustryJobGrouping m_grouping;
         private IndustryJobColumn m_sortCriteria;
         private IssuedFor m_showIssuedFor;
@@ -95,7 +95,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="lvJobs"/> is visible.
@@ -186,7 +186,7 @@ namespace EVEMon.CharacterMonitoring
                 List<IndustryJobColumnSettings> newColumns = new List<IndustryJobColumnSettings>();
                 foreach (ColumnHeader header in lvJobs.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
                 {
-                    IndustryJobColumnSettings columnSetting = m_columns.First(x => x.Column == (IndustryJobColumn)header.Tag);
+                    IndustryJobColumnSettings columnSetting = m_columns.First(x => x.Column == (IndustryJobColumn)header.Tag!);
                     if (columnSetting.Width > -1)
                         columnSetting.Width = header.Width;
 
@@ -248,7 +248,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             m_tooltip.Dispose();
             m_refreshTimer.Dispose();
@@ -278,9 +278,9 @@ namespace EVEMon.CharacterMonitoring
             lvJobs.Visible = false;
             industryExpPanelControl.Visible = false;
 
-            Jobs = Character?.IndustryJobs;
+            Jobs = Character?.IndustryJobs!;
             Columns = Settings.UI.MainWindow.IndustryJobs.Columns;
-            Grouping = Character?.UISettings.JobsGroupBy;
+            Grouping = Character?.UISettings.JobsGroupBy!;
             TextFilter = string.Empty;
 
             UpdateColumns();
@@ -365,7 +365,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
             int scrollBarPosition = lvJobs.GetVerticalScrollBarPosition();
             // Store the selected item (if any) to restore it after the update
-            int selectedItem = lvJobs.SelectedItems.Count > 0 ? lvJobs.SelectedItems[0].Tag.
+            int selectedItem = lvJobs.SelectedItems!.Count > 0 ? lvJobs!.SelectedItems[0]!.Tag.
                 GetHashCode() : 0;
             lvJobs.BeginUpdate();
             try
@@ -376,8 +376,8 @@ namespace EVEMon.CharacterMonitoring
                 // Filter jobs
                 foreach (var job in m_list)
                 {
-                    job.UpdateLocation(Character);
-                    job.UpdateInstallation(Character);
+                    job.UpdateLocation(Character!);
+                    job.UpdateInstallation(Character!);
 
                     if (job.InstalledItem != null && job.OutputItem != null && job.
                         SolarSystem != null && IsTextMatching(job, m_textFilter))
@@ -392,7 +392,7 @@ namespace EVEMon.CharacterMonitoring
                 // Restore the selected item (if any)
                 if (selectedItem > 0)
                     foreach (ListViewItem lvItem in lvJobs.Items.Cast<ListViewItem>().Where(
-                            lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                            lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                         lvItem.Selected = true;
                 // Adjust the size of the columns
                 AdjustColumns();
@@ -453,22 +453,22 @@ namespace EVEMon.CharacterMonitoring
                     break;
                 case IndustryJobGrouping.InstalledItemType:
                     IOrderedEnumerable<IGrouping<string, IndustryJob>> groups4 =
-                        jobs.GroupBy(x => x.InstalledItem.MarketGroup.CategoryPath).OrderBy(x => x.Key);
+                        jobs!.GroupBy(x => x!.InstalledItem!.MarketGroup.CategoryPath).OrderBy(x => x.Key);
                     UpdateContent(groups4);
                     break;
                 case IndustryJobGrouping.InstalledItemTypeDesc:
                     IOrderedEnumerable<IGrouping<string, IndustryJob>> groups5 =
-                        jobs.GroupBy(x => x.InstalledItem.MarketGroup.CategoryPath).OrderByDescending(x => x.Key);
+                        jobs!.GroupBy(x => x!.InstalledItem!.MarketGroup.CategoryPath).OrderByDescending(x => x.Key);
                     UpdateContent(groups5);
                     break;
                 case IndustryJobGrouping.OutputItemType:
                     IOrderedEnumerable<IGrouping<string, IndustryJob>> groups6 =
-                        jobs.GroupBy(x => x.OutputItem.MarketGroup.CategoryPath).OrderBy(x => x.Key);
+                        jobs!.GroupBy(x => x!.OutputItem!.MarketGroup.CategoryPath).OrderBy(x => x.Key);
                     UpdateContent(groups6);
                     break;
                 case IndustryJobGrouping.OutputItemTypeDesc:
                     IOrderedEnumerable<IGrouping<string, IndustryJob>> groups7 =
-                        jobs.GroupBy(x => x.OutputItem.MarketGroup.CategoryPath).OrderByDescending(x => x.Key);
+                        jobs!.GroupBy(x => x!.OutputItem!.MarketGroup.CategoryPath).OrderByDescending(x => x.Key);
                     UpdateContent(groups7);
                     break;
                 case IndustryJobGrouping.Activity:
@@ -513,7 +513,7 @@ namespace EVEMon.CharacterMonitoring
                 else if (group.Key is DateTime)
                     groupText = ((DateTime)(object)group.Key).ToShortDateString();
                 else
-                    groupText = group.Key.ToString();
+                    groupText = group!.Key!.ToString()!;
 
                 ListViewGroup listGroup = new ListViewGroup(groupText);
                 lvJobs.Groups.Add(listGroup);
@@ -554,7 +554,7 @@ namespace EVEMon.CharacterMonitoring
             for (int i = 0; i < lvJobs.Columns.Count; i++)
             {
                 ColumnHeader header = lvJobs.Columns[i];
-                IndustryJobColumn column = (IndustryJobColumn)header.Tag;
+                IndustryJobColumn column = (IndustryJobColumn)header.Tag!;
                 SetColumn(job, item.SubItems[i], column);
             }
 
@@ -600,7 +600,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvJobs.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -627,7 +627,7 @@ namespace EVEMon.CharacterMonitoring
         {
             foreach (ColumnHeader columnHeader in lvJobs.Columns.Cast<ColumnHeader>())
             {
-                IndustryJobColumn column = (IndustryJobColumn)columnHeader.Tag;
+                IndustryJobColumn column = (IndustryJobColumn)columnHeader.Tag!;
                 if (m_sortCriteria == column)
                     columnHeader.ImageIndex = m_sortAscending ? 0 : 1;
                 else
@@ -659,7 +659,7 @@ namespace EVEMon.CharacterMonitoring
                     item.Text = job.InstalledItem.Name;
                     break;
                 case IndustryJobColumn.InstalledItemType:
-                    item.Text = job.InstalledItem.MarketGroup.CategoryPath;
+                    item!.Text = job!.InstalledItem!.MarketGroup.CategoryPath;
                     break;
                 case IndustryJobColumn.OutputItem:
                     long units = GetUnitCount(job);
@@ -668,7 +668,7 @@ namespace EVEMon.CharacterMonitoring
                         " of " + job.OutputItem.Name;
                     break;
                 case IndustryJobColumn.OutputItemType:
-                    item.Text = job.OutputItem.MarketGroup.CategoryPath;
+                    item!.Text = job!.OutputItem!.MarketGroup.CategoryPath;
                     break;
                 case IndustryJobColumn.Activity:
                     item.Text = job.Activity.GetDescription();
@@ -832,8 +832,8 @@ namespace EVEMon.CharacterMonitoring
 
             foreach (ListViewItem listViewItem in lvJobs.Items.Cast<ListViewItem>())
             {
-                IndustryJob job = (IndustryJob)listViewItem.Tag;
-                if (!job.IsActive || job.ActiveJobState == ActiveJobState.Ready)
+                IndustryJob? job = (IndustryJob)listViewItem.Tag!;
+                if (!job!.IsActive || job.ActiveJobState == ActiveJobState.Ready)
                     continue;
 
                 // Update the time to completion
@@ -893,7 +893,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvJobs);
         }
@@ -903,7 +903,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void refresh_TimerTick(object sender, EventArgs e)
+        private void refresh_TimerTick(object? sender, EventArgs e)
         {
             UpdateTimeToCompletion();
         }
@@ -913,7 +913,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void listView_ColumnReordered(object? sender, ColumnReorderedEventArgs e)
         {
             m_columnsChanged = true;
         }
@@ -923,7 +923,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void listView_ColumnWidthChanged(object? sender, ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns || m_columns.Count <= e.ColumnIndex)
                 return;
@@ -944,9 +944,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void listView_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
-            IndustryJobColumn column = (IndustryJobColumn)lvJobs.Columns[e.Column].Tag;
+            IndustryJobColumn column = (IndustryJobColumn)lvJobs.Columns![e.Column].Tag!;
             if (m_sortCriteria == column)
                 m_sortAscending = !m_sortAscending;
             else
@@ -968,7 +968,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseDown(object sender, MouseEventArgs e)
+        private void listView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -981,14 +981,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseMove(object sender, MouseEventArgs e)
+        private void listView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
 
             lvJobs.Cursor = CustomCursors.ContextMenu;
 
-            ListViewItem item = lvJobs.GetItemAt(e.Location.X, e.Location.Y);
+            ListViewItem? item = lvJobs.GetItemAt(e.Location.X, e.Location.Y);
             if (item == null)
             {
                 m_tooltip.Hide();
@@ -1003,7 +1003,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void listView_MouseLeave(object sender, EventArgs e)
+        private void listView_MouseLeave(object? sender, EventArgs e)
         {
             m_tooltip.Hide();
         }
@@ -1013,7 +1013,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
             bool visible = lvJobs.SelectedItems.Count != 0;
 
@@ -1024,13 +1024,13 @@ namespace EVEMon.CharacterMonitoring
             if (!visible)
                 return;
 
-            IndustryJob job = lvJobs.SelectedItems[0]?.Tag as IndustryJob;
+            IndustryJob? job = lvJobs.SelectedItems[0]?.Tag as IndustryJob;
 
             if (job?.InstalledItem == null || job.OutputItem == null)
                 return;
 
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(job.OutputItem.ID);
-            Ship ship = job.OutputItem as Ship;
+            Ship? ship = job.OutputItem as Ship;
 
             string text = ship != null ? "Ship" : blueprint != null ? "Blueprint" : "Item";
 
@@ -1042,14 +1042,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
-            ToolStripItem menuItem = sender as ToolStripItem;
+            ToolStripItem? menuItem = sender as ToolStripItem;
 
             if (menuItem == null)
                 return;
 
-            IndustryJob job = lvJobs.SelectedItems[0]?.Tag as IndustryJob;
+            IndustryJob? job = lvJobs.SelectedItems[0]?.Tag as IndustryJob;
 
             if (menuItem == showInstalledInBrowserMenuItem)
             {
@@ -1057,17 +1057,17 @@ namespace EVEMon.CharacterMonitoring
                     return;
 
                 // showProducedInBrowserMenuItem was clicked
-                Ship ship = job.OutputItem as Ship;
+                Ship? ship = job.OutputItem as Ship;
                 Blueprint blueprint = StaticBlueprints.GetBlueprintByID(job.OutputItem.ID);
 
-                PlanWindow planWindow = PlanWindow.ShowPlanWindow(Character);
+                PlanWindow? planWindow = PlanWindow.ShowPlanWindow(Character);
 
                 if (ship != null)
-                    planWindow.ShowShipInBrowser(ship);
+                    planWindow!.ShowShipInBrowser(ship);
                 else if (blueprint != null)
-                    planWindow.ShowBlueprintInBrowser(blueprint);
+                    planWindow!.ShowBlueprintInBrowser(blueprint);
                 else
-                    planWindow.ShowItemInBrowser(job.OutputItem);
+                    planWindow!.ShowItemInBrowser(job.OutputItem);
 
                 return;
             }
@@ -1076,7 +1076,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             // showInstalledInBrowserMenuItem was clicked
-            PlanWindow.ShowPlanWindow(Character).ShowBlueprintInBrowser(job.InstalledItem);
+            PlanWindow.ShowPlanWindow(Character)!.ShowBlueprintInBrowser(job.InstalledItem);
         }
 
         # endregion
@@ -1089,7 +1089,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="IndustryJobsEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterIndustryJobsCompleted(object sender, IndustryJobsEventArgs e)
+        private void EveMonClient_CharacterIndustryJobsCompleted(object? sender, IndustryJobsEventArgs e)
         {
             UpdateContent();
         }
@@ -1099,7 +1099,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -1109,7 +1109,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_IndustryJobsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_IndustryJobsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1124,7 +1124,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible)
             {
@@ -1136,7 +1136,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Find how many jobs are active and not ready
             int activeJobs = lvJobs.Items.Cast<ListViewItem>().Select(
-                item => (IndustryJob)item.Tag).Count(job => job.IsActive && job.ActiveJobState != ActiveJobState.Ready);
+                item => (IndustryJob)item.Tag)!.Count(job => job!.IsActive && job.ActiveJobState != ActiveJobState.Ready)!;
 
             // We use time dilation according to the ammount of active jobs that are not ready,
             // due to excess CPU usage for computing the 'time to completion' when there are too many jobs
@@ -1158,7 +1158,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
         {
             if (Character == null)
                 return;
@@ -1422,7 +1422,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void OnExpandablePanelMouseClick(object sender, MouseEventArgs e)
+        private void OnExpandablePanelMouseClick(object? sender, MouseEventArgs e)
         {
             industryExpPanelControl.OnMouseClick(sender, e);
         }

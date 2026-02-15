@@ -10,7 +10,7 @@ namespace EVEMon.Controls
 {
     public partial class KillReportInvolvedParties : UserControl
     {
-        private KillLog m_killLog;
+        private KillLog m_killLog = null!;
 
 
         #region Constructor

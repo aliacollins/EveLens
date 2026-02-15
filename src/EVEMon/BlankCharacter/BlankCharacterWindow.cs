@@ -29,7 +29,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void BlankCharacterWindow_Load(object sender, EventArgs e)
+        private void BlankCharacterWindow_Load(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
@@ -43,7 +43,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             Disposed -= OnDisposed;
@@ -59,7 +59,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             buttonOK.Enabled = !string.IsNullOrEmpty(BlankCharacterUIHelper.CharacterName);
             AcceptButton = buttonOK.Enabled ? buttonOK : buttonCancel;
@@ -75,7 +75,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void buttonOK_Click(object sender, EventArgs e)
+        private void buttonOK_Click(object? sender, EventArgs e)
         {
             BlankCharacterUIHelper.AddBlankCharacter();
             Close();
@@ -86,7 +86,7 @@ namespace EVEMon.BlankCharacter
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void buttonCancel_Click(object sender, EventArgs e)
+        private void buttonCancel_Click(object? sender, EventArgs e)
         {
             Close();
         }

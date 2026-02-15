@@ -141,7 +141,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <exception cref="NotImplementedException"></exception>
-        private void cbUsabilityFilter_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbUsabilityFilter_SelectedIndexChanged(object? sender, EventArgs e)
         {
             // Update the filter delegate
             switch ((ObjectUsabilityFilter)cbUsabilityFilter.SelectedIndex)
@@ -190,7 +190,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbRace_SelectedChanged(object sender, EventArgs e)
+        private void cbRace_SelectedChanged(object? sender, EventArgs e)
         {
             // Update the control's content
             if (!m_init)
@@ -299,7 +299,7 @@ namespace EVEMon.SkillPlanner
                     tvItems.Nodes.Add(node);
                 }
 
-                TreeNode selectedNode = null;
+                TreeNode? selectedNode = null;
 
                 // Restore the selected node (if any)
                 if (selectedItemHash > 0)
@@ -315,7 +315,7 @@ namespace EVEMon.SkillPlanner
                     return;
 
                 // Reset if the node doesn't exist anymore
-                tvItems.SelectNodeWithTag(null);
+                tvItems.SelectNodeWithTag(null!);
                 SelectedObject = null;
             }
             finally

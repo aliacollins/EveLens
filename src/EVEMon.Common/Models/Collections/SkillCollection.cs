@@ -32,8 +32,11 @@ namespace EVEMon.Common.Models.Collections
         /// <param name="character">The character.</param>
         internal SkillCollection(Character character)
         {
-            IEnumerable<Skill> skills = character?.SkillGroups.SelectMany(group => group) ??
-                              StaticSkills.AllGroups.SelectMany(group => new SkillGroup(group));
+            IEnumerable<Skill> skills = character?.SkillGroups.SelectMany(group => group)
+                              ?? StaticSkills.AllGroups?.SelectMany(group => new SkillGroup(group));
+
+            if (skills == null)
+                return;
 
             foreach (Skill skill in skills)
             {
@@ -44,7 +47,7 @@ namespace EVEMon.Common.Models.Collections
             // Build prerequisites list
             foreach (Skill skill in m_itemsArray)
             {
-                skill.CompleteInitialization(m_itemsArray);
+                skill?.CompleteInitialization(m_itemsArray);
             }
         }
 

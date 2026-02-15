@@ -27,7 +27,7 @@ namespace EVEMon.SkillPlanner
         private bool m_hasInvention;
         private bool m_hasReactions;
 
-        private Blueprint m_blueprint;
+        private Blueprint? m_blueprint;
         private BlueprintActivity m_activity;
         private readonly Point m_gbManufOriginalLocation;
         private readonly Point m_gbResearchingOriginalLocation;
@@ -238,7 +238,7 @@ namespace EVEMon.SkillPlanner
             bool manufacturing = false, copying = false, me = false, te = false, invention =
                 false, reactions = false;
             // Search prerequisites for activities
-            foreach (var prereq in m_blueprint.Prerequisites)
+            foreach (var prereq in m_blueprint!.Prerequisites)
                 switch (prereq.Activity)
                 {
                     case BlueprintActivity.Manufacturing:
@@ -309,9 +309,9 @@ namespace EVEMon.SkillPlanner
         {
             // Produce item
             lblItem.ForeColor = Color.Blue;
-            if ((m_blueprint.ProducesItem?.ID ?? 0) != 0)
+            if ((m_blueprint!.ProducesItem?.ID ?? 0) != 0)
             {
-                var item = m_blueprint.ProducesItem;
+                var item = m_blueprint.ProducesItem!;
                 lblItem.Text = item.Name;
                 lblItem.Tag = item;
             }
@@ -433,7 +433,7 @@ namespace EVEMon.SkillPlanner
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = (PropertiesList.SelectedItems.Count > 0) ? PropertiesList.
-                SelectedItems[0].Tag.GetHashCode() : 0;
+                SelectedItems[0].Tag!.GetHashCode() : 0;
 
             PropertiesList.BeginUpdate();
             try
@@ -466,7 +466,7 @@ namespace EVEMon.SkillPlanner
 
                 // Restore the selected item (if any)
                 foreach (ListViewItem lvItem in PropertiesList.Items.Cast<ListViewItem>().Where(
-                    lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                    lvItem => lvItem.Tag!.GetHashCode() == selectedItem))
                 {
                     lvItem.Selected = true;
                 }
@@ -492,7 +492,7 @@ namespace EVEMon.SkillPlanner
                 // Create the groups
                 var group = new ListViewGroup(marketGroup.CategoryPath);
                 bool hasItem = false;
-                foreach (var material in m_blueprint.MaterialRequirements)
+                foreach (var material in m_blueprint!.MaterialRequirements)
                     if (material.Activity == m_activity && marketGroup.Items.Any(y => y.ID == material.ID))
                     {
                         hasItem = true;
@@ -540,7 +540,7 @@ namespace EVEMon.SkillPlanner
 
             cbFacility.Items.Add("NPC Station");
 
-            Item producedItem = m_blueprint.ProducesItem;
+            Item? producedItem = m_blueprint!.ProducesItem;
 
             // This should not happen but be prepared if something changes in CCP DB
             if (producedItem == null)
@@ -771,10 +771,10 @@ namespace EVEMon.SkillPlanner
                 return 1M;
 
             const decimal BonusFactor = 0.05M;
-            decimal skillLevel = m_blueprint.Prerequisites.Where(x => (x.Activity ==
+            decimal skillLevel = m_blueprint!.Prerequisites.Where(x => (x.Activity ==
                 BlueprintActivity.Invention || x.Activity == BlueprintActivity.
-                ReverseEngineering) && x.Skill != null).Max(x => Character.
-                LastConfirmedSkillLevel(x.Skill.ID));
+                ReverseEngineering) && x.Skill != null).Max(x => Character!.
+                LastConfirmedSkillLevel(x.Skill!.ID));
 
             return 1M + BonusFactor * skillLevel;
         }
@@ -911,7 +911,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="item"></param>
         private void ShowInBrowser(Item item)
         {
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
 
             if (item is Ship)
                 planWindow?.ShowShipInBrowser(item);
@@ -996,15 +996,15 @@ namespace EVEMon.SkillPlanner
         /// <returns></returns>
         private double GetImplantMultiplier(ICollection<int> implantIDs)
         {
-            ImplantSet implantSet = (ImplantSet)cbImplantSet.Tag;
+            ImplantSet? implantSet = cbImplantSet.Tag as ImplantSet;
 
-            Implant implant = implantSet?.FirstOrDefault(x => implantIDs.Contains(x.ID));
+            Implant? implant = implantSet?.FirstOrDefault(x => implantIDs.Contains(x.ID));
 
             if (implant == null)
                 return 1.0d;
 
-            double bonus = implant.Properties
-                .FirstOrDefault(x => DBConstants.IndustryModifyingPropertyIDs.IndexOf(x.Property.ID) != -1)
+            double bonus = implant.Properties!
+                .FirstOrDefault(x => DBConstants.IndustryModifyingPropertyIDs.IndexOf(x.Property!.ID) != -1)
                 .Int64Value;
             double multiplier = 1.0d + bonus / 100;
 
@@ -1022,7 +1022,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <remarks>Updates the required skills control according to the seleted tab</remarks>
-        private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
+        private void tabControl_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (tabControl.SelectedIndex == -1)
                 return;
@@ -1037,9 +1037,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nudME_ValueChanged(object sender, EventArgs e)
+        private void nudME_ValueChanged(object? sender, EventArgs e)
         {
-            NumericUpDown control = sender as NumericUpDown;
+            NumericUpDown? control = sender as NumericUpDown;
 
             if (control == null)
                 return;
@@ -1053,9 +1053,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nudTE_ValueChanged(object sender, EventArgs e)
+        private void nudTE_ValueChanged(object? sender, EventArgs e)
         {
-            NumericUpDown control = sender as NumericUpDown;
+            NumericUpDown? control = sender as NumericUpDown;
 
             if (control == null)
                 return;
@@ -1068,7 +1068,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbFacility_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbFacility_SelectedIndexChanged(object? sender, EventArgs e)
         {
             BlueprintBrowserSettings settings;
 
@@ -1096,7 +1096,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbImplantSet_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbImplantSet_SelectedIndexChanged(object? sender, EventArgs e)
         {
             BlueprintBrowserSettings settings;
 
@@ -1125,9 +1125,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lblItem_Click(object sender, EventArgs e)
+        private void lblItem_Click(object? sender, EventArgs e)
         {
-            Item item = (Item)lblItem.Tag;
+            Item? item = (Item?)lblItem.Tag;
 
             if (item == null)
                 return;
@@ -1142,9 +1142,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void InventBlueprintListBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void InventBlueprintListBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            Blueprint blueprint = (Blueprint)InventBlueprintListBox.SelectedItem;
+            Blueprint? blueprint = (Blueprint?)InventBlueprintListBox.SelectedItem;
 
             if (blueprint == null)
                 return;
@@ -1158,9 +1158,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void propertiesList_DoubleClick(object sender, EventArgs e)
+        private void propertiesList_DoubleClick(object? sender, EventArgs e)
         {
-            Item item = (Item)PropertiesList.FocusedItem?.Tag;
+            Item? item = PropertiesList.FocusedItem?.Tag as Item;
 
             if (item == null)
                 return;
@@ -1173,9 +1173,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void BlueprintAttributeContextMenu_Opening(object sender, CancelEventArgs e)
+        private void BlueprintAttributeContextMenu_Opening(object? sender, CancelEventArgs e)
         {
-            Item item = (Item)PropertiesList.FocusedItem?.Tag;
+            Item? item = PropertiesList.FocusedItem?.Tag as Item;
 
             showInMenuItem.Visible = showInMenuSeparator.Visible = item != null;
             showInMenuItem.Text = item is Ship ? "Show In Ship Browser" : "Show In Item Browser";
@@ -1186,7 +1186,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(PropertiesList);
         }
@@ -1196,7 +1196,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void PropertiesList_MouseDown(object sender, MouseEventArgs e)
+        private void PropertiesList_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -1209,7 +1209,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void PropertiesList_MouseMove(object sender, MouseEventArgs e)
+        private void PropertiesList_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -1222,7 +1222,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void InventBlueprintListBox_MouseMove(object sender, MouseEventArgs e)
+        private void InventBlueprintListBox_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;

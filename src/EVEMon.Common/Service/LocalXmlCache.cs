@@ -50,22 +50,6 @@ namespace EVEMon.Common.Service
         }
 
         /// <summary>
-        /// Gets the URI for the cached xml for the given character.
-        /// </summary>
-        /// <param name="character">The character.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        [Obsolete]
-        internal static Uri GetCharacterUri(Character character)
-        {
-            character.ThrowIfNull(nameof(character));
-
-            EveMonClient.EnsureCacheDirInit();
-
-            return new Uri(Path.Combine(EveMonClient.EVEMonXmlCacheDir, $"{character.Name}.xml"));
-        }
-
-        /// <summary>
         /// Loads CCP API XML data from a file.
         /// </summary>
         /// <typeparam name="T">The type of data to parse</typeparam>

@@ -63,7 +63,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the standing status to show contacts for.
@@ -109,7 +109,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterContactsUpdated -= EveMonClient_CharacterContactsUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -209,13 +209,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbContacts_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbContacts_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbContacts.Items.Count)
                 return;
 
             object item = lbContacts.Items[e.Index];
-            Contact contact = item as Contact;
+            Contact? contact = item as Contact;
             if (contact != null)
                 DrawItem(contact, e);
             else
@@ -227,7 +227,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbContacts_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbContacts_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -267,7 +267,7 @@ namespace EVEMon.CharacterMonitoring
             // Draw text for agents
             if (contact.Group == ContactGroup.Agent)
             {
-                Agent agent = StaticGeography.GetAgentByName(contact.Name);
+                Agent? agent = StaticGeography.GetAgentByName(contact.Name);
                 if (agent != null)
                 {
                     Station agentStation = agent.Station;
@@ -409,7 +409,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void contact_ContactImageUpdated(object sender, EventArgs e)
+        private void contact_ContactImageUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             lbContacts.Invalidate();
@@ -420,7 +420,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbContacts_MouseWheel(object sender, MouseEventArgs e)
+        private void lbContacts_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -436,7 +436,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -477,7 +477,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbContacts_MouseDown(object sender, MouseEventArgs e)
+        private void lbContacts_MouseDown(object? sender, MouseEventArgs e)
         {
             int index = lbContacts.IndexFromPoint(e.Location);
             if (index < 0 || index >= lbContacts.Items.Count)
@@ -496,7 +496,7 @@ namespace EVEMon.CharacterMonitoring
 
             // For a standings group, we have to handle the collapse/expand mechanism
             object item = lbContacts.Items[index];
-            string contactsGroup = item as string;
+            string? contactsGroup = item as string;
             if (contactsGroup == null)
                 return;
 
@@ -568,7 +568,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterContactsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterContactsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -582,7 +582,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -592,7 +592,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateContent();
         }

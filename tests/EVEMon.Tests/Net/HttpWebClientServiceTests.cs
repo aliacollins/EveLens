@@ -88,7 +88,7 @@ namespace EVEMon.Tests.Net
         [Fact]
         public void ContentConstructor_NullContent_StaysGet()
         {
-            var p = new RequestParams((string)null);
+            var p = new RequestParams((string)null!);
             p.Method.Should().Be(HttpMethod.Get);
         }
 
@@ -131,7 +131,7 @@ namespace EVEMon.Tests.Net
         [Fact]
         public void MethodChecked_NoContent_ReturnsGet()
         {
-            var p = new RequestParams { Method = HttpMethod.Post, Content = null };
+            var p = new RequestParams { Method = HttpMethod.Post, Content = null! };
             p.MethodChecked.Should().Be(HttpMethod.Get);
         }
 

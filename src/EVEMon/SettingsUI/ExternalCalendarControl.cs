@@ -163,7 +163,7 @@ namespace EVEMon.SettingsUI
             btnRevokeAuth.Enabled = tbGoogleCalendarName.Enabled = cbGoogleReminder.Enabled = !result.HasError;
 
             apiResponseLabel.ForeColor = result.HasError ? Color.Red : Color.Green;
-            apiResponseLabel.Text = result.HasError ? result.Error.ErrorCode ?? result.Error.ErrorMessage : @"Authenticated";
+            apiResponseLabel.Text = result.HasError ? result.Error!.ErrorCode ?? result.Error.ErrorMessage : @"Authenticated";
         }
 
         #endregion
@@ -273,7 +273,7 @@ namespace EVEMon.SettingsUI
             if (error)
             {
                 apiResponseLabel.ForeColor = Color.Red;
-                apiResponseLabel.Text = result.Error.ErrorMessage;
+                apiResponseLabel.Text = result.Error!.ErrorMessage;
             }
         }
 

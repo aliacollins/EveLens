@@ -30,11 +30,11 @@ namespace EVEMon.SkillPlanner
         private readonly List<StaticSkillLevel> m_skillsToAdd = new List<StaticSkillLevel>();
 
 
-        private Plan m_plan;
-        private Character m_character;
+        private Plan m_plan = null!;
+        private Character m_character = null!;
         private LoadoutFormat m_loadoutFormat;
-        private ILoadoutInfo m_loadoutInfo;
-        private string m_clipboardText;
+        private ILoadoutInfo? m_loadoutInfo;
+        private string? m_clipboardText;
         private bool m_allExpanded;
 
         #endregion
@@ -142,7 +142,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
         {
             if (e.Plan == m_plan)
                 UpdatePlanStatus();
@@ -153,7 +153,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
         {
             if (e.Characters.Contains(m_character))
                 UpdatePlanStatus();
@@ -164,7 +164,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="PlanChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_PlanNameChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanNameChanged(object? sender,PlanChangedEventArgs e)
         {
             if (e.Plan == m_plan)
                 UpdateExplanationLabel();
@@ -180,7 +180,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">Source of the event.</param>
         /// <param name="e">Arguments of the event.</param>
-        private void btnCancel_Click(object sender, EventArgs e)
+        private void btnCancel_Click(object? sender,EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();
@@ -191,13 +191,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnPlan_Click(object sender, EventArgs e)
+        private void btnPlan_Click(object? sender,EventArgs e)
         {
-            IPlanOperation operation = m_plan.TryAddSet(m_skillsToAdd, m_loadoutInfo.Loadouts.First().Name);
+            IPlanOperation? operation = m_plan.TryAddSet(m_skillsToAdd, m_loadoutInfo!.Loadouts.First().Name);
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
             if (planWindow == null)
                 return;
 
@@ -212,11 +212,11 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">Source of the event.</param>
         /// <param name="e">Arguments of the event.</param>
-        private void tvLoadout_DoubleClick(object sender, EventArgs e)
+        private void tvLoadout_DoubleClick(object? sender,EventArgs e)
         {
-            Item item = ResultsTreeView.SelectedNode?.Tag as Item;
+            Item? item = ResultsTreeView.SelectedNode?.Tag as Item;
 
-            PlanWindow.ShowPlanWindow(m_character, m_plan).ShowItemInBrowser(item);
+            PlanWindow.ShowPlanWindow(m_character, m_plan)?.ShowItemInBrowser(item!);
         }
 
         /// <summary>
@@ -224,7 +224,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">Source of the event.</param>
         /// <param name="e">Arguments of the event.</param>
-        private void tvLoadout_MouseUp(object sender, MouseEventArgs e)
+        private void tvLoadout_MouseUp(object? sender,MouseEventArgs e)
         {
             // Show menu only if the right mouse button is clicked
             if (e.Button != MouseButtons.Right)
@@ -244,7 +244,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void tvLoadout_MouseMove(object sender, MouseEventArgs e)
+        private void tvLoadout_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -259,15 +259,15 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender,CancelEventArgs e)
         {
             e.Cancel = ResultsTreeView.Nodes.Count == 0;
 
             if (e.Cancel)
                 return;
 
-            TreeNode node = ResultsTreeView.SelectedNode;
-            Item selectedItem = node?.Tag as Item;
+            TreeNode? node = ResultsTreeView.SelectedNode;
+            Item? selectedItem = node?.Tag as Item;
 
             ShowInBrowserMenuItem.Visible = showInMenuSeparator.Visible = selectedItem != null;
 
@@ -294,7 +294,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiCollapseSelected_Click(object sender, EventArgs e)
+        private void cmiCollapseSelected_Click(object? sender,EventArgs e)
         {
             ResultsTreeView.SelectedNode.Collapse();
         }
@@ -304,7 +304,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiExpandSelected_Click(object sender, EventArgs e)
+        private void cmiExpandSelected_Click(object? sender,EventArgs e)
         {
             ResultsTreeView.SelectedNode.Expand();
         }
@@ -314,7 +314,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiExpandAll_Click(object sender, EventArgs e)
+        private void cmiExpandAll_Click(object? sender,EventArgs e)
         {
             ResultsTreeView.ExpandAll();
             m_allExpanded = true;
@@ -325,7 +325,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiCollapseAll_Click(object sender, EventArgs e)
+        private void cmiCollapseAll_Click(object? sender,EventArgs e)
         {
             ResultsTreeView.CollapseAll();
             m_allExpanded = false;
@@ -358,19 +358,19 @@ namespace EVEMon.SkillPlanner
 
             // Decode EFT format
             if (m_loadoutFormat == LoadoutFormat.EFT)
-                m_loadoutInfo = LoadoutHelper.DeserializeEftFormat(m_clipboardText);
+                m_loadoutInfo = LoadoutHelper.DeserializeEftFormat(m_clipboardText!);
 
             // Decode XML format
             if (m_loadoutFormat == LoadoutFormat.XML)
-                m_loadoutInfo = LoadoutHelper.DeserializeXmlFormat(m_clipboardText);
+                m_loadoutInfo = LoadoutHelper.DeserializeXmlFormat(m_clipboardText!);
 
             // Decode DNA format
             if (m_loadoutFormat == LoadoutFormat.DNA)
-                m_loadoutInfo = LoadoutHelper.DeserializeDnaFormat(m_clipboardText);
+                m_loadoutInfo = LoadoutHelper.DeserializeDnaFormat(m_clipboardText!);
 
             // Decode CLF format
             if (m_loadoutFormat == LoadoutFormat.CLF)
-                m_loadoutInfo = LoadoutHelper.DeserializeClfFormat(m_clipboardText);
+                m_loadoutInfo = LoadoutHelper.DeserializeClfFormat(m_clipboardText!);
 
             if (m_loadoutInfo == null || !m_loadoutInfo.Loadouts.Any())
                 return;
@@ -384,7 +384,7 @@ namespace EVEMon.SkillPlanner
             DescriptionLabel.Text = $"Description: {m_loadoutInfo.Loadouts.First().Description}"
                 .WordWrap(55);
 
-            m_objects.Add(m_loadoutInfo.Ship);
+            m_objects.Add(m_loadoutInfo.Ship!);
 
             BuildTreeNodes(m_loadoutInfo.Loadouts.First().Items);
 
@@ -414,7 +414,7 @@ namespace EVEMon.SkillPlanner
                 string nodeName = LoadoutHelper.OrderedSlotNames[7];
 
                 // Regular item ?
-                if (!item.MarketGroup.BelongsIn(DBConstants.AmmosAndChargesMarketGroupID))
+                if (!item.MarketGroup!.BelongsIn(DBConstants.AmmosAndChargesMarketGroupID))
                 {
                     // Retrieve the tree node name for the slot
                     switch (item.FittingSlot)
@@ -431,19 +431,19 @@ namespace EVEMon.SkillPlanner
                     }
 
                     // Is it a rig?
-                    if (item.MarketGroup.BelongsIn(DBConstants.ShipModificationsMarketGroupID))
+                    if (item.MarketGroup!.BelongsIn(DBConstants.ShipModificationsMarketGroupID))
                         nodeName = LoadoutHelper.OrderedSlotNames[3];
                     // Is it a subsystem?
-                    else if (item.MarketGroup.BelongsIn(DBConstants.SubsystemsMarketGroupID))
+                    else if (item.MarketGroup!.BelongsIn(DBConstants.SubsystemsMarketGroupID))
                         nodeName = LoadoutHelper.OrderedSlotNames[4];
                     // Is it a drone?
-                    else if (item.MarketGroup.BelongsIn(DBConstants.DronesMarketGroupID))
+                    else if (item.MarketGroup!.BelongsIn(DBConstants.DronesMarketGroupID))
                         nodeName = LoadoutHelper.OrderedSlotNames[6];
 
                     // Gets or create the node for the slot
                     slotNode = !ResultsTreeView.Nodes.ContainsKey(nodeName)
                         ? ResultsTreeView.Nodes.Add(nodeName, nodeName)
-                        : ResultsTreeView.Nodes[nodeName];
+                        : ResultsTreeView.Nodes[nodeName]!;
 
                     // Add a new node
                     TreeNode itemNode = new TreeNode { Text = item.Name, Tag = item };
@@ -458,7 +458,7 @@ namespace EVEMon.SkillPlanner
                 nodeName = LoadoutHelper.OrderedSlotNames[5];
                 slotNode = !ResultsTreeView.Nodes.ContainsKey(nodeName)
                     ? ResultsTreeView.Nodes.Add(nodeName, nodeName)
-                    : ResultsTreeView.Nodes[nodeName];
+                    : ResultsTreeView.Nodes[nodeName]!;
 
                 TreeNode ammoNode = new TreeNode { Text = item.Name, Tag = item };
                 slotNode.Nodes.Add(ammoNode);

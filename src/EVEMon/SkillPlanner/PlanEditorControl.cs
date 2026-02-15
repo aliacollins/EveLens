@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -43,19 +43,19 @@ namespace EVEMon.SkillPlanner
 
         private bool m_init;
 
-        private Font m_plannedSkillFont;
-        private Font m_prerequisiteSkillFont;
+        private Font m_plannedSkillFont = null!;
+        private Font m_prerequisiteSkillFont = null!;
         private Color m_nonImmedTrainablePlanEntryColor;
         private Color m_remappingBackColor;
         private Color m_remappingForeColor;
 
-        private RemappingPoint m_previousRemappingPoint;
+        private RemappingPoint? m_previousRemappingPoint;
 
-        private Plan m_plan;
-        private Character m_character;
+        private Plan? m_plan;
+        private Character? m_character;
 
         // The ImplantsControl or the AttributesOptimizationForm
-        private IPlanOrderPluggable m_pluggable;
+        private IPlanOrderPluggable? m_pluggable;
 
         // Drag and drop
         private MouseButtons m_dragButton = MouseButtons.None;
@@ -139,7 +139,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender,EventArgs e)
         {
             m_tooltip.Dispose();
             EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
@@ -161,7 +161,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the plan represented by this editor.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -195,7 +195,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets the version of the plan as it is currently displayed.
         /// </summary>
-        internal PlanScratchpad DisplayPlan { get; private set; }
+        internal PlanScratchpad DisplayPlan { get; private set; } = null!;
 
         /// <summary>
         /// Gets the number of unique skills selected (two levels of same skill counts for one unique skill).
@@ -232,7 +232,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender,CharacterBatchEventArgs e)
         {
             if (m_character == null || !e.Characters.Contains(m_character))
                 return;
@@ -245,7 +245,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object? sender,CharacterBatchEventArgs e)
         {
             if (m_character == null || !e.Characters.Contains(m_character))
                 return;
@@ -258,7 +258,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ItemPricesUpdated(object sender, EventArgs e)
+        private void EveMonClient_ItemPricesUpdated(object? sender,EventArgs e)
         {
             UpdateStatusBar();
         }
@@ -268,7 +268,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void EveMonClient_CharacterImplantSetCollectionChanged(object sender, EventArgs e)
+        private async void EveMonClient_CharacterImplantSetCollectionChanged(object? sender,EventArgs e)
         {
             if (m_character == null)
                 return;
@@ -283,7 +283,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_PlanChanged(object sender, PlanChangedEventArgs e)
+        private void EveMonClient_PlanChanged(object? sender,PlanChangedEventArgs e)
         {
             if (e.Plan != Plan || Plan == null)
                 return;
@@ -298,7 +298,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender,EventArgs e)
         {
             if (Plan == null)
                 return;
@@ -312,7 +312,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SchedulerChanged(object sender, EventArgs e)
+        private void EveMonClient_SchedulerChanged(object? sender,EventArgs e)
         {
             if (Plan == null)
                 return;
@@ -326,7 +326,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender,EventArgs e)
         {
             if (!Visible)
                 return;
@@ -893,7 +893,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tmrAutoRefresh_Tick(object sender, EventArgs e)
+        private void tmrAutoRefresh_Tick(object? sender,EventArgs e)
         {
             PlanWindow planWindow = ParentForm as PlanWindow;
 
@@ -990,9 +990,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="o"></param>
         /// <param name="e"></param>
-        private void pluggable_Disposed(object o, EventArgs e)
+        private void pluggable_Disposed(object? o, EventArgs e)
         {
-            m_pluggable.Disposed -= pluggable_Disposed;
+            m_pluggable!.Disposed -= pluggable_Disposed;
             m_pluggable = null;
             UpdateListColumns();
         }
@@ -1054,7 +1054,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void lvSkills_ColumnWidthChanged(object? sender,ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns)
                 return;
@@ -1072,7 +1072,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbMoveUp_Click(object sender, EventArgs e)
+        private void tsbMoveUp_Click(object? sender,EventArgs e)
         {
             List<ListViewItem> items = lvSkills.Items.Cast<ListViewItem>().ToList();
 
@@ -1106,7 +1106,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbMoveDown_Click(object sender, EventArgs e)
+        private void tsbMoveDown_Click(object? sender,EventArgs e)
         {
             List<ListViewItem> items = lvSkills.Items.Cast<ListViewItem>().ToList();
 
@@ -1140,7 +1140,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void MoveToTopMenuItem_Click(object sender, EventArgs e)
+        private void MoveToTopMenuItem_Click(object? sender,EventArgs e)
         {
             // Extract the list and the selected item
             List<ListViewItem> items = lvSkills.Items.Cast<ListViewItem>().ToList();
@@ -1159,7 +1159,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_ListViewItemsDragged(object sender, EventArgs e)
+        private void lvSkills_ListViewItemsDragged(object? sender,EventArgs e)
         {
             RebuildPlanFromListViewOrder(lvSkills.Items);
         }
@@ -1288,7 +1288,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsSortPriorities_Clicked(object sender, EventArgs e)
+        private void tsSortPriorities_Clicked(object? sender,EventArgs e)
         {
             m_plan.SortingPreferences.GroupByPriority = tsSortPriorities.Checked;
             UpdateDisplayPlan();
@@ -1299,7 +1299,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void lvSkills_ColumnClick(object? sender,ColumnClickEventArgs e)
         {
             ColumnHeader column = lvSkills.Columns[e.Column];
             PlanEntrySort criteria = GetPlanSort(column);
@@ -1484,7 +1484,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender,CancelEventArgs e)
         {
             e.Cancel = !m_plan.Any();
 
@@ -1631,7 +1631,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void planGroupMenu_Click(object sender, EventArgs e)
+        private void planGroupMenu_Click(object? sender,EventArgs e)
         {
             string planGroup = ((ToolStripButton)sender).Text;
             foreach (ListViewItem item in lvSkills.Items)
@@ -1646,7 +1646,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miShowInSkillBrowser_Click(object sender, EventArgs e)
+        private void miShowInSkillBrowser_Click(object? sender,EventArgs e)
         {
             Skill skill = ((PlanEntry)lvSkills.SelectedItems[0]?.Tag)?.CharacterSkill;
 
@@ -1661,7 +1661,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miShowInSkillExplorer_Click(object sender, EventArgs e)
+        private void miShowInSkillExplorer_Click(object? sender,EventArgs e)
         {
             Skill skill = ((PlanEntry)lvSkills.SelectedItems[0]?.Tag)?.CharacterSkill;
             
@@ -1675,7 +1675,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miRemoveFromPlan_Click(object sender, EventArgs e)
+        private void miRemoveFromPlan_Click(object? sender,EventArgs e)
         {
             RemoveSelectedEntries();
         }
@@ -1686,7 +1686,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miChangePriority_Click(object sender, EventArgs e)
+        private void miChangePriority_Click(object? sender,EventArgs e)
         {
             IList<PlanEntry> entries = SelectedEntries.ToList();
             using (PlanPrioritiesEditorWindow form = new PlanPrioritiesEditorWindow())
@@ -1750,7 +1750,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miChangeNote_Click(object sender, EventArgs e)
+        private void miChangeNote_Click(object? sender,EventArgs e)
         {
             IList<PlanEntry> entries = SelectedEntries.ToList();
             if (!entries.Any())
@@ -1785,7 +1785,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miCopyToNewPlan_Click(object sender, EventArgs e)
+        private void miCopyToNewPlan_Click(object? sender,EventArgs e)
         {
             IList<PlanEntry> entries = SelectedEntries.ToList();
             if (!entries.Any())
@@ -1820,7 +1820,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miMarkOwned_Click(object sender, EventArgs e)
+        private void miMarkOwned_Click(object? sender,EventArgs e)
         {
             bool unowned = SelectedEntries.All(x => !x.CharacterSkill.IsOwned);
 
@@ -1852,7 +1852,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miChangeToLevel_Click(object sender, EventArgs e)
+        private void miChangeToLevel_Click(object? sender,EventArgs e)
         {
             ToolStripMenuItem menu = sender as ToolStripMenuItem;
 
@@ -1875,7 +1875,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miCopySelectedToClipboard_Click(object sender, EventArgs e)
+        private void miCopySelectedToClipboard_Click(object? sender,EventArgs e)
         {
             // Create a new plan
             Plan newPlan = new Plan(m_character);
@@ -1918,7 +1918,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_DragDrop(object sender, DragEventArgs e)
+        private void lvSkills_DragDrop(object? sender,DragEventArgs e)
         {
             try
             {
@@ -1970,7 +1970,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_DragOver(object sender, DragEventArgs e)
+        private void lvSkills_DragOver(object? sender,DragEventArgs e)
         {
             // Checks there is a dragged skill
             Skill dragSkill = GetDraggingSkill(e);
@@ -2000,7 +2000,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_DragEnter(object sender, DragEventArgs e)
+        private void lvSkills_DragEnter(object? sender,DragEventArgs e)
         {
             // Sets up the drag button
             SetDragMouseButton(e);
@@ -2016,7 +2016,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_DragLeave(object sender, EventArgs e)
+        private void lvSkills_DragLeave(object? sender,EventArgs e)
         {
             m_dragButton = MouseButtons.None;
             lvSkills.ClearDropMarker();
@@ -2080,7 +2080,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void lvSkills_MouseDoubleClick(object? sender,MouseEventArgs e)
         {
             if (lvSkills.SelectedItems.Count != 1)
                 return;
@@ -2111,7 +2111,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_KeyDown(object sender, KeyEventArgs e)
+        private void lvSkills_KeyDown(object? sender,KeyEventArgs e)
         {
             switch (e.KeyCode)
             {
@@ -2139,7 +2139,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_SelectedIndexChanged(object sender, EventArgs e)
+        private void lvSkills_SelectedIndexChanged(object? sender,EventArgs e)
         {
             if (tmrSelect.Enabled)
                 return;
@@ -2152,7 +2152,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tmrSelect_Tick(object sender, EventArgs e)
+        private void tmrSelect_Tick(object? sender,EventArgs e)
         {
             tmrSelect.Stop();
             OnSelectionChanged();
@@ -2241,7 +2241,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_ItemHover(object sender, ListViewItemMouseHoverEventArgs e)
+        private void lvSkills_ItemHover(object? sender,ListViewItemMouseHoverEventArgs e)
         {
             if (e.Item == null)
                 return;
@@ -2275,7 +2275,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvSkills_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void lvSkills_ColumnReordered(object? sender,ColumnReorderedEventArgs e)
         {
             m_columnsOrderChanged = true;
         }
@@ -2285,7 +2285,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void lvSkills_MouseDown(object sender, MouseEventArgs e)
+        private void lvSkills_MouseDown(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
                 return;
@@ -2298,7 +2298,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lvSkills_MouseMove(object sender, MouseEventArgs e)
+        private void lvSkills_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -2326,7 +2326,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void lvSkills_MouseLeave(object sender, EventArgs e)
+        private void lvSkills_MouseLeave(object? sender,EventArgs e)
         {
             m_tooltip.Hide();
         }
@@ -2342,7 +2342,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void toggleSkillsPanelButton_Click(object sender, EventArgs e)
+        private void toggleSkillsPanelButton_Click(object? sender,EventArgs e)
         {
             pscPlan.Panel2Collapsed = !pscPlan.Panel2Collapsed;
             tsbToggleSkills.Checked = !pscPlan.Panel2Collapsed;
@@ -2355,7 +2355,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbToggleRemapping_Click(object sender, EventArgs e)
+        private void tsbToggleRemapping_Click(object? sender,EventArgs e)
         {
             if (lvSkills.SelectedIndices.Count == 0)
                 return;
@@ -2396,7 +2396,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miInjectBooster_Click(object sender, EventArgs e)
+        private void miInjectBooster_Click(object? sender,EventArgs e)
         {
             if (lvSkills.SelectedIndices.Count == 0)
                 return;
@@ -2439,7 +2439,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbColorKey_Click(object sender, EventArgs e)
+        private void tsbColorKey_Click(object? sender,EventArgs e)
         {
             pFooter.Visible = !pFooter.Visible;
             tsbColorKey.Checked = pFooter.Visible;
@@ -2451,7 +2451,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void columnSettingsMenuItem_Click(object sender, EventArgs e)
+        private void columnSettingsMenuItem_Click(object? sender,EventArgs e)
         {
             // Update the settings from the current columns
             using (PlanColumnSelectWindow dialog = new PlanColumnSelectWindow(ExportColumnSettings()))
@@ -2470,7 +2470,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void autoSizeColumnsMenuItem_Click(object sender, EventArgs e)
+        private void autoSizeColumnsMenuItem_Click(object? sender,EventArgs e)
         {
             foreach (ColumnHeader column in lvSkills.Columns.Cast<ColumnHeader>())
             {
@@ -2484,7 +2484,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void cbChooseImplantSet_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cbChooseImplantSet_SelectedIndexChanged(object? sender,EventArgs e)
         {
             if (cbChooseImplantSet.SelectedIndex == m_lastImplantSetIndex)
                 return;
@@ -2500,7 +2500,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbChooseImplantSet_DropDown(object sender, EventArgs e)
+        private void cbChooseImplantSet_DropDown(object? sender,EventArgs e)
         {
             UpdateImplantSetList();
         }
@@ -2510,7 +2510,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cbChooseImplantSet_DropDownClosed(object sender, EventArgs e)
+        private void cbChooseImplantSet_DropDownClosed(object? sender,EventArgs e)
         {
             if (cbChooseImplantSet.SelectedIndex == -1)
                 cbChooseImplantSet.SelectedIndex = m_lastImplantSetIndex;

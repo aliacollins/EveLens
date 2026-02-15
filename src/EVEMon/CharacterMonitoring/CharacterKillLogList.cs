@@ -62,8 +62,8 @@ namespace EVEMon.CharacterMonitoring
 
         #region ListView Fields
 
-        private ColumnHeader m_sortCriteria;
-        private KillLog m_selectedKillLog;
+        private ColumnHeader m_sortCriteria = null!;
+        private KillLog m_selectedKillLog = null!;
 
         private string m_textFilter = string.Empty;
         private bool m_sortAscending;
@@ -102,7 +102,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets or sets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the text filter.
@@ -126,7 +126,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>Not used anywhere; Only to implement IListView</remarks>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public Enum Grouping { get; set; }
+        public Enum Grouping { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the settings used for columns.
@@ -134,7 +134,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>Not used anywhere; Only to implement IListView</remarks>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public IEnumerable<IColumnSettings> Columns { get; set; }
+        public IEnumerable<IColumnSettings> Columns { get; set; } = null!;
 
         #endregion
 
@@ -163,7 +163,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharacterKillLogUpdated -= EveMonClient_CharacterKillLogUpdated;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -308,7 +308,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvKillLog.SelectedItems.Count > 0 ?
-                lvKillLog.SelectedItems[0].Tag.GetHashCode() : 0;
+                lvKillLog!.SelectedItems[0]!.Tag.GetHashCode() : 0;
 
             lvKillLog.BeginUpdate();
             try
@@ -342,7 +342,7 @@ namespace EVEMon.CharacterMonitoring
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvKillLog.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                     {
                         lvItem.Selected = true;
                     }
@@ -412,7 +412,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvKillLog.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -492,13 +492,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbKillLog_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbKillLog_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbKillLog.Items.Count)
                 return;
 
             object item = lbKillLog.Items[e.Index];
-            KillLog kill = item as KillLog;
+            KillLog? kill = item as KillLog;
             if (kill != null)
                 DrawItem(kill, e);
             else
@@ -510,7 +510,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbKillLog_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbKillLog_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -590,13 +590,13 @@ namespace EVEMon.CharacterMonitoring
             Graphics g = e.Graphics;
 
             // Texts
-            string victimNameText = killLog.Victim.Name;
+            string? victimNameText = killLog.Victim.Name;
             string killTimeSinceText = killLog.TimeSinceKill
                 .ToDescriptiveText(DescriptiveTextOptions.IncludeCommas |
                                    DescriptiveTextOptions.SpaceText |
                                    DescriptiveTextOptions.FullText);
             string killTimeText = $"({killTimeSinceText} ago)";
-            string victimNameCorpAndAllianceName = GetText(killLog.Victim.CorporationName, killLog.Victim.AllianceName);
+            string victimNameCorpAndAllianceName = GetText(killLog.Victim.CorporationName!, killLog.Victim.AllianceName!);
             string whatAndWhereInfo = $"{killLog.Victim.ShipTypeName}, " +
                                       $"{killLog.SolarSystem?.Name}, " +
                                       $"{killLog.SolarSystem?.Constellation?.Region?.Name}, " +
@@ -652,8 +652,8 @@ namespace EVEMon.CharacterMonitoring
                                    DescriptiveTextOptions.SpaceText |
                                    DescriptiveTextOptions.FullText);
             string killTimeText = $"({killTimeSinceText} ago)";
-            string finalBlowAttackerCorpAndAllianceName = GetText(killLog.FinalBlowAttacker.CorporationName,
-                killLog.FinalBlowAttacker.AllianceName);
+            string finalBlowAttackerCorpAndAllianceName = GetText(killLog.FinalBlowAttacker.CorporationName!,
+                killLog.FinalBlowAttacker.AllianceName!);
             string finalBlowAttackerShipAndModuleName = GetText(killLog.FinalBlowAttacker.ShipTypeName,
                 killLog.FinalBlowAttacker.WeaponTypeName);
 
@@ -757,7 +757,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void kill_KillLogVictimShipImageUpdated(object sender, EventArgs e)
+        private void kill_KillLogVictimShipImageUpdated(object? sender, EventArgs e)
         {
             // Force to redraw
             lbKillLog.Invalidate();
@@ -768,7 +768,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbKillLog_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void lbKillLog_MouseDoubleClick(object? sender, MouseEventArgs e)
         {
             ShowKillDetails();
         }
@@ -778,7 +778,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbKillLog_MouseWheel(object sender, MouseEventArgs e)
+        private void lbKillLog_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (e.Delta == 0)
                 return;
@@ -794,7 +794,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
 
                 // Going up
                 if (direction == Math.Abs(direction))
@@ -835,7 +835,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbKillLog_MouseDown(object sender, MouseEventArgs e)
+        private void lbKillLog_MouseDown(object? sender, MouseEventArgs e)
         {
             int index = lbKillLog.IndexFromPoint(e.Location);
             if (index < 0 || index >= lbKillLog.Items.Count)
@@ -853,7 +853,7 @@ namespace EVEMon.CharacterMonitoring
             }
 
             object item = lbKillLog.Items[index];
-            string killsGroup = item as string;
+            string? killsGroup = item as string;
 
             if (killsGroup != null)
             {
@@ -894,7 +894,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbKillLog_MouseMove(object sender, MouseEventArgs e)
+        private void lbKillLog_MouseMove(object? sender, MouseEventArgs e)
         {
             for (int i = 0; i < lbKillLog.Items.Count; i++)
             {
@@ -915,7 +915,7 @@ namespace EVEMon.CharacterMonitoring
                 toolTip.Active = false;
 
                 object item = lbKillLog.Items[i];
-                m_selectedKillLog = item as KillLog;
+                m_selectedKillLog = (item as KillLog)!;
 
                 lbKillLog.Cursor = m_selectedKillLog != null ? CustomCursors.ContextMenu : Cursors.Default;
 
@@ -931,7 +931,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void lvKillLog_MouseDown(object sender, MouseEventArgs e)
+        private void lvKillLog_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
                 return;
@@ -944,12 +944,12 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void lvKillLog_MouseMove(object sender, MouseEventArgs e)
+        private void lvKillLog_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
 
-            m_selectedKillLog = lvKillLog.GetItemAt(e.X, e.Y)?.Tag as KillLog;
+            m_selectedKillLog = (lvKillLog.GetItemAt(e.X, e.Y)?.Tag as KillLog)!;
 
             lvKillLog.Cursor = m_selectedKillLog != null ? CustomCursors.ContextMenu : Cursors.Default;
         }
@@ -959,7 +959,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvKillLog_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void lvKillLog_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
             ColumnHeader column = lvKillLog.Columns[e.Column];
             if (m_sortCriteria == column)
@@ -979,7 +979,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void lvKillLog_DoubleClick(object sender, EventArgs e)
+        private void lvKillLog_DoubleClick(object? sender, EventArgs e)
         {
             ShowKillDetails();
         }
@@ -989,7 +989,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
+        private void contextMenuStrip_Opening(object? sender, CancelEventArgs e)
         {
             e.Cancel = m_selectedKillLog == null;
         }
@@ -999,7 +999,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void showDetailsMenuItem_Click(object sender, EventArgs e)
+        private void showDetailsMenuItem_Click(object? sender, EventArgs e)
         {
             ShowKillDetails();
         }
@@ -1009,17 +1009,17 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInShipBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInShipBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             if (m_selectedKillLog == null)
                 return;
 
-            Ship ship = StaticItems.GetItemByID(m_selectedKillLog.Victim.ShipTypeID) as Ship;
+            Ship? ship = StaticItems.GetItemByID(m_selectedKillLog.Victim.ShipTypeID) as Ship;
 
             if (ship == null)
                 return;
 
-            PlanWindow.ShowPlanWindow(Character).ShowShipInBrowser(ship);
+            PlanWindow.ShowPlanWindow(Character)!.ShowShipInBrowser(ship);
         }
 
         /// <summary>
@@ -1027,7 +1027,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void copyKillInfoMenuItem_Click(object sender, EventArgs e)
+        private void copyKillInfoMenuItem_Click(object? sender, EventArgs e)
         {
             KillLogExporter.CopyKillInfoToClipboard(m_selectedKillLog);
         }
@@ -1047,10 +1047,10 @@ namespace EVEMon.CharacterMonitoring
         /// </returns>
         private static bool IsTextMatching(KillLog x, string text) => string.IsNullOrEmpty(text) ||
                x.Victim.ShipTypeName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Victim.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Victim.CorporationName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Victim.AllianceName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Victim.FactionName.ToUpperInvariant().Contains(text, ignoreCase: true);
+               x!.Victim!.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
+               x!.Victim!.CorporationName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
+               x!.Victim!.AllianceName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
+               x!.Victim!.FactionName.ToUpperInvariant().Contains(text, ignoreCase: true);
 
         /// <summary>
         /// Gets the text.
@@ -1159,7 +1159,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterKillLogUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterKillLogUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -1172,7 +1172,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateKillLogView();
         }
@@ -1183,7 +1183,7 @@ namespace EVEMon.CharacterMonitoring
         /// <remarks>In case 'SafeForWork' gets enabled.</remarks>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateKillLogView();
         }

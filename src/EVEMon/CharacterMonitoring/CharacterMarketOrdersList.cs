@@ -34,7 +34,7 @@ namespace EVEMon.CharacterMonitoring
         private readonly List<MarketOrderColumnSettings> m_columns = new List<MarketOrderColumnSettings>();
         private readonly List<MarketOrder> m_list = new List<MarketOrder>();
 
-        private InfiniteDisplayToolTip m_tooltip;
+        private InfiniteDisplayToolTip m_tooltip = null!;
         private MarketOrderGrouping m_grouping;
         private MarketOrderColumn m_sortCriteria;
         private IssuedFor m_showIssuedFor;
@@ -116,7 +116,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="lvOrders"/> is visible.
@@ -207,7 +207,7 @@ namespace EVEMon.CharacterMonitoring
                 List<MarketOrderColumnSettings> newColumns = new List<MarketOrderColumnSettings>();
                 foreach (ColumnHeader header in lvOrders.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
                 {
-                    MarketOrderColumnSettings columnSetting = m_columns.First(x => x.Column == (MarketOrderColumn)header.Tag);
+                    MarketOrderColumnSettings columnSetting = m_columns.First(x => x.Column == (MarketOrderColumn)header.Tag!);
                     if (columnSetting.Width > -1)
                         columnSetting.Width = header.Width;
                     newColumns.Add(columnSetting);
@@ -258,7 +258,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             m_tooltip.Dispose();
 
@@ -285,9 +285,9 @@ namespace EVEMon.CharacterMonitoring
             lvOrders.Visible = false;
             marketExpPanelControl.Visible = false;
 
-            Orders = Character?.MarketOrders;
+            Orders = Character?.MarketOrders!;
             Columns = Settings.UI.MainWindow.MarketOrders.Columns;
-            Grouping = Character?.UISettings.OrdersGroupBy;
+            Grouping = Character?.UISettings.OrdersGroupBy!;
             TextFilter = string.Empty;
 
             UpdateColumns();
@@ -380,7 +380,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvOrders.SelectedItems.Count > 0
-                ? lvOrders.SelectedItems[0].Tag.GetHashCode()
+                ? lvOrders!.SelectedItems[0]!.Tag.GetHashCode()
                 : 0;
 
             lvOrders.BeginUpdate();
@@ -403,7 +403,7 @@ namespace EVEMon.CharacterMonitoring
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvOrders.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                     {
                         lvItem.Selected = true;
                     }
@@ -469,12 +469,12 @@ namespace EVEMon.CharacterMonitoring
                     break;
                 case MarketOrderGrouping.ItemType:
                     IOrderedEnumerable<IGrouping<MarketGroup, MarketOrder>> groups4 =
-                        orders.GroupBy(x => x.Item.MarketGroup).OrderBy(x => x.Key.Name);
+                        orders.GroupBy(x => x.Item.MarketGroup)!.OrderBy(x => x!.Key!.Name)!;
                     UpdateContent(groups4);
                     break;
                 case MarketOrderGrouping.ItemTypeDesc:
                     IOrderedEnumerable<IGrouping<MarketGroup, MarketOrder>> groups5 =
-                        orders.GroupBy(x => x.Item.MarketGroup).OrderByDescending(x => x.Key.Name);
+                        orders.GroupBy(x => x.Item.MarketGroup)!.OrderByDescending(x => x!.Key!.Name)!;
                     UpdateContent(groups5);
                     break;
                 case MarketOrderGrouping.Location:
@@ -519,7 +519,7 @@ namespace EVEMon.CharacterMonitoring
                 else if (group.Key is DateTime)
                     groupText = ((DateTime)(object)group.Key).ToShortDateString();
                 else
-                    groupText = group.Key.ToString();
+                    groupText = group!.Key!.ToString()!;
 
                 ListViewGroup listGroup = new ListViewGroup(groupText);
                 lvOrders.Groups.Add(listGroup);
@@ -563,7 +563,7 @@ namespace EVEMon.CharacterMonitoring
             // Creates the subitems
             for (int i = 0; i < lvOrders.Columns.Count; i++)
             {
-                SetColumn(order, item.SubItems[i], (MarketOrderColumn)lvOrders.Columns[i].Tag);
+                SetColumn(order, item.SubItems[i], (MarketOrderColumn)lvOrders.Columns[i]!.Tag!);
             }
 
             // Tooltip
@@ -613,7 +613,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvOrders.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -640,7 +640,7 @@ namespace EVEMon.CharacterMonitoring
         {
             foreach (ColumnHeader columnHeader in lvOrders.Columns.Cast<ColumnHeader>())
             {
-                MarketOrderColumn column = (MarketOrderColumn)columnHeader.Tag;
+                MarketOrderColumn column = (MarketOrderColumn)columnHeader.Tag!;
                 if (m_sortCriteria == column)
                     columnHeader.ImageIndex = m_sortAscending ? 0 : 1;
                 else
@@ -678,7 +678,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="column"></param>
         private static void SetColumn(MarketOrder order, ListViewItem.ListViewSubItem item, MarketOrderColumn column)
         {
-            BuyOrder buyOrder = order as BuyOrder;
+            BuyOrder? buyOrder = order as BuyOrder;
 
             switch (column)
             {
@@ -703,7 +703,7 @@ namespace EVEMon.CharacterMonitoring
                 item.Text = order.Item.ToString();
                 break;
             case MarketOrderColumn.ItemType:
-                item.Text = order.Item.MarketGroup.Name;
+                item!.Text = order!.Item!.MarketGroup.Name;
                 break;
             case MarketOrderColumn.Location:
                 item.Text = order.Station.FullLocation;
@@ -821,7 +821,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvOrders);
         }
@@ -831,7 +831,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void listView_ColumnReordered(object? sender, ColumnReorderedEventArgs e)
         {
             m_columnsChanged = true;
         }
@@ -841,7 +841,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void listView_ColumnWidthChanged(object? sender, ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns || m_columns.Count <= e.ColumnIndex)
                 return;
@@ -858,9 +858,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void listView_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void listView_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
-            MarketOrderColumn column = (MarketOrderColumn)lvOrders.Columns[e.Column].Tag;
+            MarketOrderColumn column = (MarketOrderColumn)lvOrders.Columns![e.Column].Tag!;
             if (m_sortCriteria == column)
                 m_sortAscending = !m_sortAscending;
             else
@@ -882,7 +882,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseDown(object sender, MouseEventArgs e)
+        private void listView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -895,14 +895,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseMove(object sender, MouseEventArgs e)
+        private void listView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
 
             lvOrders.Cursor = CustomCursors.ContextMenu;
 
-            ListViewItem item = lvOrders.GetItemAt(e.Location.X, e.Location.Y);
+            ListViewItem? item = lvOrders.GetItemAt(e.Location.X, e.Location.Y);
             if (item == null)
             {
                 m_tooltip.Hide();
@@ -917,7 +917,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void listView_MouseLeave(object sender, EventArgs e)
+        private void listView_MouseLeave(object? sender, EventArgs e)
         {
             m_tooltip.Hide();
         }
@@ -927,7 +927,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
             bool visible = lvOrders.SelectedItems.Count != 0;
 
@@ -937,17 +937,17 @@ namespace EVEMon.CharacterMonitoring
             if (!visible)
                 return;
 
-            MarketOrder order = lvOrders.SelectedItems[0]?.Tag as MarketOrder;
+            MarketOrder? order = lvOrders.SelectedItems[0]?.Tag as MarketOrder;
 
             if (order?.Item == null)
                 return;
 
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(order.Item.ID);
-            Ship ship = order.Item as Ship;
+            Ship? ship = order.Item as Ship;
             Skill skill = Character.Skills[order.Item.ID];
 
             if (skill == Skill.UnknownSkill)
-                skill = null;
+                skill = null!;
 
             string text = ship != null ? "Ship" : blueprint != null ? "Blueprint" : skill != null ? "Skill" : "Item";
 
@@ -959,30 +959,30 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
-            MarketOrder order = lvOrders.SelectedItems[0]?.Tag as MarketOrder;
+            MarketOrder? order = lvOrders.SelectedItems[0]?.Tag as MarketOrder;
 
             if (order?.Item == null)
                 return;
 
-            Ship ship = order.Item as Ship;
+            Ship? ship = order.Item as Ship;
             Blueprint blueprint = StaticBlueprints.GetBlueprintByID(order.Item.ID);
             Skill skill = Character.Skills[order.Item.ID];
 
             if (skill == Skill.UnknownSkill)
-                skill = null;
+                skill = null!;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(Character);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(Character);
 
             if (ship != null)
-                planWindow.ShowShipInBrowser(ship);
+                planWindow!.ShowShipInBrowser(ship);
             else if (blueprint != null)
-                planWindow.ShowBlueprintInBrowser(blueprint);
+                planWindow!.ShowBlueprintInBrowser(blueprint);
             else if (skill != null)
-                planWindow.ShowSkillInBrowser(skill);
+                planWindow!.ShowSkillInBrowser(skill);
             else
-                planWindow.ShowItemInBrowser(order.Item);
+                planWindow!.ShowItemInBrowser(order.Item);
         }
 
         # endregion
@@ -995,7 +995,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible || !m_columnsChanged)
                 return;
@@ -1014,7 +1014,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_MarketOrdersUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_MarketOrdersUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -1028,7 +1028,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
         {
             if (Character == null)
                 return;
@@ -1400,7 +1400,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void OnExpandablePanelMouseClick(object sender, MouseEventArgs e)
+        private void OnExpandablePanelMouseClick(object? sender, MouseEventArgs e)
         {
             marketExpPanelControl.OnMouseClick(sender, e);
         }
@@ -1422,7 +1422,7 @@ namespace EVEMon.CharacterMonitoring
             /// Gets or sets the text.
             /// </summary>
             /// <value>The text.</value>
-            public string Text { get; set; }
+            public string Text { get; set; } = null!;
         }
 
         #endregion

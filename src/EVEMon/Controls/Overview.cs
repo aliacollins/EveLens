@@ -17,7 +17,7 @@ namespace EVEMon.Controls
 {
     public partial class Overview : UserControl
     {
-        public event EventHandler<CharacterChangedEventArgs> CharacterClicked;
+        public event EventHandler<CharacterChangedEventArgs>? CharacterClicked;
 
         private bool m_grouping;
         private bool m_safeForWork;
@@ -84,7 +84,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.MonitoredCharacterCollectionChanged -= EveMonClient_MonitoredCharacterCollectionChanged;
             EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
@@ -137,7 +137,7 @@ namespace EVEMon.Controls
             }
 
             // Collect the existing overview items
-            var items = overviewItems.ToDictionary(page => (Character)page.Tag);
+            var items = overviewItems.ToDictionary(page => (Character)page.Tag!);
 
             // Create the order we will layout the controls
             List<Character> characters = new List<Character>();
@@ -155,14 +155,14 @@ namespace EVEMon.Controls
             foreach (Character character in characters)
             {
                 // Retrieve the current overview item, or null if we're past the limits
-                OverviewItem currentOverviewItem = index < overviewItems.Count ? overviewItems[index] : null;
+                OverviewItem? currentOverviewItem = index < overviewItems.Count ? overviewItems[index] : null;
 
                 // Does the overview item match with the character ?
-                if ((Character)currentOverviewItem?.Tag != character)
+                if ((Character?)currentOverviewItem?.Tag != character)
                 {
                     // Retrieve the overview item when it was previously created
                     // Is the overview item later in the collection ?
-                    OverviewItem overviewItem;
+                    OverviewItem? overviewItem;
                     if (items.TryGetValue(character, out overviewItem))
                         overviewItems.Remove(overviewItem); // Remove the overview item from old location
                     else
@@ -232,7 +232,7 @@ namespace EVEMon.Controls
         private OverviewItem GetOverviewItem(Character character)
         {
             OverviewItem overviewItem;
-            OverviewItem tempOverviewItem = null;
+            OverviewItem? tempOverviewItem = null;
             try
             {
                 // Creates a new page
@@ -383,7 +383,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_MonitoredCharacterCollectionChanged(object sender, EventArgs e)
+        private void EveMonClient_MonitoredCharacterCollectionChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -393,7 +393,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             UpdateContent();
         }
@@ -403,7 +403,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             if (labelLoading.Visible)
             {
@@ -427,9 +427,9 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void item_Click(object sender, EventArgs e)
+        private void item_Click(object? sender, EventArgs e)
         {
-            OverviewItem item = sender as OverviewItem;
+            OverviewItem? item = sender as OverviewItem;
 
             if (item != null)
                 CharacterClicked?.ThreadSafeInvoke(this, new CharacterChangedEventArgs(item.Character));

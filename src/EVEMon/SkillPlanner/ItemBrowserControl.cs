@@ -36,7 +36,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(PropertiesList, true);
         }
@@ -46,7 +46,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void PropertiesList_MouseDown(object sender, MouseEventArgs e)
+        private void PropertiesList_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -59,7 +59,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void PropertiesList_MouseMove(object sender, MouseEventArgs e)
+        private void PropertiesList_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -72,10 +72,10 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void propertiesList_DoubleClick(object sender, EventArgs e)
+        private void propertiesList_DoubleClick(object? sender, EventArgs e)
         {
             // Is it a skill?
-            Skill skill = PropertiesList.FocusedItem?.Tag as Skill;
+            Skill? skill = PropertiesList.FocusedItem?.Tag as Skill;
 
             if (skill != null)
             {
@@ -84,7 +84,7 @@ namespace EVEMon.SkillPlanner
             }
 
             // Is it an item?
-            Item item = PropertiesList.FocusedItem?.Tag as Item;
+            Item? item = PropertiesList.FocusedItem?.Tag as Item;
 
             if (item != null)
                 PlanWindow.ShowPlanWindow(SelectControl.Character, Plan)?.ShowItemInBrowser(item);
@@ -95,14 +95,14 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void ShipAttributeContextMenu_Opening(object sender, CancelEventArgs e)
+        private void ShipAttributeContextMenu_Opening(object? sender, CancelEventArgs e)
         {
             // Is it a skill?
-            Skill skill = PropertiesList.FocusedItem?.Tag as Skill;
+            Skill? skill = PropertiesList.FocusedItem?.Tag as Skill;
             showInSkillBrowser.Visible = skill != null;
 
             // Is it an item?
-            Item item = PropertiesList.FocusedItem?.Tag as Item;
+            Item? item = PropertiesList.FocusedItem?.Tag as Item;
             showInItemBrowser.Visible = item != null;
 
             showInMenuSeparator.Visible = skill != null || item != null;

@@ -14,7 +14,7 @@ namespace EVEMon.ImplantControls
         private const TextFormatFlags TooltipFlags =
             TextFormatFlags.WordBreak | TextFormatFlags.Left | TextFormatFlags.EndEllipsis;
 
-        private Implant m_implant;
+        private Implant m_implant = null!;
         private readonly Font m_toolTipFont = FontFactory.GetFont("Tahoma", 8.25f);
         private readonly Font m_titleFont = FontFactory.GetFont("Tahoma", 9.75f, FontStyle.Bold);
         private const int ToolTipMargin = 5;

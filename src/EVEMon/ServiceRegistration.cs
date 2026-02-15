@@ -16,7 +16,7 @@ namespace EVEMon
     /// </remarks>
     internal static class ServiceRegistration
     {
-        private static IServiceProvider s_serviceProvider;
+        private static IServiceProvider s_serviceProvider = null!;
 
         /// <summary>
         /// Gets the application's service provider.
@@ -53,7 +53,7 @@ namespace EVEMon
             if (s_serviceProvider is IDisposable disposable)
                 disposable.Dispose();
 
-            s_serviceProvider = null;
+            s_serviceProvider = null!;
         }
     }
 }

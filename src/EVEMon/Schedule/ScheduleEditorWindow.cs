@@ -19,7 +19,7 @@ namespace EVEMon.Schedule
         private const int DaysOfWeek = 7;
 
         private DateTime m_currentDate = DateTime.Now;
-        private List<ScheduleEntry> m_lbEntriesData;
+        private List<ScheduleEntry> m_lbEntriesData = null!;
 
         /// <summary>
         /// Constructor
@@ -45,7 +45,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ScheduleEditorWindow_Load(object sender, EventArgs e)
+        private void ScheduleEditorWindow_Load(object? sender, EventArgs e)
         {
             UpdateEntries();
 
@@ -92,7 +92,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SchedulerChanged(object sender, EventArgs e)
+        private void EveMonClient_SchedulerChanged(object? sender, EventArgs e)
         {
             UpdateEntries();
         }
@@ -144,7 +144,7 @@ namespace EVEMon.Schedule
             sb.AppendLine($"Title: {temp.Title}");
 
             // Simple entry ?
-            SimpleScheduleEntry simpleEntry = temp as SimpleScheduleEntry;
+            SimpleScheduleEntry? simpleEntry = temp as SimpleScheduleEntry;
             if (simpleEntry != null)
             {
                 sb
@@ -252,7 +252,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void calControl_MouseLeave(object sender, EventArgs e)
+        private void calControl_MouseLeave(object? sender, EventArgs e)
         {
             toolTip.Active = false;
         }
@@ -262,7 +262,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void calControl_MouseEnter(object sender, EventArgs e)
+        private void calControl_MouseEnter(object? sender, EventArgs e)
         {
             toolTip.Active = false;
         }
@@ -272,7 +272,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void calControl_MouseDown(object sender, MouseEventArgs e)
+        private void calControl_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -285,7 +285,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void calControl_MouseMove(object sender, MouseEventArgs e)
+        private void calControl_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -300,7 +300,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="DaySelectedEventArgs"/> instance containing the event data.</param>
-        private void calControl_DayDoubleClicked(object sender, DaySelectedEventArgs e)
+        private void calControl_DayDoubleClicked(object? sender, DaySelectedEventArgs e)
         {
             AddScheduleEntry(e.DateTime);
         }
@@ -310,7 +310,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="DaySelectedEventArgs"/> instance containing the event data.</param>
-        private void calControl_DayClicked(object sender, DaySelectedEventArgs e)
+        private void calControl_DayClicked(object? sender, DaySelectedEventArgs e)
         {
             UpdateDateTimeControls(e.DateTime);
 
@@ -358,7 +358,7 @@ namespace EVEMon.Schedule
             // Add "Edit" menus for every schedule on this day
             foreach (ScheduleEntry entry in Scheduler.Entries.Where(x => x.IsToday(datetime)))
             {
-                ToolStripItem tempItem = null;
+                ToolStripItem? tempItem = null;
                 try
                 {
                     tempItem = new ToolStripMenuItem();
@@ -399,7 +399,7 @@ namespace EVEMon.Schedule
                 DateTime to = datetime;
 
                 // Simple entry ?
-                SimpleScheduleEntry simpleEntry = entry as SimpleScheduleEntry;
+                SimpleScheduleEntry? simpleEntry = entry as SimpleScheduleEntry;
                 if (simpleEntry != null)
                 {
                     from = simpleEntry.StartDate;
@@ -468,21 +468,21 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void editMenuItem_Click(object sender, EventArgs e)
+        private static void editMenuItem_Click(object? sender, EventArgs e)
         {
-            ToolStripMenuItem menu = (ToolStripMenuItem)sender;
-            ScheduleEntry entry = (ScheduleEntry)menu.Tag;
+            ToolStripMenuItem? menu = sender as ToolStripMenuItem;
+            ScheduleEntry? entry = menu!.Tag as ScheduleEntry;
 
             // Allow the user to edit the entry
             using (EditScheduleEntryWindow f = new EditScheduleEntryWindow())
             {
-                f.ScheduleEntry = entry;
+                f.ScheduleEntry = entry!;
                 DialogResult dr = f.ShowDialog();
                 if (dr == DialogResult.Cancel)
                     return;
 
-                Scheduler.Remove(entry);
-                Scheduler.Add(f.ScheduleEntry);
+                Scheduler.Remove(entry!);
+                Scheduler.Add(f.ScheduleEntry!);
             }
         }
 
@@ -491,10 +491,10 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void newEntryMenuItem_Click(object sender, EventArgs e)
+        private void newEntryMenuItem_Click(object? sender, EventArgs e)
         {
-            ToolStripMenuItem menu = (ToolStripMenuItem)sender;
-            DateTime datetime = (DateTime)menu.Tag;
+            ToolStripMenuItem? menu = sender as ToolStripMenuItem;
+            DateTime datetime = (DateTime)menu!.Tag!;
             AddScheduleEntry(datetime);
         }
 
@@ -526,7 +526,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbDeleteEntry_Click(object sender, EventArgs e)
+        private void tsbDeleteEntry_Click(object? sender, EventArgs e)
         {
             if (lbEntries.SelectedIndex != -1)
                 RemoveSelectedEntry();
@@ -537,7 +537,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbClearExpired_Click(object sender, EventArgs e)
+        private void tsbClearExpired_Click(object? sender, EventArgs e)
         {
             Scheduler.ClearExpired();
 
@@ -551,7 +551,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbEntries_SelectedIndexChanged(object sender, EventArgs e)
+        private void lbEntries_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (lbEntries.SelectedIndex == -1)
             {
@@ -567,7 +567,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbEntries_DoubleClick(object sender, EventArgs e)
+        private void lbEntries_DoubleClick(object? sender, EventArgs e)
         {
             if (lbEntries.SelectedIndex == -1)
                 return;
@@ -593,7 +593,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void addEntryMenuItem_Click(object sender, EventArgs e)
+        private void addEntryMenuItem_Click(object? sender, EventArgs e)
         {
             using (EditScheduleEntryWindow f = new EditScheduleEntryWindow())
             {
@@ -610,7 +610,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nudYear_ValueChanged(object sender, EventArgs e)
+        private void nudYear_ValueChanged(object? sender, EventArgs e)
         {
             int oldyearnum = m_currentDate.Year;
             m_currentDate = m_currentDate.AddYears((int)nudYear.Value - m_currentDate.Year);
@@ -632,7 +632,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nudDay_ValueChanged(object sender, EventArgs e)
+        private void nudDay_ValueChanged(object? sender, EventArgs e)
         {
             bool donex = false;
             bool doney = false;
@@ -688,7 +688,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void nudMonth_ValueChanged(object sender, EventArgs e)
+        private void nudMonth_ValueChanged(object? sender, EventArgs e)
         {
             if (nudMonth.SelectedIndex == nudMonth.Items.Count - 1 && nudYear.Value == nudYear.Minimum)
                 nudMonth.SelectedIndex = nudMonth.Items.Count - 2;
@@ -714,7 +714,7 @@ namespace EVEMon.Schedule
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.KeyEventArgs"/> instance containing the event data.</param>
-        private void lbEntries_KeyDown(object sender, KeyEventArgs e)
+        private void lbEntries_KeyDown(object? sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
             {

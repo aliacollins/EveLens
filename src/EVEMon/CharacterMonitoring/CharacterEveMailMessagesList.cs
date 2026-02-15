@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -76,7 +76,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the text filter.
@@ -151,7 +151,7 @@ namespace EVEMon.CharacterMonitoring
                 foreach (ColumnHeader header in lvMailMessages.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
                 {
                     EveMailMessageColumnSettings columnSetting =
-                        m_columns.First(x => x.Column == (EveMailMessageColumn)header.Tag);
+                        m_columns.First(x => x.Column == (EveMailMessageColumn)header.Tag!);
                     if (columnSetting.Width > -1)
                         columnSetting.Width = header.Width;
 
@@ -204,7 +204,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.CharacterEVEMailMessagesUpdated -= EveMonClient_CharacterEVEMailMessagesUpdated;
@@ -232,9 +232,9 @@ namespace EVEMon.CharacterMonitoring
             lvMailMessages.Visible = false;
             eveMailReadingPane.HidePane();
 
-            EVEMailMessages = Character?.EVEMailMessages;
+            EVEMailMessages = Character?.EVEMailMessages!;
             Columns = Settings.UI.MainWindow.EVEMailMessages.Columns;
-            Grouping = Character?.UISettings.EVEMailMessagesGroupBy;
+            Grouping = Character?.UISettings.EVEMailMessagesGroupBy!;
             TextFilter = string.Empty;
             PanePosition = Settings.UI.MainWindow.EVEMailMessages.ReadingPanePosition;
 
@@ -310,7 +310,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvMailMessages.SelectedItems.Count > 0
-                ? lvMailMessages.SelectedItems[0].Tag.GetHashCode()
+                ? lvMailMessages!.SelectedItems[0]!.Tag.GetHashCode()
                 : 0;
 
             lvMailMessages.BeginUpdate();
@@ -327,7 +327,7 @@ namespace EVEMon.CharacterMonitoring
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvMailMessages.Items.Cast<ListViewItem>().Where(
-                        lvItem => lvItem.Tag.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
                     {
                         lvItem.Selected = true;
                     }
@@ -458,7 +458,7 @@ namespace EVEMon.CharacterMonitoring
                 else if (group.Key is DateTime)
                     groupText = ((DateTime)(object)group.Key).ToShortDateString();
                 else
-                    groupText = group.Key.ToString();
+                    groupText = group!.Key!.ToString()!;
 
                 ListViewGroup listGroup = new ListViewGroup(groupText);
                 lvMailMessages.Groups.Add(listGroup);
@@ -492,7 +492,7 @@ namespace EVEMon.CharacterMonitoring
             // Creates the subitems
             for (int i = 0; i < lvMailMessages.Columns.Count; i++)
             {
-                SetColumn(eveMailMessage, item.SubItems[i], (EveMailMessageColumn)lvMailMessages.Columns[i].Tag);
+                SetColumn(eveMailMessage, item.SubItems[i], (EveMailMessageColumn)lvMailMessages.Columns[i]!.Tag!);
             }
 
             return item;
@@ -526,7 +526,7 @@ namespace EVEMon.CharacterMonitoring
                     columnHeaderWidth += lvMailMessages.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column!.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -553,7 +553,7 @@ namespace EVEMon.CharacterMonitoring
         {
             foreach (ColumnHeader columnHeader in lvMailMessages.Columns.Cast<ColumnHeader>())
             {
-                EveMailMessageColumn column = (EveMailMessageColumn)columnHeader.Tag;
+                EveMailMessageColumn column = (EveMailMessageColumn)columnHeader.Tag!;
                 if (m_sortCriteria == column)
                     columnHeader.ImageIndex = m_sortAscending ? 0 : 1;
                 else
@@ -629,10 +629,10 @@ namespace EVEMon.CharacterMonitoring
         private void ReadMailLocal()
         {
             ListViewItem item = lvMailMessages.SelectedItems[0];
-            EveMailMessage message = (EveMailMessage)item.Tag;
+            EveMailMessage? message = (EveMailMessage)item.Tag!;
 
             // Show or bring to front if a window with the same EVE mail message already exists
-            WindowsFactory.ShowByTag<EveMessageWindow, EveMailMessage>(message);
+            WindowsFactory.ShowByTag<EveMessageWindow, EveMailMessage>(message!);
         }
         
         /// <summary>
@@ -661,7 +661,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
             }
 
-            EveMailMessage selectedObject = lvMailMessages.SelectedItems[0].Tag as EveMailMessage;
+            EveMailMessage? selectedObject = lvMailMessages.SelectedItems[0].Tag as EveMailMessage;
             if (selectedObject == null)
             {
                 eveMailReadingPane.HidePane();
@@ -688,7 +688,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void exportToCSVToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportToCSVToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             ListViewExporter.CreateCSV(lvMailMessages);
         }
@@ -698,7 +698,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
             mailReadLocal.Enabled = lvMailMessages.SelectedItems.Count != 0;
         }
@@ -708,7 +708,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void timer_Tick(object sender, EventArgs e)
+        private void timer_Tick(object? sender, EventArgs e)
         {
             timer.Stop();
             OnSelectionChanged();
@@ -719,7 +719,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ListViewItemSelectionChangedEventArgs"/> instance containing the event data.</param>
-        private void lvMailMessages_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        private void lvMailMessages_ItemSelectionChanged(object? sender, ListViewItemSelectionChangedEventArgs e)
         {
             if (timer.Enabled)
                 return;
@@ -732,7 +732,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void lvMailMessages_DoubleClick(object sender, EventArgs e)
+        private void lvMailMessages_DoubleClick(object? sender, EventArgs e)
         {
             ReadMailLocal();
         }
@@ -742,7 +742,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvMailMessages_ColumnReordered(object sender, ColumnReorderedEventArgs e)
+        private void lvMailMessages_ColumnReordered(object? sender, ColumnReorderedEventArgs e)
         {
             m_columnsChanged = true;
         }
@@ -752,7 +752,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvMailMessages_ColumnWidthChanged(object sender, ColumnWidthChangedEventArgs e)
+        private void lvMailMessages_ColumnWidthChanged(object? sender, ColumnWidthChangedEventArgs e)
         {
             if (m_isUpdatingColumns || m_columns.Count <= e.ColumnIndex)
                 return;
@@ -769,9 +769,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lvMailMessages_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void lvMailMessages_ColumnClick(object? sender, ColumnClickEventArgs e)
         {
-            EveMailMessageColumn column = (EveMailMessageColumn)lvMailMessages.Columns[e.Column].Tag;
+            EveMailMessageColumn column = (EveMailMessageColumn)lvMailMessages.Columns![e.Column].Tag!;
             if (m_sortCriteria == column)
                 m_sortAscending = !m_sortAscending;
             else
@@ -793,7 +793,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseDown(object sender, MouseEventArgs e)
+        private void listView_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -806,7 +806,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void listView_MouseMove(object sender, MouseEventArgs e)
+        private void listView_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -819,7 +819,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void mailReadLocal_Click(object sender, EventArgs e)
+        private void mailReadLocal_Click(object? sender, EventArgs e)
         {
             ReadMailLocal();
         }
@@ -834,7 +834,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible || !m_columnsChanged)
                 return;
@@ -852,7 +852,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterEVEMailMessagesUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailMessagesUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (Character == null || e.Character != Character)
                 return;
@@ -866,7 +866,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterEVEMailingListsUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailingListsUpdated(object? sender, CharacterChangedEventArgs e)
         {
             UpdateColumns();
         }
@@ -876,7 +876,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterEVEMailBodyDownloaded(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterEVEMailBodyDownloaded(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -889,7 +889,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_EveIDToNameUpdated(object sender, EventArgs e)
+        private void EveMonClient_EveIDToNameUpdated(object? sender, EventArgs e)
         {
             UpdateColumns();
         }
@@ -899,21 +899,21 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.Notifications.NotificationEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_NotificationSent(object sender, NotificationEventArgs e)
+        private void EveMonClient_NotificationSent(object? sender, NotificationEventArgs e)
         {
             if (Character == null)
                 return;
 
-            APIErrorNotificationEventArgs notification = e as APIErrorNotificationEventArgs;
+            APIErrorNotificationEventArgs? notification = e as APIErrorNotificationEventArgs;
 
-            CCPAPIResult<SerializableAPIMailBodies> notificationResult =
+            CCPAPIResult<SerializableAPIMailBodies>? notificationResult =
                 notification?.Result as CCPAPIResult<SerializableAPIMailBodies>;
 
             if (notificationResult == null)
                 return;
 
             // In case there was an error, hide the pane
-            if (notification.Result.HasError)
+            if (notification!.Result.HasError)
                 eveMailReadingPane.HidePane();
         }
 

@@ -55,7 +55,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void CloudStorageServiceControl_Load(object sender, EventArgs e)
+        private async void CloudStorageServiceControl_Load(object? sender, EventArgs e)
         {
             try
             {
@@ -78,7 +78,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             CloudStorageServiceProvider.CredentialsChecked -= CloudStorageServiceProvider_CheckCredentials;
             CloudStorageServiceProvider.SettingsReset -= CloudStorageServiceProvider_SettingsReset;
@@ -91,7 +91,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private async void btnReset_Click(object sender, EventArgs e)
+        private async void btnReset_Click(object? sender, EventArgs e)
         {
             ResetTextAndColor();
 
@@ -100,7 +100,7 @@ namespace EVEMon.SettingsUI
             throbber.State = ThrobberState.Rotating;
             throbber.Visible = true;
 
-            Task resetSettingsAsync = Provider?.ResetSettingsAsync();
+            Task? resetSettingsAsync = Provider?.ResetSettingsAsync();
             if (resetSettingsAsync != null)
                 await resetSettingsAsync;
         }
@@ -110,7 +110,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private async void btnRequestApply_Click(object sender, EventArgs e)
+        private async void btnRequestApply_Click(object? sender, EventArgs e)
         {
             ResetTextAndColor();
 
@@ -150,10 +150,10 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void getAnAccountLinkLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void getAnAccountLinkLabel_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             if (Provider?.RefferalLink != null)
-                Util.OpenURL(Provider?.RefferalLink);
+                Util.OpenURL(Provider?.RefferalLink!);
         }
 
         #endregion
@@ -166,7 +166,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CloudStorageServiceProviderEventArgs"/> instance containing the event data.</param>
-        private void CloudStorageServiceProvider_CheckCredentials(object sender, CloudStorageServiceProviderEventArgs e)
+        private void CloudStorageServiceProvider_CheckCredentials(object? sender, CloudStorageServiceProviderEventArgs e)
         {
             throbber.State = ThrobberState.Stopped;
             throbber.Visible = false;
@@ -192,7 +192,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CloudStorageServiceProviderEventArgs"/> instance containing the event data.</param>
-        private void CloudStorageServiceProvider_SettingsReset(object sender, CloudStorageServiceProviderEventArgs e)
+        private void CloudStorageServiceProvider_SettingsReset(object? sender, CloudStorageServiceProviderEventArgs e)
         {
             throbber.State = ThrobberState.Stopped;
             throbber.Visible = false;
@@ -234,7 +234,7 @@ namespace EVEMon.SettingsUI
             if (forceRecheck)
                 Provider.CancelPendingQueries();
 
-            await Provider?.CheckAPIAuthIsValidAsync();
+            await Provider!.CheckAPIAuthIsValidAsync();
         }
 
         /// <summary>

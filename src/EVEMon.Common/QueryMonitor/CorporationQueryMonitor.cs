@@ -18,7 +18,7 @@ namespace EVEMon.Common.QueryMonitor
         /// <param name="onSuccess">An action to call on success.</param>
         /// <param name="onFailure">The callback to use upon failure.</param>
         internal CorporationQueryMonitor(CCPCharacter character, Enum method, Action<T>
-            onSuccess, NotifyErrorCallback onFailure) : base(character, method, (result) =>
+            onSuccess, NotifyErrorCallback onFailure, bool suppressSelfTicking = false) : base(character, method, (result) =>
             {
                 if (character.Monitored)
                 {
@@ -34,7 +34,7 @@ namespace EVEMon.Common.QueryMonitor
                     else if (result.HasData)
                         onSuccess.Invoke(result.Result);
                 }
-            })
+            }, suppressSelfTicking)
         {
         }
 

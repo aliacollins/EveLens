@@ -25,7 +25,7 @@ namespace EVEMon.SettingsUI
                                                     "Alphabetical, first at bottom"
                                                 };
 
-        private readonly TrayPopupSettings m_settings;
+        private readonly TrayPopupSettings m_settings = null!;
         private readonly object[] m_portraitSize;
 
         /// <summary>
@@ -119,8 +119,8 @@ namespace EVEMon.SettingsUI
         {
             m_settings.ShowCharNotTraining = !cbHideNotTraining.Checked;
             m_settings.GroupBy = (TrayPopupGrouping)cbGroupBy.SelectedIndex;
-            m_settings.PrimarySortOrder = GetSortOrder(cbDisplayOrder1.SelectedItem as string);
-            m_settings.SecondarySortOrder = GetSortOrder(cbDisplayOrder2.SelectedItem as string);
+            m_settings.PrimarySortOrder = GetSortOrder((cbDisplayOrder1.SelectedItem as string)!);
+            m_settings.SecondarySortOrder = GetSortOrder((cbDisplayOrder2.SelectedItem as string)!);
             m_settings.ShowSkillInTraining = cbShowSkill.Checked;
             m_settings.ShowRemainingTime = cbShowTimeToCompletion.Checked;
             m_settings.ShowCompletionTime = cbShowCompletionTime.Checked;

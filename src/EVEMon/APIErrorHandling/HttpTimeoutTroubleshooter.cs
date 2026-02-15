@@ -59,9 +59,9 @@ namespace EVEMon.ApiErrorHandling
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void SetTimeoutButton_Click(object sender, EventArgs e)
+        private void SetTimeoutButton_Click(object? sender, EventArgs e)
         {
-            Settings.Updates.HttpTimeout = (int)TimeoutDropDown.SelectedValue;
+            Settings.Updates.HttpTimeout = (int)TimeoutDropDown.SelectedValue!;
             OnErrorResolved(ResolutionAction.Close);
         }
 

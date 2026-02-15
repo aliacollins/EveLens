@@ -19,11 +19,11 @@ namespace EVEMon.SkillPlanner
     /// </summary>
     public partial class EveObjectSelectControl : UserControl
     {
-        public event EventHandler SelectionChanged;
+        public event EventHandler? SelectionChanged;
 
-        private Character m_character;
-        private Plan m_plan;
-        private Timer m_searchTextTimer;
+        private Character? m_character;
+        private Plan? m_plan;
+        private Timer? m_searchTextTimer;
 
         #region Constructor
 
@@ -46,7 +46,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The character.
         /// </value>
-        internal Character Character
+        internal Character? Character
         {
             get { return m_character; }
             set
@@ -61,7 +61,7 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// Gets or sets the plan.
         /// </summary>
-        internal Plan Plan
+        internal Plan? Plan
         {
             get { return m_plan; }
             set
@@ -91,7 +91,7 @@ namespace EVEMon.SkillPlanner
         /// Gets or sets the usability predicate.
         /// </summary>
         /// <value>The usability predicate.</value>
-        protected Func<Item, bool> UsabilityPredicate { get; set; }
+        protected Func<Item, bool> UsabilityPredicate { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the activity filter.
@@ -117,7 +117,7 @@ namespace EVEMon.SkillPlanner
         /// <value>
         /// The search text timer.
         /// </value>
-        protected Timer SearchTextTimer
+        protected Timer? SearchTextTimer
         {
             get { return m_searchTextTimer; }
             set
@@ -188,7 +188,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
             Disposed -= OnDisposed;
@@ -199,7 +199,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateControlVisibility();
         }
@@ -235,7 +235,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbSearchTextHint_Click(object sender, EventArgs e)
+        private void lbSearchTextHint_Click(object? sender, EventArgs e)
         {
             tbSearchText.Focus();
         }
@@ -245,7 +245,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tbSearchText_Enter(object sender, EventArgs e)
+        private void tbSearchText_Enter(object? sender, EventArgs e)
         {
             lbSearchTextHint.Visible = false;
         }
@@ -255,7 +255,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tbSearchText_Leave(object sender, EventArgs e)
+        private void tbSearchText_Leave(object? sender, EventArgs e)
         {
             UpdateSearchTextHintVisibility();
         }
@@ -265,7 +265,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void pbSearchTextDel_MouseUp(object sender, MouseEventArgs e)
+        private void pbSearchTextDel_MouseUp(object? sender, MouseEventArgs e)
         {
             tbSearchText.Clear();
             UpdateSearchTextHintVisibility();
@@ -276,7 +276,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tbSearchText_TextChanged(object sender, EventArgs e)
+        private void tbSearchText_TextChanged(object? sender, EventArgs e)
         {
             if (m_searchTextTimer == null)
             {
@@ -285,7 +285,7 @@ namespace EVEMon.SkillPlanner
             }
 
             if (m_searchTextTimer.Enabled)
-                m_searchTextTimer.Stop();
+                m_searchTextTimer!.Stop();
 
             m_searchTextTimer.Start();
         }
@@ -295,9 +295,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void searchTextTimer_Tick(object sender, EventArgs e)
+        private void searchTextTimer_Tick(object? sender, EventArgs e)
         {
-            m_searchTextTimer.Stop();
+            m_searchTextTimer!.Stop();
             OnSearchTextChanged();
         }
 
@@ -306,7 +306,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tbSearchText_KeyPress(object sender, KeyPressEventArgs e)
+        private void tbSearchText_KeyPress(object? sender, KeyPressEventArgs e)
         {
             // (Ctrl + A) has KeyChar value 1
             if (e.KeyChar != (char)Keys.LButton)
@@ -413,7 +413,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="filteredItems"></param>
         private static void SearchNode(TreeNode tn, string searchText, List<Item> filteredItems)
         {
-            Item item = tn.Tag as Item;
+            Item? item = tn.Tag as Item;
             if (item == null)
             {
                 foreach (TreeNode subNode in tn.Nodes)
@@ -438,12 +438,12 @@ namespace EVEMon.SkillPlanner
         /// <summary>
         /// All the selected objects (through multi-select).
         /// </summary>
-        internal IEnumerable<Item> SelectedObjects { get; private set; }
+        internal IEnumerable<Item> SelectedObjects { get; private set; } = Enumerable.Empty<Item>();
 
         /// <summary>
         /// The primary selected object.
         /// </summary>
-        internal Item SelectedObject
+        internal Item? SelectedObject
         {
             get
             {
@@ -493,7 +493,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tvItems_SelectionsChanged(object sender, EventArgs e)
+        private void tvItems_SelectionsChanged(object? sender, EventArgs e)
         {
             if (tvItems.SelectedNodes.Count != 0)
             {
@@ -502,7 +502,7 @@ namespace EVEMon.SkillPlanner
                 return;
             }
 
-            SetSelectedObjects(null);
+            SetSelectedObjects(null!);
         }
 
         /// <summary>
@@ -510,7 +510,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void tvItems_MouseDown(object sender, MouseEventArgs e)
+        private void tvItems_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -523,7 +523,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void tvItems_MouseMove(object sender, MouseEventArgs e)
+        private void tvItems_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -536,7 +536,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbSearchList_SelectedIndexChanged(object sender, EventArgs e)
+        private void lbSearchList_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (lbSearchList.SelectedItems.Count != 0)
             {
@@ -545,7 +545,7 @@ namespace EVEMon.SkillPlanner
                 return;
             }
 
-            SetSelectedObjects(null);
+            SetSelectedObjects(null!);
         }
 
         /// <summary>
@@ -553,7 +553,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">is lbSearchList</param>
         /// <param name="e"></param>
-        private void lbSearchList_MouseDown(object sender, MouseEventArgs e)
+        private void lbSearchList_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -568,7 +568,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbSearchList_MouseMove(object sender, MouseEventArgs e)
+        private void lbSearchList_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -588,7 +588,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiExpandAll_Click(object sender, EventArgs e)
+        private void cmiExpandAll_Click(object? sender, EventArgs e)
         {
             tvItems.ExpandAll();
             AllExpanded = true;
@@ -599,7 +599,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiCollapseAll_Click(object sender, EventArgs e)
+        private void cmiCollapseAll_Click(object? sender, EventArgs e)
         {
             tvItems.CollapseAll();
             AllExpanded = false;
@@ -610,9 +610,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiExpandSelected_Click(object sender, EventArgs e)
+        private void cmiExpandSelected_Click(object? sender, EventArgs e)
         {
-            tvItems.SelectedNode.Expand();
+            tvItems.SelectedNode!.Expand();
         }
 
         /// <summary>
@@ -620,9 +620,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cmiCollapseSelected_Click(object sender, EventArgs e)
+        private void cmiCollapseSelected_Click(object? sender, EventArgs e)
         {
-            tvItems.SelectedNode.Collapse();
+            tvItems.SelectedNode!.Collapse();
         }
 
         /// <summary>
@@ -630,9 +630,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void contextMenu_Opening(object sender, CancelEventArgs e)
+        private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
-            ContextMenuStrip contextMenuStripControl = sender as ContextMenuStrip;
+            ContextMenuStrip? contextMenuStripControl = sender as ContextMenuStrip;
 
             e.Cancel = contextMenuStripControl?.SourceControl == null ||
                        (!contextMenuStripControl.SourceControl.Visible && SelectedObject == null) ||
@@ -651,10 +651,10 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void UpdateContextMenu()
         {
-            TreeNode node = tvItems.SelectedNode;
+            TreeNode? node = tvItems.SelectedNode;
 
             // Special case for mastery ship levels
-            PlanToMasteryLevel(node);
+            PlanToMasteryLevel(node!);
 
             // "Expand" and "Collapse" selected menu
             cmiExpandSelected.Visible = node != null && node.GetNodeCount(true) > 0 && !node.IsExpanded;
@@ -685,7 +685,7 @@ namespace EVEMon.SkillPlanner
             if (Plan == null)
                 return;
 
-            ShipSelectControl shipSelectorControl = this as ShipSelectControl;
+            ShipSelectControl? shipSelectorControl = this as ShipSelectControl;
 
             cmiLvPlanTo.Visible = shipSelectorControl != null;
             tsSeparatorPlanTo.Visible = shipSelectorControl != null && lbSearchList.Items.Count == 0;
@@ -697,7 +697,7 @@ namespace EVEMon.SkillPlanner
                 return;
             }
 
-            MasteryShip masteryShip = ((Character)Plan.Character).MasteryShips.GetMasteryShipByID(SelectedObject.ID);
+            MasteryShip? masteryShip = ((Character)Plan.Character).MasteryShips.GetMasteryShipByID(SelectedObject!.ID);
 
             if (masteryShip == null)
             {
@@ -728,10 +728,10 @@ namespace EVEMon.SkillPlanner
             if (masteryLevel == null)
                 return;
 
-            menu.Enabled = !Plan.WillGrantEligibilityFor(masteryLevel);
+            menu.Enabled = !Plan!.WillGrantEligibilityFor(masteryLevel);
 
             if (menu.Enabled)
-                menu.Tag = Plan.TryPlanTo(masteryLevel);
+                menu.Tag = Plan!.TryPlanTo(masteryLevel);
         }
 
         /// <summary>
@@ -739,13 +739,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void planToLevelMenuItem_Click(object sender, EventArgs e)
+        private void planToLevelMenuItem_Click(object? sender, EventArgs e)
         {
-            IPlanOperation operation = ((ToolStripMenuItem)sender).Tag as IPlanOperation;
+            IPlanOperation? operation = ((ToolStripMenuItem)sender!).Tag as IPlanOperation;
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             if (planWindow == null)
                 return;
 
@@ -777,7 +777,7 @@ namespace EVEMon.SkillPlanner
             IList<StaticSkillLevel> prerequisites =
                 item.Prerequisites.Where(x => x.Activity != BlueprintActivity.ReverseEngineering).ToList();
 
-            BlueprintSelectControl blueprintSelectControl = this as BlueprintSelectControl;
+            BlueprintSelectControl? blueprintSelectControl = this as BlueprintSelectControl;
 
             // Is item a blueprint and supports the selected activity ?  
             if (blueprintSelectControl != null)
@@ -821,7 +821,7 @@ namespace EVEMon.SkillPlanner
                         .Select(prereq => new
                         {
                             prereq,
-                            level = m_character.GetSkillLevel(prereq.Skill)
+                            level = m_character!.GetSkillLevel(prereq.Skill!)
                         })
                         .Select(y => y.level >= y.prereq.Level));
 
@@ -838,7 +838,7 @@ namespace EVEMon.SkillPlanner
                 .Select(prereq => new
                 {
                     prereq,
-                    level = m_character.GetSkillLevel(prereq.Skill)
+                    level = m_character!.GetSkillLevel(prereq.Skill!)
                 })
                 .Select(y => y.level >= y.prereq.Level));
 
@@ -856,7 +856,7 @@ namespace EVEMon.SkillPlanner
         {
             item.ThrowIfNull(nameof(item));
 
-            Blueprint blueprint = item as Blueprint;
+            Blueprint? blueprint = item as Blueprint;
 
             bool hasActivity = blueprint == null || ActivityFilter == ObjectActivityFilter.All
                                || blueprint.Prerequisites.Any(x => x.Activity == Activity)
@@ -875,7 +875,7 @@ namespace EVEMon.SkillPlanner
                 .Select(prereq => new
                 {
                     prereq,
-                    level = m_character.GetSkillLevel(prereq.Skill)
+                    level = m_character!.GetSkillLevel(prereq.Skill!)
                 })
                 .Select(y => y.level >= y.prereq.Level);
 

@@ -18,7 +18,7 @@ namespace EVEMon.SettingsUI
     public sealed class TrayTooltipWindow : TrayBaseWindow
     {
         private readonly List<Character> m_characters = new List<Character>();
-        private string m_tooltipFormat;
+        private string? m_tooltipFormat;
 
 
         #region Inherited Events
@@ -69,7 +69,7 @@ namespace EVEMon.SettingsUI
             {
                 if (character.IsTraining)
                 {
-                    QueuedSkill trainingSkill = character.CurrentlyTrainingSkill;
+                    QueuedSkill trainingSkill = character.CurrentlyTrainingSkill!;
                     TimeSpan remainingTime = trainingSkill.EndTime.Subtract(DateTime.UtcNow);
 
                     tooltip = Regex.Replace(tooltip,
@@ -78,7 +78,7 @@ namespace EVEMon.SettingsUI
                         RegexOptions.Compiled);
                 }
 
-                CCPCharacter ccpCharacter = character as CCPCharacter;
+                CCPCharacter? ccpCharacter = character as CCPCharacter;
                 if (ccpCharacter != null && ccpCharacter.SkillQueue.IsPaused)
                 {
                     tooltip = Regex.Replace(tooltip,
@@ -163,7 +163,7 @@ namespace EVEMon.SettingsUI
                     return character.Balance.ToNumericString(2);
             }
 
-            CCPCharacter ccpCharacter = character as CCPCharacter;
+            CCPCharacter? ccpCharacter = character as CCPCharacter;
             if (ccpCharacter == null || (!ccpCharacter.IsTraining && !ccpCharacter.SkillQueue.IsPaused))
                 return string.Empty;
 
@@ -173,14 +173,14 @@ namespace EVEMon.SettingsUI
                 case 'r':
                     return $"%{character.CharacterID}r";
                 case 's':
-                    return character.CurrentlyTrainingSkill.SkillName;
+                    return character.CurrentlyTrainingSkill!.SkillName;
                 case 'd':
-                    return $"{character.CurrentlyTrainingSkill.EndTime:g}";
+                    return $"{character.CurrentlyTrainingSkill!.EndTime:g}";
                 case 'c':
-                    level = character.CurrentlyTrainingSkill.Level - 1;
+                    level = character.CurrentlyTrainingSkill!.Level - 1;
                     break;
                 case 't':
-                    level = character.CurrentlyTrainingSkill.Level;
+                    level = character.CurrentlyTrainingSkill!.Level;
                     break;
                 default:
                     return string.Empty;
@@ -211,7 +211,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             UpdateContent();
         }

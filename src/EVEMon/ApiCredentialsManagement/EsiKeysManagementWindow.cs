@@ -69,7 +69,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposing(object sender, EventArgs e)
+        private void OnDisposing(object? sender, EventArgs e)
         {
             // Unsubscribe events
             EveMonClient.ESIKeyCollectionChanged -= EveMonClient_ESIKeyCollectionChanged;
@@ -105,7 +105,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ESIKeyCollectionChanged(object sender, EventArgs e)
+        private void EveMonClient_ESIKeyCollectionChanged(object? sender, EventArgs e)
         {
             UpdateESIKeysList();
         }
@@ -115,7 +115,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ESIKeyInfoUpdated(object sender, EventArgs e)
+        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
         {
             if (!Visible)
                 return;
@@ -128,7 +128,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterCollectionChanged(object sender, EventArgs e)
+        private void EveMonClient_CharacterCollectionChanged(object? sender, EventArgs e)
         {
             UpdateCharactersList();
         }
@@ -138,7 +138,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             UpdateCharactersList();
         }
@@ -148,7 +148,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_AccountStatusUpdated(object sender, EventArgs e)
+        private void EveMonClient_AccountStatusUpdated(object? sender, EventArgs e)
         {
             if (!Visible)
                 return;
@@ -178,7 +178,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void apiKeysListBox_MouseClick(object sender, MouseEventArgs e)
+        private void apiKeysListBox_MouseClick(object? sender, MouseEventArgs e)
         {
             bool itemClicked = false;
 
@@ -216,7 +216,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void apiKeysListBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void apiKeysListBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
             deleteESIKeyMenu.Enabled = esiKeysListBox.SelectedIndex != -1;
             editESIKeyMenu.Enabled = esiKeysListBox.SelectedIndex != -1;
@@ -227,7 +227,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void apiKeysListBox_MouseDoubleClick(object sender, MouseEventArgs e)
+        private void apiKeysListBox_MouseDoubleClick(object? sender, MouseEventArgs e)
         {
             // Search for the double-clicked item
             int index = 0;
@@ -253,7 +253,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void editAPIKeyMenu_Click(object sender, EventArgs e)
+        private void editAPIKeyMenu_Click(object? sender, EventArgs e)
         {
             ESIKey esiKey = esiKeysListBox.ESIKeys.ElementAt(esiKeysListBox.SelectedIndex);
             using (EsiKeyUpdateOrAdditionWindow window = new EsiKeyUpdateOrAdditionWindow(esiKey))
@@ -267,7 +267,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void addESIKeyMenu_Click(object sender, EventArgs e)
+        private void addESIKeyMenu_Click(object? sender, EventArgs e)
         {
             using (EsiKeyUpdateOrAdditionWindow window = new EsiKeyUpdateOrAdditionWindow())
             {
@@ -280,7 +280,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void deleteESIKeyMenu_Click(object sender, EventArgs e)
+        private void deleteESIKeyMenu_Click(object? sender, EventArgs e)
         {
             if (esiKeysListBox.SelectedIndex == -1)
                 return;
@@ -300,7 +300,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void esiKeysListBox_KeyDown(object sender, KeyEventArgs e)
+        private void esiKeysListBox_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Delete)
                 deleteESIKeyMenu_Click(sender, e);
@@ -375,7 +375,7 @@ namespace EVEMon.ApiCredentialsManagement
                     string typeText = "CCP";
                     string uriText = "-";
 
-                    UriCharacter uriCharacter = character as UriCharacter;
+                    UriCharacter? uriCharacter = character as UriCharacter;
                     if (uriCharacter?.Uri != null)
                     {
                         typeText = uriCharacter.Uri.IsFile ? "File" : "Url";
@@ -446,7 +446,7 @@ namespace EVEMon.ApiCredentialsManagement
             // Scroll through listview items to gather the groups
             foreach (Character character in EveMonClient.Characters)
             {
-                UriCharacter uriCharacter = character as UriCharacter;
+                UriCharacter? uriCharacter = character as UriCharacter;
 
                 // Uri character ?
                 if (uriCharacter?.Uri != null)
@@ -498,7 +498,7 @@ namespace EVEMon.ApiCredentialsManagement
             int width = charactersListView.Columns.Cast<ColumnHeader>().Where(column => column.Index != lastColumn.Index).Select(
                 column => column.Width).Sum();
 
-            int lastColumnMaxWidth = charactersListView.Columns[lastColumn.Index].ListView.Items.Cast<ListViewItem>().Select(
+            int lastColumnMaxWidth = charactersListView!.Columns[lastColumn.Index].ListView!.Items.Cast<ListViewItem>().Select(
                 item => TextRenderer.MeasureText(item.SubItems[lastColumn.Index].Text, Font).Width).Concat(
                     new[] { TextRenderer.MeasureText(charactersListView.Columns[lastColumn.Index].Text, Font).Width }).
                                          Concat(new[] { charactersListView.ClientSize.Width - width - pad }).Max() + pad;
@@ -524,15 +524,15 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void charactersListView_ItemChecked(object sender, ItemCheckedEventArgs e)
+        private void charactersListView_ItemChecked(object? sender, ItemCheckedEventArgs e)
         {
             if (m_refreshingCharactersCounter != 0)
                 return;
 
             // Add the character with changed monitoring status to the dictionary,
             // we will deal with them on closing
-            Character character = (Character)e.Item.Tag;
-            m_monitoredCharacters[character] = e.Item.Checked;
+            Character? character = e.Item.Tag as Character;
+            m_monitoredCharacters[character!] = e.Item.Checked;
         }
 
         /// <summary>
@@ -540,7 +540,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void charactersListView_KeyDown(object sender, KeyEventArgs e)
+        private void charactersListView_KeyDown(object? sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Delete)
                 deleteCharacterMenu_Click(sender, e);
@@ -551,7 +551,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void charactersListView_DoubleClick(object sender, EventArgs e)
+        private void charactersListView_DoubleClick(object? sender, EventArgs e)
         {
             editUriButton_Click(sender, e);
         }
@@ -561,7 +561,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void charactersListView_SelectedIndexChanged(object sender, EventArgs e)
+        private void charactersListView_SelectedIndexChanged(object? sender, EventArgs e)
         {
             UpdateControlsUsability();
         }
@@ -571,7 +571,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void importCharacterMenu_Click(object sender, EventArgs e)
+        private void importCharacterMenu_Click(object? sender, EventArgs e)
         {
             using (CharacterImportationWindow form = new CharacterImportationWindow())
             {
@@ -584,17 +584,17 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void deleteCharacterMenu_Click(object sender, EventArgs e)
+        private void deleteCharacterMenu_Click(object? sender, EventArgs e)
         {
             // Retrieve the selected URI character
             if (charactersListView.SelectedItems.Count == 0)
                 return;
 
             ListViewItem item = charactersListView.SelectedItems[0];
-            Character character = item.Tag as Character;
+            Character? character = item.Tag as Character;
 
             // Opens the character deletion
-            using (CharacterDeletionWindow window = new CharacterDeletionWindow(character))
+            using (CharacterDeletionWindow window = new CharacterDeletionWindow(character!))
             {
                 window.ShowDialog(this);
             }
@@ -605,14 +605,14 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void editUriButton_Click(object sender, EventArgs e)
+        private void editUriButton_Click(object? sender, EventArgs e)
         {
             // Retrieve the selected URI character
             if (charactersListView.SelectedItems.Count == 0)
                 return;
 
             ListViewItem item = charactersListView.SelectedItems[0];
-            UriCharacter uriCharacter = item.Tag as UriCharacter;
+            UriCharacter? uriCharacter = item.Tag as UriCharacter;
 
             // Returns if the selected item is not an Uri character
             if (uriCharacter == null)
@@ -630,7 +630,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void groupingMenu_Click(object sender, EventArgs e)
+        private void groupingMenu_Click(object? sender, EventArgs e)
         {
             m_refreshingCharactersCounter++;
             UpdateCharactersListContent();
@@ -647,7 +647,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void closeButton_Click(object sender, EventArgs e)
+        private void closeButton_Click(object? sender, EventArgs e)
         {
             Close();
         }
@@ -657,7 +657,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ColumnWidthChangingEventArgs"/> instance containing the event data.</param>
-        private void charactersListView_ColumnWidthChanging(object sender, ColumnWidthChangingEventArgs e)
+        private void charactersListView_ColumnWidthChanging(object? sender, ColumnWidthChangingEventArgs e)
         {
             e.Cancel = true;
             e.NewWidth = charactersListView.Columns[e.ColumnIndex].Width;

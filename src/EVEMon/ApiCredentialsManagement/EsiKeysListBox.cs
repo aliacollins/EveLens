@@ -89,7 +89,7 @@ namespace EVEMon.ApiCredentialsManagement
             m_pendingUpdate = false;
 
             int scrollBarPosition = TopIndex;
-            ESIKey oldSelection = SelectedItem as ESIKey;
+            ESIKey? oldSelection = SelectedItem as ESIKey;
 
             BeginUpdate();
             try
@@ -126,7 +126,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void OnDrawItem(object sender, DrawItemEventArgs e)
+        private void OnDrawItem(object? sender, DrawItemEventArgs e)
         {
             ItemHeight = m_boldFont.Height + m_middleFont.Height + m_smallBoldFont.Height * 2;
 

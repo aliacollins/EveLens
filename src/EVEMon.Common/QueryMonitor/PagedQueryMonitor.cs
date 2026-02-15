@@ -24,7 +24,7 @@ namespace EVEMon.Common.QueryMonitor
         /// </summary>
         /// <param name="wrapped">The query monitor to wrap.</param>
         internal PagedQueryMonitor(CCPQueryMonitorBase<T> wrapped) : base(wrapped.Method,
-            wrapped.Callback)
+            wrapped.Callback, suppressSelfTicking: true)
         {
             this.wrapped = wrapped;
 
@@ -72,20 +72,5 @@ namespace EVEMon.Common.QueryMonitor
             }
         }
 
-        /// <summary>
-        /// Performs the query to the provider, passing the required arguments.
-        /// </summary>
-        /// <param name="provider">The API provider to use.</param>
-        /// <param name="callback">The callback invoked on the UI thread after a result has
-        /// been queried.</param>
-        /// <exception cref="System.ArgumentNullException">provider</exception>
-        [Obsolete("Use QueryAsyncCoreAsync instead for modern async/await pattern")]
-        protected override void QueryAsyncCore(APIProvider provider, APIProvider.
-            ESIRequestCallback<T> callback)
-        {
-            provider.ThrowIfNull(nameof(provider));
-
-            provider.QueryPagedEsi<T, U>(Method, callback, wrapped.GetESIParams());
-        }
     }
 }

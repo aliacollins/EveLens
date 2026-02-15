@@ -11,16 +11,6 @@ namespace EVEMon.Common.Net
         private const string StringAccept = "text/html;q=0.9,text/plain;q=0.8,*/*;q=0.5";
 
         /// <summary>
-        /// Synchronously downloads a string from the specified url.
-        /// </summary>
-        /// <param name="url">The URL.</param>
-        /// <param name="param">The request parameters. If null, defaults will be used.</param>
-        /// <returns></returns>
-        [Obsolete("Use DownloadStringAsync instead. This method blocks the calling thread via .Result and can deadlock on the UI thread.")]
-        public static DownloadResult<string> DownloadString(Uri url, RequestParams param = null)
-            => DownloadStringAsync(url, param).Result;
-
-        /// <summary>
         /// Asynchronously downloads a string from the specified url.
         /// </summary>
         /// <param name="url">The URL.</param>

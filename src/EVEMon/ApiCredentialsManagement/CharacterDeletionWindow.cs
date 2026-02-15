@@ -14,8 +14,8 @@ namespace EVEMon.ApiCredentialsManagement
 {
     public partial class CharacterDeletionWindow : EVEMonForm
     {
-        private readonly Character m_character;
-        private List<ESIKey> m_esiKeys;
+        private readonly Character m_character = null!;
+        private List<ESIKey> m_esiKeys = null!;
 
         /// <summary>
         /// Constructor.
@@ -80,7 +80,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void deleteButton_Click(object sender, EventArgs e)
+        private void deleteButton_Click(object? sender, EventArgs e)
         {
             // Always clear the ESI keys since keys are locked to a character
             // Note: Keep this order of removal
@@ -94,7 +94,7 @@ namespace EVEMon.ApiCredentialsManagement
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void cancelButton_Click(object sender, EventArgs e)
+        private void cancelButton_Click(object? sender, EventArgs e)
         {
             Close();
         }

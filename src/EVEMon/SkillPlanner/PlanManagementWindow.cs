@@ -22,8 +22,8 @@ namespace EVEMon.SkillPlanner
     /// </summary>
     public partial class PlanManagementWindow : EVEMonForm
     {
-        private readonly PlanComparer m_columnSorter;
-        private readonly Character m_character;
+        private readonly PlanComparer m_columnSorter = null!;
+        private readonly Character m_character = null!;
 
         /// <summary>
         /// Constructor for designer.
@@ -81,7 +81,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnOpen_Click(object sender, EventArgs e)
+        private void btnOpen_Click(object? sender,EventArgs e)
         {
             // Are we performing a merge ?
             if (lbPlanList.SelectedItems.Count > 1)
@@ -91,7 +91,7 @@ namespace EVEMon.SkillPlanner
             }
 
             // Or are we just opening a plan ?
-            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag;
+            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag!;
             PlanWindow.ShowPlanWindow(plan: plan);
             Close();
         }
@@ -101,7 +101,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void btnClose_Click(object sender, EventArgs e)
+        private void btnClose_Click(object? sender,EventArgs e)
         {
             Close();
         }
@@ -114,7 +114,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterPlanCollectionChanged(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterPlanCollectionChanged(object? sender,CharacterChangedEventArgs e)
         {
             UpdateContent(true);
         }
@@ -126,9 +126,9 @@ namespace EVEMon.SkillPlanner
         private void UpdateContent(bool restoreSelectionAndFocus)
         {
             // Store selection and focus
-            Plan selection = lbPlanList.Items.Cast<ListViewItem>().Where(x => x.Selected)
+            Plan? selection = lbPlanList.Items.Cast<ListViewItem>().Where(x => x.Selected)
                 .Select(x => x.Tag).OfType<Plan>().FirstOrDefault();
-            Plan focused = lbPlanList.FocusedItem?.Tag as Plan;
+            Plan? focused = lbPlanList.FocusedItem?.Tag as Plan;
 
             lbPlanList.BeginUpdate();
             try
@@ -194,7 +194,7 @@ namespace EVEMon.SkillPlanner
                     columnHeaderWidth += lbPlanList.SmallImageList.ImageSize.Width + Pad;
 
                 // Calculate the width of the header and the items of the column
-                int columnMaxWidth = column.ListView.Items.Cast<ListViewItem>().Select(
+                int columnMaxWidth = column.ListView!.Items.Cast<ListViewItem>().Select(
                     item => TextRenderer.MeasureText(item.SubItems[column.Index].Text, Font).Width).Concat(
                         new[] { columnHeaderWidth }).Max() + Pad + 1;
 
@@ -215,7 +215,7 @@ namespace EVEMon.SkillPlanner
                 // Merge the plans
                 foreach (ListViewItem item in lbPlanList.SelectedItems)
                 {
-                    Plan plan = (Plan)item.Tag;
+                    Plan plan = (Plan)item.Tag!;
                     foreach (PlanEntry entry in plan)
                     {
                         // If not planned yet, we add the new entry
@@ -223,7 +223,7 @@ namespace EVEMon.SkillPlanner
                             result.PlanTo(entry.Skill, entry.Level, entry.Priority, entry.Notes);
 
                         // Then we update the entry's groups
-                        PlanEntry newEntry = result.GetEntry(entry.Skill, entry.Level);
+                        PlanEntry? newEntry = result.GetEntry(entry.Skill, entry.Level);
 
                         // The entry may be null if the character already knows it
                         newEntry?.PlanGroups.Add(plan.Name);
@@ -255,7 +255,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbPlanList_SelectedIndexChanged(object sender, EventArgs e)
+        private void lbPlanList_SelectedIndexChanged(object? sender,EventArgs e)
         {
             // One one plan selected means we can move it
             tsbMoveUp.Enabled = lbPlanList.SelectedItems.Count == 1;
@@ -273,7 +273,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbPlanList_DoubleClick(object sender, EventArgs e)
+        private void lbPlanList_DoubleClick(object? sender,EventArgs e)
         {
             if (lbPlanList.SelectedItems.Count == 1)
                 btnOpen_Click(this, new EventArgs());
@@ -284,7 +284,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbPlanList_MouseDown(object sender, MouseEventArgs e)
+        private void lbPlanList_MouseDown(object? sender,MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
@@ -297,7 +297,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbPlanList_MouseMove(object sender, MouseEventArgs e)
+        private void lbPlanList_MouseMove(object? sender,MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -312,7 +312,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbPlanList_ColumnClick(object sender, ColumnClickEventArgs e)
+        private void lbPlanList_ColumnClick(object? sender,ColumnClickEventArgs e)
         {
             // Click on the same column than the one already sorted ?
             if (e.Column == (int)m_columnSorter.Sort)
@@ -340,7 +340,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbPlanList_ListViewItemsDragged(object sender, EventArgs e)
+        private void lbPlanList_ListViewItemsDragged(object? sender,EventArgs e)
         {
             // Rebuild the plans list from the listview items
             m_character.Plans.RebuildFrom(lbPlanList.Items.Cast<ListViewItem>().Select(x => x.Tag).OfType<Plan>());
@@ -356,7 +356,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miNewPlan_Click(object sender, EventArgs e)
+        private void miNewPlan_Click(object? sender,EventArgs e)
         {
             // Request a new name for this plan
             using (NewPlanWindow npw = new NewPlanWindow())
@@ -381,7 +381,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miImportPlanFromFile_Click(object sender, EventArgs e)
+        private void miImportPlanFromFile_Click(object? sender,EventArgs e)
         {
             // Prompt the user to select a file
             DialogResult dr = ofdOpenDialog.ShowDialog();
@@ -415,7 +415,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miImportPlanFromCharacter_Click(object sender, EventArgs e)
+        private void miImportPlanFromCharacter_Click(object? sender,EventArgs e)
         {
             // Prompt the user to choose the source character and plan.
             using (PlanImportationFromCharacterWindow cps = new PlanImportationFromCharacterWindow(m_character))
@@ -425,10 +425,10 @@ namespace EVEMon.SkillPlanner
                     return;
 
                 // Retrieves the cloned plan
-                Plan plan = cps.TargetPlan;
+                Plan? plan = cps.TargetPlan;
 
                 // Adds and fixes the prerequisites order
-                plan.FixPrerequisites();
+                plan!.FixPrerequisites();
 
                 // Prompt the user for the new plan's name
                 using (NewPlanWindow f = new NewPlanWindow())
@@ -454,12 +454,12 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void miExportPlan_Click(object sender, EventArgs e)
+        private async void miExportPlan_Click(object? sender,EventArgs e)
         {
             if (lbPlanList.SelectedItems.Count != 1)
                 return;
 
-            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag;
+            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag!;
             await UIHelper.ExportPlanAsync(plan);
         }
 
@@ -468,7 +468,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void miExportCharacterSkillsAsPlan_Click(object sender, EventArgs e)
+        private async void miExportCharacterSkillsAsPlan_Click(object? sender,EventArgs e)
         {
             await UIHelper.ExportCharacterSkillsAsPlanAsync(m_character);
         }
@@ -478,7 +478,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miRestorePlans_Click(object sender, EventArgs e)
+        private void miRestorePlans_Click(object? sender,EventArgs e)
         {
             // Prompt the user to select a file
             using (OpenFileDialog restorePlansDialog = new OpenFileDialog())
@@ -505,9 +505,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void miSavePlans_Click(object sender, EventArgs e)
+        private async void miSavePlans_Click(object? sender,EventArgs e)
         {
-            IList<Plan> plans = lbPlanList.Items.Cast<ListViewItem>().Select(item => item.Tag as Plan).ToList();
+            IList<Plan> plans = lbPlanList.Items.Cast<ListViewItem>().Select(item => (Plan)item.Tag!).ToList();
             await UIHelper.SavePlansAsync(plans);
         }
 
@@ -516,14 +516,14 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miRenameEdit_Click(object sender, EventArgs e)
+        private void miRenameEdit_Click(object? sender,EventArgs e)
         {
             // Quit if none selected
             if (lbPlanList.SelectedItems.Count == 0)
                 return;
 
             // Prompts the user for a new name
-            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag;
+            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag!;
             using (NewPlanWindow f = new NewPlanWindow())
             {
                 f.Text = @"Rename Plan or Edit Description";
@@ -545,7 +545,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void miDelete_Click(object sender, EventArgs e)
+        private void miDelete_Click(object? sender,EventArgs e)
         {
             // Quit if none selected
             if (lbPlanList.SelectedItems.Count == 0)
@@ -561,7 +561,7 @@ namespace EVEMon.SkillPlanner
             }
             else
             {
-                Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag;
+                Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag!;
                 planName = $"\"{plan.Name}\"";
             }
 
@@ -575,7 +575,7 @@ namespace EVEMon.SkillPlanner
             // Remove the items
             foreach (ListViewItem lvi in lbPlanList.SelectedItems)
             {
-                m_character.Plans.Remove(lvi.Tag as Plan);
+                m_character.Plans.Remove((Plan)lvi.Tag!);
             }
         }
 
@@ -585,7 +585,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbMoveUp_Click(object sender, EventArgs e)
+        private void tsbMoveUp_Click(object? sender,EventArgs e)
         {
             int idx = lbPlanList.SelectedIndices[0];
             if (idx == 0)
@@ -607,7 +607,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tsbMoveDown_Click(object sender, EventArgs e)
+        private void tsbMoveDown_Click(object? sender,EventArgs e)
         {
             int idx = lbPlanList.SelectedIndices[0];
             if (idx == lbPlanList.Items.Count - 1)
@@ -633,7 +633,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void contextMenu_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void contextMenu_Opening(object? sender,System.ComponentModel.CancelEventArgs e)
         {
             if (lbPlanList.SelectedItems.Count > 1)
             {
@@ -662,7 +662,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void mFile_DropDownOpening(object sender, EventArgs e)
+        private void mFile_DropDownOpening(object? sender,EventArgs e)
         {
             // See if we have multiple characters to determine if load from character is enabled
             miImportPlanFromCharacter.Enabled = EveMonClient.Characters.Count > 1;
@@ -675,7 +675,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void mEdit_DropDownOpening(object sender, EventArgs e)
+        private void mEdit_DropDownOpening(object? sender,EventArgs e)
         {
             miRenameEdit.Enabled = lbPlanList.SelectedItems.Count == 1;
             miDelete.Enabled = lbPlanList.SelectedItems.Count > 0;

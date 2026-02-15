@@ -30,9 +30,9 @@ namespace EVEMon.CharacterMonitoring
     {
         #region Fields
 
-        private Character m_character;
+        private Character m_character = null!;
         private long m_spAtLastRedraw;
-        private string m_nextCloneJumpAtLastRedraw;
+        private string m_nextCloneJumpAtLastRedraw = null!;
         private volatile bool m_updatingLabels;
         private volatile bool m_updatingStatus;
 
@@ -104,7 +104,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.CharactersBatchUpdated -= EveMonClient_CharactersBatchUpdated;
             EveMonClient.CharacterInfoUpdated -= EveMonClient_CharacterInfoUpdated;
@@ -398,7 +398,7 @@ namespace EVEMon.CharacterMonitoring
 
             BalanceLabel.Text = $"Balance: {m_character.Balance:N} ISK";
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             if (ccpCharacter == null)
                 return;
@@ -442,7 +442,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateCountdown()
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             if (ccpCharacter == null)
                 return;
@@ -476,7 +476,7 @@ namespace EVEMon.CharacterMonitoring
         {
             UpdateThrobber.State = ThrobberState.Stopped;
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             if (ccpCharacter == null)
                 return;
@@ -541,7 +541,7 @@ namespace EVEMon.CharacterMonitoring
         /// <returns>Status text to display in the tool tip.</returns>
         private string GetUpdateStatus()
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             if (ccpCharacter == null)
                 return string.Empty;
@@ -633,7 +633,7 @@ namespace EVEMon.CharacterMonitoring
             string menuText = $"Update {monitor} {GenerateTimeToNextUpdateText(monitor)}";
 
             ToolStripMenuItem menu;
-            ToolStripMenuItem tempMenu = null;
+            ToolStripMenuItem? tempMenu = null;
             try
             {
                 tempMenu = new ToolStripMenuItem(menuText)
@@ -709,7 +709,7 @@ namespace EVEMon.CharacterMonitoring
             {
                 var booster = m_character.ActiveBooster;
                 output.AppendLine()
-                    .Append($"Booster: +{booster.Bonus} ({booster.EstimatedRemainingDuration.Hours}h {booster.EstimatedRemainingDuration.Minutes}m left)");
+                    !.Append($"Booster: +{booster!.Bonus} ({booster.EstimatedRemainingDuration.Hours}h {booster.EstimatedRemainingDuration.Minutes}m left)");
             }
 
             return output.ToString();
@@ -725,7 +725,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LabelChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterLabelChanged(object sender, LabelChangedEventArgs e)
+        private void EveMonClient_CharacterLabelChanged(object? sender, LabelChangedEventArgs e)
         {
             UpdateCharacterLabel(e.AllLabels);
         }
@@ -735,7 +735,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (Visible)
                 UpdateFrequentControls();
@@ -746,7 +746,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             if (Visible)
                 UpdateInfrequentControls();
@@ -757,7 +757,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             // No need to do this if control is not visible
             if (Visible && e.Characters.Contains(m_character))
@@ -769,7 +769,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_CharacterInfoUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_CharacterInfoUpdated(object? sender, CharacterChangedEventArgs e)
         {
             // No need to do this if control is not visible
             if (Visible && e.Character == m_character)
@@ -781,7 +781,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
+        private void EveMonClient_ConquerableStationListUpdated(object? sender, EventArgs e)
         {
             if (Visible)
                 UpdateInfoControls();
@@ -792,7 +792,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_MarketOrdersUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_MarketOrdersUpdated(object? sender, CharacterChangedEventArgs e)
         {
             // No need to do this if control is not visible
             if (Visible && e.Character == m_character)
@@ -804,7 +804,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_AccountStatusUpdated(object sender, EventArgs e)
+        private void EveMonClient_AccountStatusUpdated(object? sender, EventArgs e)
         {
             // If account status is added to ESI, investigate this and see if it can be done
             // only if visible
@@ -816,7 +816,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_ESIKeyInfoUpdated(object sender, EventArgs e)
+        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
         {
             if (Visible)
                 UpdateESIKeyWarning();
@@ -832,7 +832,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void CustomLabelComboBox_KeyUp(object sender, KeyEventArgs e)
+        private void CustomLabelComboBox_KeyUp(object? sender, KeyEventArgs e)
         {
             if (!m_updatingLabels && m_character != null)
             {
@@ -869,7 +869,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void CustomLabelComboBox_TextChanged(object sender, EventArgs e)
+        private void CustomLabelComboBox_TextChanged(object? sender, EventArgs e)
         {
             if (!m_updatingLabels && m_character != null)
                 m_character.Label = CustomLabelComboBox.Text;
@@ -881,7 +881,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void CustomLabelComboBox_Leave(object sender, EventArgs e)
+        private void CustomLabelComboBox_Leave(object? sender, EventArgs e)
         {
             // Save current value and hide
             if (!m_updatingLabels && m_character != null)
@@ -895,7 +895,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void SkillSummaryPanel_Click(object sender, EventArgs e)
+        private void SkillSummaryPanel_Click(object? sender, EventArgs e)
         {
             if (CustomLabelComboBox.Visible)
             {
@@ -911,7 +911,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void AccountStatusModeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void AccountStatusModeComboBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
             if (!m_updatingStatus && m_character != null)
             {
@@ -941,11 +941,11 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void UpdateThrobber_MouseDown(object sender, MouseEventArgs e)
+        private void UpdateThrobber_MouseDown(object? sender, MouseEventArgs e)
         {
             UpdateThrobber.Cursor = Cursors.Default;
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             // This is not a CCP character, it can't be updated
             if (ccpCharacter == null)
@@ -973,7 +973,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs" /> instance containing the event data.</param>
-        private void UpdateThrobber_MouseMove(object sender, MouseEventArgs e)
+        private void UpdateThrobber_MouseMove(object? sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
                 return;
@@ -986,7 +986,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void UpdateLabel_MouseHover(object sender, EventArgs e)
+        private void UpdateLabel_MouseHover(object? sender, EventArgs e)
         {
             ToolTip.SetToolTip(UpdateLabel, GetUpdateStatus());
         }
@@ -996,7 +996,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void ThrobberContextMenu_Opening(object sender, CancelEventArgs e)
+        private void ThrobberContextMenu_Opening(object? sender, CancelEventArgs e)
         {
             UpdateThrobber.Cursor = Cursors.Default;
 
@@ -1007,7 +1007,7 @@ namespace EVEMon.CharacterMonitoring
                 ThrobberContextMenu.Items.RemoveAt(separatorIndex);
             }
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             // Exit for non-CCP characters or no associated API key
             if (ccpCharacter == null || !ccpCharacter.Identity.ESIKeys.Any() || !ccpCharacter.QueryMonitors.Any())
@@ -1039,9 +1039,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ToolStripItemClickedEventArgs"/> instance containing the event data.</param>
-        private void ThrobberContextMenu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void ThrobberContextMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             if (ccpCharacter == null)
                 return;
@@ -1053,7 +1053,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
             }
 
-            Enum method = e.ClickedItem.Tag as Enum;
+            Enum? method = e!.ClickedItem!.Tag as Enum;
 
             if (method == null)
                 return;
@@ -1072,7 +1072,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void SkillSummaryLabel_MouseHover(object sender, EventArgs e)
+        private void SkillSummaryLabel_MouseHover(object? sender, EventArgs e)
         {
             StringBuilder sb = new StringBuilder();
             for (int skillLevel = 0; skillLevel <= 5; skillLevel++)
@@ -1085,7 +1085,7 @@ namespace EVEMon.CharacterMonitoring
                 sb.Append($"Skills at Level {skillLevel}: {count.ToString(CultureConstants.DefaultCulture).PadLeft(5)}");
             }
 
-            ToolTip.SetToolTip((Label)sender, sb.ToString());
+            ToolTip.SetToolTip((Label)sender!, sb.ToString());
         }
 
         /// <summary>
@@ -1096,11 +1096,11 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void AttributeLabel_MouseHover(object sender, EventArgs e)
+        private void AttributeLabel_MouseHover(object? sender, EventArgs e)
         {
             // Retrieve the attribute from the sender
-            Label attributeLabel = (Label)sender;
-            EveAttribute eveAttribute = (EveAttribute)attributeLabel.Tag;
+            Label? attributeLabel = (Label)sender!;
+            EveAttribute eveAttribute = (EveAttribute)attributeLabel!.Tag!;
 
             // Format the values for the tooltip
             ICharacterAttribute attribute = m_character[eveAttribute];
@@ -1120,7 +1120,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void CharacterMonitorHeader_Resize(object sender, EventArgs e)
+        private void CharacterMonitorHeader_Resize(object? sender, EventArgs e)
         {
             Height = MainTableLayoutPanel.Height;
             MainTableLayoutPanel.Width = Width;
@@ -1131,7 +1131,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void ChangeAPIKeyInfoMenuItem_Click(object sender, EventArgs e)
+        private void ChangeAPIKeyInfoMenuItem_Click(object? sender, EventArgs e)
         {
             // This menu should be enabled only for CCP characters
             // Open the ESI keys management dialog since multiple keys can affect one character
@@ -1148,7 +1148,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void ESIKeyWarningLabel_Click(object sender, EventArgs e)
+        private void ESIKeyWarningLabel_Click(object? sender, EventArgs e)
         {
             using (EsiKeysManagementWindow window = new EsiKeysManagementWindow())
             {
@@ -1161,7 +1161,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
-        private void CustomLabelLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void CustomLabelLink_LinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
         {
             CustomLabelLink.Visible = false;
             CustomLabelComboBox.Visible = true;

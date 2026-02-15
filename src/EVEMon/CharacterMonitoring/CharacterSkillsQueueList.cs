@@ -40,9 +40,9 @@ namespace EVEMon.CharacterMonitoring
         private readonly Font m_boldSkillsQueueFont;
         private readonly Font m_skillsQueueFont;
 
-        private object m_lastTooltipItem;
+        private object m_lastTooltipItem = null!;
         private BlinkAction m_blinkAction;
-        private QueuedSkill m_selectedSkill;
+        private QueuedSkill m_selectedSkill = null!;
 
         #endregion
 
@@ -71,7 +71,7 @@ namespace EVEMon.CharacterMonitoring
         /// <summary>
         /// Gets the character associated with this monitor.
         /// </summary>
-        internal CCPCharacter Character { get; set; }
+        internal CCPCharacter Character { get; set; } = null!;
 
         /// <summary>
         /// Gets the item's height.
@@ -106,7 +106,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
@@ -186,12 +186,12 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.DrawItemEventArgs"/> instance containing the event data.</param>
-        private void lbSkillsQueue_DrawItem(object sender, DrawItemEventArgs e)
+        private void lbSkillsQueue_DrawItem(object? sender, DrawItemEventArgs e)
         {
             if (e.Index < 0 || e.Index >= lbSkillsQueue.Items.Count)
                 return;
 
-            QueuedSkill item = lbSkillsQueue.Items[e.Index] as QueuedSkill;
+            QueuedSkill? item = lbSkillsQueue.Items[e.Index] as QueuedSkill;
 
             if (item == null)
                 return;
@@ -204,7 +204,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MeasureItemEventArgs"/> instance containing the event data.</param>
-        private void lbSkillsQueue_MeasureItem(object sender, MeasureItemEventArgs e)
+        private void lbSkillsQueue_MeasureItem(object? sender, MeasureItemEventArgs e)
         {
             if (e.Index < 0)
                 return;
@@ -229,12 +229,12 @@ namespace EVEMon.CharacterMonitoring
             bool hasSkill = (skill.Skill != null) && (skill.Skill != Skill.UnknownSkill);
 
             long skillPoints = (skill.Skill != null) && (skill.Level > skill.Skill.Level + 1) ?
-                skill.CurrentSP : (!hasSkill ? skill.StartSP : skill.Skill.SkillPoints);
+                skill.CurrentSP : (!hasSkill ? skill!.StartSP : skill!.Skill!.SkillPoints);
             long skillPointsToNextLevel = !hasSkill ? skill.EndSP :
-                skill.Skill.StaticData.GetPointsRequiredForLevel(Math.Min(skill.Level, 5));
+                skill!.Skill!.StaticData.GetPointsRequiredForLevel(Math.Min(skill.Level, 5));
             long pointsLeft = skillPointsToNextLevel - skillPoints;
             TimeSpan timeSpanFromPoints = !hasSkill ? skill.EndTime.Subtract(DateTime.UtcNow) :
-                skill.Skill.GetTimeSpanForPoints(pointsLeft);
+                skill!.Skill!.GetTimeSpanForPoints(pointsLeft);
             string remainingTimeText = timeSpanFromPoints.ToDescriptiveText(
                 DescriptiveTextOptions.SpaceBetween);
 
@@ -428,7 +428,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbSkillsQueue_MouseWheel(object sender, MouseEventArgs e)
+        private void lbSkillsQueue_MouseWheel(object? sender, MouseEventArgs e)
         {
             if (!lbSkillsQueue.VerticalScrollBarVisible())
                 return;
@@ -451,7 +451,7 @@ namespace EVEMon.CharacterMonitoring
             int[] numberOfPixelsToMove = new int[lines * direction];
             for (int i = 1; i <= Math.Abs(lines); i++)
             {
-                object item = null;
+                object? item = null;
                 var queue = lbSkillsQueue.Items;
 
                 // Going up
@@ -491,14 +491,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.MouseEventArgs"/> instance containing the event data.</param>
-        private void lbSkillsQueue_MouseDown(object sender, MouseEventArgs e)
+        private void lbSkillsQueue_MouseDown(object? sender, MouseEventArgs e)
         {
             // Retrieve the item at the given point and quit if none
             int index = lbSkillsQueue.IndexFromPoint(e.Location);
             if (index < 0 || index >= lbSkillsQueue.Items.Count)
                 return;
 
-            QueuedSkill item = lbSkillsQueue.Items[index] as QueuedSkill;
+            QueuedSkill? item = lbSkillsQueue.Items[index] as QueuedSkill;
 
             // Beware, this last index may actually means a click in the whitespace at the bottom
             // Let's deal with this special case
@@ -516,7 +516,7 @@ namespace EVEMon.CharacterMonitoring
             lbSkillsQueue.Cursor = Cursors.Default;
 
             // Set the selected item
-            m_selectedSkill = item;
+            m_selectedSkill = item!;
 
             // Display the context menu
             contextMenuStrip.Show(lbSkillsQueue, e.Location);
@@ -527,7 +527,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void lbSkillsQueue_MouseMove(object sender, MouseEventArgs e)
+        private void lbSkillsQueue_MouseMove(object? sender, MouseEventArgs e)
         {
             lbSkillsQueue.Cursor = CustomCursors.ContextMenu;
 
@@ -538,15 +538,15 @@ namespace EVEMon.CharacterMonitoring
                 if (!rect.Contains(e.Location))
                     continue;
 
-                QueuedSkill item = lbSkillsQueue.Items[i] as QueuedSkill;
+                QueuedSkill? item = lbSkillsQueue.Items[i] as QueuedSkill;
 
                 // Updates the tooltip
-                DisplayTooltip(item);
+                DisplayTooltip(item!);
                 return;
             }
 
             // If we went so far, we're not over anything
-            m_lastTooltipItem = null;
+            m_lastTooltipItem = null!;
             ttToolTip.Active = false;
         }
 
@@ -555,7 +555,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenuStrip_Opening(object sender, CancelEventArgs e)
+        private void contextMenuStrip_Opening(object? sender, CancelEventArgs e)
         {
             e.Cancel = !Character.SkillQueue.Any();
             if (!e.Cancel)
@@ -584,7 +584,7 @@ namespace EVEMon.CharacterMonitoring
             // Build the level options
             for (long level = queuedSkill.Level; level <= 5; level++)
             {
-                ToolStripMenuItem tempMenuLevel = null;
+                ToolStripMenuItem? tempMenuLevel = null;
                 try
                 {
                     tempMenuLevel = new ToolStripMenuItem($"Level {Skill.GetRomanFromInt(level)} to");
@@ -778,13 +778,13 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void tsmiCreatePlanFromSkillQueue_Click(object sender, EventArgs e)
+        private void tsmiCreatePlanFromSkillQueue_Click(object? sender, EventArgs e)
         {
             if (Character == null)
                 return;
 
             // Create new plan
-            Plan newPlan = PlanWindow.CreateNewPlan(Character, EveMonConstants.CurrentSkillQueueText);
+            Plan? newPlan = PlanWindow.CreateNewPlan(Character, EveMonConstants.CurrentSkillQueueText);
 
             if (newPlan == null)
                 return;
@@ -803,17 +803,17 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void menuPlanItem_Click(object sender, EventArgs e)
+        private static void menuPlanItem_Click(object? sender, EventArgs e)
         {
-            ToolStripMenuItem planItem = (ToolStripMenuItem)sender;
-            KeyValuePair<Plan, SkillLevel> tag = (KeyValuePair<Plan, SkillLevel>)planItem.Tag;
+            ToolStripMenuItem? planItem = (ToolStripMenuItem)sender!;
+            KeyValuePair<Plan, SkillLevel> tag = (KeyValuePair<Plan, SkillLevel>)planItem!.Tag!;
 
             IPlanOperation operation = tag.Key.TryPlanTo(tag.Value.Skill, tag.Value.Level);
             // If this operation does not change the plan, do nothing
             if (operation == null || operation.Type == PlanOperations.None)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(plan: operation.Plan);
             if (planWindow == null)
                 return;
 
@@ -825,10 +825,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInSkillBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInSkillBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             // Open the skill browser
-            PlanWindow.ShowPlanWindow(Character).ShowSkillInBrowser(m_selectedSkill?.Skill);
+            PlanWindow.ShowPlanWindow(Character)!.ShowSkillInBrowser(m_selectedSkill?.Skill!);
         }
 
         /// <summary>
@@ -836,10 +836,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void showInSkillExplorerMenuItem_Click(object sender, EventArgs e)
+        private void showInSkillExplorerMenuItem_Click(object? sender, EventArgs e)
         {
             // Open the skill explorer
-            SkillExplorerWindow.ShowSkillExplorerWindow(Character).ShowSkillInExplorer(m_selectedSkill?.Skill);
+            SkillExplorerWindow.ShowSkillExplorerWindow(Character)!.ShowSkillInExplorer(m_selectedSkill?.Skill!);
         }
 
         #endregion
@@ -852,7 +852,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (!Visible || Character == null || !Character.IsTraining)
                 return;
@@ -866,7 +866,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -879,7 +879,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_QueuedSkillsCompleted(object sender, QueuedSkillsEventArgs e)
+        private void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -892,7 +892,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }

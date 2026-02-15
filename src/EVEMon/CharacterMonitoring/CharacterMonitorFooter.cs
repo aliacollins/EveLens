@@ -17,7 +17,7 @@ namespace EVEMon.CharacterMonitoring
 {
     internal sealed partial class CharacterMonitorFooter : UserControl
     {
-        private Character m_character;
+        private Character m_character = null!;
 
 
         #region Constructor
@@ -46,7 +46,7 @@ namespace EVEMon.CharacterMonitoring
             Font = FontFactory.GetFont("Segoe UI");
             lblScheduleWarning.Font = FontFactory.GetFont("Segoe UI", FontStyle.Bold);
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             if (ccpCharacter != null)
                 skillQueueControl.SkillQueue = ccpCharacter.SkillQueue;
@@ -84,7 +84,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SecondTick -= EveMonClient_TimerTick;
             EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
@@ -152,8 +152,8 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateTrainingSkillInfo()
         {
-            QueuedSkill training = m_character.CurrentlyTrainingSkill;
-            DateTime completionTime = training.EndTime.ToLocalTime();
+            QueuedSkill? training = m_character.CurrentlyTrainingSkill;
+            DateTime completionTime = training!.EndTime.ToLocalTime();
 
             lblTrainingSkill.Text = training.ToString();
             lblSPPerHour.Text = training.Skill == null
@@ -166,7 +166,7 @@ namespace EVEMon.CharacterMonitoring
             string conflictMessage;
             bool isAutoBlocking;
             bool isBlocking = Scheduler.SkillIsBlockedAt(training.EndTime.ToLocalTime(), out conflictMessage, out isAutoBlocking);
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             // Do not show the "DOWNTIME" warning if character's skill queue has more than one skills
             if (ccpCharacter != null && ccpCharacter.SkillQueue.Count > 1 &&
@@ -187,7 +187,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateSkillQueueInfo()
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null)
                 return;
 
@@ -199,8 +199,8 @@ namespace EVEMon.CharacterMonitoring
                                           (ccpCharacter.SkillQueue.Count == 1 && Settings.UI.MainWindow.AlwaysShowSkillQueueTime);
 
             // Update the remaining training time label
-            QueuedSkill training = m_character.CurrentlyTrainingSkill;
-            lblTrainingRemain.Text = training.EndTime.ToRemainingTimeDescription(DateTimeKind.Utc);
+            QueuedSkill? training = m_character.CurrentlyTrainingSkill;
+            lblTrainingRemain!.Text = training!.EndTime.ToRemainingTimeDescription(DateTimeKind.Utc);
 
             // Update the remaining queue time label
             DateTime queueEndTime = ccpCharacter.SkillQueue.EndTime;
@@ -213,7 +213,7 @@ namespace EVEMon.CharacterMonitoring
         /// <returns></returns>
         private bool SkillQueueIsPaused()
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null || !ccpCharacter.SkillQueue.IsPaused)
                 return false;
 
@@ -265,7 +265,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             UpdateFrequentControls();
         }
@@ -275,7 +275,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateInfrequentControls();
         }
@@ -285,7 +285,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SchedulerChanged(object sender, EventArgs e)
+        private void EveMonClient_SchedulerChanged(object? sender, EventArgs e)
         {
             UpdateTrainingControls();
         }
@@ -295,7 +295,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             if (!e.Characters.Contains(m_character))
                 return;
@@ -313,7 +313,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void btnUpdateCalendar_Click(object sender, EventArgs e)
+        private async void btnUpdateCalendar_Click(object? sender, EventArgs e)
         {
             // Ensure that we are trying to use the external calendar
             if (!Settings.Calendar.Enabled)
@@ -323,7 +323,7 @@ namespace EVEMon.CharacterMonitoring
             }
 
             if (m_character is CCPCharacter)
-                await ExternalCalendar.UpdateCalendar(m_character as CCPCharacter);
+                await ExternalCalendar.UpdateCalendar((m_character as CCPCharacter)!);
         }
 
         #endregion

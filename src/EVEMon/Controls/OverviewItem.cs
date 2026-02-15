@@ -162,7 +162,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.SkillQueuesBatchUpdated -= EveMonClient_SkillQueuesBatchUpdated;
             EveMonClient.QueuedSkillsCompleted -= EveMonClient_QueuedSkillsCompleted;
@@ -265,7 +265,7 @@ namespace EVEMon.Controls
         /// <summary>
         /// Gets the character control is bound to.
         /// </summary>
-        public Character Character { get; }
+        public Character Character { get; } = null!;
 
         /// <summary>
         /// Gets or sets true whether a button should appear on hover.
@@ -345,13 +345,13 @@ namespace EVEMon.Controls
             FormatBalance();
 
             var ccpCharacter = Character as CCPCharacter;
-            QueuedSkill trainingSkill = Character.CurrentlyTrainingSkill;
+            QueuedSkill? trainingSkill = Character.CurrentlyTrainingSkill;
             // Character in training ? We have labels to fill
             if (Character.IsTraining || (ccpCharacter != null && trainingSkill != null &&
                 ccpCharacter.SkillQueue.IsPaused))
             {
                 // Update the skill in training label
-                lblSkillInTraining.Text = trainingSkill.ToString();
+                lblSkillInTraining.Text = trainingSkill!.ToString();
                 DateTime endTime = trainingSkill.EndTime.ToLocalTime();
 
                 // Updates the time remaining label
@@ -528,11 +528,11 @@ namespace EVEMon.Controls
         {
             lblBalance.Text = $"{Character.Balance:N} ISK";
 
-            CCPCharacter ccpCharacter = Character as CCPCharacter;
+            CCPCharacter? ccpCharacter = Character as CCPCharacter;
             Color balanceColor = m_settingsForeColor;
             if (ccpCharacter != null && !Settings.UI.SafeForWork)
             {
-                IQueryMonitor marketMonitor = ccpCharacter.QueryMonitors[
+                IQueryMonitor? marketMonitor = ccpCharacter.QueryMonitors[
                     ESIAPICharacterMethods.MarketOrders];
                 // Orange if orders could fail on margin
                 if (!ccpCharacter.HasSufficientBalance && marketMonitor != null &&
@@ -568,7 +568,7 @@ namespace EVEMon.Controls
         {
             if (Character.IsTraining)
             {
-                TimeSpan remainingTime = Character.CurrentlyTrainingSkill.RemainingTime;
+                TimeSpan remainingTime = Character.CurrentlyTrainingSkill!.RemainingTime;
                 lblRemainingTime.Text = remainingTime.ToDescriptiveText(DescriptiveTextOptions.
                     IncludeCommas);
                 UpdateSkillQueueTrainingTime();
@@ -581,7 +581,7 @@ namespace EVEMon.Controls
         /// <returns></returns>
         private void UpdateSkillQueueTrainingTime()
         {
-            CCPCharacter ccpCharacter = Character as CCPCharacter;
+            CCPCharacter? ccpCharacter = Character as CCPCharacter;
             lblSkillQueueTrainingTime.ForeColor = m_settingsForeColor;
             string text = string.Empty;
             // Current character isn't a CCP character, so can't have a Queue
@@ -631,7 +631,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharacterLabelChanged(object sender, LabelChangedEventArgs e)
+        private void EveMonClient_CharacterLabelChanged(object? sender, LabelChangedEventArgs e)
         {
             if (e.Character == Character)
                 UpdateContent();
@@ -642,7 +642,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_ESIKeyInfoUpdated(object sender, EventArgs e)
+        private void EveMonClient_ESIKeyInfoUpdated(object? sender, EventArgs e)
         {
             if (Visible)
                 UpdateESIKeyWarning();
@@ -653,7 +653,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             if (Visible)
             {
@@ -667,7 +667,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SchedulerChanged(object sender, EventArgs e)
+        private void EveMonClient_SchedulerChanged(object? sender, EventArgs e)
         {
             UpdateContent();
         }
@@ -677,7 +677,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateOnSettingsChanged();
         }
@@ -687,7 +687,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_QueuedSkillsCompleted(object sender, QueuedSkillsEventArgs e)
+        private void EveMonClient_QueuedSkillsCompleted(object? sender, QueuedSkillsEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -708,7 +708,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_MarketOrdersUpdated(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_MarketOrdersUpdated(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != Character)
                 return;
@@ -721,7 +721,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_CharactersBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_CharactersBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -734,7 +734,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void EveMonClient_SkillQueuesBatchUpdated(object sender, CharacterBatchEventArgs e)
+        private void EveMonClient_SkillQueuesBatchUpdated(object? sender, CharacterBatchEventArgs e)
         {
             if (!e.Characters.Contains(Character))
                 return;
@@ -891,7 +891,7 @@ namespace EVEMon.Controls
             if (m_minWidth <= 0)
             {
                 // Determine longest skill name
-                StaticSkill longestSkill = null;
+                StaticSkill? longestSkill = null;
                 int maxLength = 0;
                 foreach (var skill in StaticSkills.AllSkills)
                 {
@@ -903,7 +903,7 @@ namespace EVEMon.Controls
                     }
                 }
                 // Use the actual font on the display
-                m_minWidth = (int)Math.Ceiling(g.MeasureString(longestSkill.Name + " " + Skill.
+                m_minWidth = (int)Math.Ceiling(g.MeasureString(longestSkill!.Name + " " + Skill.
                     GetRomanFromInt(3), lblSkillInTraining.Font).Width);
             }
             return m_minWidth;

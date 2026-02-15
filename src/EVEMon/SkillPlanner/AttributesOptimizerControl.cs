@@ -26,7 +26,7 @@ namespace EVEMon.SkillPlanner
         /// Occurs when attributes changes. 
         /// </summary>
         [Category("Behavior")]
-        public event EventHandler<AttributeChangedEventArgs> AttributeChanged;
+        public event EventHandler<AttributeChangedEventArgs>? AttributeChanged;
 
         /// <summary>
         /// Initializes a new instance of <see cref="AttributesOptimizerControl"/>.
@@ -186,9 +186,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="AttributeValueChangingEventArgs"/> instance containing the event data.</param>
-        private void pbRemappable_ValueChanging(object sender, AttributeValueChangingEventArgs e)
+        private void pbRemappable_ValueChanging(object? sender, AttributeValueChangingEventArgs e)
         {
-            AttributeBarControl control = (AttributeBarControl)sender;
+            AttributeBarControl control = (AttributeBarControl)sender!;
 
             // Adjust delta if there is no enough free points
             if (pbUnassigned.Value < e.Value)
@@ -203,7 +203,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="AttributeValueChangedEventArgs"/> instance containing the event data.</param>
-        private void pb_ValueChanged(object sender, AttributeValueChangedEventArgs e)
+        private void pb_ValueChanged(object? sender, AttributeValueChangedEventArgs e)
         {
             Recalculate();
         }
@@ -213,9 +213,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="AttributeHighlightingEventArgs"/> instance containing the event data.</param>
-        private void pbRemappable_Highlighting(object sender, AttributeHighlightingEventArgs e)
+        private void pbRemappable_Highlighting(object? sender, AttributeHighlightingEventArgs e)
         {
-            AttributeBarControl control = (AttributeBarControl)sender;
+            AttributeBarControl control = (AttributeBarControl)sender!;
             
             // Adjust possible highlight using free points in pool
             if (e.Value - control.Value > pbUnassigned.Value)
@@ -227,7 +227,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void buttonOptimize_Click(object sender, EventArgs e)
+        private void buttonOptimize_Click(object? sender, EventArgs e)
         {
             // Updates the remapping point with the optimized remapping
             m_remapping.Update();
@@ -244,7 +244,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void buttonCurrent_Click(object sender, EventArgs e)
+        private void buttonCurrent_Click(object? sender, EventArgs e)
         {
             // Make unoptimized remap
             RemappingResult zeroRemapping = new RemappingResult(m_remapping, m_remapping.BaseScratchpad.Clone());
@@ -263,9 +263,9 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void attributeButton_Click(object sender, EventArgs e)
+        private void attributeButton_Click(object? sender, EventArgs e)
         {
-            AttributeButtonControl button = sender as AttributeButtonControl;
+            AttributeButtonControl? button = sender as AttributeButtonControl;
             if (button?.AttributeBar == null)
                 return;
 
@@ -301,7 +301,7 @@ namespace EVEMon.SkillPlanner
             point.ThrowIfNull(nameof(point));
 
             // Creates a scratchpad with the base values from the provided point.
-            CharacterScratchpad scratchpad = new CharacterScratchpad(m_character.After(m_plan.ChosenImplantSet));
+            CharacterScratchpad scratchpad = new CharacterScratchpad(m_character.After(m_plan.ChosenImplantSet!));
             for (int i = 0; i < 5; i++)
             {
                 scratchpad[(EveAttribute)i].Base = point[(EveAttribute)i];

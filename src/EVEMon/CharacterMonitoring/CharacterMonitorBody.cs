@@ -26,8 +26,8 @@ namespace EVEMon.CharacterMonitoring
         #region Fields
 
         private readonly List<ToolStripButton> m_advancedFeatures = new List<ToolStripButton>();
-        private ToolStripItem[] m_preferenceMenu;
-        private Character m_character;
+        private ToolStripItem[] m_preferenceMenu = null!;
+        private Character m_character = null!;
 
         #endregion
 
@@ -89,14 +89,14 @@ namespace EVEMon.CharacterMonitoring
             UpdateNotifications();
 
             // Picks the last selected page
-            multiPanel.SelectedPage = null;
-            ToolStripItem item = null;
+            multiPanel.SelectedPage = null!;
+            ToolStripItem? item = null;
 
             // Only for CCP characters
             if (m_character is CCPCharacter)
             {
                 item = toolStripFeatures.Items.Cast<ToolStripItem>().FirstOrDefault(
-                    x => m_character.UISettings.SelectedPage == (string)x.Tag);
+                    x => m_character.UISettings.SelectedPage == (string)x.Tag)!;
 
                 // If it's not an advanced feature page make it visible
                 if (item != null && !m_advancedFeatures.Contains(item))
@@ -131,7 +131,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void OnDisposed(object sender, EventArgs e)
+        private void OnDisposed(object? sender, EventArgs e)
         {
             EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
             EveMonClient.ESIKeyInfoUpdated -= EveMonClient_APIKeyInfoUpdated;
@@ -240,7 +240,7 @@ namespace EVEMon.CharacterMonitoring
             if (EveMonClient.ESIKeys.Any(apiKey => !apiKey.IsProcessed) || !m_character.Identity.ESIKeys.Any())
                 return;
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null)
                 return;
 
@@ -258,7 +258,7 @@ namespace EVEMon.CharacterMonitoring
         private void SetVisibility(ToolStripButton button)
         {
             IEnumerable<IQueryMonitor> monitors = GetButtonMonitors(button);
-            bool visible = monitors.Any(monitor => monitor.HasAccess) && IsEnabledFeature(button.Text);
+            bool visible = monitors.Any(monitor => monitor.HasAccess) && IsEnabledFeature(button.Text!);
             button.Visible = visible;
 
             // Quit if the button should stay visible
@@ -269,8 +269,8 @@ namespace EVEMon.CharacterMonitoring
 
             // Buttons' related monitor lost access to data while it was enabled, so...
             // 1. Remove buttons' related page from settings
-            if (m_character.UISettings.AdvancedFeaturesEnabledPages.Contains(button.Text))
-                m_character.UISettings.AdvancedFeaturesEnabledPages.Remove(button.Text);
+            if (m_character.UISettings.AdvancedFeaturesEnabledPages.Contains(button.Text!))
+                m_character.UISettings.AdvancedFeaturesEnabledPages.Remove(button.Text!);
 
             // 2. Uncheck in dropdown menu
             if (featuresMenu.DropDownItems.Count == 0)
@@ -302,7 +302,7 @@ namespace EVEMon.CharacterMonitoring
             toggleSkillsIcon.Enabled = m_character.Skills.Any();
 
             // Exit if it's a non-CCPCharacter
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null)
                 return;
 
@@ -385,7 +385,7 @@ namespace EVEMon.CharacterMonitoring
         private void ToggleAdvancedFeaturesMonitoring()
         {
             // Quit if it's a non-CCPCharacter
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null)
                 return;
 
@@ -398,7 +398,7 @@ namespace EVEMon.CharacterMonitoring
 
                 foreach (IQueryMonitor monitor in monitors)
                 {
-                    monitor.Enabled = IsEnabledFeature(button.Text);
+                    monitor.Enabled = IsEnabledFeature(button.Text!);
                     if (!monitor.QueryOnStartup || !monitor.Enabled || monitor.LastResult != null)
                         continue;
 
@@ -463,7 +463,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_TimerTick(object sender, EventArgs e)
+        private void EveMonClient_TimerTick(object? sender, EventArgs e)
         {
             UpdateFrequentControls();
         }
@@ -473,7 +473,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_APIKeyInfoUpdated(object sender, EventArgs e)
+        private void EveMonClient_APIKeyInfoUpdated(object? sender, EventArgs e)
         {
             UpdateFeaturesMenu();
         }
@@ -483,7 +483,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_SettingsChanged(object sender, EventArgs e)
+        private void EveMonClient_SettingsChanged(object? sender, EventArgs e)
         {
             UpdateInfrequentControls();
         }
@@ -493,7 +493,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_UpdatePageControls(object sender, CharacterChangedEventArgs e)
+        private void EveMonClient_UpdatePageControls(object? sender, CharacterChangedEventArgs e)
         {
             if (e.Character != m_character)
                 return;
@@ -506,7 +506,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EVEMon.Common.Notifications.NotificationInvalidationEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_NotificationInvalidated(object sender, NotificationInvalidationEventArgs e)
+        private void EveMonClient_NotificationInvalidated(object? sender, NotificationInvalidationEventArgs e)
         {
             UpdateNotifications();
         }
@@ -516,7 +516,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void EveMonClient_NotificationSent(object sender, NotificationEventArgs e)
+        private void EveMonClient_NotificationSent(object? sender, NotificationEventArgs e)
         {
             UpdateNotifications();
         }
@@ -534,7 +534,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MultiPanelSelectionChangeEventArgs"/> instance containing the event data.</param>
-        private void multiPanel_SelectionChange(object sender, MultiPanelSelectionChangeEventArgs e)
+        private void multiPanel_SelectionChange(object? sender, MultiPanelSelectionChangeEventArgs e)
         {
             if (e.NewPage == null)
                 return;
@@ -550,7 +550,7 @@ namespace EVEMon.CharacterMonitoring
                                                                            (string)button.Tag != factionalWarfareStatsPage.Text &&
                                                                            (string)button.Tag != medalsPage.Text &&
                                                                            (string)button.Tag != loyaltyPage.Text &&
-                                                                           (string)button.Tag == e.NewPage.Text);
+                                                                           (string)button.Tag == e.NewPage.Text)!;
 
             // Reset the text filter
             searchTextBox.Text = string.Empty;
@@ -564,7 +564,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void toolbarIcon_Click(object sender, EventArgs e)
+        private void toolbarIcon_Click(object? sender, EventArgs e)
         {
             foreach (ToolStripItem item in toolStripFeatures.Items)
             {
@@ -573,7 +573,7 @@ namespace EVEMon.CharacterMonitoring
                     continue;
 
                 // Is it the item we clicked ?
-                ToolStripButton button = item as ToolStripButton;
+                ToolStripButton? button = item as ToolStripButton;
                 if (button != null && item == sender)
                 {
                     // Page is already selected
@@ -601,7 +601,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void toggleSkillsIcon_Click(object sender, EventArgs e)
+        private void toggleSkillsIcon_Click(object? sender, EventArgs e)
         {
             skillsList.ToggleAll();
         }
@@ -611,7 +611,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void featureMenu_DropDownOpening(object sender, EventArgs e)
+        private void featureMenu_DropDownOpening(object? sender, EventArgs e)
         {
             // Remove everything after the separator
             int index = featuresMenu.DropDownItems.IndexOf(SelectionToolStripSeparator) + 1;
@@ -628,12 +628,12 @@ namespace EVEMon.CharacterMonitoring
                 .Select(item =>
                 {
                     ToolStripMenuItem tsmi;
-                    ToolStripMenuItem tempToolStripMenuItem = null;
+                    ToolStripMenuItem? tempToolStripMenuItem = null;
                     try
                     {
                         tempToolStripMenuItem = new ToolStripMenuItem(item.button.Text)
                         {
-                            Checked = IsEnabledFeature(item.button.Text),
+                            Checked = IsEnabledFeature(item.button.Text!),
                             Enabled = item.monitor.Any(monitor => monitor.HasAccess)
                         };
 
@@ -660,7 +660,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void featuresMenu_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void featuresMenu_DropDownItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
             // Ignore clicks on separators or non-menu items
             if (e.ClickedItem is not ToolStripMenuItem item)
@@ -684,7 +684,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void EnableAllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void EnableAllToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int index = featuresMenu.DropDownItems.IndexOf(SelectionToolStripSeparator) + 1;
             foreach (ToolStripMenuItem item in featuresMenu.DropDownItems.Cast<ToolStripItem>()
@@ -703,7 +703,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void DisableAllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void DisableAllToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             int index = featuresMenu.DropDownItems.IndexOf(SelectionToolStripSeparator) + 1;
             foreach (ToolStripMenuItem item in featuresMenu.DropDownItems.Cast<ToolStripItem>()
@@ -730,9 +730,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void walletJournalCharts_Click(object sender, EventArgs e)
+        private void walletJournalCharts_Click(object? sender, EventArgs e)
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null)
                 return;
 
@@ -749,14 +749,14 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void contactsToolbarIcon_Click(object sender, EventArgs e)
+        private void contactsToolbarIcon_Click(object? sender, EventArgs e)
         {
             foreach (ToolStripButton item in toolStripContextual.Items.OfType<ToolStripButton>())
             {
                 item.Checked = item == sender;
             }
 
-            contactsList.ShowAllContacts = sender.Equals(allContacts);
+            contactsList!.ShowAllContacts = sender!.Equals(allContacts);
             contactsList.ShowContactsInWatchList = sender.Equals(inWatchList);
 
             if (sender.Equals(contactsExcellent))
@@ -787,7 +787,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void groupMenu_DropDownOpening(object sender, EventArgs e)
+        private void groupMenu_DropDownOpening(object? sender, EventArgs e)
         {
             groupMenu.DropDownItems.Clear();
 
@@ -824,36 +824,36 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.Windows.Forms.ToolStripItemClickedEventArgs"/> instance containing the event data.</param>
-        private void groupMenu_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void groupMenu_DropDownItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
-            ToolStripItem item = e.ClickedItem;
+            ToolStripItem? item = e.ClickedItem;
 
             if (multiPanel.SelectedPage == assetsPage)
-                GroupMenuSetting<AssetGrouping, Enum>(item, assetsList);
+                GroupMenuSetting<AssetGrouping, Enum>(item!, assetsList);
 
             if (multiPanel.SelectedPage == ordersPage)
-                GroupMenuSetting<MarketOrderGrouping, Enum>(item, ordersList);
+                GroupMenuSetting<MarketOrderGrouping, Enum>(item!, ordersList);
 
             if (multiPanel.SelectedPage == contractsPage)
-                GroupMenuSetting<ContractGrouping, Enum>(item, contractsList);
+                GroupMenuSetting<ContractGrouping, Enum>(item!, contractsList);
 
             if (multiPanel.SelectedPage == walletJournalPage)
-                GroupMenuSetting<WalletJournalGrouping, Enum>(item, walletJournalList);
+                GroupMenuSetting<WalletJournalGrouping, Enum>(item!, walletJournalList);
 
             if (multiPanel.SelectedPage == walletTransactionsPage)
-                GroupMenuSetting<WalletTransactionGrouping, Enum>(item, walletTransactionsList);
+                GroupMenuSetting<WalletTransactionGrouping, Enum>(item!, walletTransactionsList);
 
             if (multiPanel.SelectedPage == jobsPage)
-                GroupMenuSetting<IndustryJobGrouping, Enum>(item, jobsList);
+                GroupMenuSetting<IndustryJobGrouping, Enum>(item!, jobsList);
 
             if (multiPanel.SelectedPage == planetaryPage)
-                GroupMenuSetting<PlanetaryGrouping, Enum>(item, planetaryList);
+                GroupMenuSetting<PlanetaryGrouping, Enum>(item!, planetaryList);
 
             if (multiPanel.SelectedPage == mailMessagesPage)
-                GroupMenuSetting<EVEMailMessagesGrouping, Enum>(item, mailMessagesList);
+                GroupMenuSetting<EVEMailMessagesGrouping, Enum>(item!, mailMessagesList);
 
             if (multiPanel.SelectedPage == eveNotificationsPage)
-                GroupMenuSetting<EVENotificationsGrouping, Enum>(item, eveNotificationsList);
+                GroupMenuSetting<EVENotificationsGrouping, Enum>(item!, eveNotificationsList);
         }
 
         #endregion
@@ -866,7 +866,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void searchTextBox_TextChanged(object sender, EventArgs e)
+        private void searchTextBox_TextChanged(object? sender, EventArgs e)
         {
             if (searchTextTimer == null)
             {
@@ -885,7 +885,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void searchTextTimer_Tick(object sender, EventArgs e)
+        private void searchTextTimer_Tick(object? sender, EventArgs e)
         {
             searchTextTimer.Stop();
             UpdateListSearchTextFilter();
@@ -896,7 +896,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void searchTextDel_MouseUp(object sender, MouseEventArgs e)
+        private void searchTextDel_MouseUp(object? sender, MouseEventArgs e)
         {
             searchTextBox.Clear();
         }
@@ -911,7 +911,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void preferencesMenu_DropDownOpening(object sender, EventArgs e)
+        private void preferencesMenu_DropDownOpening(object? sender, EventArgs e)
         {
             bool hideInactive = true;
             autoSizeColumnMenuItem.Enabled = true;
@@ -1040,7 +1040,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void columnSettingsMenuItem_Click(object sender, EventArgs e)
+        private void columnSettingsMenuItem_Click(object? sender, EventArgs e)
         {
             if (multiPanel.SelectedPage == assetsPage)
             {
@@ -1202,9 +1202,9 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void autoSizeColumnMenuItem_Click(object sender, EventArgs e)
+        private void autoSizeColumnMenuItem_Click(object? sender, EventArgs e)
         {
-            IListView list = multiPanel.SelectedPage.Controls.OfType<IListView>().FirstOrDefault();
+            IListView? list = multiPanel.SelectedPage.Controls.OfType<IListView>().FirstOrDefault();
 
             list?.AutoResizeColumns();
         }
@@ -1214,7 +1214,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void hideInactiveMenuItem_Click(object sender, EventArgs e)
+        private void hideInactiveMenuItem_Click(object? sender, EventArgs e)
         {
             bool hideInactive = true;
 
@@ -1246,7 +1246,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private async void numberAbsFormatMenuItem_Click(object sender, EventArgs e)
+        private async void numberAbsFormatMenuItem_Click(object? sender, EventArgs e)
         {
             if (multiPanel.SelectedPage == assetsPage)
             {
@@ -1294,7 +1294,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void showOnlyCharMenuItem_Click(object sender, EventArgs e)
+        private void showOnlyCharMenuItem_Click(object? sender, EventArgs e)
         {
             if (multiPanel.SelectedPage == ordersPage)
             {
@@ -1320,7 +1320,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void showOnlyCorpMenuItem_Click(object sender, EventArgs e)
+        private void showOnlyCorpMenuItem_Click(object? sender, EventArgs e)
         {
             if (multiPanel.SelectedPage == ordersPage)
             {
@@ -1346,7 +1346,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void readingPaneMenuItem_DropDownOpening(object sender, EventArgs e)
+        private void readingPaneMenuItem_DropDownOpening(object? sender, EventArgs e)
         {
             string paneSetting = ReadingPanePositioning.Off.ToString();
 
@@ -1358,7 +1358,7 @@ namespace EVEMon.CharacterMonitoring
 
             foreach (ToolStripMenuItem menuItem in readingPaneMenuItem.DropDownItems)
             {
-                menuItem.Checked = (string)menuItem.Tag == paneSetting;
+                menuItem.Checked = (string)menuItem.Tag == paneSetting!;
             }
         }
 
@@ -1367,7 +1367,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void paneRightMenuItem_Click(object sender, EventArgs e)
+        private void paneRightMenuItem_Click(object? sender, EventArgs e)
         {
             foreach (ToolStripMenuItem menuItem in readingPaneMenuItem.DropDownItems)
             {
@@ -1394,7 +1394,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void paneBottomMenuItem_Click(object sender, EventArgs e)
+        private void paneBottomMenuItem_Click(object? sender, EventArgs e)
         {
             foreach (ToolStripMenuItem menuItem in readingPaneMenuItem.DropDownItems)
             {
@@ -1421,7 +1421,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void paneOffMenuItem_Click(object sender, EventArgs e)
+        private void paneOffMenuItem_Click(object? sender, EventArgs e)
         {
             foreach (ToolStripMenuItem menuItem in readingPaneMenuItem.DropDownItems)
             {
@@ -1448,7 +1448,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void combatLogMenuItem_Click(object sender, EventArgs e)
+        private void combatLogMenuItem_Click(object? sender, EventArgs e)
         {
             Settings.UI.MainWindow.CombatLog.ShowCondensedLogs = combatLogMenuItem.Checked;
             killLogList.UpdateKillLogView();
@@ -1460,7 +1460,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showOnlyExtractorMenuItem_Click(object sender, EventArgs e)
+        private void showOnlyExtractorMenuItem_Click(object? sender, EventArgs e)
         {
             Settings.UI.MainWindow.Planetary.ShowEcuOnly = showOnlyExtractorMenuItem.Checked;
             planetaryList.UpdateColumns();
@@ -1492,10 +1492,10 @@ namespace EVEMon.CharacterMonitoring
                         menu =>
                         {
                             ToolStripButton tsb;
-                            ToolStripButton tempToolStripButton = null;
+                            ToolStripButton? tempToolStripButton = null;
                             try
                             {
-                                tempToolStripButton = new ToolStripButton(menu.group.GetHeader())
+                                tempToolStripButton = new ToolStripButton(menu.group.GetHeader()!)
                                 {
                                     Checked = list.Grouping.CompareTo(menu.@group) == 0,
                                     Tag = menu.grouping
@@ -1525,12 +1525,12 @@ namespace EVEMon.CharacterMonitoring
         private void GroupMenuSetting<T, T1>(ToolStripItem item, IListView list)
             where T : T1
         {
-            Enum grouping = item.Tag as Enum;
+            Enum? grouping = item.Tag as Enum;
             if (grouping == null)
                 return;
 
             list.Grouping = grouping;
-            T obj = default(T);
+            T? obj = default(T);
 
             if (obj is AssetGrouping)
                 m_character.UISettings.AssetsGroupBy = (AssetGrouping)grouping;
@@ -1570,7 +1570,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         internal void ClearNotifications()
         {
-            notificationList.Notifications = null;
+            notificationList.Notifications = null!;
         }
 
         /// <summary>
@@ -1578,7 +1578,7 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateListSearchTextFilter()
         {
-            IListView list = multiPanel.SelectedPage.Controls.OfType<IListView>().FirstOrDefault();
+            IListView? list = multiPanel.SelectedPage.Controls.OfType<IListView>().FirstOrDefault();
 
             if (list == null)
                 return;
@@ -1605,28 +1605,28 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void CompleteControlsInitialization()
         {
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             skillsList.Character = m_character;
-            skillQueueList.Character = ccpCharacter;
-            employmentList.Character = ccpCharacter;
-            standingsList.Character = ccpCharacter;
-            contactsList.Character = ccpCharacter;
-            factionalWarfareStatsList.Character = ccpCharacter;
-            medalsList.Character = ccpCharacter;
-            killLogList.Character = ccpCharacter;
-            assetsList.Character = ccpCharacter;
-            ordersList.Character = ccpCharacter;
-            contractsList.Character = ccpCharacter;
-            walletJournalList.Character = ccpCharacter;
-            walletTransactionsList.Character = ccpCharacter;
-            jobsList.Character = ccpCharacter;
-            planetaryList.Character = ccpCharacter;
-            loyaltyList.Character = ccpCharacter;
-            researchList.Character = ccpCharacter;
-            mailMessagesList.Character = ccpCharacter;
-            eveNotificationsList.Character = ccpCharacter;
-            notificationList.Notifications = null;
+            skillQueueList.Character = ccpCharacter!;
+            employmentList.Character = ccpCharacter!;
+            standingsList.Character = ccpCharacter!;
+            contactsList.Character = ccpCharacter!;
+            factionalWarfareStatsList.Character = ccpCharacter!;
+            medalsList.Character = ccpCharacter!;
+            killLogList.Character = ccpCharacter!;
+            assetsList.Character = ccpCharacter!;
+            ordersList.Character = ccpCharacter!;
+            contractsList.Character = ccpCharacter!;
+            walletJournalList.Character = ccpCharacter!;
+            walletTransactionsList.Character = ccpCharacter!;
+            jobsList.Character = ccpCharacter!;
+            planetaryList.Character = ccpCharacter!;
+            loyaltyList.Character = ccpCharacter!;
+            researchList.Character = ccpCharacter!;
+            mailMessagesList.Character = ccpCharacter!;
+            eveNotificationsList.Character = ccpCharacter!;
+            notificationList.Notifications = null!;
 
             // Create a list of the advanced features
             m_advancedFeatures.AddRange(new[]
@@ -1665,15 +1665,15 @@ namespace EVEMon.CharacterMonitoring
         /// <returns></returns>
         private List<IQueryMonitor> GetButtonMonitors(ToolStripItem button)
         {
-            MultiPanelPage page = multiPanel.Controls.Cast<MultiPanelPage>().FirstOrDefault(
-                x => x.Name == (string)button.Tag);
+            MultiPanelPage? page = multiPanel.Controls.Cast<MultiPanelPage>().FirstOrDefault(
+                x => x.Name == (string)button.Tag)!;
             CCPCharacter ccpCharacter = (CCPCharacter)m_character;
 
             List<IQueryMonitor> monitors = new List<IQueryMonitor>();
             if (page?.Tag == null)
                 return monitors;
 
-            string value = page.Tag.ToString();
+            string? value = page.Tag.ToString();
             ESIAPICharacterMethods cMethod;
             if (Enum.TryParse(value, out cMethod))
             {

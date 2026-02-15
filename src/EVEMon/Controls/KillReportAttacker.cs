@@ -18,8 +18,8 @@ namespace EVEMon.Controls
 {
     public partial class KillReportAttacker : UserControl
     {
-        private SerializableKillLogAttackersListItem m_attacker;
-        private Item m_selectedItem;
+        private SerializableKillLogAttackersListItem m_attacker = null!;
+        private Item m_selectedItem = null!;
 
 
         #region Constructor
@@ -63,7 +63,7 @@ namespace EVEMon.Controls
         /// <value>
         /// The kill log.
         /// </value>
-        internal KillLog KillLog { private get; set; }
+        internal KillLog KillLog { private get; set; } = null!;
 
         #endregion
 
@@ -75,11 +75,11 @@ namespace EVEMon.Controls
         /// </summary>
         private void UpdateContent()
         {
-            string alliance = m_attacker.AllianceName;
-            CharacterNameLabel.Text = m_attacker.Name.IsEmptyOrUnknown() ? m_attacker.
+            string? alliance = m_attacker.AllianceName;
+            CharacterNameLabel.Text = m_attacker.Name!.IsEmptyOrUnknown() ? m_attacker.
                 ShipTypeName : m_attacker.Name;
             CorpNameLabel.Text = m_attacker.CorporationName;
-            AllianceNameLabel.Text = m_attacker.AllianceID == 0 ? string.Empty : (alliance.
+            AllianceNameLabel.Text = m_attacker.AllianceID == 0 ? string.Empty : (alliance!.
                 IsEmptyOrUnknown() ? string.Empty : alliance);
 
             DamageDoneLabel.Text = string.Format(CultureConstants.DefaultCulture,
@@ -146,9 +146,9 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void control_MouseClick(object sender, MouseEventArgs e)
+        private void control_MouseClick(object? sender, MouseEventArgs e)
         {
-            Parent.Focus();
+            Parent!.Focus();
         }
 
         /// <summary>
@@ -156,12 +156,12 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
-        private void pictureBox_MouseDown(object sender, MouseEventArgs e)
+        private void pictureBox_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Right)
                 return;
 
-            PictureBox pictureBox = sender as PictureBox;
+            PictureBox? pictureBox = sender as PictureBox;
 
             if (pictureBox == null)
                 return;
@@ -188,10 +188,10 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
-        private void pictureBox_MouseMove(object sender, MouseEventArgs e)
+        private void pictureBox_MouseMove(object? sender, MouseEventArgs e)
         {
-            PictureBox pictureBox = sender as PictureBox;
-            m_selectedItem = null;
+            PictureBox? pictureBox = sender as PictureBox;
+            m_selectedItem = null!;
 
             if (pictureBox == null)
                 return;
@@ -211,9 +211,9 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void contextMenuStrip_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void contextMenuStrip_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            PictureBox pictureBox = contextMenuStrip.SourceControl as PictureBox;
+            PictureBox? pictureBox = contextMenuStrip.SourceControl as PictureBox;
 
             e.Cancel = pictureBox == null ||
                        ((pictureBox == ShipPictureBox) && (m_attacker.ShipTypeID == 0)) ||
@@ -235,7 +235,7 @@ namespace EVEMon.Controls
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-        private void showInBrowserMenuItem_Click(object sender, EventArgs e)
+        private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
             if (m_selectedItem == null)
                 return;

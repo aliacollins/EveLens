@@ -8,7 +8,7 @@ namespace EVEMon.SettingsUI
 {
     public partial class ProxyAuthenticationWindow : EVEMonForm
     {
-        private readonly ProxySettings m_proxySetting;
+        private readonly ProxySettings m_proxySetting = null!;
 
         private ProxyAuthenticationWindow()
         {
