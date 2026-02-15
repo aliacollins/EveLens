@@ -10,6 +10,7 @@ namespace EVEMon.Tests.Services
     /// Verifies that AppServices.SyncToServiceLocator() populates the Core ServiceLocator
     /// with non-null implementations for all registered services.
     /// </summary>
+    [Collection("AppServices")]
     public class ServiceLocatorSyncTests
     {
         public ServiceLocatorSyncTests()

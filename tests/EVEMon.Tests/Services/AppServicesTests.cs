@@ -6,6 +6,7 @@ using Xunit;
 
 namespace EVEMon.Tests.Services
 {
+    [Collection("AppServices")]
     public class AppServicesTests
     {
         public AppServicesTests()
