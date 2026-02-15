@@ -22,7 +22,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static items.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             if (MarketGroups != null)
                 return;

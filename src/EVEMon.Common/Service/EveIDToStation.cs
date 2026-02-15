@@ -68,7 +68,7 @@ namespace EVEMon.Common.Service
         /// <param name="id">The station/structure ID.</param>
         /// <param name="character">Optional character context (helps prioritize ESI key selection).</param>
         /// <returns>The station information, or an inaccessible placeholder if lookup is pending.</returns>
-        internal static Station GetIDToStation(long id, CCPCharacter character = null)
+        public static Station GetIDToStation(long id, CCPCharacter character = null)
         {
             // Check NPC stations first (these are in static data)
             var station = StaticGeography.GetStationByID(id);
@@ -96,7 +96,7 @@ namespace EVEMon.Common.Service
         /// <param name="id">The station/structure ID.</param>
         /// <param name="character">Optional character context.</param>
         /// <returns>The station information, or an inaccessible placeholder if not accessible.</returns>
-        internal static async Task<Station> GetIDToStationAsync(long id, CCPCharacter character = null)
+        public static async Task<Station> GetIDToStationAsync(long id, CCPCharacter character = null)
         {
             // Check NPC stations first
             var station = StaticGeography.GetStationByID(id);

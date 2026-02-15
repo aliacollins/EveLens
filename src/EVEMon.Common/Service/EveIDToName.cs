@@ -69,7 +69,7 @@ namespace EVEMon.Common.Service
         /// <param name="bypass">false (default) to allow local lookup optimizations, true
         /// to force a query to ESI API (depending on local cache)</param>
         /// <returns>The entity name, or EveMonConstants.UnknownText if it is being queried.</returns>
-        internal static string GetIDToName(long id, bool bypass = false)
+        public static string GetIDToName(long id, bool bypass = false)
         {
             return s_lookup.LookupID(id, bypass) ?? EveMonConstants.UnknownText;
         }
@@ -79,7 +79,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         /// <param name="id">The id.</param>
         /// <returns>The entity names, or null for each entry being queried.</returns>
-        internal static IEnumerable<string> GetIDsToNames(IEnumerable<long> ids)
+        public static IEnumerable<string> GetIDsToNames(IEnumerable<long> ids)
         {
             return s_lookup.LookupAllID(ids);
         }

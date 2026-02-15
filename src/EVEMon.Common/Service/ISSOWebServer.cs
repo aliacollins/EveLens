@@ -9,7 +9,7 @@ namespace EVEMon.Common.Service
     /// 
     /// SSO was really meant for web apps so this is the best we can do...
     /// </summary>
-    interface ISSOWebServer : IDisposable
+    public interface ISSOWebServer : IDisposable
     {
         /// <summary>
         /// Asynchronously waits for an auth code in the background.

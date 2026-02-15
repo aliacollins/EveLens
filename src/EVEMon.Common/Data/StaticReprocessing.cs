@@ -15,7 +15,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static reprocssing information.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             ReprocessingDatafile datafile = Util.DeserializeDatafile<ReprocessingDatafile>(
                 DatafileConstants.ReprocessingDatafile, Util.LoadXslt(Properties.Resources.DatafilesXSLT));

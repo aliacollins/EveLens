@@ -14,8 +14,8 @@ using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.Common.Serialization.Esi;
-using EVEMon.Common.Service;
 using EVEMon.Common.Helpers;
+using EVEMon.Core;
 using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Models
@@ -198,7 +198,7 @@ namespace EVEMon.Common.Models
         {
             get
             {
-                return EveIDToStation.GetIDToStation(homeStation, this as CCPCharacter);
+                return ServiceLocator.StationResolver.GetStation(homeStation, CharacterID) as Station;
             }
         }
 
@@ -404,8 +404,8 @@ namespace EVEMon.Common.Models
                     return null;
                 int id = loc.StationID;
                 // If this is a CCP character, allow usage of ESI key to find citadel info
-                return EveIDToStation.GetIDToStation(id != 0 ? id : loc.StructureID, this as
-                    CCPCharacter);
+                return ServiceLocator.StationResolver.GetStation(id != 0 ? id : loc.StructureID,
+                    CharacterID) as Station;
             }
         }
 
@@ -790,9 +790,9 @@ namespace EVEMon.Common.Models
             FactionID = serial.FactionID;
             SecurityStatus = serial.SecurityStatus;
             // Enable bypass since we would have a circular loop otherwise
-            CorporationName = EveIDToName.GetIDToName(CorporationID, true);
-            AllianceName = EveIDToName.GetIDToName(AllianceID, true);
-            FactionName = EveIDToName.GetIDToName(FactionID);
+            CorporationName = ServiceLocator.NameResolver.GetName(CorporationID, true);
+            AllianceName = ServiceLocator.NameResolver.GetName(AllianceID, true);
+            FactionName = ServiceLocator.NameResolver.GetName(FactionID);
         }
 
         /// <summary>
@@ -959,14 +959,14 @@ namespace EVEMon.Common.Models
                     // New booster or different booster
                     int biologyLevel = GetBiologySkillLevel();
                     ActiveBooster = BoosterInfo.Create(detectedBonus, biologyLevel);
-                    EveMonClient.Trace($"Booster detected: +{detectedBonus} (Biology Level {biologyLevel})");
+                    ServiceLocator.TraceService.Trace($"Booster detected: +{detectedBonus} (Biology Level {biologyLevel})");
                 }
                 else if (ActiveBooster != null && !ActiveBooster.IsActive)
                 {
                     // Booster was tracked but thought to be expired - reset it
                     int biologyLevel = GetBiologySkillLevel();
                     ActiveBooster = BoosterInfo.Create(detectedBonus, biologyLevel);
-                    EveMonClient.Trace($"Booster re-detected after expiry: +{detectedBonus}");
+                    ServiceLocator.TraceService.Trace($"Booster re-detected after expiry: +{detectedBonus}");
                 }
             }
             else

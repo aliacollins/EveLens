@@ -6,7 +6,7 @@ using Microsoft.CSharp;
 
 namespace EVEMon.Common.Service
 {
-    internal class CodeCompiler
+    public class CodeCompiler
     {
         private readonly CompilerParameters m_compilerParameters = new CompilerParameters();
 
@@ -30,7 +30,7 @@ namespace EVEMon.Common.Service
         /// <param name="referenceAssemblies">The reference assemblies.</param>
         /// <param name="codeText">The code text.</param>
         /// <returns></returns>
-        internal static T GenerateAssembly<T>(string[] referenceAssemblies, string codeText) where T : class
+        public static T GenerateAssembly<T>(string[] referenceAssemblies, string codeText) where T : class
         {
             var compiler = new CodeCompiler(referenceAssemblies);
             return compiler.CreateInstanceFrom<T>(codeText);

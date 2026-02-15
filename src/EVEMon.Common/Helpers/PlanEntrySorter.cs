@@ -10,7 +10,7 @@ namespace EVEMon.Common.Helpers
     /// <summary>
     /// This class holds the responsibility to sort enumerations of plan entries.
     /// </summary>
-    internal sealed class PlanEntrySorter
+    public sealed class PlanEntrySorter
     {
         private readonly PlanEntrySort m_sort;
         private readonly bool m_reverseOrder;
@@ -85,7 +85,7 @@ namespace EVEMon.Common.Helpers
         /// <param name="list"></param>
         private static void FixPrerequisitesOrder(ICollection<PlanEntry> list)
         {
-            // Gather prerequisites/postrequisites relationships and use them to connect nodes - O(n²) operation
+            // Gather prerequisites/postrequisites relationships and use them to connect nodes - O(nï¿½) operation
             Dictionary<PlanEntry, List<PlanEntry>> dependencies = new Dictionary<PlanEntry, List<PlanEntry>>();
             foreach (PlanEntry entry in list)
             {

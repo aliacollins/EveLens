@@ -9,7 +9,7 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -111,7 +111,7 @@ namespace EVEMon.Common.Models
                     case KillLogFittingContentGroup.Implant:
                     case KillLogFittingContentGroup.DroneBay:
                     case KillLogFittingContentGroup.Cargo:
-                        return EveFlag.GetFlagText(EVEFlag);
+                        return ServiceLocator.FlagResolver.GetFlagText(EVEFlag);
                     default:
                         return string.Empty;
                 }
@@ -243,7 +243,7 @@ namespace EVEMon.Common.Models
         private async Task GetItemImageAsync()
         {
             Uri uri = ImageHelper.GetTypeImageURL(m_typeID);
-            Image img = await ImageService.GetImageAsync(uri).ConfigureAwait(false);
+            Image img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false) as Image;
             if (img != null) {
                 m_image = img;
                 // Notify the subscriber that we got the image

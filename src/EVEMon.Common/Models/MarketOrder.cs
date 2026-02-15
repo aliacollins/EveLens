@@ -5,8 +5,8 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Settings;
-using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -300,7 +300,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         public void UpdateStation()
         {
-            Station = EveIDToStation.GetIDToStation(m_stationID, m_character);
+            Station = ServiceLocator.StationResolver.GetStation(m_stationID, m_character?.CharacterID ?? 0) as Station;
         }
 
 #endregion

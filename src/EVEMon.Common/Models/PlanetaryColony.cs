@@ -4,8 +4,10 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Core;
 using System;
 using System.Collections.Generic;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -193,7 +195,8 @@ namespace EVEMon.Common.Models
                 if (result.HasData)
                 {
                     Import(result.Result);
-                    EveMonClient.OnCharacterPlanetaryLayoutUpdated(Character);
+                    ServiceLocator.TraceService.Trace(Character.Name);
+                    ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterPlanetaryLayoutUpdatedEvent(Character));
                 }
             }
         }

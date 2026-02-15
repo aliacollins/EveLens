@@ -5,7 +5,7 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Settings;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using System;
 
 namespace EVEMon.Common.Models
@@ -403,7 +403,7 @@ namespace EVEMon.Common.Models
         /// <returns>Name of the installation.</returns>
         private string GetInstallation(long id, CCPCharacter character)
         {
-            return EveIDToStation.GetIDToStation(id, character)?.Name ?? EveMonConstants.
+            return (ServiceLocator.StationResolver.GetStation(id, character?.CharacterID ?? 0) as Station)?.Name ?? EveMonConstants.
                 UnknownText;
         }
 
@@ -473,8 +473,8 @@ namespace EVEMon.Common.Models
             // If location not already determined
             if (m_installedItemLocationID != 0L && (SolarSystem == null || SolarSystem.ID == 0))
             {
-                var station = EveIDToStation.GetIDToStation(m_installedItemLocationID,
-                    character);
+                var station = ServiceLocator.StationResolver.GetStation(m_installedItemLocationID,
+                    character?.CharacterID ?? 0) as Station;
                 SolarSystem = station?.SolarSystem ?? SolarSystem.UNKNOWN;
             }
         }

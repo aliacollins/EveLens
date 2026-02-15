@@ -5,7 +5,7 @@ using System.Text;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Data;
 using EVEMon.Common.Extensions;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using YamlDotNet.RepresentationModel;
 
 namespace EVEMon.Common.Models.Extended
@@ -115,14 +115,14 @@ namespace EVEMon.Common.Models.Extended
             case "MERCID":
             case "AGGRESSORCORPID":
             case "AGGRESSORALLIANCEID":
-                parsedDict[key] = EveIDToName.GetIDToName(valueAsLong);
+                parsedDict[key] = ServiceLocator.NameResolver.GetName(valueAsLong);
                 break;
             case "CLONESTATIONID":
             case "CORPSTATIONID":
             case "LOCATIONID":
             case "STRUCTUREID":
             case "EXTERNALID2":
-                parsedDict[key] = EveIDToStation.GetIDToStation(valueAsLong)?.Name ??
+                parsedDict[key] = (ServiceLocator.StationResolver.GetStation(valueAsLong) as Station)?.Name ??
                     EveMonConstants.UnknownText;
                 break;
             case "SOLARSYSTEMID":

@@ -18,7 +18,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static blueprints.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             if (BlueprintMarketGroups != null)
                 return;

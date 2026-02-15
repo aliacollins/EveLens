@@ -1,7 +1,7 @@
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using System;
 using System.Drawing;
 using System.Threading.Tasks;
@@ -39,7 +39,7 @@ namespace EVEMon.Common.Models
             m_character = character;
             m_corporationId = src.CorporationID;
             m_corporationName = string.IsNullOrWhiteSpace(src.CorporationName)
-                ? EveIDToName.GetIDToName(src.CorporationID) : src.CorporationName;
+                ? ServiceLocator.NameResolver.GetName(src.CorporationID) : src.CorporationName;
             StartDate = src.StartDate;
         }
 
@@ -69,7 +69,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         /// <value>The name of the corporation.</value>
         public string CorporationName => m_corporationName.IsEmptyOrUnknown() ?
-            (m_corporationName = EveIDToName.GetIDToName(m_corporationId)) : m_corporationName;
+            (m_corporationName = ServiceLocator.NameResolver.GetName(m_corporationId)) : m_corporationName;
 
         /// <summary>
         /// Gets or sets the start date.
@@ -105,7 +105,7 @@ namespace EVEMon.Common.Models
         private async Task GetImageAsync()
         {
             Uri uri = ImageHelper.GetCorporationImageURL(m_corporationId);
-            Image img = await ImageService.GetImageAsync(uri).ConfigureAwait(false);
+            Image img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false) as Image;
             if (img != null)
             {
                 m_image = img;

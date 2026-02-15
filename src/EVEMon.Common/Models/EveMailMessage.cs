@@ -7,9 +7,10 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
 using EVEMon.Common.Net;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -59,10 +60,10 @@ namespace EVEMon.Common.Models
             else if (senderID == 0L)
                 m_senderName = EveMonConstants.UnknownText;
             else
-                m_senderName = EveIDToName.GetIDToName(senderID);
+                m_senderName = ServiceLocator.NameResolver.GetName(senderID);
             m_toCharacters = GetIDsToNames(src.ToCharacterIDs);
             m_toMailingLists = GetMailingListIDsToNames(src.ToListID);
-            m_toCorpOrAlliance = EveIDToName.GetIDToName(src.ToCorpOrAllianceID);
+            m_toCorpOrAlliance = ServiceLocator.NameResolver.GetName(src.ToCorpOrAllianceID);
 
             EVEMailBody = new EveMailBody(0L, new EsiAPIMailBody() { Body = "" });
         }
@@ -89,7 +90,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         /// <value>The sender.</value>
         public string SenderName => m_senderName.IsEmptyOrUnknown() ? (m_senderName =
-            EveIDToName.GetIDToName(m_source.SenderID)) : m_senderName;
+            ServiceLocator.NameResolver.GetName(m_source.SenderID)) : m_senderName;
 
         /// <summary>
         /// Gets or sets the sent date of the EVE mail.
@@ -110,7 +111,7 @@ namespace EVEMon.Common.Models
         /// so this parse cannot fail
         /// </summary>
         public string ToCorpOrAlliance => m_toCorpOrAlliance.IsEmptyOrUnknown() ?
-            (m_toCorpOrAlliance = EveIDToName.GetIDToName(m_source.ToCorpOrAllianceID)) :
+            (m_toCorpOrAlliance = ServiceLocator.NameResolver.GetName(m_source.ToCorpOrAllianceID)) :
             m_toCorpOrAlliance;
 
         /// <summary>
@@ -164,7 +165,7 @@ namespace EVEMon.Common.Models
             if (!src.Any())
                 return NO_SENDER;
             
-            return EveIDToName.GetIDsToNames(src).Select(x => x ?? EveMonConstants.UnknownText);
+            return ServiceLocator.NameResolver.GetNames(src).Select(x => x ?? EveMonConstants.UnknownText);
         }
 
         /// <summary>
@@ -230,7 +231,8 @@ namespace EVEMon.Common.Models
                 result.Result.Body))
             {
                 EVEMailBody = new EveMailBody(messageID, result.Result);
-                EveMonClient.OnCharacterEVEMailBodyDownloaded(m_ccpCharacter);
+                ServiceLocator.TraceService.Trace(m_ccpCharacter.Name);
+                ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterEVEMailBodyDownloadedEvent(m_ccpCharacter));
             }
         }
 

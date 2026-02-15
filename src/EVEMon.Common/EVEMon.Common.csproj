@@ -28,6 +28,10 @@
   <!-- Project References -->
   <ItemGroup>
     <ProjectReference Include="..\EVEMon.Core\EVEMon.Core.csproj" />
+    <ProjectReference Include="..\EVEMon.Data\EVEMon.Data.csproj" />
+    <ProjectReference Include="..\EVEMon.Serialization\EVEMon.Serialization.csproj" />
+    <ProjectReference Include="..\EVEMon.Models\EVEMon.Models.csproj" />
+    <ProjectReference Include="..\EVEMon.Infrastructure\EVEMon.Infrastructure.csproj" />
   </ItemGroup>
 
   <!-- Shared AssemblyInfo -->

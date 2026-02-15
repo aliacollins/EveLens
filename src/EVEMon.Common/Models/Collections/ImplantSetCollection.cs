@@ -5,7 +5,7 @@ using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Data;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using System.Globalization;
 
 namespace EVEMon.Common.Models.Collections
@@ -213,8 +213,7 @@ namespace EVEMon.Common.Models.Collections
             // Try to pick a sane name if it is null
             if (string.IsNullOrEmpty(name))
             {
-                var location = EveIDToStation.GetIDToStation(locationID, m_character as
-                    CCPCharacter);
+                var location = ServiceLocator.StationResolver.GetStation(locationID, m_character?.CharacterID ?? 0) as Station;
                 if (location == null)
                 {
                     name = "Clone at location #" + locationID.ToString(CultureInfo.

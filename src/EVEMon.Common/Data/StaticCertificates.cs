@@ -22,7 +22,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static certificates.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             CertificatesDatafile datafile = Util.DeserializeDatafile<CertificatesDatafile>(DatafileConstants.CertificatesDatafile,
                     Util.LoadXslt(Properties.Resources.DatafilesXSLT));

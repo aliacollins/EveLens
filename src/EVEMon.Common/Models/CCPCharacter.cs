@@ -12,8 +12,8 @@ using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
 using EVEMon.Common.Serialization.Settings;
-using EVEMon.Common.Service;
 using EVEMon.Common.Extensions;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -114,8 +114,8 @@ namespace EVEMon.Common.Models
             m_endedContractsForCorporation = new List<Contract>();
 
             m_jobsCompletedForCharacter = new List<IndustryJob>();
-            m_allianceName = EveIDToName.GetIDToName(AllianceID);
-            m_corporationName = EveIDToName.GetIDToName(CorporationID);
+            m_allianceName = ServiceLocator.NameResolver.GetName(AllianceID);
+            m_corporationName = ServiceLocator.NameResolver.GetName(CorporationID);
 
             // Safe to call now that SkillQueue and all collections are initialized
             // (moved out of base Character constructor to avoid virtual call before init)
@@ -987,19 +987,19 @@ namespace EVEMon.Common.Models
             // If the corp, alliance, or faction was unknown, update it
             if (cname.IsEmptyOrUnknown())
             {
-                CorporationName = EveIDToName.GetIDToName(CorporationID);
+                CorporationName = ServiceLocator.NameResolver.GetName(CorporationID);
                 if (CorporationName != cname)
                     updated = true;
             }
             if (aname.IsEmptyOrUnknown())
             {
-                AllianceName = EveIDToName.GetIDToName(AllianceID);
+                AllianceName = ServiceLocator.NameResolver.GetName(AllianceID);
                 if (AllianceName != aname)
                     updated = true;
             }
             if (fname.IsEmptyOrUnknown())
             {
-                FactionName = EveIDToName.GetIDToName(FactionID);
+                FactionName = ServiceLocator.NameResolver.GetName(FactionID);
                 if (FactionName != fname)
                     updated = true;
             }

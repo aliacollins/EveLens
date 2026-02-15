@@ -33,7 +33,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static geography.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             GeoDatafile datafile = LoadGeoData();
             LoadFactions();

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models.Extended;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using YamlDotNet.RepresentationModel;
 using EVEMon.Common.Constants;
 
@@ -69,7 +69,7 @@ namespace EVEMon.Common.Models
         /// <value>The notification text.</value>
         internal string ParsedText => m_parsedText = (string.IsNullOrEmpty(m_parsedText) ||
             m_parsedText.Contains(EveMonConstants.UnknownText)) ? Parse(
-            EveNotificationType.GetTextLayout(m_notification.TypeID)).NewLinesToBreakLines().
+            ServiceLocator.NotificationTypeResolver.GetTextLayout(m_notification.TypeID)).NewLinesToBreakLines().
             DecodeUnicodeCharacters().Normalize() : m_parsedText;
 
         #endregion

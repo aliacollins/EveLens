@@ -27,7 +27,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static properties.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             PropertiesDatafile datafile = 
                 Util.DeserializeDatafile<PropertiesDatafile>(DatafileConstants.PropertiesDatafile,

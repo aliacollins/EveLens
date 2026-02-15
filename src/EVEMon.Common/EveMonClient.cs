@@ -502,6 +502,17 @@ namespace EVEMon.Common
         private static void UpdateSettings()
         {
             HttpWebClientServiceState.Proxy = Settings.Proxy;
+
+            // Wire up proxy host resolver for HttpWebClientServiceException
+            // so it can resolve proxy hosts without depending on HttpWebClientServiceState directly
+            HttpWebClientServiceException.ProxyHostResolver = url =>
+            {
+                if (HttpWebClientServiceState.Proxy.Enabled)
+                    return HttpWebClientServiceState.Proxy.Host;
+
+                var proxyUri = System.Net.WebRequest.DefaultWebProxy?.GetProxy(url);
+                return proxyUri?.Host ?? url.Host;
+            };
         }
 
         #endregion

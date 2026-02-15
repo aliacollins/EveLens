@@ -27,7 +27,7 @@ namespace EVEMon.Common.Service
         /// Asynchronously downloads a character portrait from its ID.
         /// </summary>
         /// <param name="charId"></param>
-        internal static async Task<Image> GetCharacterImageAsync(long charId)
+        public static async Task<Image> GetCharacterImageAsync(long charId)
         {
             string path = string.Format(CultureConstants.InvariantCulture,
                 NetworkConstants.CCPPortraits, charId, (int)EveImageSize.x128);
@@ -107,7 +107,7 @@ namespace EVEMon.Common.Service
         /// <param name="filename">The filename.</param>
         /// <param name="directory">The directory.</param>
         /// <returns></returns>
-        internal static Image GetImageFromCache(string filename, string directory = null)
+        public static Image GetImageFromCache(string filename, string directory = null)
         {
             // First check whether the image exists in cache
             EveMonClient.EnsureCacheDirInit();
@@ -170,7 +170,7 @@ namespace EVEMon.Common.Service
         /// <param name="filename">The filename.</param>
         /// <param name="directory">The directory.</param>
         /// <returns></returns>
-        internal static async Task AddImageToCacheAsync(Image image, string filename,
+        public static async Task AddImageToCacheAsync(Image image, string filename,
             string directory = null)
         {
             // Saves the image file

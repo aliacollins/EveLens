@@ -6,7 +6,7 @@ namespace EVEMon.Common.QueryMonitor
     /// Interface for character data querying implementations.
     /// Used by CCPCharacter to interact with CharacterQueryOrchestrator.
     /// </summary>
-    internal interface ICharacterDataQuerying : IDisposable
+    public interface ICharacterDataQuerying : IDisposable
     {
         /// <summary>
         /// Gets whether the character sheet monitor has an error.

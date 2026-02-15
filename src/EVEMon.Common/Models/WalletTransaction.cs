@@ -3,7 +3,7 @@ using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 
 
 namespace EVEMon.Common.Models
@@ -36,7 +36,7 @@ namespace EVEMon.Common.Models
             Quantity = src.Quantity;
             Price = src.Price;
             m_clientID = src.ClientID;
-            m_clientName = EveIDToName.GetIDToName(m_clientID);
+            m_clientName = ServiceLocator.NameResolver.GetName(m_clientID);
             TransactionType = src.TransactionType == "buy" ? TransactionType.Buy : TransactionType.Sell;
             TransactionFor = src.TransactionFor == "personal" ? IssuedFor.Character : IssuedFor.Corporation;
             m_stationID = src.StationID;
@@ -91,7 +91,7 @@ namespace EVEMon.Common.Models
         /// The name of the client.
         /// </value>
         public string ClientName => m_clientName.IsEmptyOrUnknown() ?
-            (m_clientName = EveIDToName.GetIDToName(m_clientID)) : m_clientName;
+            (m_clientName = ServiceLocator.NameResolver.GetName(m_clientID)) : m_clientName;
 
         /// <summary>
         /// Gets the station.
@@ -138,7 +138,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         public void UpdateStation()
         {
-            Station = EveIDToStation.GetIDToStation(m_stationID, m_character);
+            Station = ServiceLocator.StationResolver.GetStation(m_stationID, m_character?.CharacterID ?? 0) as Station;
         }
 
         #endregion

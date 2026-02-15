@@ -5,9 +5,11 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Service;
+using EVEMon.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -224,7 +226,8 @@ namespace EVEMon.Common.Models
                 {
                     var fwStats = result.Result.ToXMLItem(factionWars);
                     Import(fwStats);
-                    EveMonClient.OnEveFactionalWarfareStatsUpdated();
+                    ServiceLocator.TraceService.Trace(nameof(EveFactionalWarfareStats));
+                    ServiceLocator.EventAggregator.Publish(CommonEvents.EveFactionalWarfareStatsUpdatedEvent.Instance);
                     // Save the file to our cache
                     LocalXmlCache.SaveAsync(Filename, Util.SerializeToXmlDocument(fwStats)).
                         ConfigureAwait(false);

@@ -9,8 +9,8 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -161,7 +161,7 @@ namespace EVEMon.Common.Models
         private async Task GetVictimShipImageAsync()
         {
             Uri uri = ImageHelper.GetTypeImageURL(Victim.ShipTypeID);
-            Image img = await ImageService.GetImageAsync(uri).ConfigureAwait(false);
+            Image img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false) as Image;
             if (img != null) {
                 m_image = img;
                 // Notify the subscriber that we got the image
@@ -177,19 +177,19 @@ namespace EVEMon.Common.Models
             if (Victim != null)
             {
                 // Update victim's info
-                Victim.AllianceName = EveIDToName.GetIDToName(Victim.AllianceID);
-                Victim.CorporationName = EveIDToName.GetIDToName(Victim.CorporationID);
-                Victim.FactionName = EveIDToName.GetIDToName(Victim.FactionID);
-                Victim.Name = EveIDToName.GetIDToName(Victim.ID);
+                Victim.AllianceName = ServiceLocator.NameResolver.GetName(Victim.AllianceID);
+                Victim.CorporationName = ServiceLocator.NameResolver.GetName(Victim.CorporationID);
+                Victim.FactionName = ServiceLocator.NameResolver.GetName(Victim.FactionID);
+                Victim.Name = ServiceLocator.NameResolver.GetName(Victim.ID);
             }
             if (Attackers != null)
                 foreach (var attacker in Attackers)
                 {
                     // Update attacker's info
-                    attacker.AllianceName = EveIDToName.GetIDToName(attacker.AllianceID);
-                    attacker.CorporationName = EveIDToName.GetIDToName(attacker.CorporationID);
-                    attacker.FactionName = EveIDToName.GetIDToName(attacker.FactionID);
-                    attacker.Name = EveIDToName.GetIDToName(attacker.ID);
+                    attacker.AllianceName = ServiceLocator.NameResolver.GetName(attacker.AllianceID);
+                    attacker.CorporationName = ServiceLocator.NameResolver.GetName(attacker.CorporationID);
+                    attacker.FactionName = ServiceLocator.NameResolver.GetName(attacker.FactionID);
+                    attacker.Name = ServiceLocator.NameResolver.GetName(attacker.ID);
                 }
         }
 

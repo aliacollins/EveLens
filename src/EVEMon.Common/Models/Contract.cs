@@ -7,10 +7,11 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -201,20 +202,20 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the issuer.
         /// </summary>
-        public string Issuer => m_issuer.IsEmptyOrUnknown() ? (m_issuer = EveIDToName.
-            GetIDToName(IssuerID)) : m_issuer;
+        public string Issuer => m_issuer.IsEmptyOrUnknown() ? (m_issuer = ServiceLocator.
+            NameResolver.GetName(IssuerID)) : m_issuer;
 
         /// <summary>
         /// Gets the assignee.
         /// </summary>
-        public string Assignee => m_assignee.IsEmptyOrUnknown() ? (m_assignee = EveIDToName.
-            GetIDToName(AssigneeID)) : m_assignee;
+        public string Assignee => m_assignee.IsEmptyOrUnknown() ? (m_assignee = ServiceLocator.
+            NameResolver.GetName(AssigneeID)) : m_assignee;
 
         /// <summary>
         /// Gets the acceptor.
         /// </summary>
-        public string Acceptor => m_acceptor.IsEmptyOrUnknown() ? (m_acceptor = EveIDToName.
-            GetIDToName(AcceptorID)) : m_acceptor;
+        public string Acceptor => m_acceptor.IsEmptyOrUnknown() ? (m_acceptor = ServiceLocator.
+            NameResolver.GetName(AcceptorID)) : m_acceptor;
 
         /// <summary>
         /// Gets the contract items.
@@ -394,9 +395,9 @@ namespace EVEMon.Common.Models
             Availability = src.Availability;
             ContractType = src.ContractType;
             // Issuer and assignee
-            m_issuer = src.ForCorp ? Character.Corporation.Name : EveIDToName.GetIDToName(
+            m_issuer = src.ForCorp ? Character.Corporation.Name : ServiceLocator.NameResolver.GetName(
                 src.IssuerID);
-            m_assignee = EveIDToName.GetIDToName(src.AssigneeID);
+            m_assignee = ServiceLocator.NameResolver.GetName(src.AssigneeID);
         }
 
         /// <summary>
@@ -408,7 +409,7 @@ namespace EVEMon.Common.Models
             Accepted = src.DateAccepted;
             Completed = src.DateCompleted;
             AcceptorID = src.AcceptorID;
-            m_acceptor = EveIDToName.GetIDToName(src.AcceptorID);
+            m_acceptor = ServiceLocator.NameResolver.GetName(src.AcceptorID);
             Status = src.ContractStatus;
             if (Overdue)
                 Status = CCPContractStatus.Overdue;
@@ -507,9 +508,15 @@ namespace EVEMon.Common.Models
                 Import(result.Result);
                 // Fire correct event type
                 if (methodEnum is ESIAPICharacterMethods)
-                    EveMonClient.OnCharacterContractItemsDownloaded(target);
+                {
+                    ServiceLocator.TraceService.Trace(target.Name);
+                    ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterContractItemsDownloadedEvent(target));
+                }
                 else
-                    EveMonClient.OnCorporationContractItemsDownloaded(target);
+                {
+                    ServiceLocator.TraceService.Trace(target.CorporationName);
+                    ServiceLocator.EventAggregator.Publish(new CommonEvents.CorporationContractItemsDownloadedEvent(target));
+                }
             }
             m_itemsPending = false;
         }
@@ -532,9 +539,15 @@ namespace EVEMon.Common.Models
                 Import(result.Result);
                 // Fire correct event type
                 if (methodEnum is ESIAPICharacterMethods)
-                    EveMonClient.OnCharacterContractBidsDownloaded(target);
+                {
+                    ServiceLocator.TraceService.Trace(target.Name);
+                    ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterContractBidsDownloadedEvent(target));
+                }
                 else
-                    EveMonClient.OnCorporationContractBidsDownloaded(target);
+                {
+                    ServiceLocator.TraceService.Trace(target.CorporationName);
+                    ServiceLocator.EventAggregator.Publish(new CommonEvents.CorporationContractBidsDownloadedEvent(target));
+                }
             }
             m_bidsPending = false;
         }
@@ -549,8 +562,8 @@ namespace EVEMon.Common.Models
         /// </summary>
         public void UpdateStation()
         {
-            StartStation = EveIDToStation.GetIDToStation(m_startStationID, Character);
-            EndStation = EveIDToStation.GetIDToStation(m_endStationID, Character);
+            StartStation = ServiceLocator.StationResolver.GetStation(m_startStationID, Character?.CharacterID ?? 0) as Station;
+            EndStation = ServiceLocator.StationResolver.GetStation(m_endStationID, Character?.CharacterID ?? 0) as Station;
         }
 
         /// <summary>

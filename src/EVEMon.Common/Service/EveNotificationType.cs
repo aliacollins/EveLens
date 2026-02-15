@@ -29,7 +29,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         /// <param name="typeID">The type ID.</param>
         /// <returns></returns>
-        internal static string GetName(int typeID)
+        public static string GetName(int typeID)
         {
             EnsureLoaded();
             SerializableNotificationRefTypesListItem type;
@@ -42,7 +42,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         /// <param name="typeID">The type name.</param>
         /// <returns>The type ID.</returns>
-        internal static int GetID(string name)
+        public static int GetID(string name)
         {
             int id;
             EnsureLoaded();
@@ -79,7 +79,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         /// <param name="typeID">The type identifier.</param>
         /// <returns></returns>
-        internal static string GetSubjectLayout(int typeID)
+        public static string GetSubjectLayout(int typeID)
         {
             EnsureLoaded();
 
@@ -93,7 +93,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         /// <param name="typeID">The type identifier.</param>
         /// <returns></returns>
-        internal static string GetTextLayout(int typeID)
+        public static string GetTextLayout(int typeID)
         {
             if (EveMonClient.IsDebugBuild)
                 EnsureInitialized();

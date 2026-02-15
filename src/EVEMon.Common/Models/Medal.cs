@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
 using EVEMon.Common.Enumerations;
-using EVEMon.Common.Service;
 using EVEMon.Common.Extensions;
+using EVEMon.Core;
 using EVEMon.Common.Serialization.Esi;
 
 namespace EVEMon.Common.Models
@@ -41,8 +41,8 @@ namespace EVEMon.Common.Models
             Issued = src.Issued;
             Group = group;
 
-            m_issuer = EveIDToName.GetIDToName(src.IssuerID);
-            m_corporationName = EveIDToName.GetIDToName(CorporationID);
+            m_issuer = ServiceLocator.NameResolver.GetName(src.IssuerID);
+            m_corporationName = ServiceLocator.NameResolver.GetName(CorporationID);
         }
 
         #endregion
@@ -104,13 +104,13 @@ namespace EVEMon.Common.Models
         /// Gets the issuer.
         /// </summary>
         public string Issuer => m_issuer.IsEmptyOrUnknown() ? (m_issuer =
-            EveIDToName.GetIDToName(IssuerID)) : m_issuer;
+            ServiceLocator.NameResolver.GetName(IssuerID)) : m_issuer;
 
         /// <summary>
         /// Gets the corporation name.
         /// </summary>
         public string CorporationName => m_corporationName.IsEmptyOrUnknown() ?
-            (m_corporationName = EveIDToName.GetIDToName(IssuerID)) : m_corporationName;
+            (m_corporationName = ServiceLocator.NameResolver.GetName(IssuerID)) : m_corporationName;
 
         #endregion
 

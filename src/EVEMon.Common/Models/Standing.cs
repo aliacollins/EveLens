@@ -5,8 +5,8 @@ using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
-using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -52,7 +52,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         /// <value>The name.</value>
         public string EntityName => m_entityName.IsEmptyOrUnknown() ?
-            (m_entityName = EveIDToName.GetIDToName(m_entityID)) : m_entityName;
+            (m_entityName = ServiceLocator.NameResolver.GetName(m_entityID)) : m_entityName;
 
         /// <summary>
         /// Gets or sets the standing value.
@@ -144,7 +144,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         private async Task GetImageAsync()
         {
-            Image img = await ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false);
+            Image img = await ServiceLocator.ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false) as Image;
             if (img != null)
             {
                 m_image = img;

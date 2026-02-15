@@ -20,6 +20,13 @@ namespace EVEMon.Common.Services
         private static ICharacterRepository s_characterRepository;
         private static ISettingsDataStore s_dataStore;
         private static CharacterFactory s_characterFactory;
+        private static ITraceService s_traceService;
+        private static IApplicationPaths s_applicationPaths;
+        private static INameResolver s_nameResolver;
+        private static IStationResolver s_stationResolver;
+        private static IFlagResolver s_flagResolver;
+        private static Core.Interfaces.IImageService s_imageService;
+        private static INotificationTypeResolver s_notificationTypeResolver;
 
         /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
@@ -65,6 +72,48 @@ namespace EVEMon.Common.Services
                 CharacterRepository, EventAggregator, EveMonClientCharacterServices.Instance);
 
         /// <summary>
+        /// Gets the trace service for diagnostic logging.
+        /// </summary>
+        public static ITraceService TraceService
+            => s_traceService ?? (s_traceService = new TraceServiceAdapter());
+
+        /// <summary>
+        /// Gets the application paths service.
+        /// </summary>
+        public static IApplicationPaths ApplicationPaths
+            => s_applicationPaths ?? (s_applicationPaths = new ApplicationPathsAdapter());
+
+        /// <summary>
+        /// Gets the name resolver for EVE entity ID to name lookups.
+        /// </summary>
+        public static INameResolver NameResolver
+            => s_nameResolver ?? (s_nameResolver = new NameResolverAdapter());
+
+        /// <summary>
+        /// Gets the station resolver for station/structure lookups.
+        /// </summary>
+        public static IStationResolver StationResolver
+            => s_stationResolver ?? (s_stationResolver = new StationResolverAdapter());
+
+        /// <summary>
+        /// Gets the flag resolver for inventory flag lookups.
+        /// </summary>
+        public static IFlagResolver FlagResolver
+            => s_flagResolver ?? (s_flagResolver = new FlagResolverAdapter());
+
+        /// <summary>
+        /// Gets the image service for image downloading and caching.
+        /// </summary>
+        public static Core.Interfaces.IImageService ImageService
+            => s_imageService ?? (s_imageService = new ImageServiceAdapter());
+
+        /// <summary>
+        /// Gets the notification type resolver.
+        /// </summary>
+        public static INotificationTypeResolver NotificationTypeResolver
+            => s_notificationTypeResolver ?? (s_notificationTypeResolver = new NotificationTypeResolverAdapter());
+
+        /// <summary>
         /// Replaces a service implementation (for testing or DI transition).
         /// </summary>
         internal static void SetDispatcher(IDispatcher dispatcher) => s_dispatcher = dispatcher;
@@ -74,6 +123,32 @@ namespace EVEMon.Common.Services
         internal static void SetCharacterRepository(ICharacterRepository repo) => s_characterRepository = repo;
         internal static void SetDataStore(ISettingsDataStore store) => s_dataStore = store;
         internal static void SetCharacterFactory(CharacterFactory factory) => s_characterFactory = factory;
+        internal static void SetTraceService(ITraceService svc) => s_traceService = svc;
+        internal static void SetApplicationPaths(IApplicationPaths paths) => s_applicationPaths = paths;
+        internal static void SetNameResolver(INameResolver resolver) => s_nameResolver = resolver;
+        internal static void SetStationResolver(IStationResolver resolver) => s_stationResolver = resolver;
+        internal static void SetFlagResolver(IFlagResolver resolver) => s_flagResolver = resolver;
+        internal static void SetImageService(Core.Interfaces.IImageService svc) => s_imageService = svc;
+        internal static void SetNotificationTypeResolver(INotificationTypeResolver resolver) => s_notificationTypeResolver = resolver;
+
+        /// <summary>
+        /// Syncs all service instances to the Core ServiceLocator,
+        /// enabling code in EVEMon.Models/Infrastructure to access services
+        /// without referencing EVEMon.Common.
+        /// </summary>
+        public static void SyncToServiceLocator()
+        {
+            Core.ServiceLocator.TraceService = TraceService;
+            Core.ServiceLocator.ApplicationPaths = ApplicationPaths;
+            Core.ServiceLocator.NameResolver = NameResolver;
+            Core.ServiceLocator.StationResolver = StationResolver;
+            Core.ServiceLocator.FlagResolver = FlagResolver;
+            Core.ServiceLocator.ImageService = ImageService;
+            Core.ServiceLocator.NotificationTypeResolver = NotificationTypeResolver;
+            Core.ServiceLocator.EventAggregator = EventAggregator;
+            Core.ServiceLocator.Dispatcher = Dispatcher;
+            Core.ServiceLocator.CharacterRepository = CharacterRepository;
+        }
 
         /// <summary>
         /// Resets all services to their defaults (for testing).
@@ -87,6 +162,13 @@ namespace EVEMon.Common.Services
             s_characterRepository = null;
             s_dataStore = null;
             s_characterFactory = null;
+            s_traceService = null;
+            s_applicationPaths = null;
+            s_nameResolver = null;
+            s_stationResolver = null;
+            s_flagResolver = null;
+            s_imageService = null;
+            s_notificationTypeResolver = null;
         }
     }
 }

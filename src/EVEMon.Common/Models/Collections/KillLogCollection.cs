@@ -5,7 +5,10 @@ using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Constants;
+using EVEMon.Core;
 using System;
+using CommonEvents = EVEMon.Common.Events;
+using CoreEvents = EVEMon.Core.Events;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -46,7 +49,9 @@ namespace EVEMon.Common.Models.Collections
             LocalXmlCache.SaveAsync(filename, Util.SerializeToXmlDocument(exported)).
                 ConfigureAwait(false);
             // Fire event to update the UI
-            EveMonClient.OnCharacterKillLogUpdated(m_ccpCharacter);
+            ServiceLocator.TraceService.Trace(m_ccpCharacter.Name);
+            ServiceLocator.EventAggregator.Publish(new CoreEvents.CharacterKillLogUpdatedEvent(m_ccpCharacter.CharacterID, m_ccpCharacter.Name));
+            ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterKillLogUpdatedEvent(m_ccpCharacter));
         }
 
         /// <summary>

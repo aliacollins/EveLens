@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.Esi;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -36,7 +36,7 @@ namespace EVEMon.Common.Models
 
             LoyaltyPoints = src.LoyaltyPoints;
             CorpId = src.CorpID;
-            m_corporationName = EveIDToName.GetIDToName(src.CorpID);
+            m_corporationName = ServiceLocator.NameResolver.GetName(src.CorpID);
         }
 
         #endregion
@@ -49,7 +49,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         /// <value>The name of the corporation.</value>
         public string CorporationName => m_corporationName.IsEmptyOrUnknown() ?
-            (m_corporationName = EveIDToName.GetIDToName(CorpId)) : m_corporationName;
+            (m_corporationName = ServiceLocator.NameResolver.GetName(CorpId)) : m_corporationName;
 
         /// <summary>
         /// Gets or sets the loyalty point value.
@@ -91,7 +91,7 @@ namespace EVEMon.Common.Models
         private async Task GetImageAsync()
         {
             Uri uri = ImageHelper.GetCorporationImageURL(CorpId);
-            Image img = await ImageService.GetImageAsync(uri).ConfigureAwait(false);
+            Image img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false) as Image;
             if (img != null) {
                 m_image = img;
                 LoyaltyCorpImageUpdated?.ThreadSafeInvoke(this, EventArgs.Empty);

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Net;
 
@@ -38,7 +38,7 @@ namespace EVEMon.Common.Models
             m_attendResponse = null;
             m_eventID = src.EventID;
             OwnerID = src.OwnerID;
-            m_ownerName = EveIDToName.GetIDToName(OwnerID);
+            m_ownerName = ServiceLocator.NameResolver.GetName(OwnerID);
             EventTitle = src.EventTitle;
             EventText = src.EventText;
             Duration = src.Duration;
@@ -62,7 +62,7 @@ namespace EVEMon.Common.Models
         /// Gets the name of the owner.
         /// </summary>
         public string OwnerName => m_ownerName.IsEmptyOrUnknown() ? (m_ownerName =
-            EveIDToName.GetIDToName(OwnerID)) : m_ownerName;
+            ServiceLocator.NameResolver.GetName(OwnerID)) : m_ownerName;
 
         /// <summary>
         /// Gets the event title.

@@ -4,7 +4,7 @@ using EVEMon.Common.Enumerations;
 
 namespace EVEMon.Common.Helpers
 {
-    internal sealed class PathFinder
+    public sealed class PathFinder
     {
         private readonly PathFinder m_parent;
         private readonly SolarSystem m_system;

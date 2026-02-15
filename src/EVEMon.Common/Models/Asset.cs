@@ -5,6 +5,7 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Service;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -32,13 +33,13 @@ namespace EVEMon.Common.Models
         {
             src.ThrowIfNull(nameof(src));
 
-            int flagID = EveFlag.GetFlagID(src.EVEFlag);
+            int flagID = ServiceLocator.FlagResolver.GetFlagID(src.EVEFlag);
             LocationID = src.LocationID;
             Quantity = src.Quantity;
             Item = StaticItems.GetItemByID(src.TypeID);
             FlagID = (short)flagID;
             m_character = character;
-            m_flag = EveFlag.GetFlagText(flagID);
+            m_flag = ServiceLocator.FlagResolver.GetFlagText(flagID);
             TypeOfBlueprint = GetTypeOfBlueprint(src.IsBPC);
             Container = string.Empty;
             Volume = GetVolume();
@@ -119,7 +120,7 @@ namespace EVEMon.Common.Models
             get
             {
                 if (m_flag.IsEmptyOrUnknown())
-                    m_flag = EveFlag.GetFlagText(FlagID);
+                    m_flag = ServiceLocator.FlagResolver.GetFlagText(FlagID);
 
                 return m_flag;
             }
@@ -209,7 +210,7 @@ namespace EVEMon.Common.Models
             if (m_locationID != 0L && (m_solarSystem == null || m_solarSystem.ID == 0 ||
                 m_fullLocation.IsEmptyOrUnknown() || string.IsNullOrEmpty(m_location)))
             {
-                var station = EveIDToStation.GetIDToStation(m_locationID, m_character);
+                var station = ServiceLocator.StationResolver.GetStation(m_locationID, m_character?.CharacterID ?? 0) as Station;
                 // If station is not known
                 if (station == null || station.SolarSystem == null || station.
                     SolarSystem.ID == 0)
@@ -221,7 +222,7 @@ namespace EVEMon.Common.Models
                         // In space
                         m_solarSystem = sys;
                         m_fullLocation = sys.FullLocation;
-                        EveMonClient.Trace("Asset.UpdateLocation [{0}] - In space: {1}",
+                        ServiceLocator.TraceService.Trace("Asset.UpdateLocation [{0}] - In space: {1}",
                             m_locationID, sys.Name);
                     }
                     else
@@ -229,7 +230,7 @@ namespace EVEMon.Common.Models
                         // In an inaccessible citadel, or one that is not yet loaded
                         m_solarSystem = SolarSystem.UNKNOWN;
                         m_fullLocation = EveMonConstants.UnknownText;
-                        EveMonClient.Trace("Asset.UpdateLocation [{0}] - Inaccessible/Unknown",
+                        ServiceLocator.TraceService.Trace("Asset.UpdateLocation [{0}] - Inaccessible/Unknown",
                             m_locationID);
                     }
                 }
@@ -239,7 +240,7 @@ namespace EVEMon.Common.Models
                     m_solarSystem = station.SolarSystem;
                     m_fullLocation = station.FullLocation;
                     string stationType = m_locationID > int.MaxValue ? "Citadel" : "NPC Station";
-                    EveMonClient.Trace("Asset.UpdateLocation [{0}] - {1}: {2}",
+                    ServiceLocator.TraceService.Trace("Asset.UpdateLocation [{0}] - {1}: {2}",
                         m_locationID, stationType, station.Name);
                 }
                 string locationStr = m_locationID.ToString(CultureConstants.InvariantCulture);

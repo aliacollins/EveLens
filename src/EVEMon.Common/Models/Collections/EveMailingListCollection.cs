@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -32,7 +34,8 @@ namespace EVEMon.Common.Models.Collections
             }
 
             // Fires the event regarding EVE mailing lists update
-            EveMonClient.OnCharacterEVEMailingListsUpdated(m_ccpCharacter);
+            ServiceLocator.TraceService.Trace(m_ccpCharacter.Name);
+            ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterEVEMailingListsUpdatedEvent(m_ccpCharacter));
         }
     }
 }

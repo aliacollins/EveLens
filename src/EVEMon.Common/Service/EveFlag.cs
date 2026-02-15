@@ -25,7 +25,7 @@ namespace EVEMon.Common.Service
         /// Gets the description of the flag.
         /// </summary>
         /// <param name="id">The flag id.</param>
-        internal static string GetFlagText(int id)
+        public static string GetFlagText(int id)
         {
             if (EveMonClient.IsDebugBuild)
                 EnsureInitialized();
@@ -44,7 +44,7 @@ namespace EVEMon.Common.Service
         /// Gets the description of the flag.
         /// </summary>
         /// <param name="name">The flag name.</param>
-        internal static int GetFlagID(string name)
+        public static int GetFlagID(string name)
         {
             if (EveMonClient.IsDebugBuild)
                 EnsureInitialized();

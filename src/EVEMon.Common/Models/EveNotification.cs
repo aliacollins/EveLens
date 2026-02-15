@@ -2,7 +2,7 @@
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Serialization.Esi;
-using EVEMon.Common.Service;
+using EVEMon.Core;
 using System;
 using System.Collections.Generic;
 
@@ -27,11 +27,11 @@ namespace EVEMon.Common.Models
             string typeCode = src.Type;
             CCPCharacter = ccpCharacter;
             NotificationID = src.NotificationID;
-            TypeID = EveNotificationType.GetID(typeCode);
-            TypeName = EveNotificationType.GetName(TypeID);
+            TypeID = ServiceLocator.NotificationTypeResolver.GetID(typeCode);
+            TypeName = ServiceLocator.NotificationTypeResolver.GetName(TypeID);
             m_senderID = src.SenderID;
             m_title = string.Empty;
-            m_senderName = (m_senderID == 0L) ? "EVE System" : EveIDToName.GetIDToName(m_senderID);
+            m_senderName = (m_senderID == 0L) ? "EVE System" : ServiceLocator.NameResolver.GetName(m_senderID);
             SentDate = src.SentDate;
             Recipient = new List<string> { ccpCharacter.Name };
             EVENotificationText = new EveNotificationText(this, TypeID, src.NotificationText);
@@ -73,7 +73,7 @@ namespace EVEMon.Common.Models
         /// prepopulated with "EVE System" so it will never be unknowntext.
         /// </summary>
         public string SenderName => m_senderName.IsEmptyOrUnknown() ?
-            (m_senderName = EveIDToName.GetIDToName(m_senderID)) : m_senderName;
+            (m_senderName = ServiceLocator.NameResolver.GetName(m_senderID)) : m_senderName;
 
         /// <summary>
         /// Gets the sent date of the EVE notification.
@@ -106,9 +106,9 @@ namespace EVEMon.Common.Models
                     UnknownText))
                 {
                     // Determine subject layout, if applicable
-                    string subjectLayout = EveNotificationType.GetSubjectLayout(type);
-                    m_title = string.IsNullOrWhiteSpace(subjectLayout) ? EveNotificationType.
-                        GetName(type) : EVENotificationText.Parse(subjectLayout);
+                    string subjectLayout = ServiceLocator.NotificationTypeResolver.GetSubjectLayout(type);
+                    m_title = string.IsNullOrWhiteSpace(subjectLayout) ? ServiceLocator.
+                        NotificationTypeResolver.GetName(type) : EVENotificationText.Parse(subjectLayout);
                     // If the title was not properly parsed, leave it blank
                     if (m_title.Contains("{") || m_title == EVENotificationText.
                             NotificationText)

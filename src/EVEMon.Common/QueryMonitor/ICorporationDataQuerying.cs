@@ -6,7 +6,7 @@ namespace EVEMon.Common.QueryMonitor
     /// Interface for corporation data querying implementations.
     /// Used by CCPCharacter to interact with CorporationQueryOrchestrator.
     /// </summary>
-    internal interface ICorporationDataQuerying : IDisposable
+    public interface ICorporationDataQuerying : IDisposable
     {
         /// <summary>
         /// Gets whether the corporation market orders have been queried.

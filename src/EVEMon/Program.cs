@@ -102,6 +102,7 @@ namespace EVEMon
             // Configure dependency injection (Strangler Fig wrappers for existing static classes)
             EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure begin", printMethod: false);
             ServiceRegistration.Configure();
+            EVEMon.Common.Services.AppServices.SyncToServiceLocator();
             EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure done", printMethod: false);
 
             // Load settings (this is the slow part - must stay on UI thread for dialogs)

@@ -6,8 +6,8 @@ using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
-using EVEMon.Common.Service;
 using EVEMon.Common.Serialization.Esi;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Models
 {
@@ -33,7 +33,7 @@ namespace EVEMon.Common.Models
         internal Contact(EsiContactListItem src)
         {
             m_contactID = src.ContactID;
-            m_contactName = EveIDToName.GetIDToName(m_contactID);
+            m_contactName = ServiceLocator.NameResolver.GetName(m_contactID);
             IsInWatchlist = src.InWatchlist;
             Standing = src.Standing;
             Group = src.Group == ContactGroup.Personal && StaticGeography.AllAgents.Any(
@@ -63,7 +63,7 @@ namespace EVEMon.Common.Models
         /// The name of the contact.
         /// </value>
         public string Name => (m_contactName.IsEmptyOrUnknown()) ? (m_contactName =
-            EveIDToName.GetIDToName(m_contactID)) : m_contactName;
+            ServiceLocator.NameResolver.GetName(m_contactID)) : m_contactName;
 
         /// <summary>
         /// Gets a value indicating whether the contact is in the watchlist.
@@ -110,7 +110,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         private async Task GetImageAsync()
         {
-            Image img = await ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false);
+            Image img = await ServiceLocator.ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false) as Image;
             if (img != null)
             {
                 m_image = img;

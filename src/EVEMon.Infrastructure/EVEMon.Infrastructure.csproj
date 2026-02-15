@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>EVEMon.Common</RootNamespace>
+    <AssemblyName>EVEMon.Infrastructure</AssemblyName>
+    <DefineConstants>$(DefineConstants);NO_THREAD_SAFETY</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.9.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EVEMon.Core\EVEMon.Core.csproj" />
+    <ProjectReference Include="..\EVEMon.Data\EVEMon.Data.csproj" />
+    <ProjectReference Include="..\EVEMon.Serialization\EVEMon.Serialization.csproj" />
+    <ProjectReference Include="..\EVEMon.Models\EVEMon.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+</Project>

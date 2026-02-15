@@ -26,7 +26,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static skills.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             SkillsDatafile datafile = Util.DeserializeDatafile<SkillsDatafile>(DatafileConstants.SkillsDatafile,
                 Util.LoadXslt(Properties.Resources.DatafilesXSLT));

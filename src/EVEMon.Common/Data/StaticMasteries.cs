@@ -18,7 +18,7 @@ namespace EVEMon.Common.Data
         /// <summary>
         /// Initialize static masteries.
         /// </summary>
-        internal static void Load()
+        public static void Load()
         {
             MasteriesDatafile datafile = Util.DeserializeDatafile<MasteriesDatafile>(
                 DatafileConstants.MasteriesDatafile);
