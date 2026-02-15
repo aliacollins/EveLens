@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -18,7 +19,7 @@ namespace EVEMon.Common.Data
         public static void Load()
         {
             ReprocessingDatafile datafile = Util.DeserializeDatafile<ReprocessingDatafile>(
-                DatafileConstants.ReprocessingDatafile, Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                DatafileConstants.ReprocessingDatafile, Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             foreach (SerializableItemMaterials item in datafile.Items)
             {

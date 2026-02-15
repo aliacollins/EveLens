@@ -27,6 +27,7 @@ namespace EVEMon.Common.Services
         private static IFlagResolver s_flagResolver;
         private static Core.Interfaces.IImageService s_imageService;
         private static INotificationTypeResolver s_notificationTypeResolver;
+        private static IResourceProvider s_resourceProvider;
 
         /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
@@ -114,6 +115,12 @@ namespace EVEMon.Common.Services
             => s_notificationTypeResolver ?? (s_notificationTypeResolver = new NotificationTypeResolverAdapter());
 
         /// <summary>
+        /// Gets the resource provider for embedded resources (XSLT, static data).
+        /// </summary>
+        public static IResourceProvider ResourceProvider
+            => s_resourceProvider ?? (s_resourceProvider = new ResourceProviderAdapter());
+
+        /// <summary>
         /// Replaces a service implementation (for testing or DI transition).
         /// </summary>
         internal static void SetDispatcher(IDispatcher dispatcher) => s_dispatcher = dispatcher;
@@ -130,6 +137,7 @@ namespace EVEMon.Common.Services
         internal static void SetFlagResolver(IFlagResolver resolver) => s_flagResolver = resolver;
         internal static void SetImageService(Core.Interfaces.IImageService svc) => s_imageService = svc;
         internal static void SetNotificationTypeResolver(INotificationTypeResolver resolver) => s_notificationTypeResolver = resolver;
+        internal static void SetResourceProvider(IResourceProvider provider) => s_resourceProvider = provider;
 
         /// <summary>
         /// Syncs all service instances to the Core ServiceLocator,
@@ -148,6 +156,7 @@ namespace EVEMon.Common.Services
             Core.ServiceLocator.EventAggregator = EventAggregator;
             Core.ServiceLocator.Dispatcher = Dispatcher;
             Core.ServiceLocator.CharacterRepository = CharacterRepository;
+            Core.ServiceLocator.ResourceProvider = ResourceProvider;
         }
 
         /// <summary>
@@ -169,6 +178,7 @@ namespace EVEMon.Common.Services
             s_flagResolver = null;
             s_imageService = null;
             s_notificationTypeResolver = null;
+            s_resourceProvider = null;
         }
     }
 }

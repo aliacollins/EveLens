@@ -6,6 +6,7 @@ using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -29,7 +30,7 @@ namespace EVEMon.Common.Data
         public static void Load()
         {
             SkillsDatafile datafile = Util.DeserializeDatafile<SkillsDatafile>(DatafileConstants.SkillsDatafile,
-                Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             // Fetch deserialized data
             s_arrayIndicesCount = 0;

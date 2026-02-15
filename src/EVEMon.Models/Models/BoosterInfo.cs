@@ -1,6 +1,5 @@
 using System;
 using EVEMon.Common.Constants;
-using EVEMon.Common.Data;
 
 namespace EVEMon.Common.Models
 {

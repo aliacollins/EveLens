@@ -19,5 +19,6 @@ namespace EVEMon.Core
         public static IEventAggregator EventAggregator { get; set; }
         public static IDispatcher Dispatcher { get; set; }
         public static ICharacterRepository CharacterRepository { get; set; }
+        public static IResourceProvider ResourceProvider { get; set; }
     }
 }

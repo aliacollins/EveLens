@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -25,7 +26,7 @@ namespace EVEMon.Common.Data
         public static void Load()
         {
             CertificatesDatafile datafile = Util.DeserializeDatafile<CertificatesDatafile>(DatafileConstants.CertificatesDatafile,
-                    Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                    Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             AllGroups = new Collection<StaticCertificateGroup>();
 

@@ -20,5 +20,9 @@
     <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
   </ItemGroup>
 
+  <!-- Embedded Resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="Serialization\Datafiles\datafile-transform.xslt" />
+  </ItemGroup>
 
 </Project>

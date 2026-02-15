@@ -136,7 +136,7 @@ namespace EVEMon.Common.Helpers
             if (!string.IsNullOrEmpty(encryptedText) &&
                 encryptedText.StartsWith(EncryptedMarker, StringComparison.Ordinal))
             {
-                EveMonClient.Trace("CredentialProtection.TryDecrypt: found DPAPI-encrypted " +
+                System.Diagnostics.Trace.WriteLine("CredentialProtection.TryDecrypt: found DPAPI-encrypted " +
                     "token from previous build — re-authentication required.");
                 decryptedText = null;
                 return false;

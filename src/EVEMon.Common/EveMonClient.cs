@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using EVEMon.Common.Attributes;
 using EVEMon.Common.Collections.Global;
+using CommonEvents = EVEMon.Common.Events;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
@@ -80,6 +81,13 @@ namespace EVEMon.Common
             s_updateBatcher = new UpdateBatcher(coalesceMs: 100);
             s_updateBatcher.CharactersBatchUpdated += OnBatchedCharacterUpdatesReady;
             s_updateBatcher.SkillQueuesBatchUpdated += OnBatchedSkillQueueUpdatesReady;
+
+            // Subscribe to CharacterUpdatedEvent so that models publishing directly
+            // to the EventAggregator (bypassing OnCharacterUpdated) still feed the batcher.
+            AppServices.EventAggregator?.Subscribe<CommonEvents.CharacterUpdatedEvent>(e =>
+            {
+                s_updateBatcher?.QueueCharacterUpdate(e.Character);
+            });
 
             // Initialize the query scheduler - drives all character/corporation querying.
             s_smartQueryScheduler = new SmartQueryScheduler(

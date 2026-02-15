@@ -6,6 +6,7 @@ using EVEMon.Common.Constants;
 using System;
 using System.Globalization;
 using EVEMon.Common.Extensions;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -49,7 +50,7 @@ namespace EVEMon.Common.Data
         private static void LoadFactions()
         {
             // This is a workaround until XmlGenerator can be updated
-            foreach (string factionInfo in Properties.Resources.chrFactions.Split('\n'))
+            foreach (string factionInfo in ServiceLocator.ResourceProvider.ChrFactions.Split('\n'))
             {
                 string[] entries = factionInfo.Split(',');
                 NPCCorporation? baseCorp = null, militiaCorp = null;
@@ -78,7 +79,7 @@ namespace EVEMon.Common.Data
         private static GeoDatafile LoadGeoData()
         {
             var datafile = Util.DeserializeDatafile<GeoDatafile>(DatafileConstants.GeographyDatafile,
-                Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             // Generate the nodes
             foreach (SerializableRegion srcRegion in datafile.Regions)

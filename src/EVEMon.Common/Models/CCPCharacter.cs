@@ -114,8 +114,8 @@ namespace EVEMon.Common.Models
             m_endedContractsForCorporation = new List<Contract>();
 
             m_jobsCompletedForCharacter = new List<IndustryJob>();
-            m_allianceName = ServiceLocator.NameResolver.GetName(AllianceID);
-            m_corporationName = ServiceLocator.NameResolver.GetName(CorporationID);
+            m_allianceName = ServiceLocator.NameResolver?.GetName(AllianceID) ?? string.Empty;
+            m_corporationName = ServiceLocator.NameResolver?.GetName(CorporationID) ?? string.Empty;
 
             // Safe to call now that SkillQueue and all collections are initialized
             // (moved out of base Character constructor to avoid virtual call before init)

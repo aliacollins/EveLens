@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -24,7 +25,7 @@ namespace EVEMon.Common.Data
                 return;
 
             BlueprintsDatafile datafile = Util.DeserializeDatafile<BlueprintsDatafile>(DatafileConstants.BlueprintsDatafile,
-                Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             BlueprintMarketGroups = new BlueprintMarketGroupCollection(null, datafile.MarketGroups);
 

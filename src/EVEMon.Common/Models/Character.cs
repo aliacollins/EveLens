@@ -165,8 +165,8 @@ namespace EVEMon.Common.Models
         /// </summary>
         public bool Monitored
         {
-            get { return EveMonClient.MonitoredCharacters.Contains(this); }
-            set { EveMonClient.MonitoredCharacters.OnCharacterMonitoringChanged(this, value); }
+            get { return ServiceLocator.CharacterRepository.IsMonitored(this); }
+            set { ServiceLocator.CharacterRepository.SetMonitored(this, value); }
         }
 
         /// <summary>
@@ -187,7 +187,7 @@ namespace EVEMon.Common.Models
                     return;
 
                 m_name = value;
-                EveMonClient.OnCharacterUpdated(this);
+                OnCharacterChanged();
             }
         }
 
@@ -341,7 +341,7 @@ namespace EVEMon.Common.Models
             set
             {
                 m_label = value ?? string.Empty;
-                EveMonClient.OnCharacterLabelChanged(this);
+                OnCharacterLabelChanged();
             }
         }
 
@@ -357,7 +357,7 @@ namespace EVEMon.Common.Models
             set
             {
                 m_cloneStateSetting = value;
-                EveMonClient.OnCharacterUpdated(this);
+                OnCharacterChanged();
             }
         }
 
@@ -765,7 +765,7 @@ namespace EVEMon.Common.Models
         internal void Import(CCPAPIResult<SerializableAPICharacterSheet> serial)
         {
             Import(serial.Result);
-            EveMonClient.OnCharacterUpdated(this);
+            OnCharacterChanged();
         }
 
         /// <summary>
@@ -1170,6 +1170,36 @@ namespace EVEMon.Common.Models
         internal void ExportPlans(List<SerializablePlan> list)
         {
             list.AddRange(Plans.Select(plan => plan.Export()));
+        }
+
+        #endregion
+
+
+        #region Event Publishing Helpers
+
+        /// <summary>
+        /// Publishes a character-updated event via the EventAggregator,
+        /// replacing the former <c>EveMonClient.OnCharacterUpdated(this)</c> call.
+        /// The <see cref="SettingsSaveSubscriber"/> handles Settings.Save() automatically.
+        /// </summary>
+        private void OnCharacterChanged()
+        {
+            ServiceLocator.TraceService?.Trace(m_name);
+            ServiceLocator.EventAggregator?.Publish(
+                new EVEMon.Common.Events.CharacterUpdatedEvent(this));
+        }
+
+        /// <summary>
+        /// Publishes a character-label-changed event via the EventAggregator,
+        /// replacing the former <c>EveMonClient.OnCharacterLabelChanged(this)</c> call.
+        /// </summary>
+        private void OnCharacterLabelChanged()
+        {
+            ServiceLocator.TraceService?.Trace(m_name);
+            var labels = ServiceLocator.CharacterRepository?.GetKnownLabels()
+                         ?? Enumerable.Empty<string>();
+            ServiceLocator.EventAggregator?.Publish(
+                new EVEMon.Common.Events.CharacterLabelChangedEvent(this, labels));
         }
 
         #endregion

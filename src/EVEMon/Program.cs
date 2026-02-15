@@ -10,6 +10,7 @@ using EVEMon.Common.CloudStorageServices;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 using EVEMon.ExceptionHandling;
 using EVEMon.LogitechG15;
@@ -26,6 +27,7 @@ namespace EVEMon
 
         private static bool s_exitRequested;
         private static bool s_errorWindowIsShown;
+        private static SettingsSaveSubscriber s_settingsSaveSubscriber = null!;
 
         /// <summary>
         /// The main entry point for the application.
@@ -103,6 +105,10 @@ namespace EVEMon
             EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure begin", printMethod: false);
             ServiceRegistration.Configure();
             EVEMon.Common.Services.AppServices.SyncToServiceLocator();
+
+            // Wire up the settings-save subscriber so EventAggregator events trigger Settings.Save()
+            s_settingsSaveSubscriber = new SettingsSaveSubscriber(AppServices.EventAggregator);
+
             EveMonClient.Trace("Program.Startup - ServiceRegistration.Configure done", printMethod: false);
 
             // Load settings (this is the slow part - must stay on UI thread for dialogs)
@@ -177,6 +183,9 @@ namespace EVEMon
             {
                 // Stop the one-second timer right now
                 EveMonClient.Shutdown();
+
+                // Dispose settings-save subscriber
+                s_settingsSaveSubscriber?.Dispose();
 
                 // Dispose DI container
                 ServiceRegistration.Dispose();

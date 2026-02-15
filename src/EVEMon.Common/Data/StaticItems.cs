@@ -4,6 +4,7 @@ using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -35,7 +36,7 @@ namespace EVEMon.Common.Data
 
             // Deserialize the items datafile
             ItemsDatafile datafile = Util.DeserializeDatafile<ItemsDatafile>(DatafileConstants.ItemsDatafile,
-                Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             MarketGroups = new MarketGroupCollection(null, datafile.MarketGroups);
 

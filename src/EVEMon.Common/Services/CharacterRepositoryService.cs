@@ -43,5 +43,31 @@ namespace EVEMon.Common.Services
 
         /// <inheritdoc />
         public int Count => EveMonClient.Characters?.Count ?? 0;
+
+        /// <inheritdoc />
+        public IEnumerable<string> GetKnownLabels()
+        {
+            return EveMonClient.Characters?.GetKnownLabels() ?? Enumerable.Empty<string>();
+        }
+
+        /// <inheritdoc />
+        public bool IsMonitored(ICharacterIdentity character)
+        {
+            var monitored = EveMonClient.MonitoredCharacters;
+            if (monitored == null || character == null)
+                return false;
+            return monitored.Any(c => c.Guid == character.Guid);
+        }
+
+        /// <inheritdoc />
+        public void SetMonitored(ICharacterIdentity character, bool value)
+        {
+            if (character == null)
+                return;
+            // Delegate to the real Character model's Monitored setter via the collection
+            var realCharacter = EveMonClient.Characters?[character.Guid.ToString()];
+            if (realCharacter != null)
+                EveMonClient.MonitoredCharacters.OnCharacterMonitoringChanged(realCharacter, value);
+        }
     }
 }

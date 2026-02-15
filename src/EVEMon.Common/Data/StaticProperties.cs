@@ -3,6 +3,7 @@ using System.Linq;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Serialization.Datafiles;
+using EVEMon.Core;
 
 namespace EVEMon.Common.Data
 {
@@ -31,7 +32,7 @@ namespace EVEMon.Common.Data
         {
             PropertiesDatafile datafile = 
                 Util.DeserializeDatafile<PropertiesDatafile>(DatafileConstants.PropertiesDatafile,
-                    Util.LoadXslt(Properties.Resources.DatafilesXSLT));
+                    Util.LoadXslt(ServiceLocator.ResourceProvider.DatafilesXSLT));
 
             // Fetch deserialized data
             foreach (EvePropertyCategory category in datafile.Categories.Select(

@@ -30,5 +30,24 @@ namespace EVEMon.Core.Interfaces
         /// Gets the total number of characters.
         /// </summary>
         int Count { get; }
+
+        /// <summary>
+        /// Gets all distinct labels assigned to characters.
+        /// </summary>
+        IEnumerable<string> GetKnownLabels();
+
+        /// <summary>
+        /// Gets whether the specified character is currently monitored.
+        /// </summary>
+        /// <param name="character">The character identity to check.</param>
+        /// <returns>True if the character is monitored.</returns>
+        bool IsMonitored(ICharacterIdentity character);
+
+        /// <summary>
+        /// Sets whether the specified character is monitored.
+        /// </summary>
+        /// <param name="character">The character identity to update.</param>
+        /// <param name="value">True to monitor, false to unmonitor.</param>
+        void SetMonitored(ICharacterIdentity character, bool value);
     }
 }

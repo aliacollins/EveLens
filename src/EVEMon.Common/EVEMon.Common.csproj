@@ -52,7 +52,7 @@
   <!-- Additional Embedded Resources - Non-resx data files -->
   <ItemGroup>
     <EmbeddedResource Include="Serialization\Eve\rowsets-transform.xslt" />
-    <EmbeddedResource Include="Serialization\Datafiles\datafile-transform.xslt" />
+    <!-- datafile-transform.xslt moved to EVEMon.Data -->
     <EmbeddedResource Include="Serialization\Settings\settings-transform.xslt" />
     <EmbeddedResource Include="Serialization\NotificationRefTypes.xml" />
     <EmbeddedResource Include="Serialization\Flags.xml" />

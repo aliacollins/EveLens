@@ -117,11 +117,11 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            Settings.Save();
             UpdateSettings();
             SettingsChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(SettingsChangedEvent.Instance);
             AppServices.EventAggregator?.Publish(CommonEvents.SettingsChangedEvent.Instance);
         }
@@ -135,9 +135,9 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
         }
 
@@ -151,9 +151,9 @@ namespace EVEMon.Common
 
             Trace();
             EveMonClient.Characters.UpdateAccountStatuses();
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
             AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyCollectionChangedEvent.Instance);
         }
@@ -167,9 +167,9 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyMonitoredChangedEvent.Instance);
         }
 
@@ -182,9 +182,9 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
         }
 
@@ -197,9 +197,9 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
             AppServices.EventAggregator?.Publish(CommonEvents.CharacterCollectionChangedEvent.Instance);
         }
@@ -300,10 +300,10 @@ namespace EVEMon.Common
                 return;
 
             Trace(esiKey.ToString());
-            Settings.Save();
             ESIKeyInfoUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
         }
 
@@ -318,9 +318,9 @@ namespace EVEMon.Common
 
             Trace(esiKey.ToString());
             Characters.UpdateAccountStatuses();
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CommonEvents.AccountStatusUpdatedEvent.Instance);
         }
 
@@ -334,9 +334,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(esiKey.ToString());
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterListUpdatedEvent(esiKey));
         }
 
@@ -349,9 +349,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(character));
         }
 
@@ -365,12 +365,12 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Queue for batched event (coalesces rapid updates)
             s_updateBatcher?.QueueCharacterUpdate(character);
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CharacterUpdatedEvent(character.CharacterID, character.Name));
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(character));
         }
@@ -385,9 +385,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CharacterInfoUpdatedEvent(character.CharacterID, character.Name));
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterInfoUpdatedEvent(character));
         }
@@ -418,12 +418,12 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             character.UpdateAccountStatus();
-            Settings.Save();
 
             // Queue for batched event (coalesces rapid updates)
             s_updateBatcher?.QueueSkillQueueUpdate(character);
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CharacterSkillQueueUpdatedEvent(character.CharacterID, character.Name));
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterSkillQueueUpdatedEvent(character));
         }
@@ -502,9 +502,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.MarketOrdersUpdatedEvent(character));
         }
 
@@ -536,9 +536,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.ContractsUpdatedEvent(character));
         }
 
@@ -630,9 +630,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.IndustryJobsUpdatedEvent(character));
         }
 
@@ -729,9 +729,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CharacterMailUpdatedEvent(character.CharacterID, character.Name));
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailMessagesUpdatedEvent(character));
         }
@@ -776,9 +776,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CharacterNotificationsUpdatedEvent(character.CharacterID, character.Name));
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVENotificationsUpdatedEvent(character));
         }
@@ -949,9 +949,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanCollectionChangedEvent(character));
         }
 
@@ -1046,9 +1046,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(plan.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.PlanChangedEvent(plan));
         }
 
@@ -1062,9 +1062,9 @@ namespace EVEMon.Common
                 return;
 
             Trace(plan.Name);
-            Settings.Save();
 
             // Bridge to EventAggregator for new code
+            // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(new CommonEvents.PlanNameChangedEvent(plan));
         }
 
