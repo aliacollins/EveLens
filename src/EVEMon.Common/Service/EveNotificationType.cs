@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Service
 {
@@ -224,7 +225,8 @@ namespace EVEMon.Common.Service
             {
                 s_cachedUntil = DateTime.UtcNow.AddDays(1);
                 Import(result.Result);
-                EveMonClient.OnNotificationRefTypesUpdated();
+                AppServices.TraceService?.Trace("NotificationRefTypesUpdated");
+                AppServices.EventAggregator?.Publish(CommonEvents.NotificationRefTypesUpdatedEvent.Instance);
                 // Save the file in cache
                 LocalXmlCache.SaveAsync(Filename, result.XmlDocument).ConfigureAwait(false);
             }

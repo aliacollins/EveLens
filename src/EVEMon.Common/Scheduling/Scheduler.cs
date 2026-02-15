@@ -6,6 +6,8 @@ using EVEMon.Common.Attributes;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.Services;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Scheduling
 {
@@ -37,7 +39,8 @@ namespace EVEMon.Common.Scheduling
             s_schedule.Add(entry);
 
             // Notify to subscribers
-            EveMonClient.OnSchedulerChanged();
+            AppServices.TraceService?.Trace("SchedulerChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
         }
 
         /// <summary>
@@ -49,7 +52,8 @@ namespace EVEMon.Common.Scheduling
             s_schedule.Remove(entry);
 
             // Notify to subscribers
-            EveMonClient.OnSchedulerChanged();
+            AppServices.TraceService?.Trace("SchedulerChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
         }
 
         /// <summary>
@@ -101,7 +105,8 @@ namespace EVEMon.Common.Scheduling
             }
 
             // Notify to subscribers
-            EveMonClient.OnSchedulerChanged();
+            AppServices.TraceService?.Trace("SchedulerChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
         }
 
         /// <summary>
@@ -135,7 +140,8 @@ namespace EVEMon.Common.Scheduling
             }
 
             // Notify to subscribers
-            EveMonClient.OnSchedulerChanged();
+            AppServices.TraceService?.Trace("SchedulerChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
         }
 
         /// <summary>

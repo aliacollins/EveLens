@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.MarketPricer.EveMarketer
 {
@@ -205,7 +206,7 @@ namespace EVEMon.Common.MarketPricer.EveMarketer
 
             AppServices.TraceService?.Trace("done");
 
-            EveMonClient.OnPricesDownloaded(null, string.Empty);
+            AppServices.EventAggregator?.Publish(CommonEvents.ItemPricesUpdatedEvent.Instance);
 
             // Save the file in cache
             SaveAsync(Filename, Util.SerializeToXmlDocument(Export())).ConfigureAwait(false);
@@ -230,7 +231,7 @@ namespace EVEMon.Common.MarketPricer.EveMarketer
 
                     // Reset query pending flag
                     s_queryPending = false;
-                    EveMonClient.OnPricesDownloaded(null, string.Empty);
+                    AppServices.EventAggregator?.Publish(CommonEvents.ItemPricesUpdatedEvent.Instance);
 
                     // We return 'true' to avoid saving a file
                     return true;

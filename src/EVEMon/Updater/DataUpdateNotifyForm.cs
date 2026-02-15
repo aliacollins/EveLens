@@ -11,6 +11,7 @@ using EVEMon.Common.Data;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.PatchXml;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 using EVEMon.Common.Extensions;
 
 namespace EVEMon.Updater
@@ -134,7 +135,7 @@ namespace EVEMon.Updater
 
             foreach (SerializableDatafile versionDatafile in datafiles.Where(datafile => datafile.IsDownloaded))
             {
-                string oldFilename = Path.Combine(EveMonClient.EVEMonDataDir, versionDatafile.Name!);
+                string oldFilename = Path.Combine(AppServices.ApplicationPaths.DataDirectory, versionDatafile.Name!);
                 string tempFilename = $"{oldFilename}.tmp";
 
                 Datafile downloadedDatafile = new Datafile(Path.GetFileName(tempFilename));

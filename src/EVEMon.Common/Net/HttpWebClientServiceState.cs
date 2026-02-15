@@ -1,4 +1,5 @@
 using System;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.Common.Net
@@ -45,8 +46,8 @@ namespace EVEMon.Common.Net
                 var architecture = Environment.Is64BitOperatingSystem
                     ? "x64"
                     : "x86";
-                var productName = EveMonClient.FileVersionInfo.ProductName;
-                var version = EveMonClient.FileVersionInfo.FileVersion;
+                var productName = AppServices.FileVersionInfo.ProductName;
+                var version = AppServices.FileVersionInfo.FileVersion;
 
                 // Build user agent per ESI best practices
                 // Format: AppName/Version (contact info) (OS info)

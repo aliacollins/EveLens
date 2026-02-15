@@ -11,6 +11,7 @@ using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Exceptions;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using Google;
 using Google.Apis.Auth.OAuth2;
@@ -441,7 +442,7 @@ namespace EVEMon.Common.ExternalCalendar
             var initializer = new BaseClientService.Initializer
             {
                 HttpClientInitializer = s_credential,
-                ApplicationName = EveMonClient.FileVersionInfo.ProductName,
+                ApplicationName = AppServices.FileVersionInfo.ProductName,
             };
 
             return new CalendarService(initializer);

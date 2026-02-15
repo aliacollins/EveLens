@@ -197,7 +197,7 @@ namespace EVEMon.ApiErrorHandling
             StringBuilder builder = new StringBuilder();
 
             builder.Append("EVEMon ");
-            builder.AppendLine(EveMonClient.FileVersionInfo.FileVersion);
+            builder.AppendLine(AppServices.FileVersionInfo.FileVersion);
             builder.AppendLine().AppendLine("API Error:");
             builder.AppendLine(GetErrorLabelText(Notification));
 

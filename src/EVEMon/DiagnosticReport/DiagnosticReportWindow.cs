@@ -5,6 +5,7 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 
 namespace EVEMon.DiagnosticReport
 {
@@ -58,7 +59,7 @@ namespace EVEMon.DiagnosticReport
             OpenGitHubIssueButton.Text = "Submitting...";
             try
             {
-                string version = EveMonClient.FileVersionInfo?.FileVersion ?? "unknown";
+                string version = AppServices.FileVersionInfo?.FileVersion ?? "unknown";
                 string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
                 string? subject = SubjectTextBox.Text?.Trim();
                 string title = string.IsNullOrEmpty(subject)

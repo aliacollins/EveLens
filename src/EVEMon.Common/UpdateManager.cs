@@ -10,6 +10,8 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.PatchXml;
 using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
+using EVEMon.Common.CustomEventArgs;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common
 {
@@ -51,7 +53,7 @@ namespace EVEMon.Common
         /// </summary>
         public static void DeleteInstallationFiles()
         {
-            foreach (string file in Directory.GetFiles(EveMonClient.EVEMonDataDir,
+            foreach (string file in Directory.GetFiles(AppServices.ApplicationPaths.DataDirectory,
                 "EVEMon-install-*.exe", SearchOption.TopDirectoryOnly))
             {
                 try
@@ -74,7 +76,7 @@ namespace EVEMon.Common
         /// </summary>
         public static void DeleteDataFiles()
         {
-            foreach (string file in Datafile.GetFilesFrom(EveMonClient.EVEMonDataDir,
+            foreach (string file in Datafile.GetFilesFrom(AppServices.ApplicationPaths.DataDirectory,
                 Datafile.DatafilesExtension).Concat(Datafile.GetFilesFrom(EveMonClient.
                 EVEMonDataDir, Datafile.OldDatafileExtension)))
             {
@@ -160,16 +162,16 @@ namespace EVEMon.Common
             // Determine update channel based on version type
             // Alpha/Beta users check their specific channel first, then fall back to stable
             string baseUpdatePath = NetworkConstants.EVEMonUpdates; // /updates/patch.xml
-            string channelSuffix = EveMonClient.IsAlphaVersion ? "-alpha"
-                                 : EveMonClient.IsBetaVersion ? "-beta"
+            string channelSuffix = AppServices.IsAlphaVersion ? "-alpha"
+                                 : AppServices.IsBetaVersion ? "-beta"
                                  : "";
 
             // For pre-release, use channel-specific patch file (e.g., patch-alpha.xml)
             // Also use branch-specific URL (alpha branch for alpha, beta branch for beta)
             string gitHubBase = NetworkConstants.GitHubBase;
-            if (EveMonClient.IsAlphaVersion)
+            if (AppServices.IsAlphaVersion)
                 gitHubBase = gitHubBase.Replace("/main", "/alpha");
-            else if (EveMonClient.IsBetaVersion)
+            else if (AppServices.IsBetaVersion)
                 gitHubBase = gitHubBase.Replace("/main", "/beta");
 
             string updateAddress = gitHubBase +
@@ -248,7 +250,7 @@ namespace EVEMon.Common
         /// <param name="result">The result.</param>
         private static void ScanUpdateFeed(SerializablePatch result)
         {
-            string? fileVersion = EveMonClient.FileVersionInfo.FileVersion;
+            string? fileVersion = AppServices.FileVersionInfo.FileVersion;
             if (fileVersion == null)
                 return;
 
@@ -294,8 +296,9 @@ namespace EVEMon.Common
                 }
 
                 // Requests a notification to subscribers and quit
-                EveMonClient.OnUpdateAvailable(forumUrl, installerUrl, updateMessage,
+                var updateArgs = new UpdateAvailableEventArgs(forumUrl, installerUrl, updateMessage,
                     currentVersion, newestVersion, md5Sum, canAutoInstall, installArgs);
+                AppServices.EventAggregator?.Publish(new CommonEvents.UpdateAvailableEvent(updateArgs));
                 return;
             }
 
@@ -303,7 +306,8 @@ namespace EVEMon.Common
             if (result.FilesHaveChanged)
             {
                 // Requests a notification to subscribers
-                EveMonClient.OnDataUpdateAvailable(result.ChangedDatafiles);
+                var dataUpdateArgs = new DataUpdateAvailableEventArgs(result.ChangedDatafiles);
+                AppServices.EventAggregator?.Publish(new CommonEvents.DataUpdateAvailableEvent(dataUpdateArgs));
                 return;
             }
 
@@ -326,8 +330,9 @@ namespace EVEMon.Common
                 return;
             // Reset the most recent denied version
             Settings.Updates.MostRecentDeniedMajorUpgrade = string.Empty;
-            EveMonClient.OnUpdateAvailable(null, null, null, currentVersion, newestVersion,
-                null, false, null);
+            var majorUpdateArgs = new UpdateAvailableEventArgs(null, null, null, currentVersion,
+                newestVersion, null, false, null);
+            AppServices.EventAggregator?.Publish(new CommonEvents.UpdateAvailableEvent(majorUpdateArgs));
         }
 
         /// <summary>

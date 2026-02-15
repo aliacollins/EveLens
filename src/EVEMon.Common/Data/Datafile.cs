@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Data
 {
@@ -68,7 +69,7 @@ namespace EVEMon.Common.Data
         /// </remarks>
         internal static string GetFullPath(string filename)
         {
-            string evemonDataDir = EveMonClient.EVEMonDataDir ??
+            string evemonDataDir = AppServices.ApplicationPaths.DataDirectory ??
                                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EVEMon");
 
             // Path in %APPDATA% folder

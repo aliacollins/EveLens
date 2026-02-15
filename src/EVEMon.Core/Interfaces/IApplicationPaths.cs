@@ -26,5 +26,10 @@ namespace EVEMon.Core.Interfaces
         /// Gets the path to the settings file.
         /// </summary>
         string SettingsFilePath { get; }
+
+        /// <summary>
+        /// Gets the path to the trace/log file.
+        /// </summary>
+        string TraceFilePath { get; }
     }
 }

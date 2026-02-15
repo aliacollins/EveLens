@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Exceptions;
 using EVEMon.Common.Serialization;
+using EVEMon.Common.Services;
 using Google;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Auth.OAuth2.Responses;
@@ -422,7 +423,7 @@ namespace EVEMon.Common.CloudStorageServices.GoogleDrive
             var initializer = new BaseClientService.Initializer
             {
                 HttpClientInitializer = s_credential,
-                ApplicationName = EveMonClient.FileVersionInfo.ProductName,
+                ApplicationName = AppServices.FileVersionInfo.ProductName,
             };
 
             return new DriveService(initializer);

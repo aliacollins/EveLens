@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Service
 {
@@ -167,7 +168,8 @@ namespace EVEMon.Common.Service
             s_queryPending = false;
 
             // Notify the subscribers
-            EveMonClient.OnEveFlagsUpdated();
+            AppServices.TraceService?.Trace("EveFlagsUpdated");
+            AppServices.EventAggregator?.Publish(CommonEvents.EveFlagsUpdatedEvent.Instance);
 
             // Save the file in cache
             LocalXmlCache.SaveAsync(Filename, Util.SerializeToXmlDocument(result.Result)).

@@ -12,6 +12,7 @@ using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.Core.Events;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common
 {
@@ -198,7 +199,9 @@ namespace EVEMon.Common
                 AppServices.TraceService?.Trace("done");
 
                 // Notify the subscribers
-                EveMonClient.OnSettingsChanged();
+                AppServices.TraceService?.Trace("SettingsChanged");
+                AppServices.EventAggregator?.Publish(SettingsChangedEvent.Instance);
+                AppServices.EventAggregator?.Publish(CommonEvents.SettingsChangedEvent.Instance);
             }
         }
 

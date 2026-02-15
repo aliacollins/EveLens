@@ -8,6 +8,7 @@ using EVEMon.Common;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Notifications;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
 
 namespace EVEMon.SettingsUI
@@ -69,7 +70,7 @@ namespace EVEMon.SettingsUI
         /// <returns></returns>
         private static IEnumerable<NotificationCategory> Categories
             => Enum.GetValues(typeof(NotificationCategory)).Cast<NotificationCategory>()
-                .Where(x => EveMonClient.IsDebugBuild || x != NotificationCategory.TestNofitication)
+                .Where(x => AppServices.IsDebugBuild || x != NotificationCategory.TestNofitication)
                 .Where(x => x.HasHeader());
 
         /// <summary>

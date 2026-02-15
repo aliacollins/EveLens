@@ -33,7 +33,7 @@ namespace EVEMon.Common.Helpers
             s_initialized = true;
 
             string userAgentId = Util.Decrypt("+PzrIVxVhL3PBJcRYN2tXg==", CultureConstants.InvariantCulture.NativeName);
-            string clientId = EveMonClient.IsDebugBuild ? "2" : "1";
+            string clientId = AppServices.IsDebugBuild ? "2" : "1";
 
             string screenResolution = "0x0";
             try
@@ -53,8 +53,8 @@ namespace EVEMon.Common.Helpers
                 TrackerId = $"{userAgentId}-{clientId}",
                 AnonymizeIp = true,
                 ClientId = Util.CreateSHA1SumFromMacAddress(),
-                ApplicationName = EveMonClient.FileVersionInfo.ProductName ?? string.Empty,
-                ApplicationVersion = EveMonClient.FileVersionInfo.FileVersion ?? string.Empty,
+                ApplicationName = AppServices.FileVersionInfo.ProductName ?? string.Empty,
+                ApplicationVersion = AppServices.FileVersionInfo.FileVersion ?? string.Empty,
                 ScreenResolution = screenResolution,
                 UserAgent = HttpWebClientServiceState.UserAgent
             };
@@ -104,7 +104,7 @@ namespace EVEMon.Common.Helpers
                     var result = await HttpWebClientService.DownloadImageAsync(new Uri(NetworkConstants.
                         GoogleAnalyticsUrl), new RequestParams(BuildQueryString()))
                         .ConfigureAwait(false);
-                    if (EveMonClient.IsDebugBuild)
+                    if (AppServices.IsDebugBuild)
                     {
                         AppServices.TraceService?.Trace($"({category} - {action})");
                         if (result.Error != null)
@@ -121,7 +121,7 @@ namespace EVEMon.Common.Helpers
                 // Reschedule later
                 Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEvent(type, category,
                     action));
-                if (EveMonClient.IsDebugBuild)
+                if (AppServices.IsDebugBuild)
                     AppServices.TraceService?.Trace($"in {TimeSpan.FromMinutes(1)}");
             }
         }
@@ -142,7 +142,7 @@ namespace EVEMon.Common.Helpers
                 HttpWebClientService.DownloadImageAsync(new Uri(NetworkConstants.GoogleAnalyticsUrl),
                     new RequestParams(BuildQueryString())).ContinueWith(task =>
                 {
-                    if (EveMonClient.IsDebugBuild)
+                    if (AppServices.IsDebugBuild)
                     {
                         AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - ({category} - {action})",
                             printMethod: false);
@@ -161,7 +161,7 @@ namespace EVEMon.Common.Helpers
                 // Reschedule later
                 Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEventAsync(type,
                     category, action));
-                if (EveMonClient.IsDebugBuild)
+                if (AppServices.IsDebugBuild)
                     AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromMinutes(1)}",
                         printMethod: false);
             }

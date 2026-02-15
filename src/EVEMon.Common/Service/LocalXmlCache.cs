@@ -29,7 +29,7 @@ namespace EVEMon.Common.Service
             {
                 EveMonClient.EnsureCacheDirInit();
 
-                return new FileInfo(Path.Combine(EveMonClient.EVEMonXmlCacheDir, $"{filename}.xml"));
+                return new FileInfo(Path.Combine(AppServices.ApplicationPaths.XmlCacheDirectory, $"{filename}.xml"));
             }
         }
 
@@ -46,7 +46,7 @@ namespace EVEMon.Common.Service
             EveMonClient.EnsureCacheDirInit();
 
             XmlDocument doc = new XmlDocument();
-            doc.Load(Path.Combine(EveMonClient.EVEMonXmlCacheDir, $"{character.Name}.xml"));
+            doc.Load(Path.Combine(AppServices.ApplicationPaths.XmlCacheDirectory, $"{character.Name}.xml"));
             return doc;
         }
 
@@ -96,7 +96,7 @@ namespace EVEMon.Common.Service
             filename = characterNode?.InnerText ?? filename;
 
             // Writes in the target file
-            string fileName = Path.Combine(EveMonClient.EVEMonXmlCacheDir, $"{filename}.xml");
+            string fileName = Path.Combine(AppServices.ApplicationPaths.XmlCacheDirectory, $"{filename}.xml");
             string content = Util.GetXmlStringRepresentation(xdoc);
             await FileHelper.OverwriteOrWarnTheUserAsync(fileName,
                 async fs =>
@@ -121,7 +121,7 @@ namespace EVEMon.Common.Service
             EveMonClient.EnsureCacheDirInit();
 
             // Writes in the target file
-            string fileName = Path.Combine(EveMonClient.EVEMonXmlCacheDir, $"{filename}.xml");
+            string fileName = Path.Combine(AppServices.ApplicationPaths.XmlCacheDirectory, $"{filename}.xml");
             FileHelper.DeleteFile(fileName);
         }
 

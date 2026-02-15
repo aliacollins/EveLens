@@ -11,6 +11,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.PatchXml;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.Updater
@@ -163,7 +164,7 @@ namespace EVEMon.Updater
                 m_datafile = datafile;
                 m_label!.Text = $"{datafile.Name}";
                 m_progressLabel!.Text = @"Downloading update...";
-                m_tempFilename = Path.Combine(EveMonClient.EVEMonDataDir, $"{datafile.Name}.tmp");
+                m_tempFilename = Path.Combine(AppServices.ApplicationPaths.DataDirectory, $"{datafile.Name}.tmp");
 
                 WebClient = HttpWebClientService.GetWebClient();
             }

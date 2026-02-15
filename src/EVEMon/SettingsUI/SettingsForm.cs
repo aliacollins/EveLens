@@ -845,7 +845,7 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void btnEVEMonDataDir_Click(object sender, EventArgs e)
         {
-            Util.OpenURL(new Uri(EveMonClient.EVEMonDataDir));
+            Util.OpenURL(new Uri(AppServices.ApplicationPaths.DataDirectory));
         }
 
         #endregion

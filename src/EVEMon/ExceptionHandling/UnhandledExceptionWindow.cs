@@ -8,6 +8,7 @@ using EVEMon.Common.Controls;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Properties;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 
 namespace EVEMon.ExceptionHandling
 {
@@ -205,7 +206,7 @@ namespace EVEMon.ExceptionHandling
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void DataDirectoryButton_Click(object? sender, EventArgs e)
         {
-            Util.OpenURL(new Uri(EveMonClient.EVEMonDataDir));
+            Util.OpenURL(new Uri(AppServices.ApplicationPaths.DataDirectory));
         }
 
         /// <summary>

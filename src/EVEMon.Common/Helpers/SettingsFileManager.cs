@@ -57,7 +57,7 @@ namespace EVEMon.Common.Helpers
         /// <summary>
         /// Gets the base EVEMon data directory.
         /// </summary>
-        public static string DataDirectory => EveMonClient.EVEMonDataDir;
+        public static string DataDirectory => AppServices.ApplicationPaths.DataDirectory;
 
         /// <summary>
         /// Gets the full path to config.json.

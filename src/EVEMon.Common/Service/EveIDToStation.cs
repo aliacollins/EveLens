@@ -9,6 +9,7 @@ using EVEMon.Core.Events;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Service
 {
@@ -46,7 +47,8 @@ namespace EVEMon.Common.Service
         /// </summary>
         private static void OnLookupServiceDataChanged(object sender, EventArgs e)
         {
-            EveMonClient.OnConquerableStationListUpdated();
+            AppServices.TraceService?.Trace("ConquerableStationListUpdated");
+            AppServices.EventAggregator?.Publish(CommonEvents.ConquerableStationListUpdatedEvent.Instance);
             s_savePending = true;
         }
 

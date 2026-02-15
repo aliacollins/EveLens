@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CommonEvents = EVEMon.Common.Events;
 
 using StringIDInfo = EVEMon.Common.Service.IDInformation<string, string>;
 
@@ -316,7 +317,8 @@ namespace EVEMon.Common.Service
 
             protected override void TriggerEvent()
             {
-                EveMonClient.OnEveIDToNameUpdated();
+                AppServices.TraceService?.Trace("EveIDToNameUpdated");
+                AppServices.EventAggregator?.Publish(CommonEvents.EveIDToNameUpdatedEvent.Instance);
                 s_savePending = true;
             }
         }

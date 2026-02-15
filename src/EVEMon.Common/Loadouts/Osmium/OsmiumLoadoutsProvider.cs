@@ -10,6 +10,9 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.Osmium.Loadout;
+using EVEMon.Common.Services;
+using EVEMon.Common.CustomEventArgs;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Loadouts.Osmium
 {
@@ -130,7 +133,8 @@ namespace EVEMon.Common.Loadouts.Osmium
         {
             s_queryFeedPending = false;
 
-            EveMonClient.OnLoadoutsFeedDownloaded(loadoutFeed, errorMessage);
+            AppServices.EventAggregator?.Publish(new CommonEvents.LoadoutFeedUpdatedEvent(
+                new LoadoutFeedEventArgs(loadoutFeed, errorMessage)));
         }
 
         /// <summary>
@@ -141,7 +145,8 @@ namespace EVEMon.Common.Loadouts.Osmium
         {
             s_queryPending = false;
 
-            EveMonClient.OnLoadoutDownloaded(result.Result, result.Error?.Message);
+            AppServices.EventAggregator?.Publish(new CommonEvents.LoadoutUpdatedEvent(
+                new LoadoutEventArgs(result.Result, result.Error?.Message)));
         }
 
         /// <summary>

@@ -146,7 +146,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// The settings file content URL encode.
         /// </value>
         protected static string SettingsFileContentUrlEncode
-            => HttpUtility.UrlEncode(File.ReadAllText(EveMonClient.SettingsFileNameFullPath));
+            => HttpUtility.UrlEncode(File.ReadAllText(AppServices.ApplicationPaths.SettingsFilePath));
 
         /// <summary>
         /// Gets the content of the settings file in a byte array.
@@ -155,7 +155,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// The settings file content byte array.
         /// </value>
         protected static byte[] SettingsFileContentByteArray
-            => Encoding.UTF8.GetBytes(File.ReadAllText(EveMonClient.SettingsFileNameFullPath));
+            => Encoding.UTF8.GetBytes(File.ReadAllText(AppServices.ApplicationPaths.SettingsFilePath));
 
         /// <summary>
         /// Gets the settings file name without extension.
@@ -164,7 +164,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// The settings file name without extension.
         /// </value>
         protected static string SettingsFileNameWithoutExtension
-            => Path.GetFileNameWithoutExtension(EveMonClient.SettingsFileName);
+            => Path.GetFileNameWithoutExtension(AppServices.SettingsFileName);
 
         protected static Configuration Configuration
             => ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoamingAndLocal);
@@ -567,7 +567,7 @@ namespace EVEMon.Common.CloudStorageServices
             if (configFileParentParentDir.Parent == null || !Directory.Exists(configFileParentParentDir.Parent.FullName))
                 return;
 
-            string? productName = EveMonClient.FileVersionInfo.ProductName;
+            string? productName = AppServices.FileVersionInfo.ProductName;
             foreach (string directory in Directory.GetDirectories(configFileParentParentDir.Parent.FullName)
                 .Where(directory => directory != configFileParentParentDir.FullName &&
                                     productName != null &&

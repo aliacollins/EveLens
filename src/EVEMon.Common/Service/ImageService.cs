@@ -112,7 +112,7 @@ namespace EVEMon.Common.Service
         {
             // First check whether the image exists in cache
             EveMonClient.EnsureCacheDirInit();
-            string cacheFileName = Path.Combine(directory ?? EveMonClient.EVEMonImageCacheDir,
+            string cacheFileName = Path.Combine(directory ?? AppServices.ApplicationPaths.ImageCacheDirectory,
                 filename);
 
             if (!File.Exists(cacheFileName))

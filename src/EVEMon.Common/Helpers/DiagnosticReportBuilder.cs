@@ -345,7 +345,7 @@ namespace EVEMon.Common.Helpers
         {
             try
             {
-                string filePath = Path.Combine(EveMonClient.EVEMonDataDir,
+                string filePath = Path.Combine(AppServices.ApplicationPaths.DataDirectory,
                     "DiagnosticReport.txt");
                 File.WriteAllText(filePath, reportText);
                 return filePath;
@@ -374,7 +374,7 @@ namespace EVEMon.Common.Helpers
             string version;
             try
             {
-                version = EveMonClient.FileVersionInfo?.FileVersion ?? "(unknown)";
+                version = AppServices.FileVersionInfo?.FileVersion ?? "(unknown)";
             }
             catch
             {
@@ -417,7 +417,7 @@ namespace EVEMon.Common.Helpers
             try
             {
                 report.Append("EVEMon Version: ").AppendLine(
-                    EveMonClient.FileVersionInfo.FileVersion);
+                    AppServices.FileVersionInfo.FileVersion);
             }
             catch
             {
@@ -476,7 +476,7 @@ namespace EVEMon.Common.Helpers
                 report.AppendLine($"  Characters Loaded: {charCount} ({ccpCount} CCP, {localCount} local)");
                 report.AppendLine($"  ESI Keys: {esiCount}");
                 report.AppendLine($"  Monitored: {monCount}");
-                report.AppendLine($"  Data Loaded: {EveMonClient.IsDataLoaded}");
+                report.AppendLine($"  Data Loaded: {AppServices.IsDataLoaded}");
                 report.AppendLine($"  Settings Restoring: {Settings.IsRestoring}");
             }
             catch
@@ -590,9 +590,9 @@ namespace EVEMon.Common.Helpers
                 report.AppendLine($"  ForkMigration: {(Settings.MigrationFromOtherForkDetected ? "Yes" : "No")}");
 
                 string channel = "Stable";
-                if (EveMonClient.IsAlphaVersion)
+                if (AppServices.IsAlphaVersion)
                     channel = "Alpha";
-                else if (EveMonClient.IsBetaVersion)
+                else if (AppServices.IsBetaVersion)
                     channel = "Beta";
 
                 report.AppendLine($"Update Channel: {channel}");
@@ -614,7 +614,7 @@ namespace EVEMon.Common.Helpers
 
             try
             {
-                foreach (string datafile in Datafile.GetFilesFrom(EveMonClient.EVEMonDataDir,
+                foreach (string datafile in Datafile.GetFilesFrom(AppServices.ApplicationPaths.DataDirectory,
                     Datafile.DatafilesExtension))
                 {
                     FileInfo info = new FileInfo(datafile);
@@ -647,7 +647,7 @@ namespace EVEMon.Common.Helpers
             FileStream traceStream = null;
             try
             {
-                traceStream = Util.GetFileStream(EveMonClient.TraceFileNameFullPath,
+                traceStream = Util.GetFileStream(AppServices.ApplicationPaths.TraceFilePath,
                     FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                 using (StreamReader traceReader = new StreamReader(traceStream))
                 {

@@ -11,5 +11,7 @@ namespace EVEMon.Common.Services
         public string ImageCacheDirectory => EveMonClient.EVEMonImageCacheDir;
 
         public string SettingsFilePath => EveMonClient.SettingsFileNameFullPath;
+
+        public string TraceFilePath => EveMonClient.TraceFileNameFullPath;
     }
 }

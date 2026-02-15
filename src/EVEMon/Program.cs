@@ -155,7 +155,7 @@ namespace EVEMon
                 G15Handler.Initialize();
 
             // Mark data as fully loaded - MainWindow will skip redundant loading
-            EveMonClient.IsDataLoaded = true;
+            AppServices.SetDataLoaded(true);
 
             try
             {

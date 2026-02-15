@@ -8,6 +8,7 @@ using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Updater
 {
@@ -113,7 +114,7 @@ namespace EVEMon.Updater
             if (string.IsNullOrWhiteSpace(filename))
                 return false;
 
-            string localFilename = Path.Combine(EveMonClient.EVEMonDataDir, filename);
+            string localFilename = Path.Combine(AppServices.ApplicationPaths.DataDirectory, filename);
 
             // If the file already exists delete it
             if (File.Exists(localFilename))

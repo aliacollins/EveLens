@@ -86,6 +86,56 @@ namespace EVEMon.Common.Services
         public static bool Closed => EveMonClient.Closed;
 
         /// <summary>
+        /// Gets whether this is a debug build.
+        /// </summary>
+        public static bool IsDebugBuild => EveMonClient.IsDebugBuild;
+
+        /// <summary>
+        /// Gets whether the static data has been loaded.
+        /// </summary>
+        public static bool IsDataLoaded => EveMonClient.IsDataLoaded;
+
+        /// <summary>
+        /// Sets whether the static data has been loaded.
+        /// </summary>
+        public static void SetDataLoaded(bool value) => EveMonClient.IsDataLoaded = value;
+
+        /// <summary>
+        /// Gets whether this is a pre-release version.
+        /// </summary>
+        public static bool IsPreReleaseVersion => EveMonClient.IsPreReleaseVersion;
+
+        /// <summary>
+        /// Gets whether this is an alpha version.
+        /// </summary>
+        public static bool IsAlphaVersion => EveMonClient.IsAlphaVersion;
+
+        /// <summary>
+        /// Gets whether this is a beta version.
+        /// </summary>
+        public static bool IsBetaVersion => EveMonClient.IsBetaVersion;
+
+        /// <summary>
+        /// Gets the file version information for the application.
+        /// </summary>
+        public static System.Diagnostics.FileVersionInfo FileVersionInfo => EveMonClient.FileVersionInfo;
+
+        /// <summary>
+        /// Gets the product name with version string.
+        /// </summary>
+        public static string ProductNameWithVersion => EveMonClient.ProductNameWithVersion;
+
+        /// <summary>
+        /// Gets the version string.
+        /// </summary>
+        public static string VersionString => EveMonClient.VersionString;
+
+        /// <summary>
+        /// Gets the settings file name.
+        /// </summary>
+        public static string SettingsFileName => EveMonClient.SettingsFileName;
+
+        /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
         /// </summary>
         public static IDispatcher Dispatcher

@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Scheduling;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Schedule
 {
@@ -28,7 +29,7 @@ namespace EVEMon.Schedule
 
             tbTitle.MaxLength = ScheduleEntry.TitleMaxLength;
 
-            if (!EveMonClient.IsDebugBuild)
+            if (!AppServices.IsDebugBuild)
                 buttonDebug.Visible = false;
 
             InitialEntry();

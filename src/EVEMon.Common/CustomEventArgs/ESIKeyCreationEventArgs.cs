@@ -5,6 +5,7 @@ using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
 using System;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.CustomEventArgs
 {
@@ -113,7 +114,8 @@ namespace EVEMon.Common.CustomEventArgs
                 esiKey.Update(this);
 
                 // Fires the event regarding the ESI key info update
-                EveMonClient.OnESIKeyInfoUpdated(esiKey);
+                AppServices.TraceService?.Trace($"ESIKeyInfoUpdated: {esiKey}");
+                AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
             }
             else
             {

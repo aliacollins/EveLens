@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Services;
 
 namespace EVEMon.About
 {
@@ -205,7 +206,7 @@ namespace EVEMon.About
             y += 35;
 
             // Version
-            var version = EveMonClient.FileVersionInfo;
+            var version = AppServices.FileVersionInfo;
             var versionText = EveMonClient.IsDebugBuild ? $"{version.FileVersion} (Debug)" : version.ProductVersion;
             panel.Controls.Add(new Label
             {

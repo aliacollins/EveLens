@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Net;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Service
 {
@@ -40,7 +41,7 @@ namespace EVEMon.Common.Service
                 string version;
                 try
                 {
-                    version = EveMonClient.FileVersionInfo?.FileVersion ?? "(unknown)";
+                    version = AppServices.FileVersionInfo?.FileVersion ?? "(unknown)";
                 }
                 catch
                 {
