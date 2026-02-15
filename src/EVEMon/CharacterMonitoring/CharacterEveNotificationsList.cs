@@ -307,7 +307,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvNotifications.SelectedItems!.Count > 0 ? lvNotifications!.
-                SelectedItems[0].Tag.GetHashCode() : 0;
+                SelectedItems[0].Tag!.GetHashCode() : 0;
 
             lvNotifications.BeginUpdate();
             splitContainerNotifications.Visible = false;

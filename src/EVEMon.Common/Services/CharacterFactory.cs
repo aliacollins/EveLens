@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using EVEMon.Common.Interfaces;
+using EVEMon.Common.Models;
+using EVEMon.Common.Serialization.Settings;
 using EVEMon.Core.Events;
 using EVEMon.Core.Interfaces;
 
@@ -19,7 +22,8 @@ namespace EVEMon.Common.Services
     /// - Separates construction from initialization: the factory creates/tracks the character
     ///   but does NOT auto-subscribe to events. An explicit Initialize() pattern means tests
     ///   can create characters without triggering event subscriptions.
-    /// - Does NOT directly instantiate CCPCharacter (that remains in the old code path).
+    /// - CreateCCPCharacter / CreateCCPCharacterFromSerialized are the SINGLE entry points
+    ///   for all CCPCharacter instantiation (production code should not call new CCPCharacter directly).
     ///
     /// Institutional knowledge preserved:
     /// - Lazy collection initialization pattern (character collections are lazy until accessed).
@@ -31,6 +35,7 @@ namespace EVEMon.Common.Services
     {
         private readonly ICharacterRepository _repository;
         private readonly IEventAggregator _eventAggregator;
+        private readonly ICharacterServices _services;
 
         /// <summary>
         /// Tracks managed character identities by their EVE Online character ID.
@@ -44,10 +49,13 @@ namespace EVEMon.Common.Services
         /// </summary>
         /// <param name="repository">The character repository for looking up existing characters.</param>
         /// <param name="eventAggregator">The event aggregator for publishing lifecycle events.</param>
-        public CharacterFactory(ICharacterRepository repository, IEventAggregator eventAggregator)
+        /// <param name="services">The character services for CCPCharacter construction.</param>
+        public CharacterFactory(ICharacterRepository repository, IEventAggregator eventAggregator,
+            ICharacterServices services = null)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
+            _services = services;
         }
 
         /// <inheritdoc />
@@ -87,6 +95,54 @@ namespace EVEMon.Common.Services
             _eventAggregator.Publish(new CharacterCreatedEvent(identity, fromSerialized: false));
 
             return identity;
+        }
+
+        /// <summary>
+        /// Creates a new CCPCharacter for a brand-new identity (no serialized data).
+        /// This is the single entry point for creating new CCP characters.
+        /// </summary>
+        /// <param name="identity">The character identity.</param>
+        /// <returns>A new CCPCharacter instance, tracked by this factory.</returns>
+        internal CCPCharacter CreateCCPCharacter(CharacterIdentity identity)
+        {
+            if (identity == null)
+                throw new ArgumentNullException(nameof(identity));
+
+            var services = _services ?? EveMonClientCharacterServices.Instance;
+            var character = new CCPCharacter(identity, services);
+
+            var entry = new ManagedCharacterEntry(character, fromSerialized: false)
+            {
+                ForceUpdateBasicFeatures = true
+            };
+            _managedCharacters[identity.CharacterID] = entry;
+            _eventAggregator.Publish(new CharacterCreatedEvent(character, fromSerialized: false));
+
+            return character;
+        }
+
+        /// <summary>
+        /// Creates a CCPCharacter from serialized settings data.
+        /// This is the single entry point for deserializing CCP characters.
+        /// </summary>
+        /// <param name="identity">The character identity.</param>
+        /// <param name="serial">The serialized character data.</param>
+        /// <returns>A new CCPCharacter instance, tracked by this factory.</returns>
+        internal CCPCharacter CreateCCPCharacterFromSerialized(CharacterIdentity identity, SerializableCCPCharacter serial)
+        {
+            if (identity == null)
+                throw new ArgumentNullException(nameof(identity));
+            if (serial == null)
+                throw new ArgumentNullException(nameof(serial));
+
+            var services = _services ?? EveMonClientCharacterServices.Instance;
+            var character = new CCPCharacter(identity, serial, services);
+
+            var entry = new ManagedCharacterEntry(character, fromSerialized: true);
+            _managedCharacters[identity.CharacterID] = entry;
+            _eventAggregator.Publish(new CharacterCreatedEvent(character, fromSerialized: true));
+
+            return character;
         }
 
         /// <inheritdoc />

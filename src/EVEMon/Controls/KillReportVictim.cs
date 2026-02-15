@@ -192,7 +192,7 @@ namespace EVEMon.Controls
             Item item = StaticItems.GetItemByID(m_killLog.Victim.ShipTypeID);
 
             if (item != null)
-                PlanWindow.ShowPlanWindow(m_killLog.Character).ShowShipInBrowser(item);
+                PlanWindow.ShowPlanWindow(m_killLog.Character)?.ShowShipInBrowser(item);
         }
 
         #endregion

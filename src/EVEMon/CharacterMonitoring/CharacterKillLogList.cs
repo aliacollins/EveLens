@@ -308,7 +308,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvKillLog.SelectedItems.Count > 0 ?
-                lvKillLog!.SelectedItems[0]!.Tag.GetHashCode() : 0;
+                lvKillLog!.SelectedItems[0]!.Tag!.GetHashCode() : 0;
 
             lvKillLog.BeginUpdate();
             try

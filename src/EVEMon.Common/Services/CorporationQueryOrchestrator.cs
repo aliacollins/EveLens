@@ -36,7 +36,7 @@ namespace EVEMon.Common.Services
 
         /// <summary>
         /// Production constructor — creates real ESI monitors and callbacks.
-        /// Called from CCPCharacter when FeatureFlags.UseCharacterOrchestrator is true.
+        /// Called from CCPCharacter when ESI key info is updated.
         /// </summary>
         internal CorporationQueryOrchestrator(CCPCharacter ccpCharacter)
         {
@@ -76,15 +76,11 @@ namespace EVEMon.Common.Services
             foreach (var monitor in m_corporationQueryMonitors)
                 ccpCharacter.QueryMonitors.Add(monitor);
 
-            if (FeatureFlags.UseSmartScheduler && EveMonClient.SmartQueryScheduler != null)
+            if (EveMonClient.SmartQueryScheduler != null)
             {
                 m_schedulerAdapter = new ScheduledQueryableAdapter(
                     ccpCharacter.CharacterID, () => ProcessTick());
                 EveMonClient.SmartQueryScheduler.Register(m_schedulerAdapter);
-            }
-            else
-            {
-                EveMonClient.QueryScheduler?.Register(this);
             }
         }
 
@@ -130,10 +126,6 @@ namespace EVEMon.Common.Services
             {
                 EveMonClient.SmartQueryScheduler?.Unregister(m_schedulerAdapter);
                 m_schedulerAdapter = null;
-            }
-            else
-            {
-                EveMonClient.QueryScheduler?.Unregister(this);
             }
 
             // Unsubscribe events in monitors

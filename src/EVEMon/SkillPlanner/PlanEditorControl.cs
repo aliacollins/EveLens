@@ -405,7 +405,7 @@ namespace EVEMon.SkillPlanner
 
             // Stores selection and focus, to restore them after the update
             Dictionary<int, bool> selection = StoreSelection();
-            int focusedHashCode = lvSkills.FocusedItem?.Tag.GetHashCode() ?? 0;
+            int focusedHashCode = lvSkills.FocusedItem?.Tag?.GetHashCode() ?? 0;
 
             lvSkills.BeginUpdate();
             try
@@ -445,8 +445,8 @@ namespace EVEMon.SkillPlanner
 
                 // Restore selection and focus
                 RestoreSelection(selection);
-                ListViewItem focusedItem = lvSkills.Items.Cast<ListViewItem>()
-                    .FirstOrDefault(x => x.Tag.GetHashCode() == focusedHashCode);
+                ListViewItem? focusedItem = lvSkills.Items.Cast<ListViewItem>()
+                    .FirstOrDefault(x => x.Tag?.GetHashCode() == focusedHashCode);
 
                 if (focusedItem != null)
                     focusedItem.Focused = true;
@@ -477,7 +477,7 @@ namespace EVEMon.SkillPlanner
                 for (int i = 0; i < lvSkills.Items.Count; i++)
                 {
                     ListViewItem lvi = lvSkills.Items[i];
-                    PlanEntry entry = lvi.Tag as PlanEntry;
+                    PlanEntry? entry = lvi.Tag as PlanEntry;
 
                     // Add enough subitems to match the number of columns
                     while (lvi.SubItems.Count < lvSkills.Columns.Count)
@@ -559,7 +559,7 @@ namespace EVEMon.SkillPlanner
                 bool isAutoBlocking;
                 bool isBlocked = Scheduler.SkillIsBlockedAt(entry.EndTime, out blockingEntry, out isAutoBlocking);
                 bool showBlocked = true;
-                CCPCharacter ccpCharacter = m_character as CCPCharacter;
+                CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
                 if (ccpCharacter != null)
                 {
@@ -600,7 +600,7 @@ namespace EVEMon.SkillPlanner
                 // Regular columns (not pluggable-dependent)
                 if (lvSkills.Columns[columnIndex].Tag != null)
                 {
-                    PlanColumnSettings columnSettings = (PlanColumnSettings)lvSkills.Columns[columnIndex].Tag;
+                    PlanColumnSettings columnSettings = (PlanColumnSettings)lvSkills.Columns[columnIndex].Tag!;
 
                     lvi.SubItems[columnIndex].BackColor = lvi.BackColor;
                     lvi.SubItems[columnIndex].ForeColor = lvi.ForeColor;
@@ -647,7 +647,7 @@ namespace EVEMon.SkillPlanner
             RemappingPoint point = (RemappingPoint)lvi.Tag;
             for (int columnIndex = 0; columnIndex < lvSkills.Columns.Count; columnIndex++)
             {
-                PlanColumnSettings columnSettings = (PlanColumnSettings)lvSkills.Columns[columnIndex].Tag;
+                PlanColumnSettings? columnSettings = lvSkills.Columns[columnIndex].Tag as PlanColumnSettings;
 
                 lvi.SubItems[columnIndex].Text = string.Empty;
                 lvi.SubItems[columnIndex].BackColor = m_remappingBackColor;
@@ -715,7 +715,7 @@ namespace EVEMon.SkillPlanner
             if (!Settings.UI.PlanWindow.HighlightQueuedSkills)
                 return;
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            CCPCharacter? ccpCharacter = m_character as CCPCharacter;
 
             // Current character isn't a CCP character, so can't have a Queue
             if (ccpCharacter == null)
@@ -860,7 +860,7 @@ namespace EVEMon.SkillPlanner
             // Compute and store a string ID for every item
             foreach (ListViewItem lvi in lvSkills.SelectedItems)
             {
-                c[lvi.Tag.GetHashCode()] = true;
+                c[lvi.Tag!.GetHashCode()] = true;
             }
 
             return c;
@@ -876,7 +876,7 @@ namespace EVEMon.SkillPlanner
             {
                 // Retrieve this item's tag hash code
                 ListViewItem lvi = lvSkills.Items[i];
-                int hashCode = lvi.Tag.GetHashCode();
+                int hashCode = lvi.Tag!.GetHashCode();
 
                 // Check whether this id must be selected
                 bool selected;
@@ -895,7 +895,7 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void tmrAutoRefresh_Tick(object? sender,EventArgs e)
         {
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
 
             UpdateListViewItems();
             planWindow?.CheckObsoleteEntries();
@@ -915,7 +915,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void UpdateStatusBar()
         {
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
 
             // 0 items selected or
             // 1 items are selected and status bar only updates on multi-select
@@ -948,7 +948,7 @@ namespace EVEMon.SkillPlanner
             m_lastImplantSetIndex = cbChooseImplantSet.SelectedIndex;
             DisplayPlan.ChosenImplantSet = m_plan.ChosenImplantSet;
 
-            Task updateOnImplantSetChange = m_pluggable?.UpdateOnImplantSetChange();
+            Task? updateOnImplantSetChange = m_pluggable?.UpdateOnImplantSetChange();
             if (updateOnImplantSetChange != null)
                 await updateOnImplantSetChange;
         }
@@ -1031,13 +1031,13 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="lvi"></param>
         /// <returns></returns>
-        private static PlanEntry GetPlanEntry(ListViewItem lvi) => lvi?.Tag as PlanEntry;
+        private static PlanEntry? GetPlanEntry(ListViewItem lvi) => lvi?.Tag as PlanEntry;
 
         /// <summary>
         /// Gets the first selected item which has a plan entry as a tag.
         /// </summary>
         /// <returns></returns>
-        private PlanEntry GetFirstSelectedEntry() => lvSkills.SelectedItems[0].Tag as PlanEntry;
+        private PlanEntry? GetFirstSelectedEntry() => lvSkills.SelectedItems[0].Tag as PlanEntry;
 
         /// <summary>
         /// Gets an enumeration over the selected entries.
@@ -1173,10 +1173,10 @@ namespace EVEMon.SkillPlanner
             // Create the new entries
             List<PlanEntry> entries = new List<PlanEntry>();
 
-            RemappingPoint remapping = null;
+            RemappingPoint? remapping = null;
             foreach (ListViewItem item in items)
             {
-                PlanEntry entry = item.Tag as PlanEntry;
+                PlanEntry? entry = item.Tag as PlanEntry;
                 if (entry != null)
                 {
                     entry.Remapping = remapping;
@@ -1222,7 +1222,7 @@ namespace EVEMon.SkillPlanner
             foreach (ColumnHeader columnHeader in lvSkills.Columns.Cast<ColumnHeader>().OrderBy(x => x.DisplayIndex))
             {
                 // Retrieve the column and skip if null
-                PlanColumnSettings column = columnHeader.Tag as PlanColumnSettings;
+                PlanColumnSettings? column = columnHeader.Tag as PlanColumnSettings;
                 if (column == null)
                     continue;
 
@@ -1260,7 +1260,7 @@ namespace EVEMon.SkillPlanner
             {
                 // Calculate the skill levels to remove
                 var operation = PrepareSelectionRemoval();
-                PlanWindow planWindow = ParentForm as PlanWindow;
+                PlanWindow? planWindow = ParentForm as PlanWindow;
                 if (operation != null && planWindow != null)
                     PlanHelper.SelectPerform(new PlanToOperationWindow(operation), planWindow,
                         operation);
@@ -1271,7 +1271,7 @@ namespace EVEMon.SkillPlanner
         /// Prepares the selection removal.
         /// </summary>
         /// <returns></returns>
-        private IPlanOperation PrepareSelectionRemoval()
+        private IPlanOperation? PrepareSelectionRemoval()
         {
             var entriesToRemove = lvSkills.SelectedItems.Cast<ListViewItem>().Select(x => x.
                 Tag).OfType<PlanEntry>();
@@ -1339,7 +1339,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="criteria"></param>
         /// <returns></returns>
-        private ColumnHeader GetColumn(PlanEntrySort criteria) => criteria == PlanEntrySort.None
+        private ColumnHeader? GetColumn(PlanEntrySort criteria) => criteria == PlanEntrySort.None
            ? null
            : lvSkills.Columns.Cast<ColumnHeader>().FirstOrDefault(header => GetPlanSort(header) == criteria);
 
@@ -1353,7 +1353,7 @@ namespace EVEMon.SkillPlanner
             if (header.Tag == null)
                 return PlanEntrySort.TimeDifference;
 
-            PlanColumnSettings ct = (PlanColumnSettings)header.Tag;
+            PlanColumnSettings ct = (PlanColumnSettings)header.Tag!;
             switch (ct.Column)
             {
                 case PlanColumn.SkillName:
@@ -1407,7 +1407,7 @@ namespace EVEMon.SkillPlanner
             // Updates the menu icons on the left toolbar
             tsSortPriorities.Checked = m_plan.SortingPreferences.GroupByPriority;
 
-            ColumnHeader columnWithSortCriteria = GetColumn(m_plan.SortingPreferences.Criteria);
+            ColumnHeader? columnWithSortCriteria = GetColumn(m_plan.SortingPreferences.Criteria);
             foreach (ColumnHeader columnHeader in lvSkills.Columns.Cast<ColumnHeader>())
             {
                 if (columnWithSortCriteria == columnHeader)
@@ -1491,7 +1491,7 @@ namespace EVEMon.SkillPlanner
             if (e.Cancel)
                 return;
 
-            PlanEntry entry = lvSkills.SelectedItems.Count > 0 ? GetPlanEntry(lvSkills.SelectedItems[0]) : null;
+            PlanEntry? entry = lvSkills.SelectedItems.Count > 0 ? GetPlanEntry(lvSkills.SelectedItems[0]) : null;
 
             // By default, all hidden
             foreach (ToolStripItem item in contextMenu.Items)
@@ -1561,7 +1561,7 @@ namespace EVEMon.SkillPlanner
             {
                 miRemoveFromPlan.Visible = true;
                 planMenuSeparator.Visible = true;
-                IPlanOperation operation = PrepareSelectionRemoval();
+                IPlanOperation? operation = PrepareSelectionRemoval();
                 if (PlanHelper.RequiresWindow(operation))
                     miRemoveFromPlan.Text += @"...";
             }
@@ -1612,13 +1612,13 @@ namespace EVEMon.SkillPlanner
         /// <returns>True if at least one of the entries could be set.</returns>
         private bool SetChangeLevelMenu()
         {
-            PlanEntry pe = GetFirstSelectedEntry();
+            PlanEntry? pe = GetFirstSelectedEntry();
 
             // Scroll through levels (and menus, one per level)
             bool result = false;
             for (int level = 0; level <= 5; level++)
             {
-                m_plan.UpdatesRegularPlanToMenu(miChangeLevel.DropDownItems[level], pe.CharacterSkill, level);
+                m_plan.UpdatesRegularPlanToMenu(miChangeLevel.DropDownItems[level], pe!.CharacterSkill, level);
                 result |= miChangeLevel.DropDownItems[level].Enabled;
             }
 
@@ -1633,10 +1633,10 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void planGroupMenu_Click(object? sender,EventArgs e)
         {
-            string planGroup = ((ToolStripButton)sender).Text;
+            string planGroup = ((ToolStripButton)sender!).Text!;
             foreach (ListViewItem item in lvSkills.Items)
             {
-                item.Selected = GetPlanEntry(item).PlanGroups.Contains(planGroup);
+                item.Selected = GetPlanEntry(item)?.PlanGroups.Contains(planGroup) ?? false;
             }
         }
 
@@ -1648,11 +1648,11 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void miShowInSkillBrowser_Click(object? sender,EventArgs e)
         {
-            Skill skill = ((PlanEntry)lvSkills.SelectedItems[0]?.Tag)?.CharacterSkill;
+            Skill? skill = (lvSkills.SelectedItems[0]?.Tag as PlanEntry)?.CharacterSkill;
 
             // Open the skill browser
-            PlanWindow planWindow = ParentForm as PlanWindow;
-            planWindow?.ShowSkillInBrowser(skill);
+            PlanWindow? planWindow = ParentForm as PlanWindow;
+            planWindow?.ShowSkillInBrowser(skill!);
         }
 
         /// <summary>
@@ -1663,10 +1663,10 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void miShowInSkillExplorer_Click(object? sender,EventArgs e)
         {
-            Skill skill = ((PlanEntry)lvSkills.SelectedItems[0]?.Tag)?.CharacterSkill;
-            
+            Skill? skill = (lvSkills.SelectedItems[0]?.Tag as PlanEntry)?.CharacterSkill;
+
             // Open the skill explorer
-            SkillExplorerWindow.ShowSkillExplorerWindow(m_character, m_plan).ShowSkillInExplorer(skill);
+            SkillExplorerWindow.ShowSkillExplorerWindow(m_character!, m_plan!).ShowSkillInExplorer(skill!);
         }
 
         /// <summary>
@@ -1695,7 +1695,7 @@ namespace EVEMon.SkillPlanner
                 form.Priority = PlanEntry.DefaultPriority;
                 if (lvSkills.SelectedItems.Count == 1)
                 {
-                    PlanEntry pe = GetPlanEntry(lvSkills.SelectedItems[0]);
+                    PlanEntry? pe = GetPlanEntry(lvSkills.SelectedItems[0]);
                     if (pe != null)
                         form.Priority = pe.Priority;
                 }
@@ -1836,7 +1836,7 @@ namespace EVEMon.SkillPlanner
             skillSelectControl.UpdateContent();
 
             // Update also the skill browser
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             planWindow?.UpdateSkillBrowser();
 
             // Update the Owned Skill books window if open
@@ -1854,14 +1854,14 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void miChangeToLevel_Click(object? sender,EventArgs e)
         {
-            ToolStripMenuItem menu = sender as ToolStripMenuItem;
+            ToolStripMenuItem? menu = sender as ToolStripMenuItem;
 
-            IPlanOperation operation = menu?.Tag as IPlanOperation;
+            IPlanOperation? operation = menu?.Tag as IPlanOperation;
 
             if (operation == null)
                 return;
 
-            PlanWindow planWindow = ParentForm as PlanWindow;
+            PlanWindow? planWindow = ParentForm as PlanWindow;
             if (planWindow == null)
                 return;
 
@@ -1884,7 +1884,7 @@ namespace EVEMon.SkillPlanner
             operation.Perform();
 
             // Prompt the user for settings. When null, the user cancelled
-            PlanExportSettings settings = UIHelper.PromptUserForPlanExportSettings(newPlan);
+            PlanExportSettings? settings = UIHelper.PromptUserForPlanExportSettings(newPlan);
             if (settings == null)
                 return;
             
@@ -1927,12 +1927,12 @@ namespace EVEMon.SkillPlanner
                     return;
 
                 // Checks there is a skill
-                Skill dragSkill = GetDraggingSkill(e);
+                Skill? dragSkill = GetDraggingSkill(e);
                 if (dragSkill == null)
                     return;
 
                 // Gets the item and returns if none created (already on lv5)
-                ListViewItem newItem = CreatePlanItemForSkill(dragSkill);
+                ListViewItem? newItem = CreatePlanItemForSkill(dragSkill);
                 if (newItem == null)
                     return;
 
@@ -1973,7 +1973,7 @@ namespace EVEMon.SkillPlanner
         private void lvSkills_DragOver(object? sender,DragEventArgs e)
         {
             // Checks there is a dragged skill
-            Skill dragSkill = GetDraggingSkill(e);
+            Skill? dragSkill = GetDraggingSkill(e);
             if (dragSkill == null)
                 return;
 
@@ -2006,7 +2006,7 @@ namespace EVEMon.SkillPlanner
             SetDragMouseButton(e);
 
             // Gets the dragging skill set up by the source control
-            Skill dragSkill = GetDraggingSkill(e);
+            Skill? dragSkill = GetDraggingSkill(e);
             if (dragSkill != null)
                 e.Effect = DragDropEffects.Move;
         }
@@ -2027,10 +2027,10 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="e"></param>
         /// <returns></returns>
-        private static Skill GetDraggingSkill(DragEventArgs e)
+        private static Skill? GetDraggingSkill(DragEventArgs e)
         {
-            if (e.Data.GetDataPresent("System.Windows.Forms.TreeNode"))
-                return (Skill)((TreeNode)e.Data.GetData("System.Windows.Forms.TreeNode")).Tag;
+            if (e.Data?.GetDataPresent("System.Windows.Forms.TreeNode") == true)
+                return (Skill)((TreeNode)e.Data.GetData("System.Windows.Forms.TreeNode")!).Tag!;
 
             return null;
         }
@@ -2040,7 +2040,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         /// <param name="skill"></param>
         /// <returns></returns>
-        private ListViewItem CreatePlanItemForSkill(Skill skill)
+        private ListViewItem? CreatePlanItemForSkill(Skill skill)
         {
             // Gets the planned level of the skill.
             long newLevel = m_plan.GetPlannedLevel(skill) + 1;
@@ -2093,7 +2093,7 @@ namespace EVEMon.SkillPlanner
             {
                 // Retrieves the point
                 ListViewItem nextItem = lvSkills.Items[lvSkills.SelectedIndices[0] + 1];
-                RemappingPoint remappingPoint = GetPlanEntry(nextItem).Remapping;
+                RemappingPoint remappingPoint = GetPlanEntry(nextItem)!.Remapping;
 
                 // Display the attributes optimizer
                 // if it's not already shown
@@ -2186,8 +2186,8 @@ namespace EVEMon.SkillPlanner
                 // Checks whether it is a prerequisite of the currently selected entry and whether we should highlight it
                 if (!Settings.UI.SafeForWork && Settings.UI.PlanWindow.HighlightPrerequisites && SelectedEntries.Count() == 1)
                 {
-                    PlanEntry currentEntry = current.Tag as PlanEntry;
-                    PlanEntry selectedEntry = lvSkills.SelectedItems[0].Tag as PlanEntry;
+                    PlanEntry? currentEntry = current.Tag as PlanEntry;
+                    PlanEntry? selectedEntry = lvSkills.SelectedItems[0].Tag as PlanEntry;
                     if (currentEntry != null && selectedEntry != null)
                     {
                         long neededLevel;
@@ -2249,7 +2249,7 @@ namespace EVEMon.SkillPlanner
             // Is it an entry ?
             if (e.Item.Tag is PlanEntry)
             {
-                Skill skill = GetPlanEntry(e.Item).CharacterSkill;
+                Skill skill = GetPlanEntry(e.Item)!.CharacterSkill;
                 StringBuilder builder = new StringBuilder(skill.Description.WordWrap(100, false));
 
                 if (!skill.IsKnown)
@@ -2265,8 +2265,8 @@ namespace EVEMon.SkillPlanner
                 // Then it is a remapping point
             else if (e.Item.Tag is RemappingPoint)
             {
-                RemappingPoint point = e.Item.Tag as RemappingPoint;
-                e.Item.ToolTipText = m_areRemappingPointsActive ? point.ToLongString() : "Remapping (ignored)";
+                RemappingPoint? point = e.Item.Tag as RemappingPoint;
+                e.Item.ToolTipText = m_areRemappingPointsActive ? point!.ToLongString() : "Remapping (ignored)";
             }
         }
 
@@ -2372,8 +2372,8 @@ namespace EVEMon.SkillPlanner
                 lvSkills.Items[entryIndex].Focused = true;
 
                 // Retrieve the original entry after this item and remove its remapping point.
-                PlanEntry entry = lvSkills.Items[entryIndex].Tag as PlanEntry;
-                PlanEntry originalEntry = GetOriginalEntry(entry);
+                PlanEntry? entry = lvSkills.Items[entryIndex].Tag as PlanEntry;
+                PlanEntry originalEntry = GetOriginalEntry(entry!);
                 originalEntry.Remapping = null;
             }
                 // Toggle on a skill
@@ -2382,8 +2382,8 @@ namespace EVEMon.SkillPlanner
                 // Retrieves the focused item's hash code.
                 item.Focused = true;
 
-                PlanEntry entry = tag as PlanEntry;
-                PlanEntry originalEntry = GetOriginalEntry(entry);
+                PlanEntry? entry = tag as PlanEntry;
+                PlanEntry originalEntry = GetOriginalEntry(entry!);
 
                 // Add a remapping point
                 originalEntry.Remapping = originalEntry.Remapping ?? new RemappingPoint();
@@ -2402,7 +2402,7 @@ namespace EVEMon.SkillPlanner
                 return;
 
             ListViewItem item = lvSkills.SelectedItems[0];
-            PlanEntry entry = item.Tag as PlanEntry;
+            PlanEntry? entry = item.Tag as PlanEntry;
             if (entry == null)
                 return;
 

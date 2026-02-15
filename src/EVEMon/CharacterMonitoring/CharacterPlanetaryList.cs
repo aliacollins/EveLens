@@ -322,7 +322,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvPlanetary.SelectedItems.Count > 0
-                ? lvPlanetary!.SelectedItems[0]!.Tag.GetHashCode()
+                ? lvPlanetary!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
 
             lvPlanetary.BeginUpdate();
@@ -954,7 +954,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Find how many jobs are active and not ready
             int activePins = lvPlanetary.Items.Cast<ListViewItem>().Select(
-                item => (PlanetaryPin)item.Tag)!.Count(pin => pin!.State == PlanetaryPinState.Extracting)!;
+                item => (PlanetaryPin)item.Tag!).Count(pin => pin.State == PlanetaryPinState.Extracting);
 
             // We use time dilation according to the ammount of active pins that are active,
             // due to excess CPU usage for computing the 'time to completion' when there are too many pins

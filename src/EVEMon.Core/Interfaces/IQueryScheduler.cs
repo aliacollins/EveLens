@@ -3,8 +3,8 @@ using System;
 namespace EVEMon.Core.Interfaces
 {
     /// <summary>
-    /// Abstracts the query scheduling system that drives character data polling.
-    /// Replaces CentralQueryScheduler with adaptive polling and priority scheduling.
+    /// Abstracts the query scheduling system that drives character data polling
+    /// with adaptive polling and priority scheduling.
     /// </summary>
     public interface IQueryScheduler : IDisposable
     {

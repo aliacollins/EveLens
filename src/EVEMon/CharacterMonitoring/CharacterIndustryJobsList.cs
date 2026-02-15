@@ -832,8 +832,8 @@ namespace EVEMon.CharacterMonitoring
 
             foreach (ListViewItem listViewItem in lvJobs.Items.Cast<ListViewItem>())
             {
-                IndustryJob? job = (IndustryJob)listViewItem.Tag!;
-                if (!job!.IsActive || job.ActiveJobState == ActiveJobState.Ready)
+                IndustryJob job = (IndustryJob)listViewItem.Tag!;
+                if (!job.IsActive || job.ActiveJobState == ActiveJobState.Ready)
                     continue;
 
                 // Update the time to completion
@@ -1136,7 +1136,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Find how many jobs are active and not ready
             int activeJobs = lvJobs.Items.Cast<ListViewItem>().Select(
-                item => (IndustryJob)item.Tag)!.Count(job => job!.IsActive && job.ActiveJobState != ActiveJobState.Ready)!;
+                item => (IndustryJob)item.Tag!).Count(job => job.IsActive && job.ActiveJobState != ActiveJobState.Ready);
 
             // We use time dilation according to the ammount of active jobs that are not ready,
             // due to excess CPU usage for computing the 'time to completion' when there are too many jobs

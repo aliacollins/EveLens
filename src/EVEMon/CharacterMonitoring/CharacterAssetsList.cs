@@ -354,7 +354,7 @@ namespace EVEMon.CharacterMonitoring
             int scrollBarPosition = lvAssets.GetVerticalScrollBarPosition();
 
             // Store the selected item (if any) to restore it after the update
-            Asset firstSelected = GetFirstSelectedAsset();
+            Asset? firstSelected = GetFirstSelectedAsset();
             int selectedItem = firstSelected?.GetHashCode() ?? 0;
 
             lvAssets.BeginUpdate();
@@ -841,12 +841,12 @@ namespace EVEMon.CharacterMonitoring
         /// Gets the asset for the first selected item, compatible with virtual mode.
         /// Returns null if nothing is selected.
         /// </summary>
-        private Asset GetFirstSelectedAsset()
+        private Asset? GetFirstSelectedAsset()
         {
             if (m_isVirtualMode)
             {
                 if (lvAssets.SelectedIndices.Count == 0)
-                    return null!;
+                    return null;
 
                 int index = lvAssets.SelectedIndices[0];
                 return index >= 0 && index < m_virtualModeItems.Count
@@ -1121,7 +1121,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="CancelEventArgs"/> instance containing the event data.</param>
         private void contextMenu_Opening(object? sender, CancelEventArgs e)
         {
-            Asset firstAsset = GetFirstSelectedAsset();
+            Asset? firstAsset = GetFirstSelectedAsset();
             bool visible = SelectedItemCount > 0 && firstAsset?.Item != null;
 
             if (visible)
@@ -1160,7 +1160,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void showInBrowserMenuItem_Click(object? sender, EventArgs e)
         {
-            Asset asset = GetFirstSelectedAsset();
+            Asset? asset = GetFirstSelectedAsset();
 
             if (asset?.Item == null)
                 return;

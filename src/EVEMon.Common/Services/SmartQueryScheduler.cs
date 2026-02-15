@@ -6,8 +6,7 @@ using EVEMon.Core.Interfaces;
 namespace EVEMon.Common.Services
 {
     /// <summary>
-    /// Adaptive query scheduler that replaces <see cref="QueryMonitor.CentralQueryScheduler"/>
-    /// with testable, DI-based scheduling. Features:
+    /// Adaptive query scheduler with testable, DI-based scheduling. Features:
     /// <list type="bullet">
     ///   <item>Priority scheduling: visible character processes every tick</item>
     ///   <item>Background round-robin: one background character per tick cycle</item>

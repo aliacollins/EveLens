@@ -380,7 +380,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvOrders.SelectedItems.Count > 0
-                ? lvOrders!.SelectedItems[0]!.Tag.GetHashCode()
+                ? lvOrders!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
 
             lvOrders.BeginUpdate();

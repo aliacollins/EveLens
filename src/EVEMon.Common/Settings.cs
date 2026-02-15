@@ -810,16 +810,13 @@ Click OK to continue.";
                 });
             }
 
-            // Initialize SmartSettingsManager if feature flag is enabled
-            if (FeatureFlags.UseSmartSettings)
-            {
-                s_smartSettingsManager = new SmartSettingsManager(
-                    AppServices.DataStore.DataDirectory,
-                    AppServices.EventAggregator,
-                    AppServices.Dispatcher,
-                    () => Export());
-                EveMonClient.Trace("SmartSettingsManager initialized (feature flag ON)");
-            }
+            // Initialize SmartSettingsManager for save coalescing
+            s_smartSettingsManager = new SmartSettingsManager(
+                AppServices.DataStore.DataDirectory,
+                AppServices.EventAggregator,
+                AppServices.Dispatcher,
+                () => Export());
+            EveMonClient.Trace("SmartSettingsManager initialized");
 
             EveMonClient.Trace($"done - UsingJsonFormat={UsingJsonFormat}");
         }
@@ -1311,7 +1308,7 @@ Do you want to continue?";
             if (IsRestoring)
                 return;
 
-            if (FeatureFlags.UseSmartSettings && s_smartSettingsManager != null)
+            if (s_smartSettingsManager != null)
             {
                 // SmartSettingsManager owns the full pipeline: Export→Serialize→Write
                 s_smartSettingsManager.Save();
@@ -1337,7 +1334,7 @@ Do you want to continue?";
                 return;
 
             // If SmartSettingsManager is active, it owns the full pipeline exclusively
-            if (FeatureFlags.UseSmartSettings && s_smartSettingsManager != null)
+            if (s_smartSettingsManager != null)
             {
                 await s_smartSettingsManager.SaveImmediateAsync();
                 return;

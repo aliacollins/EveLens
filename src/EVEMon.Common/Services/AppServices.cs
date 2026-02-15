@@ -19,6 +19,7 @@ namespace EVEMon.Common.Services
         private static IEventAggregator s_eventAggregator;
         private static ICharacterRepository s_characterRepository;
         private static ISettingsDataStore s_dataStore;
+        private static CharacterFactory s_characterFactory;
 
         /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
@@ -57,6 +58,13 @@ namespace EVEMon.Common.Services
             => s_dataStore ?? (s_dataStore = EveMonClientDataStore.Instance);
 
         /// <summary>
+        /// Gets the character factory for creating CCPCharacter instances.
+        /// </summary>
+        internal static CharacterFactory CharacterFactory
+            => s_characterFactory ??= new CharacterFactory(
+                CharacterRepository, EventAggregator, EveMonClientCharacterServices.Instance);
+
+        /// <summary>
         /// Replaces a service implementation (for testing or DI transition).
         /// </summary>
         internal static void SetDispatcher(IDispatcher dispatcher) => s_dispatcher = dispatcher;
@@ -65,6 +73,7 @@ namespace EVEMon.Common.Services
         internal static void SetEventAggregator(IEventAggregator aggregator) => s_eventAggregator = aggregator;
         internal static void SetCharacterRepository(ICharacterRepository repo) => s_characterRepository = repo;
         internal static void SetDataStore(ISettingsDataStore store) => s_dataStore = store;
+        internal static void SetCharacterFactory(CharacterFactory factory) => s_characterFactory = factory;
 
         /// <summary>
         /// Resets all services to their defaults (for testing).
@@ -77,6 +86,7 @@ namespace EVEMon.Common.Services
             s_eventAggregator = null;
             s_characterRepository = null;
             s_dataStore = null;
+            s_characterFactory = null;
         }
     }
 }

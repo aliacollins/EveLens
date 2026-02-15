@@ -156,7 +156,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void cbbEMailServerProvider_SelectedIndexChanged(object sender, EventArgs e)
+        private void cbbEMailServerProvider_SelectedIndexChanged(object? sender, EventArgs e)
         {
             SetControls();
         }
@@ -166,7 +166,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void cbEmailAuthRequired_CheckedChanged(object sender, EventArgs e)
+        private void cbEmailAuthRequired_CheckedChanged(object? sender, EventArgs e)
         {
             tlpEmailAuthTable.Enabled = cbEmailAuthRequired.Checked;
         }
@@ -176,7 +176,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnReset_Click(object sender, EventArgs e)
+        private void btnReset_Click(object? sender, EventArgs e)
         {
             ResetControls();
         }
@@ -186,7 +186,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void btnTestEmail_Click(object sender, EventArgs e)
+        private void btnTestEmail_Click(object? sender, EventArgs e)
         {
             if (!ValidateChildren())
                 return;
@@ -200,7 +200,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void tbEmailServerAddress_Validating(object sender, CancelEventArgs e)
+        private void tbEmailServerAddress_Validating(object? sender, CancelEventArgs e)
         {
             e.Cancel = string.IsNullOrWhiteSpace(tbEmailServerAddress.Text.Trim());
 
@@ -213,13 +213,13 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void tbEmailPort_Validating(object sender, CancelEventArgs e)
+        private void tbEmailPort_Validating(object? sender, CancelEventArgs e)
         {
             int ignore;
             e.Cancel = !SettingsForm.IsValidPort(tbEmailPort.Text, "Email Server port", out ignore);
         }
 
-        private void tbEmailUsername_Validating(object sender, CancelEventArgs e)
+        private void tbEmailUsername_Validating(object? sender, CancelEventArgs e)
         {
             e.Cancel = cbEmailAuthRequired.Checked && string.IsNullOrWhiteSpace(tbEmailUsername.Text.Trim());
 
@@ -232,7 +232,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void tbEmailPassword_Validating(object sender, CancelEventArgs e)
+        private void tbEmailPassword_Validating(object? sender, CancelEventArgs e)
         {
             e.Cancel = cbEmailAuthRequired.Checked && string.IsNullOrWhiteSpace(tbEmailPassword.Text.Trim());
 
@@ -245,7 +245,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void tbFromAddress_Validating(object sender, CancelEventArgs e)
+        private void tbFromAddress_Validating(object? sender, CancelEventArgs e)
         {
             e.Cancel = !string.IsNullOrEmpty(tbFromAddress.Text.Trim()) && !tbFromAddress.Text.Trim().IsValidEmail();
 
@@ -262,7 +262,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.ComponentModel.CancelEventArgs"/> instance containing the event data.</param>
-        private void tbToAddress_Validating(object sender, CancelEventArgs e)
+        private void tbToAddress_Validating(object? sender, CancelEventArgs e)
         {
             IEnumerable<string> toAddresses = tbToAddress.Text.Trim().Split(
                 new[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -288,7 +288,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbEmailServerAddress_Validated(object sender, EventArgs e)
+        private void tbEmailServerAddress_Validated(object? sender, EventArgs e)
         {
             errorProvider.SetError(tbEmailServerAddress, string.Empty);
         }
@@ -298,7 +298,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbEmailUsername_Validated(object sender, EventArgs e)
+        private void tbEmailUsername_Validated(object? sender, EventArgs e)
         {
             errorProvider.SetError(tbEmailUsername, string.Empty);
         }
@@ -308,7 +308,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbEmailPassword_Validated(object sender, EventArgs e)
+        private void tbEmailPassword_Validated(object? sender, EventArgs e)
         {
             errorProvider.SetError(tbEmailPassword, string.Empty);
         }
@@ -318,7 +318,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbFromAddress_Validated(object sender, EventArgs e)
+        private void tbFromAddress_Validated(object? sender, EventArgs e)
         {
             errorProvider.SetError(tbFromAddress, string.Empty);
         }
@@ -328,7 +328,7 @@ namespace EVEMon.SettingsUI
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
-        private void tbToAddress_Validated(object sender, EventArgs e)
+        private void tbToAddress_Validated(object? sender, EventArgs e)
         {
             errorProvider.SetError(tbToAddress, string.Empty);
         }

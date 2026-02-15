@@ -9,22 +9,11 @@ using Xunit;
 namespace EVEMon.Tests.Services
 {
     /// <summary>
-    /// Integration tests for the CQO replacement of CDQ.
-    /// Tests interface implementations, feature flag behavior, and lifecycle.
+    /// Integration tests for CharacterQueryOrchestrator.
+    /// Tests interface implementations and lifecycle.
     /// </summary>
-    public class CharacterQueryOrchestratorIntegrationTests : IDisposable
+    public class CharacterQueryOrchestratorIntegrationTests
     {
-        private readonly bool _originalUseCharacterOrchestrator;
-
-        public CharacterQueryOrchestratorIntegrationTests()
-        {
-            _originalUseCharacterOrchestrator = FeatureFlags.UseCharacterOrchestrator;
-        }
-
-        public void Dispose()
-        {
-            FeatureFlags.UseCharacterOrchestrator = _originalUseCharacterOrchestrator;
-        }
 
         #region Interface Implementation Tests
 
@@ -144,39 +133,6 @@ namespace EVEMon.Tests.Services
 
             orchestrator.CharacterIndustryJobsQueried.Should().BeTrue(
                 "no real monitor exists in test mode, defaults to true");
-        }
-
-        #endregion
-
-        #region Feature Flag Tests
-
-        [Fact]
-        public void UseCharacterOrchestrator_DefaultsFalse()
-        {
-            FeatureFlags.UseCharacterOrchestrator = false;
-
-            FeatureFlags.UseCharacterOrchestrator.Should().BeFalse(
-                "feature flag should be OFF by default for safety");
-        }
-
-        [Fact]
-        public void UseCharacterOrchestrator_CanBeEnabled()
-        {
-            FeatureFlags.UseCharacterOrchestrator = true;
-
-            FeatureFlags.UseCharacterOrchestrator.Should().BeTrue();
-        }
-
-        [Fact]
-        public void UseCharacterOrchestrator_IndependentOfOtherFlags()
-        {
-            FeatureFlags.UseCharacterOrchestrator = true;
-            FeatureFlags.UseSmartScheduler = false;
-            FeatureFlags.UseSmartSettings = false;
-
-            FeatureFlags.UseCharacterOrchestrator.Should().BeTrue();
-            FeatureFlags.UseSmartScheduler.Should().BeFalse();
-            FeatureFlags.UseSmartSettings.Should().BeFalse();
         }
 
         #endregion

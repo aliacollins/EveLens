@@ -117,6 +117,10 @@ namespace EVEMon.Common.Models
             m_allianceName = EveIDToName.GetIDToName(AllianceID);
             m_corporationName = EveIDToName.GetIDToName(CorporationID);
 
+            // Safe to call now that SkillQueue and all collections are initialized
+            // (moved out of base Character constructor to avoid virtual call before init)
+            UpdateAccountStatus();
+
             // Character-specific events are dispatched directly by EveMonClient.OnXxx() methods
             // instead of each CCPCharacter subscribing and filtering. This eliminates 10N handlers
             // for N characters. Only global (non-character) events need subscriptions.
@@ -150,7 +154,18 @@ namespace EVEMon.Common.Models
         }
 
         /// <summary>
-        /// Test constructor: creates a CCPCharacter with custom services (no EveMonClient dependency).
+        /// Deserialization constructor with custom services (used by CharacterFactory).
+        /// </summary>
+        internal CCPCharacter(CharacterIdentity identity, SerializableCCPCharacter serial, ICharacterServices services)
+            : this(identity, serial.Guid, services)
+        {
+            Import(serial);
+            m_lastAPIUpdates = serial.LastUpdates.ToList();
+            ForceUpdateBasicFeatures = true;
+        }
+
+        /// <summary>
+        /// Constructor for a new CCP character with custom services (used by CharacterFactory).
         /// </summary>
         internal CCPCharacter(CharacterIdentity identity, ICharacterServices services)
             : this(identity, Guid.NewGuid(), services)
@@ -782,20 +797,14 @@ namespace EVEMon.Common.Models
 
             if (m_characterDataQuerying == null && Identity.ESIKeys.Any())
             {
-                if (FeatureFlags.UseCharacterOrchestrator)
-                    m_characterDataQuerying = new Services.CharacterQueryOrchestrator(this);
-                else
-                    m_characterDataQuerying = new CharacterDataQuerying(this);
+                m_characterDataQuerying = new Services.CharacterQueryOrchestrator(this);
                 ResetLastAPIUpdates(m_lastAPIUpdates.Where(lastUpdate => Enum.IsDefined(
                     typeof(ESIAPICharacterMethods), lastUpdate.Method)));
             }
 
             if (m_corporationDataQuerying == null && Identity.ESIKeys.Any())
             {
-                if (FeatureFlags.UseCharacterOrchestrator)
-                    m_corporationDataQuerying = new Services.CorporationQueryOrchestrator(this);
-                else
-                    m_corporationDataQuerying = new CorporationDataQuerying(this);
+                m_corporationDataQuerying = new Services.CorporationQueryOrchestrator(this);
                 ResetLastAPIUpdates(m_lastAPIUpdates.Where(lastUpdate => Enum.IsDefined(
                     typeof(ESIAPICorporationMethods), lastUpdate.Method)));
             }

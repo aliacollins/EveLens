@@ -12,6 +12,7 @@ using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Service;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -254,7 +255,7 @@ namespace EVEMon.Common.Models
         internal void Dispose()
         {
             // No event subscriptions to unsubscribe - ESIKey token refresh
-            // is driven by CentralQueryScheduler instead of per-key FiveSecondTick
+            // is driven by EveMonClient.OnEsiKeyRefreshTick instead of per-key FiveSecondTick
         }
 
         #endregion
@@ -263,7 +264,7 @@ namespace EVEMon.Common.Models
         #region Global Events
 
         /// <summary>
-        /// Checks the access token for refresh. Called by CentralQueryScheduler.
+        /// Checks the access token for refresh. Called by EveMonClient on FiveSecondTick.
         /// </summary>
         internal void ProcessTick()
         {
@@ -490,7 +491,7 @@ namespace EVEMon.Common.Models
                 // Notify subscribers
                 EveMonClient.OnCharacterUpdated(cid.CCPCharacter);
             else
-                EveMonClient.Characters.Add(new CCPCharacter(cid));
+                EveMonClient.Characters.Add(AppServices.CharacterFactory.CreateCCPCharacter(cid));
         }
 
         #endregion

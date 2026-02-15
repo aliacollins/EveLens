@@ -8,6 +8,7 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Collections.Global
 {
@@ -153,7 +154,7 @@ namespace EVEMon.Common.Collections.Global
                 // Imports the character
                 SerializableCCPCharacter ccpCharacter = serialCharacter as SerializableCCPCharacter;
                 if (ccpCharacter != null)
-                    this.Add(new CCPCharacter(id, ccpCharacter), false, false);
+                    this.Add(AppServices.CharacterFactory.CreateCCPCharacterFromSerialized(id, ccpCharacter), false, false);
                 else
                 {
                     SerializableUriCharacter uriCharacter = serialCharacter as SerializableUriCharacter;

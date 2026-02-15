@@ -64,8 +64,6 @@ namespace EVEMon.Common.Models
             SkillGroups = new SkillGroupCollection(this);
             Skills = new SkillCollection(this);
 
-            UpdateAccountStatus();
-
             EmploymentHistory = new EmploymentRecordCollection(this);
             ImplantSets = new ImplantSetCollection(this);
             Plans = new PlanCollection(this);

@@ -299,7 +299,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvWalletTransactions.SelectedItems.Count > 0
-                ? lvWalletTransactions!.SelectedItems[0]!.Tag.GetHashCode()
+                ? lvWalletTransactions!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
 
             lvWalletTransactions.BeginUpdate();

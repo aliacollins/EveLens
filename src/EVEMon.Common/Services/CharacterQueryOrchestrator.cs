@@ -82,7 +82,7 @@ namespace EVEMon.Common.Services
         // Responses from the market order history results since we handle it manually
         private ResponseParams? m_orderHistoryResponse;
 
-        // Adapter for SmartQueryScheduler registration (null when using CentralQueryScheduler)
+        // Adapter for SmartQueryScheduler registration
         private ScheduledQueryableAdapter? m_schedulerAdapter;
 
         // Staggered startup fields - prevents all characters from querying at once
@@ -119,7 +119,7 @@ namespace EVEMon.Common.Services
 
         /// <summary>
         /// Production constructor — creates real ESI monitors and callbacks.
-        /// Called from CCPCharacter when FeatureFlags.UseCharacterOrchestrator is true.
+        /// Called from CCPCharacter when ESI key info is updated.
         /// </summary>
         internal CharacterQueryOrchestrator(CCPCharacter ccpCharacter)
         {
@@ -135,15 +135,11 @@ namespace EVEMon.Common.Services
 
             m_basicFeaturesMonitors = InitializeBasicFeaturesMonitors(ccpCharacter);
 
-            if (FeatureFlags.UseSmartScheduler && EveMonClient.SmartQueryScheduler != null)
+            if (EveMonClient.SmartQueryScheduler != null)
             {
                 m_schedulerAdapter = new ScheduledQueryableAdapter(
                     ccpCharacter.CharacterID, () => ProcessTick());
                 EveMonClient.SmartQueryScheduler.Register(m_schedulerAdapter);
-            }
-            else
-            {
-                EveMonClient.QueryScheduler?.Register(this);
             }
         }
 
@@ -1272,10 +1268,6 @@ namespace EVEMon.Common.Services
                 {
                     EveMonClient.SmartQueryScheduler?.Unregister(m_schedulerAdapter);
                     m_schedulerAdapter = null;
-                }
-                else
-                {
-                    EveMonClient.QueryScheduler?.Unregister(this);
                 }
 
                 // Unsubscribe events in monitors

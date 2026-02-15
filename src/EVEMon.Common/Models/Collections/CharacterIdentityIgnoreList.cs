@@ -4,6 +4,7 @@ using System.Linq;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Models.Collections
 {
@@ -53,7 +54,7 @@ namespace EVEMon.Common.Models.Collections
                 return;
 
             // Create a new CCP character
-            EveMonClient.Characters.Add(new CCPCharacter(identity));
+            EveMonClient.Characters.Add(AppServices.CharacterFactory.CreateCCPCharacter(identity));
         }
 
         /// <summary>

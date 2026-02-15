@@ -344,7 +344,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvContracts.SelectedItems!.Count > 0 ? lvContracts!.
-                SelectedItems[0].Tag.GetHashCode() : 0;
+                SelectedItems[0].Tag!.GetHashCode() : 0;
 
             lvContracts.BeginUpdate();
             try

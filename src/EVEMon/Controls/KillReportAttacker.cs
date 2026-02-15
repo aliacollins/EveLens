@@ -240,12 +240,12 @@ namespace EVEMon.Controls
             if (m_selectedItem == null)
                 return;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(KillLog.Character);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(KillLog.Character);
 
             if (m_selectedItem is Ship)
-                planWindow.ShowShipInBrowser(m_selectedItem);
+                planWindow?.ShowShipInBrowser(m_selectedItem);
             else
-                planWindow.ShowItemInBrowser(m_selectedItem);
+                planWindow?.ShowItemInBrowser(m_selectedItem);
         }
 
         #endregion

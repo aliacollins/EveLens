@@ -4,7 +4,7 @@ using EVEMon.Core.Interfaces;
 namespace EVEMon.Common.Services
 {
     /// <summary>
-    /// Adapts CharacterDataQuerying/CorporationDataQuerying/ESIKey to <see cref="IScheduledQueryable"/>
+    /// Adapts query orchestrators to <see cref="IScheduledQueryable"/>
     /// so <see cref="SmartQueryScheduler"/> can drive them.
     /// </summary>
     internal sealed class ScheduledQueryableAdapter : IScheduledQueryable
@@ -22,7 +22,7 @@ namespace EVEMon.Common.Services
 
         /// <summary>
         /// Always returns 0 because the wrapped objects don't track ESI Not-Modified responses
-        /// at this level. Individual monitors within CharacterDataQuerying handle their own
+        /// at this level. Individual monitors within the orchestrator handle their own
         /// cache expiry via ETag/If-None-Match headers.
         /// </summary>
         public int ConsecutiveNotModifiedCount => 0;

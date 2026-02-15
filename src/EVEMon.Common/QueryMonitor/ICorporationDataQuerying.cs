@@ -4,8 +4,7 @@ namespace EVEMon.Common.QueryMonitor
 {
     /// <summary>
     /// Interface for corporation data querying implementations.
-    /// Allows CCPCharacter to work with either CorporationDataQuerying (legacy)
-    /// or CorporationQueryOrchestrator (new) interchangeably.
+    /// Used by CCPCharacter to interact with CorporationQueryOrchestrator.
     /// </summary>
     internal interface ICorporationDataQuerying : IDisposable
     {

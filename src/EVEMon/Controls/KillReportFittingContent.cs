@@ -572,16 +572,16 @@ namespace EVEMon.Controls
             if (skill == Skill.UnknownSkill)
                 skill = null;
 
-            PlanWindow planWindow = PlanWindow.ShowPlanWindow(m_killLog.Character);
+            PlanWindow? planWindow = PlanWindow.ShowPlanWindow(m_killLog.Character);
 
             if (ship != null)
-                planWindow.ShowShipInBrowser(ship);
+                planWindow?.ShowShipInBrowser(ship);
             else if (blueprint != null)
-                planWindow.ShowBlueprintInBrowser(blueprint);
+                planWindow?.ShowBlueprintInBrowser(blueprint);
             else if (skill != null)
-                planWindow.ShowSkillInBrowser(skill);
+                planWindow?.ShowSkillInBrowser(skill);
             else
-                planWindow.ShowItemInBrowser(m_selectedItem);
+                planWindow?.ShowItemInBrowser(m_selectedItem);
 
 
         }

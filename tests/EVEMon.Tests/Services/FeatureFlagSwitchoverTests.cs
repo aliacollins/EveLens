@@ -11,86 +11,8 @@ using Xunit;
 
 namespace EVEMon.Tests.Services
 {
-    public class FeatureFlagSwitchoverTests : IDisposable
+    public class SchedulerAndSettingsTests
     {
-        private readonly bool _originalUseSmartSettings;
-        private readonly bool _originalUseSmartScheduler;
-        private readonly bool _originalUseCharacterOrchestrator;
-
-        public FeatureFlagSwitchoverTests()
-        {
-            // Save original flag state so we can restore after each test
-            _originalUseSmartSettings = FeatureFlags.UseSmartSettings;
-            _originalUseSmartScheduler = FeatureFlags.UseSmartScheduler;
-            _originalUseCharacterOrchestrator = FeatureFlags.UseCharacterOrchestrator;
-        }
-
-        public void Dispose()
-        {
-            // Restore original flag state
-            FeatureFlags.UseSmartSettings = _originalUseSmartSettings;
-            FeatureFlags.UseSmartScheduler = _originalUseSmartScheduler;
-            FeatureFlags.UseCharacterOrchestrator = _originalUseCharacterOrchestrator;
-        }
-
-        #region FeatureFlags Defaults
-
-        [Fact]
-        public void FeatureFlags_DefaultToFalse()
-        {
-            // Restore defaults to verify (constructor saved them already)
-            // The class definition has = false, so new process starts with all off
-            FeatureFlags.UseSmartSettings = false;
-            FeatureFlags.UseSmartScheduler = false;
-            FeatureFlags.UseCharacterOrchestrator = false;
-
-            FeatureFlags.UseSmartSettings.Should().BeFalse();
-            FeatureFlags.UseSmartScheduler.Should().BeFalse();
-            FeatureFlags.UseCharacterOrchestrator.Should().BeFalse();
-        }
-
-        [Fact]
-        public void FeatureFlags_CanBeFlippedOn()
-        {
-            FeatureFlags.UseSmartSettings = true;
-            FeatureFlags.UseSmartScheduler = true;
-            FeatureFlags.UseCharacterOrchestrator = true;
-
-            FeatureFlags.UseSmartSettings.Should().BeTrue();
-            FeatureFlags.UseSmartScheduler.Should().BeTrue();
-            FeatureFlags.UseCharacterOrchestrator.Should().BeTrue();
-        }
-
-        [Fact]
-        public void FeatureFlags_AreIndependent()
-        {
-            FeatureFlags.UseSmartSettings = true;
-            FeatureFlags.UseSmartScheduler = false;
-            FeatureFlags.UseCharacterOrchestrator = false;
-
-            FeatureFlags.UseSmartSettings.Should().BeTrue();
-            FeatureFlags.UseSmartScheduler.Should().BeFalse();
-            FeatureFlags.UseCharacterOrchestrator.Should().BeFalse();
-
-            FeatureFlags.UseSmartSettings = false;
-            FeatureFlags.UseSmartScheduler = true;
-            FeatureFlags.UseCharacterOrchestrator = false;
-
-            FeatureFlags.UseSmartSettings.Should().BeFalse();
-            FeatureFlags.UseSmartScheduler.Should().BeTrue();
-            FeatureFlags.UseCharacterOrchestrator.Should().BeFalse();
-
-            FeatureFlags.UseSmartSettings = false;
-            FeatureFlags.UseSmartScheduler = false;
-            FeatureFlags.UseCharacterOrchestrator = true;
-
-            FeatureFlags.UseSmartSettings.Should().BeFalse();
-            FeatureFlags.UseSmartScheduler.Should().BeFalse();
-            FeatureFlags.UseCharacterOrchestrator.Should().BeTrue();
-        }
-
-        #endregion
-
         #region ScheduledQueryableAdapter
 
         [Fact]
@@ -119,7 +41,6 @@ namespace EVEMon.Tests.Services
         {
             var adapter = new ScheduledQueryableAdapter(1L, () => { });
 
-            // CDQ handles its own startup delay, so adapter always reports complete
             adapter.IsStartupComplete.Should().BeTrue();
         }
 
@@ -128,7 +49,6 @@ namespace EVEMon.Tests.Services
         {
             var adapter = new ScheduledQueryableAdapter(1L, () => { });
 
-            // CDQ doesn't track Not-Modified at this level
             adapter.ConsecutiveNotModifiedCount.Should().Be(0);
         }
 

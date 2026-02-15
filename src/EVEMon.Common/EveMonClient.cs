@@ -15,7 +15,6 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Net;
-using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
@@ -40,7 +39,6 @@ namespace EVEMon.Common
         private static bool s_initialized;
         private static string s_traceFile = null!;
         private static UpdateBatcher? s_updateBatcher;
-        private static CentralQueryScheduler? s_queryScheduler;
         private static SmartQueryScheduler? s_smartQueryScheduler;
         private static ApiRequestQueue? s_apiRequestQueue;
 
@@ -84,20 +82,10 @@ namespace EVEMon.Common
             s_updateBatcher.SkillQueuesBatchUpdated += OnBatchedSkillQueueUpdatesReady;
 
             // Initialize the query scheduler - drives all character/corporation querying.
-            // SmartQueryScheduler is the new adaptive scheduler; CentralQueryScheduler is the legacy one.
-            if (FeatureFlags.UseSmartScheduler)
-            {
-                s_smartQueryScheduler = new SmartQueryScheduler(
-                    AppServices.Dispatcher, AppServices.EsiClient);
-                // CentralQueryScheduler normally drives ESIKey.ProcessTick() on FiveSecondTick.
-                // With SmartQueryScheduler, we need a dedicated handler for ESI key token refresh.
-                FiveSecondTick += OnEsiKeyRefreshTick;
-                Trace("SmartQueryScheduler initialized (feature flag ON)");
-            }
-            else
-            {
-                s_queryScheduler = new CentralQueryScheduler();
-            }
+            s_smartQueryScheduler = new SmartQueryScheduler(
+                AppServices.Dispatcher, AppServices.EsiClient);
+            FiveSecondTick += OnEsiKeyRefreshTick;
+            Trace("SmartQueryScheduler initialized");
 
             // Initialize the API request queue for rate limiting
             // ESI recommends no more than 20 concurrent connections, with 50ms spacing
@@ -127,9 +115,7 @@ namespace EVEMon.Common
             s_updateBatcher?.Dispose();
             s_updateBatcher = null;
 
-            // Dispose the query schedulers
-            s_queryScheduler?.Dispose();
-            s_queryScheduler = null;
+            // Dispose the query scheduler
             if (s_smartQueryScheduler != null)
             {
                 FiveSecondTick -= OnEsiKeyRefreshTick;
@@ -154,14 +140,7 @@ namespace EVEMon.Common
         public static UpdateBatcher? UpdateBatcher => s_updateBatcher;
 
         /// <summary>
-        /// Gets the central query scheduler that drives all character/corporation querying.
-        /// Null when SmartQueryScheduler is active.
-        /// </summary>
-        internal static CentralQueryScheduler? QueryScheduler => s_queryScheduler;
-
-        /// <summary>
         /// Gets the smart query scheduler (adaptive polling with priority scheduling).
-        /// Null when CentralQueryScheduler is active.
         /// </summary>
         internal static SmartQueryScheduler? SmartQueryScheduler => s_smartQueryScheduler;
 
@@ -171,8 +150,7 @@ namespace EVEMon.Common
         public static ApiRequestQueue? ApiRequestQueue => s_apiRequestQueue;
 
         /// <summary>
-        /// Drives ESI key token refresh when SmartQueryScheduler is active.
-        /// CentralQueryScheduler handles this internally, but SmartQueryScheduler doesn't
+        /// Drives ESI key token refresh. SmartQueryScheduler doesn't
         /// know about ESI keys, so we need a separate handler.
         /// </summary>
         private static void OnEsiKeyRefreshTick(object sender, EventArgs e)

@@ -96,7 +96,7 @@ namespace EVEMon.CharacterMonitoring
             if (m_character is CCPCharacter)
             {
                 item = toolStripFeatures.Items.Cast<ToolStripItem>().FirstOrDefault(
-                    x => m_character.UISettings.SelectedPage == (string)x.Tag)!;
+                    x => m_character.UISettings.SelectedPage == (string?)x.Tag)!;
 
                 // If it's not an advanced feature page make it visible
                 if (item != null && !m_advancedFeatures.Contains(item))
@@ -438,7 +438,7 @@ namespace EVEMon.CharacterMonitoring
         private void UpdateSelectedPage()
         {
             if (m_advancedFeatures.Any(featureIcon =>
-                multiPanel.SelectedPage.Text == (string)featureIcon.Tag && !featureIcon.Visible))
+                multiPanel.SelectedPage.Text == (string?)featureIcon.Tag && !featureIcon.Visible))
             {
                 toolbarIcon_Click(skillsIcon, EventArgs.Empty);
             }
@@ -546,11 +546,11 @@ namespace EVEMon.CharacterMonitoring
             toggleSkillsIcon.Visible = e.NewPage == skillsPage;
             tsPagesSeparator.Visible = featuresMenu.Visible;
             tsToggleSeparator.Visible = toggleSkillsIcon.Visible;
-            toolStripContextual.Visible = m_advancedFeatures.Any(button => (string)button.Tag != standingsPage.Text &&
-                                                                           (string)button.Tag != factionalWarfareStatsPage.Text &&
-                                                                           (string)button.Tag != medalsPage.Text &&
-                                                                           (string)button.Tag != loyaltyPage.Text &&
-                                                                           (string)button.Tag == e.NewPage.Text)!;
+            toolStripContextual.Visible = m_advancedFeatures.Any(button => (string?)button.Tag != standingsPage.Text &&
+                                                                           (string?)button.Tag != factionalWarfareStatsPage.Text &&
+                                                                           (string?)button.Tag != medalsPage.Text &&
+                                                                           (string?)button.Tag != loyaltyPage.Text &&
+                                                                           (string?)button.Tag == e.NewPage.Text)!;
 
             // Reset the text filter
             searchTextBox.Text = string.Empty;
@@ -582,7 +582,7 @@ namespace EVEMon.CharacterMonitoring
 
                     // Selects the proper page
                     multiPanel.SelectedPage =
-                        multiPanel.Controls.Cast<MultiPanelPage>().First(x => x.Name == (string)item.Tag);
+                        multiPanel.Controls.Cast<MultiPanelPage>().First(x => x.Name == (string?)item.Tag);
 
                     // Checks it
                     button.Checked = true;
@@ -624,7 +624,7 @@ namespace EVEMon.CharacterMonitoring
             List<ToolStripMenuItem> toolStripMenuItems = m_advancedFeatures
                 .Select(button => new { button, monitor = GetButtonMonitors(button) })
                 .Where(item => item.monitor != null
-                               && multiPanel.Controls.OfType<MultiPanelPage>().Any(page => page.Name == (string)item.button.Tag))
+                               && multiPanel.Controls.OfType<MultiPanelPage>().Any(page => page.Name == (string?)item.button.Tag))
                 .Select(item =>
                 {
                     ToolStripMenuItem tsmi;
@@ -1358,7 +1358,7 @@ namespace EVEMon.CharacterMonitoring
 
             foreach (ToolStripMenuItem menuItem in readingPaneMenuItem.DropDownItems)
             {
-                menuItem.Checked = (string)menuItem.Tag == paneSetting!;
+                menuItem.Checked = (string?)menuItem.Tag == paneSetting!;
             }
         }
 
@@ -1666,14 +1666,14 @@ namespace EVEMon.CharacterMonitoring
         private List<IQueryMonitor> GetButtonMonitors(ToolStripItem button)
         {
             MultiPanelPage? page = multiPanel.Controls.Cast<MultiPanelPage>().FirstOrDefault(
-                x => x.Name == (string)button.Tag)!;
+                x => x.Name == (string?)button.Tag)!;
             CCPCharacter ccpCharacter = (CCPCharacter)m_character;
 
             List<IQueryMonitor> monitors = new List<IQueryMonitor>();
             if (page?.Tag == null)
                 return monitors;
 
-            string? value = page.Tag.ToString();
+            string? value = page!.Tag!.ToString();
             ESIAPICharacterMethods cMethod;
             if (Enum.TryParse(value, out cMethod))
             {

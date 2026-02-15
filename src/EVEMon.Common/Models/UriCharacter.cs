@@ -35,6 +35,7 @@ namespace EVEMon.Common.Models
         {
             m_uri = uri;
             Import(source);
+            UpdateAccountStatus();
         }
 
         /// <summary>
@@ -48,6 +49,7 @@ namespace EVEMon.Common.Models
         {
             m_uri = uri;
             Import(serial);
+            UpdateAccountStatus();
         }
 
         /// <summary>
@@ -59,6 +61,7 @@ namespace EVEMon.Common.Models
             : base(identity, serial.Guid)
         {
             Import(serial);
+            UpdateAccountStatus();
 
             // Clear stale file URIs from old XML-workflow blank characters
             if (identity.CharacterID >= BlankCharacterID)

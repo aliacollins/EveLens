@@ -310,7 +310,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvMailMessages.SelectedItems.Count > 0
-                ? lvMailMessages!.SelectedItems[0]!.Tag.GetHashCode()
+                ? lvMailMessages!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
 
             lvMailMessages.BeginUpdate();

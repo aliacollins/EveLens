@@ -4,8 +4,7 @@ namespace EVEMon.Common.QueryMonitor
 {
     /// <summary>
     /// Interface for character data querying implementations.
-    /// Allows CCPCharacter to work with either CharacterDataQuerying (legacy)
-    /// or CharacterQueryOrchestrator (new) interchangeably.
+    /// Used by CCPCharacter to interact with CharacterQueryOrchestrator.
     /// </summary>
     internal interface ICharacterDataQuerying : IDisposable
     {

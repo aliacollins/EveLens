@@ -297,7 +297,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Store the selected item (if any) to restore it after the update
             int selectedItem = lvWalletJournal.SelectedItems.Count > 0
-                ? lvWalletJournal!.SelectedItems[0]!.Tag.GetHashCode() : 0;
+                ? lvWalletJournal!.SelectedItems[0]!.Tag!.GetHashCode() : 0;
 
             lvWalletJournal.BeginUpdate();
             try
