@@ -81,7 +81,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subLoyalty = agg.SubscribeOnUI<CharacterLoyaltyPointsUpdatedEvent>(this, e => EveMonClient_CharacterLoyaltyUpdated(e));
+            _subLoyalty = agg.SubscribeOnUIForCharacter<CharacterLoyaltyPointsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterLoyaltyUpdated(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
@@ -368,9 +368,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterLoyaltyUpdated(CharacterLoyaltyPointsUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateContent();
         }
 

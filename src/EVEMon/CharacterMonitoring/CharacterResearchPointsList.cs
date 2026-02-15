@@ -169,7 +169,7 @@ namespace EVEMon.CharacterMonitoring
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
-            _subResearch = agg.SubscribeOnUI<CharacterResearchPointsUpdatedEvent>(this, e => EveMonClient_CharacterResearchPointsUpdated(e));
+            _subResearch = agg.SubscribeOnUIForCharacter<CharacterResearchPointsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterResearchPointsUpdated(e));
             Disposed += OnDisposed;
         }
 
@@ -672,9 +672,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterResearchPointsUpdated(CharacterResearchPointsUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             ResearchPoints = Character.ResearchPoints;
             UpdateColumns();
         }

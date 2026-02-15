@@ -103,8 +103,8 @@ namespace EVEMon.SkillPlanner
             tsSortPriorities.Click += tsSortPriorities_Clicked;
             cbChooseImplantSet.DropDown += cbChooseImplantSet_DropDown;
 
-            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
-            _skillQueuesBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, OnSkillQueuesBatchUpdated);
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => m_character, OnCharactersBatchUpdated);
+            _skillQueuesBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<SkillQueuesBatchUpdatedEvent>(this, () => m_character, OnSkillQueuesBatchUpdated);
             _implantSetCollectionChangedSub = AppServices.EventAggregator.SubscribeOnUI<CharacterImplantSetCollectionChangedEvent>(this, OnCharacterImplantSetCollectionChanged);
             _itemPricesUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<ItemPricesUpdatedEvent>(this, OnItemPricesUpdated);
             _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
@@ -245,9 +245,6 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
-            if (m_character == null || !e.Characters.Contains(m_character))
-                return;
-
             UpdateDisplayPlan();
         }
 
@@ -256,9 +253,6 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void OnSkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
-            if (m_character == null || !e.Characters.Contains(m_character))
-                return;
-
             UpdateDisplayPlan();
         }
 

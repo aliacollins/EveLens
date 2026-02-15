@@ -210,8 +210,8 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subAssets = agg.SubscribeOnUI<CharacterAssetsUpdatedEvent>(this, e => EveMonClient_CharacterAssetsUpdated(e));
-            _subCharInfo = agg.SubscribeOnUI<CharacterInfoUpdatedEvent>(this, e => EveMonClient_CharacterInfoUpdated(e));
+            _subAssets = agg.SubscribeOnUIForCharacter<CharacterAssetsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterAssetsUpdated(e));
+            _subCharInfo = agg.SubscribeOnUIForCharacter<CharacterInfoUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterInfoUpdated(e));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             _subEveFlags = agg.SubscribeOnUI<EveFlagsUpdatedEvent>(this, e => EveMonClient_EveFlagsUpdated());
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
@@ -1225,9 +1225,6 @@ namespace EVEMon.CharacterMonitoring
         {
             try
             {
-                if (Character == null || e.Character != Character)
-                    return;
-
                 Assets = Character.Assets;
                 await UpdateContentAsync();
             }
@@ -1287,9 +1284,6 @@ namespace EVEMon.CharacterMonitoring
         {
             try
             {
-                if (Character == null || e.Character != Character)
-                    return;
-
                 await UpdateAssetLocationAsync();
             }
             catch (Exception ex)

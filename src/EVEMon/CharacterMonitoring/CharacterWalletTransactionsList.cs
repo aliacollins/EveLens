@@ -183,7 +183,7 @@ namespace EVEMon.CharacterMonitoring
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
-            _subWalletTransactions = agg.SubscribeOnUI<CharacterWalletTransactionsUpdatedEvent>(this, e => EveMonClient_CharacterWalletTransactionsUpdated(e));
+            _subWalletTransactions = agg.SubscribeOnUIForCharacter<CharacterWalletTransactionsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterWalletTransactionsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
         }
@@ -766,9 +766,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterWalletTransactionsUpdated(CharacterWalletTransactionsUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             WalletTransactions = Character.WalletTransactions;
             UpdateColumns();
         }

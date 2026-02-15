@@ -218,11 +218,11 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subContracts = agg.SubscribeOnUI<ContractsUpdatedEvent>(this, e => EveMonClient_ContractsUpdated(e));
+            _subContracts = agg.SubscribeOnUIForCharacter<ContractsUpdatedEvent>(this, () => Character, e => EveMonClient_ContractsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
-            _subCharContractItems = agg.SubscribeOnUI<CharacterContractItemsDownloadedEvent>(this, e => EveMonClient_ContractItemsDownloaded(e.Character));
-            _subCorpContractItems = agg.SubscribeOnUI<CorporationContractItemsDownloadedEvent>(this, e => EveMonClient_ContractItemsDownloaded(e.Character));
+            _subCharContractItems = agg.SubscribeOnUIForCharacter<CharacterContractItemsDownloadedEvent>(this, () => Character, e => EveMonClient_ContractItemsDownloaded(e.Character));
+            _subCorpContractItems = agg.SubscribeOnUIForCharacter<CorporationContractItemsDownloadedEvent>(this, () => Character, e => EveMonClient_ContractItemsDownloaded(e.Character));
             Disposed += OnDisposed;
         }
 
@@ -1065,9 +1065,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.ContractsEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_ContractsUpdated(ContractsUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             Contracts = Character.Contracts;
             UpdateColumns();
         }
@@ -1079,9 +1076,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_ContractItemsDownloaded(Character character)
         {
-            if (Character == null || character != Character)
-                return;
-
             UpdateContent();
         }
         

@@ -68,7 +68,7 @@ namespace EVEMon.SkillPlanner
 
             _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
-            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => m_plan?.Character as Character, OnCharactersBatchUpdated);
             Disposed += OnDisposed;
 
             //Update the controls visibility
@@ -388,7 +388,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
-            if (m_plan == null || !e.Characters.Contains(m_plan.Character) || m_selectedSkill == null)
+            if (m_selectedSkill == null)
                 return;
 
             // Update the 'Owns book' indicator

@@ -243,9 +243,9 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subIndustryJobs = agg.SubscribeOnUI<IndustryJobsUpdatedEvent>(this, e => EveMonClient_IndustryJobsUpdated(e));
+            _subIndustryJobs = agg.SubscribeOnUIForCharacter<IndustryJobsUpdatedEvent>(this, () => Character, e => EveMonClient_IndustryJobsUpdated(e));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
-            _subJobsCompleted = agg.SubscribeOnUI<CharacterIndustryJobsCompletedEvent>(this, e => EveMonClient_CharacterIndustryJobsCompleted());
+            _subJobsCompleted = agg.SubscribeOnUIForCharacter<CharacterIndustryJobsCompletedEvent>(this, () => Character, e => EveMonClient_CharacterIndustryJobsCompleted());
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
         }
@@ -1116,9 +1116,6 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void EveMonClient_IndustryJobsUpdated(IndustryJobsUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             Jobs = Character.IndustryJobs;
             UpdateColumns();
         }

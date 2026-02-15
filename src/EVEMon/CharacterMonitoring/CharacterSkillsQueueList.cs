@@ -100,8 +100,8 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subSkillQueuesBatch = agg.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, e => EveMonClient_SkillQueuesBatchUpdated(e));
-            _subQueuedSkillsCompleted = agg.SubscribeOnUI<QueuedSkillsCompletedEvent>(this, e => EveMonClient_QueuedSkillsCompleted(e));
+            _subSkillQueuesBatch = agg.SubscribeOnUIForCharacterBatch<SkillQueuesBatchUpdatedEvent>(this, () => Character, e => EveMonClient_SkillQueuesBatchUpdated(e));
+            _subQueuedSkillsCompleted = agg.SubscribeOnUIForCharacter<QueuedSkillsCompletedEvent>(this, () => Character, e => EveMonClient_QueuedSkillsCompleted(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             EveMonClient.SecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
@@ -874,9 +874,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_SkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
-            if (!e.Characters.Contains(Character))
-                return;
-
             UpdateContent();
         }
 
@@ -887,9 +884,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_QueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateContent();
         }
 

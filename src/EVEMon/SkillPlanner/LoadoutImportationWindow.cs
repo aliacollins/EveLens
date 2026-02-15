@@ -69,7 +69,7 @@ namespace EVEMon.SkillPlanner
 
             Plan = plan;
 
-            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _charsBatchUpdatedSub = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => m_character, OnCharactersBatchUpdated);
             _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
             _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
         }
@@ -159,8 +159,7 @@ namespace EVEMon.SkillPlanner
         /// </summary>
         private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
-            if (e.Characters.Contains(m_character))
-                UpdatePlanStatus();
+            UpdatePlanStatus();
         }
 
         /// <summary>

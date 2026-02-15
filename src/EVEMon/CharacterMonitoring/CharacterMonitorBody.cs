@@ -86,16 +86,16 @@ namespace EVEMon.CharacterMonitoring
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
-            _subAssets = agg.SubscribeOnUI<CharacterAssetsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subMarketOrders = agg.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subContracts = agg.SubscribeOnUI<ContractsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subWalletJournal = agg.SubscribeOnUI<CharacterWalletJournalUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subWalletTransactions = agg.SubscribeOnUI<CharacterWalletTransactionsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subIndustryJobs = agg.SubscribeOnUI<IndustryJobsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subPlanetary = agg.SubscribeOnUI<CharacterPlanetaryColoniesUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subResearch = agg.SubscribeOnUI<CharacterResearchPointsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subMailMessages = agg.SubscribeOnUI<CharacterEVEMailMessagesUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
-            _subNotifications = agg.SubscribeOnUI<CharacterEVENotificationsUpdatedEvent>(this, e => EveMonClient_UpdatePageControls(e.Character));
+            _subAssets = agg.SubscribeOnUIForCharacter<CharacterAssetsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subMarketOrders = agg.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subContracts = agg.SubscribeOnUIForCharacter<ContractsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subWalletJournal = agg.SubscribeOnUIForCharacter<CharacterWalletJournalUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subWalletTransactions = agg.SubscribeOnUIForCharacter<CharacterWalletTransactionsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subIndustryJobs = agg.SubscribeOnUIForCharacter<IndustryJobsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subPlanetary = agg.SubscribeOnUIForCharacter<CharacterPlanetaryColoniesUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subResearch = agg.SubscribeOnUIForCharacter<CharacterResearchPointsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subMailMessages = agg.SubscribeOnUIForCharacter<CharacterEVEMailMessagesUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
+            _subNotifications = agg.SubscribeOnUIForCharacter<CharacterEVENotificationsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
             _subNotificationSent = agg.SubscribeOnUI<NotificationSentEvent>(this, e => EveMonClient_NotificationSent(e.Args));
             _subNotificationInvalidated = agg.SubscribeOnUI<NotificationInvalidatedEvent>(this, e => EveMonClient_NotificationInvalidated(e.Args));
             Disposed += OnDisposed;
@@ -510,11 +510,8 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         /// <param name="sender">The source of the event.</param>
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
-        private void EveMonClient_UpdatePageControls(Character character)
+        private void EveMonClient_UpdatePageControls()
         {
-            if (character != m_character)
-                return;
-
             UpdatePageControls();
         }
 

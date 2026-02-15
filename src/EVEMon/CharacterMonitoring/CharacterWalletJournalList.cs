@@ -183,7 +183,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             _subRefTypes = agg.SubscribeOnUI<RefTypesUpdatedEvent>(this, e => EveMonClient_RefTypesUpdated());
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
-            _subWalletJournal = agg.SubscribeOnUI<CharacterWalletJournalUpdatedEvent>(this, e => EveMonClient_CharacterWalletJournalUpdated(e));
+            _subWalletJournal = agg.SubscribeOnUIForCharacter<CharacterWalletJournalUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterWalletJournalUpdated(e));
             Disposed += OnDisposed;
         }
 
@@ -760,9 +760,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterWalletJournalUpdated(CharacterWalletJournalUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             WalletJournal = Character.WalletJournal;
             UpdateColumns();
         }

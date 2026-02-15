@@ -106,7 +106,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subCharsBatch = agg.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, e => EveMonClient_CharactersBatchUpdated(e));
+            _subCharsBatch = agg.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => Character, e => EveMonClient_CharactersBatchUpdated(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
             Disposed += OnDisposed;
@@ -1100,9 +1100,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
-            if (!e.Characters.Contains(Character))
-                return;
-
             UpdateContent();
         }
 

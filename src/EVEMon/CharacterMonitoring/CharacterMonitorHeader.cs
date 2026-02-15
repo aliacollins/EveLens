@@ -82,9 +82,9 @@ namespace EVEMon.CharacterMonitoring
 
             // Subscribe to events
             var agg = AppServices.EventAggregator;
-            _subCharsBatch = agg.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, e => EveMonClient_CharactersBatchUpdated(e));
-            _subCharInfo = agg.SubscribeOnUI<CharacterInfoUpdatedEvent>(this, e => EveMonClient_CharacterInfoUpdated(e));
-            _subMarketOrders = agg.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, e => EveMonClient_MarketOrdersUpdated(e));
+            _subCharsBatch = agg.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => m_character, e => EveMonClient_CharactersBatchUpdated(e));
+            _subCharInfo = agg.SubscribeOnUIForCharacter<CharacterInfoUpdatedEvent>(this, () => m_character, e => EveMonClient_CharacterInfoUpdated(e));
+            _subMarketOrders = agg.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => m_character, e => EveMonClient_MarketOrdersUpdated(e));
             _subAccountStatus = agg.SubscribeOnUI<AccountStatusUpdatedEvent>(this, e => EveMonClient_AccountStatusUpdated());
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             _subCharLabel = agg.SubscribeOnUI<CharacterLabelChangedEvent>(this, e => EveMonClient_CharacterLabelChanged(e));
@@ -771,7 +771,7 @@ namespace EVEMon.CharacterMonitoring
         private void EveMonClient_CharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
             // No need to do this if control is not visible
-            if (Visible && e.Characters.Contains(m_character))
+            if (Visible)
                 UpdateInfrequentControls();
         }
 
@@ -783,7 +783,7 @@ namespace EVEMon.CharacterMonitoring
         private void EveMonClient_CharacterInfoUpdated(CharacterInfoUpdatedEvent e)
         {
             // No need to do this if control is not visible
-            if (Visible && e.Character == m_character)
+            if (Visible)
                 UpdateInfoControls();
         }
 
@@ -806,7 +806,7 @@ namespace EVEMon.CharacterMonitoring
         private void EveMonClient_MarketOrdersUpdated(MarketOrdersUpdatedEvent e)
         {
             // No need to do this if control is not visible
-            if (Visible && e.Character == m_character)
+            if (Visible)
                 FormatBalance();
         }
 

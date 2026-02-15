@@ -154,10 +154,10 @@ namespace EVEMon.Controls
             lblSkillQueueTrainingTime.Text = string.Empty;
 
             // Global events
-            _subSkillQueuesBatchUpdated = AppServices.EventAggregator.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, OnSkillQueuesBatchUpdated);
-            _subQueuedSkillsCompleted = AppServices.EventAggregator.SubscribeOnUI<QueuedSkillsCompletedEvent>(this, OnQueuedSkillsCompleted);
-            _subMarketOrdersUpdated = AppServices.EventAggregator.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, OnMarketOrdersUpdated);
-            _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUI<CharactersBatchUpdatedEvent>(this, OnCharactersBatchUpdated);
+            _subSkillQueuesBatchUpdated = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<SkillQueuesBatchUpdatedEvent>(this, () => Character, OnSkillQueuesBatchUpdated);
+            _subQueuedSkillsCompleted = AppServices.EventAggregator.SubscribeOnUIForCharacter<QueuedSkillsCompletedEvent>(this, () => Character, OnQueuedSkillsCompleted);
+            _subMarketOrdersUpdated = AppServices.EventAggregator.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => Character, OnMarketOrdersUpdated);
+            _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => Character, OnCharactersBatchUpdated);
             _subSchedulerChanged = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
             _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             EveMonClient.SecondTick += EveMonClient_TimerTick;
@@ -694,9 +694,6 @@ namespace EVEMon.Controls
         /// </summary>
         private void OnQueuedSkillsCompleted(QueuedSkillsCompletedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             // Character still training ? Jump to next skill
             if (Character.IsTraining)
                 UpdateContent();
@@ -713,9 +710,6 @@ namespace EVEMon.Controls
         /// </summary>
         private void OnMarketOrdersUpdated(MarketOrdersUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             FormatBalance();
         }
 
@@ -724,9 +718,6 @@ namespace EVEMon.Controls
         /// </summary>
         private void OnCharactersBatchUpdated(CharactersBatchUpdatedEvent e)
         {
-            if (!e.Characters.Contains(Character))
-                return;
-
             UpdateContent();
         }
 
@@ -735,9 +726,6 @@ namespace EVEMon.Controls
         /// </summary>
         private void OnSkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
-            if (!e.Characters.Contains(Character))
-                return;
-
             UpdateContent();
         }
 

@@ -253,7 +253,7 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subMarketOrders = agg.SubscribeOnUI<MarketOrdersUpdatedEvent>(this, e => EveMonClient_MarketOrdersUpdated(e));
+            _subMarketOrders = agg.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => Character, e => EveMonClient_MarketOrdersUpdated(e));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             Disposed += OnDisposed;
         }
@@ -1021,9 +1021,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_MarketOrdersUpdated(MarketOrdersUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             Orders = Character.MarketOrders;
             UpdateColumns();
         }

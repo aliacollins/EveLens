@@ -66,7 +66,7 @@ namespace EVEMon.CharacterMonitoring
             EveMonClient.SecondTick += EveMonClient_TimerTick;
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             _subScheduler = agg.SubscribeOnUI<SchedulerChangedEvent>(this, e => EveMonClient_SchedulerChanged());
-            _subSkillQueuesBatch = agg.SubscribeOnUI<SkillQueuesBatchUpdatedEvent>(this, e => EveMonClient_SkillQueuesBatchUpdated(e));
+            _subSkillQueuesBatch = agg.SubscribeOnUIForCharacterBatch<SkillQueuesBatchUpdatedEvent>(this, () => m_character, e => EveMonClient_SkillQueuesBatchUpdated(e));
             Disposed += OnDisposed;
         }
 
@@ -303,9 +303,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_SkillQueuesBatchUpdated(SkillQueuesBatchUpdatedEvent e)
         {
-            if (!e.Characters.Contains(m_character))
-                return;
-
             skillQueueControl.Invalidate();
         }
 

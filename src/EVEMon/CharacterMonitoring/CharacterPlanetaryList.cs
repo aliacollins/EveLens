@@ -200,9 +200,9 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subColonies = agg.SubscribeOnUI<CharacterPlanetaryColoniesUpdatedEvent>(this, e => EveMonClient_CharacterPlanetaryColoniesUpdated(e));
-            _subLayout = agg.SubscribeOnUI<CharacterPlanetaryLayoutUpdatedEvent>(this, e => EveMonClient_CharacterPlanetaryLayoutUpdated(e));
-            _subPinsCompleted = agg.SubscribeOnUI<CharacterPlanetaryPinsCompletedEvent>(this, e => EveMonClient_CharacterPlanetaryPinsCompleted());
+            _subColonies = agg.SubscribeOnUIForCharacter<CharacterPlanetaryColoniesUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryColoniesUpdated(e));
+            _subLayout = agg.SubscribeOnUIForCharacter<CharacterPlanetaryLayoutUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryLayoutUpdated(e));
+            _subPinsCompleted = agg.SubscribeOnUIForCharacter<CharacterPlanetaryPinsCompletedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryPinsCompleted());
             Disposed += OnDisposed;
         }
 
@@ -984,9 +984,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterPlanetaryColoniesUpdated(CharacterPlanetaryColoniesUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             UpdateColumns();
         }
 
@@ -997,9 +994,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterPlanetaryLayoutUpdated(CharacterPlanetaryLayoutUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             PlanetaryPins = Character.PlanetaryColonies.SelectMany(x => x.Pins);
             UpdateColumns();
         }

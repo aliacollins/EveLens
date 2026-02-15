@@ -86,7 +86,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subCharInfo = agg.SubscribeOnUI<CharacterInfoUpdatedEvent>(this, e => EveMonClient_CharacterInfoUpdated(e));
+            _subCharInfo = agg.SubscribeOnUIForCharacter<CharacterInfoUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterInfoUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             Disposed += OnDisposed;
@@ -371,9 +371,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterInfoUpdated(CharacterInfoUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateContent();
         }
 

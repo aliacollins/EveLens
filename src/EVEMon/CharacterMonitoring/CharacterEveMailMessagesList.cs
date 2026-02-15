@@ -199,9 +199,9 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subMailMessages = agg.SubscribeOnUI<CharacterEVEMailMessagesUpdatedEvent>(this, e => EveMonClient_CharacterEVEMailMessagesUpdated(e));
-            _subMailingLists = agg.SubscribeOnUI<CharacterEVEMailingListsUpdatedEvent>(this, e => EveMonClient_CharacterEVEMailingListsUpdated(e));
-            _subMailBody = agg.SubscribeOnUI<CharacterEVEMailBodyDownloadedEvent>(this, e => EveMonClient_CharacterEVEMailBodyDownloaded(e));
+            _subMailMessages = agg.SubscribeOnUIForCharacter<CharacterEVEMailMessagesUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVEMailMessagesUpdated(e));
+            _subMailingLists = agg.SubscribeOnUIForCharacter<CharacterEVEMailingListsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVEMailingListsUpdated(e));
+            _subMailBody = agg.SubscribeOnUIForCharacter<CharacterEVEMailBodyDownloadedEvent>(this, () => Character, e => EveMonClient_CharacterEVEMailBodyDownloaded(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subNotificationSent = agg.SubscribeOnUI<NotificationSentEvent>(this, e => EveMonClient_NotificationSent(e.Args));
             Disposed += OnDisposed;
@@ -862,9 +862,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterEVEMailMessagesUpdated(CharacterEVEMailMessagesUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             EVEMailMessages = Character.EVEMailMessages;
             UpdateColumns();
         }
@@ -886,9 +883,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_CharacterEVEMailBodyDownloaded(CharacterEVEMailBodyDownloadedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             OnSelectionChanged();
         }
 

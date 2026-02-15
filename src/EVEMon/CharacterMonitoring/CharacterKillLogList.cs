@@ -158,7 +158,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subKillLog = agg.SubscribeOnUI<CharacterKillLogUpdatedEvent>(this, e => EveMonClient_CharacterKillLogUpdated(e));
+            _subKillLog = agg.SubscribeOnUIForCharacter<CharacterKillLogUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterKillLogUpdated(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             Disposed += OnDisposed;
@@ -1167,9 +1167,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_CharacterKillLogUpdated(CharacterKillLogUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateKillLogView();
         }
 

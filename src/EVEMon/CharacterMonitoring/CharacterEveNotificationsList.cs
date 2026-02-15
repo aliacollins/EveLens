@@ -196,7 +196,7 @@ namespace EVEMon.CharacterMonitoring
 
             var agg = AppServices.EventAggregator;
             EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
-            _subNotifications = agg.SubscribeOnUI<CharacterEVENotificationsUpdatedEvent>(this, e => EveMonClient_CharacterEVENotificationsUpdated(e));
+            _subNotifications = agg.SubscribeOnUIForCharacter<CharacterEVENotificationsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVENotificationsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subNotifRefTypes = agg.SubscribeOnUI<NotificationRefTypesUpdatedEvent>(this, e => EveMonClient_NotificationRefTypesUpdated());
             EveNotificationTextParser.NotificationTextParserUpdated += EveNotificationTextParser_NotificationTextParserUpdated;
@@ -779,9 +779,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterEVENotificationsUpdated(CharacterEVENotificationsUpdatedEvent e)
         {
-            if (Character == null || e.Character != Character)
-                return;
-
             EVENotifications = Character.EVENotifications;
             UpdateColumns();
         }

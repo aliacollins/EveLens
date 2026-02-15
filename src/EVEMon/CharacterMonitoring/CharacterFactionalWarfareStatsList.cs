@@ -69,7 +69,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subCharFWStats = agg.SubscribeOnUI<CharacterFactionalWarfareStatsUpdatedEvent>(this, e => EveMonClient_CharacterFactionalWarfareStatsUpdated(e));
+            _subCharFWStats = agg.SubscribeOnUIForCharacter<CharacterFactionalWarfareStatsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterFactionalWarfareStatsUpdated(e));
             _subEveFWStats = agg.SubscribeOnUI<EveFactionalWarfareStatsUpdatedEvent>(this, e => EveMonClient_EveFactionalWarfareStatsUpdated());
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             Disposed += OnDisposed;
@@ -462,9 +462,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void EveMonClient_CharacterFactionalWarfareStatsUpdated(CharacterFactionalWarfareStatsUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateContent();
         }
 

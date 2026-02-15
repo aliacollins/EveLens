@@ -92,8 +92,8 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            _subCharMedals = agg.SubscribeOnUI<CharacterMedalsUpdatedEvent>(this, e => EveMonClient_CharacterMedalsUpdated(e));
-            _subCorpMedals = agg.SubscribeOnUI<CorporationMedalsUpdatedEvent>(this, e => EveMonClient_CorporationMedalsUpdated(e));
+            _subCharMedals = agg.SubscribeOnUIForCharacter<CharacterMedalsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterMedalsUpdated(e));
+            _subCorpMedals = agg.SubscribeOnUIForCharacter<CorporationMedalsUpdatedEvent>(this, () => Character, e => EveMonClient_CorporationMedalsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             Disposed += OnDisposed;
@@ -581,9 +581,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_CharacterMedalsUpdated(CharacterMedalsUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateContent();
         }
 
@@ -594,9 +591,6 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void EveMonClient_CorporationMedalsUpdated(CorporationMedalsUpdatedEvent e)
         {
-            if (e.Character != Character)
-                return;
-
             UpdateContent();
         }
 

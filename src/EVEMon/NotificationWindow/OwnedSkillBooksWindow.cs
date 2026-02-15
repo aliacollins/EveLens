@@ -63,7 +63,7 @@ namespace EVEMon.NotificationWindow
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
-            _subCharacterAssetsUpdated = AppServices.EventAggregator.SubscribeOnUI<CharacterAssetsUpdatedEvent>(this, OnCharacterAssetsUpdated);
+            _subCharacterAssetsUpdated = AppServices.EventAggregator.SubscribeOnUIForCharacter<CharacterAssetsUpdatedEvent>(this, () => m_character, OnCharacterAssetsUpdated);
             Disposed += OnDisposed;
 
             Text = string.Format(CultureConstants.DefaultCulture, Text, m_character.Name);
@@ -242,9 +242,6 @@ namespace EVEMon.NotificationWindow
         /// <param name="e">The <see cref="EVEMon.Common.CustomEventArgs.CharacterChangedEventArgs"/> instance containing the event data.</param>
         private void OnCharacterAssetsUpdated(CharacterAssetsUpdatedEvent e)
         {
-            if (e.Character != m_character)
-                return;
-
             UpdateList();
         }
 
