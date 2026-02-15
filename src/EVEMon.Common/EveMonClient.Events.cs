@@ -50,59 +50,9 @@ namespace EVEMon.Common
         public static event EventHandler? ThirtySecondTick;
 
         /// <summary>
-        /// Occurs when the scheduler entries changed.
-        /// </summary>
-        public static event EventHandler? SchedulerChanged;
-
-        /// <summary>
         /// Occurs when the settings changed.
         /// </summary>
         public static event EventHandler? SettingsChanged;
-
-        /// <summary>
-        /// Occurs when the collection of ESI Keys changed.
-        /// </summary>
-        public static event EventHandler? ESIKeyCollectionChanged;
-
-        /// <summary>
-        /// Occurs when the ESI Keys monitored state changed.
-        /// </summary>
-        public static event EventHandler? ESIKeyMonitoredChanged;
-
-        /// <summary>
-        /// Occurs when the collection of characters changed.
-        /// </summary>
-        public static event EventHandler? CharacterCollectionChanged;
-
-        /// <summary>
-        /// Occurs when a character's label is changed.
-        /// </summary>
-        public static event EventHandler<LabelChangedEventArgs>? CharacterLabelChanged;
-
-        /// <summary>
-        /// Occurs when the collection of monitored characters changed.
-        /// </summary>
-        public static event EventHandler? MonitoredCharacterCollectionChanged;
-
-        /// <summary>
-        /// Occurs when the collection of a character implant set changed.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterImplantSetCollectionChanged;
-        
-        /// <summary>
-        /// Occurs when an account status has been updated.
-        /// </summary>
-        public static event EventHandler? AccountStatusUpdated;
-
-        /// <summary>
-        /// Occurs when the conquerable station list has been updated.
-        /// </summary>
-        public static event EventHandler? ConquerableStationListUpdated;
-
-        /// <summary>
-        /// Occurs when the EVE factional warfare statistics has been updated.
-        /// </summary>
-        public static event EventHandler? EveFactionalWarfareStatsUpdated;
 
         /// <summary>
         /// Occurs when the ESI key info have been updated.
@@ -113,293 +63,6 @@ namespace EVEMon.Common
         /// Occurs when the EveIDToName list has been updated.
         /// </summary>
         public static event EventHandler? EveIDToNameUpdated;
-
-        /// <summary>
-        /// Occurs when the RefTypes list has been updated.
-        /// </summary>
-        public static event EventHandler? RefTypesUpdated;
-
-        /// <summary>
-        /// Occurs when the NotificationRefTypes list has been updated.
-        /// </summary>
-        public static event EventHandler? NotificationRefTypesUpdated;
-
-        /// <summary>
-        /// Occurs when the EveFlags list has been updated.
-        /// </summary>
-        public static event EventHandler? EveFlagsUpdated;
-
-        /// <summary>
-        /// Occurs when the list of characters in an ESI key has been updated.
-        /// </summary>
-        public static event EventHandler<ESIKeyInfoChangedEventArgs>? CharacterListUpdated;
-
-        /// <summary>
-        /// Occurs when one or many queued skills have been completed.
-        /// </summary>
-        public static event EventHandler<QueuedSkillsEventArgs>? QueuedSkillsCompleted;
-
-        /// <summary>
-        /// Occurs when one of the character's collection of plans changed.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterPlanCollectionChanged;
-
-        /// <summary>
-        /// Occurs when a character's potrait has been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterPortraitUpdated;
-
-        /// <summary>
-        /// Occurs when a character sheet has been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterUpdated;
-
-        /// <summary>
-        /// Occurs when a character info has been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterInfoUpdated;
-        
-        /// <summary>
-        /// Occurs when a character skill queue has been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterSkillQueueUpdated;
-
-        /// <summary>
-        /// Occurs when multiple characters have been updated within a coalesce window (100ms).
-        /// Subscribe to this instead of CharacterUpdated for batch UI updates.
-        /// </summary>
-        public static event EventHandler<CharacterBatchEventArgs>? CharactersBatchUpdated;
-
-        /// <summary>
-        /// Occurs when multiple skill queues have been updated within a coalesce window (100ms).
-        /// Subscribe to this instead of CharacterSkillQueueUpdated for batch UI updates.
-        /// </summary>
-        public static event EventHandler<CharacterBatchEventArgs>? SkillQueuesBatchUpdated;
-
-        /// <summary>
-        /// Occurs when a character standings have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterStandingsUpdated;
-
-        /// <summary>
-        /// Occurs when a character factional warfare stats have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterFactionalWarfareStatsUpdated;
-
-        /// <summary>
-        /// Occurs when a character assets have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterAssetsUpdated;
-
-        /// <summary>
-        /// Occurs when both personal and corporation market orders of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? MarketOrdersUpdated;
-
-        /// <summary>
-        /// Occurs when personal market orders of a character have been updated.
-        /// </summary>
-        public static event EventHandler<MarketOrdersEventArgs>? CharacterMarketOrdersUpdated;
-
-        /// <summary>
-        /// Occurs when corporation market orders of a character have been updated.
-        /// </summary>
-        public static event EventHandler<MarketOrdersEventArgs>? CorporationMarketOrdersUpdated;
-
-        /// <summary>
-        /// Occurs when both personal and corporation contracts of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? ContractsUpdated;
-
-        /// <summary>
-        /// Occurs when personal contracts of a character have been updated.
-        /// </summary>
-        public static event EventHandler<ContractsEventArgs>? CharacterContractsUpdated;
-
-        /// <summary>
-        /// Occurs when corporation contracts of a character have been updated.
-        /// </summary>
-        public static event EventHandler<ContractsEventArgs>? CorporationContractsUpdated;
-
-        /// <summary>
-        /// Occurs when personal contract bids of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterContractBidsDownloaded;
-
-        /// <summary>
-        /// Occurs when corporation contract bids of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CorporationContractBidsDownloaded;
-
-        /// <summary>
-        /// Occurs when items list of a character's contract have been downloaded.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterContractItemsDownloaded;
-
-        /// <summary>
-        /// Occurs when items list of a corporation's contract have been downloaded.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CorporationContractItemsDownloaded;
-
-        /// <summary>
-        /// Occurs when a character wallet journal have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterWalletJournalUpdated;
-
-        /// <summary>
-        /// Occurs when a character walet transactions have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterWalletTransactionsUpdated;
-
-        /// <summary>
-        /// Occurs when industry jobs of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? IndustryJobsUpdated;
-
-        /// <summary>
-        /// Occurs when industry jobs of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterIndustryJobsUpdated;
-
-        /// <summary>
-        /// Occurs when industry jobs of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CorporationIndustryJobsUpdated;
-
-        /// <summary>
-        /// Occurs when the industry jobs of a character have been completed.
-        /// </summary>
-        public static event EventHandler<IndustryJobsEventArgs>? CharacterIndustryJobsCompleted;
-
-        /// <summary>
-        /// Occurs when the industry jobs of a character have been completed.
-        /// </summary>
-        public static event EventHandler<IndustryJobsEventArgs>? CorporationIndustryJobsCompleted;
-
-        /// <summary>
-        /// Occurs when the planetary pins of a character have been completed.
-        /// </summary>
-        public static event EventHandler<PlanetaryPinsEventArgs>? CharacterPlanetaryPinsCompleted;
-
-        /// <summary>
-        /// Occurs when the research points of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterResearchPointsUpdated;
-
-        /// <summary>
-        /// Occurs when the mail messages of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVEMailMessagesUpdated;
-
-        /// <summary>
-        /// Occurs when the mailing list of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVEMailingListsUpdated;
-
-        /// <summary>
-        /// Occurs when the body of a character EVE mail message has been downloaded.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVEMailBodyDownloaded;
-
-        /// <summary>
-        /// Occurs when the notifications of a character have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterEVENotificationsUpdated;
-        
-        /// <summary>
-        /// Occurs when the text of a character contacts have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterContactsUpdated;
-
-        /// <summary>
-        /// Occurs when the text of a character medals have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterMedalsUpdated;
-
-        /// <summary>
-        /// Occurs when the text of a corporation medals have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CorporationMedalsUpdated;
-
-        /// <summary>
-        /// Occurs when the text of a character upcoming calendar events have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterUpcomingCalendarEventsUpdated;
-
-        /// <summary>
-        /// Occurs when the text of a character calendar event attendees have been downloaded.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterCalendarEventAttendeesDownloaded;
-
-        /// <summary>
-        /// Occurs when the text of a character kill logs have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterKillLogUpdated;
-
-        /// <summary>
-        /// Occurs when the character planetary colony list has been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterPlanetaryColoniesUpdated;
-
-        /// <summary>
-        /// Occurs when the character planetary colony layout has been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterPlanetaryLayoutUpdated;
-
-        /// <summary>
-        /// Occurs when the character loyalty point balances have been updated.
-        /// </summary>
-        public static event EventHandler<CharacterChangedEventArgs>? CharacterLoyaltyPointsUpdated;
-
-        /// <summary>
-        /// Occurs when a plan's name changed.
-        /// </summary>
-        public static event EventHandler<PlanChangedEventArgs>? PlanNameChanged;
-
-        /// <summary>
-        /// Occurs when a plan changed.
-        /// </summary>
-        public static event EventHandler<PlanChangedEventArgs>? PlanChanged;
-
-        /// <summary>
-        /// Fired every time we ping the TQ server status (update pilots online count etc).
-        /// </summary>
-        public static event EventHandler<EveServerEventArgs>? ServerStatusUpdated;
-
-        /// <summary>
-        /// Fired every time a notification (API errors, skill completed) is sent.
-        /// </summary>
-        public static event EventHandler<NotificationEventArgs>? NotificationSent;
-
-        /// <summary>
-        /// Fired every time a notification (API errors, skill completed) is invalidated.
-        /// </summary>
-        public static event EventHandler<NotificationInvalidationEventArgs>? NotificationInvalidated;
-
-        /// <summary>
-        /// Occurs when an application update is available.
-        /// </summary>
-        public static event EventHandler<UpdateAvailableEventArgs>? UpdateAvailable;
-
-        /// <summary>
-        /// Occurs when a data files update is available.
-        /// </summary>
-        public static event EventHandler<DataUpdateAvailableEventArgs>? DataUpdateAvailable;
-
-        /// <summary>
-        /// Occurs when the loadout feed updated.
-        /// </summary>
-        public static event EventHandler<LoadoutFeedEventArgs>? LoadoutFeedUpdated;
-
-        /// <summary>
-        /// Occurs when the loadout updated.
-        /// </summary>
-        public static event EventHandler<LoadoutEventArgs>? LoadoutUpdated;
-
-        /// <summary>
-        /// Occurs when item prices updated.
-        /// </summary>
-        public static event EventHandler? ItemPricesUpdated;
 
         /// <summary>
         /// Fires the timer tick event to notify the subscribers.
@@ -473,7 +136,6 @@ namespace EVEMon.Common
 
             Trace();
             Settings.Save();
-            SchedulerChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.SchedulerChangedEvent.Instance);
@@ -490,7 +152,6 @@ namespace EVEMon.Common
             Trace();
             EveMonClient.Characters.UpdateAccountStatuses();
             Settings.Save();
-            ESIKeyCollectionChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(ESIKeyCollectionChangedEvent.Instance);
@@ -507,7 +168,6 @@ namespace EVEMon.Common
 
             Trace();
             Settings.Save();
-            ESIKeyMonitoredChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyMonitoredChangedEvent.Instance);
@@ -523,7 +183,6 @@ namespace EVEMon.Common
 
             Trace();
             Settings.Save();
-            MonitoredCharacterCollectionChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
@@ -539,7 +198,6 @@ namespace EVEMon.Common
 
             Trace();
             Settings.Save();
-            CharacterCollectionChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CharacterCollectionChangedEvent.Instance);
@@ -556,7 +214,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            ConquerableStationListUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.ConquerableStationListUpdatedEvent.Instance);
@@ -571,7 +228,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            EveFactionalWarfareStatsUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.EveFactionalWarfareStatsUpdatedEvent.Instance);
@@ -601,7 +257,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            RefTypesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.RefTypesUpdatedEvent.Instance);
@@ -616,7 +271,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            NotificationRefTypesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.NotificationRefTypesUpdatedEvent.Instance);
@@ -631,7 +285,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            EveFlagsUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.EveFlagsUpdatedEvent.Instance);
@@ -666,7 +319,6 @@ namespace EVEMon.Common
             Trace(esiKey.ToString());
             Characters.UpdateAccountStatuses();
             Settings.Save();
-            AccountStatusUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.AccountStatusUpdatedEvent.Instance);
@@ -683,7 +335,6 @@ namespace EVEMon.Common
 
             Trace(esiKey.ToString());
             Settings.Save();
-            CharacterListUpdated?.ThreadSafeInvoke(null, new ESIKeyInfoChangedEventArgs(esiKey));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterListUpdatedEvent(esiKey));
@@ -699,7 +350,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            CharacterImplantSetCollectionChanged?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(character));
@@ -716,9 +366,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-
-            // Fire individual event for backward compatibility
-            CharacterUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Queue for batched event (coalesces rapid updates)
             s_updateBatcher?.QueueCharacterUpdate(character);
@@ -739,7 +386,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            CharacterInfoUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterInfoUpdatedEvent(character.CharacterID, character.Name));
@@ -756,8 +402,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterLabelChanged?.ThreadSafeInvoke(null, new LabelChangedEventArgs(character,
-                Characters.GetKnownLabels()));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterLabelChangedEvent(character, Characters.GetKnownLabels()));
@@ -775,9 +419,6 @@ namespace EVEMon.Common
             Trace(character.Name);
             character.UpdateAccountStatus();
             Settings.Save();
-
-            // Fire individual event for backward compatibility
-            CharacterSkillQueueUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Queue for batched event (coalesces rapid updates)
             s_updateBatcher?.QueueSkillQueueUpdate(character);
@@ -798,7 +439,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            QueuedSkillsCompleted?.ThreadSafeInvoke(null, new QueuedSkillsEventArgs(character, skillsCompleted));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.QueuedSkillsCompletedEvent(character, skillsCompleted));
@@ -814,7 +454,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterStandingsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterStandingsUpdatedEvent(character.CharacterID, character.Name));
@@ -831,7 +470,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterFactionalWarfareStatsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterFactionalWarfareStatsUpdatedEvent(character));
@@ -848,7 +486,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnAssetsUpdated();
-            CharacterAssetsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterAssetsUpdatedEvent(character.CharacterID, character.Name));
@@ -866,7 +503,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            MarketOrdersUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.MarketOrdersUpdatedEvent(character));
@@ -884,7 +520,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnCharacterMarketOrdersUpdated(endedOrders);
-            CharacterMarketOrdersUpdated?.ThreadSafeInvoke(null, new MarketOrdersEventArgs(character, endedOrders));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterMarketOrdersUpdatedEvent(character.CharacterID, character.Name));
@@ -902,7 +537,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            ContractsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.ContractsUpdatedEvent(character));
@@ -920,7 +554,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnCharacterContractsUpdated(endedContracts);
-            CharacterContractsUpdated?.ThreadSafeInvoke(null, new ContractsEventArgs(character, endedContracts));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterContractsUpdatedEvent(character.CharacterID, character.Name));
@@ -937,7 +570,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterContractBidsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContractBidsDownloadedEvent(character));
@@ -953,7 +585,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterContractItemsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterContractItemsDownloadedEvent(character));
@@ -969,7 +600,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterWalletJournalUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletJournalUpdatedEvent(character));
@@ -985,7 +615,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterWalletTransactionsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletTransactionsUpdatedEvent(character));
@@ -1002,7 +631,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            IndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.IndustryJobsUpdatedEvent(character));
@@ -1019,7 +647,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnCharacterIndustryJobsUpdated();
-            CharacterIndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterIndustryJobsUpdatedEvent(character.CharacterID, character.Name));
@@ -1037,7 +664,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnCorporationIndustryJobsUpdated();
-            CorporationIndustryJobsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationIndustryJobsUpdatedEvent(character));
@@ -1055,7 +681,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnCharacterIndustryJobsCompleted(jobsCompleted);
-            CharacterIndustryJobsCompleted?.ThreadSafeInvoke(null, new IndustryJobsEventArgs(character, jobsCompleted));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterIndustryJobsCompletedEvent(character, jobsCompleted));
@@ -1073,7 +698,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             (character as CCPCharacter)?.OnPlanetaryPinsCompleted(pinsCompleted);
-            CharacterPlanetaryPinsCompleted?.ThreadSafeInvoke(null, new PlanetaryPinsEventArgs(character, pinsCompleted));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryPinsCompletedEvent(character, pinsCompleted));
@@ -1089,7 +713,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterResearchPointsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterResearchUpdatedEvent(character.CharacterID, character.Name));
@@ -1107,7 +730,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            CharacterEVEMailMessagesUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterMailUpdatedEvent(character.CharacterID, character.Name));
@@ -1124,7 +746,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterEVEMailingListsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailingListsUpdatedEvent(character));
@@ -1140,7 +761,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterEVEMailBodyDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterEVEMailBodyDownloadedEvent(character));
@@ -1157,7 +777,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            CharacterEVENotificationsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterNotificationsUpdatedEvent(character.CharacterID, character.Name));
@@ -1174,7 +793,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterContactsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterContactsUpdatedEvent(character.CharacterID, character.Name));
@@ -1191,7 +809,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterMedalsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterMedalsUpdatedEvent(character.CharacterID, character.Name));
@@ -1208,7 +825,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CorporationMedalsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationMedalsUpdatedEvent(character));
@@ -1224,7 +840,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterUpcomingCalendarEventsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterCalendarUpdatedEvent(character.CharacterID, character.Name));
@@ -1241,7 +856,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterCalendarEventAttendeesDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterCalendarEventAttendeesDownloadedEvent(character));
@@ -1257,7 +871,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterKillLogUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterKillLogUpdatedEvent(character.CharacterID, character.Name));
@@ -1274,7 +887,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterPlanetaryColoniesUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterPlanetaryUpdatedEvent(character.CharacterID, character.Name));
@@ -1291,7 +903,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterPlanetaryLayoutUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryLayoutUpdatedEvent(character));
@@ -1307,7 +918,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterLoyaltyPointsUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CharacterLoyaltyUpdatedEvent(character.CharacterID, character.Name));
@@ -1324,7 +934,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.Name);
-            CharacterPortraitUpdated?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPortraitUpdatedEvent(character));
@@ -1341,7 +950,6 @@ namespace EVEMon.Common
 
             Trace(character.Name);
             Settings.Save();
-            CharacterPlanCollectionChanged?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanCollectionChangedEvent(character));
@@ -1359,7 +967,6 @@ namespace EVEMon.Common
 
             Trace(character.CorporationName);
             (character as CCPCharacter)?.OnCorporationMarketOrdersUpdated(endedOrders);
-            CorporationMarketOrdersUpdated?.ThreadSafeInvoke(null, new MarketOrdersEventArgs(character, endedOrders));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationMarketOrdersEndedEvent(character, endedOrders));
@@ -1377,7 +984,6 @@ namespace EVEMon.Common
 
             Trace(character.CorporationName);
             (character as CCPCharacter)?.OnCorporationContractsUpdated(endedContracts);
-            CorporationContractsUpdated?.ThreadSafeInvoke(null, new ContractsEventArgs(character, endedContracts));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractsEndedEvent(character, endedContracts));
@@ -1393,7 +999,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.CorporationName);
-            CorporationContractBidsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractBidsDownloadedEvent(character));
@@ -1409,7 +1014,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(character.CorporationName);
-            CorporationContractItemsDownloaded?.ThreadSafeInvoke(null, new CharacterChangedEventArgs(character));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationContractItemsDownloadedEvent(character));
@@ -1427,7 +1031,6 @@ namespace EVEMon.Common
 
             Trace(character.CorporationName);
             (character as CCPCharacter)?.OnCorporationIndustryJobsCompleted(jobsCompleted);
-            CorporationIndustryJobsCompleted?.ThreadSafeInvoke(null, new IndustryJobsEventArgs(character, jobsCompleted));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CorporationIndustryJobsCompletedEvent(character, jobsCompleted));
@@ -1444,7 +1047,6 @@ namespace EVEMon.Common
 
             Trace(plan.Name);
             Settings.Save();
-            PlanChanged?.ThreadSafeInvoke(null, new PlanChangedEventArgs(plan));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.PlanChangedEvent(plan));
@@ -1461,7 +1063,6 @@ namespace EVEMon.Common
 
             Trace(plan.Name);
             Settings.Save();
-            PlanNameChanged?.ThreadSafeInvoke(null, new PlanChangedEventArgs(plan));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.PlanNameChangedEvent(plan));
@@ -1479,7 +1080,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            ServerStatusUpdated?.ThreadSafeInvoke(null, new EveServerEventArgs(server, previousStatus, status));
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
@@ -1496,7 +1096,6 @@ namespace EVEMon.Common
                 return;
 
             Trace(notification.ToString());
-            NotificationSent?.ThreadSafeInvoke(null, notification);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.NotificationSentEvent(notification));
@@ -1512,7 +1111,6 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            NotificationInvalidated?.ThreadSafeInvoke(null, args);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.NotificationInvalidatedEvent(args));
@@ -1536,7 +1134,6 @@ namespace EVEMon.Common
             Trace($"({currentVersion} -> {newestVersion}, {canAutoInstall}, {installArgs})");
             var updateArgs = new UpdateAvailableEventArgs(forumUrl, installerUrl, updateMessage, currentVersion,
                 newestVersion, md5Sum, canAutoInstall, installArgs);
-            UpdateAvailable?.ThreadSafeInvoke(null, updateArgs);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.UpdateAvailableEvent(updateArgs));
@@ -1550,7 +1147,6 @@ namespace EVEMon.Common
         {
             Trace($"(ChangedFiles = {changedFiles.Count})");
             var dataUpdateArgs = new DataUpdateAvailableEventArgs(changedFiles);
-            DataUpdateAvailable?.ThreadSafeInvoke(null, dataUpdateArgs);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.DataUpdateAvailableEvent(dataUpdateArgs));
@@ -1564,7 +1160,6 @@ namespace EVEMon.Common
         internal static void OnLoadoutsFeedDownloaded(object loadoutFeed, string errorMessage)
         {
             var feedArgs = new LoadoutFeedEventArgs(loadoutFeed, errorMessage);
-            LoadoutFeedUpdated?.ThreadSafeInvoke(null, feedArgs);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.LoadoutFeedUpdatedEvent(feedArgs));
@@ -1578,7 +1173,6 @@ namespace EVEMon.Common
         internal static void OnLoadoutDownloaded(object loadout, string errorMessage)
         {
             var loadoutArgs = new LoadoutEventArgs(loadout, errorMessage);
-            LoadoutUpdated?.ThreadSafeInvoke(null, loadoutArgs);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.LoadoutUpdatedEvent(loadoutArgs));
@@ -1591,8 +1185,6 @@ namespace EVEMon.Common
         /// <param name="errormessage">The errormessage.</param>
         internal static void OnPricesDownloaded(object pricesFeed, string errormessage)
         {
-            ItemPricesUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
-
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(CommonEvents.ItemPricesUpdatedEvent.Instance);
         }
@@ -1611,7 +1203,6 @@ namespace EVEMon.Common
                 return;
 
             Trace($"Batched update for {e.Count} characters");
-            CharactersBatchUpdated?.ThreadSafeInvoke(null, e);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.CharactersBatchUpdatedEvent(e.Characters));
@@ -1626,7 +1217,6 @@ namespace EVEMon.Common
                 return;
 
             Trace($"Batched skill queue update for {e.Count} characters");
-            SkillQueuesBatchUpdated?.ThreadSafeInvoke(null, e);
 
             // Bridge to EventAggregator for new code
             AppServices.EventAggregator?.Publish(new CommonEvents.SkillQueuesBatchUpdatedEvent(e.Characters));
