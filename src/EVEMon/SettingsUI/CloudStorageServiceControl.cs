@@ -93,16 +93,23 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void btnReset_Click(object? sender, EventArgs e)
         {
-            ResetTextAndColor();
+            try
+            {
+                ResetTextAndColor();
 
-            txtBoxAuthCode.ResetText();
+                txtBoxAuthCode.ResetText();
 
-            throbber.State = ThrobberState.Rotating;
-            throbber.Visible = true;
+                throbber.State = ThrobberState.Rotating;
+                throbber.Visible = true;
 
-            Task? resetSettingsAsync = Provider?.ResetSettingsAsync();
-            if (resetSettingsAsync != null)
-                await resetSettingsAsync;
+                Task? resetSettingsAsync = Provider?.ResetSettingsAsync();
+                if (resetSettingsAsync != null)
+                    await resetSettingsAsync;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in btnReset_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -112,37 +119,44 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void btnRequestApply_Click(object? sender, EventArgs e)
         {
-            ResetTextAndColor();
-
-            if (Provider == null)
-                return;
-
-            if (!m_authCodeRequested && !Provider.HasCredentialsStored)
+            try
             {
-                await Provider.RequestAuthCodeAsync();
+                ResetTextAndColor();
 
-                if (Provider.AuthSteps == AuthenticationSteps.One)
+                if (Provider == null)
+                    return;
+
+                if (!m_authCodeRequested && !Provider.HasCredentialsStored)
                 {
-                    btnRequestApply.Enabled = false;
+                    await Provider.RequestAuthCodeAsync();
+
+                    if (Provider.AuthSteps == AuthenticationSteps.One)
+                    {
+                        btnRequestApply.Enabled = false;
+                        return;
+                    }
+
+                    btnRequestApply.Text = @"Apply Auth Code";
+                    lblAuthCode.Enabled = txtBoxAuthCode.Enabled = btnRequestApply.Enabled =
+                        !Provider.HasCredentialsStored;
+
+                    m_authCodeRequested = true;
+
                     return;
                 }
 
-                btnRequestApply.Text = @"Apply Auth Code";
-                lblAuthCode.Enabled = txtBoxAuthCode.Enabled = btnRequestApply.Enabled =
-                    !Provider.HasCredentialsStored;
+                if (string.IsNullOrWhiteSpace(txtBoxAuthCode.Text))
+                    return;
 
-                m_authCodeRequested = true;
+                throbber.State = ThrobberState.Rotating;
+                throbber.Visible = true;
 
-                return;
+                await Provider.CheckAuthCodeAsync(txtBoxAuthCode.Text);
             }
-
-            if (string.IsNullOrWhiteSpace(txtBoxAuthCode.Text))
-                return;
-
-            throbber.State = ThrobberState.Rotating;
-            throbber.Visible = true;
-
-            await Provider.CheckAuthCodeAsync(txtBoxAuthCode.Text);
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in btnRequestApply_Click: {ex}");
+            }
         }
 
         /// <summary>

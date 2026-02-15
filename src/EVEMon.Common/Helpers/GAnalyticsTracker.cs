@@ -96,10 +96,10 @@ namespace EVEMon.Common.Helpers
         /// <param name="action">The action.</param>
         private static async void TrackEvent(Type type, string category, string action)
         {
-            InitEvent(type, category, action);
-            if (NetworkMonitor.IsNetworkAvailable)
+            try
             {
-                try
+                InitEvent(type, category, action);
+                if (NetworkMonitor.IsNetworkAvailable)
                 {
                     var result = await HttpWebClientService.DownloadImageAsync(new Uri(NetworkConstants.
                         GoogleAnalyticsUrl), new RequestParams(BuildQueryString()))
@@ -111,18 +111,18 @@ namespace EVEMon.Common.Helpers
                             AppServices.TraceService?.Trace($"{result.Error.Message}");
                     }
                 }
-                catch (Exception ex)
+                else
                 {
-                    ExceptionHandler.LogException(ex, false);
+                    // Reschedule later
+                    Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEvent(type, category,
+                        action));
+                    if (AppServices.IsDebugBuild)
+                        AppServices.TraceService?.Trace($"in {TimeSpan.FromMinutes(1)}");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                // Reschedule later
-                Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEvent(type, category,
-                    action));
-                if (AppServices.IsDebugBuild)
-                    AppServices.TraceService?.Trace($"in {TimeSpan.FromMinutes(1)}");
+                System.Diagnostics.Debug.WriteLine($"Async error in TrackEvent: {ex}");
             }
         }
 

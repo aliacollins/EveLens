@@ -29,6 +29,7 @@ namespace EVEMon.SettingsUI
 
         private IDisposable? _subQueuedSkillsCompleted;
         private IDisposable? _subServerStatusUpdated;
+        private IDisposable? _subSecondTick;
 
 
         #region Inherited Events
@@ -47,7 +48,7 @@ namespace EVEMon.SettingsUI
             // Client events
             _subQueuedSkillsCompleted = AppServices.EventAggregator.SubscribeOnUI<QueuedSkillsCompletedEvent>(this, OnQueuedSkillsCompleted);
             _subServerStatusUpdated = AppServices.EventAggregator.SubscribeOnUI<ServerStatusUpdatedEvent>(this, OnServerStatusUpdated);
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _subSecondTick = AppServices.EventAggregator.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
         }
 
         /// <summary>
@@ -60,7 +61,8 @@ namespace EVEMon.SettingsUI
 
             _subQueuedSkillsCompleted?.Dispose();
             _subServerStatusUpdated?.Dispose();
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _subSecondTick?.Dispose();
+            _subSecondTick = null;
         }
 
         #endregion

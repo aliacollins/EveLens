@@ -460,11 +460,18 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void miExportPlan_Click(object? sender,EventArgs e)
         {
-            if (lbPlanList.SelectedItems.Count != 1)
-                return;
+            try
+            {
+                if (lbPlanList.SelectedItems.Count != 1)
+                    return;
 
-            Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag!;
-            await UIHelper.ExportPlanAsync(plan);
+                Plan plan = (Plan)lbPlanList.SelectedItems[0].Tag!;
+                await UIHelper.ExportPlanAsync(plan);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in miExportPlan_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -474,7 +481,14 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void miExportCharacterSkillsAsPlan_Click(object? sender,EventArgs e)
         {
-            await UIHelper.ExportCharacterSkillsAsPlanAsync(m_character);
+            try
+            {
+                await UIHelper.ExportCharacterSkillsAsPlanAsync(m_character);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in miExportCharacterSkillsAsPlan_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -511,8 +525,15 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void miSavePlans_Click(object? sender,EventArgs e)
         {
-            IList<Plan> plans = lbPlanList.Items.Cast<ListViewItem>().Select(item => (Plan)item.Tag!).ToList();
-            await UIHelper.SavePlansAsync(plans);
+            try
+            {
+                IList<Plan> plans = lbPlanList.Items.Cast<ListViewItem>().Select(item => (Plan)item.Tag!).ToList();
+                await UIHelper.SavePlansAsync(plans);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in miSavePlans_Click: {ex}");
+            }
         }
 
         /// <summary>

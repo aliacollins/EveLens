@@ -78,6 +78,7 @@ namespace EVEMon.SkillPlanner
         private IDisposable? _planChangedSub;
         private IDisposable? _settingsChangedSub;
         private IDisposable? _schedulerChangedSub;
+        private IDisposable? _fiveSecondTickSub;
 
         #endregion
 
@@ -109,7 +110,7 @@ namespace EVEMon.SkillPlanner
             _itemPricesUpdatedSub = AppServices.EventAggregator.SubscribeOnUI<ItemPricesUpdatedEvent>(this, OnItemPricesUpdated);
             _planChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanChangedEvent>(this, OnPlanChanged);
             _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _fiveSecondTickSub = AppServices.EventAggregator?.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
             _schedulerChangedSub = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
             Disposed += OnDisposed;
         }
@@ -159,7 +160,8 @@ namespace EVEMon.SkillPlanner
             _itemPricesUpdatedSub?.Dispose();
             _planChangedSub?.Dispose();
             _settingsChangedSub?.Dispose();
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _fiveSecondTickSub?.Dispose();
+            _fiveSecondTickSub = null;
             _schedulerChangedSub?.Dispose();
             Disposed -= OnDisposed;
         }
@@ -271,12 +273,19 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void OnCharacterImplantSetCollectionChanged(CharacterImplantSetCollectionChangedEvent e)
         {
-            if (m_character == null)
-                return;
+            try
+            {
+                if (m_character == null)
+                    return;
 
-            UpdateImplantSetList();
-            cbChooseImplantSet.SelectedIndex = m_lastImplantSetIndex < cbChooseImplantSet.Items.Count ? m_lastImplantSetIndex : 0;
-            await UpdateImplantSet();
+                UpdateImplantSetList();
+                cbChooseImplantSet.SelectedIndex = m_lastImplantSetIndex < cbChooseImplantSet.Items.Count ? m_lastImplantSetIndex : 0;
+                await UpdateImplantSet();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -2483,13 +2492,20 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void cbChooseImplantSet_SelectedIndexChanged(object? sender,EventArgs e)
         {
-            if (cbChooseImplantSet.SelectedIndex == m_lastImplantSetIndex)
-                return;
+            try
+            {
+                if (cbChooseImplantSet.SelectedIndex == m_lastImplantSetIndex)
+                    return;
 
-            await UpdateImplantSet();
+                await UpdateImplantSet();
 
-            if (m_init)
-                UpdateSkillList();
+                if (m_init)
+                    UpdateSkillList();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>

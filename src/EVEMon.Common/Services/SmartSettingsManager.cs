@@ -125,29 +125,38 @@ namespace EVEMon.Common.Services
         /// </summary>
         private async void OnTimerElapsed(object state)
         {
-            if (_disposed)
-                return;
-
-            if (!_dirty)
-            {
-                RearmTimer();
-                return;
-            }
-
-            _dirty = false;
-
             try
             {
-                await PerformSaveAsync().ConfigureAwait(false);
+                if (_disposed)
+                    return;
+
+                if (!_dirty)
+                {
+                    RearmTimer();
+                    return;
+                }
+
+                _dirty = false;
+
+                try
+                {
+                    await PerformSaveAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    ExceptionHandler.LogException(ex, false);
+                    System.Diagnostics.Debug.WriteLine($"Async error in OnTimerElapsed: {ex}");
+                    // Mark dirty again so it retries on next tick
+                    _dirty = true;
+                }
+                finally
+                {
+                    RearmTimer();
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // Mark dirty again so it retries on next tick
-                _dirty = true;
-            }
-            finally
-            {
-                RearmTimer();
+                System.Diagnostics.Debug.WriteLine($"Async error in OnTimerElapsed: {ex}");
             }
         }
 

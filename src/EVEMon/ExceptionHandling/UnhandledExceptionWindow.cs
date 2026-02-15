@@ -265,6 +265,10 @@ namespace EVEMon.ExceptionHandling
                     fallbackTitle, crashSummary);
                 Util.OpenURL(new Uri(url));
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in SubmitReportButton_Click: {ex}");
+            }
             finally
             {
                 SubmitReportButton.Enabled = true;

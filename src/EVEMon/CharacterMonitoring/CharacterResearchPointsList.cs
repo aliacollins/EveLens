@@ -38,6 +38,7 @@ namespace EVEMon.CharacterMonitoring
         private bool m_init;
         private IDisposable? _subResearch;
         private IDisposable? _subConquerableStation;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -167,7 +168,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             _subResearch = agg.SubscribeOnUIForCharacter<CharacterResearchPointsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterResearchPointsUpdated(e));
             Disposed += OnDisposed;
@@ -180,7 +181,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subConquerableStation?.Dispose();
             _subResearch?.Dispose();
             Disposed -= OnDisposed;

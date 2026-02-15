@@ -10,6 +10,7 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Services;
+using EVEMon.Common.Events;
 
 namespace EVEMon.SettingsUI
 {
@@ -20,6 +21,7 @@ namespace EVEMon.SettingsUI
     {
         private readonly List<Character> m_characters = new List<Character>();
         private string? m_tooltipFormat;
+        private IDisposable? _subSecondTick;
 
 
         #region Inherited Events
@@ -31,7 +33,7 @@ namespace EVEMon.SettingsUI
             if (DesignMode)
                 return;
 
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _subSecondTick = AppServices.EventAggregator.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
         }
 
         /// <summary>
@@ -42,7 +44,8 @@ namespace EVEMon.SettingsUI
         {
             base.OnClosed(e);
 
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _subSecondTick?.Dispose();
+            _subSecondTick = null;
         }
 
         #endregion

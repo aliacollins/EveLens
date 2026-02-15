@@ -100,6 +100,10 @@ namespace EVEMon.DiagnosticReport
                 string url = DiagnosticReportBuilder.BuildGitHubIssueUrl(fallbackTitle);
                 Util.OpenURL(new Uri(url));
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in OpenGitHubIssueButton_Click: {ex}");
+            }
             finally
             {
                 OpenGitHubIssueButton.Text = "Submit Report";

@@ -188,10 +188,17 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void ExternalCalendarControl_EnabledChanged(object sender, EventArgs e)
         {
-            if (Enabled)
+            try
             {
-                UpdateControlsVisibility();
-                await RequestGoogleCalendarAuthentication(true);
+                if (Enabled)
+                {
+                    UpdateControlsVisibility();
+                    await RequestGoogleCalendarAuthentication(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in ExternalCalendarControl_EnabledChanged: {ex}");
             }
         }
 
@@ -234,8 +241,15 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void rbGoogle_CheckedChanged(object sender, EventArgs e)
         {
-            UpdateControlsVisibility();
-            await RequestGoogleCalendarAuthentication(true);
+            try
+            {
+                UpdateControlsVisibility();
+                await RequestGoogleCalendarAuthentication(true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in rbGoogle_CheckedChanged: {ex}");
+            }
         }
 
         /// <summary>
@@ -245,7 +259,14 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void btnRequestAuth_Click(object sender, EventArgs e)
         {
-            await RequestGoogleCalendarAuthentication();
+            try
+            {
+                await RequestGoogleCalendarAuthentication();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in btnRequestAuth_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -255,25 +276,32 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void btnRevokeAuth_Click(object sender, EventArgs e)
         {
-            apiResponseLabel.ResetText();
-            apiResponseLabel.ResetForeColor();
-
-            throbber.State = ThrobberState.Rotating;
-            throbber.Visible = true;
-
-            var result = await GoogleCalendarEvent.RevokeAuth();
-
-            throbber.State = ThrobberState.Stopped;
-            throbber.Visible = false;
-
-            bool error = result.HasError;
-            btnRequestAuth.Enabled = !error;
-            btnRevokeAuth.Enabled = tbGoogleCalendarName.Enabled = cbGoogleReminder.Enabled =
-                error;
-            if (error)
+            try
             {
-                apiResponseLabel.ForeColor = Color.Red;
-                apiResponseLabel.Text = result.Error!.ErrorMessage;
+                apiResponseLabel.ResetText();
+                apiResponseLabel.ResetForeColor();
+
+                throbber.State = ThrobberState.Rotating;
+                throbber.Visible = true;
+
+                var result = await GoogleCalendarEvent.RevokeAuth();
+
+                throbber.State = ThrobberState.Stopped;
+                throbber.Visible = false;
+
+                bool error = result.HasError;
+                btnRequestAuth.Enabled = !error;
+                btnRevokeAuth.Enabled = tbGoogleCalendarName.Enabled = cbGoogleReminder.Enabled =
+                    error;
+                if (error)
+                {
+                    apiResponseLabel.ForeColor = Color.Red;
+                    apiResponseLabel.Text = result.Error!.ErrorMessage;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in btnRevokeAuth_Click: {ex}");
             }
         }
 

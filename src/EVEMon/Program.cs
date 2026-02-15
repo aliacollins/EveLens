@@ -129,7 +129,7 @@ namespace EVEMon
             // Load static datafiles (skills, items, geography, etc.)
             s_splashScreen.UpdateProgress(45, "Loading game data...");
             AppServices.TraceService?.Trace("Program.Startup - GlobalDatafileCollection.LoadAsync begin", printMethod: false);
-            Task.Run(() => GlobalDatafileCollection.LoadAsync()).GetAwaiter().GetResult();
+            Task.Run(() => GlobalDatafileCollection.LoadAsync()).Wait();
             AppServices.TraceService?.Trace("Program.Startup - GlobalDatafileCollection.LoadAsync done", printMethod: false);
             s_splashScreen.UpdateProgress(65, "Game data loaded");
 
@@ -139,14 +139,14 @@ namespace EVEMon
             Task.Run(() => TaskHelper.RunIOBoundTaskAsync(() => {
                 EveIDToName.InitializeFromFile();
                 EveIDToStation.InitializeFromFile();
-            })).GetAwaiter().GetResult();
+            })).Wait();
             AppServices.TraceService?.Trace("Program.Startup - EveIDToName/EveIDToStation.InitializeFromFile done", printMethod: false);
             s_splashScreen.UpdateProgress(75, "Caches loaded");
 
             // Import character data
             s_splashScreen.UpdateProgress(78, "Loading characters...");
             AppServices.TraceService?.Trace("Program.Startup - Settings.ImportDataAsync begin", printMethod: false);
-            Task.Run(() => Settings.ImportDataAsync()).GetAwaiter().GetResult();
+            Task.Run(() => Settings.ImportDataAsync()).Wait();
             AppServices.TraceService?.Trace("Program.Startup - Settings.ImportDataAsync done", printMethod: false);
             s_splashScreen.UpdateProgress(85, "Characters loaded");
 
@@ -177,10 +177,13 @@ namespace EVEMon
                 AppServices.TraceService?.Trace("Main loop - done", printMethod: false);
 
                 // Save before we quit
-                Task.Run(() => Task.WhenAll(Settings.SaveImmediateAsync(), EveIDToName.SaveImmediateAsync())).GetAwaiter().GetResult();
+                Task.Run(() => Task.WhenAll(Settings.SaveImmediateAsync(), EveIDToName.SaveImmediateAsync())).Wait();
             }
             finally
             {
+                // Shutdown settings (dispose SmartSettingsManager and timer subscriptions)
+                Settings.Shutdown();
+
                 // Stop the one-second timer right now
                 EveMonClient.Shutdown();
 

@@ -78,6 +78,7 @@ namespace EVEMon.CharacterMonitoring
                         m_issuedForCorporationEscrowAdditionalToCover;
         private IDisposable? _subMarketOrders;
         private IDisposable? _subConquerableStation;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -252,7 +253,7 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip = new InfiniteDisplayToolTip(lvOrders);
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subMarketOrders = agg.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => Character, e => EveMonClient_MarketOrdersUpdated(e));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             Disposed += OnDisposed;
@@ -267,7 +268,8 @@ namespace EVEMon.CharacterMonitoring
         {
             m_tooltip.Dispose();
 
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subMarketOrders?.Dispose();
             _subConquerableStation?.Dispose();
             Disposed -= OnDisposed;

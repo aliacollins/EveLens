@@ -19,6 +19,7 @@ namespace EVEMon.LogitechG15
     {
         private static LcdDisplay? s_lcd;
         private static bool s_startupError;
+        private static IDisposable? s_subThirtySecondTick;
         private static IDisposable? s_subQueuedSkillsCompleted;
         private static IDisposable? s_subSettingsChanged;
 
@@ -34,7 +35,7 @@ namespace EVEMon.LogitechG15
             if (AppServices.Closed)
                 return;
 
-            EveMonClient.ThirtySecondTick += EveMonClient_TimerTick;
+            s_subThirtySecondTick = AppServices.EventAggregator?.Subscribe<EVEMon.Core.Events.ThirtySecondTickEvent>(e => EveMonClient_TimerTick(null, EventArgs.Empty));
         }
 
         #endregion

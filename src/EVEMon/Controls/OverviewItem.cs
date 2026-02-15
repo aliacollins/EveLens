@@ -78,6 +78,7 @@ namespace EVEMon.Controls
         private IDisposable? _subSettingsChanged;
         private IDisposable? _subCharacterLabelChanged;
         private IDisposable? _subESIKeyInfoUpdated;
+        private IDisposable? _subSecondTick;
 
         #endregion
 
@@ -160,7 +161,7 @@ namespace EVEMon.Controls
             _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => Character, OnCharactersBatchUpdated);
             _subSchedulerChanged = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
             _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _subSecondTick = AppServices.EventAggregator.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subCharacterLabelChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterLabelChangedEvent>(this, OnCharacterLabelChanged);
             _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
             Disposed += OnDisposed;
@@ -181,7 +182,7 @@ namespace EVEMon.Controls
             _subCharactersBatchUpdated?.Dispose();
             _subSchedulerChanged?.Dispose();
             _subSettingsChanged?.Dispose();
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _subSecondTick?.Dispose();
             _subCharacterLabelChanged?.Dispose();
             _subESIKeyInfoUpdated?.Dispose();
             Disposed -= OnDisposed;

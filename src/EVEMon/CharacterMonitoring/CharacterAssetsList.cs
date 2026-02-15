@@ -62,6 +62,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subEveFlags;
         private IDisposable? _subSettings;
         private IDisposable? _subItemPrices;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -209,7 +210,7 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip = new InfiniteDisplayToolTip(lvAssets);
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subAssets = agg.SubscribeOnUIForCharacter<CharacterAssetsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterAssetsUpdated(e));
             _subCharInfo = agg.SubscribeOnUIForCharacter<CharacterInfoUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterInfoUpdated(e));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
@@ -228,7 +229,8 @@ namespace EVEMon.CharacterMonitoring
         {
             m_tooltip.Dispose();
 
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subAssets?.Dispose();
             _subCharInfo?.Dispose();
             _subConquerableStation?.Dispose();
@@ -244,31 +246,38 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         protected override async void OnVisibleChanged(EventArgs e)
         {
-            if (DesignMode || this.IsDesignModeHosted() || Character == null)
-                return;
+            try
+            {
+                if (DesignMode || this.IsDesignModeHosted() || Character == null)
+                    return;
 
-            base.OnVisibleChanged(e);
+                base.OnVisibleChanged(e);
 
-            if (!Visible)
-                return;
+                if (!Visible)
+                    return;
 
-            // Prevents the properties to call UpdateColumnsAsync() till we set all properties
-            m_init = false;
+                // Prevents the properties to call UpdateColumnsAsync() till we set all properties
+                m_init = false;
 
-            lvAssets.Hide();
-            estimatedCostPanel.Hide();
-            noAssetsLabel.Visible = Character?.Assets.Count == 0;
-            
-            Assets = Character?.Assets!;
-            Columns = Settings.UI.MainWindow.Assets.Columns;
-            Grouping = Character?.UISettings.AssetsGroupBy!;
-            TextFilter = string.Empty;
+                lvAssets.Hide();
+                estimatedCostPanel.Hide();
+                noAssetsLabel.Visible = Character?.Assets.Count == 0;
 
-            await UpdateColumnsAsync();
+                Assets = Character?.Assets!;
+                Columns = Settings.UI.MainWindow.Assets.Columns;
+                Grouping = Character?.UISettings.AssetsGroupBy!;
+                TextFilter = string.Empty;
 
-            m_init = true;
+                await UpdateColumnsAsync();
 
-            UpdateListVisibility();
+                m_init = true;
+
+                UpdateListVisibility();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         # endregion

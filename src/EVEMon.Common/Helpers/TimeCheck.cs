@@ -40,64 +40,57 @@ namespace EVEMon.Common.Helpers
         {
             if (!NetworkMonitor.IsNetworkAvailable)
             {
-                // Reschedule later otherwise
                 ScheduleCheck(TimeSpan.FromMinutes(1));
                 return;
             }
 
             AppServices.TraceService?.Trace((string)null);
 
-            string ntpServer = NetworkConstants.GlobalNTPPool;// "pool.ntp.org";
-            DateTime serverTimeToLocalTime;
-            bool isSynchronised;
+            string ntpServer = NetworkConstants.GlobalNTPPool;
 
-            await Dns.GetHostAddressesAsync(ntpServer)
-                .ContinueWith(task =>
+            try
+            {
+                IPAddress[] ipAddresses = await Dns.GetHostAddressesAsync(ntpServer).ConfigureAwait(false);
+
+                if (!ipAddresses.Any())
+                    return;
+
+                DateTime localTime = DateTime.Now;
+
+                byte[] ntpData = await Task.Run(() =>
                 {
-                    IPAddress[] ipAddresses = task.Result;
+                    var data = new byte[48];
+                    data[0] = 0x1B;
 
-                    if (!ipAddresses.Any())
-                        return;
-
-                    try
+                    var ipEndPoint = new IPEndPoint(ipAddresses.First(), 123);
+                    using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
                     {
-                        DateTime dateTimeNowUtc;
-                        DateTime localTime = DateTime.Now;
-                        
-                        var ntpData = new byte[48];
-                        ntpData[0] = 0x1B; //LeapIndicator = 0 (no warning), VersionNum = 3 (IPv4 only), Mode = 3 (Client Mode)
-
-                        var ipEndPoint = new IPEndPoint(task.Result.First(), 123);
-                        using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-                        {
-                            socket.ReceiveTimeout = 5000;
-                            socket.SendTimeout = 5000;
-                            socket.Connect(ipEndPoint);
-                            socket.Send(ntpData);
-                            socket.Receive(ntpData);
-                            socket.Close();
-                        }
-
-                        ulong intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
-                        ulong fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
-
-                        var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
-                        var networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
-
-                        dateTimeNowUtc = networkDateTime;
-
-                        serverTimeToLocalTime = dateTimeNowUtc.ToLocalTime();
-                        TimeSpan timediff =
-                            TimeSpan.FromSeconds(Math.Abs(serverTimeToLocalTime.Subtract(localTime).TotalSeconds));
-                        isSynchronised = timediff < TimeSpan.FromSeconds(60);
-
-                        OnCheckCompleted(isSynchronised, serverTimeToLocalTime, localTime);
+                        socket.ReceiveTimeout = 5000;
+                        socket.SendTimeout = 5000;
+                        socket.Connect(ipEndPoint);
+                        socket.Send(data);
+                        socket.Receive(data);
+                        socket.Close();
                     }
-                    catch (Exception exc)
-                    {
-                        CheckFailure(exc);
-                    }
-                }, EveMonClient.CurrentSynchronizationContext).ConfigureAwait(false);
+                    return data;
+                }).ConfigureAwait(false);
+
+                ulong intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
+                ulong fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
+
+                var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
+                var networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
+
+                DateTime serverTimeToLocalTime = networkDateTime.ToLocalTime();
+                TimeSpan timediff = TimeSpan.FromSeconds(Math.Abs(serverTimeToLocalTime.Subtract(localTime).TotalSeconds));
+                bool isSynchronised = timediff < TimeSpan.FromSeconds(60);
+
+                OnCheckCompleted(isSynchronised, serverTimeToLocalTime, localTime);
+            }
+            catch (Exception exc)
+            {
+                CheckFailure(exc);
+            }
         }
 
         /// <summary>

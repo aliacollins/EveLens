@@ -45,6 +45,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subNotifications;
         private IDisposable? _subEveIDToName;
         private IDisposable? _subNotifRefTypes;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -195,7 +196,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subNotifications = agg.SubscribeOnUIForCharacter<CharacterEVENotificationsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVENotificationsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subNotifRefTypes = agg.SubscribeOnUI<NotificationRefTypesUpdatedEvent>(this, e => EveMonClient_NotificationRefTypesUpdated());
@@ -210,7 +211,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subNotifications?.Dispose();
             _subEveIDToName?.Dispose();
             _subNotifRefTypes?.Dispose();

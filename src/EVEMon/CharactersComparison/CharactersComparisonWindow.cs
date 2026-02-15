@@ -492,11 +492,18 @@ namespace EVEMon.CharactersComparison
         /// <param name="e">The <see cref="System.Windows.Forms.ToolStripItemClickedEventArgs"/> instance containing the event data.</param>
         private async void characterListContextMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
-            Character? character = e!.ClickedItem!.Tag as Character;
-            characterListContextMenu.Close();
+            try
+            {
+                Character? character = e!.ClickedItem!.Tag as Character;
+                characterListContextMenu.Close();
 
-            if (character != null)
-                await UIHelper.ExportCharacterSkillsAsPlanAsync(character);
+                if (character != null)
+                    await UIHelper.ExportCharacterSkillsAsPlanAsync(character);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -559,18 +566,25 @@ namespace EVEMon.CharactersComparison
         private async void exportSelectedSkillsAsPlanFromToolStripMenuItem_DropDownItemClicked(object? sender,
             ToolStripItemClickedEventArgs e)
         {
-            characterInfoContextMenu.Close();
+            try
+            {
+                characterInfoContextMenu.Close();
 
-            Character? character = e!.ClickedItem!.Tag as Character;
-            if (character == null)
-                return;
+                Character? character = e!.ClickedItem!.Tag as Character;
+                if (character == null)
+                    return;
 
-            IList<Skill> skills = lvCharacterInfo.SelectedItems.Cast<ListViewItem>()
-                .SelectMany(item => character.Skills.Where(skill => skill.Name == item.Text && skill.Level != 0))
-                .ToList();
+                IList<Skill> skills = lvCharacterInfo.SelectedItems.Cast<ListViewItem>()
+                    .SelectMany(item => character.Skills.Where(skill => skill.Name == item.Text && skill.Level != 0))
+                    .ToList();
 
-            if (skills.Any())
-                await UIHelper.ExportCharacterSkillsAsPlanAsync(character, skills);
+                if (skills.Any())
+                    await UIHelper.ExportCharacterSkillsAsPlanAsync(character, skills);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>

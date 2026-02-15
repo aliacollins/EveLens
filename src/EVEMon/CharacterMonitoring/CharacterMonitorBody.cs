@@ -44,6 +44,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subNotificationSent;
         private IDisposable? _subNotificationInvalidated;
         private IDisposable? _subESIKeyInfo;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -84,7 +85,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Subscribe events
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             _subAssets = agg.SubscribeOnUIForCharacter<CharacterAssetsUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
             _subMarketOrders = agg.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => m_character, e => EveMonClient_UpdatePageControls());
@@ -150,7 +151,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subESIKeyInfo?.Dispose();
             _subSettings?.Dispose();
             _subAssets?.Dispose();
@@ -1262,44 +1264,51 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void numberAbsFormatMenuItem_Click(object? sender, EventArgs e)
         {
-            if (multiPanel.SelectedPage == assetsPage)
+            try
             {
-                bool numberFormat = Settings.UI.MainWindow.Assets.NumberAbsFormat;
-                numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
-                Settings.UI.MainWindow.Assets.NumberAbsFormat = !numberFormat;
-                await assetsList.UpdateColumnsAsync();
-            }
+                if (multiPanel.SelectedPage == assetsPage)
+                {
+                    bool numberFormat = Settings.UI.MainWindow.Assets.NumberAbsFormat;
+                    numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
+                    Settings.UI.MainWindow.Assets.NumberAbsFormat = !numberFormat;
+                    await assetsList.UpdateColumnsAsync();
+                }
 
-            if (multiPanel.SelectedPage == ordersPage)
-            {
-                bool numberFormat = Settings.UI.MainWindow.MarketOrders.NumberAbsFormat;
-                numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
-                Settings.UI.MainWindow.MarketOrders.NumberAbsFormat = !numberFormat;
-                ordersList.UpdateColumns();
-            }
+                if (multiPanel.SelectedPage == ordersPage)
+                {
+                    bool numberFormat = Settings.UI.MainWindow.MarketOrders.NumberAbsFormat;
+                    numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
+                    Settings.UI.MainWindow.MarketOrders.NumberAbsFormat = !numberFormat;
+                    ordersList.UpdateColumns();
+                }
 
-            if (multiPanel.SelectedPage == contractsPage)
-            {
-                bool numberFormat = Settings.UI.MainWindow.Contracts.NumberAbsFormat;
-                numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
-                Settings.UI.MainWindow.Contracts.NumberAbsFormat = !numberFormat;
-                contractsList.UpdateColumns();
-            }
+                if (multiPanel.SelectedPage == contractsPage)
+                {
+                    bool numberFormat = Settings.UI.MainWindow.Contracts.NumberAbsFormat;
+                    numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
+                    Settings.UI.MainWindow.Contracts.NumberAbsFormat = !numberFormat;
+                    contractsList.UpdateColumns();
+                }
 
-            if (multiPanel.SelectedPage == walletJournalPage)
-            {
-                bool numberFormat = Settings.UI.MainWindow.WalletJournal.NumberAbsFormat;
-                numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
-                Settings.UI.MainWindow.WalletJournal.NumberAbsFormat = !numberFormat;
-                walletJournalList.UpdateColumns();
-            }
+                if (multiPanel.SelectedPage == walletJournalPage)
+                {
+                    bool numberFormat = Settings.UI.MainWindow.WalletJournal.NumberAbsFormat;
+                    numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
+                    Settings.UI.MainWindow.WalletJournal.NumberAbsFormat = !numberFormat;
+                    walletJournalList.UpdateColumns();
+                }
 
-            if (multiPanel.SelectedPage == walletTransactionsPage)
+                if (multiPanel.SelectedPage == walletTransactionsPage)
+                {
+                    bool numberFormat = Settings.UI.MainWindow.WalletTransactions.NumberAbsFormat;
+                    numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
+                    Settings.UI.MainWindow.WalletTransactions.NumberAbsFormat = !numberFormat;
+                    walletTransactionsList.UpdateColumns();
+                }
+            }
+            catch (Exception ex)
             {
-                bool numberFormat = Settings.UI.MainWindow.WalletTransactions.NumberAbsFormat;
-                numberAbsFormatMenuItem.Text = !numberFormat ? "Number Full Format" : "Number Abbreviating Format";
-                Settings.UI.MainWindow.WalletTransactions.NumberAbsFormat = !numberFormat;
-                walletTransactionsList.UpdateColumns();
+                System.Diagnostics.Debug.WriteLine($"Async error in numberAbsFormatMenuItem_Click: {ex}");
             }
         }
 

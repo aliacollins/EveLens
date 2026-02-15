@@ -144,20 +144,27 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void uploadSettingsFileButton_Click(object? sender, EventArgs e)
         {
-            ResetTextAndColor();
+            try
+            {
+                ResetTextAndColor();
 
-            if (s_queryPending)
-                return;
+                if (s_queryPending)
+                    return;
 
-            s_queryPending = true;
-            throbber.State = ThrobberState.Rotating;
-            throbber.Visible = true;
+                s_queryPending = true;
+                throbber.State = ThrobberState.Rotating;
+                throbber.Visible = true;
 
-            await Settings.SaveImmediateAsync();
+                await Settings.SaveImmediateAsync();
 
-            Task? uploadSettingsFileAsync = Provider?.UploadSettingsFileAsync();
-            if (uploadSettingsFileAsync != null)
-                await uploadSettingsFileAsync;
+                Task? uploadSettingsFileAsync = Provider?.UploadSettingsFileAsync();
+                if (uploadSettingsFileAsync != null)
+                    await uploadSettingsFileAsync;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in uploadSettingsFileButton_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -167,18 +174,25 @@ namespace EVEMon.SettingsUI
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void downloadSettingsFileButton_Click(object? sender, EventArgs e)
         {
-            ResetTextAndColor();
+            try
+            {
+                ResetTextAndColor();
 
-            if (s_queryPending)
-                return;
+                if (s_queryPending)
+                    return;
 
-            s_queryPending = true;
-            throbber.State = ThrobberState.Rotating;
-            throbber.Visible = true;
+                s_queryPending = true;
+                throbber.State = ThrobberState.Rotating;
+                throbber.Visible = true;
 
-            Task? downloadSettingsFileAsync = Provider?.DownloadSettingsFileAsync();
-            if (downloadSettingsFileAsync != null)
-                await downloadSettingsFileAsync;
+                Task? downloadSettingsFileAsync = Provider?.DownloadSettingsFileAsync();
+                if (downloadSettingsFileAsync != null)
+                    await downloadSettingsFileAsync;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in downloadSettingsFileButton_Click: {ex}");
+            }
         }
 
         #endregion

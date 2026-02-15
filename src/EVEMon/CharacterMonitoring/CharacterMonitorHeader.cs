@@ -45,6 +45,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subCharLabel;
         private IDisposable? _subSettings;
         private IDisposable? _subESIKeyInfo;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -89,7 +90,7 @@ namespace EVEMon.CharacterMonitoring
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             _subCharLabel = agg.SubscribeOnUI<CharacterLabelChangedEvent>(this, e => EveMonClient_CharacterLabelChanged(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subESIKeyInfo = agg.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, e => EveMonClient_ESIKeyInfoUpdated());
             SkillSummaryPanel.Click += SkillSummaryPanel_Click;
             Disposed += OnDisposed;
@@ -124,7 +125,8 @@ namespace EVEMon.CharacterMonitoring
             _subConquerableStation?.Dispose();
             _subCharLabel?.Dispose();
             _subSettings?.Dispose();
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subESIKeyInfo?.Dispose();
             SkillSummaryPanel.Click -= SkillSummaryPanel_Click;
             Disposed -= OnDisposed;

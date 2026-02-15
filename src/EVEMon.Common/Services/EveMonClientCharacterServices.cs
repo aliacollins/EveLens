@@ -12,33 +12,58 @@ namespace EVEMon.Common.Services
     /// <summary>
     /// Production implementation that delegates to EveMonClient statics.
     /// Singleton -- all CCPCharacter instances share one.
+    /// Subscribes to EventAggregator for timer and global events, then
+    /// raises its own CLR events so that existing ICharacterServices
+    /// consumers continue to work without change.
     /// </summary>
-    internal sealed class EveMonClientCharacterServices : ICharacterServices
+    internal sealed class EveMonClientCharacterServices : ICharacterServices, IDisposable
     {
         internal static readonly EveMonClientCharacterServices Instance = new();
 
+        private EventHandler? _secondTick;
+        private EventHandler? _fiveSecondTick;
+        private EventHandler? _esiKeyInfoUpdated;
+        private EventHandler? _eveIDToNameUpdated;
+
+        private IDisposable? _subSecondTick;
+        private IDisposable? _subFiveSecondTick;
+        private IDisposable? _subESIKeyInfoUpdated;
+        private IDisposable? _subEveIDToNameUpdated;
+
+        private EveMonClientCharacterServices()
+        {
+            _subSecondTick = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
+                e => _secondTick?.Invoke(this, EventArgs.Empty));
+            _subFiveSecondTick = AppServices.EventAggregator?.Subscribe<FiveSecondTickEvent>(
+                e => _fiveSecondTick?.Invoke(this, EventArgs.Empty));
+            _subESIKeyInfoUpdated = AppServices.EventAggregator?.Subscribe<CommonEvents.ESIKeyInfoUpdatedEvent>(
+                e => _esiKeyInfoUpdated?.Invoke(this, EventArgs.Empty));
+            _subEveIDToNameUpdated = AppServices.EventAggregator?.Subscribe<CommonEvents.EveIDToNameUpdatedEvent>(
+                e => _eveIDToNameUpdated?.Invoke(this, EventArgs.Empty));
+        }
+
         public event EventHandler SecondTick
         {
-            add => EveMonClient.SecondTick += value;
-            remove => EveMonClient.SecondTick -= value;
+            add => _secondTick += value;
+            remove => _secondTick -= value;
         }
 
         public event EventHandler FiveSecondTick
         {
-            add => EveMonClient.FiveSecondTick += value;
-            remove => EveMonClient.FiveSecondTick -= value;
+            add => _fiveSecondTick += value;
+            remove => _fiveSecondTick -= value;
         }
 
         public event EventHandler ESIKeyInfoUpdated
         {
-            add => EveMonClient.ESIKeyInfoUpdated += value;
-            remove => EveMonClient.ESIKeyInfoUpdated -= value;
+            add => _esiKeyInfoUpdated += value;
+            remove => _esiKeyInfoUpdated -= value;
         }
 
         public event EventHandler EveIDToNameUpdated
         {
-            add => EveMonClient.EveIDToNameUpdated += value;
-            remove => EveMonClient.EveIDToNameUpdated -= value;
+            add => _eveIDToNameUpdated += value;
+            remove => _eveIDToNameUpdated -= value;
         }
 
         public void OnCharacterUpdated(Character c)
@@ -90,5 +115,17 @@ namespace EVEMon.Common.Services
         public bool AnyESIKeyUnprocessed() => AppServices.ESIKeys.Any(k => !k.IsProcessed);
 
         public GlobalNotificationCollection Notifications => AppServices.Notifications;
+
+        public void Dispose()
+        {
+            _subSecondTick?.Dispose();
+            _subSecondTick = null;
+            _subFiveSecondTick?.Dispose();
+            _subFiveSecondTick = null;
+            _subESIKeyInfoUpdated?.Dispose();
+            _subESIKeyInfoUpdated = null;
+            _subEveIDToNameUpdated?.Dispose();
+            _subEveIDToNameUpdated = null;
+        }
     }
 }

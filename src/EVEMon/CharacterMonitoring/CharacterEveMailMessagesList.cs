@@ -47,6 +47,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subMailBody;
         private IDisposable? _subEveIDToName;
         private IDisposable? _subNotificationSent;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -198,7 +199,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subMailMessages = agg.SubscribeOnUIForCharacter<CharacterEVEMailMessagesUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVEMailMessagesUpdated(e));
             _subMailingLists = agg.SubscribeOnUIForCharacter<CharacterEVEMailingListsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVEMailingListsUpdated(e));
             _subMailBody = agg.SubscribeOnUIForCharacter<CharacterEVEMailBodyDownloadedEvent>(this, () => Character, e => EveMonClient_CharacterEVEMailBodyDownloaded(e));
@@ -214,7 +215,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subMailMessages?.Dispose();
             _subMailingLists?.Dispose();
             _subMailBody?.Dispose();

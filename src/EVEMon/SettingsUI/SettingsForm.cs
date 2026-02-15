@@ -262,13 +262,20 @@ namespace EVEMon.SettingsUI
         /// <param name="e"></param>
         private async void btnOk_Click(object sender, EventArgs e)
         {
-            // Return settings
-            ApplyToSettings();
+            try
+            {
+                // Return settings
+                ApplyToSettings();
 
-            if (SettingsChanged)
-                await Settings.ImportAsync(m_settings, true);
+                if (SettingsChanged)
+                    await Settings.ImportAsync(m_settings, true);
 
-            Close();
+                Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in btnOk_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -279,16 +286,23 @@ namespace EVEMon.SettingsUI
         /// <param name="e"></param>
         private async void applyButton_Click(object sender, EventArgs e)
         {
-            ApplyToSettings();
+            try
+            {
+                ApplyToSettings();
 
-            if (!SettingsChanged)
-                return;
+                if (!SettingsChanged)
+                    return;
 
-            // Import the new settings
-            await Settings.ImportAsync(m_settings, true);
+                // Import the new settings
+                await Settings.ImportAsync(m_settings, true);
 
-            // Refresh the old settings
-            m_oldSettings = Settings.Export();
+                // Refresh the old settings
+                m_oldSettings = Settings.Export();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in applyButton_Click: {ex}");
+            }
         }
 
         #endregion
@@ -1026,12 +1040,19 @@ namespace EVEMon.SettingsUI
         /// <param name="e"></param>
         private async void cloudStorageProvidersComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (m_isLoading)
-                return;
+            try
+            {
+                if (m_isLoading)
+                    return;
 
-            m_settings.CloudStorageServiceProvider.ProviderName = cloudStorageProvidersComboBox.SelectedItem?.ToString()!;
-            cloudStorageProviderLogoPictureBox.Image = m_settings.CloudStorageServiceProvider.Provider?.Logo;
-            await cloudStorageServiceControl.CheckAPIAuthIsValidAsync(forceRecheck: true);
+                m_settings.CloudStorageServiceProvider.ProviderName = cloudStorageProvidersComboBox.SelectedItem?.ToString()!;
+                cloudStorageProviderLogoPictureBox.Image = m_settings.CloudStorageServiceProvider.Provider?.Logo;
+                await cloudStorageServiceControl.CheckAPIAuthIsValidAsync(forceRecheck: true);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in cloudStorageProvidersComboBox_SelectedIndexChanged: {ex}");
+            }
         }
 
         /// <summary>

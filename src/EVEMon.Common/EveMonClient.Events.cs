@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
-using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Notifications;
@@ -35,36 +34,6 @@ namespace EVEMon.Common
         #region Events firing
 
         /// <summary>
-        /// Occurs every second. Use for skill countdowns and visible UI updates only.
-        /// </summary>
-        public static event EventHandler? SecondTick;
-
-        /// <summary>
-        /// Occurs every 5 seconds. Use for API cache checks and moderate-frequency updates.
-        /// </summary>
-        public static event EventHandler? FiveSecondTick;
-
-        /// <summary>
-        /// Occurs every 30 seconds. Use for background tasks like settings save checks.
-        /// </summary>
-        public static event EventHandler? ThirtySecondTick;
-
-        /// <summary>
-        /// Occurs when the settings changed.
-        /// </summary>
-        public static event EventHandler? SettingsChanged;
-
-        /// <summary>
-        /// Occurs when the ESI key info have been updated.
-        /// </summary>
-        public static event EventHandler? ESIKeyInfoUpdated;
-
-        /// <summary>
-        /// Occurs when the EveIDToName list has been updated.
-        /// </summary>
-        public static event EventHandler? EveIDToNameUpdated;
-
-        /// <summary>
         /// Fires the timer tick event to notify the subscribers.
         /// Uses tiered system to reduce overhead for 100+ character scenarios.
         /// </summary>
@@ -87,20 +56,17 @@ namespace EVEMon.Common
 
                 // Fire tiered events
                 // SecondTick - every 1 second (skill countdowns, visible UI)
-                SecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
                 AppServices.EventAggregator?.Publish(SecondTickEvent.Instance);
 
                 // FiveSecondTick - every 5 seconds (API checks, cache expiry)
                 if (s_tickCounter % 5 == 0)
                 {
-                    FiveSecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
                     AppServices.EventAggregator?.Publish(FiveSecondTickEvent.Instance);
                 }
 
                 // ThirtySecondTick - every 30 seconds (background tasks)
                 if (s_tickCounter % 30 == 0)
                 {
-                    ThirtySecondTick?.ThreadSafeInvoke(null, EventArgs.Empty);
                     AppServices.EventAggregator?.Publish(ThirtySecondTickEvent.Instance);
                     s_tickCounter = 0; // Reset to prevent overflow
                 }
@@ -121,9 +87,8 @@ namespace EVEMon.Common
 
             Trace();
             UpdateSettings();
-            SettingsChanged?.ThreadSafeInvoke(null, EventArgs.Empty);
 
-            // Bridge to EventAggregator for new code
+            // Publish to EventAggregator (all subscribers migrated)
             // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(SettingsChangedEvent.Instance);
             AppServices.EventAggregator?.Publish(CommonEvents.SettingsChangedEvent.Instance);
@@ -245,9 +210,8 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            EveIDToNameUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
-            // Bridge to EventAggregator for new code
+            // Publish to EventAggregator (all subscribers migrated)
             AppServices.EventAggregator?.Publish(CommonEvents.EveIDToNameUpdatedEvent.Instance);
         }
 
@@ -303,9 +267,8 @@ namespace EVEMon.Common
                 return;
 
             Trace(esiKey.ToString());
-            ESIKeyInfoUpdated?.ThreadSafeInvoke(null, EventArgs.Empty);
 
-            // Bridge to EventAggregator for new code
+            // Publish to EventAggregator (all subscribers migrated)
             // Settings.Save() is handled by SettingsSaveSubscriber
             AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
         }

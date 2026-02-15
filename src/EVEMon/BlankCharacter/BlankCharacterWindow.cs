@@ -3,11 +3,15 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Controls;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Services;
+using EVEMon.Core.Events;
 
 namespace EVEMon.BlankCharacter
 {
     public partial class BlankCharacterWindow : EVEMonForm
     {
+        private IDisposable? _fiveSecondTickSub;
+
         #region Constructor
 
         /// <summary>
@@ -31,7 +35,7 @@ namespace EVEMon.BlankCharacter
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void BlankCharacterWindow_Load(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _fiveSecondTickSub = AppServices.EventAggregator?.Subscribe<FiveSecondTickEvent>(e => EveMonClient_TimerTick(null, EventArgs.Empty));
             Disposed += OnDisposed;
 
             buttonOK.Text = "Create";
@@ -45,7 +49,8 @@ namespace EVEMon.BlankCharacter
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _fiveSecondTickSub?.Dispose();
+            _fiveSecondTickSub = null;
             Disposed -= OnDisposed;
         }
 

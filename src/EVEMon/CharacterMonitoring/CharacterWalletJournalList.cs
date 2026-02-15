@@ -41,6 +41,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subRefTypes;
         private IDisposable? _subEveIDToName;
         private IDisposable? _subWalletJournal;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -180,7 +181,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subRefTypes = agg.SubscribeOnUI<RefTypesUpdatedEvent>(this, e => EveMonClient_RefTypesUpdated());
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subWalletJournal = agg.SubscribeOnUIForCharacter<CharacterWalletJournalUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterWalletJournalUpdated(e));
@@ -194,7 +195,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subRefTypes?.Dispose();
             _subEveIDToName?.Dispose();
             _subWalletJournal?.Dispose();

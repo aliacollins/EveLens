@@ -1279,7 +1279,14 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void tsmiExportPlan_Click(object? sender,EventArgs e)
         {
-            await UIHelper.ExportPlanAsync(m_plan!);
+            try
+            {
+                await UIHelper.ExportPlanAsync(m_plan!);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in tsmiExportPlan_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -1289,7 +1296,14 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void tsmiAfterPlanCharacter_Click(object? sender,EventArgs e)
         {
-            await UIHelper.ExportCharacterAsync(m_character!, m_plan!);
+            try
+            {
+                await UIHelper.ExportCharacterAsync(m_character!, m_plan!);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in tsmiAfterPlanCharacter_Click: {ex}");
+            }
         }
 
         /// <summary>

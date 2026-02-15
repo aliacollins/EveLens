@@ -116,19 +116,26 @@ namespace EVEMon.ApiCredentialsManagement
         /// <param name="e"></param>
         private async void fileButton_Click(object? sender, EventArgs e)
         {
-            using (OpenFileDialog form = new OpenFileDialog())
+            try
             {
-                form.Title = @"Import character file";
-                form.Filter = @"CCP XML Character (*.xml)|*.xml";
-                form.FilterIndex = 0;
+                using (OpenFileDialog form = new OpenFileDialog())
+                {
+                    form.Title = @"Import character file";
+                    form.Filter = @"CCP XML Character (*.xml)|*.xml";
+                    form.FilterIndex = 0;
 
-                DialogResult dr = form.ShowDialog();
-                if (dr == DialogResult.Cancel)
-                    return;
+                    DialogResult dr = form.ShowDialog();
+                    if (dr == DialogResult.Cancel)
+                        return;
 
-                fileTextBox.Text = form.FileName;
-                fileRadio.Checked = true;
-                await TryUri(form.FileName);
+                    fileTextBox.Text = form.FileName;
+                    fileRadio.Checked = true;
+                    await TryUri(form.FileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
             }
         }
 

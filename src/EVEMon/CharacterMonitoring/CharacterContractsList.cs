@@ -50,6 +50,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subConquerableStation;
         private IDisposable? _subCharContractItems;
         private IDisposable? _subCorpContractItems;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -217,7 +218,7 @@ namespace EVEMon.CharacterMonitoring
             m_tooltip = new InfiniteDisplayToolTip(lvContracts);
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subContracts = agg.SubscribeOnUIForCharacter<ContractsUpdatedEvent>(this, () => Character, e => EveMonClient_ContractsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
@@ -235,7 +236,8 @@ namespace EVEMon.CharacterMonitoring
         {
             m_tooltip.Dispose();
 
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subContracts?.Dispose();
             _subEveIDToName?.Dispose();
             _subConquerableStation?.Dispose();

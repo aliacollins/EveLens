@@ -23,6 +23,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subSettings;
         private IDisposable? _subScheduler;
         private IDisposable? _subSkillQueuesBatch;
+        private IDisposable? _tickSub;
 
 
         #region Constructor
@@ -63,7 +64,7 @@ namespace EVEMon.CharacterMonitoring
 
             // Subscribe events
             var agg = AppServices.EventAggregator;
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
             _subScheduler = agg.SubscribeOnUI<SchedulerChangedEvent>(this, e => EveMonClient_SchedulerChanged());
             _subSkillQueuesBatch = agg.SubscribeOnUIForCharacterBatch<SkillQueuesBatchUpdatedEvent>(this, () => m_character, e => EveMonClient_SkillQueuesBatchUpdated(e));
@@ -92,7 +93,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subSettings?.Dispose();
             _subScheduler?.Dispose();
             _subSkillQueuesBatch?.Dispose();
@@ -318,15 +320,22 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void btnUpdateCalendar_Click(object? sender, EventArgs e)
         {
-            // Ensure that we are trying to use the external calendar
-            if (!Settings.Calendar.Enabled)
+            try
             {
-                btnAddToCalendar.Visible = false;
-                return;
-            }
+                // Ensure that we are trying to use the external calendar
+                if (!Settings.Calendar.Enabled)
+                {
+                    btnAddToCalendar.Visible = false;
+                    return;
+                }
 
-            if (m_character is CCPCharacter)
-                await ExternalCalendar.UpdateCalendar((m_character as CCPCharacter)!);
+                if (m_character is CCPCharacter)
+                    await ExternalCalendar.UpdateCalendar((m_character as CCPCharacter)!);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         #endregion

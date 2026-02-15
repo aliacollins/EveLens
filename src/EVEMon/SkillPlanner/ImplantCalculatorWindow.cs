@@ -250,14 +250,21 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void nudIntelligence_ValueChanged(object? sender, EventArgs e)
         {
-            UpdateAttributeLabels(EveAttribute.Intelligence, (int)nudIntelligence.Value,
-                lblAdjustIntelligence, lblEffectiveIntelligence);
+            try
+            {
+                UpdateAttributeLabels(EveAttribute.Intelligence, (int)nudIntelligence.Value,
+                    lblAdjustIntelligence, lblEffectiveIntelligence);
 
-            if (!m_init)
-                return;
+                if (!m_init)
+                    return;
 
-            //  Update all the times on the right pane
-            await UpdateTimesAsync();
+                //  Update all the times on the right pane
+                await UpdateTimesAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -267,14 +274,21 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void nudCharisma_ValueChanged(object? sender, EventArgs e)
         {
-            UpdateAttributeLabels(EveAttribute.Charisma, (int)nudCharisma.Value,
-                lblAdjustCharisma, lblEffectiveCharisma);
+            try
+            {
+                UpdateAttributeLabels(EveAttribute.Charisma, (int)nudCharisma.Value,
+                    lblAdjustCharisma, lblEffectiveCharisma);
 
-            if (!m_init)
-                return;
+                if (!m_init)
+                    return;
 
-            //  Update all the times on the right pane
-            await UpdateTimesAsync();
+                //  Update all the times on the right pane
+                await UpdateTimesAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -284,14 +298,21 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void nudPerception_ValueChanged(object? sender, EventArgs e)
         {
-            UpdateAttributeLabels(EveAttribute.Perception, (int)nudPerception.Value,
-                lblAdjustPerception, lblEffectivePerception);
+            try
+            {
+                UpdateAttributeLabels(EveAttribute.Perception, (int)nudPerception.Value,
+                    lblAdjustPerception, lblEffectivePerception);
 
-            if (!m_init)
-                return;
+                if (!m_init)
+                    return;
 
-            //  Update all the times on the right pane
-            await UpdateTimesAsync();
+                //  Update all the times on the right pane
+                await UpdateTimesAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -301,14 +322,21 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void nudMemory_ValueChanged(object? sender, EventArgs e)
         {
-            UpdateAttributeLabels(EveAttribute.Memory, (int)nudMemory.Value,
-                lblAdjustMemory, lblEffectiveMemory);
+            try
+            {
+                UpdateAttributeLabels(EveAttribute.Memory, (int)nudMemory.Value,
+                    lblAdjustMemory, lblEffectiveMemory);
 
-            if (!m_init)
-                return;
+                if (!m_init)
+                    return;
 
-            //  Update all the times on the right pane
-            await UpdateTimesAsync();
+                //  Update all the times on the right pane
+                await UpdateTimesAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -318,14 +346,21 @@ namespace EVEMon.SkillPlanner
         /// <param name="e"></param>
         private async void nudWillpower_ValueChanged(object? sender, EventArgs e)
         {
-            UpdateAttributeLabels(EveAttribute.Willpower, (int)nudWillpower.Value,
-                lblAdjustWillpower, lblEffectiveWillpower);
+            try
+            {
+                UpdateAttributeLabels(EveAttribute.Willpower, (int)nudWillpower.Value,
+                    lblAdjustWillpower, lblEffectiveWillpower);
 
-            if (!m_init)
-                return;
+                if (!m_init)
+                    return;
 
-            //  Update all the times on the right pane
-            await UpdateTimesAsync();
+                //  Update all the times on the right pane
+                await UpdateTimesAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>

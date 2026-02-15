@@ -79,12 +79,13 @@ namespace EVEMon
         private IDisposable? _subNotificationInvalidated;
         private IDisposable? _subMonitoredCharacterCollectionChanged;
         private IDisposable? _subServerStatusUpdated;
-        private static IDisposable? s_subQueuedSkillsCompleted;
+        private IDisposable? _subQueuedSkillsCompleted;
         private IDisposable? _subSettingsChanged;
         private IDisposable? _subCharacterLabelChanged;
         private IDisposable? _subESIKeyInfoUpdated;
         private IDisposable? _subUpdateAvailable;
         private IDisposable? _subDataUpdateAvailable;
+        private IDisposable? _subSecondTick;
 
         #endregion
 
@@ -220,9 +221,9 @@ namespace EVEMon
             _subNotificationInvalidated = AppServices.EventAggregator.SubscribeOnUI<NotificationInvalidatedEvent>(this, OnNotificationInvalidated);
             _subMonitoredCharacterCollectionChanged = AppServices.EventAggregator.SubscribeOnUI<MonitoredCharacterCollectionChangedEvent>(this, OnMonitoredCharacterCollectionChanged);
             _subServerStatusUpdated = AppServices.EventAggregator.SubscribeOnUI<ServerStatusUpdatedEvent>(this, OnServerStatusUpdated);
-            s_subQueuedSkillsCompleted = AppServices.EventAggregator.Subscribe<QueuedSkillsCompletedEvent>(OnQueuedSkillsCompleted);
+            _subQueuedSkillsCompleted = AppServices.EventAggregator.Subscribe<QueuedSkillsCompletedEvent>(OnQueuedSkillsCompleted);
             _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _subSecondTick = AppServices.EventAggregator?.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subCharacterLabelChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterLabelChangedEvent>(this, OnCharacterLabelChanged);
             _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
@@ -236,30 +237,37 @@ namespace EVEMon
         /// <param name="e">A <see cref="T:System.EventArgs"/> that contains the event data.</param>
         protected override async void OnShown(EventArgs e)
         {
-            base.OnShown(e);
-
-            if (!m_initialized)
-                await InitializeData();
-
-            // Pre-release warning for alpha/beta builds
-            if (EveMonClient.IsPreReleaseVersion)
+            try
             {
-                string versionType = EveMonClient.IsAlphaVersion ? "ALPHA" : "BETA";
-                string warningKey = $"prerelease-{AppServices.VersionString}";
-                string warningTitle = $"{versionType} Build Warning";
-                string warningMessage = $"You are running EVEMon {versionType} version {AppServices.VersionString}.\n\n" +
-                    $"This is a pre-release build intended for testing purposes. " +
-                    $"It may contain bugs, incomplete features, or unexpected behavior.\n\n" +
-                    $"Please report any issues on GitHub:\n" +
-                    $"https://github.com/aliacollins/evemon/issues\n\n" +
-                    $"Thank you for helping test EVEMon!";
+                base.OnShown(e);
 
-                TipWindow.ShowTip(this, warningKey, warningTitle, warningMessage);
+                if (!m_initialized)
+                    await InitializeData();
+
+                // Pre-release warning for alpha/beta builds
+                if (EveMonClient.IsPreReleaseVersion)
+                {
+                    string versionType = EveMonClient.IsAlphaVersion ? "ALPHA" : "BETA";
+                    string warningKey = $"prerelease-{AppServices.VersionString}";
+                    string warningTitle = $"{versionType} Build Warning";
+                    string warningMessage = $"You are running EVEMon {versionType} version {AppServices.VersionString}.\n\n" +
+                        $"This is a pre-release build intended for testing purposes. " +
+                        $"It may contain bugs, incomplete features, or unexpected behavior.\n\n" +
+                        $"Please report any issues on GitHub:\n" +
+                        $"https://github.com/aliacollins/evemon/issues\n\n" +
+                        $"Thank you for helping test EVEMon!";
+
+                    TipWindow.ShowTip(this, warningKey, warningTitle, warningMessage);
+                }
+
+                // Welcome message
+                TipWindow.ShowTip(this, "startup", "Getting Started", Properties.Resources.
+                    MessageGettingStarted);
             }
-
-            // Welcome message
-            TipWindow.ShowTip(this, "startup", "Getting Started", Properties.Resources.
-                MessageGettingStarted);
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -431,11 +439,26 @@ namespace EVEMon
             _subNotificationInvalidated?.Dispose();
             _subMonitoredCharacterCollectionChanged?.Dispose();
             _subServerStatusUpdated?.Dispose();
-            s_subQueuedSkillsCompleted?.Dispose();
+            _subQueuedSkillsCompleted?.Dispose();
             _subSettingsChanged?.Dispose();
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _subSecondTick?.Dispose();
             _subCharacterLabelChanged?.Dispose();
             _subESIKeyInfoUpdated?.Dispose();
+            _subUpdateAvailable?.Dispose();
+            _subDataUpdateAvailable?.Dispose();
+
+            // Null out references to help GC
+            _subNotificationSent = null;
+            _subNotificationInvalidated = null;
+            _subMonitoredCharacterCollectionChanged = null;
+            _subServerStatusUpdated = null;
+            _subQueuedSkillsCompleted = null;
+            _subSettingsChanged = null;
+            _subSecondTick = null;
+            _subCharacterLabelChanged = null;
+            _subESIKeyInfoUpdated = null;
+            _subUpdateAvailable = null;
+            _subDataUpdateAvailable = null;
         }
 
         /// <summary>
@@ -1341,45 +1364,52 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void OnUpdateAvailable(UpdateAvailableEvent evt)
         {
-            var e = evt.Args;
-
-            // Notify the user and prompt him
-            if (m_isShowingUpdateWindow)
-                return;
-
-            m_isShowingUpdateWindow = true;
-
-            // New release of the same major version available
-            if (!string.IsNullOrWhiteSpace(e.UpdateMessage))
+            try
             {
-                using (UpdateNotifyForm form = new UpdateNotifyForm(e))
-                {
-                    if (form.ShowDialog() == DialogResult.OK)
-                    {
-                        m_isUpdating = true;
+                var e = evt.Args;
 
-                        // Save the settings to make sure we don't lose anything
-                        await Settings.SaveImmediateAsync();
-                        Close();
+                // Notify the user and prompt him
+                if (m_isShowingUpdateWindow)
+                    return;
+
+                m_isShowingUpdateWindow = true;
+
+                // New release of the same major version available
+                if (!string.IsNullOrWhiteSpace(e.UpdateMessage))
+                {
+                    using (UpdateNotifyForm form = new UpdateNotifyForm(e))
+                    {
+                        if (form.ShowDialog() == DialogResult.OK)
+                        {
+                            m_isUpdating = true;
+
+                            // Save the settings to make sure we don't lose anything
+                            await Settings.SaveImmediateAsync();
+                            Close();
+                        }
                     }
                 }
+                // new major version release
+                else
+                {
+                    string message = $"A new version ({e.NewestVersion}) is available at " +
+                        $"{NetworkConstants.EVEMonMainPage}.{Environment.NewLine}" +
+                        $"{Environment.NewLine}Your current version is: {e.CurrentVersion}.";
+
+                    MessageBoxCustom.Show(this, message, @"EVEMon Update Available", "Ignore this upgrade",
+                        icon: MessageBoxIcon.Information);
+
+                    if (MessageBoxCustom.CheckBoxChecked)
+                        Settings.Updates.MostRecentDeniedMajorUpgrade = e.NewestVersion.ToString();
+                }
+
+                m_isShowingUpdateWindow = false;
+                m_isUpdating = false;
             }
-            // new major version release
-            else
+            catch (Exception ex)
             {
-                string message = $"A new version ({e.NewestVersion}) is available at " +
-                    $"{NetworkConstants.EVEMonMainPage}.{Environment.NewLine}" +
-                    $"{Environment.NewLine}Your current version is: {e.CurrentVersion}.";
-
-                MessageBoxCustom.Show(this, message, @"EVEMon Update Available", "Ignore this upgrade",
-                    icon: MessageBoxIcon.Information);
-
-                if (MessageBoxCustom.CheckBoxChecked)
-                    Settings.Updates.MostRecentDeniedMajorUpgrade = e.NewestVersion.ToString();
+                ExceptionHandler.LogException(ex, true);
             }
-
-            m_isShowingUpdateWindow = false;
-            m_isUpdating = false;
         }
 
         /// <summary>
@@ -1389,20 +1419,27 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void OnDataUpdateAvailable(DataUpdateAvailableEvent evt)
         {
-            var e = evt.Args;
-
-            if (m_isShowingDataUpdateWindow)
-                return;
-
-            m_isShowingDataUpdateWindow = true;
-            using (DataUpdateNotifyForm form = new DataUpdateNotifyForm(e))
+            try
             {
-                if (form.ShowDialog() == DialogResult.OK)
-                    await RestartApplicationAsync();
-            }
+                var e = evt.Args;
 
-            m_isShowingDataUpdateWindow = false;
-            m_isUpdatingData = false;
+                if (m_isShowingDataUpdateWindow)
+                    return;
+
+                m_isShowingDataUpdateWindow = true;
+                using (DataUpdateNotifyForm form = new DataUpdateNotifyForm(e))
+                {
+                    if (form.ShowDialog() == DialogResult.OK)
+                        await RestartApplicationAsync();
+                }
+
+                m_isShowingDataUpdateWindow = false;
+                m_isUpdatingData = false;
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1527,12 +1564,19 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void saveCharacterInfosMenuItem_Click(object? sender, EventArgs e)
         {
-            Character? character = GetCurrentCharacter();
-            if (character == null)
-                return;
+            try
+            {
+                Character? character = GetCurrentCharacter();
+                if (character == null)
+                    return;
 
-            UIHelper.CharacterMonitorScreenshot = GetCurrentMonitor().GetCharacterScreenshot();
-            await UIHelper.ExportCharacterAsync(character);
+                UIHelper.CharacterMonitorScreenshot = GetCurrentMonitor().GetCharacterScreenshot();
+                await UIHelper.ExportCharacterAsync(character);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1542,13 +1586,20 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void saveSettingsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            // Prompts the user for a location
-            saveFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            DialogResult result = saveFileDialog.ShowDialog();
+            try
+            {
+                // Prompts the user for a location
+                saveFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+                DialogResult result = saveFileDialog.ShowDialog();
 
-            // Copy settings if OK
-            if (result == DialogResult.OK)
-                await Settings.CopySettingsAsync(saveFileDialog.FileName);
+                // Copy settings if OK
+                if (result == DialogResult.OK)
+                    await Settings.CopySettingsAsync(saveFileDialog.FileName);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1558,34 +1609,41 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void loadSettingsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            // Prompts the user for a location
-            openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            try
+            {
+                // Prompts the user for a location
+                openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 
-            // Load settings if OK
-            if (openFileDialog.ShowDialog() != DialogResult.OK)
-                return;
+                // Load settings if OK
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                    return;
 
-            // Clear any notifications
-            ClearNotifications();
+                // Clear any notifications
+                ClearNotifications();
 
-            // Close any open character associated windows
-            WindowsFactory.CloseAllTagged();
+                // Close any open character associated windows
+                WindowsFactory.CloseAllTagged();
 
-            // Hide the TabControl
-            noCharactersLabel.Hide();
-            tcCharacterTabs.Hide();
-            mainLoadingThrobber.State = ThrobberState.Rotating;
-            mainLoadingThrobber.Show();
-            tabLoadingLabel.Show();
+                // Hide the TabControl
+                noCharactersLabel.Hide();
+                tcCharacterTabs.Hide();
+                mainLoadingThrobber.State = ThrobberState.Rotating;
+                mainLoadingThrobber.Show();
+                tabLoadingLabel.Show();
 
-            UpdateSettingsControlsVisibility(enabled: false);
+                UpdateSettingsControlsVisibility(enabled: false);
 
-            // Open the specified settings
-            await Settings.RestoreAsync(openFileDialog.FileName);
+                // Open the specified settings
+                await Settings.RestoreAsync(openFileDialog.FileName);
 
-            // Remove the tip window if it exist and is confirmed in settings
-            if (Settings.UI.ConfirmedTips.Contains("startup") && Controls.OfType<TipWindow>().Any())
-                Controls.Remove(Controls.OfType<TipWindow>().First());
+                // Remove the tip window if it exist and is confirmed in settings
+                if (Settings.UI.ConfirmedTips.Contains("startup") && Controls.OfType<TipWindow>().Any())
+                    Controls.Remove(Controls.OfType<TipWindow>().First());
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1613,31 +1671,38 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void resetSettingsToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            // Manually delete the Settings file for any non-recoverable errors
-            DialogResult dr = MessageBox.Show(Properties.Resources.PromptResetSettings,
-                @"Confirm Settings Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
-                MessageBoxDefaultButton.Button2);
+            try
+            {
+                // Manually delete the Settings file for any non-recoverable errors
+                DialogResult dr = MessageBox.Show(Properties.Resources.PromptResetSettings,
+                    @"Confirm Settings Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button2);
 
-            if (dr != DialogResult.Yes)
-                return;
+                if (dr != DialogResult.Yes)
+                    return;
 
-            // Close any open character associated windows
-            WindowsFactory.CloseAllTagged();
+                // Close any open character associated windows
+                WindowsFactory.CloseAllTagged();
 
-            // Clear any notifications
-            ClearNotifications();
+                // Clear any notifications
+                ClearNotifications();
 
-            // Hide the TabControl
-            tcCharacterTabs.Hide();
+                // Hide the TabControl
+                tcCharacterTabs.Hide();
 
-            // Reset the settings
-            await Settings.ResetAsync();
+                // Reset the settings
+                await Settings.ResetAsync();
 
-            // Show the TabControl
-            tcCharacterTabs.Show();
+                // Show the TabControl
+                tcCharacterTabs.Show();
 
-            // Trigger the tip window
-            OnShown(e);
+                // Trigger the tip window
+                OnShown(e);
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -1647,11 +1712,18 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void exitToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            // Try to save settings to cloud storage service provider
-            bool canExit = await TryUploadToCloudStorageProviderAsync();
+            try
+            {
+                // Try to save settings to cloud storage service provider
+                bool canExit = await TryUploadToCloudStorageProviderAsync();
 
-            if (canExit)
-                Application.Exit();
+                if (canExit)
+                    Application.Exit();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -2386,11 +2458,18 @@ namespace EVEMon
         /// <param name="e"></param>
         private async void closeToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            // Try to save settings to cloud storage service provider
-            bool canExit = await TryUploadToCloudStorageProviderAsync();
+            try
+            {
+                // Try to save settings to cloud storage service provider
+                bool canExit = await TryUploadToCloudStorageProviderAsync();
 
-            if (canExit)
-                Application.Exit();
+                if (canExit)
+                    Application.Exit();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         /// <summary>
@@ -2655,7 +2734,14 @@ namespace EVEMon
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private async void restartToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            await RestartApplicationAsync();
+            try
+            {
+                await RestartApplicationAsync();
+            }
+            catch (Exception ex)
+            {
+                ExceptionHandler.LogException(ex, true);
+            }
         }
 
         #endregion

@@ -46,6 +46,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subColonies;
         private IDisposable? _subLayout;
         private IDisposable? _subPinsCompleted;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -199,7 +200,7 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Interval = 1000;
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subColonies = agg.SubscribeOnUIForCharacter<CharacterPlanetaryColoniesUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryColoniesUpdated(e));
             _subLayout = agg.SubscribeOnUIForCharacter<CharacterPlanetaryLayoutUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryLayoutUpdated(e));
             _subPinsCompleted = agg.SubscribeOnUIForCharacter<CharacterPlanetaryPinsCompletedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryPinsCompleted());
@@ -215,7 +216,8 @@ namespace EVEMon.CharacterMonitoring
         {
             m_refreshTimer.Dispose();
 
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subColonies?.Dispose();
             _subLayout?.Dispose();
             _subPinsCompleted?.Dispose();

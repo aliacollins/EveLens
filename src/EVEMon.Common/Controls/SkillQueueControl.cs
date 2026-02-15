@@ -27,6 +27,7 @@ namespace EVEMon.Common.Controls
         private Color m_emptyColor = Color.DimGray;
         private Color m_borderColor = Color.Gray;
         private Point m_lastLocation = new Point(-1, -1);
+        private IDisposable? _subSecondTick;
         private IDisposable? _subSettingsChanged;
         private IDisposable? _subCharacterUpdated;
 
@@ -42,7 +43,7 @@ namespace EVEMon.Common.Controls
 
             Disposed += OnDisposed;
             // SecondTick - skill queue countdown display
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _subSecondTick = AppServices.EventAggregator?.Subscribe<EVEMon.Core.Events.SecondTickEvent>(e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
             _subCharacterUpdated = AppServices.EventAggregator.SubscribeOnUI<CharacterUpdatedEvent>(this, OnCharacterUpdated);
         }
@@ -55,7 +56,8 @@ namespace EVEMon.Common.Controls
         private void OnDisposed(object sender, EventArgs e)
         {
             Disposed -= OnDisposed;
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _subSecondTick?.Dispose();
+            _subSecondTick = null;
             _subSettingsChanged?.Dispose();
             _subCharacterUpdated?.Dispose();
             m_toolTip.Dispose();

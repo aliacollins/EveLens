@@ -59,6 +59,7 @@ namespace EVEMon.CharacterMonitoring
         private Skill m_selectedSkill = null!;
         private IDisposable? _subCharsBatch;
         private IDisposable? _subSettings;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -108,7 +109,7 @@ namespace EVEMon.CharacterMonitoring
             var agg = AppServices.EventAggregator;
             _subCharsBatch = agg.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => Character, e => EveMonClient_CharactersBatchUpdated(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             Disposed += OnDisposed;
         }
 
@@ -121,7 +122,8 @@ namespace EVEMon.CharacterMonitoring
         {
             _subCharsBatch?.Dispose();
             _subSettings?.Dispose();
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             Disposed -= OnDisposed;
         }
 

@@ -42,6 +42,7 @@ namespace EVEMon.Common
         private static UpdateBatcher? s_updateBatcher;
         private static SmartQueryScheduler? s_smartQueryScheduler;
         private static ApiRequestQueue? s_apiRequestQueue;
+        private static IDisposable? s_esiKeyRefreshTickSubscription;
 
         #endregion
 
@@ -95,7 +96,8 @@ namespace EVEMon.Common
             // Initialize the query scheduler - drives all character/corporation querying.
             s_smartQueryScheduler = new SmartQueryScheduler(
                 AppServices.Dispatcher, AppServices.EsiClient);
-            FiveSecondTick += OnEsiKeyRefreshTick;
+            s_esiKeyRefreshTickSubscription = AppServices.EventAggregator?.Subscribe<Core.Events.FiveSecondTickEvent>(
+                e => OnEsiKeyRefreshTick());
             Trace("SmartQueryScheduler initialized");
 
             // Initialize the API request queue for rate limiting
@@ -129,7 +131,8 @@ namespace EVEMon.Common
             // Dispose the query scheduler
             if (s_smartQueryScheduler != null)
             {
-                FiveSecondTick -= OnEsiKeyRefreshTick;
+                s_esiKeyRefreshTickSubscription?.Dispose();
+                s_esiKeyRefreshTickSubscription = null;
                 s_smartQueryScheduler.Dispose();
                 s_smartQueryScheduler = null;
             }
@@ -164,7 +167,7 @@ namespace EVEMon.Common
         /// Drives ESI key token refresh. SmartQueryScheduler doesn't
         /// know about ESI keys, so we need a separate handler.
         /// </summary>
-        private static void OnEsiKeyRefreshTick(object sender, EventArgs e)
+        private static void OnEsiKeyRefreshTick()
         {
             foreach (var key in ESIKeys)
                 key.ProcessTick();

@@ -42,6 +42,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subConquerableStation;
         private IDisposable? _subWalletTransactions;
         private IDisposable? _subEveIDToName;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -181,7 +182,7 @@ namespace EVEMon.CharacterMonitoring
                 return;
 
             var agg = AppServices.EventAggregator;
-            EveMonClient.FiveSecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
             _subWalletTransactions = agg.SubscribeOnUIForCharacter<CharacterWalletTransactionsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterWalletTransactionsUpdated(e));
             _subEveIDToName = agg.SubscribeOnUI<EveIDToNameUpdatedEvent>(this, e => EveMonClient_EveIDToNameUpdated());
@@ -195,7 +196,8 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
-            EveMonClient.FiveSecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             _subConquerableStation?.Dispose();
             _subWalletTransactions?.Dispose();
             _subEveIDToName?.Dispose();

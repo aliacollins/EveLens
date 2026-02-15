@@ -48,6 +48,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subSkillQueuesBatch;
         private IDisposable? _subQueuedSkillsCompleted;
         private IDisposable? _subSettings;
+        private IDisposable? _tickSub;
 
         #endregion
 
@@ -103,7 +104,7 @@ namespace EVEMon.CharacterMonitoring
             _subSkillQueuesBatch = agg.SubscribeOnUIForCharacterBatch<SkillQueuesBatchUpdatedEvent>(this, () => Character, e => EveMonClient_SkillQueuesBatchUpdated(e));
             _subQueuedSkillsCompleted = agg.SubscribeOnUIForCharacter<QueuedSkillsCompletedEvent>(this, () => Character, e => EveMonClient_QueuedSkillsCompleted(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
-            EveMonClient.SecondTick += EveMonClient_TimerTick;
+            _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             Disposed += OnDisposed;
         }
 
@@ -117,7 +118,8 @@ namespace EVEMon.CharacterMonitoring
             _subSkillQueuesBatch?.Dispose();
             _subQueuedSkillsCompleted?.Dispose();
             _subSettings?.Dispose();
-            EveMonClient.SecondTick -= EveMonClient_TimerTick;
+            _tickSub?.Dispose();
+            _tickSub = null;
             Disposed -= OnDisposed;
         }
 

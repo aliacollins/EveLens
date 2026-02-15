@@ -22,11 +22,11 @@ namespace EVEMon.Common
     [EnforceUIThreadAffinity]
     public static partial class Settings
     {
-        private static bool s_savePending;
+        private static volatile bool s_savePending;
         private static DateTime s_nextSaveTime;
         private static XslCompiledTransform? s_settingsTransform;
-        private static SerializableSettings? s_settings;
-        private static SmartSettingsManager? s_smartSettingsManager;
+        private static volatile SerializableSettings? s_settings;
+        private static volatile SmartSettingsManager? s_smartSettingsManager;
         private static IDisposable? s_thirtySecondTickSubscription;
 
         /// <summary>
@@ -324,8 +324,10 @@ namespace EVEMon.Common
         /// Shuts down settings services, disposing the SmartSettingsManager if active.
         /// Called during application shutdown.
         /// </summary>
-        internal static void Shutdown()
+        public static void Shutdown()
         {
+            s_thirtySecondTickSubscription?.Dispose();
+            s_thirtySecondTickSubscription = null;
             s_smartSettingsManager?.Dispose();
             s_smartSettingsManager = null;
         }

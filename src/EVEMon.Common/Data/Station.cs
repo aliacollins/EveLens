@@ -4,13 +4,14 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Datafiles;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Data
 {
     /// <summary>
     /// Represents a station inside the EVE universe.
     /// </summary>
-    public class Station : ReadonlyCollection<Agent>, IComparable<Station>
+    public class Station : ReadonlyCollection<Agent>, IStation, IComparable<Station>
     {
         /// <summary>
         /// Creates a station modelling an inaccessible citadel with the given ID.
@@ -108,6 +109,12 @@ namespace EVEMon.Common.Data
         /// Gets the solar system where this station is located.
         /// </summary>
         public SolarSystem SolarSystem { get; }
+
+        /// <summary>
+        /// Gets the solar system ID where this station is located.
+        /// Returns 0 if the solar system is unknown.
+        /// </summary>
+        public int SolarSystemID => SolarSystem?.ID ?? 0;
 
         /// <summary>
         /// Gets the solar system where this station is located. This accessor is checked

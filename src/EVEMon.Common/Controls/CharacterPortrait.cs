@@ -317,7 +317,14 @@ namespace EVEMon.Common.Controls
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void miUpdatePicture_Click(object sender, EventArgs e)
         {
-            await UpdateCharacterImageFromCCPAsync();
+            try
+            {
+                await UpdateCharacterImageFromCCPAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in miUpdatePicture_Click: {ex}");
+            }
         }
 
         /// <summary>
@@ -327,7 +334,14 @@ namespace EVEMon.Common.Controls
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private async void miUpdatePictureFromEVECache_Click(object sender, EventArgs e)
         {
-            await UpdateCharacterFromEVECacheAsync();
+            try
+            {
+                await UpdateCharacterFromEVECacheAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Async error in miUpdatePictureFromEVECache_Click: {ex}");
+            }
         }
 
         /// <summary>

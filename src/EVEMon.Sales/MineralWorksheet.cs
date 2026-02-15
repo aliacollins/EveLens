@@ -7,7 +7,9 @@ using System.Windows.Forms;
 using EVEMon.Common;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Controls;
+using EVEMon.Common.Events;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Sales
 {
@@ -17,6 +19,7 @@ namespace EVEMon.Sales
         private string m_courtesyUrl;
         private string m_source;
         private bool m_pricesLocked;
+        private IDisposable? _subSettingsChanged;
 
 
         #region Constructor
@@ -104,7 +107,7 @@ namespace EVEMon.Sales
 
             MineralDataRequest.Initialize();
 
-            EveMonClient.SettingsChanged += EveMonClient_SettingsChanged;
+            _subSettingsChanged = AppServices.EventAggregator?.Subscribe<SettingsChangedEvent>(e => EveMonClient_SettingsChanged(null, EventArgs.Empty));
             Disposed += OnDiposed;
 
             UpdateVisuals();
@@ -135,7 +138,8 @@ namespace EVEMon.Sales
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDiposed(object sender, EventArgs e)
         {
-            EveMonClient.SettingsChanged -= EveMonClient_SettingsChanged;
+            _subSettingsChanged?.Dispose();
+            _subSettingsChanged = null;
             Disposed -= OnDiposed;
         }
 
