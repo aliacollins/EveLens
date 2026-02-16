@@ -207,7 +207,7 @@ namespace EVEMon.About
 
             // Version
             var version = AppServices.FileVersionInfo;
-            var versionText = EveMonClient.IsDebugBuild ? $"{version.FileVersion} (Debug)" : version.ProductVersion;
+            var versionText = AppServices.IsDebugBuild ? $"{version.FileVersion} (Debug)" : version.ProductVersion;
             panel.Controls.Add(new Label
             {
                 Text = $"Version {versionText}  |  {(Environment.Is64BitProcess ? "64" : "32")}-bit",

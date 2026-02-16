@@ -142,19 +142,22 @@ namespace EVEMon.Common.Helpers
                 HttpWebClientService.DownloadImageAsync(new Uri(NetworkConstants.GoogleAnalyticsUrl),
                     new RequestParams(BuildQueryString())).ContinueWith(task =>
                 {
-                    if (AppServices.IsDebugBuild)
+                    AppServices.Dispatcher?.Post(() =>
                     {
-                        AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - ({category} - {action})",
-                            printMethod: false);
-                        if (task.Result.Error != null)
-                            AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - {task.Result.Error.Message}",
+                        if (AppServices.IsDebugBuild)
+                        {
+                            AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - ({category} - {action})",
                                 printMethod: false);
-                        else
-                            AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromDays(1)}",
-                                printMethod: false);
-                    }
-                    Dispatcher.Schedule(TimeSpan.FromDays(1), () => TrackStart(type, DailyStartText));
-                }, EveMonClient.CurrentSynchronizationContext);
+                            if (task.Result.Error != null)
+                                AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - {task.Result.Error.Message}",
+                                    printMethod: false);
+                            else
+                                AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromDays(1)}",
+                                    printMethod: false);
+                        }
+                        Dispatcher.Schedule(TimeSpan.FromDays(1), () => TrackStart(type, DailyStartText));
+                    });
+                });
             }
             else
             {

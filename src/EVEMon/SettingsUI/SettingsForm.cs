@@ -748,7 +748,7 @@ namespace EVEMon.SettingsUI
             cbSkillInTitle.Enabled = cbTitleToTime.Checked;
 
             // Portable Eve Clients settings
-            portableEveClientsControl.Enabled = !EveMonClient.EveAppDataFoldersExistInDefaultLocation;
+            portableEveClientsControl.Enabled = !AppServices.EveAppDataFoldersExistInDefaultLocation;
 
             // Minimize to tray/task bar
             rbMinToTray.Enabled = !rbSystemTrayOptionsNever.Checked;

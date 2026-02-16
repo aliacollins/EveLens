@@ -118,7 +118,7 @@ namespace EVEMon.Common
                 return;
 
             Trace();
-            EveMonClient.Characters.UpdateAccountStatuses();
+            AppServices.Characters?.UpdateAccountStatuses();
 
             // Bridge to EventAggregator for new code
             // Settings.Save() is handled by SettingsSaveSubscriber

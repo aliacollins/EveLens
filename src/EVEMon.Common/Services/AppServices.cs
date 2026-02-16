@@ -131,6 +131,21 @@ namespace EVEMon.Common.Services
         public static string SettingsFileName => EveMonClient.SettingsFileName;
 
         /// <summary>
+        /// Gets the global datafile collection used during data loading.
+        /// </summary>
+        public static GlobalDatafileCollection Datafiles => EveMonClient.Datafiles;
+
+        /// <summary>
+        /// Gets a value indicating whether cache folder in EVE default location exist.
+        /// </summary>
+        public static bool EveAppDataFoldersExistInDefaultLocation => EveMonClient.EveAppDataFoldersExistInDefaultLocation;
+
+        /// <summary>
+        /// Clears all cached data (settings, XML cache, images).
+        /// </summary>
+        public static void ClearCache() => EveMonClient.ClearCache();
+
+        /// <summary>
         /// Gets the dispatcher service for UI thread marshaling.
         /// </summary>
         public static IDispatcher Dispatcher => s_dispatcher.Value;

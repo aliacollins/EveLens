@@ -560,22 +560,24 @@ namespace EVEMon.CharacterMonitoring
                     return assetList;
                 }).ContinueWith(task =>
                 {
-                    // Switch to virtual mode
-                    if (!m_isVirtualMode)
+                    AppServices.Dispatcher?.Post(() =>
                     {
-                        m_isVirtualMode = true;
-                        lvAssets.VirtualMode = true;
-                        // Clear the item sorter - we handle sorting ourselves in virtual mode
-                        lvAssets.ListViewItemSorter = null;
-                    }
+                        // Switch to virtual mode
+                        if (!m_isVirtualMode)
+                        {
+                            m_isVirtualMode = true;
+                            lvAssets.VirtualMode = true;
+                            // Clear the item sorter - we handle sorting ourselves in virtual mode
+                            lvAssets.ListViewItemSorter = null;
+                        }
 
-                    m_virtualModeItems = task.Result;
-                    lvAssets.Groups.Clear();
-                    lvAssets.VirtualListSize = m_virtualModeItems.Count;
+                        m_virtualModeItems = task.Result;
+                        lvAssets.Groups.Clear();
+                        lvAssets.VirtualListSize = m_virtualModeItems.Count;
 
-                    AppServices.TraceService?.Trace($"CharacterAssetsList - Virtual mode enabled for {m_virtualModeItems.Count} items");
-
-                }, EveMonClient.CurrentSynchronizationContext);
+                        AppServices.TraceService?.Trace($"CharacterAssetsList - Virtual mode enabled for {m_virtualModeItems.Count} items");
+                    });
+                });
             }
             else
             {
@@ -594,19 +596,21 @@ namespace EVEMon.CharacterMonitoring
 
                 }).ContinueWith(task =>
                 {
-                    // Switch back to normal mode if needed
-                    if (m_isVirtualMode)
+                    AppServices.Dispatcher?.Post(() =>
                     {
-                        m_isVirtualMode = false;
-                        lvAssets.VirtualMode = false;
-                        m_virtualModeItems = null!;
-                    }
+                        // Switch back to normal mode if needed
+                        if (m_isVirtualMode)
+                        {
+                            m_isVirtualMode = false;
+                            lvAssets.VirtualMode = false;
+                            m_virtualModeItems = null!;
+                        }
 
-                    lvAssets.Groups.Clear();
-                    lvAssets.Items.Clear();
-                    lvAssets.Items.AddRange(task.Result);
-
-                }, EveMonClient.CurrentSynchronizationContext);
+                        lvAssets.Groups.Clear();
+                        lvAssets.Items.Clear();
+                        lvAssets.Items.AddRange(task.Result);
+                    });
+                });
             }
         }
 
@@ -649,21 +653,23 @@ namespace EVEMon.CharacterMonitoring
 
             }).ContinueWith(task =>
             {
-                // Disable virtual mode when using groups (virtual mode doesn't support ListView groups)
-                if (m_isVirtualMode)
+                AppServices.Dispatcher?.Post(() =>
                 {
-                    m_isVirtualMode = false;
-                    lvAssets.VirtualMode = false;
-                    m_virtualModeItems = null!;
-                }
+                    // Disable virtual mode when using groups (virtual mode doesn't support ListView groups)
+                    if (m_isVirtualMode)
+                    {
+                        m_isVirtualMode = false;
+                        lvAssets.VirtualMode = false;
+                        m_virtualModeItems = null!;
+                    }
 
-                lvAssets.Items.Clear();
-                lvAssets.Groups.Clear();
+                    lvAssets.Items.Clear();
+                    lvAssets.Groups.Clear();
 
-                lvAssets.Groups.AddRange(task.Result.Item1);
-                lvAssets.Items.AddRange(task.Result.Item2);
-
-            }, EveMonClient.CurrentSynchronizationContext);
+                    lvAssets.Groups.AddRange(task.Result.Item1);
+                    lvAssets.Items.AddRange(task.Result.Item2);
+                });
+            });
 
         /// <summary>
         /// Creates the list view sub items.

@@ -113,7 +113,7 @@ namespace EVEMon
             lblServerStatus.Text = $"|  {AppServices.EVEServer?.StatusText ?? EveMonConstants.UnknownText}";
 
             tsDatafilesLoadingProgressBar.Step =
-                (int)Math.Ceiling((double)tsDatafilesLoadingProgressBar.Maximum / EveMonClient.Datafiles.Count);
+                (int)Math.Ceiling((double)tsDatafilesLoadingProgressBar.Maximum / AppServices.Datafiles.Count);
 
             foreach (ToolStripItem item in mainMenuBar.Items)
             {
@@ -245,9 +245,9 @@ namespace EVEMon
                     await InitializeData();
 
                 // Pre-release warning for alpha/beta builds
-                if (EveMonClient.IsPreReleaseVersion)
+                if (AppServices.IsPreReleaseVersion)
                 {
-                    string versionType = EveMonClient.IsAlphaVersion ? "ALPHA" : "BETA";
+                    string versionType = AppServices.IsAlphaVersion ? "ALPHA" : "BETA";
                     string warningKey = $"prerelease-{AppServices.VersionString}";
                     string warningTitle = $"{versionType} Build Warning";
                     string warningMessage = $"You are running EVEMon {versionType} version {AppServices.VersionString}.\n\n" +
@@ -277,7 +277,7 @@ namespace EVEMon
         private async Task InitializeData()
         {
             // If data was already loaded during splash screen, skip redundant loading
-            if (EveMonClient.IsDataLoaded)
+            if (AppServices.IsDataLoaded)
             {
                 AppServices.TraceService?.Trace("MainWindow - Data already loaded during splash, skipping InitializeData", printMethod: false);
                 m_initialized = true;
@@ -1660,7 +1660,7 @@ namespace EVEMon
                 MessageBoxDefaultButton.Button2);
 
             if (dr == DialogResult.Yes)
-                EveMonClient.ClearCache();
+                AppServices.ClearCache();
         }
 
         /// <summary>

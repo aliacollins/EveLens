@@ -223,7 +223,7 @@ namespace EVEMon.ExceptionHandling
                 string type = m_exception.GetType().Name;
                 string crashSummary = $"{type}: {m_exception.Message}";
 
-                string version = EveMonClient.FileVersionInfo?.FileVersion ?? "unknown";
+                string version = AppServices.FileVersionInfo?.FileVersion ?? "unknown";
                 string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm");
                 string? userDesc = UserDescriptionTextBox.Text?.Trim();
                 string title = string.IsNullOrEmpty(userDesc)

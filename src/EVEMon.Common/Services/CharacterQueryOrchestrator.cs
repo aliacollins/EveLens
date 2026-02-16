@@ -1027,12 +1027,15 @@ namespace EVEMon.Common.Services
                 TaskHelper.RunCPUBoundTaskAsync(() => target.Assets.Import(result)).
                     ContinueWith(_ =>
                     {
-                        // CharacterAssetsUpdated
-                        AppServices.TraceService?.Trace($"CharacterAssetsUpdated: {target.Name}");
-                        (target as CCPCharacter)?.OnAssetsUpdated();
-                        AppServices.EventAggregator?.Publish(new CharacterAssetsUpdatedEvent(target.CharacterID, target.Name));
-                        AppServices.EventAggregator?.Publish(new CommonEvents.CharacterAssetsUpdatedEvent(target));
-                    }, EveMonClient.CurrentSynchronizationContext);
+                        AppServices.Dispatcher?.Post(() =>
+                        {
+                            // CharacterAssetsUpdated
+                            AppServices.TraceService?.Trace($"CharacterAssetsUpdated: {target.Name}");
+                            (target as CCPCharacter)?.OnAssetsUpdated();
+                            AppServices.EventAggregator?.Publish(new CharacterAssetsUpdatedEvent(target.CharacterID, target.Name));
+                            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterAssetsUpdatedEvent(target));
+                        });
+                    });
         }
 
         /// <summary>
