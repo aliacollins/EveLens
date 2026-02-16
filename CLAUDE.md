@@ -5,7 +5,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architectural Laws (NEVER VIOLATE)
 
 These laws prevent regression to the old monolithic architecture. 821 tests enforce them.
-Full details with code examples in `ARCHITECTURAL-LAWS.md`.
 
 1. **No Static State** — Never create static mutable state. Use AppServices + interfaces.
 2. **No God Objects** — No class >500 lines or referenced by >30 files. Split early.
