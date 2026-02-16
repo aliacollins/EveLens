@@ -192,8 +192,8 @@ namespace EVEMon
                 Visible = ShowInTaskbar;
             }
 
-            // Start the one-second timer 
-            EveMonClient.Run(Thread.CurrentThread);
+            // Start the one-second timer
+            AppServices.Run(Thread.CurrentThread);
 
             // Check with NIST that the local clock is synchronized
             TimeCheck.ScheduleCheck(TimeSpan.FromSeconds(1));

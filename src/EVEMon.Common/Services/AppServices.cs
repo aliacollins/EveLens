@@ -247,6 +247,59 @@ namespace EVEMon.Common.Services
         internal static void SetEVEServer(EveServer server) => s_eveServer = new Lazy<EveServer>(() => server);
 
         /// <summary>
+        /// Bootstraps the application: initializes filesystem paths, trace logging,
+        /// EveMonClient, DI services, and syncs to ServiceLocator.
+        /// Call this from Program.cs instead of touching EveMonClient directly.
+        /// </summary>
+        public static void Bootstrap()
+        {
+            // Phase 1: Filesystem paths and trace logging (must happen first)
+            EveMonClient.CheckIsDebug();
+            EveMonClient.CheckIsSnapshot();
+            EveMonClient.InitializeFileSystemPaths();
+            EveMonClient.StartTraceLogging();
+
+            // Phase 2: Snapshot paths so ApplicationPathsAdapter no longer delegates to EveMonClient
+            var paths = (ApplicationPathsAdapter)ApplicationPaths;
+            paths.SnapshotFromEveMonClient();
+
+            TraceService?.Trace("AppServices.Bootstrap - paths snapshotted", printMethod: false);
+
+            // Phase 3: Initialize EveMonClient (creates collections, timers)
+            EveMonClient.Initialize();
+            TraceService?.Trace("AppServices.Bootstrap - EveMonClient initialized", printMethod: false);
+
+            // Phase 4: Sync to ServiceLocator for Models/Infrastructure access
+            SyncToServiceLocator();
+            TraceService?.Trace("AppServices.Bootstrap - ServiceLocator synced", printMethod: false);
+        }
+
+        /// <summary>
+        /// Shuts down the application: saves settings, stops timers, disposes resources.
+        /// Call this from Program.cs instead of touching EveMonClient directly.
+        /// </summary>
+        public static void Shutdown()
+        {
+            // Shutdown settings (dispose SmartSettingsManager and timer subscriptions)
+            Common.Settings.Shutdown();
+
+            // Stop the one-second timer and dispose resources
+            EveMonClient.Shutdown();
+
+            // Stop trace logging
+            EveMonClient.StopTraceLogging();
+        }
+
+        /// <summary>
+        /// Starts the UI message loop on the given thread.
+        /// Wraps EveMonClient.Run() for the dispatcher timer.
+        /// </summary>
+        public static void Run(System.Threading.Thread thread)
+        {
+            EveMonClient.Run(thread);
+        }
+
+        /// <summary>
         /// Syncs all service instances to the Core ServiceLocator,
         /// enabling code in EVEMon.Models/Infrastructure to access services
         /// without referencing EVEMon.Common.

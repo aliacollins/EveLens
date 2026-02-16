@@ -52,12 +52,6 @@ namespace EVEMon
             if (!IsInstanceUnique)
                 return;
 
-            // Check if we are in DEBUG mode
-            EveMonClient.CheckIsDebug();
-
-            // Check if we are in SNAPSHOT mode
-            EveMonClient.CheckIsSnapshot();
-
             // Subscribe application's events (especially the unhandled exceptions management for the crash box)
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
@@ -74,12 +68,9 @@ namespace EVEMon
             s_splashScreen.UpdateProgress(0, "Initializing...");
             Application.DoEvents();
 
-            // Find our files
-            s_splashScreen.UpdateProgress(5, "Locating files...");
-            EveMonClient.InitializeFileSystemPaths();
-
-            // Creates a trace file
-            EveMonClient.StartTraceLogging();
+            // Bootstrap: filesystem paths, trace logging, EveMonClient init, DI setup
+            s_splashScreen.UpdateProgress(5, "Initializing...");
+            AppServices.Bootstrap();
             AppServices.TraceService?.Trace("Program.Startup - begin", printMethod: false);
             AppServices.TraceService?.Trace("Program.Startup - SplashScreen displayed", printMethod: false);
 
@@ -95,16 +86,10 @@ namespace EVEMon
             CloudStorageServiceProvider.UpgradeSettings();
             AppServices.TraceService?.Trace("Program.Startup - CloudStorageServiceProvider.UpgradeSettings done", printMethod: false);
 
-            // Initialization
-            s_splashScreen.UpdateProgress(20, "Initializing client...");
-            AppServices.TraceService?.Trace("Program.Startup - EveMonClient.Initialize begin", printMethod: false);
-            EveMonClient.Initialize();
-            AppServices.TraceService?.Trace("Program.Startup - EveMonClient.Initialize done", printMethod: false);
-
             // Configure dependency injection (Strangler Fig wrappers for existing static classes)
+            s_splashScreen.UpdateProgress(20, "Configuring services...");
             AppServices.TraceService?.Trace("Program.Startup - ServiceRegistration.Configure begin", printMethod: false);
             ServiceRegistration.Configure();
-            EVEMon.Common.Services.AppServices.SyncToServiceLocator();
 
             // Wire up the settings-save subscriber so EventAggregator events trigger Settings.Save()
             s_settingsSaveSubscriber = new SettingsSaveSubscriber(AppServices.EventAggregator);
@@ -181,20 +166,15 @@ namespace EVEMon
             }
             finally
             {
-                // Shutdown settings (dispose SmartSettingsManager and timer subscriptions)
-                Settings.Shutdown();
-
-                // Stop the one-second timer right now
-                EveMonClient.Shutdown();
-
                 // Dispose settings-save subscriber
                 s_settingsSaveSubscriber?.Dispose();
 
                 // Dispose DI container
                 ServiceRegistration.Dispose();
 
+                // Shutdown: settings, timers, trace logging
                 AppServices.TraceService?.Trace("Closed", printMethod: false);
-                EveMonClient.StopTraceLogging();
+                AppServices.Shutdown();
             }
         }
 
