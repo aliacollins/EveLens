@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
 
 namespace EVEMon.Common.QueryMonitor
@@ -53,6 +55,25 @@ namespace EVEMon.Common.QueryMonitor
             {
                 var result = await provider.QueryEsiAsync<T>(Method, GetESIParams())
                     .ConfigureAwait(false);
+
+                // Detect 401 Unauthorized — ESI token is expired/invalid.
+                // Flag the ESI key so the UI shows "re-auth needed" instead of
+                // endlessly retrying with a stale token.
+                if (result.ResponseCode == (int)HttpStatusCode.Unauthorized)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        foreach (var key in m_character.Identity.ESIKeys)
+                        {
+                            if (!key.HasError)
+                            {
+                                key.HasError = true;
+                                AppServices.TraceService?.Trace(
+                                    $"ESI 401 on {Method} for {m_character.Name} — marked ESIKey {key.ID} as error");
+                            }
+                        }
+                    });
+                }
 
                 // Marshal back to UI thread and call OnQueried for proper bookkeeping
                 Dispatcher.Invoke(() => OnQueried(result));

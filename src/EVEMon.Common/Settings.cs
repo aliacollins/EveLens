@@ -173,9 +173,15 @@ namespace EVEMon.Common
 
             try
             {
-                // API settings
-                SSOClientID = s_settings.SSOClientID ?? string.Empty;
-                SSOClientSecret = s_settings.SSOClientSecret ?? string.Empty;
+                // API settings: Only override if custom values were persisted (not empty defaults).
+                // When loading from JSON, SSOClientID/Secret may be empty strings — don't
+                // overwrite the esi-credentials.json / embedded defaults with blanks.
+                if (!string.IsNullOrEmpty(s_settings.SSOClientID)
+                    && s_settings.SSOClientID != DefaultClientID)
+                    SSOClientID = s_settings.SSOClientID;
+                if (!string.IsNullOrEmpty(s_settings.SSOClientSecret)
+                    && s_settings.SSOClientSecret != DefaultClientSecret)
+                    SSOClientSecret = s_settings.SSOClientSecret;
 
                 // User settings
                 UI = s_settings.UI;
@@ -243,14 +249,8 @@ namespace EVEMon.Common
         }
 
         /// <summary>
-        /// Saves settings immediately.
+        /// Saves settings immediately. JSON-only — no XML writes.
         /// </summary>
-        /// <remarks>
-        /// When UsingJsonFormat is true (JSON is source of truth):
-        ///   - Saves only to JSON files (fast, no XML overhead)
-        /// When UsingJsonFormat is false (migration in progress):
-        ///   - Saves to both XML and JSON (ensures compatibility)
-        /// </remarks>
         public static async Task SaveImmediateAsync()
         {
             // Prevents the saving if we are restoring the settings at that time
@@ -268,7 +268,7 @@ namespace EVEMon.Common
             s_savePending = false;
             s_nextSaveTime = DateTime.UtcNow.AddSeconds(10);
 
-            AppServices.TraceService?.Trace($"begin - UsingJsonFormat={UsingJsonFormat}");
+            AppServices.TraceService?.Trace("begin");
 
             try
             {
@@ -276,42 +276,9 @@ namespace EVEMon.Common
                 SerializableSettings settings = Export();
                 AppServices.TraceService?.Trace("Export done");
 
-                if (UsingJsonFormat)
-                {
-                    // JSON is source of truth - save only to JSON (faster)
-                    await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
-                    AppServices.TraceService?.Trace("JSON save complete (JSON-only mode)");
-                }
-                else
-                {
-                    // Migration in progress - save to both XML and JSON
-                    // Serialize to MemoryStream on background thread to avoid UI freeze
-                    byte[] serializedData = await Task.Run(() =>
-                    {
-                        using (MemoryStream ms = new MemoryStream())
-                        {
-                            XmlSerializer xs = new XmlSerializer(typeof(SerializableSettings));
-                            xs.Serialize(ms, settings);
-                            return ms.ToArray();
-                        }
-                    });
-
-                    AppServices.TraceService?.Trace($"Serialized {serializedData.Length} bytes to XML");
-
-                    // Write to XML file (atomic via temp file)
-                    await FileHelper.OverwriteOrWarnTheUserAsync(AppServices.DataStore.SettingsFilePath,
-                        async fs =>
-                        {
-                            await fs.WriteAsync(serializedData, 0, serializedData.Length);
-                            await fs.FlushAsync();
-                            return true;
-                        });
-                    AppServices.TraceService?.Trace("XML file written");
-
-                    // Also save to JSON format (keeps JSON files in sync with XML)
-                    await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
-                    AppServices.TraceService?.Trace("JSON save complete (dual-write mode)");
-                }
+                // JSON-only save — SerializableSettings serialized directly
+                await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
+                AppServices.TraceService?.Trace("JSON save complete");
             }
             catch (Exception exception)
             {

@@ -49,6 +49,13 @@ namespace EVEMon.Common.Services
         public bool IsDirty => _dirty;
 
         /// <summary>
+        /// Gets the write lock used to synchronize file operations.
+        /// Callers can pass this to <see cref="SettingsFileManager.ClearAllJsonFiles"/>
+        /// to prevent races with in-flight saves.
+        /// </summary>
+        internal SemaphoreSlim WriteLock => _writeLock;
+
+        /// <summary>
         /// Creates a new SmartSettingsManager that owns the full save pipeline.
         /// </summary>
         /// <param name="dataDirectory">The EVEMon data directory.</param>
@@ -72,6 +79,34 @@ namespace EVEMon.Common.Services
             // One-shot timer: fires once, then re-arms after callback completes.
             // This prevents overlapping callbacks if PerformSaveAsync takes longer than the interval.
             _saveTimer = new Timer(OnTimerElapsed, null, SaveCoalesceIntervalMs, Timeout.Infinite);
+
+            // Flush any unsaved state if the process exits unexpectedly.
+            // ProcessExit gives us ~2 seconds — enough for a synchronous save.
+            AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+        }
+
+        /// <summary>
+        /// Best-effort flush of dirty settings when the process is exiting.
+        /// </summary>
+        private void OnProcessExit(object? sender, EventArgs e)
+        {
+            if (!_dirty || _disposed)
+                return;
+
+            try
+            {
+                _dirty = false;
+                var settings = _exportFunc();
+                if (settings != null)
+                {
+                    SettingsFileManager.SaveFromSerializableSettingsAsync(settings)
+                        .GetAwaiter().GetResult(); // OK here — ProcessExit has ~2s
+                }
+            }
+            catch
+            {
+                // Best effort — swallow all exceptions during shutdown
+            }
         }
 
         /// <summary>
@@ -213,9 +248,14 @@ namespace EVEMon.Common.Services
                 await File.WriteAllTextAsync(tempPath, content).ConfigureAwait(false);
 
                 if (File.Exists(filePath))
-                    File.Delete(filePath);
-
-                File.Move(tempPath, filePath);
+                {
+                    string backupPath = filePath + ".bak";
+                    File.Replace(tempPath, filePath, backupPath);
+                }
+                else
+                {
+                    File.Move(tempPath, filePath);
+                }
             }
             finally
             {
@@ -339,6 +379,9 @@ namespace EVEMon.Common.Services
                 return;
 
             _disposed = true;
+
+            // Unregister ProcessExit handler to avoid double-flush
+            AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
 
             // Stop the timer — no new callbacks will fire
             _saveTimer.Change(Timeout.Infinite, Timeout.Infinite);

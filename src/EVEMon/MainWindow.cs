@@ -75,6 +75,15 @@ namespace EVEMon
         private bool m_firstApiLoadNotified;
         private bool m_closingAfterUpload;
 
+        // Hybrid tab strategy:
+        // ≤50 characters: eager monitors attached to every tab (instant switching, old behavior).
+        // >50 characters: virtual tabs — lightweight shells, monitors created on demand with LRU cache.
+        // Handle math: 50 × 150 = 7,500 + 500 chrome + 500 overview = 8,500 (85% of ~10,000 limit).
+        private const int MaxEagerMonitors = 50;
+        private bool m_useVirtualTabs;
+        private CharacterMonitor? m_activeMonitor;
+        private readonly Dictionary<TabPage, CharacterMonitor> m_monitorCache = new();
+
         private IDisposable? _subNotificationSent;
         private IDisposable? _subNotificationInvalidated;
         private IDisposable? _subMonitoredCharacterCollectionChanged;
@@ -431,6 +440,13 @@ namespace EVEMon
             niAlertIcon.Visible = false;
             trayIcon.Visible = false;
 
+            // Dispose all cached monitors
+            m_activeMonitor?.Dispose();
+            m_activeMonitor = null;
+            foreach (var monitor in m_monitorCache.Values)
+                monitor.Dispose();
+            m_monitorCache.Clear();
+
             // Unsubscribe events
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
             TimeCheck.TimeCheckCompleted -= TimeCheck_TimeCheckCompleted;
@@ -598,6 +614,8 @@ namespace EVEMon
         /// <param name="e"></param>
         private void OnMonitoredCharacterCollectionChanged(MonitoredCharacterCollectionChangedEvent e)
         {
+            AppServices.TraceService?.Trace("MonitoredCharacterCollectionChanged fired");
+
             if (m_isUpdatingTabOrder)
                 return;
 
@@ -633,6 +651,9 @@ namespace EVEMon
             {
                 TabPage? selectedTab = tcCharacterTabs.SelectedTab;
 
+                // Decide strategy: eager monitors for ≤50 chars, virtual tabs for >50
+                m_useVirtualTabs = AppServices.MonitoredCharacters.Count() > MaxEagerMonitors;
+
                 // Collect the existing pages
                 Dictionary<Character, TabPage> pages = tcCharacterTabs.TabPages.Cast<TabPage>().Where(
                     page => page.Tag is Character).ToDictionary(page => (Character)page.Tag!);
@@ -659,8 +680,10 @@ namespace EVEMon
                         TabPage? page;
                         if (pages.TryGetValue(character!, out page))
                             tcCharacterTabs.TabPages.Remove(page); // Remove the page from old location
+                        else if (m_useVirtualTabs)
+                            page = CreateLightweightTabPage(character); // Virtual: shell only
                         else
-                            page = CreateTabPage(character); // Create a new page
+                            page = CreateEagerTabPage(character); // Eager: full monitor attached
 
                         // Inserts the page in the proper location
                         tcCharacterTabs.TabPages.Insert(index, page);
@@ -676,9 +699,19 @@ namespace EVEMon
                 // Ensures the overview has been added when necessary
                 AddOverviewTab();
 
-                // Dispose the removed tabs
+                // Dispose the removed tabs — also clean up monitor cache if a removed tab had a cached monitor
                 foreach (TabPage page in pages.Values)
                 {
+                    if (m_monitorCache.TryGetValue(page, out var cachedMonitor))
+                    {
+                        cachedMonitor.Dispose();
+                        m_monitorCache.Remove(page);
+                    }
+                    if (m_activeMonitor != null && m_activeMonitor.Parent == page)
+                    {
+                        m_activeMonitor.Dispose();
+                        m_activeMonitor = null;
+                    }
                     page.Dispose();
                 }
 
@@ -687,6 +720,9 @@ namespace EVEMon
                     tcCharacterTabs.SelectedTab = selectedTab;
                 else if (tcCharacterTabs.TabCount > 0)
                     tcCharacterTabs.SelectedTab = tcCharacterTabs.TabPages[0];
+
+                // Materialize the selected tab's CharacterMonitor (virtual tab pattern)
+                MaterializeSelectedTab();
             }
             finally
             {
@@ -733,13 +769,11 @@ namespace EVEMon
         }
 
         /// <summary>
-        /// Creates the tab page for the given character.
+        /// Creates a full tab page with an eagerly-attached CharacterMonitor.
+        /// Used when character count ≤ MaxEagerMonitors (instant tab switching).
         /// </summary>
-        /// <param name="character">The character</param>
-        /// <returns>A tab page.</returns>
-        private static TabPage CreateTabPage(Character character)
+        private static TabPage CreateEagerTabPage(Character character)
         {
-            // Create the tab
             TabPage page;
             TabPage? tempPage = null;
             try
@@ -749,7 +783,6 @@ namespace EVEMon
                 tempPage.Padding = new Padding(5);
                 tempPage.Tag = character;
 
-                // Create the character monitor
                 CreateCharacterMonitor(character, tempPage);
 
                 page = tempPage;
@@ -759,7 +792,20 @@ namespace EVEMon
             {
                 tempPage?.Dispose();
             }
+            return page;
+        }
 
+        /// <summary>
+        /// Creates a lightweight tab page with no CharacterMonitor.
+        /// Used when character count > MaxEagerMonitors (virtual tab pattern).
+        /// Monitor is materialized on demand when the tab is selected.
+        /// </summary>
+        private static TabPage CreateLightweightTabPage(Character character)
+        {
+            var page = new TabPage(GetTabNameForCharacter(character));
+            page.UseVisualStyleBackColor = true;
+            page.Padding = new Padding(5);
+            page.Tag = character;
             return page;
         }
 
@@ -788,6 +834,106 @@ namespace EVEMon
         }
 
         /// <summary>
+        /// Materializes the CharacterMonitor for the currently selected tab.
+        /// Eager path (≤50 chars): monitor is already attached, just track it.
+        /// Virtual path (>50 chars): create/restore from cache on demand.
+        /// </summary>
+        private void MaterializeSelectedTab()
+        {
+            var selectedTab = tcCharacterTabs.SelectedTab;
+            var character = selectedTab?.Tag as Character;
+
+            if (character == null) // Overview tab or no selection
+            {
+                if (m_useVirtualTabs)
+                    DetachActiveMonitor();
+                m_activeMonitor = null;
+                AppServices.EventAggregator?.Publish(new EVEMon.Core.Events.ActiveCharacterChangedEvent(0));
+                return;
+            }
+
+            if (!m_useVirtualTabs)
+            {
+                // Eager path: monitor is already attached to the tab — just track it
+                m_activeMonitor = selectedTab!.Controls.Count > 0
+                    ? selectedTab.Controls[0] as CharacterMonitor
+                    : null;
+            }
+            else
+            {
+                // Virtual path: check cache or create on demand
+
+                // Already showing this character — nothing to do
+                if (m_activeMonitor != null
+                    && selectedTab!.Controls.Count > 0
+                    && selectedTab.Controls[0] == m_activeMonitor)
+                    goto PublishEvent;
+
+                // Detach active monitor (keep it in cache)
+                DetachActiveMonitor();
+
+                // Check if the cache has a monitor for this tab (instant restore)
+                if (m_monitorCache.TryGetValue(selectedTab!, out var cachedMonitor))
+                {
+                    m_activeMonitor = cachedMonitor;
+                    selectedTab!.Controls.Add(m_activeMonitor);
+                }
+                else
+                {
+                    // Cache miss: evict if over limit, then create fresh monitor
+                    EvictIfOverLimit();
+                    CreateCharacterMonitor(character, selectedTab!);
+                    m_activeMonitor = selectedTab!.Controls.Count > 0
+                        ? selectedTab.Controls[0] as CharacterMonitor
+                        : null;
+
+                    // Store in cache
+                    if (m_activeMonitor != null)
+                        m_monitorCache[selectedTab] = m_activeMonitor;
+                }
+            }
+
+            PublishEvent:
+            // Publish event — ActiveCharacterTierSubscriber handles SetVisibleCharacter + tier toggling
+            long charId = character is CCPCharacter ccp ? ccp.CharacterID : 0;
+            AppServices.EventAggregator?.Publish(new EVEMon.Core.Events.ActiveCharacterChangedEvent(charId));
+        }
+
+        /// <summary>
+        /// Detaches the active monitor from its tab without disposing it (virtual path only).
+        /// The monitor stays in m_monitorCache for fast re-attach.
+        /// </summary>
+        private void DetachActiveMonitor()
+        {
+            if (m_activeMonitor != null)
+            {
+                m_activeMonitor.Parent?.Controls.Remove(m_activeMonitor);
+                m_activeMonitor = null;
+            }
+        }
+
+        /// <summary>
+        /// If the virtual tab cache exceeds MaxEagerMonitors, evicts the oldest entry.
+        /// Keeps handle count safe for 100+ character scenarios.
+        /// </summary>
+        private void EvictIfOverLimit()
+        {
+            while (m_monitorCache.Count >= MaxEagerMonitors)
+            {
+                // Evict the first entry (oldest insertion)
+                var oldest = m_monitorCache.GetEnumerator();
+                if (oldest.MoveNext())
+                {
+                    var entry = oldest.Current;
+                    entry.Value.Parent?.Controls.Remove(entry.Value);
+                    entry.Value.Dispose();
+                    m_monitorCache.Remove(entry.Key);
+                }
+                oldest.Dispose();
+            }
+        }
+
+        /// <summary>
         /// When tabs are moved by the user (through drag'n drop), we update the settings.
         /// </summary>
         /// <param name="sender"></param>
@@ -811,6 +957,11 @@ namespace EVEMon
         /// <param name="e"></param>
         private void tcCharacterTabs_SelectedIndexChanged(object? sender, EventArgs e)
         {
+            // Guard against re-entrance during tab rebuild (e.g., drag-drop reorder)
+            if (m_isUpdatingTabOrder)
+                return;
+
+            MaterializeSelectedTab();
             UpdateControlsOnTabSelectionChange();
         }
 
@@ -1307,18 +1458,17 @@ namespace EVEMon
         private SortedList<TimeSpan, CCPCharacter> GetOrderedCharactersTrainingTime()
         {
             SortedList<TimeSpan, CCPCharacter> sortedList = new SortedList<TimeSpan, CCPCharacter>();
-            foreach (TabPage tp in tcCharacterTabs.TabPages)
+            foreach (Character monitored in AppServices.MonitoredCharacters)
             {
                 // Is it a character bound to CCP ?
-                if (!(tp.Tag is CCPCharacter))
+                if (!(monitored is CCPCharacter character))
                     continue;
 
                 // Is it in training ?
-                CCPCharacter? character = tp.Tag as CCPCharacter;
-                if (!character!.IsTraining)
+                if (!character.IsTraining)
                     continue;
 
-                TimeSpan ts = character!.CurrentlyTrainingSkill!.RemainingTime;
+                TimeSpan ts = character.CurrentlyTrainingSkill!.RemainingTime;
 
                 // While the timespan is not unique, we add 1ms
                 while (sortedList.ContainsKey(ts))
@@ -1517,6 +1667,33 @@ namespace EVEMon
         }
 
         /// <summary>
+        /// File > Re-authenticate All Characters...
+        /// Opens the bulk re-authentication window.
+        /// </summary>
+        private void reauthAllCharactersMenuItem_Click(object? sender, EventArgs e)
+        {
+            ShowBulkReauthWindow();
+        }
+
+        /// <summary>
+        /// Opens the bulk re-authentication window as a modal dialog.
+        /// </summary>
+        private void ShowBulkReauthWindow()
+        {
+            using var window = new BulkReauthenticationWindow();
+            window.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// Updates the enabled state of the Re-authenticate menu item
+        /// based on whether any ESI keys have errors.
+        /// </summary>
+        private void fileToolStripMenuItem_DropDownOpening(object? sender, EventArgs e)
+        {
+            reauthAllCharactersMenuItem.Enabled = AppServices.ESIKeys.Any(k => k.HasError);
+        }
+
+        /// <summary>
         /// File > Hide Character...
         /// Unmonitor this character.
         /// It will still be in the settings unless the users removes the API key
@@ -1618,6 +1795,8 @@ namespace EVEMon
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
                     return;
 
+                AppServices.TraceService?.Trace($"Restore: starting restore from {Path.GetFileName(openFileDialog.FileName)}");
+
                 // Clear any notifications
                 ClearNotifications();
 
@@ -1636,12 +1815,58 @@ namespace EVEMon
                 // Open the specified settings
                 await Settings.RestoreAsync(openFileDialog.FileName);
 
+                AppServices.TraceService?.Trace("Restore: RestoreAsync completed, ensuring loading UI is dismissed");
+
+                // Always dismiss loading indicators — don't rely solely on
+                // MonitoredCharacterCollectionChangedEvent which may not fire
+                // if the restore produced no character changes.
+                mainLoadingThrobber.State = ThrobberState.Stopped;
+                mainLoadingThrobber.Hide();
+                tabLoadingLabel.Hide();
+                UpdateSettingsControlsVisibility(enabled: true);
+                UpdateTabs();
+
                 // Remove the tip window if it exist and is confirmed in settings
                 if (Settings.UI.ConfirmedTips.Contains("startup") && Controls.OfType<TipWindow>().Any())
                     Controls.Remove(Controls.OfType<TipWindow>().First());
+
+                AppServices.TraceService?.Trace("Restore: UI updated, restore flow complete");
+
+                // Show completion dialog with re-auth option if any ESI keys were restored
+                int keyCount = AppServices.ESIKeys.Count();
+                if (keyCount > 0)
+                {
+                    int charCount = AppServices.Characters.OfType<CCPCharacter>().Count();
+                    int planCount = AppServices.Characters.OfType<CCPCharacter>()
+                        .Sum(c => c.Plans.Count);
+
+                    var result = MessageBox.Show(
+                        $"Settings restored successfully.\n\n" +
+                        $"  {charCount} character(s) loaded\n" +
+                        $"  {planCount} skill plan(s) loaded\n" +
+                        $"  All UI preferences restored\n\n" +
+                        "ESI tokens cannot be preserved in backups (CCP security policy\n" +
+                        "rotates them on every use).\n\n" +
+                        "Click 'Yes' to re-authenticate your characters now,\n" +
+                        "or 'No' to do it later from File > Re-authenticate All Characters.",
+                        "Settings Restored",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes)
+                        ShowBulkReauthWindow();
+                }
             }
             catch (Exception ex)
             {
+                AppServices.TraceService?.Trace($"Restore: exception - {ex.Message}");
+
+                // Ensure loading UI is dismissed even on exception
+                mainLoadingThrobber.State = ThrobberState.Stopped;
+                mainLoadingThrobber.Hide();
+                tabLoadingLabel.Hide();
+                UpdateSettingsControlsVisibility(enabled: true);
+
                 ExceptionHandler.LogException(ex, true);
             }
         }
@@ -2311,12 +2536,8 @@ namespace EVEMon
             // Clear all tray icon notifications
             m_popupNotifications.Clear();
 
-            // Clear all character monitor notifications
-            foreach (CharacterMonitor? monitor in tcCharacterTabs.TabPages.Cast<TabPage>()
-                .Select(tabPage => tabPage.Controls[0] as CharacterMonitor))
-            {
-                monitor?.ClearNotifications();
-            }
+            // Clear active character monitor notifications (only 1 monitor exists at a time with virtual tabs)
+            m_activeMonitor?.ClearNotifications();
         }
 
         #endregion

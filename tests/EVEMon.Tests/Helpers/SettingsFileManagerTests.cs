@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Services;
@@ -526,6 +527,227 @@ namespace EVEMon.Tests.Helpers
             File.WriteAllText(filePath, "{\"key\": \"value\"}");
 
             SettingsFileManager.IsJsonBackupFile(filePath).Should().BeFalse();
+        }
+
+        #endregion
+
+        #region Atomic Write Creates Backup
+
+        [Fact]
+        public async Task SaveConfigAsync_OverwriteExisting_CreatesBackupFile()
+        {
+            // Arrange — save once to create the primary file
+            var config1 = new JsonConfig { ForkId = "first" };
+            await SettingsFileManager.SaveConfigAsync(config1);
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
+
+            // Act — save again to trigger File.Replace, which creates .bak
+            var config2 = new JsonConfig { ForkId = "second" };
+            await SettingsFileManager.SaveConfigAsync(config2);
+
+            // Assert — .bak file should exist and contain the previous version
+            string backupPath = SettingsFileManager.ConfigFilePath + ".bak";
+            File.Exists(backupPath).Should().BeTrue("File.Replace should create a .bak backup");
+
+            string backupContent = await File.ReadAllTextAsync(backupPath);
+            backupContent.Should().Contain("first", "backup should contain the previous save data");
+        }
+
+        [Fact]
+        public async Task SaveCredentialsAsync_OverwriteExisting_CreatesBackupFile()
+        {
+            // Arrange
+            var creds1 = new JsonCredentials
+            {
+                EsiKeys = { new JsonEsiKey { CharacterId = 111, RefreshToken = "old-token" } }
+            };
+            await SettingsFileManager.SaveCredentialsAsync(creds1);
+
+            // Act
+            var creds2 = new JsonCredentials
+            {
+                EsiKeys = { new JsonEsiKey { CharacterId = 222, RefreshToken = "new-token" } }
+            };
+            await SettingsFileManager.SaveCredentialsAsync(creds2);
+
+            // Assert
+            string backupPath = SettingsFileManager.CredentialsFilePath + ".bak";
+            File.Exists(backupPath).Should().BeTrue();
+        }
+
+        #endregion
+
+        #region Backup Recovery on Load
+
+        [Fact]
+        public async Task LoadConfigAsync_PrimaryCorrupt_ReadsBackup()
+        {
+            // Arrange — write a valid backup, then corrupt the primary
+            var config = new JsonConfig { ForkId = "recovered-fork", ForkVersion = "1.0" };
+            await SettingsFileManager.SaveConfigAsync(config);
+
+            // Manually save a second time so .bak exists with valid data
+            var config2 = new JsonConfig { ForkId = "latest" };
+            await SettingsFileManager.SaveConfigAsync(config2);
+
+            // Now corrupt the primary file
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "{{{ not valid json");
+
+            // Act
+            var loaded = await SettingsFileManager.LoadConfigAsync();
+
+            // Assert — should recover from .bak
+            loaded.Should().NotBeNull();
+            loaded.ForkId.Should().Be("recovered-fork",
+                "should fall back to .bak which contains the previous version");
+        }
+
+        [Fact]
+        public async Task LoadCredentialsAsync_PrimaryMissing_ReadsBackup()
+        {
+            // Arrange — save twice so .bak exists, then delete primary
+            var creds1 = new JsonCredentials
+            {
+                EsiKeys = { new JsonEsiKey { CharacterId = 42, RefreshToken = "token-42" } }
+            };
+            await SettingsFileManager.SaveCredentialsAsync(creds1);
+
+            var creds2 = new JsonCredentials
+            {
+                EsiKeys = { new JsonEsiKey { CharacterId = 43, RefreshToken = "token-43" } }
+            };
+            await SettingsFileManager.SaveCredentialsAsync(creds2);
+
+            // Delete primary, .bak should have creds1
+            File.Delete(SettingsFileManager.CredentialsFilePath);
+
+            // Act
+            var loaded = await SettingsFileManager.LoadCredentialsAsync();
+
+            // Assert
+            loaded.Should().NotBeNull();
+            loaded.EsiKeys.Should().HaveCount(1);
+            loaded.EsiKeys[0].CharacterId.Should().Be(42);
+        }
+
+        [Fact]
+        public async Task LoadCharacterIndexAsync_PrimaryCorrupt_ReadsBackup()
+        {
+            SettingsFileManager.EnsureDirectoriesExist();
+
+            // Arrange — save twice so .bak exists
+            var index1 = new JsonCharacterIndex
+            {
+                Characters = { new JsonCharacterIndexEntry { CharacterId = 1, Name = "Pilot A" } }
+            };
+            await SettingsFileManager.SaveCharacterIndexAsync(index1);
+
+            var index2 = new JsonCharacterIndex
+            {
+                Characters = { new JsonCharacterIndexEntry { CharacterId = 2, Name = "Pilot B" } }
+            };
+            await SettingsFileManager.SaveCharacterIndexAsync(index2);
+
+            // Corrupt primary
+            File.WriteAllText(SettingsFileManager.CharacterIndexFilePath, "corrupt!");
+
+            // Act
+            var loaded = await SettingsFileManager.LoadCharacterIndexAsync();
+
+            // Assert
+            loaded.Should().NotBeNull();
+            loaded.Characters.Should().HaveCount(1);
+            loaded.Characters[0].Name.Should().Be("Pilot A");
+        }
+
+        [Fact]
+        public async Task LoadCharacterAsync_PrimaryCorrupt_ReadsBackup()
+        {
+            SettingsFileManager.EnsureDirectoriesExist();
+
+            // Arrange — save twice so .bak exists
+            var char1 = new JsonCharacterData { CharacterId = 100, Name = "Original" };
+            await SettingsFileManager.SaveCharacterAsync(char1);
+
+            var char1Updated = new JsonCharacterData { CharacterId = 100, Name = "Updated" };
+            await SettingsFileManager.SaveCharacterAsync(char1Updated);
+
+            // Corrupt primary
+            string charPath = SettingsFileManager.GetCharacterFilePath(100);
+            File.WriteAllText(charPath, "not json");
+
+            // Act
+            var loaded = await SettingsFileManager.LoadCharacterAsync(100);
+
+            // Assert
+            loaded.Should().NotBeNull();
+            loaded!.Name.Should().Be("Original");
+        }
+
+        #endregion
+
+        #region SSO Credential Persistence
+
+        [Fact]
+        public async Task SaveConfigAsync_WithSSOCredentials_RoundTrips()
+        {
+            // Arrange
+            var config = new JsonConfig
+            {
+                ForkId = "aliacollins",
+                SSOClientID = "my-custom-client",
+                SSOClientSecret = "my-custom-secret"
+            };
+
+            // Act
+            await SettingsFileManager.SaveConfigAsync(config);
+            var loaded = await SettingsFileManager.LoadConfigAsync();
+
+            // Assert
+            loaded.SSOClientID.Should().Be("my-custom-client");
+            loaded.SSOClientSecret.Should().Be("my-custom-secret");
+        }
+
+        [Fact]
+        public async Task SaveConfigAsync_WithNullSSO_OmitsFromJson()
+        {
+            // Arrange — default config has null SSO fields
+            var config = new JsonConfig { ForkId = "aliacollins" };
+
+            // Act
+            await SettingsFileManager.SaveConfigAsync(config);
+            string json = await File.ReadAllTextAsync(SettingsFileManager.ConfigFilePath);
+
+            // Assert — null fields should be omitted (WhenWritingNull)
+            json.Should().NotContain("ssoClientID");
+            json.Should().NotContain("ssoClientSecret");
+        }
+
+        #endregion
+
+        #region ClearAllJsonFiles with Write Lock
+
+        [Fact]
+        public void ClearAllJsonFiles_WithNullWriteLock_DoesNotThrow()
+        {
+            // Should work exactly like the old signature
+            Action act = () => SettingsFileManager.ClearAllJsonFiles(null);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public async Task ClearAllJsonFiles_WithWriteLock_AcquiresAndReleases()
+        {
+            // Arrange
+            var semaphore = new SemaphoreSlim(1, 1);
+            await SettingsFileManager.SaveConfigAsync(new JsonConfig());
+
+            // Act
+            SettingsFileManager.ClearAllJsonFiles(semaphore);
+
+            // Assert — semaphore should be released (count back to 1)
+            semaphore.CurrentCount.Should().Be(1);
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeFalse();
         }
 
         #endregion

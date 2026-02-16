@@ -161,7 +161,9 @@ namespace EVEMon.Controls
             _subCharactersBatchUpdated = AppServices.EventAggregator.SubscribeOnUIForCharacterBatch<CharactersBatchUpdatedEvent>(this, () => Character, OnCharactersBatchUpdated);
             _subSchedulerChanged = AppServices.EventAggregator.SubscribeOnUI<SchedulerChangedEvent>(this, OnSchedulerChanged);
             _subSettingsChanged = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
-            _subSecondTick = AppServices.EventAggregator.SubscribeOnUI<EVEMon.Core.Events.SecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
+            // Use FiveSecondTickEvent instead of SecondTickEvent to reduce handler count from 100/sec to ~20/5sec
+            // for 100+ characters. Overview shows "2d 14h" not "2d 14h 32s" so 5-second granularity is sufficient.
+            _subSecondTick = AppServices.EventAggregator.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, _ => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subCharacterLabelChanged = AppServices.EventAggregator.SubscribeOnUI<CharacterLabelChangedEvent>(this, OnCharacterLabelChanged);
             _subESIKeyInfoUpdated = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, OnESIKeyInfoUpdated);
             Disposed += OnDisposed;
@@ -352,9 +354,23 @@ namespace EVEMon.Controls
             // Update character's 'Adorned Name' and 'Portrait' in case they have changed
             lblCharName.Text = Character.LabelPrefix + Character.AdornedName;
             pbCharacterPortrait.Character = Character;
-            lblTotalSkillPoints.Text = string.Format("{0:N0} SP", Character.SkillPoints);
 
-            FormatBalance();
+            // Show loading placeholders only for characters with genuinely no data
+            // (newly added via SSO, never synced). Characters loaded from settings
+            // have cached data from the last session — show it immediately.
+            bool hasNoData = Character.SkillPoints == 0 && Character.Balance == 0;
+
+            lblTotalSkillPoints.Text = hasNoData
+                ? "Fetching..."
+                : string.Format("{0:N0} SP", Character.SkillPoints);
+
+            if (hasNoData)
+            {
+                lblBalance.Text = "Fetching...";
+                lblBalance.ForeColor = m_settingsForeColor;
+            }
+            else
+                FormatBalance();
 
             var ccpCharacter = Character as CCPCharacter;
             QueuedSkill? trainingSkill = Character.CurrentlyTrainingSkill;
@@ -430,7 +446,13 @@ namespace EVEMon.Controls
                 // been associated with any character identity yet.
                 var unlinkedKeys = AppServices.ESIKeys
                     .Where(k => !k.CharacterIdentities.Any());
-                if (unlinkedKeys.Any(k => !string.IsNullOrEmpty(k.RefreshToken)))
+                if (unlinkedKeys.Any(k => k.HasError))
+                {
+                    // Auth failed — token is stale/invalid
+                    lblESIKeyWarning.Text = "Re-auth Required";
+                    lblESIKeyWarning.ForeColor = Color.OrangeRed;
+                }
+                else if (unlinkedKeys.Any(k => !string.IsNullOrEmpty(k.RefreshToken)))
                 {
                     // Has token, authentication in progress
                     lblESIKeyWarning.Text = "Connecting...";

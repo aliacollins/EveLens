@@ -32,6 +32,22 @@ namespace EVEMon.Common.Models
 
         private ICharacterDataQuerying? m_characterDataQuerying;
         private ICorporationDataQuerying? m_corporationDataQuerying;
+
+        /// <summary>
+        /// Gets the query orchestrator for this character, used by the tier subscriber
+        /// to toggle Tier 1 (Detail) monitors on/off based on active tab.
+        /// </summary>
+        internal CharacterQueryOrchestrator? QueryOrchestrator =>
+            m_characterDataQuerying as CharacterQueryOrchestrator;
+
+        /// <summary>
+        /// Gets whether this character has received its first ESI data update this session.
+        /// Returns false during startup while waiting for the initial API fetch.
+        /// Used by UI controls to show loading indicators instead of stale/empty data.
+        /// </summary>
+        public bool HasCompletedFirstUpdate =>
+            QueryMonitors.Any() && QueryMonitors.Any(m => m.LastUpdate > DateTime.MinValue
+                && m.LastUpdate.Year > 2000);
         private List<SerializableAPIUpdate>? m_lastAPIUpdates;
 
         private readonly ICharacterServices m_services;

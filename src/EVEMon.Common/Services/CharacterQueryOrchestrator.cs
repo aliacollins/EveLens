@@ -61,6 +61,51 @@ namespace EVEMon.Common.Services
         #endregion
 
 
+        #region Tier Classification
+
+        /// <summary>
+        /// Tier 0 (Monitor): Endpoints needed for overview display and alerting.
+        /// Polled for ALL monitored characters, every scheduler tick.
+        /// </summary>
+        private static readonly HashSet<ESIAPICharacterMethods> Tier0Methods = new()
+        {
+            ESIAPICharacterMethods.CharacterSheet,
+            ESIAPICharacterMethods.Skills,
+            ESIAPICharacterMethods.SkillQueue,
+            ESIAPICharacterMethods.AccountBalance,
+            ESIAPICharacterMethods.Location,
+            ESIAPICharacterMethods.Clones,
+            ESIAPICharacterMethods.Implants,
+            ESIAPICharacterMethods.Ship,
+            ESIAPICharacterMethods.MarketOrders,       // order expiry alerts
+            ESIAPICharacterMethods.Contracts,          // contract alerts
+            ESIAPICharacterMethods.IndustryJobs,       // job completion alerts
+            ESIAPICharacterMethods.MailMessages,       // new mail count
+            ESIAPICharacterMethods.Notifications,      // sovereignty/war alerts
+            ESIAPICharacterMethods.PlanetaryColonies,  // extraction complete
+        };
+
+        /// <summary>
+        /// Tier 1 (Detail): Endpoints only polled when character tab is open.
+        /// </summary>
+        private static readonly HashSet<ESIAPICharacterMethods> Tier1Methods = new()
+        {
+            ESIAPICharacterMethods.AssetList,
+            ESIAPICharacterMethods.WalletJournal,
+            ESIAPICharacterMethods.WalletTransactions,
+            ESIAPICharacterMethods.KillLog,
+            ESIAPICharacterMethods.EmploymentHistory,
+            ESIAPICharacterMethods.ContactList,
+            ESIAPICharacterMethods.MailingLists,
+        };
+
+        // Tier 2 (Archive): Everything else — Standings, FW stats, Medals,
+        // ResearchPoints, Calendar, LoyaltyPoints. Enabled always but at
+        // ESI-dictated slow cache intervals (hours).
+
+        #endregion
+
+
         #region Production Mode Fields
 
         private readonly CCPCharacter? m_ccpCharacter;
@@ -73,6 +118,10 @@ namespace EVEMon.Common.Services
         private CharacterQueryMonitor<EsiAPIIndustryJobs>? m_charIndustryJobsMonitor;
         private List<IQueryMonitorEx>? m_characterQueryMonitors;
         private List<IQueryMonitorEx>? m_basicFeaturesMonitors;
+        private List<IQueryMonitorEx>? m_tier0Monitors;
+        private List<IQueryMonitorEx>? m_tier1Monitors;
+        private List<IQueryMonitorEx>? m_tier2Monitors;
+        private volatile bool m_isActiveCharacter;
         private bool m_characterSheetUpdating;
 
         // Responses from the attribute results since we handle it manually
@@ -135,6 +184,7 @@ namespace EVEMon.Common.Services
             m_characterQueryMonitors.ForEach(monitor => ccpCharacter.QueryMonitors.Add(monitor));
 
             m_basicFeaturesMonitors = InitializeBasicFeaturesMonitors(ccpCharacter);
+            ClassifyMonitorsByTier();
 
             if (EveMonClient.SmartQueryScheduler != null)
             {
@@ -481,6 +531,40 @@ namespace EVEMon.Common.Services
             return basicMonitors;
         }
 
+        /// <summary>
+        /// Classifies all monitors into Tier 0 (Monitor), Tier 1 (Detail), or Tier 2 (Archive)
+        /// based on their ESI method. Called once after monitor creation.
+        /// </summary>
+        private void ClassifyMonitorsByTier()
+        {
+            m_tier0Monitors = new List<IQueryMonitorEx>();
+            m_tier1Monitors = new List<IQueryMonitorEx>();
+            m_tier2Monitors = new List<IQueryMonitorEx>();
+
+            foreach (var monitor in m_characterQueryMonitors!)
+            {
+                if (monitor.Method is ESIAPICharacterMethods method)
+                {
+                    if (Tier0Methods.Contains(method))
+                        m_tier0Monitors.Add(monitor);
+                    else if (Tier1Methods.Contains(method))
+                        m_tier1Monitors.Add(monitor);
+                    else
+                        m_tier2Monitors.Add(monitor);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets whether this character's tab is currently active (visible) in the UI.
+        /// When active, Tier 1 (Detail) monitors are enabled. When inactive, they are disabled.
+        /// Called by <see cref="ActiveCharacterTierSubscriber"/> in response to tab switches.
+        /// </summary>
+        internal void SetActiveCharacter(bool isActive)
+        {
+            m_isActiveCharacter = isActive;
+        }
+
         #endregion
 
 
@@ -502,7 +586,10 @@ namespace EVEMon.Common.Services
         }
 
         /// <summary>
-        /// Production mode tick: drives real monitors via UpdateTick().
+        /// Production mode tick: drives real monitors via UpdateTick() with three-tier activation.
+        /// Tier 0 (Monitor): Always active for all monitored characters (overview + alerts).
+        /// Tier 1 (Detail): Only active when this character's tab is open.
+        /// Tier 2 (Archive): Always enabled (slow ESI cache intervals handle frequency).
         /// </summary>
         private void ProcessTickProduction()
         {
@@ -520,9 +607,22 @@ namespace EVEMon.Common.Services
                 AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {m_ccpCharacter!.Name} startup delay completed, monitors enabled");
             }
 
-            // If character is monitored enable the basic feature monitoring
-            foreach (var monitor in m_basicFeaturesMonitors!)
-                monitor.Enabled = m_ccpCharacter!.Monitored;
+            bool monitored = m_ccpCharacter!.Monitored;
+
+            // Tier 0: Always active for monitored characters (overview + alerts)
+            foreach (var monitor in m_tier0Monitors!)
+                monitor.Enabled = monitored;
+
+            // Tier 1: Enabled for all monitored characters (background fetch).
+            // SmartQueryScheduler prioritizes the visible character via SetVisibleCharacter().
+            // After 5-10 minutes of running, all data is cached — every tab switch is instant.
+            foreach (var monitor in m_tier1Monitors!)
+                monitor.Enabled = monitored;
+
+            // Tier 2: Always enabled (slow ESI cache intervals handle frequency)
+            foreach (var monitor in m_tier2Monitors!)
+                monitor.Enabled = monitored;
+
             if (m_characterSheetUpdating)
                 FinishCharacterSheetUpdated();
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EVEMon.Common.Extensions;
 
@@ -22,6 +23,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long ID { get; set; }
 
         [XmlElement("name")]
+        [JsonIgnore]
         public string? NameXml
         {
             get { return Name; }
@@ -32,6 +34,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long HomeStationID { get; set; }
 
         [XmlElement("DoB")]
+        [JsonIgnore]
         public string BirthdayXml
         {
             get { return Birthday.DateTimeToTimeString(); }
@@ -55,6 +58,7 @@ namespace EVEMon.Common.Serialization.Eve
         public string? Gender { get; set; }
 
         [XmlElement("corporationName")]
+        [JsonIgnore]
         public string? CorporationNameXml
         {
             get { return CorporationName; }
@@ -65,6 +69,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long CorporationID { get; set; }
 
         [XmlElement("allianceName")]
+        [JsonIgnore]
         public string? AllianceNameXml
         {
             get { return AllianceName; }
@@ -87,6 +92,7 @@ namespace EVEMon.Common.Serialization.Eve
         public short FreeRespecs { get; set; }
 
         [XmlElement("cloneJumpDate")]
+        [JsonIgnore]
         public string CloneJumpDateXml
         {
             get { return CloneJumpDate.DateTimeToTimeString(); }
@@ -98,6 +104,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("lastRespecDate")]
+        [JsonIgnore]
         public string LastRespecDateXml
         {
             get { return LastRespecDate.DateTimeToTimeString(); }
@@ -109,6 +116,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("lastTimedRespec")]
+        [JsonIgnore]
         public string LastTimedRespecXml
         {
             get { return LastTimedRespec.DateTimeToTimeString(); }
@@ -120,6 +128,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("remoteStationDate")]
+        [JsonIgnore]
         public string RemoteStationDateXml
         {
             get { return RemoteStationDate.DateTimeToTimeString(); }
@@ -131,6 +140,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("jumpActivation")]
+        [JsonIgnore]
         public string JumpActivationDateXml
         {
             get { return JumpActivationDate.DateTimeToTimeString(); }
@@ -142,6 +152,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("jumpFatigue")]
+        [JsonIgnore]
         public string JumpFatigueDateXml
         {
             get { return JumpFatigueDate.DateTimeToTimeString(); }
@@ -153,6 +164,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlElement("jumpLastUpdate")]
+        [JsonIgnore]
         public string JumpLastUpdateDateXml
         {
             get { return JumpLastUpdateDate.DateTimeToTimeString(); }
@@ -200,66 +212,77 @@ namespace EVEMon.Common.Serialization.Eve
 		/// Gets or sets the name.
 		/// </summary>
 		[XmlIgnore]
+        [JsonInclude]
         public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the corporation.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public string? CorporationName { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the alliance.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public string? AllianceName { get; set; }
 
         /// <summary>
         /// The date and time the character was created.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime Birthday { get; set; }
 
         /// <summary>
         /// The date and time the jump clone was created.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime CloneJumpDate { get; set; }
 
         /// <summary>
         /// The date and time of the last remap.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime LastRespecDate { get; set; }
 
         /// <summary>
         /// The date and time of the last timed remap.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime LastTimedRespec { get; set; }
 
         /// <summary>
         /// The date and time of the last remap.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime RemoteStationDate { get; set; }
 
         /// <summary>
         /// Gets or sets the jump activation date.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime JumpActivationDate { get; set; }
 
         /// <summary>
         /// Gets or sets the jump fatigue date.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime JumpFatigueDate { get; set; }
 
         /// <summary>
         /// Gets or sets the jump last update date.
         /// </summary>
         [XmlIgnore]
+        [JsonInclude]
         public DateTime JumpLastUpdateDate { get; set; }
     }
 }

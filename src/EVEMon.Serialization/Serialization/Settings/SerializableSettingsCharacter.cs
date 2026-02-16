@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EVEMon.Common.Serialization.Eve;
 
@@ -7,6 +8,8 @@ namespace EVEMon.Common.Serialization.Settings
     /// <summary>
     /// Represents a base for character serialization in the settings.
     /// </summary>
+    [JsonDerivedType(typeof(SerializableCCPCharacter), "ccp")]
+    [JsonDerivedType(typeof(SerializableUriCharacter), "uri")]
     public class SerializableSettingsCharacter : SerializableCharacterSheetBase
     {
         [XmlAttribute("guid")]

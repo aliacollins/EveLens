@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EVEMon.Common.Extensions;
 
@@ -10,6 +11,7 @@ namespace EVEMon.Common.Serialization.Eve
         public long CorporationID { get; set; }
 
         [XmlAttribute("corporationName")]
+        [JsonIgnore]
         public string? CorporationNameXml
         {
             get { return CorporationName; }
@@ -17,6 +19,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlAttribute("startDate")]
+        [JsonIgnore]
         public string StartDateXml
         {
             get { return StartDate.DateTimeToTimeString(); }
@@ -28,9 +31,11 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
+        [JsonInclude]
         public string? CorporationName { get; set; }
 
         [XmlIgnore]
+        [JsonInclude]
         public DateTime StartDate { get; set; }
     }
 }

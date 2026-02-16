@@ -116,7 +116,7 @@ namespace EVEMon.Common.Models
         /// Returns true if an error occurred while last trying to refresh this key.
         /// </summary>
         [XmlIgnore]
-        public bool HasError { get; private set; }
+        public bool HasError { get; internal set; }
 
 #if false
         /// <summary>
@@ -175,6 +175,15 @@ namespace EVEMon.Common.Models
 
         #region Internal Methods
         
+        /// <summary>
+        /// Clears the refresh token. Used after settings restore to prevent
+        /// auto-refresh attempts with stale PKCE tokens.
+        /// </summary>
+        internal void ClearRefreshToken()
+        {
+            RefreshToken = string.Empty;
+        }
+
         /// <summary>
         /// Starts obtaining an access token from the refresh token, because either the access
         /// token expired or was never obtained.

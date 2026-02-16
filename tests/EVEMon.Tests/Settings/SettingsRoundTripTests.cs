@@ -394,6 +394,76 @@ namespace EVEMon.Tests.Settings
             creds.EsiKeys.Should().NotBeNull().And.BeEmpty();
         }
 
+        [Fact]
+        public void JsonConfig_RoundTrip_PreservesSSO_Credentials()
+        {
+            // Arrange — default (null) SSO fields
+            var original = new JsonConfig
+            {
+                Version = 1,
+                ForkId = "aliacollins"
+            };
+
+            // Act
+            string json = JsonSerializer.Serialize(original, JsonWriteOptions);
+            var result = JsonSerializer.Deserialize<JsonConfig>(json, JsonReadOptions);
+
+            // Assert — null SSO values should survive round-trip
+            result.Should().NotBeNull();
+            result!.SSOClientID.Should().BeNull();
+            result.SSOClientSecret.Should().BeNull();
+        }
+
+        [Fact]
+        public void JsonConfig_RoundTrip_WithCustomSSO_PreservesValues()
+        {
+            // Arrange
+            var original = new JsonConfig
+            {
+                Version = 1,
+                ForkId = "aliacollins",
+                SSOClientID = "my-custom-client-id",
+                SSOClientSecret = "my-custom-secret"
+            };
+
+            // Act
+            string json = JsonSerializer.Serialize(original, JsonWriteOptions);
+            var result = JsonSerializer.Deserialize<JsonConfig>(json, JsonReadOptions);
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.SSOClientID.Should().Be("my-custom-client-id");
+            result.SSOClientSecret.Should().Be("my-custom-secret");
+        }
+
+        [Fact]
+        public void Migration_XmlToJson_PreservesSSO_Credentials()
+        {
+            // Arrange — XML settings with custom SSO credentials
+            var xmlSettings = new SerializableSettings
+            {
+                SSOClientID = "custom-xml-id",
+                SSOClientSecret = "custom-xml-secret",
+                ForkId = "aliacollins"
+            };
+
+            // Act — simulate what MigrateConfig does via the round-trip:
+            // SerializableSettings → JsonConfig → SerializableSettings
+            var config = new JsonConfig
+            {
+                SSOClientID = xmlSettings.SSOClientID,
+                SSOClientSecret = xmlSettings.SSOClientSecret,
+                ForkId = xmlSettings.ForkId
+            };
+            string json = JsonSerializer.Serialize(config, JsonWriteOptions);
+            var loaded = JsonSerializer.Deserialize<JsonConfig>(json, JsonReadOptions);
+
+            // Assert
+            loaded.Should().NotBeNull();
+            loaded!.SSOClientID.Should().Be("custom-xml-id");
+            loaded.SSOClientSecret.Should().Be("custom-xml-secret");
+        }
+
         #endregion
 
         #region Corrupted Content Handling

@@ -56,6 +56,7 @@ namespace EVEMon
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.addAPIKeyMenu = new System.Windows.Forms.ToolStripMenuItem();
 			this.manageAPIKeysMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.reauthAllCharactersMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.fileManagerHideToolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
 			this.deleteCharacterMenu = new System.Windows.Forms.ToolStripMenuItem();
 			this.exportCharacterMenu = new System.Windows.Forms.ToolStripMenuItem();
@@ -351,6 +352,7 @@ namespace EVEMon
 			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addAPIKeyMenu,
             this.manageAPIKeysMenuItem,
+            this.reauthAllCharactersMenuItem,
             this.fileManagerHideToolStripSeparator,
             this.deleteCharacterMenu,
             this.exportCharacterMenu,
@@ -366,6 +368,7 @@ namespace EVEMon
 			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
 			this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.fileToolStripMenuItem.Text = "&File";
+			this.fileToolStripMenuItem.DropDownOpening += new System.EventHandler(this.fileToolStripMenuItem_DropDownOpening);
 			// 
 			// addAPIKeyMenu
 			// 
@@ -382,9 +385,16 @@ namespace EVEMon
 			this.manageAPIKeysMenuItem.Size = new System.Drawing.Size(185, 22);
 			this.manageAPIKeysMenuItem.Text = "&Manage Characters...";
 			this.manageAPIKeysMenuItem.Click += new System.EventHandler(this.manageAPIKeysMenuItem_Click);
-			// 
+			//
+			// reauthAllCharactersMenuItem
+			//
+			this.reauthAllCharactersMenuItem.Name = "reauthAllCharactersMenuItem";
+			this.reauthAllCharactersMenuItem.Size = new System.Drawing.Size(250, 22);
+			this.reauthAllCharactersMenuItem.Text = "Re-authenticate All Characters...";
+			this.reauthAllCharactersMenuItem.Click += new System.EventHandler(this.reauthAllCharactersMenuItem_Click);
+			//
 			// fileManagerHideToolStripSeparator
-			// 
+			//
 			this.fileManagerHideToolStripSeparator.Name = "fileManagerHideToolStripSeparator";
 			this.fileManagerHideToolStripSeparator.Size = new System.Drawing.Size(182, 6);
 			// 
@@ -1300,6 +1310,7 @@ namespace EVEMon
         private EVEMon.Controls.NotificationList notificationList;
         private System.Windows.Forms.NotifyIcon niAlertIcon;
         private System.Windows.Forms.ToolStripMenuItem addAPIKeyMenu;
+        private System.Windows.Forms.ToolStripMenuItem reauthAllCharactersMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteCharacterMenu;
         private System.Windows.Forms.ToolStripSeparator fileManagerHideToolStripSeparator;
         private System.Windows.Forms.ToolStripMenuItem hideCharacterMenu;

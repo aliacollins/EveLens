@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EVEMon.Common.Extensions;
 
@@ -19,12 +20,15 @@ namespace EVEMon.Common.Serialization.Eve
         public int EndSP { get; set; }
 
         [XmlAttribute("startTime")]
+        [JsonIgnore]
         public string? CCPStartTime { get; set; }
 
         [XmlAttribute("endTime")]
+        [JsonIgnore]
         public string? CCPEndTime { get; set; }
 
         [XmlIgnore]
+        [JsonInclude]
         public DateTime StartTime
         {
             get { return CCPStartTime?.TimeStringToDateTime() ?? DateTime.MinValue; }
@@ -32,6 +36,7 @@ namespace EVEMon.Common.Serialization.Eve
         }
 
         [XmlIgnore]
+        [JsonInclude]
         public DateTime EndTime
         {
             get { return CCPEndTime?.TimeStringToDateTime() ?? DateTime.MinValue; }
@@ -41,18 +46,21 @@ namespace EVEMon.Common.Serialization.Eve
         // When the skill queue is paused, startTime and endTime are empty in the XML document
         // As a result, the serialization leaves the DateTime with its default value
         [XmlIgnore]
+        [JsonIgnore]
         public bool IsPaused
         {
             get { return EndTime == DateTime.MinValue; }
         }
 
         [XmlIgnore]
+        [JsonIgnore]
         public bool IsCompleted
         {
             get { return !IsPaused && EndTime <= DateTime.UtcNow; }
         }
 
         [XmlIgnore]
+        [JsonIgnore]
         public bool IsTraining
         {
             get { return !IsPaused && StartTime <= DateTime.UtcNow && DateTime.UtcNow <= EndTime; }

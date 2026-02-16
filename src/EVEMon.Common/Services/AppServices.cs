@@ -39,6 +39,7 @@ namespace EVEMon.Common.Services
         private static Lazy<GlobalCharacterIdentityCollection> s_characterIdentities = new(() => EveMonClient.CharacterIdentities);
         private static Lazy<GlobalMonitoredCharacterCollection> s_monitoredCharacters = new(() => EveMonClient.MonitoredCharacters);
         private static Lazy<EveServer> s_eveServer = new(() => EveMonClient.EVEServer);
+        private static Lazy<ActiveCharacterTierSubscriber> s_tierSubscriber = new(() => new ActiveCharacterTierSubscriber());
 
         /// <summary>
         /// Gets the notification collection.
@@ -74,6 +75,12 @@ namespace EVEMon.Common.Services
         /// Gets the EVE server status.
         /// </summary>
         public static EveServer EVEServer => s_eveServer.Value;
+
+        /// <summary>
+        /// Gets the tier subscriber that bridges tab selection to query tier activation.
+        /// Accessing this property initializes the subscriber (lazy).
+        /// </summary>
+        internal static ActiveCharacterTierSubscriber TierSubscriber => s_tierSubscriber.Value;
 
         /// <summary>
         /// Gets whether the application is closed.
@@ -272,6 +279,10 @@ namespace EVEMon.Common.Services
             // Phase 4: Sync to ServiceLocator for Models/Infrastructure access
             SyncToServiceLocator();
             TraceService?.Trace("AppServices.Bootstrap - ServiceLocator synced", printMethod: false);
+
+            // Phase 5: Initialize the tier subscriber to bridge tab selection to query tier activation
+            _ = TierSubscriber;
+            TraceService?.Trace("AppServices.Bootstrap - TierSubscriber initialized", printMethod: false);
         }
 
         /// <summary>
@@ -280,6 +291,10 @@ namespace EVEMon.Common.Services
         /// </summary>
         public static void Shutdown()
         {
+            // Dispose the tier subscriber
+            if (s_tierSubscriber.IsValueCreated)
+                s_tierSubscriber.Value.Dispose();
+
             // Shutdown settings (dispose SmartSettingsManager and timer subscriptions)
             Common.Settings.Shutdown();
 
@@ -347,6 +362,7 @@ namespace EVEMon.Common.Services
             s_characterIdentities = new Lazy<GlobalCharacterIdentityCollection>(() => EveMonClient.CharacterIdentities);
             s_monitoredCharacters = new Lazy<GlobalMonitoredCharacterCollection>(() => EveMonClient.MonitoredCharacters);
             s_eveServer = new Lazy<EveServer>(() => EveMonClient.EVEServer);
+            s_tierSubscriber = new Lazy<ActiveCharacterTierSubscriber>(() => new ActiveCharacterTierSubscriber());
         }
     }
 }

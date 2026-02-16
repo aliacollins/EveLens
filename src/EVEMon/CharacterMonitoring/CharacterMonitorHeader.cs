@@ -255,6 +255,16 @@ namespace EVEMon.CharacterMonitoring
             SuspendLayout();
             try
             {
+                // Show loading placeholder only for characters with no cached data
+                if (m_character.SkillPoints == 0 && m_character.Balance == 0)
+                {
+                    SecurityStatusLabel.Text = "Security Status: Fetching...";
+                    ActiveShipLabel.Text = "Active Ship: Fetching...";
+                    LocationInfoLabel.Text = "Located in: Fetching...";
+                    DockedInfoLabel.Text = " ";
+                    return;
+                }
+
                 SecurityStatusLabel.Text = $"Security Status: {m_character.SecurityStatus:N2}";
                 ActiveShipLabel.Text = m_character.GetActiveShipText();
                 LocationInfoLabel.Text = $"Located in: {m_character.GetLastKnownLocationText()}";
@@ -408,6 +418,16 @@ namespace EVEMon.CharacterMonitoring
         {
             if (m_character == null)
                 return;
+
+            // Show loading placeholder only for characters with no cached data
+            // (newly added, never synced). Cached data from last session shows immediately.
+            if (m_character.SkillPoints == 0 && m_character.Balance == 0)
+            {
+                BalanceLabel.Text = "Balance: Fetching...";
+                BalanceLabel.ForeColor = Color.DimGray;
+                BalanceLabel.Font = FontFactory.GetFont(Font);
+                return;
+            }
 
             BalanceLabel.Text = $"Balance: {m_character.Balance:N} ISK";
 
@@ -684,6 +704,12 @@ namespace EVEMon.CharacterMonitoring
         /// <returns>Formatted list of information about a characters skills.</returns>
         private string FormatSkillSummary()
         {
+            // Show loading placeholder only for characters with no cached data
+            if (m_character.SkillPoints == 0 && m_character.Balance == 0)
+            {
+                return "Fetching skill data...";
+            }
+
             StringBuilder output = new StringBuilder();
 
             output

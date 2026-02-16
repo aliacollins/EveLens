@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EVEMon.Common.Enumerations;
 
@@ -7,6 +8,8 @@ namespace EVEMon.Common.Serialization.Settings
     /// <summary>
     /// Represents a market sell order.
     /// </summary>
+    [JsonDerivedType(typeof(SerializableBuyOrder), "buy")]
+    [JsonDerivedType(typeof(SerializableSellOrder), "sell")]
     public class SerializableOrderBase
     {
         /// <summary>

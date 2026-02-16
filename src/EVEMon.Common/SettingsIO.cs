@@ -12,6 +12,7 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Models;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Notifications;
 using EVEMon.Common.Scheduling;
@@ -317,7 +318,7 @@ Do you want to continue?";
                 }
 
                 // Deserialize the (possibly modified) content
-                s_settings = Util.DeserializeXmlFromString<SerializableSettings>(fileContent);
+                s_settings = Util.DeserializeXmlFromString<SerializableSettings>(fileContent, SettingsTransform);
 
                 // Loading from file failed, we abort and keep our current settings
                 if (s_settings == null)
@@ -333,15 +334,10 @@ Do you want to continue?";
                 // Clear JSON files - they'll be recreated from restored XML
                 SettingsFileManager.ClearAllJsonFiles();
 
-                // Immediately migrate restored settings to JSON
-                await TryMigrateToJsonAsync(s_settings);
-
-                // JSON is now our source of truth
-                if (SettingsFileManager.JsonSettingsExist())
-                {
-                    UsingJsonFormat = true;
-                    AppServices.TraceService?.Trace("RestoreAsync: Migrated to JSON - JSON is now source of truth");
-                }
+                // Save restored settings directly to JSON (bypasses NeedsMigration check)
+                await SettingsFileManager.SaveFromSerializableSettingsAsync(s_settings);
+                UsingJsonFormat = true;
+                AppServices.TraceService?.Trace("RestoreAsync: Saved restored settings to JSON");
             }
 
             IsRestoring = true;
@@ -349,7 +345,15 @@ Do you want to continue?";
             await ImportDataAsync();
             IsRestoring = false;
 
-            AppServices.TraceService?.Trace($"RestoreAsync: Complete - UsingJsonFormat={UsingJsonFormat}");
+            // Mark all ESI keys as needing re-auth (tokens are stale after restore)
+            foreach (ESIKey key in AppServices.ESIKeys)
+            {
+                key.HasError = true;
+                // Clear refresh token to prevent auto-refresh attempts with stale tokens
+                key.ClearRefreshToken();
+            }
+
+            AppServices.TraceService?.Trace($"RestoreAsync: Complete - UsingJsonFormat={UsingJsonFormat}, marked {AppServices.ESIKeys.Count} keys for re-auth");
         }
 
         /// <summary>

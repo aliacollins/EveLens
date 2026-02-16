@@ -68,4 +68,23 @@ namespace EVEMon.Core.Events
             Identity = identity ?? throw new ArgumentNullException(nameof(identity));
         }
     }
+
+    /// <summary>
+    /// Published when the active character tab changes in the main window.
+    /// Used by the query tier system to activate Tier 1 (Detail) monitors
+    /// for the visible character and deactivate them for background characters.
+    /// </summary>
+    public sealed class ActiveCharacterChangedEvent
+    {
+        /// <summary>
+        /// Gets the character ID of the newly active character, or 0 if no character is selected.
+        /// </summary>
+        public long CharacterId { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ActiveCharacterChangedEvent"/> class.
+        /// </summary>
+        /// <param name="characterId">The character ID of the active character, or 0 for none.</param>
+        public ActiveCharacterChangedEvent(long characterId) => CharacterId = characterId;
+    }
 }

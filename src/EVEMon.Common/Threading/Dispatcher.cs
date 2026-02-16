@@ -21,7 +21,11 @@ namespace EVEMon.Common.Threading
             if (s_uiContext != null)
                 return;
 
-            s_uiContext = SynchronizationContext.Current ?? new WindowsFormsSynchronizationContext();
+            // Must capture a WindowsFormsSynchronizationContext so that Post/Send
+            // marshal to the UI thread. A base SynchronizationContext would queue
+            // to the thread pool instead, causing cross-thread UI exceptions.
+            s_uiContext = SynchronizationContext.Current as WindowsFormsSynchronizationContext
+                ?? new WindowsFormsSynchronizationContext();
 
             s_oneSecondTimer = new System.Windows.Forms.Timer { Interval = 1000 };
             s_oneSecondTimer.Tick += OneSecondTickTimer_Tick;
