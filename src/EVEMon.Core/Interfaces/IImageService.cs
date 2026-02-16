@@ -4,18 +4,32 @@ using System.Threading.Tasks;
 namespace EVEMon.Core.Interfaces
 {
     /// <summary>
-    /// Provides image loading with caching.
-    /// Breaks Model -> ImageService dependency (6 call sites, 6 files).
-    /// Returns object typed as System.Drawing.Image at runtime.
+    /// Provides image downloading with disk caching.
+    /// Breaks the Model to <c>ImageService</c> static service dependency (6 call sites, 6 files).
     /// </summary>
+    /// <remarks>
+    /// Images are cached on disk in <c>IApplicationPaths.ImageCacheDirectory</c>.
+    /// When <paramref name="useCache"/> is true (default), the disk cache is checked before
+    /// making an HTTP request. Returns null if the download fails or the URL is unreachable.
+    ///
+    /// Return type is <c>object?</c> (actually <c>System.Drawing.Image</c> at runtime) because
+    /// the Core assembly cannot reference <c>System.Drawing</c>. Callers must cast to
+    /// <c>System.Drawing.Image</c>.
+    ///
+    /// Production: <c>ImageServiceAdapter</c> in <c>EVEMon.Common/Services/ImageServiceAdapter.cs</c>
+    /// (delegates to static <c>ImageService.GetImageAsync()</c>).
+    /// Testing: Provide a stub returning null or a known test image.
+    /// </remarks>
     public interface IImageService
     {
         /// <summary>
-        /// Downloads or retrieves from cache an image at the given URL.
+        /// Downloads or retrieves from disk cache an image at the given URL.
+        /// Returns the image as <c>System.Drawing.Image</c> (typed as <c>object</c>),
+        /// or null if the download failed or the URL was unreachable.
         /// </summary>
-        /// <param name="url">The image URL.</param>
-        /// <param name="useCache">When true, checks the cache before downloading.</param>
-        /// <returns>The image object, or null if loading failed.</returns>
+        /// <param name="url">The fully qualified image URL.</param>
+        /// <param name="useCache">When true (default), checks the disk cache before downloading.</param>
+        /// <returns>The image object, or null on failure.</returns>
         Task<object?> GetImageAsync(Uri url, bool useCache = true);
     }
 }

@@ -1,29 +1,49 @@
 namespace EVEMon.Core.Interfaces
 {
     /// <summary>
-    /// Abstracts the notification system for decoupled alerting.
-    /// Replaces direct dependency on <c>EveMonClient.Notifications</c>.
+    /// Abstracts the application notification system for decoupled alerting.
+    /// Replaces direct dependency on <c>EveMonClient.Notifications</c>
+    /// (<c>GlobalNotificationCollection</c>).
     /// </summary>
+    /// <remarks>
+    /// Notifications are displayed in the UI notification panel and optionally as system
+    /// tray balloon tips. Each notification has a category (what happened) and a priority
+    /// (how urgently the user should be informed).
+    ///
+    /// Category and priority are passed as <c>int</c> rather than enum types because the
+    /// Core assembly cannot reference the <c>NotificationCategory</c> and
+    /// <c>NotificationPriority</c> enums defined in <c>EVEMon.Common</c>. Callers cast
+    /// from the appropriate enum.
+    ///
+    /// <see cref="Invalidate"/> removes notifications matching a category (and optional context),
+    /// used when the condition that triggered the notification is resolved. For example,
+    /// an API error notification is invalidated when the next API call succeeds.
+    ///
+    /// Production: Implement by delegating to <c>GlobalNotificationCollection</c>.
+    /// Testing: Provide a stub that tracks <c>Notify</c>/<c>Invalidate</c> calls for assertion.
+    /// </remarks>
     public interface INotificationService
     {
         /// <summary>
-        /// Raises a notification with the specified category and priority.
+        /// Raises a notification visible in the notification panel and optionally as a tray balloon.
         /// </summary>
-        /// <param name="category">The notification category (mapped to NotificationCategory enum).</param>
-        /// <param name="priority">The notification priority (mapped to NotificationPriority enum).</param>
-        /// <param name="title">The notification title text.</param>
-        /// <param name="context">Optional context object associated with the notification.</param>
+        /// <param name="category">The notification category (cast from <c>NotificationCategory</c> enum).</param>
+        /// <param name="priority">The notification priority (cast from <c>NotificationPriority</c> enum).</param>
+        /// <param name="title">The notification title text displayed to the user.</param>
+        /// <param name="context">Optional context object associated with the notification (e.g., character).</param>
         void Notify(int category, int priority, string title, object? context = null);
 
         /// <summary>
-        /// Invalidates (removes) notifications matching the specified category.
+        /// Removes all notifications matching the specified category and optional context.
+        /// Used when the underlying condition is resolved (e.g., API error clears on success).
         /// </summary>
-        /// <param name="category">The notification category to invalidate.</param>
-        /// <param name="context">Optional context to match when invalidating.</param>
+        /// <param name="category">The notification category to remove (cast from <c>NotificationCategory</c>).</param>
+        /// <param name="context">Optional context to match; if null, removes all notifications of the category.</param>
         void Invalidate(int category, object? context = null);
 
         /// <summary>
-        /// Invalidates all API error notifications.
+        /// Removes all API-related error notifications at once.
+        /// Called when a bulk operation succeeds and all outstanding API errors can be dismissed.
         /// </summary>
         void InvalidateAPIErrors();
     }

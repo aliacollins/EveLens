@@ -5,7 +5,17 @@ namespace EVEMon.Core.Events
 {
     /// <summary>
     /// Published when a character is created via <see cref="ICharacterFactory"/>.
+    /// Subscribers can use this to perform additional initialization (e.g., registering
+    /// the character with the query scheduler, updating UI character lists).
     /// </summary>
+    /// <remarks>
+    /// Published by <c>CharacterFactory</c> in <c>EVEMon.Common/Services/CharacterFactory.cs</c>
+    /// immediately after the character is tracked in the factory's managed set.
+    ///
+    /// The <see cref="FromSerialized"/> flag distinguishes between characters loaded from
+    /// saved settings (true) and newly created characters via SSO (false). New characters
+    /// typically need <c>ForceUpdateBasicFeatures = true</c> for immediate ESI fetch.
+    /// </remarks>
     public sealed class CharacterCreatedEvent
     {
         /// <summary>
@@ -14,11 +24,17 @@ namespace EVEMon.Core.Events
         public ICharacterIdentity Identity { get; }
 
         /// <summary>
-        /// Gets a value indicating whether the character was created from serialized data
-        /// (as opposed to being newly created).
+        /// Gets a value indicating whether the character was created from serialized
+        /// settings data (true) or is a brand-new character via SSO authentication (false).
         /// </summary>
         public bool FromSerialized { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CharacterCreatedEvent"/> class.
+        /// </summary>
+        /// <param name="identity">The identity of the created character (must not be null).</param>
+        /// <param name="fromSerialized">True if loaded from saved settings; false if newly created.</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="identity"/> is null.</exception>
         public CharacterCreatedEvent(ICharacterIdentity identity, bool fromSerialized)
         {
             Identity = identity ?? throw new ArgumentNullException(nameof(identity));
@@ -27,8 +43,14 @@ namespace EVEMon.Core.Events
     }
 
     /// <summary>
-    /// Published when a character is disposed via <see cref="ICharacterFactory"/>.
+    /// Published when a character is disposed via <see cref="ICharacterFactory.DisposeCharacter"/>.
+    /// Subscribers should clean up any resources associated with the character
+    /// (e.g., unregistering from the query scheduler, removing UI elements).
     /// </summary>
+    /// <remarks>
+    /// Published by <c>CharacterFactory</c> in <c>EVEMon.Common/Services/CharacterFactory.cs</c>
+    /// after the character is removed from the factory's managed set.
+    /// </remarks>
     public sealed class CharacterDisposedEvent
     {
         /// <summary>
@@ -36,6 +58,11 @@ namespace EVEMon.Core.Events
         /// </summary>
         public ICharacterIdentity Identity { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CharacterDisposedEvent"/> class.
+        /// </summary>
+        /// <param name="identity">The identity of the disposed character (must not be null).</param>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="identity"/> is null.</exception>
         public CharacterDisposedEvent(ICharacterIdentity identity)
         {
             Identity = identity ?? throw new ArgumentNullException(nameof(identity));
