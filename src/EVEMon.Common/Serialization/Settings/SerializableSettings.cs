@@ -16,12 +16,15 @@ namespace EVEMon.Common.Serialization.Settings
         private readonly Collection<SerializableSettingsCharacter> m_characters;
         private readonly Collection<MonitoredCharacterSettings> m_monitoredCharacters;
 
+        private readonly Collection<string> m_esiCustomScopes;
+
         public SerializableSettings()
         {
             m_plans = new Collection<SerializablePlan>();
             m_esiKeys = new Collection<SerializableESIKey>();
             m_characters = new Collection<SerializableSettingsCharacter>();
             m_monitoredCharacters = new Collection<MonitoredCharacterSettings>();
+            m_esiCustomScopes = new Collection<string>();
             SSOClientID = string.Empty;
             SSOClientSecret = string.Empty;
             CloudStorageServiceProvider = new CloudStorageServiceProviderSettings();
@@ -114,5 +117,12 @@ namespace EVEMon.Common.Serialization.Settings
 
         [XmlElement("proxy")]
         public ProxySettings Proxy { get; set; }
+
+        [XmlElement("esiScopePreset")]
+        public string EsiScopePreset { get; set; } = "FullMonitoring";
+
+        [XmlArray("esiCustomScopes")]
+        [XmlArrayItem("scope")]
+        public Collection<string> EsiCustomScopes => m_esiCustomScopes;
     }
 }

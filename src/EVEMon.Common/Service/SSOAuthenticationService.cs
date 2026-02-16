@@ -30,14 +30,14 @@ namespace EVEMon.Common.Service
         public static SSOAuthenticationService GetInstance()
         {
             string id = Settings.SSOClientID, secret = Settings.SSOClientSecret;
+            string scopes = EsiScopeResolver.GetActiveScopes();
             SSOAuthenticationService authService;
 
             if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(secret))
                 authService = new SSOAuthenticationService(NetworkConstants.SSODefaultAppID,
-                    null, NetworkConstants.SSOScopes);
+                    null, scopes);
             else
-                authService = new SSOAuthenticationService(id, secret, NetworkConstants.
-                    SSOScopes);
+                authService = new SSOAuthenticationService(id, secret, scopes);
             return authService;
         }
 

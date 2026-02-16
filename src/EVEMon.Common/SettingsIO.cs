@@ -213,8 +213,12 @@ namespace EVEMon.Common
                 Updates = Updates,
                 Proxy = Proxy,
                 G15 = G15,
-                UI = UI
+                UI = UI,
+                EsiScopePreset = EsiScopePreset
             };
+
+            foreach (var scope in EsiCustomScopes)
+                serial.EsiCustomScopes.Add(scope);
 
             serial.Characters.AddRange(AppServices.DataStore.ExportCharacters());
             AppServices.TraceService?.Trace($"{serial.Characters.Count} characters exported");

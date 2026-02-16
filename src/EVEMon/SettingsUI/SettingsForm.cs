@@ -16,6 +16,7 @@ using EVEMon.Common.SettingsObjects;
 using Microsoft.Win32;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Drawing;
@@ -195,6 +196,9 @@ namespace EVEMon.SettingsUI
             // Client ID / Secret
             clientIDTextBox.Text = m_settings.SSOClientID;
             clientSecretTextBox.Text = m_settings.SSOClientSecret;
+
+            // ESI Scope Preset
+            InitializeEsiPresetComboBox();
 
             // Updates
             cbCheckTime.Checked = m_settings.Updates.CheckTimeOnStartup;
@@ -590,7 +594,10 @@ namespace EVEMon.SettingsUI
             // External calendar settings
             m_settings.Calendar.Enabled = externalCalendarCheckbox.Checked;
             externalCalendarControl.ApplyExternalCalendarSettings(m_settings);
-            
+
+            // ESI Scope Preset
+            ApplyEsiPresetToSettings();
+
             // Run at startup
             if (!runAtStartupComboBox.Enabled)
                 return;
@@ -1064,6 +1071,150 @@ namespace EVEMon.SettingsUI
         private void esiSettingsLabel_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             Util.OpenURL(new Uri(NetworkConstants.CCPApplicationRegistration));
+        }
+
+        #endregion
+
+
+        #region ESI Scope Preset
+
+        /// <summary>
+        /// Populates the ESI preset combo box and selects the current preset.
+        /// </summary>
+        private void InitializeEsiPresetComboBox()
+        {
+            cbEsiPreset.Items.Clear();
+
+            // Add standard presets
+            foreach (string key in EsiScopePresets.PresetKeys)
+            {
+                if (EsiScopePresets.PresetDisplayNames.TryGetValue(key, out string? displayName))
+                    cbEsiPreset.Items.Add(displayName);
+            }
+
+            // Add Custom option
+            if (EsiScopePresets.PresetDisplayNames.TryGetValue(EsiScopePresets.Custom, out string? customName))
+                cbEsiPreset.Items.Add(customName);
+
+            // Select current preset
+            string currentPreset = m_settings.EsiScopePreset ?? EsiScopePresets.FullMonitoring;
+            int selectedIndex = 0;
+
+            for (int i = 0; i < EsiScopePresets.PresetKeys.Count; i++)
+            {
+                if (EsiScopePresets.PresetKeys[i] == currentPreset)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+
+            if (currentPreset == EsiScopePresets.Custom)
+                selectedIndex = cbEsiPreset.Items.Count - 1;
+
+            if (selectedIndex < cbEsiPreset.Items.Count)
+                cbEsiPreset.SelectedIndex = selectedIndex;
+
+            UpdatePresetDescription();
+        }
+
+        /// <summary>
+        /// Gets the preset key for the currently selected combo box item.
+        /// </summary>
+        private string GetSelectedPresetKey()
+        {
+            int index = cbEsiPreset.SelectedIndex;
+            if (index < 0)
+                return EsiScopePresets.FullMonitoring;
+
+            if (index < EsiScopePresets.PresetKeys.Count)
+                return EsiScopePresets.PresetKeys[index];
+
+            return EsiScopePresets.Custom;
+        }
+
+        /// <summary>
+        /// Updates the description label based on the selected preset.
+        /// </summary>
+        private void UpdatePresetDescription()
+        {
+            string presetKey = GetSelectedPresetKey();
+
+            if (presetKey == EsiScopePresets.Custom)
+            {
+                lblPresetDescription.Text = EsiScopePresets.GetCustomDescription(
+                    m_settings.EsiCustomScopes);
+            }
+            else if (EsiScopePresets.PresetDescriptions.TryGetValue(presetKey, out string? desc))
+            {
+                lblPresetDescription.Text = desc;
+            }
+            else
+            {
+                lblPresetDescription.Text = string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Saves ESI preset settings to m_settings.
+        /// </summary>
+        private void ApplyEsiPresetToSettings()
+        {
+            m_settings.EsiScopePreset = GetSelectedPresetKey();
+        }
+
+        /// <summary>
+        /// Handles the ESI preset combo box selection change.
+        /// </summary>
+        private void cbEsiPreset_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (m_isLoading)
+                return;
+
+            UpdatePresetDescription();
+        }
+
+        /// <summary>
+        /// Toggles visibility of the View/Edit Scopes button.
+        /// </summary>
+        private void cbShowScopeDetails_CheckedChanged(object sender, EventArgs e)
+        {
+            btnViewEditScopes.Visible = cbShowScopeDetails.Checked;
+        }
+
+        /// <summary>
+        /// Opens the ESI Scope Editor dialog.
+        /// </summary>
+        private void btnViewEditScopes_Click(object sender, EventArgs e)
+        {
+            // Determine current scopes based on preset
+            string presetKey = GetSelectedPresetKey();
+            HashSet<string> currentScopes;
+
+            if (presetKey == EsiScopePresets.Custom && m_settings.EsiCustomScopes.Count > 0)
+                currentScopes = new HashSet<string>(m_settings.EsiCustomScopes);
+            else
+                currentScopes = EsiScopePresets.GetScopesForPreset(presetKey);
+
+            using (var editor = new EsiScopeEditorForm(currentScopes))
+            {
+                if (editor.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                // Update settings with results
+                string detectedPreset = editor.SelectedPreset;
+                m_settings.EsiScopePreset = detectedPreset;
+
+                m_settings.EsiCustomScopes.Clear();
+                if (detectedPreset == EsiScopePresets.Custom)
+                {
+                    foreach (string scope in editor.SelectedScopes)
+                        m_settings.EsiCustomScopes.Add(scope);
+                }
+
+                // Update combo box to reflect the detected preset
+                InitializeEsiPresetComboBox();
+            }
         }
 
         #endregion

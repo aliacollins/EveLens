@@ -139,6 +139,12 @@ namespace EVEMon.SettingsUI
 			this.cbHighlightPrerequisites = new System.Windows.Forms.CheckBox();
 			this.cbHighlightPlannedSkills = new System.Windows.Forms.CheckBox();
 			this.networkPage = new EVEMon.Common.Controls.MultiPanel.MultiPanelPage();
+			this.esiDataAccessGroupBox = new System.Windows.Forms.GroupBox();
+			this.btnViewEditScopes = new System.Windows.Forms.Button();
+			this.cbShowScopeDetails = new System.Windows.Forms.CheckBox();
+			this.lblPresetDescription = new System.Windows.Forms.Label();
+			this.cbEsiPreset = new System.Windows.Forms.ComboBox();
+			this.lblAccessLevel = new System.Windows.Forms.Label();
 			this.esiSettingsGroupBox = new System.Windows.Forms.GroupBox();
 			this.lblClientSecret = new System.Windows.Forms.Label();
 			this.lblClientID = new System.Windows.Forms.Label();
@@ -241,6 +247,7 @@ namespace EVEMon.SettingsUI
 			this.overviewPanel.SuspendLayout();
 			this.skillPlannerPage.SuspendLayout();
 			this.networkPage.SuspendLayout();
+			this.esiDataAccessGroupBox.SuspendLayout();
 			this.esiSettingsGroupBox.SuspendLayout();
 			this.ProxyServerGroupBox.SuspendLayout();
 			this.customProxyPanel.SuspendLayout();
@@ -1295,9 +1302,10 @@ namespace EVEMon.SettingsUI
 			this.cbHighlightPlannedSkills.TabIndex = 0;
 			this.cbHighlightPlannedSkills.Text = "Highlight Planned Skills";
 			this.cbHighlightPlannedSkills.UseVisualStyleBackColor = true;
-			// 
+			//
 			// networkPage
-			// 
+			//
+			this.networkPage.Controls.Add(this.esiDataAccessGroupBox);
 			this.networkPage.Controls.Add(this.esiSettingsGroupBox);
 			this.networkPage.Controls.Add(this.ProxyServerGroupBox);
 			this.networkPage.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -1307,7 +1315,70 @@ namespace EVEMon.SettingsUI
 			this.networkPage.TabIndex = 4;
 			this.networkPage.Text = "networkPage";
 			this.networkPage.Visible = false;
-			// 
+			//
+			// esiDataAccessGroupBox
+			//
+			this.esiDataAccessGroupBox.Controls.Add(this.btnViewEditScopes);
+			this.esiDataAccessGroupBox.Controls.Add(this.cbShowScopeDetails);
+			this.esiDataAccessGroupBox.Controls.Add(this.lblPresetDescription);
+			this.esiDataAccessGroupBox.Controls.Add(this.cbEsiPreset);
+			this.esiDataAccessGroupBox.Controls.Add(this.lblAccessLevel);
+			this.esiDataAccessGroupBox.Location = new System.Drawing.Point(3, 288);
+			this.esiDataAccessGroupBox.Name = "esiDataAccessGroupBox";
+			this.esiDataAccessGroupBox.Size = new System.Drawing.Size(409, 130);
+			this.esiDataAccessGroupBox.TabIndex = 2;
+			this.esiDataAccessGroupBox.TabStop = false;
+			this.esiDataAccessGroupBox.Text = "ESI Data Access";
+			//
+			// lblAccessLevel
+			//
+			this.lblAccessLevel.AutoSize = true;
+			this.lblAccessLevel.Location = new System.Drawing.Point(9, 22);
+			this.lblAccessLevel.Name = "lblAccessLevel";
+			this.lblAccessLevel.Size = new System.Drawing.Size(76, 13);
+			this.lblAccessLevel.TabIndex = 0;
+			this.lblAccessLevel.Text = "Access Level:";
+			//
+			// cbEsiPreset
+			//
+			this.cbEsiPreset.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbEsiPreset.FormattingEnabled = true;
+			this.cbEsiPreset.Location = new System.Drawing.Point(95, 19);
+			this.cbEsiPreset.Name = "cbEsiPreset";
+			this.cbEsiPreset.Size = new System.Drawing.Size(300, 21);
+			this.cbEsiPreset.TabIndex = 1;
+			this.cbEsiPreset.SelectedIndexChanged += new System.EventHandler(this.cbEsiPreset_SelectedIndexChanged);
+			//
+			// lblPresetDescription
+			//
+			this.lblPresetDescription.Location = new System.Drawing.Point(9, 48);
+			this.lblPresetDescription.Name = "lblPresetDescription";
+			this.lblPresetDescription.Size = new System.Drawing.Size(390, 34);
+			this.lblPresetDescription.TabIndex = 2;
+			this.lblPresetDescription.Text = "";
+			//
+			// cbShowScopeDetails
+			//
+			this.cbShowScopeDetails.AutoSize = true;
+			this.cbShowScopeDetails.Location = new System.Drawing.Point(9, 85);
+			this.cbShowScopeDetails.Name = "cbShowScopeDetails";
+			this.cbShowScopeDetails.Size = new System.Drawing.Size(170, 17);
+			this.cbShowScopeDetails.TabIndex = 3;
+			this.cbShowScopeDetails.Text = "Show individual scope details";
+			this.cbShowScopeDetails.UseVisualStyleBackColor = true;
+			this.cbShowScopeDetails.CheckedChanged += new System.EventHandler(this.cbShowScopeDetails_CheckedChanged);
+			//
+			// btnViewEditScopes
+			//
+			this.btnViewEditScopes.Location = new System.Drawing.Point(27, 104);
+			this.btnViewEditScopes.Name = "btnViewEditScopes";
+			this.btnViewEditScopes.Size = new System.Drawing.Size(120, 23);
+			this.btnViewEditScopes.TabIndex = 4;
+			this.btnViewEditScopes.Text = "View/Edit Scopes...";
+			this.btnViewEditScopes.UseVisualStyleBackColor = true;
+			this.btnViewEditScopes.Visible = false;
+			this.btnViewEditScopes.Click += new System.EventHandler(this.btnViewEditScopes_Click);
+			//
 			// esiSettingsGroupBox
 			// 
 			this.esiSettingsGroupBox.Controls.Add(this.lblClientSecret);
@@ -2342,6 +2413,8 @@ namespace EVEMon.SettingsUI
 			this.skillPlannerPage.ResumeLayout(false);
 			this.skillPlannerPage.PerformLayout();
 			this.networkPage.ResumeLayout(false);
+			this.esiDataAccessGroupBox.ResumeLayout(false);
+			this.esiDataAccessGroupBox.PerformLayout();
 			this.esiSettingsGroupBox.ResumeLayout(false);
 			this.esiSettingsGroupBox.PerformLayout();
 			this.ProxyServerGroupBox.ResumeLayout(false);
@@ -2558,6 +2631,12 @@ namespace EVEMon.SettingsUI
         private System.Windows.Forms.Label lblSkillQueueWarningThresholdDays;
         private System.Windows.Forms.Label lblSkillQueuWarningThreshold;
         private System.Windows.Forms.CheckBox cbShowSkillpointsOnOverview;
+        private System.Windows.Forms.GroupBox esiDataAccessGroupBox;
+        private System.Windows.Forms.Label lblAccessLevel;
+        private System.Windows.Forms.ComboBox cbEsiPreset;
+        private System.Windows.Forms.Label lblPresetDescription;
+        private System.Windows.Forms.CheckBox cbShowScopeDetails;
+        private System.Windows.Forms.Button btnViewEditScopes;
         private System.Windows.Forms.GroupBox esiSettingsGroupBox;
         private System.Windows.Forms.TextBox clientIDTextBox;
         private System.Windows.Forms.LinkLabel esiSettingsLabel;

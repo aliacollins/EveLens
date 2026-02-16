@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -155,6 +156,16 @@ namespace EVEMon.Common
         /// </summary>
         public static CloudStorageServiceProviderSettings CloudStorageServiceProvider { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the ESI scope preset name.
+        /// </summary>
+        public static string EsiScopePreset { get; set; } = "FullMonitoring";
+
+        /// <summary>
+        /// Gets the custom ESI scopes when preset is "Custom".
+        /// </summary>
+        public static IList<string> EsiCustomScopes { get; private set; } = new List<string>();
+
         #endregion
 
 
@@ -196,6 +207,10 @@ namespace EVEMon.Common
                 LoadoutsProvider = s_settings.LoadoutsProvider;
                 PortableEveInstallations = s_settings.PortableEveInstallations;
                 CloudStorageServiceProvider = s_settings.CloudStorageServiceProvider;
+
+                // ESI scope settings
+                EsiScopePreset = s_settings.EsiScopePreset ?? "FullMonitoring";
+                EsiCustomScopes = new List<string>(s_settings.EsiCustomScopes);
 
                 // Scheduler
                 Scheduler.Import(s_settings.Scheduler);
