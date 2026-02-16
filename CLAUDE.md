@@ -235,6 +235,25 @@ Document every bug fix with root cause, fix, and files changed.
 
 New code should use interfaces and EventAggregator. The static access paths remain for backward compatibility during migration.
 
+## How to Add a Feature (End-to-End)
+
+Follow this sequence for any new feature. Skip steps that don't apply.
+
+1. **Define the interface** in `src/EVEMon.Core/Interfaces/IMyService.cs` — XML docs with summary, remarks, production/testing info
+2. **Define event types** in `src/EVEMon.Core/Events/` (if timer/no deps) or `src/EVEMon.Common/Events/CommonEvents.cs` (if carries model data). Use singleton `Instance` for parameterless events.
+3. **Implement the service** in `src/EVEMon.Common/Services/MyServiceImpl.cs` — accept dependencies via constructor
+4. **Register in AppServices.cs**:
+   ```csharp
+   private static Lazy<IMyService> s_myService = new(() => new MyServiceImpl());
+   public static IMyService MyService => s_myService.Value;
+   internal static void SetMyService(IMyService svc) => s_myService = new(() => svc);
+   ```
+5. **Sync to ServiceLocator** if Models/Infrastructure need access — add property to `ServiceLocator.cs`, add sync line in `AppServices.SyncToServiceLocator()`
+6. **Subscribe in UI** via `SubscribeOnUI<T>()`, store `IDisposable`, dispose on close
+7. **Write tests** — use `NullCharacterServices` for characters, `new EventAggregator()` for events, `Substitute.For<IMyService>()` for mocks
+8. **Run full suite**: `dotnet test tests/EVEMon.Tests/EVEMon.Tests.csproj` — 821+ must pass
+9. **Verify laws**: no `EveMonClient.` in UI, no static events, no async void without try/catch
+
 ## Project Context
 
 - **Maintainer:** Alia Collins (EVE character)
