@@ -698,12 +698,6 @@ namespace EVEMon.Common.Helpers
                    content.StartsWith("EveMonClient.Initialize", StringComparison.Ordinal) ||
                    content.StartsWith("EveMonClient.Run", StringComparison.Ordinal) ||
                    content.StartsWith("EveMonClient.Shutdown", StringComparison.Ordinal) ||
-                   content.StartsWith("EveMonClient.OnSettingsChanged", StringComparison.Ordinal) ||
-                   content.StartsWith("EveMonClient.OnSchedulerChanged", StringComparison.Ordinal) ||
-                   content.StartsWith("EveMonClient.OnServerStatusUpdated", StringComparison.Ordinal) ||
-                   content.StartsWith("EveMonClient.OnEveIDToNameUpdated", StringComparison.Ordinal) ||
-                   content.StartsWith("EveMonClient.OnUpdateAvailable", StringComparison.Ordinal) ||
-                   content.StartsWith("EveMonClient.OnDataUpdateAvailable", StringComparison.Ordinal) ||
                    content.StartsWith("Settings.", StringComparison.Ordinal) ||
                    content.StartsWith("Datafiles.Load", StringComparison.Ordinal) ||
                    content.StartsWith("SettingsFileManager", StringComparison.Ordinal) ||
