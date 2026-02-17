@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterResearchPointsView">
+
+    <DockPanel>
+        <!-- Filter bar -->
+        <Border DockPanel.Dock="Top" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <DockPanel>
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="FilterBox"
+                         Text="{Binding TextFilter, Mode=TwoWay}"
+                         Watermark="Search research points..."
+                         MinWidth="200" />
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock>
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="Items: {0}">
+                        <Binding Path="TotalItemCount" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+
+        <!-- Data grid -->
+        <DataGrid x:Name="ItemsGrid"
+                  ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy Agent" />
+                    <MenuItem Header="Copy Field" />
+                    <Separator />
+                    <MenuItem Header="Export to CSV..." />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Agent" Binding="{Binding AgentName}" Width="150" />
+                <DataGridTextColumn Header="Level" Binding="{Binding AgentLevel}" Width="60" />
+                <DataGridTextColumn Header="Field" Binding="{Binding Field}" Width="200" />
+                <DataGridTextColumn Header="Current RP" Binding="{Binding CurrentRP, StringFormat=\{0:N2\}}" Width="120" />
+                <DataGridTextColumn Header="Points/Day" Binding="{Binding PointsPerDay, StringFormat=\{0:N2\}}" Width="100" />
+                <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="Station" Binding="{Binding Station.Name}" Width="200" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

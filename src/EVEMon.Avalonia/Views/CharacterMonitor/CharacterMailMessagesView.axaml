@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterMailMessagesView">
+
+    <DockPanel>
+        <!-- Filter bar -->
+        <Border DockPanel.Dock="Top" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <DockPanel>
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="FilterBox"
+                         Text="{Binding TextFilter, Mode=TwoWay}"
+                         Watermark="Search mail..."
+                         MinWidth="200" />
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock>
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="Items: {0}">
+                        <Binding Path="TotalItemCount" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+
+        <!-- Data grid -->
+        <DataGrid x:Name="ItemsGrid"
+                  ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy Subject" />
+                    <MenuItem Header="Copy Sender" />
+                    <Separator />
+                    <MenuItem Header="Export to CSV..." />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="From" Binding="{Binding SenderName}" Width="150" />
+                <DataGridTextColumn Header="Subject" Binding="{Binding Title}" Width="300" />
+                <DataGridTextColumn Header="Date" Binding="{Binding SentDate, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
+                <DataGridTextColumn Header="To Corp/Alliance" Binding="{Binding ToCorpOrAlliance}" Width="150" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

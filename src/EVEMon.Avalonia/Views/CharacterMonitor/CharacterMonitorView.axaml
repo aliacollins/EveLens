@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:EVEMon.Avalonia.Views.CharacterMonitor"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterMonitorView">
+
+    <DockPanel>
+        <!-- Character header docked to top -->
+        <local:CharacterMonitorHeader DockPanel.Dock="Top" DataContext="{Binding}" />
+
+        <!-- Sub-tabs with compact headers -->
+        <TabControl TabStripPlacement="Top" Padding="0" FontSize="11">
+
+            <!-- Character info tabs -->
+            <TabItem Header="Skills" FontSize="11">
+                <local:CharacterSkillsView />
+            </TabItem>
+            <TabItem Header="Queue" FontSize="11">
+                <local:CharacterSkillQueueView />
+            </TabItem>
+            <TabItem Header="Employment" FontSize="11">
+                <local:CharacterEmploymentHistoryView />
+            </TabItem>
+            <TabItem Header="Standings" FontSize="11">
+                <local:CharacterStandingsView />
+            </TabItem>
+            <TabItem Header="Contacts" FontSize="11">
+                <local:CharacterContactsView />
+            </TabItem>
+            <TabItem Header="FW" FontSize="11">
+                <local:CharacterFactionalWarfareView />
+            </TabItem>
+            <TabItem Header="Medals" FontSize="11">
+                <local:CharacterMedalsView />
+            </TabItem>
+            <TabItem Header="LP" FontSize="11">
+                <local:CharacterLoyaltyView />
+            </TabItem>
+
+            <!-- Data tabs -->
+            <TabItem Header="Assets" FontSize="11">
+                <local:CharacterAssetsView />
+            </TabItem>
+            <TabItem Header="Orders" FontSize="11">
+                <local:CharacterMarketOrdersView />
+            </TabItem>
+            <TabItem Header="Contracts" FontSize="11">
+                <local:CharacterContractsView />
+            </TabItem>
+            <TabItem Header="Industry" FontSize="11">
+                <local:CharacterIndustryJobsView />
+            </TabItem>
+            <TabItem Header="Journal" FontSize="11">
+                <local:CharacterWalletJournalView />
+            </TabItem>
+            <TabItem Header="Transactions" FontSize="11">
+                <local:CharacterWalletTransactionsView />
+            </TabItem>
+            <TabItem Header="Mail" FontSize="11">
+                <local:CharacterMailMessagesView />
+            </TabItem>
+            <TabItem Header="Notify" FontSize="11">
+                <local:CharacterNotificationsView />
+            </TabItem>
+            <TabItem Header="Kills" FontSize="11">
+                <local:CharacterKillLogView />
+            </TabItem>
+            <TabItem Header="PI" FontSize="11">
+                <local:CharacterPlanetaryView />
+            </TabItem>
+            <TabItem Header="Research" FontSize="11">
+                <local:CharacterResearchPointsView />
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</UserControl>

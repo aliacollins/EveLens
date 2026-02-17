@@ -1,0 +1,132 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterMonitorHeader">
+
+    <Border Background="{StaticResource EveBackgroundMediumBrush}"
+            BorderBrush="{StaticResource EveBorderBrush}"
+            BorderThickness="0,0,0,1"
+            Padding="10,8" MinHeight="148">
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+
+            <!-- Column 0: Character portrait -->
+            <Border Grid.Column="0" Grid.RowSpan="2"
+                    Width="128" Height="128"
+                    Margin="0,0,12,0"
+                    Background="{StaticResource EveBackgroundDarkestBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    VerticalAlignment="Top">
+                <Image x:Name="PortraitImage"
+                       Width="128" Height="128"
+                       Stretch="UniformToFill" />
+            </Border>
+
+            <!-- Column 1, Row 0: Character name + bio info -->
+            <StackPanel Grid.Column="1" Grid.Row="0" Spacing="1" Margin="0,0,16,0">
+                <!-- Name -->
+                <TextBlock Text="{Binding AdornedName}"
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}"
+                           Margin="0,0,0,2" />
+
+                <!-- Race/Bloodline line -->
+                <TextBlock FontSize="11.5" Foreground="{StaticResource EveTextSecondaryBrush}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="{}{0} - {1} - {2}">
+                            <Binding Path="Gender" />
+                            <Binding Path="Race" />
+                            <Binding Path="Bloodline" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+
+                <!-- Balance (prominent) -->
+                <TextBlock Text="{Binding Balance, StringFormat='Balance: {0:N2} ISK'}"
+                           FontSize="11.5" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveSuccessGreenBrush}"
+                           Margin="0,2,0,0" />
+
+                <!-- Birthday -->
+                <TextBlock Text="{Binding Birthday, StringFormat='Birthday: {0:dd-MM-yyyy HH:mm:ss}'}"
+                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Corporation -->
+                <TextBlock Text="{Binding CorporationName, StringFormat='Corporation: {0}'}"
+                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Alliance -->
+                <TextBlock Text="{Binding AllianceName, StringFormat='Alliance: {0}'}"
+                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Security Status -->
+                <TextBlock Text="{Binding SecurityStatus, StringFormat='Security Status: {0:N2}'}"
+                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Active Ship -->
+                <TextBlock FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="Active Ship: {0} [{1}]">
+                            <Binding Path="ShipTypeName" />
+                            <Binding Path="ShipName" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+
+                <!-- Location -->
+                <TextBlock Text="{Binding LastKnownSolarSystem.Name, StringFormat='Located in: {0}'}"
+                           FontSize="11" Foreground="{StaticResource EveSuccessGreenBrush}" />
+            </StackPanel>
+
+            <!-- Column 1, Row 1: Account status + Attributes (matching WinForms lower section) -->
+            <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal"
+                        Margin="0,6,0,0" Spacing="24">
+                <!-- Account Status -->
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="Account Status:" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding EffectiveCharacterStatus}"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{StaticResource EveSuccessGreenBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Column 2: Skills summary (right-aligned) -->
+            <StackPanel Grid.Column="2" Grid.RowSpan="2"
+                        Spacing="2" VerticalAlignment="Top"
+                        HorizontalAlignment="Right"
+                        MinWidth="180">
+                <!-- Known Skills -->
+                <TextBlock FontSize="11" HorizontalAlignment="Right"
+                           Foreground="{StaticResource EveTextSecondaryBrush}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="Known Skills: {0}">
+                            <Binding Path="KnownSkillCount" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+
+                <!-- Total SP -->
+                <TextBlock Text="{Binding SkillPoints, StringFormat='Total SP: {0:N0}'}"
+                           FontSize="11" HorizontalAlignment="Right"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Free SP -->
+                <TextBlock Text="{Binding FreeSkillPoints, StringFormat='Free SP: {0:N0}'}"
+                           FontSize="11" HorizontalAlignment="Right"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Separator -->
+                <Separator Margin="0,4" Background="{StaticResource EveBorderBrush}" />
+
+                <!-- Bonus Remaps -->
+                <TextBlock Text="{Binding AvailableReMaps, StringFormat='Bonus Remaps: {0}'}"
+                           FontSize="11" HorizontalAlignment="Right"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+            </StackPanel>
+
+        </Grid>
+    </Border>
+</UserControl>

@@ -45,6 +45,7 @@ namespace EVEMon.Common.ViewModels
         private TColumn _sortColumn;
         private bool _sortAscending = true;
         private IReadOnlyList<ListGrouping<TItem>> _groupedItems = Array.Empty<ListGrouping<TItem>>();
+        private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
         private int _totalItemCount;
 
         /// <summary>
@@ -127,6 +128,16 @@ namespace EVEMon.Common.ViewModels
         }
 
         /// <summary>
+        /// Gets all items after filtering and sorting, flattened across groups.
+        /// Bind DataGrid.ItemsSource to this property.
+        /// </summary>
+        public IReadOnlyList<TItem> Items
+        {
+            get => _items;
+            private set => SetProperty(ref _items, value);
+        }
+
+        /// <summary>
         /// Gets the total number of items after filtering (before grouping).
         /// </summary>
         public int TotalItemCount
@@ -195,6 +206,7 @@ namespace EVEMon.Common.ViewModels
             if (source == null)
             {
                 GroupedItems = Array.Empty<ListGrouping<TItem>>();
+                Items = Array.Empty<TItem>();
                 TotalItemCount = 0;
                 return;
             }
@@ -212,6 +224,9 @@ namespace EVEMon.Common.ViewModels
                 var comparer = new ItemComparer(this);
                 filtered.Sort(comparer);
             }
+
+            // Set flat items list for DataGrid binding
+            Items = filtered;
 
             // Group
             var grouping = _grouping;

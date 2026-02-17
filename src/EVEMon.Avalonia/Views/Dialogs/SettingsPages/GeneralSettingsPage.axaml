@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.Dialogs.SettingsPages.GeneralSettingsPage">
+
+    <StackPanel Spacing="12">
+        <TextBlock Text="General" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+        <CheckBox x:Name="RunAtStartupCheckBox"
+                  Content="Run EVEMon at Startup"
+                  IsEnabled="False"
+                  ToolTip.Tip="Not available on this platform" />
+
+        <CheckBox x:Name="SafeForWorkCheckBox"
+                  Content="Run in &quot;safe for work&quot; mode (no portraits or colors)" />
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="Environment:" VerticalAlignment="Center" />
+            <ComboBox x:Name="CompatibilityCombo" Width="120">
+                <ComboBoxItem Content="Windows" />
+                <ComboBoxItem Content="Wine" />
+            </ComboBox>
+        </StackPanel>
+
+        <Separator Margin="0,4" />
+
+        <Button x:Name="OpenDataDirButton"
+                Content="EVEMon Data Directory"
+                HorizontalAlignment="Left" />
+    </StackPanel>
+</UserControl>

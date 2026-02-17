@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterContractsView">
+
+    <DockPanel>
+        <!-- Filter bar -->
+        <Border DockPanel.Dock="Top" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <DockPanel>
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="FilterBox"
+                         Text="{Binding TextFilter, Mode=TwoWay}"
+                         Watermark="Search contracts..."
+                         MinWidth="200" />
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock>
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="Items: {0}">
+                        <Binding Path="TotalItemCount" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+
+        <!-- Data grid -->
+        <DataGrid x:Name="ItemsGrid"
+                  ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy Contract Info" />
+                    <MenuItem Header="Copy Issuer" />
+                    <Separator />
+                    <MenuItem Header="Export to CSV..." />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Contract" Binding="{Binding ContractText}" Width="200" />
+                <DataGridTextColumn Header="Type" Binding="{Binding ContractType}" Width="100" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+                <DataGridTextColumn Header="Issuer" Binding="{Binding Issuer}" Width="120" />
+                <DataGridTextColumn Header="Assignee" Binding="{Binding Assignee}" Width="120" />
+                <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=\{0:N2\} ISK}" Width="120" />
+                <DataGridTextColumn Header="Issued" Binding="{Binding Issued, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="Expires" Binding="{Binding Expiration, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

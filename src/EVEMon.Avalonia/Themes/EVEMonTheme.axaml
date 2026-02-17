@@ -1,0 +1,230 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         EVEMon Dark Theme — EVE Online Inspired
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <Styles.Resources>
+        <!-- Background palette -->
+        <Color x:Key="EveBackgroundDarkest">#FF0D0D1A</Color>
+        <Color x:Key="EveBackgroundDark">#FF1A1A2E</Color>
+        <Color x:Key="EveBackgroundMedium">#FF16213E</Color>
+        <Color x:Key="EveBackgroundLight">#FF0F3460</Color>
+
+        <!-- Accent colors (EVE gold/amber) -->
+        <Color x:Key="EveAccentPrimary">#FFE6A817</Color>
+        <Color x:Key="EveAccentSecondary">#FFC9A227</Color>
+        <Color x:Key="EveAccentDimmed">#FF8B7420</Color>
+
+        <!-- Text colors (brighter for readability) -->
+        <Color x:Key="EveTextPrimary">#FFF0F0F0</Color>
+        <Color x:Key="EveTextSecondary">#FFAAAAAA</Color>
+        <Color x:Key="EveTextDisabled">#FF707070</Color>
+
+        <!-- Status colors -->
+        <Color x:Key="EveErrorRed">#FFCF6679</Color>
+        <Color x:Key="EveWarningYellow">#FFFFD54F</Color>
+        <Color x:Key="EveSuccessGreen">#FF81C784</Color>
+
+        <!-- Hover / interactive -->
+        <Color x:Key="EveHoverColor">#FF1E2A4A</Color>
+        <SolidColorBrush x:Key="EveHoverBrush" Color="{StaticResource EveHoverColor}" />
+
+        <!-- Border / separator -->
+        <Color x:Key="EveBorderColor">#FF2A2A4A</Color>
+        <Color x:Key="EveBorderFocused">#FF0F3460</Color>
+
+        <!-- Brushes for easy binding -->
+        <SolidColorBrush x:Key="EveBackgroundDarkestBrush" Color="{StaticResource EveBackgroundDarkest}" />
+        <SolidColorBrush x:Key="EveBackgroundDarkBrush" Color="{StaticResource EveBackgroundDark}" />
+        <SolidColorBrush x:Key="EveBackgroundMediumBrush" Color="{StaticResource EveBackgroundMedium}" />
+        <SolidColorBrush x:Key="EveBackgroundLightBrush" Color="{StaticResource EveBackgroundLight}" />
+        <SolidColorBrush x:Key="EveAccentPrimaryBrush" Color="{StaticResource EveAccentPrimary}" />
+        <SolidColorBrush x:Key="EveAccentSecondaryBrush" Color="{StaticResource EveAccentSecondary}" />
+        <SolidColorBrush x:Key="EveAccentDimmedBrush" Color="{StaticResource EveAccentDimmed}" />
+        <SolidColorBrush x:Key="EveTextPrimaryBrush" Color="{StaticResource EveTextPrimary}" />
+        <SolidColorBrush x:Key="EveTextSecondaryBrush" Color="{StaticResource EveTextSecondary}" />
+        <SolidColorBrush x:Key="EveTextDisabledBrush" Color="{StaticResource EveTextDisabled}" />
+        <SolidColorBrush x:Key="EveErrorRedBrush" Color="{StaticResource EveErrorRed}" />
+        <SolidColorBrush x:Key="EveWarningYellowBrush" Color="{StaticResource EveWarningYellow}" />
+        <SolidColorBrush x:Key="EveSuccessGreenBrush" Color="{StaticResource EveSuccessGreen}" />
+        <SolidColorBrush x:Key="EveBorderBrush" Color="{StaticResource EveBorderColor}" />
+        <SolidColorBrush x:Key="EveBorderFocusedBrush" Color="{StaticResource EveBorderFocused}" />
+    </Styles.Resources>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Control Style Overrides
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- TextBlock -->
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- Button -->
+    <Style Selector="Button">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="2" />
+        <Setter Property="Padding" Value="12,6" />
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="Foreground" Value="#FF1A1A2E" />
+    </Style>
+
+    <!-- TextBox -->
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkestBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource EveAccentDimmedBrush}" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+
+    <!-- TabControl -->
+    <Style Selector="TabControl">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+    </Style>
+    <Style Selector="TabItem">
+        <Setter Property="Foreground" Value="{StaticResource EveTextSecondaryBrush}" />
+    </Style>
+    <Style Selector="TabItem:selected">
+        <Setter Property="Foreground" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+    <Style Selector="TabItem:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- Expander: full-width header stretch fix -->
+    <Style Selector="Expander">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Expander /template/ ToggleButton">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Expander /template/ ToggleButton /template/ ContentPresenter">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- DataGrid -->
+    <Style Selector="DataGrid">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="RowBackground" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+    <Style Selector="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveAccentSecondaryBrush}" />
+    </Style>
+    <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+    <Style Selector="DataGridCell">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- ListBox -->
+    <Style Selector="ListBox">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+    </Style>
+
+    <!-- ComboBox -->
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkestBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+
+    <!-- ToggleButton -->
+    <Style Selector="ToggleButton">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="10,4" />
+    </Style>
+    <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
+    </Style>
+
+    <!-- CheckBox -->
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- ToolTip -->
+    <Style Selector="ToolTip">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+
+    <!-- Window background -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+    </Style>
+
+    <!-- ScrollViewer -->
+    <Style Selector="ScrollViewer">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Modern thin scrollbar -->
+    <Style Selector="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="8" />
+        <Setter Property="MinWidth" Value="8" />
+    </Style>
+    <Style Selector="ScrollBar:horizontal">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="MinHeight" Value="8" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb">
+        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="MinWidth" Value="6" />
+        <Setter Property="MinHeight" Value="6" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveAccentSecondaryBrush}" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb:pressed">
+        <Setter Property="Background" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+    <Style Selector="ScrollBar /template/ RepeatButton">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <!-- Separator -->
+    <Style Selector="Separator">
+        <Setter Property="Background" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+
+</Styles>

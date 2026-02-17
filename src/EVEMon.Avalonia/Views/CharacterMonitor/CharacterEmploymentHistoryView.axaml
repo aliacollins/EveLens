@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterEmploymentHistoryView">
+
+    <DockPanel>
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock x:Name="StatusText" Text="Records: 0"
+                       Foreground="{DynamicResource EveTextSecondaryBrush}" />
+        </Border>
+
+        <!-- Horizontal timeline -->
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                      VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto" Margin="20,16">
+
+                <!-- Row 0: Corp cards -->
+                <ItemsControl x:Name="TimelineItems" Grid.Row="0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="0" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Width="160" Margin="0,0,4,0">
+                                <!-- Corp card -->
+                                <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                        BorderThickness="1" CornerRadius="4"
+                                        Padding="8,6" MinHeight="70"
+                                        HorizontalAlignment="Stretch">
+                                    <StackPanel Spacing="3" HorizontalAlignment="Center">
+                                        <!-- Corp logo placeholder -->
+                                        <Border Width="32" Height="32"
+                                                Background="{StaticResource EveBackgroundDarkestBrush}"
+                                                BorderBrush="{StaticResource EveBorderBrush}"
+                                                BorderThickness="1" CornerRadius="2"
+                                                HorizontalAlignment="Center">
+                                            <Image Width="32" Height="32" Stretch="UniformToFill" />
+                                        </Border>
+                                        <TextBlock Text="{Binding CorporationName}"
+                                                   FontSize="10" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                   TextAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   MaxLines="1" MaxWidth="136"
+                                                   ToolTip.Tip="{Binding CorporationName}" />
+                                        <TextBlock Text="{Binding DurationText}"
+                                                   FontSize="9"
+                                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                                   TextAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Connector dot -->
+                                <Ellipse Width="8" Height="8"
+                                         Fill="{StaticResource EveAccentPrimaryBrush}"
+                                         HorizontalAlignment="Center"
+                                         Margin="0,4,0,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Row 1: Horizontal timeline bar -->
+                <Border Grid.Row="1" Height="2"
+                        Background="{StaticResource EveAccentDimmedBrush}"
+                        Margin="0,0,0,0" />
+
+                <!-- Row 2: Date labels -->
+                <ItemsControl x:Name="DateLabels" Grid.Row="2">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="0" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Width="164">
+                                <!-- Up tick -->
+                                <Border Width="1" Height="6"
+                                        Background="{StaticResource EveAccentDimmedBrush}"
+                                        HorizontalAlignment="Center" />
+                                <!-- Date + Duration -->
+                                <TextBlock Text="{Binding StartDate, StringFormat='{}{0:MMM yyyy}'}"
+                                           FontSize="10"
+                                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                                           TextAlignment="Center" />
+                                <TextBlock Text="{Binding DurationText}"
+                                           FontSize="9"
+                                           Foreground="{StaticResource EveTextDisabledBrush}"
+                                           TextAlignment="Center" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

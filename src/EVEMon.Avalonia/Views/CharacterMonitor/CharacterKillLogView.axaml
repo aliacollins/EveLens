@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterKillLogView">
+
+    <DockPanel>
+        <!-- Filter bar -->
+        <Border DockPanel.Dock="Top" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <DockPanel>
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="FilterBox"
+                         Text="{Binding TextFilter, Mode=TwoWay}"
+                         Watermark="Search kill log..."
+                         MinWidth="200" />
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock>
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="Items: {0}">
+                        <Binding Path="TotalItemCount" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+
+        <!-- Data grid -->
+        <DataGrid x:Name="ItemsGrid"
+                  ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy Victim Info" />
+                    <MenuItem Header="Copy System" />
+                    <Separator />
+                    <MenuItem Header="Export to CSV..." />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Time" Binding="{Binding KillTime, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
+                <DataGridTextColumn Header="Victim" Binding="{Binding Victim.Name}" Width="150" />
+                <DataGridTextColumn Header="Ship" Binding="{Binding Victim.ShipTypeName}" Width="150" />
+                <DataGridTextColumn Header="Corporation" Binding="{Binding Victim.CorporationName}" Width="150" />
+                <DataGridTextColumn Header="Alliance" Binding="{Binding Victim.AllianceName}" Width="150" />
+                <DataGridTextColumn Header="System" Binding="{Binding SolarSystem.Name}" Width="120" />
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

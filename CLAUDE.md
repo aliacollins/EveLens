@@ -288,10 +288,134 @@ Follow this sequence for any new feature. Skip steps that don't apply.
 8. **Run full suite**: `dotnet test tests/EVEMon.Tests/EVEMon.Tests.csproj` — 821+ must pass
 9. **Verify laws**: no `EveMonClient.` in UI, no static events, no async void without try/catch
 
+## Avalonia Architectural Laws (NEVER VIOLATE)
+
+These laws govern all code in `src/EVEMon.Avalonia/`. They extend (not replace) the main Architectural Laws above.
+
+15. **Every View Must Have a ViewModel** — No view may bind directly to Character/CCPCharacter model collections. Create a ViewModel in `EVEMon.Common/ViewModels/` that transforms model data into bindable properties. Code-behind only wires the ViewModel, never builds data structures.
+16. **ViewModels Live in EVEMon.Common** — ViewModels are shared infrastructure, not Avalonia-specific. They must be testable without Avalonia references. Display-only wrapper types (color, formatting) may live in `EVEMon.Avalonia/ViewModels/` but must contain zero business logic.
+17. **Standard View Wiring Pattern** — Every view code-behind follows this exact pattern:
+    ```csharp
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        LoadData();
+    }
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+        LoadData();
+    }
+    private void LoadData()
+    {
+        Character? character = DataContext as Character;
+        if (character == null)
+        {
+            var parent = this.FindAncestorOfType<CharacterMonitorView>();
+            character = parent?.DataContext as Character;
+        }
+        if (character == null) return;
+        _viewModel ??= new XxxViewModel();
+        _viewModel.Character = character;
+        // Populate controls from ViewModel
+    }
+    ```
+18. **No Business Logic in Views** — Views handle: control wiring, event handler delegation to ViewModel, visual tree navigation. Views never: filter data, sort data, compute aggregates, build display models, or format strings from model properties.
+19. **Grouped Views Use Expander Pattern** — All grouped list views (Skills, Assets, etc.) use the same Expander-based layout with full-width stretch styles. Group headers show: name, count, summary value. Items stretch to fill width. Collapse/Expand All buttons required.
+20. **DataGrid Requires .ToList()** — EVEMon's custom `ReadonlyCollection<T>` does not implement `IList`. Always call `.ToList()` before setting `ItemsSource`. Never bind DataGrid ItemsSource directly to model collection properties in XAML.
+21. **DataGrid Theme Required** — `App.axaml` must include `<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>` before the EVEMon theme. Without this, DataGrid rows render with zero height.
+22. **Portrait/Image Loading Is Async Code-Behind** — Character portraits and corporation logos load via `ImageService.GetCharacterImageAsync()` / `CorporationImage` in code-behind after visual tree attachment. Use `DrawingImageToAvaloniaConverter.Instance` to convert `System.Drawing.Image` to `Avalonia.Media.Imaging.Bitmap`. Never block the UI thread.
+23. **Consistent Visual Language** — All views use: 11pt body text, 12pt headers, `EveAccentPrimaryBrush` for names/titles, `EveTextSecondaryBrush` for metadata, `EveTextDisabledBrush` for tertiary info, `EveSuccessGreenBrush` for ISK values, `EveBackgroundMediumBrush` for elevated surfaces. Pill-shaped buttons (CornerRadius=12). Thin modern scrollbars. Full-width expander headers.
+24. **Dispose on Detach** — ViewModels with EventAggregator subscriptions must be disposed in `OnDetachedFromVisualTree`, not `OnUnloaded` (which fires on tab switches and causes crashes).
+
+### Avalonia UI Design System (ENFORCED)
+
+These are non-negotiable visual standards. Every pixel must be intentional.
+
+**Typography Scale:**
+| Usage | Size | Weight | Brush |
+|-------|------|--------|-------|
+| Window title | 15pt | Bold | EveAccentPrimaryBrush |
+| Section header (group name) | 12pt | SemiBold | EveAccentPrimaryBrush |
+| Body text (data values) | 11pt | Regular | EveTextPrimaryBrush |
+| Secondary info (metadata) | 11pt | Regular | EveTextSecondaryBrush |
+| Tertiary info (rank, volume) | 10pt | Regular | EveTextDisabledBrush |
+| Status bar | 11pt | Regular | EveTextSecondaryBrush |
+
+**Color Semantics (never deviate):**
+- **Gold** (`EveAccentPrimaryBrush`) — Names, titles, active selection, group headers
+- **Green** (`EveSuccessGreenBrush`) — ISK values, positive status (Online, Omega)
+- **Yellow** (`EveWarningYellowBrush`) — Training in progress, warnings
+- **Red** (`EveErrorRedBrush`) — Errors, negative values, expired
+- **Gray light** (`EveTextSecondaryBrush`) — Counts, dates, secondary labels
+- **Gray dark** (`EveTextDisabledBrush`) — Ranks, volumes, tertiary data
+- **Primary text** (`EveTextPrimaryBrush`) — Item names, skill names, data values
+
+**Spacing & Layout:**
+- Outer padding: 10px horizontal, 7px vertical on toolbars/headers
+- Inner padding: 8-12px on cards and group headers
+- Item row padding: 20px left indent (under group), 4px vertical
+- Group margin: 1px bottom between groups
+- Card margin: 4-6px between cards
+- Button padding: 10px horizontal, 4px vertical
+
+**Component Standards:**
+- **Search bar**: Pill shape (CornerRadius=14), dark background, transparent TextBox inside, clear button (✕) appears on input
+- **Action buttons**: Pill shape (CornerRadius=12), text-only, grouped in StackPanel with Spacing=6
+- **Toggle buttons**: Pill shape, highlight on checked state
+- **Expander groups**: Full-width stretch (Laws in theme), Medium background header, Dark background items
+- **Level indicators**: 5 blocks, 10×12px, CornerRadius=2, Gold=trained, Green=training, Dark=untrained
+- **Status bar**: Bottom-docked, 1px top border, same medium background as toolbar
+- **Scrollbars**: 8px thin, gold thumb, no arrows (defined in EVEMonTheme.axaml)
+- **Cards**: CornerRadius=6, 1px border, medium background, min-height for consistency
+
+**Layout Rules:**
+- All list views use full-width stretch — no ragged widths
+- Grids use `ColumnDefinitions="*,Auto,Auto,..."` — first column stretches, rest auto-size
+- Long text uses `TextTrimming="CharacterEllipsis"` with `ToolTip.Tip` for full text
+- Items within groups are sorted alphabetically by default
+- Groups sorted alphabetically by default
+- Consistent status bar format: `"Label: {count} items | Secondary: {value}"`
+
+**Interaction Patterns:**
+- **Filter**: Immediate (on text change), clear button appears when non-empty
+- **Grouping**: ComboBox dropdown, re-renders on change
+- **Collapse/Expand**: Pair of buttons, always visible in toolbar
+- **Navigation**: Click on overview card → navigate to character tab
+- **Images**: Load async after visual tree attachment, show placeholder border while loading
+
+### Avalonia File Organization
+
+```
+EVEMon.Avalonia/
+  Views/
+    MainWindow.axaml(.cs)          — Menu, status bar, tab container
+    CharacterMonitor/
+      CharacterMonitorView.axaml   — Header + sub-tab container
+      CharacterMonitorHeader.axaml — Portrait + character info
+      CharacterOverviewView.axaml  — All-characters card grid
+      Character*View.axaml(.cs)    — One per sub-tab (19 total)
+    Dialogs/                       — Modal windows
+    Shared/                        — Reusable controls (future)
+  ViewModels/                      — Avalonia-specific display wrappers ONLY
+  Converters/                      — IValueConverter implementations
+  Services/                        — Platform adapters (Dispatcher, Dialog, etc.)
+  Themes/                          — EVEMonTheme.axaml
+```
+
+### Pattern for New Avalonia List Views (End-to-End)
+
+1. **Create ViewModel** in `EVEMon.Common/ViewModels/Lists/XxxViewModel.cs` — inherit `CharacterViewModelBase`, expose grouped data as `List<XxxGroupEntry>` via `IReadOnlyList`, include filter/grouping logic.
+2. **Create display wrapper** (if needed) in `EVEMon.Avalonia/ViewModels/XxxDisplayEntry.cs` — adds IBrush properties for colors, formatted strings. No business logic.
+3. **Create AXAML** in `EVEMon.Avalonia/Views/CharacterMonitor/CharacterXxxView.axaml` — use Expander+ItemsControl pattern for grouped views, DataGrid for flat tabular views. Full-width stretch. Pill search bar with clear button.
+4. **Create code-behind** using standard wiring pattern (Law 17). Dispose ViewModel in `OnDetachedFromVisualTree`.
+5. **Add to CharacterMonitorView.axaml** — new TabItem with compact header.
+6. **Write tests** for the ViewModel in `tests/EVEMon.Tests/ViewModels/`.
+
 ## Project Context
 
 - **Maintainer:** Alia Collins (EVE character)
 - **GitHub:** https://github.com/aliacollins/evemon
-- **.NET 8 Windows Forms** application
+- **.NET 8 Windows Forms + Avalonia** application (dual UI)
 - **ESI API** for EVE Online data (OAuth2)
 - Settings location: `%APPDATA%\EVEMon\`

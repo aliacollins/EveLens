@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.Dialogs.SettingsPages.MainWindowSettingsPage">
+
+    <ScrollViewer>
+        <StackPanel Spacing="12">
+            <TextBlock Text="Main Window" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+            <!-- Window Title -->
+            <TextBlock Text="Window Title" FontWeight="SemiBold" />
+            <StackPanel Spacing="6" Margin="8,0,0,0">
+                <CheckBox x:Name="ShowCharInfoInTitleCheckBox"
+                          Content="Show character info in window title" />
+                <CheckBox x:Name="ShowSkillInTitleCheckBox"
+                          Content="Show skill in training" />
+            </StackPanel>
+
+            <Separator Margin="0,4" />
+
+            <!-- Character Monitor -->
+            <TextBlock Text="Character Monitor" FontWeight="SemiBold" />
+            <StackPanel Spacing="6" Margin="8,0,0,0">
+                <CheckBox x:Name="ShowAllPublicSkillsCheckBox"
+                          Content="Show Also All Public Skills" />
+                <CheckBox x:Name="ShowNonPublicSkillsCheckBox"
+                          Content="Show Also Non-Public Skills" />
+                <CheckBox x:Name="ShowPrereqMetSkillsCheckBox"
+                          Content="Show Also Prereq-Met Skills" />
+                <CheckBox x:Name="HighlightPartialSkillsCheckBox"
+                          Content="Highlight Partially Trained Skills" />
+                <CheckBox x:Name="HighlightQueuedSkillsCheckBox"
+                          Content="Highlight Queued Skills" />
+                <CheckBox x:Name="AlwaysShowSkillQueueTimeCheckBox"
+                          Content="Always show time above the skill queue" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Skill queue warning threshold (days):" VerticalAlignment="Center" />
+                    <NumericUpDown x:Name="SkillQueueWarningDays"
+                                   Minimum="1" Maximum="30" Value="1"
+                                   Width="80" />
+                </StackPanel>
+            </StackPanel>
+
+            <Separator Margin="0,4" />
+
+            <!-- Overview -->
+            <TextBlock Text="Overview" FontWeight="SemiBold" />
+            <StackPanel Spacing="6" Margin="8,0,0,0">
+                <CheckBox x:Name="ShowOverviewCheckBox"
+                          Content="Show Overview tab" />
+                <CheckBox x:Name="ShowOverviewPortraitCheckBox"
+                          Content="Show Portrait" />
+                <CheckBox x:Name="ShowOverviewWalletCheckBox"
+                          Content="Show Wallet" />
+                <CheckBox x:Name="ShowOverviewSkillPointsCheckBox"
+                          Content="Show Skill Points" />
+                <CheckBox x:Name="ShowOverviewSkillQueueTimeCheckBox"
+                          Content="Show Skill Queue Training Time" />
+                <CheckBox x:Name="GroupTrainingFirstCheckBox"
+                          Content="Group characters in training first" />
+                <CheckBox x:Name="IncreasedContrastCheckBox"
+                          Content="Use increased contrast" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

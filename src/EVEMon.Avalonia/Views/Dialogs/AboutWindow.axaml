@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EVEMon.Avalonia.Views.Dialogs.AboutWindow"
+        Title="About EVEMon"
+        Width="480" Height="420"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <DockPanel Margin="20">
+        <!-- Bottom: OK button -->
+        <Button x:Name="OkButton"
+                DockPanel.Dock="Bottom"
+                Content="OK"
+                Width="80"
+                HorizontalAlignment="Right"
+                Margin="0,12,0,0" />
+
+        <StackPanel Spacing="6">
+            <!-- App title -->
+            <TextBlock Text="EVEMon"
+                       FontSize="28"
+                       FontWeight="Bold" />
+
+            <!-- Subtitle -->
+            <TextBlock Text="EVE Online Character Monitor and Skill Planner"
+                       FontSize="13"
+                       Foreground="Gray" />
+
+            <Separator Margin="0,8" />
+
+            <!-- Version info -->
+            <TextBlock x:Name="VersionText"
+                       FontSize="13" />
+
+            <TextBlock x:Name="BuildInfoText"
+                       FontSize="12"
+                       Foreground="Gray" />
+
+            <Separator Margin="0,8" />
+
+            <!-- Maintainer -->
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="Maintainer:"
+                           FontSize="12"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Alia Collins"
+                           FontSize="12" />
+            </StackPanel>
+
+            <!-- Original author -->
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock Text="Originally by:"
+                           FontSize="12"
+                           FontWeight="SemiBold" />
+                <TextBlock Text="Six Anari and the EVEMon DevTeam"
+                           FontSize="12" />
+            </StackPanel>
+
+            <Separator Margin="0,8" />
+
+            <!-- Links -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Links"
+                           FontSize="12"
+                           FontWeight="SemiBold" />
+                <Button x:Name="WebsiteLink"
+                        Content="evemon.dev"
+                        Classes="hyperlink"
+                        Padding="0"
+                        Background="Transparent"
+                        Foreground="{DynamicResource SystemAccentColor}"
+                        Cursor="Hand" />
+                <Button x:Name="GitHubLink"
+                        Content="GitHub: aliacollins/evemon"
+                        Classes="hyperlink"
+                        Padding="0"
+                        Background="Transparent"
+                        Foreground="{DynamicResource SystemAccentColor}"
+                        Cursor="Hand" />
+            </StackPanel>
+
+            <Separator Margin="0,8" />
+
+            <!-- Copyright -->
+            <TextBlock x:Name="CopyrightText"
+                       FontSize="11"
+                       Foreground="Gray" />
+
+            <TextBlock Text="EVE Online and the EVE logo are registered trademarks of CCP hf."
+                       FontSize="10"
+                       Foreground="Gray"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+    </DockPanel>
+</Window>

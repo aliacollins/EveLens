@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterFactionalWarfareView">
+
+    <Border Padding="20">
+        <StackPanel DataContext="{Binding FactionalWarfareStats}" Spacing="8">
+            <TextBlock Text="Factional Warfare Statistics" FontSize="14" FontWeight="Bold"
+                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+            <TextBlock Text="{Binding FactionName, StringFormat='Faction: {0}'}"
+                       FontSize="12" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding EnlistedDate, StringFormat='Enlisted: {0:yyyy-MM-dd}'}"
+                       FontSize="12" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding CurrentRank, StringFormat='Current Rank: {0}'}"
+                       FontSize="12" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding HighestRank, StringFormat='Highest Rank: {0}'}"
+                       FontSize="12" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <Separator Margin="0,4" />
+            <TextBlock Text="Kills" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{DynamicResource EveTextPrimaryBrush}" />
+            <TextBlock Text="{Binding KillsYesterday, StringFormat='Yesterday: {0}'}"
+                       FontSize="11" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding KillsLastWeek, StringFormat='Last Week: {0}'}"
+                       FontSize="11" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding KillsTotal, StringFormat='Total: {0}'}"
+                       FontSize="11" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <Separator Margin="0,4" />
+            <TextBlock Text="Victory Points" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{DynamicResource EveTextPrimaryBrush}" />
+            <TextBlock Text="{Binding VictoryPointsYesterday, StringFormat='Yesterday: {0}'}"
+                       FontSize="11" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding VictoryPointsLastWeek, StringFormat='Last Week: {0}'}"
+                       FontSize="11" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            <TextBlock Text="{Binding VictoryPointsTotal, StringFormat='Total: {0}'}"
+                       FontSize="11" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+        </StackPanel>
+    </Border>
+</UserControl>
