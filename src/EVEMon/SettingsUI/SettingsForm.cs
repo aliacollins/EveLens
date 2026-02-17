@@ -13,6 +13,7 @@ using EVEMon.Common.Resources.Skill_Select;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using System;
@@ -39,6 +40,7 @@ namespace EVEMon.SettingsUI
             AppServices.LoggerFactory?.CreateLogger<SettingsForm>());
         private static readonly EventId UiEvent = new(5, "UI");
 
+        private SettingsFormViewModel? _viewModel;
         private readonly SerializableSettings m_settings;
         private SerializableSettings m_oldSettings;
         private bool m_isLoading;
@@ -119,6 +121,10 @@ namespace EVEMon.SettingsUI
                 return;
 
             s_logger.Value?.LogInformation(UiEvent, "form.shown: SettingsForm");
+
+            // ViewModel for settings form state
+            _viewModel = new SettingsFormViewModel();
+            Disposed += (s, ev) => _viewModel?.Dispose();
 
             // Initialize members
             m_isLoading = true;
@@ -1026,6 +1032,9 @@ namespace EVEMon.SettingsUI
         {
             multiPanel.SelectedPage = multiPanel.Controls.Cast<MultiPanelPage>().FirstOrDefault(
                 page => page.Name == (string?)e.Node!.Tag)!;
+
+            if (_viewModel != null)
+                _viewModel.SelectedCategory = e.Node!.Text;
         }
 
         /// <summary>

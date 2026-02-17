@@ -153,9 +153,43 @@ ESI API → SmartQueryScheduler → QueryMonitor → CCPCharacter →
 
 19 interfaces including: `IEventAggregator`, `IDispatcher`, `ISettingsProvider`, `ICharacterRepository` (split into `ICharacterReader`/`ICharacterWriter`), `IStation`, `IApplicationPaths`, `ITraceService`, `IEsiClient`
 
+### ViewModel Layer (`src/EVEMon.Common/ViewModels/`)
+
+MVVM infrastructure using CommunityToolkit.Mvvm. ViewModels live in `EVEMon.Common` (no new assembly).
+
+**Base classes:**
+- `ViewModelBase` — ObservableObject + IDisposable, auto-tracked subscriptions via CompositeDisposable, `Subscribe<T>()`, `SetPropertyOnUI<T>()`
+- `CharacterViewModelBase` — Character property, `SubscribeForCharacter<T>()` for character-filtered events
+- `ListViewModel<TItem,TColumn,TGrouping>` — Generic filter/sort/group pipeline. TextFilter, Grouping, SortColumn → `Refresh()` → GroupedItems
+- `FormViewModel` — IsDirty tracking, Apply/Cancel for dialogs
+
+**Concrete ViewModels (11 list VMs + 4 app VMs):**
+- `Lists/AssetsListViewModel`, `MarketOrdersListViewModel`, `ContractsListViewModel`, `IndustryJobsListViewModel`, `WalletJournalListViewModel`, `WalletTransactionsListViewModel`, `MailMessagesListViewModel`, `NotificationsListViewModel`, `KillLogListViewModel`, `PlanetaryListViewModel`, `ResearchPointsListViewModel`
+- `MainWindowViewModel`, `CharacterMonitorBodyViewModel`, `PlanEditorViewModel`, `SettingsFormViewModel`
+
+**Binding helpers** (`ViewModels/Binding/`): `PropertyBinding`, `ListViewBindingHelper`, `CompositeDisposable`, `ActionDisposable`
+
+**Migration status: COMPLETE.** All 11 list controls fully delegate filter/sort/group to their VMs. Old pipeline methods (`IsTextMatching`, `UpdateSort`, `UpdateContentByGroup`) deleted from all controls. `PlanEditorViewModel` wired in `PlanWindow`, `SettingsFormViewModel` wired in `SettingsForm`. Architecture tests enforce VM-to-control pairing, old method removal, and GroupedItems contract guarantees.
+
+**Pattern for new list views:**
+```csharp
+// 1. Create VM subclass
+public sealed class MyListViewModel : ListViewModel<MyItem, MyColumn, MyGrouping>
+{
+    protected override IEnumerable<MyItem> GetSourceItems() => ...;
+    protected override bool MatchesFilter(MyItem item, string filter) => ...;
+    protected override int CompareItems(MyItem x, MyItem y, MyColumn column) => ...;
+    protected override string GetGroupKey(MyItem item, MyGrouping grouping) => ...;
+}
+
+// 2. In the control, read from VM:
+_viewModel.Refresh();
+var groups = _viewModel.GroupedItems; // filtered, sorted, grouped
+```
+
 ## Testing
 
-**821 tests** across 51 files. xUnit 2.9 + FluentAssertions 6.12 + NSubstitute 5.1.
+**1201 tests** across 66 files. xUnit 2.9 + FluentAssertions 6.12 + NSubstitute 5.1.
 
 ### Test Patterns
 

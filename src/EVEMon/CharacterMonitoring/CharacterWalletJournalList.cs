@@ -17,9 +17,10 @@ using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
-using EVEMon.Common.Models.Comparers;
+
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -42,6 +43,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subEveIDToName;
         private IDisposable? _subWalletJournal;
         private IDisposable? _tickSub;
+        private WalletJournalListViewModel? _viewModel;
 
         #endregion
 
@@ -180,6 +182,8 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            _viewModel = new WalletJournalListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subRefTypes = agg.SubscribeOnUI<RefTypesUpdatedEvent>(this, e => EveMonClient_RefTypesUpdated());
@@ -195,6 +199,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             _tickSub?.Dispose();
             _tickSub = null;
             _subRefTypes?.Dispose();
@@ -297,26 +304,61 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvWalletJournal.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvWalletJournal.SelectedItems.Count > 0
                 ? lvWalletJournal!.SelectedItems[0]!.Tag!.GetHashCode() : 0;
 
             lvWalletJournal.BeginUpdate();
             try
             {
-                IEnumerable<WalletJournal> walletJournalTransactions = m_list.Where(x => IsTextMatching(x, m_textFilter));
+                // Sync state to VM
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                }
 
-                UpdateSort();
+                var groupedItems = _viewModel?.GroupedItems;
 
-                UpdateContentByGroup(walletJournalTransactions);
+                lvWalletJournal.Items.Clear();
+                lvWalletJournal.Groups.Clear();
 
-                // Restore the selected item (if any)
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
+
+                    foreach (var group in groupedItems)
+                    {
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvWalletJournal.Groups.Add(lvGroup);
+                        }
+
+                        foreach (var walletJournal in group.Items)
+                        {
+                            var item = new ListViewItem($"{walletJournal.Date.ToLocalTime()}")
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = walletJournal
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(walletJournal, item);
+                            lvWalletJournal.Items.Add(item);
+                        }
+                    }
+                }
+
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvWalletJournal.Items.Cast<ListViewItem>().Where(
@@ -326,9 +368,7 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
                 UpdateListVisibility();
             }
             finally
@@ -351,114 +391,9 @@ namespace EVEMon.CharacterMonitoring
             lvWalletJournal.Visible = !noWalletJournalLabel.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="walletJournalTransactions">The wallet journal transactions.</param>
-        private void UpdateContentByGroup(IEnumerable<WalletJournal> walletJournalTransactions)
-        {
-            switch (m_grouping)
-            {
-                case WalletJournalGrouping.None:
-                    UpdateNoGroupContent(walletJournalTransactions);
-                    break;
-                case WalletJournalGrouping.Date:
-                    IOrderedEnumerable<IGrouping<DateTime, WalletJournal>> groups1 =
-                        walletJournalTransactions.GroupBy(x => x.Date.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case WalletJournalGrouping.DateDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, WalletJournal>> groups2 =
-                        walletJournalTransactions.GroupBy(x => x.Date.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups2);
-                    break;
-                case WalletJournalGrouping.Type:
-                    IOrderedEnumerable<IGrouping<string, WalletJournal>> groups3 =
-                        walletJournalTransactions.GroupBy(x => x.Type).OrderBy(x => x.Key);
-                    UpdateContent(groups3);
-                    break;
-                case WalletJournalGrouping.TypeDesc:
-                    IOrderedEnumerable<IGrouping<string, WalletJournal>> groups4 =
-                        walletJournalTransactions.GroupBy(x => x.Type).OrderByDescending(x => x.Key);
-                    UpdateContent(groups4);
-                    break;
-                case WalletJournalGrouping.Issuer:
-                    IOrderedEnumerable<IGrouping<string, WalletJournal>> groups5 =
-                        walletJournalTransactions.GroupBy(x => x.Issuer).OrderBy(x => x.Key);
-                    UpdateContent(groups5);
-                    break;
-                case WalletJournalGrouping.IssuerDesc:
-                    IOrderedEnumerable<IGrouping<string, WalletJournal>> groups6 =
-                        walletJournalTransactions.GroupBy(x => x.Issuer).OrderByDescending(x => x.Key);
-                    UpdateContent(groups6);
-                    break;
-                case WalletJournalGrouping.Recipient:
-                    IOrderedEnumerable<IGrouping<string, WalletJournal>> groups7 =
-                        walletJournalTransactions.GroupBy(x => x.Recipient).OrderBy(x => x.Key);
-                    UpdateContent(groups7);
-                    break;
-                case WalletJournalGrouping.RecipientDesc:
-                    IOrderedEnumerable<IGrouping<string, WalletJournal>> groups8 =
-                        walletJournalTransactions.GroupBy(x => x.Recipient).OrderByDescending(x => x.Key);
-                    UpdateContent(groups8);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        private void UpdateNoGroupContent(IEnumerable<WalletJournal> walletJournalTransactions)
-        {
-            lvWalletJournal.Items.Clear();
-            lvWalletJournal.Groups.Clear();
-
-            // Add the items
-            lvWalletJournal.Items.AddRange(walletJournalTransactions.Select(walletJournal => new
-            {
-                walletJournal,
-                item = new ListViewItem($"{walletJournal.Date.ToLocalTime()}")
-                {
-                    UseItemStyleForSubItems = false,
-                    Tag = walletJournal
-                }
-            }).Select(x => CreateSubItems(x.walletJournal, x.item)).ToArray());
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, WalletJournal>> groups)
-        {
-            lvWalletJournal.Items.Clear();
-            lvWalletJournal.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, WalletJournal> group in groups)
-            {
-                string groupText;
-                if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                    groupText = group!.Key!.ToString()!;
-
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvWalletJournal.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvWalletJournal.Items.AddRange(group.Select(walletJournal => new
-                {
-                    walletJournal,
-                    item = new ListViewItem($"{walletJournal.Date.ToLocalTime()}", listGroup)
-                    {
-                        UseItemStyleForSubItems = false,
-                        Tag = walletJournal
-                    }
-                }).Select(x => CreateSubItems(x.walletJournal, x.item)).ToArray());
-            }
-        }
+        // UpdateContentByGroup REMOVED — grouping is now handled by WalletJournalListViewModel.
+        // UpdateNoGroupContent REMOVED — grouping is now handled by WalletJournalListViewModel.
+        // UpdateContent<TKey> REMOVED — grouping is now handled by WalletJournalListViewModel.
 
         /// <summary>
         /// Creates the list view sub items.
@@ -519,16 +454,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvWalletJournal.ListViewItemSorter = new ListViewItemComparerByTag<WalletJournal>(
-                new WalletJournalComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort REMOVED — sorting is now handled by WalletJournalListViewModel.
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -605,20 +531,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(WalletJournal x, string text) => string.IsNullOrEmpty(text)
-       || x.Type.ToUpperInvariant().Contains(text, ignoreCase: true)
-       || x.Reason.ToUpperInvariant().Contains(text, ignoreCase: true)
-       || x.Issuer.ToUpperInvariant().Contains(text, ignoreCase: true)
-       || x.Recipient.ToUpperInvariant().Contains(text, ignoreCase: true)
-       || x.TaxReceiver.ToUpperInvariant().Contains(text, ignoreCase: true);
+        // IsTextMatching REMOVED — text filtering is now handled by WalletJournalListViewModel.
 
         #endregion
 
@@ -680,8 +593,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

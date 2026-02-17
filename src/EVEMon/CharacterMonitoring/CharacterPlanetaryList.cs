@@ -21,6 +21,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.CharacterMonitoring
@@ -47,6 +48,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subLayout;
         private IDisposable? _subPinsCompleted;
         private IDisposable? _tickSub;
+        private PlanetaryListViewModel? _viewModel;
 
         #endregion
 
@@ -199,6 +201,8 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Tick += refresh_TimerTick;
             m_refreshTimer.Interval = 1000;
 
+            _viewModel = new PlanetaryListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subColonies = agg.SubscribeOnUIForCharacter<CharacterPlanetaryColoniesUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterPlanetaryColoniesUpdated(e));
@@ -214,6 +218,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             m_refreshTimer.Dispose();
 
             _tickSub?.Dispose();
@@ -322,13 +329,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvPlanetary.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvPlanetary.SelectedItems.Count > 0
                 ? lvPlanetary!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
@@ -336,17 +340,51 @@ namespace EVEMon.CharacterMonitoring
             lvPlanetary.BeginUpdate();
             try
             {
-                string text = m_textFilter.ToUpperInvariant();
-                IEnumerable<PlanetaryPin> pins = m_list.Where(x => IsTextMatching(x, text));
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                    _viewModel.ShowEcuOnly = Settings.UI.MainWindow.Planetary.ShowEcuOnly;
+                }
 
-                if (Settings.UI.MainWindow.Planetary.ShowEcuOnly)
-                    pins = pins.Where(pin => DBConstants.EcuTypeIDs.Any(id => id == pin.TypeID));
+                var groupedItems = _viewModel?.GroupedItems;
 
-                UpdateSort();
+                lvPlanetary.Items.Clear();
+                lvPlanetary.Groups.Clear();
 
-                UpdateContentByGroup(pins);
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
 
-                // Restore the selected item (if any)
+                    foreach (var group in groupedItems)
+                    {
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvPlanetary.Groups.Add(lvGroup);
+                        }
+
+                        foreach (var pin in group.Items)
+                        {
+                            var item = new ListViewItem(pin.TypeName)
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = pin
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(pin, item);
+                            lvPlanetary.Items.Add(item);
+                        }
+                    }
+                }
+
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvPlanetary.Items.Cast<ListViewItem>().Where(
@@ -356,148 +394,13 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
                 UpdateListVisibility();
             }
             finally
             {
                 lvPlanetary.EndUpdate();
                 lvPlanetary.SetVerticalScrollBarPosition(scrollBarPosition);
-            }
-        }
-
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="pins">The pins.</param>
-        private void UpdateContentByGroup(IEnumerable<PlanetaryPin> pins)
-        {
-            switch (m_grouping)
-            {
-                case PlanetaryGrouping.None:
-                    UpdateNoGroupContent(pins);
-                    break;
-                case PlanetaryGrouping.SolarSystem:
-                    IOrderedEnumerable<IGrouping<string, PlanetaryPin>> groups0 =
-                        pins.GroupBy(x => x.Colony.SolarSystem.Name).OrderBy(x => x.Key);
-                    UpdateContent(groups0);
-                    break;
-                case PlanetaryGrouping.SolarSystemDesc:
-                    IOrderedEnumerable<IGrouping<string, PlanetaryPin>> groups1 =
-                        pins.GroupBy(x => x.Colony.SolarSystem.Name).OrderByDescending(x => x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case PlanetaryGrouping.PlanetType:
-                    IOrderedEnumerable<IGrouping<string, PlanetaryPin>> groups2 =
-                        pins.GroupBy(x => x.Colony.PlanetTypeName).OrderBy(x => x.Key);
-                    UpdateContent(groups2);
-                    break;
-                case PlanetaryGrouping.PlanetTypeDesc:
-                    IOrderedEnumerable<IGrouping<string, PlanetaryPin>> groups3 =
-                        pins.GroupBy(x => x.Colony.PlanetTypeName).OrderByDescending(x => x.Key);
-                    UpdateContent(groups3);
-                    break;
-                case PlanetaryGrouping.Colony:
-                    IOrderedEnumerable<IGrouping<PlanetaryColony, PlanetaryPin>> groups4 =
-                        pins.GroupBy(x => x.Colony).OrderBy(x => x.Key.PlanetID);
-                    UpdateContent(groups4);
-                    break;
-                case PlanetaryGrouping.ColonyDesc:
-                    IOrderedEnumerable<IGrouping<PlanetaryColony, PlanetaryPin>> groups5 =
-                        pins.GroupBy(x => x.Colony).OrderByDescending(x => x.Key.PlanetID);
-                    UpdateContent(groups5);
-                    break;
-                case PlanetaryGrouping.EndDate:
-                    IOrderedEnumerable<IGrouping<DateTime, PlanetaryPin>> groups6 =
-                        pins.GroupBy(x => x.ExpiryTime.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups6);
-                    break;
-                case PlanetaryGrouping.EndDateDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, PlanetaryPin>> groups7 =
-                        pins.GroupBy(x => x.ExpiryTime.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups7);
-                    break;
-                case PlanetaryGrouping.GroupName:
-                    IOrderedEnumerable<IGrouping<string, PlanetaryPin>> groups8 =
-                        pins.GroupBy(x => x.GroupName).OrderBy(x => x.Key);
-                    UpdateContent(groups8);
-                    break;
-                case PlanetaryGrouping.GroupNameDesc:
-                    IOrderedEnumerable<IGrouping<string, PlanetaryPin>> groups9 =
-                        pins.GroupBy(x => x.GroupName).OrderByDescending(x => x.Key);
-                    UpdateContent(groups9);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        private void UpdateNoGroupContent(IEnumerable<PlanetaryPin> pins)
-        {
-            lvPlanetary.Items.Clear();
-            lvPlanetary.Groups.Clear();
-
-            // Add the items
-            lvPlanetary.Items.AddRange(pins.Select(
-                pin => new
-                {
-                    pin,
-                    item = new ListViewItem(pin.TypeName)
-                    {
-                        UseItemStyleForSubItems = false,
-                        Tag = pin
-                    }
-                }).Select(x => CreateSubItems(x.pin, x.item)).ToArray());
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, PlanetaryPin>> groups)
-        {
-            lvPlanetary.Items.Clear();
-            lvPlanetary.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, PlanetaryPin> group in groups)
-            {
-                string groupText;
-                if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                {
-                    PlanetaryColony? colony = group.Key as PlanetaryColony;
-                    if (colony != null)
-                    {
-                        groupText = $"{colony.SolarSystem.Name} > {colony.PlanetName} [{colony.PlanetTypeName}] " +
-                                    $"(Installations: {colony.NumberOfPins}, " +
-                                    $"Level: {colony.UpgradeLevel}, " +
-                                    $"Updated: {colony.LastUpdate.ToLocalTime()})";
-                    }
-                    else
-                        groupText = group!.Key!.ToString()!;
-                }
-
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvPlanetary.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvPlanetary.Items.AddRange(
-                    group.Select(pin => new
-                    {
-                        pin,
-                        item = new ListViewItem(pin.TypeName, listGroup)
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = pin
-                        }
-
-                    }).Select(x => CreateSubItems(x.pin, x.item)).ToArray());
             }
         }
 
@@ -573,17 +476,6 @@ namespace EVEMon.CharacterMonitoring
                 // Assign the width found
                 column.Width = columnMaxWidth;
             }
-        }
-
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvPlanetary.ListViewItemSorter = new ListViewItemComparerByTag<PlanetaryPin>(
-                new PlanetaryPinComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
         }
 
         /// <summary>
@@ -678,24 +570,6 @@ namespace EVEMon.CharacterMonitoring
 
 
         #region Helper Methods
-
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(PlanetaryPin x, string text) => string.IsNullOrEmpty(text)
-       || x.Colony.PlanetName.ToUpperInvariant().Contains(text)
-       || x.Colony.PlanetTypeName.ToUpperInvariant().Contains(text)
-       || x.Colony.PlanetTypeName.ToUpperInvariant().Contains(text)
-       || x.Colony.SolarSystem.Name.ToUpperInvariant().Contains(text)
-       || x.Colony.SolarSystem.Constellation.Name.ToUpperInvariant().Contains(text)
-       || x.Colony.SolarSystem.Constellation.Region.Name.ToUpperInvariant().Contains(text)
-       || x.TypeName.ToUpperInvariant().Contains(text)
-       || x.ContentTypeName.ToUpperInvariant().Contains(text);
 
         /// <summary>
         /// Updates the time to completion.
@@ -839,8 +713,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

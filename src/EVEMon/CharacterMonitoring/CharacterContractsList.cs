@@ -22,6 +22,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.DetailsWindow;
 using EVEMon.SkillPlanner;
 
@@ -51,6 +52,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subCharContractItems;
         private IDisposable? _subCorpContractItems;
         private IDisposable? _tickSub;
+        private ContractsListViewModel? _viewModel;
 
         #endregion
 
@@ -217,6 +219,8 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvContracts);
 
+            _viewModel = new ContractsListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subContracts = agg.SubscribeOnUIForCharacter<ContractsUpdatedEvent>(this, () => Character, e => EveMonClient_ContractsUpdated(e));
@@ -234,6 +238,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             m_tooltip.Dispose();
 
             _tickSub?.Dispose();
@@ -346,38 +353,63 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvContracts.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvContracts.SelectedItems!.Count > 0 ? lvContracts!.
                 SelectedItems[0].Tag!.GetHashCode() : 0;
 
             lvContracts.BeginUpdate();
             try
             {
-                bool filterInactive = Character != null && Settings.UI.MainWindow.Contracts.
-                    HideInactiveContracts, filterIssued = m_showIssuedFor != IssuedFor.All;
-                var contracts = new LinkedList<Contract>();
-                foreach (var con in m_list)
-                    // Filter on valid contracts matching text
-                    if (con.ContractType != ContractType.None && con.StartStation != null &&
-                        con.EndStation != null && IsTextMatching(con, m_textFilter))
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                    _viewModel.HideInactive = Character != null && Settings.UI.MainWindow.Contracts.HideInactiveContracts;
+                    _viewModel.ShowIssuedFor = m_showIssuedFor;
+                }
+
+                var groupedItems = _viewModel?.GroupedItems;
+
+                lvContracts.Items.Clear();
+                lvContracts.Groups.Clear();
+
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
+
+                    foreach (var group in groupedItems)
                     {
-                        con.UpdateContractItems();
-                        // Filter on issued type and availability
-                        if ((!filterIssued || con.IssuedFor == m_showIssuedFor) &&
-                            (!filterInactive || con.IsAvailable || con.NeedsAttention))
-                        contracts.AddLast(con);
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvContracts.Groups.Add(lvGroup);
+                        }
+
+                        foreach (var contract in group.Items)
+                        {
+                            contract.UpdateContractItems();
+                            var item = new ListViewItem(contract.ContractText)
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = contract
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(contract, item);
+                            lvContracts.Items.Add(item);
+                        }
                     }
+                }
 
-                UpdateSort();
-                UpdateContentByGroup(contracts);
+                UpdateSortVisualFeedback();
 
-                // Restore the selected item (if any)
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvContracts.Items.Cast<ListViewItem>().Where(
@@ -387,9 +419,7 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
                 UpdateListVisibility();
             }
             finally
@@ -412,97 +442,7 @@ namespace EVEMon.CharacterMonitoring
             lvContracts.Visible = !noContractsLabel.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="contracts">The contracts.</param>
-        private void UpdateContentByGroup(IEnumerable<Contract> contracts)
-        {
-            switch (m_grouping)
-            {
-                case ContractGrouping.State:
-                    IOrderedEnumerable<IGrouping<ContractState, Contract>> groups0 =
-                        contracts.GroupBy(x => x.State).OrderBy(x => (int)x.Key);
-                    UpdateContent(groups0);
-                    break;
-                case ContractGrouping.StateDesc:
-                    IOrderedEnumerable<IGrouping<ContractState, Contract>> groups1 =
-                        contracts.GroupBy(x => x.State).OrderByDescending(x => (int)x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case ContractGrouping.Issued:
-                    IOrderedEnumerable<IGrouping<DateTime, Contract>> groups4 =
-                        contracts.GroupBy(x => x.Issued.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups4);
-                    break;
-                case ContractGrouping.IssuedDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, Contract>> groups5 =
-                        contracts.GroupBy(x => x.Issued.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups5);
-                    break;
-                case ContractGrouping.ContractType:
-                    IOrderedEnumerable<IGrouping<ContractType, Contract>> groups6 =
-                        contracts.GroupBy(x => x.ContractType).OrderBy(x => x.Key);
-                    UpdateContent(groups6);
-                    break;
-                case ContractGrouping.ContractTypeDesc:
-                    IOrderedEnumerable<IGrouping<ContractType, Contract>> groups7 =
-                        contracts.GroupBy(x => x.ContractType).OrderByDescending(x => x.Key);
-                    UpdateContent(groups7);
-                    break;
-                case ContractGrouping.StartLocation:
-                    IOrderedEnumerable<IGrouping<Station, Contract>> groups8 =
-                        contracts.GroupBy(x => x.StartStation)!.OrderBy(x => x!.Key!.Name)!;
-                    UpdateContent(groups8);
-                    break;
-                case ContractGrouping.StartLocationDesc:
-                    IOrderedEnumerable<IGrouping<Station, Contract>> groups9 =
-                        contracts.GroupBy(x => x.StartStation)!.OrderByDescending(x => x!.Key!.Name)!;
-                    UpdateContent(groups9);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, Contract>> groups)
-        {
-            lvContracts.Items.Clear();
-            lvContracts.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, Contract> group in groups)
-            {
-                string groupText;
-                if (group.Key is ContractState)
-                    groupText = ((ContractState)(object)group.Key).GetHeader();
-                else if (group.Key is ContractType)
-                    groupText = ((ContractType)(object)group.Key).GetDescription();
-                else if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                    groupText = group!.Key!.ToString()!;
-
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvContracts.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvContracts.Items.AddRange(
-                    group.Select(contract =>
-                        new
-                        {
-                            contract,
-                            item = new ListViewItem(contract.ContractText, listGroup)
-                            {
-                                UseItemStyleForSubItems = false,
-                                Tag = contract
-                            }
-                        }).Select(x => CreateSubItems(x.contract, x.item)).ToArray());
-            }
-        }
+        // UpdateContentByGroup and UpdateContent<TKey> removed — VM handles filter/sort/group
 
         /// <summary>
         /// Creates the list view sub items.
@@ -599,16 +539,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvContracts.ListViewItemSorter = new ListViewItemComparerByTag<Contract>(
-                new ContractComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort removed — VM handles sorting
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -749,28 +680,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(Contract x, string text)
-            => string.IsNullOrEmpty(text) ||
-               x.Status.GetDescription().ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.ContractText.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.ContractType.GetDescription().ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Issuer.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Assignee.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Acceptor.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Description.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.Availability.GetDescription().ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x!.StartStation!.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.StartStation.SolarSystemChecked.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.StartStation.SolarSystemChecked.Constellation.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x.StartStation.SolarSystemChecked.Constellation.Region.Name.ToUpperInvariant().Contains(text, ignoreCase: true);
+        // IsTextMatching removed — VM handles text filtering
 
         /// <summary>
         /// Gets the text and formatting for the expiration cell
@@ -896,8 +806,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

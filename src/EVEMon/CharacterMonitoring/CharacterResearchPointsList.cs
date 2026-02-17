@@ -15,9 +15,10 @@ using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
-using EVEMon.Common.Models.Comparers;
+
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.CharacterMonitoring
@@ -39,6 +40,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subResearch;
         private IDisposable? _subConquerableStation;
         private IDisposable? _tickSub;
+        private ResearchPointsListViewModel? _viewModel;
 
         #endregion
 
@@ -167,6 +169,8 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            _viewModel = new ResearchPointsListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
@@ -181,6 +185,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             _tickSub?.Dispose();
             _tickSub = null;
             _subConquerableStation?.Dispose();
@@ -284,37 +291,48 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvResearchPoints.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvResearchPoints.SelectedItems.Count > 0 ?
                 lvResearchPoints!.SelectedItems[0]!.Tag!.GetHashCode() : 0;
 
             lvResearchPoints.BeginUpdate();
             try
             {
-                IEnumerable<ResearchPoint> researchPoints = m_list.Where(x => !string.
-                    IsNullOrEmpty(x.AgentName) && !string.IsNullOrEmpty(x.Field) &&
-                    x.Station != null).Where(x => IsTextMatching(x, m_textFilter));
+                // Sync state to VM
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.TextFilter = m_textFilter;
+                }
 
-                UpdateSort();
+                var groupedItems = _viewModel?.GroupedItems;
 
                 lvResearchPoints.Items.Clear();
+                lvResearchPoints.Groups.Clear();
 
-                // Add the items
-                lvResearchPoints.Items.AddRange(researchPoints.Select(researchPoint => new
+                if (groupedItems != null)
                 {
-                    researchPoint,
-                    item = new ListViewItem(researchPoint.AgentName)
+                    foreach (var group in groupedItems)
                     {
-                        UseItemStyleForSubItems = false,
-                        Tag = researchPoint
+                        foreach (var researchPoint in group.Items)
+                        {
+                            var item = new ListViewItem(researchPoint.AgentName)
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = researchPoint
+                            };
+                            CreateSubItems(researchPoint, item);
+                            lvResearchPoints.Items.Add(item);
+                        }
                     }
-                }).Select(x => CreateSubItems(x.researchPoint, x.item)).ToArray());
+                }
+
+                UpdateSortVisualFeedback();
 
                 // Restore the selected item (if any)
                 if (selectedItem > 0)
@@ -326,9 +344,7 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
                 UpdateListVisibility();
             }
             finally
@@ -410,16 +426,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvResearchPoints.ListViewItemSorter = new ListViewItemComparerByTag<ResearchPoint>(
-                new ResearchPointComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort REMOVED — sorting is now handled by ResearchPointsListViewModel.
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -490,21 +497,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(ResearchPoint x, string text) => string.IsNullOrEmpty(text)
-            || x.AgentName.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Field.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.Name.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.SolarSystemChecked.Name.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.SolarSystemChecked.Constellation.Name.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.SolarSystemChecked.Constellation.Region.Name.ToUpperInvariant().Contains(text, ignoreCase: true);
+        // IsTextMatching REMOVED — text filtering is now handled by ResearchPointsListViewModel.
 
         #endregion
 
@@ -566,8 +559,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

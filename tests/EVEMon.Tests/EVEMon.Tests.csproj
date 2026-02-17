@@ -29,6 +29,7 @@
     <ProjectReference Include="..\..\src\EVEMon.Serialization\EVEMon.Serialization.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Models\EVEMon.Models.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Infrastructure\EVEMon.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\EVEMon\EVEMon.csproj" />
   </ItemGroup>
 
   <!-- Shared AssemblyInfo -->

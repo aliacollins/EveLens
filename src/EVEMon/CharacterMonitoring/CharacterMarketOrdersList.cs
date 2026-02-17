@@ -22,6 +22,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.CharacterMonitoring
@@ -79,6 +80,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subMarketOrders;
         private IDisposable? _subConquerableStation;
         private IDisposable? _tickSub;
+        private MarketOrdersListViewModel? _viewModel;
 
         #endregion
 
@@ -252,6 +254,8 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvOrders);
 
+            _viewModel = new MarketOrdersListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subMarketOrders = agg.SubscribeOnUIForCharacter<MarketOrdersUpdatedEvent>(this, () => Character, e => EveMonClient_MarketOrdersUpdated(e));
@@ -266,6 +270,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             m_tooltip.Dispose();
 
             _tickSub?.Dispose();
@@ -379,13 +386,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvOrders.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvOrders.SelectedItems.Count > 0
                 ? lvOrders!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
@@ -393,20 +397,53 @@ namespace EVEMon.CharacterMonitoring
             lvOrders.BeginUpdate();
             try
             {
-                IEnumerable<MarketOrder> orders = m_list.Where(x => x.Item != null &&
-                    x.Station != null).Where(x => IsTextMatching(x, m_textFilter));
+                // Sync state to VM
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                    _viewModel.HideInactive = Character != null && Settings.UI.MainWindow.MarketOrders.HideInactiveOrders;
+                    _viewModel.ShowIssuedFor = m_showIssuedFor;
+                }
 
-                if (Character != null && Settings.UI.MainWindow.MarketOrders.HideInactiveOrders)
-                    orders = orders.Where(x => x.IsAvailable);
+                var groupedItems = _viewModel?.GroupedItems;
 
-                if (m_showIssuedFor != IssuedFor.All)
-                    orders = orders.Where(x => x.IssuedFor == m_showIssuedFor);
+                lvOrders.Items.Clear();
+                lvOrders.Groups.Clear();
 
-                UpdateSort();
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
 
-                UpdateContentByGroup(orders);
+                    foreach (var group in groupedItems)
+                    {
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvOrders.Groups.Add(lvGroup);
+                        }
 
-                // Restore the selected item (if any)
+                        foreach (var order in group.Items)
+                        {
+                            var item = new ListViewItem(order.Item.Name)
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = order
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(order, item);
+                            lvOrders.Items.Add(item);
+                        }
+                    }
+                }
+
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvOrders.Items.Cast<ListViewItem>().Where(
@@ -416,12 +453,8 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
-                // Update the expandable panel info
                 UpdateExpPanelContent();
-
                 UpdateListVisibility();
             }
             finally
@@ -446,105 +479,7 @@ namespace EVEMon.CharacterMonitoring
             lvOrders.Visible = !noOrdersLabel.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="orders">The orders.</param>
-        private void UpdateContentByGroup(IEnumerable<MarketOrder> orders)
-        {
-            switch (m_grouping)
-            {
-                case MarketOrderGrouping.State:
-                    IOrderedEnumerable<IGrouping<OrderState, MarketOrder>> groups0 =
-                        orders.GroupBy(x => x.State).OrderBy(x => (int)x.Key);
-                    UpdateContent(groups0);
-                    break;
-                case MarketOrderGrouping.StateDesc:
-                    IOrderedEnumerable<IGrouping<OrderState, MarketOrder>> groups1 =
-                        orders.GroupBy(x => x.State).OrderByDescending(x => (int)x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case MarketOrderGrouping.Issued:
-                    IOrderedEnumerable<IGrouping<DateTime, MarketOrder>> groups2 =
-                        orders.GroupBy(x => x.Issued.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups2);
-                    break;
-                case MarketOrderGrouping.IssuedDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, MarketOrder>> groups3 =
-                        orders.GroupBy(x => x.Issued.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups3);
-                    break;
-                case MarketOrderGrouping.ItemType:
-                    IOrderedEnumerable<IGrouping<MarketGroup, MarketOrder>> groups4 =
-                        orders.GroupBy(x => x.Item.MarketGroup)!.OrderBy(x => x!.Key!.Name)!;
-                    UpdateContent(groups4);
-                    break;
-                case MarketOrderGrouping.ItemTypeDesc:
-                    IOrderedEnumerable<IGrouping<MarketGroup, MarketOrder>> groups5 =
-                        orders.GroupBy(x => x.Item.MarketGroup)!.OrderByDescending(x => x!.Key!.Name)!;
-                    UpdateContent(groups5);
-                    break;
-                case MarketOrderGrouping.Location:
-                    IOrderedEnumerable<IGrouping<Station, MarketOrder>> groups6 =
-                        orders.GroupBy(x => x.Station).OrderBy(x => x.Key.Name);
-                    UpdateContent(groups6);
-                    break;
-                case MarketOrderGrouping.LocationDesc:
-                    IOrderedEnumerable<IGrouping<Station, MarketOrder>> groups7 =
-                        orders.GroupBy(x => x.Station).OrderByDescending(x => x.Key.Name);
-                    UpdateContent(groups7);
-                    break;
-                case MarketOrderGrouping.OrderType:
-                    IOrderedEnumerable<IGrouping<string, MarketOrder>> groups8 =
-                        orders.GroupBy(x => x is BuyOrder ? "Buying Orders" : "Selling Orders").OrderBy(x => x.Key);
-                    UpdateContent(groups8);
-                    break;
-                case MarketOrderGrouping.OrderTypeDesc:
-                    IOrderedEnumerable<IGrouping<string, MarketOrder>> groups9 =
-                        orders.GroupBy(x => x is BuyOrder ? "Buying Orders" : "Selling Orders").OrderByDescending(x => x.Key);
-                    UpdateContent(groups9);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, MarketOrder>> groups)
-        {
-            lvOrders.Items.Clear();
-            lvOrders.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, MarketOrder> group in groups)
-            {
-                string groupText;
-                if (group.Key is OrderState)
-                    groupText = ((OrderState)(object)group.Key).GetHeader();
-                else if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                    groupText = group!.Key!.ToString()!;
-
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvOrders.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvOrders.Items.AddRange(
-                    group.Select(order => new
-                    {
-                        order,
-                        item = new ListViewItem(order.Item.Name, listGroup)
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = order
-                        }
-
-                    }).Select(x => CreateSubItems(x.order, x.item)).ToArray());
-            }
-        }
+        // UpdateContentByGroup and UpdateContent<TKey> removed — VM handles filter/sort/group
 
         /// <summary>
         /// Creates the list view sub items.
@@ -629,16 +564,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvOrders.ListViewItemSorter = new ListViewItemComparerByTag<MarketOrder>(
-                new MarketOrderComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort removed — VM handles sorting
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -768,20 +694,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        private static bool IsTextMatching(MarketOrder x, string text)
-            => string.IsNullOrEmpty(text) ||
-               x.Item.Name.Contains(text, ignoreCase: true) ||
-               x.Item.Description.Contains(text, ignoreCase: true) ||
-               x.Station.Name.Contains(text, ignoreCase: true) ||
-               x.Station.SolarSystemChecked.Name.Contains(text, ignoreCase: true) ||
-               x.Station.SolarSystemChecked.Constellation.Name.Contains(text, ignoreCase: true) ||
-               x.Station.SolarSystemChecked.Constellation.Region.Name.Contains(text, ignoreCase: true);
+        // IsTextMatching removed — VM handles text filtering
 
         /// <summary>
         /// Gets the text and formatting for the expiration cell
@@ -878,8 +791,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

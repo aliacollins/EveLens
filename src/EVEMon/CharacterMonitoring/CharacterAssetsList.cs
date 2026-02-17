@@ -23,6 +23,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.SkillPlanner;
 using Region = EVEMon.Common.Data.Region;
 
@@ -63,6 +64,12 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subSettings;
         private IDisposable? _subItemPrices;
         private IDisposable? _tickSub;
+
+        /// <summary>
+        /// ViewModel for this list (Strangler Fig: coexists with existing code,
+        /// will gradually assume filter/sort/group responsibilities).
+        /// </summary>
+        private AssetsListViewModel? _viewModel;
 
         #endregion
 
@@ -209,6 +216,8 @@ namespace EVEMon.CharacterMonitoring
 
             m_tooltip = new InfiniteDisplayToolTip(lvAssets);
 
+            _viewModel = new AssetsListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subAssets = agg.SubscribeOnUIForCharacter<CharacterAssetsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterAssetsUpdated(e));
@@ -228,6 +237,9 @@ namespace EVEMon.CharacterMonitoring
         private void OnDisposed(object? sender, EventArgs e)
         {
             m_tooltip.Dispose();
+
+            _viewModel?.Dispose();
+            _viewModel = null;
 
             _tickSub?.Dispose();
             _tickSub = null;
@@ -262,6 +274,9 @@ namespace EVEMon.CharacterMonitoring
                 lvAssets.Hide();
                 estimatedCostPanel.Hide();
                 noAssetsLabel.Visible = Character?.Assets.Count == 0;
+
+                if (_viewModel != null)
+                    _viewModel.Character = Character;
 
                 Assets = Character?.Assets!;
                 Columns = Settings.UI.MainWindow.Assets.Columns;
@@ -361,7 +376,7 @@ namespace EVEMon.CharacterMonitoring
         }
 
         /// <summary>
-        /// Updates the content of the listview.
+        /// Updates the content of the listview using the ViewModel's filter/sort/group pipeline.
         /// </summary>
         private async Task UpdateContentAsync()
         {
@@ -378,18 +393,96 @@ namespace EVEMon.CharacterMonitoring
             lvAssets.BeginUpdate();
             try
             {
-                List<Asset> assets;
-                lock (m_list)
+                // Sync state to VM and refresh the data pipeline
+                if (_viewModel != null)
                 {
-                    assets = m_list.Where(x => x.Item != null && x.SolarSystem != null).
-                        Where(x => IsTextMatching(x, m_textFilter)).ToList();
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
                 }
 
-                UpdateSort();
+                // Read filtered/sorted/grouped data from VM
+                var groupedItems = _viewModel?.GroupedItems;
+                var allItems = new List<Asset>();
 
-                await UpdateContentByGroupAsync(assets);
+                if (groupedItems != null && groupedItems.Count > 0)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                       !string.IsNullOrEmpty(groupedItems[0].Key);
+                    bool useVirtualMode = !hasGrouping &&
+                                          groupedItems[0].Items.Count > VirtualModeThreshold;
 
-                await UpdateItemsCostAsync(assets);
+                    if (useVirtualMode)
+                    {
+                        // Virtual mode for large ungrouped lists
+                        var items = groupedItems[0].Items.ToList();
+                        if (!m_isVirtualMode)
+                        {
+                            m_isVirtualMode = true;
+                            lvAssets.VirtualMode = true;
+                            lvAssets.ListViewItemSorter = null;
+                        }
+                        m_virtualModeItems = items;
+                        lvAssets.Groups.Clear();
+                        lvAssets.VirtualListSize = items.Count;
+                        allItems.AddRange(items);
+                    }
+                    else
+                    {
+                        // Normal mode: disable virtual mode if active
+                        if (m_isVirtualMode)
+                        {
+                            m_isVirtualMode = false;
+                            lvAssets.VirtualMode = false;
+                            m_virtualModeItems = null!;
+                        }
+
+                        lvAssets.Items.Clear();
+                        lvAssets.Groups.Clear();
+
+                        foreach (var group in groupedItems)
+                        {
+                            ListViewGroup? lvGroup = null;
+                            if (hasGrouping)
+                            {
+                                lvGroup = new ListViewGroup(group.Key);
+                                lvAssets.Groups.Add(lvGroup);
+                            }
+
+                            foreach (var asset in group.Items)
+                            {
+                                var item = new ListViewItem(asset.Item.Name)
+                                {
+                                    UseItemStyleForSubItems = false,
+                                    Tag = asset
+                                };
+                                if (lvGroup != null)
+                                    item.Group = lvGroup;
+                                CreateSubItems(asset, item);
+                                lvAssets.Items.Add(item);
+                                allItems.Add(asset);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // No items
+                    if (m_isVirtualMode)
+                    {
+                        m_isVirtualMode = false;
+                        lvAssets.VirtualMode = false;
+                        m_virtualModeItems = null!;
+                    }
+                    lvAssets.Items.Clear();
+                    lvAssets.Groups.Clear();
+                }
+
+                UpdateSortVisualFeedback();
+
+                await UpdateItemsCostAsync(allItems);
 
                 // Adjust the size of the columns
                 AdjustColumns();
@@ -466,210 +559,9 @@ namespace EVEMon.CharacterMonitoring
             lvAssets.Visible = !noAssetsLabel.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="assets">The assets.</param>
-        private async Task UpdateContentByGroupAsync(IEnumerable<Asset> assets)
-        {
-            switch (m_grouping)
-            {
-                case AssetGrouping.None:
-                    await UpdateNoGroupContentAsync(assets);
-                    break;
-                case AssetGrouping.Group:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups1 =
-                        assets.GroupBy(x => x.Item.GroupName).OrderBy(x => x.Key)!;
-                    await UpdateContentAsync(groups1);
-                    break;
-                case AssetGrouping.GroupDesc:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups2 =
-                        assets.GroupBy(x => x.Item.GroupName).OrderByDescending(x => x.Key)!;
-                    await UpdateContentAsync(groups2);
-                    break;
-                case AssetGrouping.Category:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups3 =
-                        assets.GroupBy(x => x.Item.CategoryName).OrderBy(x => x.Key)!;
-                    await UpdateContentAsync(groups3);
-                    break;
-                case AssetGrouping.CategoryDesc:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups4 =
-                        assets.GroupBy(x => x.Item.CategoryName).OrderByDescending(x => x.Key)!;
-                    await UpdateContentAsync(groups4);
-                    break;
-                case AssetGrouping.Container:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups5 =
-                        assets.GroupBy(x => x.Container).OrderBy(x => x.Key);
-                    await UpdateContentAsync(groups5);
-                    break;
-                case AssetGrouping.ContainerDesc:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups6 =
-                        assets.GroupBy(x => x.Container).OrderByDescending(x => x.Key);
-                    await UpdateContentAsync(groups6);
-                    break;
-                case AssetGrouping.Location:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups7 =
-                        assets.GroupBy(x => x.Location).OrderBy(x => x.Key);
-                    await UpdateContentAsync(groups7);
-                    break;
-                case AssetGrouping.LocationDesc:
-                    IOrderedEnumerable<IGrouping<string, Asset>> groups8 =
-                        assets.GroupBy(x => x.Location).OrderByDescending(x => x.Key);
-                    await UpdateContentAsync(groups8);
-                    break;
-                case AssetGrouping.Region:
-                    IOrderedEnumerable<IGrouping<Region, Asset>> groups9 =
-                        assets.GroupBy(x => x.SolarSystem.Constellation.Region).OrderBy(x => x.Key);
-                    await UpdateContentAsync(groups9);
-                    break;
-                case AssetGrouping.RegionDesc:
-                    IOrderedEnumerable<IGrouping<Region, Asset>> groups10 =
-                        assets.GroupBy(x => x.SolarSystem.Constellation.Region).OrderByDescending(x => x.Key);
-                    await UpdateContentAsync(groups10);
-                    break;
-                case AssetGrouping.Jumps:
-                    IOrderedEnumerable<IGrouping<int, Asset>> groups11 =
-                        assets.GroupBy(x => x.Jumps).OrderBy(x => x.Key);
-                    await UpdateContentAsync(groups11);
-                    break;
-                case AssetGrouping.JumpsDesc:
-                    IOrderedEnumerable<IGrouping<int, Asset>> groups12 =
-                        assets.GroupBy(x => x.Jumps).OrderByDescending(x => x.Key);
-                    await UpdateContentAsync(groups12);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <param name="assets">The assets.</param>
-        private Task UpdateNoGroupContentAsync(IEnumerable<Asset> assets)
-        {
-            var assetList = assets.ToList();
-            bool useVirtualMode = assetList.Count > VirtualModeThreshold;
-
-            if (useVirtualMode)
-            {
-                // Use virtual mode for large lists - items created on demand
-                return TaskHelper.RunCPUBoundTaskAsync(() =>
-                {
-                    // Sort the assets in memory
-                    var comparer = new AssetComparer(m_sortCriteria, m_sortAscending);
-                    assetList.Sort(comparer);
-                    return assetList;
-                }).ContinueWith(task =>
-                {
-                    AppServices.Dispatcher?.Post(() =>
-                    {
-                        // Switch to virtual mode
-                        if (!m_isVirtualMode)
-                        {
-                            m_isVirtualMode = true;
-                            lvAssets.VirtualMode = true;
-                            // Clear the item sorter - we handle sorting ourselves in virtual mode
-                            lvAssets.ListViewItemSorter = null;
-                        }
-
-                        m_virtualModeItems = task.Result;
-                        lvAssets.Groups.Clear();
-                        lvAssets.VirtualListSize = m_virtualModeItems.Count;
-
-                        AppServices.TraceService?.Trace($"CharacterAssetsList - Virtual mode enabled for {m_virtualModeItems.Count} items");
-                    });
-                });
-            }
-            else
-            {
-                // Use normal mode for smaller lists
-                return TaskHelper.RunCPUBoundTaskAsync(() =>
-                {
-                    return assetList.Select(asset => new
-                    {
-                        asset,
-                        item = new ListViewItem(asset.Item.Name)
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = asset
-                        }
-                    }).Select(x => CreateSubItems(x.asset, x.item)).ToArray();
-
-                }).ContinueWith(task =>
-                {
-                    AppServices.Dispatcher?.Post(() =>
-                    {
-                        // Switch back to normal mode if needed
-                        if (m_isVirtualMode)
-                        {
-                            m_isVirtualMode = false;
-                            lvAssets.VirtualMode = false;
-                            m_virtualModeItems = null!;
-                        }
-
-                        lvAssets.Groups.Clear();
-                        lvAssets.Items.Clear();
-                        lvAssets.Items.AddRange(task.Result);
-                    });
-                });
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private Task UpdateContentAsync<TKey>(IEnumerable<IGrouping<TKey, Asset>> groups)
-            => TaskHelper.RunCPUBoundTaskAsync(() =>
-            {
-                var listOfGroups = new List<ListViewGroup>();
-                var listOfItems = new List<ListViewItem>();
-
-                // Add the groups
-                foreach (IGrouping<TKey, Asset> group in groups)
-                {
-                    string groupText;
-                    if (@group.Key is int) // Really ugly way but couldn't figured another way
-                        groupText = @group.First().JumpsText;
-                    else
-                        groupText = @group.Key?.ToString() ?? string.Empty;
-
-                    ListViewGroup listGroup = new ListViewGroup(groupText);
-                    listOfGroups.Add(listGroup);
-
-                    ListViewItem[] items = @group.Select(asset => new
-                    {
-                        asset,
-                        item = new ListViewItem(asset.Item.Name, listGroup)
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = asset
-                        }
-                    }).Select(x => CreateSubItems(x.asset, x.item)).ToArray();
-                    listOfItems.AddRange(items);
-                }
-
-                return new Tuple<ListViewGroup[], ListViewItem[]>(listOfGroups.ToArray(), listOfItems.ToArray());
-
-            }).ContinueWith(task =>
-            {
-                AppServices.Dispatcher?.Post(() =>
-                {
-                    // Disable virtual mode when using groups (virtual mode doesn't support ListView groups)
-                    if (m_isVirtualMode)
-                    {
-                        m_isVirtualMode = false;
-                        lvAssets.VirtualMode = false;
-                        m_virtualModeItems = null!;
-                    }
-
-                    lvAssets.Items.Clear();
-                    lvAssets.Groups.Clear();
-
-                    lvAssets.Groups.AddRange(task.Result.Item1);
-                    lvAssets.Items.AddRange(task.Result.Item2);
-                });
-            });
+        // UpdateContentByGroupAsync, UpdateNoGroupContentAsync, UpdateContentAsync<TKey>
+        // REMOVED — filter/sort/group pipeline is now handled by AssetsListViewModel.
+        // UpdateContentAsync reads from _viewModel.GroupedItems directly.
 
         /// <summary>
         /// Creates the list view sub items.
@@ -740,28 +632,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            if (m_isVirtualMode && m_virtualModeItems != null)
-            {
-                // In virtual mode, sort the underlying list and refresh the view
-                var comparer = new AssetComparer(m_sortCriteria, m_sortAscending);
-                m_virtualModeItems.Sort(comparer);
-                // Force the ListView to refresh all visible items
-                lvAssets.Invalidate();
-            }
-            else
-            {
-                // Normal mode - use ListViewItemSorter
-                lvAssets.ListViewItemSorter = new ListViewItemComparerByTag<Asset>(
-                    new AssetComparer(m_sortCriteria, m_sortAscending));
-            }
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort REMOVED — sorting is now handled by AssetsListViewModel.
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -906,26 +777,7 @@ namespace EVEMon.CharacterMonitoring
                 .ToList();
         }
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(Asset x, string text) => string.IsNullOrEmpty(text) ||
-            ((x.Item?.ID ?? 0) != 0 && (x.Item!.Name.Contains(text, true) ||
-            x.Item.GroupName.Contains(text, true) ||
-            x.Item.CategoryName.Contains(text, true) ||
-            x.TypeOfBlueprint.Contains(text, true))) ||
-            x.Container.Contains(text, true) ||
-            x.Flag.Contains(text, true) ||
-            x.Location.Contains(text, true) ||
-            ((x.SolarSystem?.ID ?? 0) != 0 &&
-                (x!.SolarSystem!.Name.Contains(text, true) ||
-                x.SolarSystem.Constellation.Name.Contains(text, true) ||
-                x.SolarSystem.Constellation.Region.Name.Contains(text, true)));
+        // IsTextMatching REMOVED — text filtering is now handled by AssetsListViewModel.MatchesFilter.
 
         /// <summary>
         /// Gets the tool tip text.
@@ -1044,8 +896,13 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            // Delegate sort to VM and repopulate
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

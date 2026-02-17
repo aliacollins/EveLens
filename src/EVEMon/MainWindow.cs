@@ -14,6 +14,7 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Events;
 using EVEMon.Common.Services;
+using EVEMon.Common.ViewModels;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
@@ -100,6 +101,7 @@ namespace EVEMon
         private IDisposable? _subUpdateAvailable;
         private IDisposable? _subDataUpdateAvailable;
         private IDisposable? _subSecondTick;
+        private MainWindowViewModel? _viewModel;
 
         #endregion
 
@@ -227,6 +229,8 @@ namespace EVEMon
 
             // Updates the controls visibility according to settings
             UpdateControlsVisibility();
+
+            _viewModel = new MainWindowViewModel();
 
             // Subscribe events
             TimeCheck.TimeCheckCompleted += TimeCheck_TimeCheckCompleted;
@@ -454,6 +458,9 @@ namespace EVEMon
                 monitor.Dispose();
             m_monitorCache.Clear();
 
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             // Unsubscribe events
             SystemEvents.DisplaySettingsChanged -= SystemEvents_DisplaySettingsChanged;
             TimeCheck.TimeCheckCompleted -= TimeCheck_TimeCheckCompleted;
@@ -633,6 +640,8 @@ namespace EVEMon
             UpdateSettingsControlsVisibility(enabled: true);
 
             UpdateTabs();
+
+            _viewModel?.RefreshCharacters();
         }
 
         /// <summary>
@@ -971,6 +980,8 @@ namespace EVEMon
             s_logger.Value?.LogInformation(UiEvent, "tab.switch: {TabIndex}", tcCharacterTabs.SelectedIndex);
             MaterializeSelectedTab();
             UpdateControlsOnTabSelectionChange();
+
+            _viewModel?.SelectCharacter(GetCurrentCharacter());
         }
 
         /// <summary>

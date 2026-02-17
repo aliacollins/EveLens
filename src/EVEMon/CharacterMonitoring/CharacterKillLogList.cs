@@ -18,10 +18,10 @@ using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
-using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Properties;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.DetailsWindow;
 using EVEMon.SkillPlanner;
 
@@ -72,6 +72,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subKillLog;
         private IDisposable? _subSettings;
         private IDisposable? _subEveIDToName;
+        private KillLogListViewModel? _viewModel;
 
         #endregion
 
@@ -157,6 +158,8 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            _viewModel = new KillLogListViewModel();
+
             var agg = AppServices.EventAggregator;
             _subKillLog = agg.SubscribeOnUIForCharacter<CharacterKillLogUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterKillLogUpdated(e));
             _subSettings = agg.SubscribeOnUI<SettingsChangedEvent>(this, e => EveMonClient_SettingsChanged());
@@ -171,6 +174,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             _subKillLog?.Dispose();
             _subSettings?.Dispose();
             _subEveIDToName?.Dispose();
@@ -306,45 +312,57 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateListViewContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvKillLog.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvKillLog.SelectedItems.Count > 0 ?
                 lvKillLog!.SelectedItems[0]!.Tag!.GetHashCode() : 0;
 
             lvKillLog.BeginUpdate();
             try
             {
-                IEnumerable<KillLog> killLog = Character.KillLog.Where(x => IsTextMatching(x, m_textFilter));
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.TextFilter = m_textFilter;
+                }
 
-                UpdateSort();
+                var groupedItems = _viewModel?.GroupedItems;
 
                 lvKillLog.Items.Clear();
                 lvKillLog.Groups.Clear();
 
-                foreach (IGrouping<KillGroup, KillLog> group in killLog.GroupBy(x => x.Group).OrderBy(x => x.Key))
+                if (groupedItems != null)
                 {
-                    string groupText = $"{group.Key} ({group.Count()})";
-                    ListViewGroup listGroup = new ListViewGroup(groupText);
-                    lvKillLog.Groups.Add(listGroup);
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
 
-                    // Add the items
-                    lvKillLog.Items.AddRange(group.Select(kill => new
+                    foreach (var group in groupedItems)
                     {
-                        kill,
-                        item = new ListViewItem(kill.KillTime.ToLocalTime().ToString(CultureConstants.DefaultCulture), listGroup)
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
                         {
-                            UseItemStyleForSubItems = false,
-                            Tag = kill
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvKillLog.Groups.Add(lvGroup);
                         }
-                    }).Select(x => CreateSubItems(x.kill, x.item)).ToArray());
+
+                        foreach (var kill in group.Items)
+                        {
+                            var item = new ListViewItem(kill.KillTime.ToLocalTime().ToString(CultureConstants.DefaultCulture))
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = kill
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(kill, item);
+                            lvKillLog.Items.Add(item);
+                        }
+                    }
                 }
 
-                // Restore the selected item (if any)
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvKillLog.Items.Cast<ListViewItem>().Where(
@@ -354,10 +372,8 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
 
-                // Display or hide the "no research points" label
                 noKillLogLabel.Visible = lvKillLog.Items.Count == 0;
                 lvKillLog.Visible = !noKillLogLabel.Visible;
                 lbKillLog.Visible = false;
@@ -427,16 +443,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvKillLog.ListViewItemSorter = new ListViewItemComparerByTag<KillLog>(
-                new KillLogComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort removed — VM handles sorting
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -976,8 +983,11 @@ namespace EVEMon.CharacterMonitoring
                 m_sortAscending = true;
             }
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
         }
 
         /// <summary>
@@ -1043,20 +1053,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(KillLog x, string text) => string.IsNullOrEmpty(text) ||
-               x.Victim.ShipTypeName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x!.Victim!.Name.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x!.Victim!.CorporationName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x!.Victim!.AllianceName.ToUpperInvariant().Contains(text, ignoreCase: true) ||
-               x!.Victim!.FactionName.ToUpperInvariant().Contains(text, ignoreCase: true);
+        // IsTextMatching removed — VM handles filtering
 
         /// <summary>
         /// Gets the text.

@@ -18,9 +18,10 @@ using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
-using EVEMon.Common.Models.Comparers;
+
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 
 namespace EVEMon.CharacterMonitoring
 {
@@ -43,6 +44,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subWalletTransactions;
         private IDisposable? _subEveIDToName;
         private IDisposable? _tickSub;
+        private WalletTransactionsListViewModel? _viewModel;
 
         #endregion
 
@@ -181,6 +183,8 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            _viewModel = new WalletTransactionsListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subConquerableStation = agg.SubscribeOnUI<ConquerableStationListUpdatedEvent>(this, e => EveMonClient_ConquerableStationListUpdated());
@@ -196,6 +200,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             _tickSub?.Dispose();
             _tickSub = null;
             _subConquerableStation?.Dispose();
@@ -299,13 +306,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvWalletTransactions.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvWalletTransactions.SelectedItems.Count > 0
                 ? lvWalletTransactions!.SelectedItems[0]!.Tag!.GetHashCode()
                 : 0;
@@ -313,14 +317,51 @@ namespace EVEMon.CharacterMonitoring
             lvWalletTransactions.BeginUpdate();
             try
             {
-                IEnumerable<WalletTransaction> walletTransactions = m_list
-                    .Where(x => x.Station != null).Where(x => IsTextMatching(x, m_textFilter));
+                // Sync state to VM
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                }
 
-                UpdateSort();
+                var groupedItems = _viewModel?.GroupedItems;
 
-                UpdateContentByGroup(walletTransactions);
+                lvWalletTransactions.Items.Clear();
+                lvWalletTransactions.Groups.Clear();
 
-                // Restore the selected item (if any)
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
+
+                    foreach (var group in groupedItems)
+                    {
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvWalletTransactions.Groups.Add(lvGroup);
+                        }
+
+                        foreach (var walletTransaction in group.Items)
+                        {
+                            var item = new ListViewItem($"{walletTransaction.Date.ToLocalTime()}")
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = walletTransaction
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(walletTransaction, item);
+                            lvWalletTransactions.Items.Add(item);
+                        }
+                    }
+                }
+
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvWalletTransactions.Items.Cast<ListViewItem>().Where(
@@ -330,9 +371,7 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
                 UpdateListVisibility();
             }
             finally
@@ -355,118 +394,9 @@ namespace EVEMon.CharacterMonitoring
             lvWalletTransactions.Visible = !noWalletTransactionsLabel.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="walletTransactions">The wallet transactions.</param>
-        private void UpdateContentByGroup(IEnumerable<WalletTransaction> walletTransactions)
-        {
-            switch (m_grouping)
-            {
-                case WalletTransactionGrouping.None:
-                    UpdateNoGroupContent(walletTransactions);
-                    break;
-                case WalletTransactionGrouping.Date:
-                    IOrderedEnumerable<IGrouping<DateTime, WalletTransaction>> groups1 =
-                        walletTransactions.GroupBy(x => x.Date.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case WalletTransactionGrouping.DateDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, WalletTransaction>> groups2 =
-                        walletTransactions.GroupBy(x => x.Date.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups2);
-                    break;
-                case WalletTransactionGrouping.ItemType:
-                    IOrderedEnumerable<IGrouping<string, WalletTransaction>> groups3 =
-                        walletTransactions.GroupBy(x => x.ItemName).OrderBy(x => x.Key);
-                    UpdateContent(groups3);
-                    break;
-                case WalletTransactionGrouping.ItemTypeDesc:
-                    IOrderedEnumerable<IGrouping<string, WalletTransaction>> groups4 =
-                        walletTransactions.GroupBy(x => x.ItemName).OrderByDescending(x => x.Key);
-                    UpdateContent(groups4);
-                    break;
-                case WalletTransactionGrouping.Client:
-                    IOrderedEnumerable<IGrouping<string, WalletTransaction>> groups5 =
-                        walletTransactions.GroupBy(x => x.ClientName).OrderBy(x => x.Key);
-                    UpdateContent(groups5);
-                    break;
-                case WalletTransactionGrouping.ClientDesc:
-                    IOrderedEnumerable<IGrouping<string, WalletTransaction>> groups6 =
-                        walletTransactions.GroupBy(x => x.ClientName).OrderByDescending(x => x.Key);
-                    UpdateContent(groups6);
-                    break;
-                case WalletTransactionGrouping.Location:
-                    IOrderedEnumerable<IGrouping<Station, WalletTransaction>> groups7 =
-                        walletTransactions.GroupBy(x => x.Station).OrderBy(x => x.Key.Name);
-                    UpdateContent(groups7);
-                    break;
-                case WalletTransactionGrouping.LocationDesc:
-                    IOrderedEnumerable<IGrouping<Station, WalletTransaction>> groups8 =
-                        walletTransactions.GroupBy(x => x.Station).OrderByDescending(x => x.Key.Name);
-                    UpdateContent(groups8);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        private void UpdateNoGroupContent(IEnumerable<WalletTransaction> walletTransactions)
-        {
-            lvWalletTransactions.Items.Clear();
-            lvWalletTransactions.Groups.Clear();
-
-            // Add the items
-            lvWalletTransactions.Items
-                .AddRange(walletTransactions
-                    .Select(walletTransaction => new
-                    {
-                        walletTransaction,
-                        item = new ListViewItem($"{walletTransaction.Date.ToLocalTime()}")
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = walletTransaction
-                        }
-                    }).Select(x => CreateSubItems(x.walletTransaction, x.item)).ToArray());
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, WalletTransaction>> groups)
-        {
-            lvWalletTransactions.Items.Clear();
-            lvWalletTransactions.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, WalletTransaction> group in groups)
-            {
-                string groupText;
-                if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                    groupText = group!.Key!.ToString()!;
-                
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvWalletTransactions.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvWalletTransactions.Items
-                    .AddRange(group
-                        .Select(walletTransaction => new
-                        {
-                            walletTransaction,
-                            item = new ListViewItem($"{walletTransaction.Date.ToLocalTime()}", listGroup)
-                            {
-                                UseItemStyleForSubItems = false,
-                                Tag = walletTransaction
-                            }
-                        }).Select(x => CreateSubItems(x.walletTransaction, x.item)).ToArray());
-            }
-        }
+        // UpdateContentByGroup REMOVED — grouping is now handled by WalletTransactionsListViewModel.
+        // UpdateNoGroupContent REMOVED — grouping is now handled by WalletTransactionsListViewModel.
+        // UpdateContent<TKey> REMOVED — grouping is now handled by WalletTransactionsListViewModel.
 
         /// <summary>
         /// Creates the list view sub items.
@@ -527,16 +457,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvWalletTransactions.ListViewItemSorter = new ListViewItemComparerByTag<WalletTransaction>(
-                new WalletTransactionComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort REMOVED — sorting is now handled by WalletTransactionsListViewModel.
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -630,21 +551,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(WalletTransaction x, string text) => string.IsNullOrEmpty(text)
-            || x.ItemName.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.ClientName.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.Name.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.SolarSystemChecked.Name.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.SolarSystemChecked.Constellation.Name.ToUpperInvariant().Contains(text, ignoreCase: true)
-            || x.Station.SolarSystemChecked.Constellation.Region.Name.ToUpperInvariant().Contains(text, ignoreCase: true);
+        // IsTextMatching REMOVED — text filtering is now handled by WalletTransactionsListViewModel.
 
         #endregion
 
@@ -706,8 +613,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

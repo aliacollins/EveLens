@@ -22,6 +22,7 @@ using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels;
 using Microsoft.Extensions.Logging;
 
 using R = EVEMon.Properties.Resources;
@@ -46,6 +47,7 @@ namespace EVEMon.SkillPlanner
             AppServices.LoggerFactory?.CreateLogger<PlanWindow>());
         private static readonly EventId UiEvent = new(5, "UI");
 
+        private PlanEditorViewModel? _viewModel;
         private IDisposable? _planNameChangedSub;
         private IDisposable? _settingsChangedSub;
         private IDisposable? _itemPricesUpdatedSub;
@@ -110,6 +112,14 @@ namespace EVEMon.SkillPlanner
             m_emptyImageList.ImageSize = new Size(24, 24);
             m_emptyImageList.Images.Add(new Bitmap(24, 24));
 
+            // ViewModel for plan editing state
+            _viewModel = new PlanEditorViewModel();
+            if (m_plan != null)
+            {
+                _viewModel.Plan = m_plan;
+                _viewModel.Character = m_character;
+            }
+
             // Global events (unsubscribed on window closing)
             _planNameChangedSub = AppServices.EventAggregator.SubscribeOnUI<PlanNameChangedEvent>(this, OnPlanNameChanged);
             _settingsChangedSub = AppServices.EventAggregator.SubscribeOnUI<SettingsChangedEvent>(this, OnSettingsChanged);
@@ -158,7 +168,8 @@ namespace EVEMon.SkillPlanner
             base.OnFormClosing(e);
             s_logger.Value?.LogInformation(UiEvent, "form.closing: PlanWindow");
 
-            // Unsubscribe global events
+            // Unsubscribe global events and dispose VM
+            _viewModel?.Dispose();
             _planNameChangedSub?.Dispose();
             _settingsChangedSub?.Dispose();
             _itemPricesUpdatedSub?.Dispose();
@@ -257,6 +268,13 @@ namespace EVEMon.SkillPlanner
 
                 // Assign the associated character
                 m_character = (Character)m_plan.Character;
+
+                // Sync plan and character to the ViewModel
+                if (_viewModel != null)
+                {
+                    _viewModel.Plan = value;
+                    _viewModel.Character = m_character;
+                }
 
                 // Update any open window that is associated with this plan window
                 UpdateOpenedWindows(value);

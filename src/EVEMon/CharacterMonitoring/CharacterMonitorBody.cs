@@ -18,6 +18,7 @@ using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Notifications;
 using EVEMon.Common.Services;
+using EVEMon.Common.ViewModels;
 using EVEMon.Common.SettingsObjects;
 using EVEMon.DetailsWindow;
 
@@ -45,6 +46,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subNotificationInvalidated;
         private IDisposable? _subESIKeyInfo;
         private IDisposable? _tickSub;
+        private CharacterMonitorBodyViewModel? _viewModel;
 
         #endregion
 
@@ -82,6 +84,8 @@ namespace EVEMon.CharacterMonitoring
             preferencesMenu.DropDownItems.CopyTo(m_preferenceMenu, 0);
 
             multiPanel.SelectionChange += multiPanel_SelectionChange;
+
+            _viewModel = new CharacterMonitorBodyViewModel();
 
             // Subscribe events
             var agg = AppServices.EventAggregator;
@@ -151,6 +155,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             _tickSub?.Dispose();
             _tickSub = null;
             _subESIKeyInfo?.Dispose();
@@ -570,6 +577,8 @@ namespace EVEMon.CharacterMonitoring
 
             // Reset the text filter
             searchTextBox.Text = string.Empty;
+
+            _viewModel?.SelectPage(e.NewPage?.Text ?? string.Empty);
 
             // Update the page controls
             UpdatePageControls();
@@ -1672,6 +1681,9 @@ namespace EVEMon.CharacterMonitoring
 
             // Subscribe event
             _subESIKeyInfo = AppServices.EventAggregator.SubscribeOnUI<ESIKeyInfoUpdatedEvent>(this, e => EveMonClient_APIKeyInfoUpdated());
+
+            if (_viewModel != null && m_character != null)
+                _viewModel.Character = m_character;
         }
 
         /// <summary>

@@ -22,6 +22,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.SkillPlanner;
 
 namespace EVEMon.CharacterMonitoring
@@ -63,6 +64,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subJobsCompleted;
         private IDisposable? _subEveIDToName;
         private IDisposable? _tickSub;
+        private IndustryJobsListViewModel? _viewModel;
 
         #endregion
 
@@ -242,6 +244,8 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Tick += refresh_TimerTick;
             m_refreshTimer.Interval = 1000;
 
+            _viewModel = new IndustryJobsListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subIndustryJobs = agg.SubscribeOnUIForCharacter<IndustryJobsUpdatedEvent>(this, () => Character, e => EveMonClient_IndustryJobsUpdated(e));
@@ -258,6 +262,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             m_tooltip.Dispose();
             m_refreshTimer.Dispose();
 
@@ -369,43 +376,74 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
+
             int scrollBarPosition = lvJobs.GetVerticalScrollBarPosition();
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvJobs.SelectedItems!.Count > 0 ? lvJobs!.SelectedItems[0]!.Tag.
                 GetHashCode() : 0;
+
             lvJobs.BeginUpdate();
             try
             {
-                bool hideInactive = Character != null && Settings.UI.MainWindow.IndustryJobs.
-                    HideInactiveJobs, hideIssued = m_showIssuedFor != IssuedFor.All;
-                var jobs = new LinkedList<IndustryJob>();
-                // Filter jobs
-                foreach (var job in m_list)
+                if (_viewModel != null)
                 {
-                    job.UpdateLocation(Character!);
-                    job.UpdateInstallation(Character!);
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                    _viewModel.HideInactive = Character != null && Settings.UI.MainWindow.IndustryJobs.HideInactiveJobs;
+                    _viewModel.ShowIssuedFor = m_showIssuedFor;
+                }
 
-                    if (job.InstalledItem != null && job.OutputItem != null && job.
-                        SolarSystem != null && IsTextMatching(job, m_textFilter))
+                var groupedItems = _viewModel?.GroupedItems;
+
+                lvJobs.Items.Clear();
+                lvJobs.Groups.Clear();
+
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
+
+                    foreach (var group in groupedItems)
                     {
-                        if ((!hideInactive || job.IsActive) && (!hideIssued || job.IssuedFor ==
-                                m_showIssuedFor))
-                            jobs.AddLast(job);
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvJobs.Groups.Add(lvGroup);
+                        }
+
+                        foreach (var job in group.Items)
+                        {
+                            job.UpdateLocation(Character!);
+                            job.UpdateInstallation(Character!);
+                            var item = new ListViewItem(job.InstalledItem.Name)
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = job
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(job, item);
+                            lvJobs.Items.Add(item);
+                        }
                     }
                 }
-                UpdateSort();
-                UpdateContentByGroup(jobs);
-                // Restore the selected item (if any)
+
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
+                {
                     foreach (ListViewItem lvItem in lvJobs.Items.Cast<ListViewItem>().Where(
-                            lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
+                        lvItem => lvItem!.Tag!.GetHashCode() == selectedItem))
+                    {
                         lvItem.Selected = true;
-                // Adjust the size of the columns
+                    }
+                }
+
                 AdjustColumns();
-                // Update the expandable panel info
                 UpdateExpPanelContent();
                 UpdateListVisibility();
             }
@@ -432,115 +470,7 @@ namespace EVEMon.CharacterMonitoring
             m_refreshTimer.Enabled = lvJobs.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="jobs">The jobs.</param>
-        private void UpdateContentByGroup(IEnumerable<IndustryJob> jobs)
-        {
-            switch (m_grouping)
-            {
-                case IndustryJobGrouping.State:
-                    IOrderedEnumerable<IGrouping<JobState, IndustryJob>> groups0 =
-                        jobs.GroupBy(x => x.State).OrderBy(x => (int)x.Key);
-                    UpdateContent(groups0);
-                    break;
-                case IndustryJobGrouping.StateDesc:
-                    IOrderedEnumerable<IGrouping<JobState, IndustryJob>> groups1 =
-                        jobs.GroupBy(x => x.State).OrderByDescending(x => (int)x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case IndustryJobGrouping.EndDate:
-                    IOrderedEnumerable<IGrouping<DateTime, IndustryJob>> groups2 =
-                        jobs.GroupBy(x => x.EndDate.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups2);
-                    break;
-                case IndustryJobGrouping.EndDateDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, IndustryJob>> groups3 =
-                        jobs.GroupBy(x => x.EndDate.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups3);
-                    break;
-                case IndustryJobGrouping.InstalledItemType:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups4 =
-                        jobs!.GroupBy(x => x!.InstalledItem!.MarketGroup.CategoryPath).OrderBy(x => x.Key);
-                    UpdateContent(groups4);
-                    break;
-                case IndustryJobGrouping.InstalledItemTypeDesc:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups5 =
-                        jobs!.GroupBy(x => x!.InstalledItem!.MarketGroup.CategoryPath).OrderByDescending(x => x.Key);
-                    UpdateContent(groups5);
-                    break;
-                case IndustryJobGrouping.OutputItemType:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups6 =
-                        jobs!.GroupBy(x => x!.OutputItem!.MarketGroup.CategoryPath).OrderBy(x => x.Key);
-                    UpdateContent(groups6);
-                    break;
-                case IndustryJobGrouping.OutputItemTypeDesc:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups7 =
-                        jobs!.GroupBy(x => x!.OutputItem!.MarketGroup.CategoryPath).OrderByDescending(x => x.Key);
-                    UpdateContent(groups7);
-                    break;
-                case IndustryJobGrouping.Activity:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups8 =
-                        jobs.GroupBy(x => x.Activity.GetDescription()).OrderBy(x => x.Key);
-                    UpdateContent(groups8);
-                    break;
-                case IndustryJobGrouping.ActivityDesc:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups9 =
-                        jobs.GroupBy(x => x.Activity.GetDescription()).OrderByDescending(x => x.Key);
-                    UpdateContent(groups9);
-                    break;
-                case IndustryJobGrouping.Location:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups10 =
-                        jobs.GroupBy(x => x.Installation).OrderBy(x => x.Key);
-                    UpdateContent(groups10);
-                    break;
-                case IndustryJobGrouping.LocationDesc:
-                    IOrderedEnumerable<IGrouping<string, IndustryJob>> groups11 =
-                        jobs.GroupBy(x => x.Installation).OrderByDescending(x => x.Key);
-                    UpdateContent(groups11);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, IndustryJob>> groups)
-        {
-            lvJobs.Items.Clear();
-            lvJobs.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, IndustryJob> group in groups)
-            {
-                string groupText;
-                if (group.Key is JobState)
-                    groupText = ((JobState)(object)group.Key).GetHeader();
-                else if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                    groupText = group!.Key!.ToString()!;
-
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvJobs.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvJobs.Items.AddRange(
-                    group.Select(job => new
-                    {
-                        job,
-                        item = new ListViewItem(job.InstalledItem.Name, listGroup)
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = job
-                        }
-
-                    }).Select(x => CreateSubItems(x.job, x.item)).ToArray());
-            }
-        }
+        // UpdateContentByGroup and UpdateContent<TKey> removed — VM handles filter/sort/group
 
         /// <summary>
         /// Creates the list view sub items.
@@ -618,16 +548,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvJobs.ListViewItemSorter = new ListViewItemComparerByTag<IndustryJob>(
-                new IndustryJobComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort removed — VM handles sorting
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -813,22 +734,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(IndustryJob x, string text) => string.
-            IsNullOrEmpty(text) || x.InstalledItem.Name.Contains(text, ignoreCase: true) ||
-            x.OutputItem.Name.Contains(text, ignoreCase: true) ||
-            (x.Installation?.Contains(text, ignoreCase: true) ?? false) ||
-            (x.SolarSystem?.Name?.Contains(text, ignoreCase: true) ?? false) ||
-            (x.SolarSystem?.Constellation?.Name?.Contains(text, ignoreCase: true) ?? false) ||
-            (x.SolarSystem?.Constellation?.Region?.Name?.Contains(text, ignoreCase: true) ??
-            false);
+        // IsTextMatching removed — VM handles text filtering
 
         /// <summary>
         /// Updates the time to completion.
@@ -966,8 +872,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }

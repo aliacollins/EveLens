@@ -16,12 +16,11 @@ using EVEMon.Common.Factories;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
-using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Notifications;
-using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Common.ViewModels.Lists;
 using EVEMon.DetailsWindow;
 
 namespace EVEMon.CharacterMonitoring
@@ -46,6 +45,7 @@ namespace EVEMon.CharacterMonitoring
         private IDisposable? _subEveIDToName;
         private IDisposable? _subNotifRefTypes;
         private IDisposable? _tickSub;
+        private NotificationsListViewModel? _viewModel;
 
         #endregion
 
@@ -195,6 +195,8 @@ namespace EVEMon.CharacterMonitoring
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            _viewModel = new NotificationsListViewModel();
+
             var agg = AppServices.EventAggregator;
             _tickSub = agg.SubscribeOnUI<EVEMon.Core.Events.FiveSecondTickEvent>(this, e => EveMonClient_TimerTick(null, EventArgs.Empty));
             _subNotifications = agg.SubscribeOnUIForCharacter<CharacterEVENotificationsUpdatedEvent>(this, () => Character, e => EveMonClient_CharacterEVENotificationsUpdated(e));
@@ -211,6 +213,9 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e"></param>
         private void OnDisposed(object? sender, EventArgs e)
         {
+            _viewModel?.Dispose();
+            _viewModel = null;
+
             _tickSub?.Dispose();
             _tickSub = null;
             _subNotifications?.Dispose();
@@ -307,13 +312,10 @@ namespace EVEMon.CharacterMonitoring
         /// </summary>
         private void UpdateContent()
         {
-            // Returns if not visible
             if (!Visible)
                 return;
 
             int scrollBarPosition = lvNotifications.GetVerticalScrollBarPosition();
-
-            // Store the selected item (if any) to restore it after the update
             int selectedItem = lvNotifications.SelectedItems!.Count > 0 ? lvNotifications!.
                 SelectedItems[0].Tag!.GetHashCode() : 0;
 
@@ -321,14 +323,50 @@ namespace EVEMon.CharacterMonitoring
             splitContainerNotifications.Visible = false;
             try
             {
-                IEnumerable<EveNotification> eveNotifications = m_list .Where(x => x.SentDate
-                    != DateTime.MinValue).Where(x => IsTextMatching(x, m_textFilter));
+                if (_viewModel != null)
+                {
+                    _viewModel.Character = Character;
+                    _viewModel.SortColumn = m_sortCriteria;
+                    _viewModel.SortAscending = m_sortAscending;
+                    _viewModel.Grouping = m_grouping;
+                    _viewModel.TextFilter = m_textFilter;
+                }
 
-                UpdateSort();
+                var groupedItems = _viewModel?.GroupedItems;
 
-                UpdateContentByGroup(eveNotifications);
+                lvNotifications.Items.Clear();
+                lvNotifications.Groups.Clear();
 
-                // Restore the selected item (if any)
+                if (groupedItems != null)
+                {
+                    bool hasGrouping = groupedItems.Count > 1 ||
+                                      (groupedItems.Count == 1 && !string.IsNullOrEmpty(groupedItems[0].Key));
+
+                    foreach (var group in groupedItems)
+                    {
+                        ListViewGroup? lvGroup = null;
+                        if (hasGrouping)
+                        {
+                            lvGroup = new ListViewGroup(group.Key);
+                            lvNotifications.Groups.Add(lvGroup);
+                        }
+
+                        foreach (var eveNotification in group.Items)
+                        {
+                            var item = new ListViewItem(eveNotification.SenderName)
+                            {
+                                UseItemStyleForSubItems = false,
+                                Tag = eveNotification
+                            };
+                            if (lvGroup != null) item.Group = lvGroup;
+                            CreateSubItems(eveNotification, item);
+                            lvNotifications.Items.Add(item);
+                        }
+                    }
+                }
+
+                UpdateSortVisualFeedback();
+
                 if (selectedItem > 0)
                 {
                     foreach (ListViewItem lvItem in lvNotifications.Items.Cast<ListViewItem>()
@@ -338,9 +376,7 @@ namespace EVEMon.CharacterMonitoring
                     }
                 }
 
-                // Adjust the size of the columns
                 AdjustColumns();
-
                 UpdateListVisibility();
             }
             finally
@@ -363,84 +399,7 @@ namespace EVEMon.CharacterMonitoring
             lvNotifications.Visible = splitContainerNotifications.Visible = !noEVENotificationsLabel.Visible;
         }
 
-        /// <summary>
-        /// Updates the content by group.
-        /// </summary>
-        /// <param name="eveNotifications">The eve notifications.</param>
-        private void UpdateContentByGroup(IEnumerable<EveNotification> eveNotifications)
-        {
-            switch (m_grouping)
-            {
-                case EVENotificationsGrouping.Type:
-                    IOrderedEnumerable<IGrouping<string, EveNotification>> groups0 =
-                        eveNotifications.GroupBy(x => x.TypeName).OrderBy(x => x.Key);
-                    UpdateContent(groups0);
-                    break;
-                case EVENotificationsGrouping.TypeDesc:
-                    IOrderedEnumerable<IGrouping<string, EveNotification>> groups1 =
-                        eveNotifications.GroupBy(x => x.TypeName).OrderByDescending(x => x.Key);
-                    UpdateContent(groups1);
-                    break;
-                case EVENotificationsGrouping.SentDate:
-                    IOrderedEnumerable<IGrouping<DateTime, EveNotification>> groups2 =
-                        eveNotifications.GroupBy(x => x.SentDate.ToLocalTime().Date).OrderBy(x => x.Key);
-                    UpdateContent(groups2);
-                    break;
-                case EVENotificationsGrouping.SentDateDesc:
-                    IOrderedEnumerable<IGrouping<DateTime, EveNotification>> groups3 =
-                        eveNotifications.GroupBy(x => x.SentDate.ToLocalTime().Date).OrderByDescending(x => x.Key);
-                    UpdateContent(groups3);
-                    break;
-                case EVENotificationsGrouping.Sender:
-                    IOrderedEnumerable<IGrouping<string, EveNotification>> groups4 =
-                        eveNotifications.GroupBy(x => x.SenderName).OrderBy(x => x.Key);
-                    UpdateContent(groups4);
-                    break;
-                case EVENotificationsGrouping.SenderDesc:
-                    IOrderedEnumerable<IGrouping<string, EveNotification>> groups5 =
-                        eveNotifications.GroupBy(x => x.SenderName).OrderByDescending(x => x.Key);
-                    UpdateContent(groups5);
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Updates the content of the listview.
-        /// </summary>
-        /// <typeparam name="TKey"></typeparam>
-        /// <param name="groups"></param>
-        private void UpdateContent<TKey>(IEnumerable<IGrouping<TKey, EveNotification>> groups)
-        {
-            lvNotifications.Items.Clear();
-            lvNotifications.Groups.Clear();
-
-            // Add the groups
-            foreach (IGrouping<TKey, EveNotification> group in groups)
-            {
-                string groupText;
-                if (group.Key is EveMailState)
-                    groupText = ((EveMailState)(object)group.Key).GetHeader();
-                else if (group.Key is DateTime)
-                    groupText = ((DateTime)(object)group.Key).ToShortDateString();
-                else
-                    groupText = group!.Key!.ToString()!;
-
-                ListViewGroup listGroup = new ListViewGroup(groupText);
-                lvNotifications.Groups.Add(listGroup);
-
-                // Add the items in every group
-                lvNotifications.Items.AddRange(
-                    group.Select(eveNotification => new
-                    {
-                        eveNotification,
-                        item = new ListViewItem(eveNotification.SenderName, listGroup)
-                        {
-                            UseItemStyleForSubItems = false,
-                            Tag = eveNotification
-                        }
-                    }).Select(x => CreateSubItems(x.eveNotification, x.item)).ToArray());
-            }
-        }
+        // UpdateContentByGroup and UpdateContent<TKey> removed — VM handles grouping
 
         /// <summary>
         /// Creates the list view sub items.
@@ -501,16 +460,7 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
-        /// <summary>
-        /// Updates the item sorter.
-        /// </summary>
-        private void UpdateSort()
-        {
-            lvNotifications.ListViewItemSorter = new ListViewItemComparerByTag<EveNotification>(
-                new EveNotificationComparer(m_sortCriteria, m_sortAscending));
-
-            UpdateSortVisualFeedback();
-        }
+        // UpdateSort removed — VM handles sorting
 
         /// <summary>
         /// Updates the sort feedback (the arrow on the header).
@@ -581,18 +531,7 @@ namespace EVEMon.CharacterMonitoring
 
         #region Helper Methods
 
-        /// <summary>
-        /// Checks the given text matches the item.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="text">The text.</param>
-        /// <returns>
-        /// 	<c>true</c> if [is text matching] [the specified x]; otherwise, <c>false</c>.
-        /// </returns>
-        private static bool IsTextMatching(EveNotification x, string text) => string.IsNullOrEmpty(text)
-       || x.SenderName.ToUpperInvariant().Contains(text, ignoreCase: true)
-       || x.Title.ToUpperInvariant().Contains(text, ignoreCase: true)
-       || x.Text.ToUpperInvariant().Contains(text, ignoreCase: true);
+        // IsTextMatching removed — VM handles filtering
 
         /// <summary>
         /// Called when selection changed.
@@ -719,8 +658,12 @@ namespace EVEMon.CharacterMonitoring
 
             m_isUpdatingColumns = true;
 
-            // Updates the item sorter
-            UpdateSort();
+            if (_viewModel != null)
+            {
+                _viewModel.SortColumn = m_sortCriteria;
+                _viewModel.SortAscending = m_sortAscending;
+            }
+            UpdateSortVisualFeedback();
 
             m_isUpdatingColumns = false;
         }
