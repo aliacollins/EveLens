@@ -12,6 +12,7 @@ using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
 using EVEMon.Common.Serialization.Settings;
+using Microsoft.Extensions.Logging;
 using EVEMon.Common.Extensions;
 using EVEMon.Core;
 
@@ -813,7 +814,8 @@ namespace EVEMon.Common.Models
 
             if (m_characterDataQuerying == null && Identity.ESIKeys.Any())
             {
-                m_characterDataQuerying = new Services.CharacterQueryOrchestrator(this);
+                m_characterDataQuerying = new Services.CharacterQueryOrchestrator(this,
+                    AppServices.LoggerFactory?.CreateLogger<Services.CharacterQueryOrchestrator>());
                 ResetLastAPIUpdates(m_lastAPIUpdates.Where(lastUpdate => Enum.IsDefined(
                     typeof(ESIAPICharacterMethods), lastUpdate.Method)));
             }

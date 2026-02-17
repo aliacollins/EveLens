@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using EVEMon.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace EVEMon.Common.Services
 {
@@ -19,6 +20,15 @@ namespace EVEMon.Common.Services
     {
         private readonly ConcurrentDictionary<Type, List<SubscriptionBase>> _subscriptions
             = new ConcurrentDictionary<Type, List<SubscriptionBase>>();
+        private readonly ILogger? _logger;
+
+        /// <summary>
+        /// Creates a new EventAggregator with optional structured logging.
+        /// </summary>
+        internal EventAggregator(ILogger<EventAggregator>? logger = null)
+        {
+            _logger = logger;
+        }
 
         /// <inheritdoc />
         public IDisposable Subscribe<TEvent>(Action<TEvent> handler) where TEvent : class
@@ -87,6 +97,14 @@ namespace EVEMon.Common.Services
                 // Clean up dead weak references while we're here
                 subs.RemoveAll(s => !s.IsAlive);
                 snapshot = subs.ToArray();
+            }
+
+            // Log event dispatch (skip SecondTickEvent to reduce noise)
+            if (_logger != null && typeof(TEvent) != typeof(Core.Events.SecondTickEvent))
+            {
+                _logger.LogInformation(new EventId(1, "EVT"),
+                    "{EventName} \u2192 {HandlerCount} handlers",
+                    typeof(TEvent).Name, snapshot.Length);
             }
 
             foreach (var sub in snapshot)

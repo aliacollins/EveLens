@@ -11,13 +11,13 @@ using System.Windows.Forms;
 using EVEMon.Common.Attributes;
 using EVEMon.Common.Collections.Global;
 using CommonEvents = EVEMon.Common.Events;
-using EVEMon.Common.Constants;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Net;
 using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace EVEMon.Common
 {
@@ -30,8 +30,6 @@ namespace EVEMon.Common
     {
         #region Fields
 
-        private static StreamWriter? s_traceStream;
-        private static TextWriterTraceListener? s_traceListener;
         private static readonly DateTime s_startTime = DateTime.UtcNow;
 
         internal static TimeSpan Uptime => DateTime.UtcNow - s_startTime;
@@ -40,7 +38,6 @@ namespace EVEMon.Common
         private static bool s_initialized;
         private static string s_traceFile = null!;
         private static UpdateBatcher? s_updateBatcher;
-        private static SmartQueryScheduler? s_smartQueryScheduler;
         private static ApiRequestQueue? s_apiRequestQueue;
         private static IDisposable? s_esiKeyRefreshTickSubscription;
 
@@ -93,12 +90,13 @@ namespace EVEMon.Common
             // Initialize the account status subscriber (reacts to ESIKey and SkillQueue events)
             AccountStatusSubscriber.Initialize();
 
-            // Initialize the query scheduler - drives all character/corporation querying.
-            s_smartQueryScheduler = new SmartQueryScheduler(
-                AppServices.Dispatcher, AppServices.EsiClient);
+            // ESI key token refresh runs on FiveSecondTickEvent (independent of data fetch scheduler)
             s_esiKeyRefreshTickSubscription = AppServices.EventAggregator?.Subscribe<Core.Events.FiveSecondTickEvent>(
                 e => OnEsiKeyRefreshTick());
-            Trace("SmartQueryScheduler initialized");
+
+            // Touch EsiScheduler to start the dispatch loop (lazy initialization)
+            _ = AppServices.EsiScheduler;
+            Trace("EsiScheduler initialized");
 
             // Initialize the API request queue for rate limiting
             // ESI recommends no more than 20 concurrent connections, with 50ms spacing
@@ -128,14 +126,9 @@ namespace EVEMon.Common
             s_updateBatcher?.Dispose();
             s_updateBatcher = null;
 
-            // Dispose the query scheduler
-            if (s_smartQueryScheduler != null)
-            {
-                s_esiKeyRefreshTickSubscription?.Dispose();
-                s_esiKeyRefreshTickSubscription = null;
-                s_smartQueryScheduler.Dispose();
-                s_smartQueryScheduler = null;
-            }
+            // Dispose ESI key refresh subscription
+            s_esiKeyRefreshTickSubscription?.Dispose();
+            s_esiKeyRefreshTickSubscription = null;
 
             // Shutdown settings services
             Settings.Shutdown();
@@ -152,11 +145,6 @@ namespace EVEMon.Common
         /// Gets the update batcher for coalescing character updates.
         /// </summary>
         public static UpdateBatcher? UpdateBatcher => s_updateBatcher;
-
-        /// <summary>
-        /// Gets the smart query scheduler (adaptive polling with priority scheduling).
-        /// </summary>
-        internal static SmartQueryScheduler? SmartQueryScheduler => s_smartQueryScheduler;
 
         /// <summary>
         /// Gets the API request queue for rate limiting ESI requests.
@@ -587,43 +575,19 @@ namespace EVEMon.Common
         #region Diagnostics
 
         /// <summary>
-        /// Sends a message to the trace with the prepended time since
-        /// startup, in addition to argument inserting into the format.
+        /// Sends a formatted trace message. Delegates to <see cref="AppServices.TraceService"/>.
         /// </summary>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
         public static void Trace(string format, params object[] args)
         {
-            string message = string.Format(CultureConstants.DefaultCulture, format, args);
-            Trace(message);
+            AppServices.TraceService?.Trace(format, args);
         }
 
         /// <summary>
-        /// Sends a message to the trace with the prepended time since startup.
+        /// Sends a trace message. Delegates to <see cref="AppServices.TraceService"/>.
         /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="printMethod">if set to <c>true</c> [print method].</param>
         public static void Trace(string message = null, bool printMethod = true)
         {
-            string header = string.Empty;
-
-            if (printMethod)
-            {
-                StackTrace stackTrace = new StackTrace();
-                StackFrame frame = stackTrace.GetFrame(1);
-                MethodBase method = frame.GetMethod();
-                if (method.Name == "MoveNext")
-                    method = stackTrace.GetFrame(3).GetMethod();
-
-                Type declaringType = method.DeclaringType;
-                header = $"{declaringType?.Name}.{method.Name}";
-            }
-
-            string timeStr = $"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}Z > ";
-            message = string.IsNullOrWhiteSpace(message) || !printMethod ? message : $" - {message}";
-            string msgStr = $"{header}{message}";
-
-            System.Diagnostics.Trace.WriteLine($"{timeStr}{msgStr.TrimEnd(Environment.NewLine.ToCharArray())}");
+            AppServices.TraceService?.Trace(message ?? string.Empty, printMethod);
         }
 
         /// <summary>
@@ -663,34 +627,22 @@ namespace EVEMon.Common
 
         /// <summary>
         /// Starts the logging of trace messages to a file.
+        /// Delegates to <see cref="AppServices.TraceService"/>.
+        /// Kept for backward compatibility with existing callers.
         /// </summary>
         public static void StartTraceLogging()
         {
-            try
-            {
-                System.Diagnostics.Trace.AutoFlush = true;
-                s_traceStream = File.CreateText(TraceFileNameFullPath);
-                s_traceListener = new TextWriterTraceListener(s_traceStream);
-                System.Diagnostics.Trace.Listeners.Add(s_traceListener);
-            }
-            catch (IOException e)
-            {
-                string text = "EVEMon has encountered an error and needs to terminate.\n" +
-                              $"The error message is:\n\n\"{e.Message}\"";
-
-                MessageBox.Show(text, @"EVEMon Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Application.Exit();
-            }
+            AppServices.TraceService?.StartLogging(TraceFileNameFullPath);
         }
 
         /// <summary>
         /// Stops the logging of trace messages to a file.
+        /// Delegates to <see cref="AppServices.TraceService"/>.
+        /// Kept for backward compatibility with existing callers.
         /// </summary>
         public static void StopTraceLogging()
         {
-            System.Diagnostics.Trace.Listeners.Remove(s_traceListener);
-            s_traceListener.Close();
-            s_traceStream.Close();
+            AppServices.TraceService?.StopLogging();
         }
 
         /// <summary>

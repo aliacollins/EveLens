@@ -54,12 +54,14 @@ namespace EVEMon.Common
                 if (s_tickCounter % 5 == 0)
                 {
                     AppServices.EventAggregator?.Publish(FiveSecondTickEvent.Instance);
+                    AppServices.TraceService?.Trace("[TICK] 5s fired", printMethod: false);
                 }
 
                 // ThirtySecondTick - every 30 seconds (background tasks)
                 if (s_tickCounter % 30 == 0)
                 {
                     AppServices.EventAggregator?.Publish(ThirtySecondTickEvent.Instance);
+                    AppServices.TraceService?.Trace("[TICK] 30s fired", printMethod: false);
                     s_tickCounter = 0; // Reset to prevent overflow
                 }
             }

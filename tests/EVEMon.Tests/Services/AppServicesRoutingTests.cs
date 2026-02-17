@@ -1,6 +1,7 @@
 using EVEMon.Common.Services;
 using EVEMon.Core.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
@@ -301,6 +302,17 @@ namespace EVEMon.Tests.Services
         }
 
         [Fact]
+        public void TraceService_DefaultInstance_IsTraceService()
+        {
+            // Act
+            var trace = AppServices.TraceService;
+
+            // Assert — the default should be the standalone TraceService, not the legacy adapter
+            trace.Should().BeOfType<TraceService>(
+                "AppServices should now use the standalone TraceService, not TraceServiceAdapter");
+        }
+
+        [Fact]
         public void ApplicationPaths_ReturnsNonNull_ImplementsIApplicationPaths()
         {
             // Act
@@ -320,6 +332,37 @@ namespace EVEMon.Tests.Services
             // Assert
             provider.Should().NotBeNull();
             provider.Should().BeAssignableTo<IResourceProvider>();
+        }
+
+        #endregion
+
+        #region LoggerFactory Tests
+
+        [Fact]
+        public void LoggerFactory_ReturnsNonNull_ImplementsILoggerFactory()
+        {
+            // Act
+            var factory = AppServices.LoggerFactory;
+
+            // Assert
+            factory.Should().NotBeNull();
+            factory.Should().BeAssignableTo<Microsoft.Extensions.Logging.ILoggerFactory>();
+        }
+
+        [Fact]
+        public void Reset_RecreatesLoggerFactory()
+        {
+            // Arrange
+            var first = AppServices.LoggerFactory;
+            first.Should().NotBeNull();
+
+            // Act
+            AppServices.Reset();
+            var second = AppServices.LoggerFactory;
+
+            // Assert
+            second.Should().NotBeNull();
+            second.Should().NotBeSameAs(first, "Reset should create a new LoggerFactory instance");
         }
 
         #endregion

@@ -1,4 +1,5 @@
 using EVEMon.Common.Services;
+using EVEMon.Core.Enumerations;
 using EVEMon.Core.Interfaces;
 using FluentAssertions;
 using Xunit;
@@ -77,6 +78,41 @@ namespace EVEMon.Tests.Services
             var adapter = new TraceServiceAdapter();
 
             var act = () => adapter.Trace("test {0}", "arg");
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void TraceServiceAdapter_MinimumLevel_DefaultsToDebug()
+        {
+            var adapter = new TraceServiceAdapter();
+
+            adapter.MinimumLevel.Should().Be(TraceLevel.Debug);
+        }
+
+        [Fact]
+        public void TraceServiceAdapter_TraceLevelOverload_DoesNotThrow()
+        {
+            var adapter = new TraceServiceAdapter();
+
+            var act = () => adapter.Trace(TraceLevel.Warning, "warning message", false);
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void TraceServiceAdapter_TraceLevelFormatOverload_DoesNotThrow()
+        {
+            var adapter = new TraceServiceAdapter();
+
+            var act = () => adapter.Trace(TraceLevel.Error, "error {0}", "details");
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void TraceServiceAdapter_StopLogging_WithoutStart_DoesNotThrow()
+        {
+            var adapter = new TraceServiceAdapter();
+
+            var act = () => adapter.StopLogging();
             act.Should().NotThrow();
         }
 

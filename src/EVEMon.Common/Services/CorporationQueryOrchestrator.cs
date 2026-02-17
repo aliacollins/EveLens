@@ -29,7 +29,6 @@ namespace EVEMon.Common.Services
         private readonly QueryMonitor<EsiAPIIndustryJobs> m_corpIndustryJobsMonitor;
         private readonly List<IQueryMonitorEx> m_corporationQueryMonitors;
         private readonly CCPCharacter m_ccpCharacter;
-        private ScheduledQueryableAdapter? m_schedulerAdapter;
 
         #endregion
 
@@ -45,45 +44,38 @@ namespace EVEMon.Common.Services
             m_ccpCharacter = ccpCharacter;
             m_corporationQueryMonitors = new List<IQueryMonitorEx>(4);
 
-            // Initializes the query monitors
+            // Initializes the query monitors.
+            // Corp monitors self-tick via FiveSecondTickEvent (no suppressSelfTicking).
+            // Corp data has slow ESI cache intervals (30min+) and doesn't need
+            // EsiScheduler priority scheduling — self-ticking is sufficient.
             m_corpMedalsMonitor = new PagedQueryMonitor<EsiAPIMedals, EsiMedalsListItem>(
                 new CorporationQueryMonitor<EsiAPIMedals>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMedals, OnMedalsUpdated,
-                AppServices.Notifications.NotifyCorporationMedalsError,
-                suppressSelfTicking: true)
+                AppServices.Notifications.NotifyCorporationMedalsError)
                 { QueryOnStartup = true });
             // Add the monitors in an order as they will appear in the throbber menu
             m_corporationQueryMonitors.Add(m_corpMedalsMonitor);
             m_corpMarketOrdersMonitor = new PagedQueryMonitor<EsiAPIMarketOrders,
                 EsiOrderListItem>(new CorporationQueryMonitor<EsiAPIMarketOrders>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationMarketOrders, OnMarketOrdersUpdated,
-                AppServices.Notifications.NotifyCorporationMarketOrdersError,
-                suppressSelfTicking: true)
+                AppServices.Notifications.NotifyCorporationMarketOrdersError)
                 { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpMarketOrdersMonitor);
             m_corpContractsMonitor = new PagedQueryMonitor<EsiAPIContracts,
                 EsiContractListItem>(new CorporationQueryMonitor<EsiAPIContracts>(ccpCharacter,
                 ESIAPICorporationMethods.CorporationContracts, OnContractsUpdated,
-                AppServices.Notifications.NotifyCorporationContractsError,
-                suppressSelfTicking: true)
+                AppServices.Notifications.NotifyCorporationContractsError)
                 { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpContractsMonitor);
             m_corpIndustryJobsMonitor = new PagedQueryMonitor<EsiAPIIndustryJobs,
                 EsiJobListItem>(new CorporationQueryMonitor<EsiAPIIndustryJobs>(
                 ccpCharacter, ESIAPICorporationMethods.CorporationIndustryJobs,
                 OnIndustryJobsUpdated, AppServices.Notifications.
-                NotifyCorporationIndustryJobsError, suppressSelfTicking: true) { QueryOnStartup = true });
+                NotifyCorporationIndustryJobsError) { QueryOnStartup = true });
             m_corporationQueryMonitors.Add(m_corpIndustryJobsMonitor);
 
             foreach (var monitor in m_corporationQueryMonitors)
                 ccpCharacter.QueryMonitors.Add(monitor);
-
-            if (EveMonClient.SmartQueryScheduler != null)
-            {
-                m_schedulerAdapter = new ScheduledQueryableAdapter(
-                    ccpCharacter.CharacterID, () => ProcessTick());
-                EveMonClient.SmartQueryScheduler.Register(m_schedulerAdapter);
-            }
         }
 
         #endregion
@@ -124,12 +116,6 @@ namespace EVEMon.Common.Services
         /// </summary>
         public void Dispose()
         {
-            if (m_schedulerAdapter != null)
-            {
-                EveMonClient.SmartQueryScheduler?.Unregister(m_schedulerAdapter);
-                m_schedulerAdapter = null;
-            }
-
             // Unsubscribe events in monitors
             foreach (IQueryMonitorEx monitor in m_corporationQueryMonitors)
             {

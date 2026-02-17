@@ -20,13 +20,13 @@ namespace EVEMon.Tests.Services
     /// </summary>
     public class QueryTierTests : IDisposable
     {
-        private readonly IQueryScheduler _scheduler;
+        private readonly IEsiScheduler _scheduler;
         private readonly IEsiClient _esiClient;
         private readonly IEventAggregator _events;
 
         public QueryTierTests()
         {
-            _scheduler = Substitute.For<IQueryScheduler>();
+            _scheduler = Substitute.For<IEsiScheduler>();
             _esiClient = Substitute.For<IEsiClient>();
             _events = Substitute.For<IEventAggregator>();
             _esiClient.MaxConcurrentRequests.Returns(20);

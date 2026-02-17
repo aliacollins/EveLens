@@ -7,12 +7,16 @@ using System.Threading.Tasks;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using Microsoft.Extensions.Logging;
 
 namespace EVEMon.Common.Net
 {
     internal class HttpClientServiceRequest
     {
+        private static readonly Lazy<ILogger?> s_logger = new(() =>
+            AppServices.LoggerFactory?.CreateLogger<HttpClientServiceRequest>());
         private static TimeSpan s_timeout;
         private Uri m_url;
         private Uri m_referrer;
@@ -60,7 +64,13 @@ namespace EVEMon.Common.Net
                 try
                 {
                     var request = GetHttpRequest(newParams);
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
                     response = await GetHttpResponseAsync(request).ConfigureAwait(false);
+                    sw.Stop();
+                    s_logger.Value?.LogInformation(new EventId(3, "ESI"),
+                        "{Method} {Path} → {StatusCode} {Reason} ({ElapsedMs}ms)",
+                        request.Method, url.AbsolutePath, (int)response.StatusCode,
+                        response.ReasonPhrase, sw.ElapsedMilliseconds);
                     EnsureSuccessStatusCode(response);
                 }
                 catch (HttpWebClientServiceException)

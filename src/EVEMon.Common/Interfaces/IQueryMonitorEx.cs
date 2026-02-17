@@ -1,4 +1,5 @@
 using System;
+using EVEMon.Common.Enumerations;
 
 namespace EVEMon.Common.Interfaces
 {
@@ -30,5 +31,19 @@ namespace EVEMon.Common.Interfaces
         /// Call this after construction when the monitor's parent will drive updates.
         /// </summary>
         void SuppressSelfTicking();
+
+        /// <summary>
+        /// Updates monitor status externally when the fetch is driven by EsiScheduler
+        /// rather than the monitor's own HTTP path. Used for UI status display (throbber).
+        /// </summary>
+        /// <param name="isUpdating">Whether a fetch is currently in progress.</param>
+        /// <param name="lastUpdate">The UTC time of the last successful update (null to leave unchanged).</param>
+        void SetExternalStatus(bool isUpdating, DateTime? lastUpdate = null);
+
+        /// <summary>
+        /// Sets the CachedUntil time for the NextUpdate timer display.
+        /// Called by EsiScheduler closures after a fetch completes with cache metadata.
+        /// </summary>
+        void SetCachedUntilOverride(DateTime cachedUntil);
     }
 }

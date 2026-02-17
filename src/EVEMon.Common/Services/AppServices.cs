@@ -1,8 +1,11 @@
 using System;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Interfaces;
+using EVEMon.Common.Logging;
 using EVEMon.Common.Models;
+using EVEMon.Common.Scheduling;
 using EVEMon.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace EVEMon.Common.Services
 {
@@ -19,12 +22,13 @@ namespace EVEMon.Common.Services
         private static Lazy<IDispatcher> s_dispatcher = new(() => new DispatcherService());
         private static Lazy<ISettingsProvider> s_settings = new(() => new SettingsProviderService());
         private static Lazy<IEsiClient> s_esiClient = new(() => new EsiClientService());
-        private static Lazy<IEventAggregator> s_eventAggregator = new(() => new EventAggregator());
+        private static Lazy<IEventAggregator> s_eventAggregator = new(() =>
+            new EventAggregator(LoggerFactory.CreateLogger<EventAggregator>()));
         private static Lazy<ICharacterRepository> s_characterRepository = new(() => new CharacterRepositoryService());
         private static Lazy<ISettingsDataStore> s_dataStore = new(() => EveMonClientDataStore.Instance);
         private static Lazy<CharacterFactory> s_characterFactory = new(() => new CharacterFactory(
             CharacterRepository, EventAggregator, EveMonClientCharacterServices.Instance));
-        private static Lazy<ITraceService> s_traceService = new(() => new TraceServiceAdapter());
+        private static Lazy<ITraceService> s_traceService = new(() => new TraceService());
         private static Lazy<IApplicationPaths> s_applicationPaths = new(() => new ApplicationPathsAdapter());
         private static Lazy<INameResolver> s_nameResolver = new(() => new NameResolverAdapter());
         private static Lazy<IStationResolver> s_stationResolver = new(() => new StationResolverAdapter());
@@ -39,7 +43,11 @@ namespace EVEMon.Common.Services
         private static Lazy<GlobalCharacterIdentityCollection> s_characterIdentities = new(() => EveMonClient.CharacterIdentities);
         private static Lazy<GlobalMonitoredCharacterCollection> s_monitoredCharacters = new(() => EveMonClient.MonitoredCharacters);
         private static Lazy<EveServer> s_eveServer = new(() => EveMonClient.EVEServer);
+        private static Lazy<ILoggerFactory> s_loggerFactory = new(() => CreateLoggerFactory());
         private static Lazy<ActiveCharacterTierSubscriber> s_tierSubscriber = new(() => new ActiveCharacterTierSubscriber());
+        private static Lazy<IEsiScheduler> s_esiScheduler = new(() => new EsiScheduler(
+            Dispatcher, EventAggregator, EsiClient,
+            LoggerFactory?.CreateLogger<EsiScheduler>()));
 
         /// <summary>
         /// Gets the notification collection.
@@ -81,6 +89,18 @@ namespace EVEMon.Common.Services
         /// Accessing this property initializes the subscriber (lazy).
         /// </summary>
         internal static ActiveCharacterTierSubscriber TierSubscriber => s_tierSubscriber.Value;
+
+        /// <summary>
+        /// Gets the ESI scheduler for priority-based character data fetching.
+        /// Replaces SmartQueryScheduler with cache-expiry-driven scheduling.
+        /// </summary>
+        public static IEsiScheduler EsiScheduler => s_esiScheduler.Value;
+
+        /// <summary>
+        /// Gets the logger factory for creating structured loggers (MEL).
+        /// Provides TCP JSON-lines streaming and System.Diagnostics.Trace bridging.
+        /// </summary>
+        public static ILoggerFactory LoggerFactory => s_loggerFactory.Value;
 
         /// <summary>
         /// Gets whether the application is closed.
@@ -251,7 +271,9 @@ namespace EVEMon.Common.Services
         internal static void SetAPIProviders(GlobalAPIProviderCollection providers) => s_apiProviders = new Lazy<GlobalAPIProviderCollection>(() => providers);
         internal static void SetCharacterIdentities(GlobalCharacterIdentityCollection ids) => s_characterIdentities = new Lazy<GlobalCharacterIdentityCollection>(() => ids);
         internal static void SetMonitoredCharacters(GlobalMonitoredCharacterCollection chars) => s_monitoredCharacters = new Lazy<GlobalMonitoredCharacterCollection>(() => chars);
+        internal static void SetLoggerFactory(ILoggerFactory factory) => s_loggerFactory = new Lazy<ILoggerFactory>(() => factory);
         internal static void SetEVEServer(EveServer server) => s_eveServer = new Lazy<EveServer>(() => server);
+        internal static void SetEsiScheduler(IEsiScheduler scheduler) => s_esiScheduler = new Lazy<IEsiScheduler>(() => scheduler);
 
         /// <summary>
         /// Bootstraps the application: initializes filesystem paths, trace logging,
@@ -264,7 +286,7 @@ namespace EVEMon.Common.Services
             EveMonClient.CheckIsDebug();
             EveMonClient.CheckIsSnapshot();
             EveMonClient.InitializeFileSystemPaths();
-            EveMonClient.StartTraceLogging();
+            TraceService.StartLogging(EveMonClient.TraceFileNameFullPath);
 
             // Phase 2: Snapshot paths so ApplicationPathsAdapter no longer delegates to EveMonClient
             var paths = (ApplicationPathsAdapter)ApplicationPaths;
@@ -291,6 +313,13 @@ namespace EVEMon.Common.Services
         /// </summary>
         public static void Shutdown()
         {
+            // Dispose the ESI scheduler (stops dispatch loop), then persist state
+            if (s_esiScheduler.IsValueCreated)
+            {
+                s_esiScheduler.Value.Dispose();
+                s_esiScheduler.Value.PersistState();
+            }
+
             // Dispose the tier subscriber
             if (s_tierSubscriber.IsValueCreated)
                 s_tierSubscriber.Value.Dispose();
@@ -301,8 +330,12 @@ namespace EVEMon.Common.Services
             // Stop the one-second timer and dispose resources
             EveMonClient.Shutdown();
 
+            // Dispose the logger factory (stops TCP listener before trace logging ends)
+            if (s_loggerFactory.IsValueCreated && s_loggerFactory.Value is IDisposable disposableFactory)
+                disposableFactory.Dispose();
+
             // Stop trace logging
-            EveMonClient.StopTraceLogging();
+            TraceService.StopLogging();
         }
 
         /// <summary>
@@ -342,12 +375,14 @@ namespace EVEMon.Common.Services
             s_dispatcher = new Lazy<IDispatcher>(() => new DispatcherService());
             s_settings = new Lazy<ISettingsProvider>(() => new SettingsProviderService());
             s_esiClient = new Lazy<IEsiClient>(() => new EsiClientService());
-            s_eventAggregator = new Lazy<IEventAggregator>(() => new EventAggregator());
+            s_loggerFactory = new Lazy<ILoggerFactory>(() => CreateLoggerFactory());
+            s_eventAggregator = new Lazy<IEventAggregator>(() =>
+                new EventAggregator(LoggerFactory.CreateLogger<EventAggregator>()));
             s_characterRepository = new Lazy<ICharacterRepository>(() => new CharacterRepositoryService());
             s_dataStore = new Lazy<ISettingsDataStore>(() => EveMonClientDataStore.Instance);
             s_characterFactory = new Lazy<CharacterFactory>(() => new CharacterFactory(
                 CharacterRepository, EventAggregator, EveMonClientCharacterServices.Instance));
-            s_traceService = new Lazy<ITraceService>(() => new TraceServiceAdapter());
+            s_traceService = new Lazy<ITraceService>(() => new TraceService());
             s_applicationPaths = new Lazy<IApplicationPaths>(() => new ApplicationPathsAdapter());
             s_nameResolver = new Lazy<INameResolver>(() => new NameResolverAdapter());
             s_stationResolver = new Lazy<IStationResolver>(() => new StationResolverAdapter());
@@ -363,6 +398,23 @@ namespace EVEMon.Common.Services
             s_monitoredCharacters = new Lazy<GlobalMonitoredCharacterCollection>(() => EveMonClient.MonitoredCharacters);
             s_eveServer = new Lazy<EveServer>(() => EveMonClient.EVEServer);
             s_tierSubscriber = new Lazy<ActiveCharacterTierSubscriber>(() => new ActiveCharacterTierSubscriber());
+            s_esiScheduler = new Lazy<IEsiScheduler>(() => new EsiScheduler(
+                Dispatcher, EventAggregator, EsiClient,
+                LoggerFactory?.CreateLogger<EsiScheduler>()));
+        }
+
+        /// <summary>
+        /// Creates the default <see cref="ILoggerFactory"/> with TCP JSON-lines and Trace providers.
+        /// </summary>
+        private static ILoggerFactory CreateLoggerFactory()
+        {
+            var factory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+            {
+                builder.SetMinimumLevel(LogLevel.Debug);
+                builder.AddProvider(new TraceLoggerProvider());
+                builder.AddProvider(new TcpJsonLoggerProvider());
+            });
+            return factory;
         }
     }
 }

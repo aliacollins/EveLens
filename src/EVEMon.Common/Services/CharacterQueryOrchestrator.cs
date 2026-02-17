@@ -16,6 +16,7 @@ using EVEMon.Common.Service;
 using EVEMon.Common.Threading;
 using EVEMon.Core.Events;
 using EVEMon.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Services
@@ -124,32 +125,33 @@ namespace EVEMon.Common.Services
         private volatile bool m_isActiveCharacter;
         private bool m_characterSheetUpdating;
 
+        private readonly ILogger? m_logger;
+
         // Responses from the attribute results since we handle it manually
         private ResponseParams? m_attrResponse;
         // Result from the character skill queue to handle a pathological case where skill
         // queues were not-modified but need to be re-imported due to a skills list change
         private EsiAPISkillQueue? m_lastQueue;
+        // Stashed skills result for order-independent skills+queue coordination.
+        // When skills arrive before the queue, they are stored here and imported
+        // once the queue arrives (or immediately if queue is already cached).
+        private EsiAPISkills? m_lastSkills;
         // Responses from the market order history results since we handle it manually
         private ResponseParams? m_orderHistoryResponse;
 
-        // Adapter for SmartQueryScheduler registration
-        private ScheduledQueryableAdapter? m_schedulerAdapter;
-
         // Staggered startup fields - prevents all characters from querying at once
-        private static int s_characterStartupIndex = 0;
-        private static readonly Random s_random = new Random();
-        private DateTime m_startupDelayUntil;
+        // (retained for startup-complete tracking; actual scheduling moved to EsiScheduler)
         private bool m_startupDelayCompleted = false;
 
-        private const int StartupDelayPerCharacterMs = 75;
-        private const int StartupRandomJitterMs = 250;
+        // Subscription to fetch completion events for updating monitor status (UI throbber)
+        private IDisposable? m_fetchCompletedSub;
 
         #endregion
 
 
         #region Test Mode Fields
 
-        private readonly IQueryScheduler? _scheduler;
+        private readonly IEsiScheduler? _esiScheduler;
         private readonly IEsiClient? _esiClient;
         private readonly IEventAggregator? _eventAggregator;
         private readonly long _characterId;
@@ -171,14 +173,13 @@ namespace EVEMon.Common.Services
         /// Production constructor — creates real ESI monitors and callbacks.
         /// Called from CCPCharacter when ESI key info is updated.
         /// </summary>
-        internal CharacterQueryOrchestrator(CCPCharacter ccpCharacter)
+        internal CharacterQueryOrchestrator(CCPCharacter ccpCharacter, ILogger<CharacterQueryOrchestrator>? logger = null)
         {
             m_ccpCharacter = ccpCharacter ?? throw new ArgumentNullException(nameof(ccpCharacter));
+            m_logger = logger;
             _isProductionMode = true;
             _characterId = ccpCharacter.CharacterID;
             _characterName = ccpCharacter.Name ?? string.Empty;
-
-            InitializeStartupDelay(ccpCharacter);
 
             m_characterQueryMonitors = CreateMonitors(ccpCharacter);
             m_characterQueryMonitors.ForEach(monitor => ccpCharacter.QueryMonitors.Add(monitor));
@@ -186,12 +187,15 @@ namespace EVEMon.Common.Services
             m_basicFeaturesMonitors = InitializeBasicFeaturesMonitors(ccpCharacter);
             ClassifyMonitorsByTier();
 
-            if (EveMonClient.SmartQueryScheduler != null)
-            {
-                m_schedulerAdapter = new ScheduledQueryableAdapter(
-                    ccpCharacter.CharacterID, () => ProcessTick());
-                EveMonClient.SmartQueryScheduler.Register(m_schedulerAdapter);
-            }
+            // Register with EsiScheduler for priority-based fetching
+            RegisterWithEsiScheduler(ccpCharacter);
+
+            // Subscribe to fetch events to update monitor status for UI throbber
+            m_fetchCompletedSub = AppServices.EventAggregator?.Subscribe<Core.Events.MonitorFetchCompletedEvent>(
+                OnFetchCompleted);
+
+            // Mark startup as completed — staggered startup is now handled by ColdStartPlanner
+            m_startupDelayCompleted = true;
         }
 
         #endregion
@@ -200,17 +204,17 @@ namespace EVEMon.Common.Services
         #region Test Constructor
 
         /// <summary>
-        /// Test/scheduling constructor — uses abstract MonitorState for scheduling tests.
-        /// Preserved for backward compatibility with existing tests.
+        /// Test constructor — uses abstract MonitorState for scheduling tests.
+        /// Does not register with EsiScheduler (test mode manages its own tick cycle).
         /// </summary>
         public CharacterQueryOrchestrator(
-            IQueryScheduler scheduler,
+            IEsiScheduler scheduler,
             IEsiClient esiClient,
             IEventAggregator eventAggregator,
             long characterId,
             string characterName)
         {
-            _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
+            _esiScheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
             _esiClient = esiClient ?? throw new ArgumentNullException(nameof(esiClient));
             _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
             _characterId = characterId;
@@ -228,8 +232,6 @@ namespace EVEMon.Common.Services
                     NextQueryTime = DateTime.MinValue // Ready to query immediately
                 };
             }
-
-            _scheduler.Register(this);
         }
 
         #endregion
@@ -345,25 +347,479 @@ namespace EVEMon.Common.Services
         #region Production Mode — Monitor Creation
 
         /// <summary>
-        /// Calculates the staggered startup delay to prevent all characters querying at once.
+        /// Registers this character's endpoints with the EsiScheduler.
+        /// Each endpoint gets a typed async closure that performs the full HTTP fetch cycle.
+        /// The scheduler's ColdStartPlanner handles staggered startup timing.
         /// </summary>
-        private void InitializeStartupDelay(CCPCharacter ccpCharacter)
+        private void RegisterWithEsiScheduler(CCPCharacter ccpCharacter)
         {
-            if (ccpCharacter.ForceUpdateBasicFeatures)
+            var scheduler = AppServices.EsiScheduler;
+            if (scheduler == null)
+                return;
+
+            var notifiers = AppServices.Notifications;
+            var registrations = new List<Core.Interfaces.EndpointRegistration>();
+
+            // 1. CharacterSheet
+            registrations.Add(new Core.Interfaces.EndpointRegistration
             {
-                // New character added manually - fetch immediately
-                m_startupDelayUntil = DateTime.UtcNow;
-                m_startupDelayCompleted = true;
-                AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {ccpCharacter.Name} is new, skipping startup delay");
-            }
-            else
+                Method = (long)ESIAPICharacterMethods.CharacterSheet,
+                ExecuteAsync = CreateFetchFunc<EsiAPICharacterSheet>(
+                    ESIAPICharacterMethods.CharacterSheet,
+                    OnCharacterSheetUpdated,
+                    (c, r) => notifiers.NotifyCharacterSheetError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.CharacterSheet,
+            });
+
+            // 2. Location
+            registrations.Add(new Core.Interfaces.EndpointRegistration
             {
-                int characterIndex = System.Threading.Interlocked.Increment(ref s_characterStartupIndex);
-                int baseDelayMs = characterIndex * StartupDelayPerCharacterMs;
-                int jitterMs = s_random.Next(StartupRandomJitterMs);
-                m_startupDelayUntil = DateTime.UtcNow.AddMilliseconds(baseDelayMs + jitterMs);
-                AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {ccpCharacter.Name} startup delayed until {m_startupDelayUntil:HH:mm:ss.fff} (index {characterIndex})");
+                Method = (long)ESIAPICharacterMethods.Location,
+                ExecuteAsync = CreateFetchFunc<EsiAPILocation>(
+                    ESIAPICharacterMethods.Location,
+                    OnCharacterLocationUpdated,
+                    (c, r) => notifiers.NotifyCharacterLocationError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Location,
+            });
+
+            // 3. Clones
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Clones,
+                ExecuteAsync = CreateFetchFunc<EsiAPIClones>(
+                    ESIAPICharacterMethods.Clones,
+                    OnCharacterClonesUpdated,
+                    (c, r) => notifiers.NotifyCharacterClonesError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Clones,
+            });
+
+            // 4. Implants (special: failure handler also chains to attributes)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Implants,
+                ExecuteAsync = CreateFetchFunc<List<int>>(
+                    ESIAPICharacterMethods.Implants,
+                    OnCharacterImplantsUpdated,
+                    OnCharacterImplantsFailed),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Implants,
+            });
+
+            // 5. Ship
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Ship,
+                ExecuteAsync = CreateFetchFunc<EsiAPIShip>(
+                    ESIAPICharacterMethods.Ship,
+                    OnCharacterShipUpdated,
+                    (c, r) => notifiers.NotifyCharacterShipError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Ship,
+            });
+
+            // 6. Skills
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Skills,
+                ExecuteAsync = CreateFetchFunc<EsiAPISkills>(
+                    ESIAPICharacterMethods.Skills,
+                    OnCharacterSkillsUpdated,
+                    (c, r) => notifiers.NotifyCharacterSkillsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Skills,
+            });
+
+            // 7. SkillQueue
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.SkillQueue,
+                ExecuteAsync = CreateFetchFunc<EsiAPISkillQueue>(
+                    ESIAPICharacterMethods.SkillQueue,
+                    OnSkillQueueUpdated,
+                    (c, r) => notifiers.NotifySkillQueueError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.SkillQueue,
+            });
+
+            // 8. EmploymentHistory
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.EmploymentHistory,
+                ExecuteAsync = CreateFetchFunc<EsiAPIEmploymentHistory>(
+                    ESIAPICharacterMethods.EmploymentHistory,
+                    OnCharacterEmploymentUpdated,
+                    (c, r) => notifiers.NotifyCharacterEmploymentError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.EmploymentHistory,
+            });
+
+            // 9. Standings (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Standings,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIStandings, EsiStandingsListItem>(
+                    ESIAPICharacterMethods.Standings,
+                    OnStandingsUpdated,
+                    (c, r) => notifiers.NotifyCharacterStandingsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Standings,
+            });
+
+            // 10. ContactList (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.ContactList,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIContactsList, EsiContactListItem>(
+                    ESIAPICharacterMethods.ContactList,
+                    OnContactsUpdated,
+                    (c, r) => notifiers.NotifyCharacterContactsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.ContactList,
+            });
+
+            // 11. FactionalWarfareStats
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.FactionalWarfareStats,
+                ExecuteAsync = CreateFetchFunc<EsiAPIFactionalWarfareStats>(
+                    ESIAPICharacterMethods.FactionalWarfareStats,
+                    OnFactionalWarfareStatsUpdated,
+                    (c, r) => notifiers.NotifyCharacterFactionalWarfareStatsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.FactionalWarfareStats,
+            });
+
+            // 12. Medals (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Medals,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIMedals, EsiMedalsListItem>(
+                    ESIAPICharacterMethods.Medals,
+                    OnMedalsUpdated,
+                    (c, r) => notifiers.NotifyCharacterMedalsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Medals,
+            });
+
+            // 13. KillLog (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.KillLog,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIKillLog, EsiKillLogListItem>(
+                    ESIAPICharacterMethods.KillLog,
+                    OnKillLogUpdated,
+                    (c, r) => notifiers.NotifyCharacterKillLogError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.KillLog,
+            });
+
+            // 14. AssetList (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.AssetList,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIAssetList, EsiAssetListItem>(
+                    ESIAPICharacterMethods.AssetList,
+                    OnAssetsUpdated,
+                    (c, r) => notifiers.NotifyCharacterAssetsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.AssetList,
+            });
+
+            // 15. MarketOrders
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.MarketOrders,
+                ExecuteAsync = CreateFetchFunc<EsiAPIMarketOrders>(
+                    ESIAPICharacterMethods.MarketOrders,
+                    OnMarketOrdersUpdated,
+                    (c, r) => notifiers.NotifyCharacterMarketOrdersError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.MarketOrders,
+            });
+
+            // 16. Contracts (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Contracts,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIContracts, EsiContractListItem>(
+                    ESIAPICharacterMethods.Contracts,
+                    OnContractsUpdated,
+                    (c, r) => notifiers.NotifyCharacterContractsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Contracts,
+            });
+
+            // 17. WalletJournal (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.WalletJournal,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIWalletJournal, EsiWalletJournalListItem>(
+                    ESIAPICharacterMethods.WalletJournal,
+                    OnWalletJournalUpdated,
+                    (c, r) => notifiers.NotifyCharacterWalletJournalError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.WalletJournal,
+            });
+
+            // 18. AccountBalance
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.AccountBalance,
+                ExecuteAsync = CreateFetchFunc<string>(
+                    ESIAPICharacterMethods.AccountBalance,
+                    OnWalletBalanceUpdated,
+                    (c, r) => notifiers.NotifyCharacterBalanceError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.AccountBalance,
+            });
+
+            // 19. WalletTransactions (PAGED)
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.WalletTransactions,
+                ExecuteAsync = CreatePagedFetchFunc<EsiAPIWalletTransactions, EsiWalletTransactionsListItem>(
+                    ESIAPICharacterMethods.WalletTransactions,
+                    OnWalletTransactionsUpdated,
+                    (c, r) => notifiers.NotifyCharacterWalletTransactionsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.WalletTransactions,
+            });
+
+            // 20. IndustryJobs
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.IndustryJobs,
+                ExecuteAsync = CreateFetchFunc<EsiAPIIndustryJobs>(
+                    ESIAPICharacterMethods.IndustryJobs,
+                    OnIndustryJobsUpdated,
+                    (c, r) => notifiers.NotifyCharacterIndustryJobsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.IndustryJobs,
+            });
+
+            // 21. ResearchPoints
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.ResearchPoints,
+                ExecuteAsync = CreateFetchFunc<EsiAPIResearchPoints>(
+                    ESIAPICharacterMethods.ResearchPoints,
+                    OnResearchPointsUpdated,
+                    (c, r) => notifiers.NotifyCharacterResearchPointsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.ResearchPoints,
+            });
+
+            // 22. MailMessages
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.MailMessages,
+                ExecuteAsync = CreateFetchFunc<EsiAPIMailMessages>(
+                    ESIAPICharacterMethods.MailMessages,
+                    OnEVEMailMessagesUpdated,
+                    (c, r) => notifiers.NotifyEVEMailMessagesError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.MailMessages,
+            });
+
+            // 23. MailingLists
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.MailingLists,
+                ExecuteAsync = CreateFetchFunc<EsiAPIMailingLists>(
+                    ESIAPICharacterMethods.MailingLists,
+                    OnEveMailingListsUpdated,
+                    (c, r) => notifiers.NotifyMailingListsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.MailingLists,
+            });
+
+            // 24. Notifications
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.Notifications,
+                ExecuteAsync = CreateFetchFunc<EsiAPINotifications>(
+                    ESIAPICharacterMethods.Notifications,
+                    OnEVENotificationsUpdated,
+                    (c, r) => notifiers.NotifyEVENotificationsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.Notifications,
+            });
+
+            // 25. UpcomingCalendarEvents
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.UpcomingCalendarEvents,
+                ExecuteAsync = CreateFetchFunc<EsiAPICalendarEvents>(
+                    ESIAPICharacterMethods.UpcomingCalendarEvents,
+                    OnUpcomingCalendarEventsUpdated,
+                    (c, r) => notifiers.NotifyCharacterUpcomingCalendarEventsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.UpcomingCalendarEvents,
+            });
+
+            // 26. PlanetaryColonies
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.PlanetaryColonies,
+                ExecuteAsync = CreateFetchFunc<EsiAPIPlanetaryColoniesList>(
+                    ESIAPICharacterMethods.PlanetaryColonies,
+                    OnPlanetaryColoniesUpdated,
+                    (c, r) => notifiers.NotifyCharacterPlanetaryColoniesError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.PlanetaryColonies,
+            });
+
+            // 27. LoyaltyPoints
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.LoyaltyPoints,
+                ExecuteAsync = CreateFetchFunc<EsiAPILoyality>(
+                    ESIAPICharacterMethods.LoyaltyPoints,
+                    OnLoyaltyPointsUpdated,
+                    (c, r) => notifiers.NotifyCharacterLoyaltyPointsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.LoyaltyPoints,
+            });
+
+            scheduler.RegisterCharacter(ccpCharacter.CharacterID, registrations);
+
+            AppServices.TraceService?.Trace(
+                $"CharacterQueryOrchestrator - {ccpCharacter.Name} registered with EsiScheduler ({registrations.Count} endpoints)");
+        }
+
+        /// <summary>
+        /// Finds the query monitor for the given ESI method (for status updates).
+        /// </summary>
+        private IQueryMonitorEx? FindMonitor(ESIAPICharacterMethods method)
+        {
+            if (m_characterQueryMonitors == null)
+                return null;
+
+            foreach (var monitor in m_characterQueryMonitors)
+            {
+                if (monitor.Method is ESIAPICharacterMethods m && m == method)
+                    return monitor;
             }
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a typed async closure for a single non-paged ESI endpoint.
+        /// The closure handles: ESI key lookup, HTTP call, success/error callbacks,
+        /// monitor status updates (for UI throbber), and FetchOutcome.
+        /// </summary>
+        private Func<string?, Task<FetchOutcome>> CreateFetchFunc<T>(
+            ESIAPICharacterMethods method,
+            Action<T> onSuccess,
+            Action<CCPCharacter, EsiResult<T>>? onError = null) where T : class
+        {
+            // Capture the monitor for this endpoint so we can update its status
+            var monitor = FindMonitor(method);
+
+            return async (etag) =>
+            {
+                var target = m_ccpCharacter;
+                if (target == null)
+                    return new FetchOutcome { StatusCode = 0 };
+
+                var esiKey = target.Identity.FindAPIKeyWithAccess(method);
+                if (esiKey == null || EsiErrors.IsErrorCountExceeded)
+                    return new FetchOutcome { StatusCode = 0 };
+
+                // Set monitor to Updating for UI throbber
+                Dispatcher.Post(() => monitor?.SetExternalStatus(true));
+
+                var lastResponse = etag != null
+                    ? new ResponseParams(0) { ETag = etag }
+                    : null;
+
+                var result = await AppServices.APIProviders.CurrentProvider.QueryEsiAsync<T>(
+                    method,
+                    new ESIParams(lastResponse, esiKey.AccessToken)
+                    {
+                        ParamOne = target.CharacterID
+                    }).ConfigureAwait(false);
+
+                var cachedUntil = result.CachedUntil;
+
+                // Marshal callback to UI thread and update monitor status + timer
+                if (!result.HasError && result.HasData && result.Result != null)
+                {
+                    Dispatcher.Post(() =>
+                    {
+                        onSuccess(result.Result);
+                        monitor?.SetExternalStatus(false, DateTime.UtcNow);
+                        if (cachedUntil != default)
+                            monitor?.SetCachedUntilOverride(cachedUntil);
+                    });
+                }
+                else
+                {
+                    Dispatcher.Post(() =>
+                    {
+                        if (result.HasError && onError != null && target.ShouldNotifyError(result, method))
+                            onError(target, result);
+                        monitor?.SetExternalStatus(false, DateTime.UtcNow);
+                        if (cachedUntil != default)
+                            monitor?.SetCachedUntilOverride(cachedUntil);
+                    });
+                }
+
+                return new FetchOutcome
+                {
+                    StatusCode = result.ResponseCode,
+                    CachedUntil = cachedUntil,
+                    ETag = result.Response?.ETag,
+                    RateLimitRemaining = result.Response?.RateLimitRemaining,
+                    RetryAfterSeconds = result.Response?.RetryAfterSeconds,
+                };
+            };
+        }
+
+        /// <summary>
+        /// Creates a typed async closure for a paged ESI collection endpoint.
+        /// </summary>
+        private Func<string?, Task<FetchOutcome>> CreatePagedFetchFunc<T, U>(
+            ESIAPICharacterMethods method,
+            Action<T> onSuccess,
+            Action<CCPCharacter, EsiResult<T>>? onError = null) where T : List<U> where U : class
+        {
+            var monitor = FindMonitor(method);
+
+            return async (etag) =>
+            {
+                var target = m_ccpCharacter;
+                if (target == null)
+                    return new FetchOutcome { StatusCode = 0 };
+
+                var esiKey = target.Identity.FindAPIKeyWithAccess(method);
+                if (esiKey == null || EsiErrors.IsErrorCountExceeded)
+                    return new FetchOutcome { StatusCode = 0 };
+
+                // Set monitor to Updating for UI throbber
+                Dispatcher.Post(() => monitor?.SetExternalStatus(true));
+
+                var lastResponse = etag != null
+                    ? new ResponseParams(0) { ETag = etag }
+                    : null;
+
+                var result = await AppServices.APIProviders.CurrentProvider.QueryPagedEsiAsync<T, U>(
+                    method,
+                    new ESIParams(lastResponse, esiKey.AccessToken)
+                    {
+                        ParamOne = target.CharacterID
+                    }).ConfigureAwait(false);
+
+                var cachedUntil = result.CachedUntil;
+
+                // Marshal callback to UI thread and update monitor status + timer
+                if (!result.HasError && result.HasData && result.Result != null)
+                {
+                    Dispatcher.Post(() =>
+                    {
+                        onSuccess(result.Result);
+                        monitor?.SetExternalStatus(false, DateTime.UtcNow);
+                        if (cachedUntil != default)
+                            monitor?.SetCachedUntilOverride(cachedUntil);
+                    });
+                }
+                else
+                {
+                    Dispatcher.Post(() =>
+                    {
+                        if (result.HasError && onError != null && target.ShouldNotifyError(result, method))
+                            onError(target, result);
+                        monitor?.SetExternalStatus(false, DateTime.UtcNow);
+                        if (cachedUntil != default)
+                            monitor?.SetCachedUntilOverride(cachedUntil);
+                    });
+                }
+
+                return new FetchOutcome
+                {
+                    StatusCode = result.ResponseCode,
+                    CachedUntil = result.CachedUntil,
+                    ETag = result.Response?.ETag,
+                    RateLimitRemaining = result.Response?.RateLimitRemaining,
+                    RetryAfterSeconds = result.Response?.RetryAfterSeconds,
+                };
+            };
         }
 
         /// <summary>
@@ -593,20 +1049,6 @@ namespace EVEMon.Common.Services
         /// </summary>
         private void ProcessTickProduction()
         {
-            // Check if startup delay has passed (staggered startup to prevent API burst)
-            if (!m_startupDelayCompleted)
-            {
-                if (DateTime.UtcNow < m_startupDelayUntil)
-                {
-                    // Still in startup delay - keep monitors disabled
-                    return;
-                }
-
-                // Startup delay completed - allow monitors to run
-                m_startupDelayCompleted = true;
-                AppServices.TraceService?.Trace($"CharacterQueryOrchestrator - {m_ccpCharacter!.Name} startup delay completed, monitors enabled");
-            }
-
             bool monitored = m_ccpCharacter!.Monitored;
 
             // Tier 0: Always active for monitored characters (overview + alerts)
@@ -614,7 +1056,7 @@ namespace EVEMon.Common.Services
                 monitor.Enabled = monitored;
 
             // Tier 1: Enabled for all monitored characters (background fetch).
-            // SmartQueryScheduler prioritizes the visible character via SetVisibleCharacter().
+            // EsiScheduler prioritizes the visible character via SetVisibleCharacter().
             // After 5-10 minutes of running, all data is cached — every tab switch is instant.
             foreach (var monitor in m_tier1Monitors!)
                 monitor.Enabled = monitored;
@@ -723,6 +1165,34 @@ namespace EVEMon.Common.Services
 
             // Check if all basic monitors have completed (CharacterSheet completion tracking)
             CheckCharacterSheetCompletionTest();
+        }
+
+        #endregion
+
+
+        #region Production Mode — Monitor Status Bridge
+
+        /// <summary>
+        /// Updates query monitor status from EsiScheduler fetch completion events.
+        /// Bridges the scheduler's direct HTTP path to the legacy monitor status display (throbber).
+        /// </summary>
+        private void OnFetchCompleted(Core.Events.MonitorFetchCompletedEvent e)
+        {
+            if (e.CharacterId != _characterId || !_isProductionMode)
+                return;
+
+            if (m_characterQueryMonitors == null)
+                return;
+
+            foreach (var monitor in m_characterQueryMonitors)
+            {
+                if (monitor.Method is Enumerations.CCPAPI.ESIAPICharacterMethods method
+                    && (long)method == e.EndpointMethod)
+                {
+                    monitor.Enabled = true;
+                    break;
+                }
+            }
         }
 
         #endregion
@@ -870,13 +1340,23 @@ namespace EVEMon.Common.Services
 
         /// <summary>
         /// Processes the queried character's skills.
+        /// Stashes the result and attempts import — if the queue hasn't arrived yet,
+        /// the import will occur when the queue callback fires.
         /// </summary>
         private void OnCharacterSkillsUpdated(EsiAPISkills result)
         {
             var target = m_ccpCharacter;
             // Character may have been deleted since we queried
-            if (target != null && m_lastQueue != null)
-                target.Import(result, m_lastQueue);
+            if (target == null)
+                return;
+
+            m_lastSkills = result;
+
+            m_logger?.LogDebug(new EventId(6, "SKILL"),
+                "skills stashed for {CharName}, attempting import (queue={HasQueue})",
+                _characterName, m_lastQueue != null);
+
+            TryImportSkills();
         }
 
         /// <summary>
@@ -890,6 +1370,10 @@ namespace EVEMon.Common.Services
             {
                 m_lastQueue = result;
                 target.SkillQueue.Import(result.CreateSkillQueue());
+
+                // If skills arrived before queue, import them now
+                TryImportSkills();
+
                 // Check if the character has less than the threshold queue length
                 if (target.IsTraining && target.SkillQueue.LessThanWarningThreshold)
                     AppServices.Notifications.NotifySkillQueueThreshold(target,
@@ -899,6 +1383,28 @@ namespace EVEMon.Common.Services
             }
             else
                 m_lastQueue = null;
+        }
+
+        /// <summary>
+        /// Attempts to import skills using the latest skills and queue data.
+        /// Called from both <see cref="OnCharacterSkillsUpdated"/> and
+        /// <see cref="OnSkillQueueUpdated"/> to handle either-order arrival.
+        /// </summary>
+        private void TryImportSkills()
+        {
+            var target = m_ccpCharacter;
+            if (target == null || m_lastSkills == null)
+                return;
+
+            // Import with queue if available, or without (Character.Import handles null queue)
+            target.Import(m_lastSkills, m_lastQueue);
+
+            m_logger?.LogInformation(new EventId(6, "SKILL"),
+                "skills imported for {CharName} — {SkillCount} skills, queue={HasQueue}",
+                _characterName, m_lastSkills.Skills?.Count ?? 0, m_lastQueue != null);
+
+            // Clear stashed skills after successful import (queue stays for future cycles)
+            m_lastSkills = null;
         }
 
         #endregion
@@ -1422,11 +1928,12 @@ namespace EVEMon.Common.Services
 
             if (_isProductionMode)
             {
-                if (m_schedulerAdapter != null)
-                {
-                    EveMonClient.SmartQueryScheduler?.Unregister(m_schedulerAdapter);
-                    m_schedulerAdapter = null;
-                }
+                // Unregister from EsiScheduler
+                AppServices.EsiScheduler?.UnregisterCharacter(_characterId);
+
+                // Dispose fetch completion subscription
+                m_fetchCompletedSub?.Dispose();
+                m_fetchCompletedSub = null;
 
                 // Unsubscribe events in monitors
                 if (m_characterQueryMonitors != null)
@@ -1437,8 +1944,6 @@ namespace EVEMon.Common.Services
             }
             else
             {
-                _scheduler!.Unregister(this);
-
                 lock (_lock)
                 {
                     _monitors!.Clear();

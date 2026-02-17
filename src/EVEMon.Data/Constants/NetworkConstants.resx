@@ -133,8 +133,8 @@
     <comment>New web address for portraits as part of Incursion 1.1.0</comment>
   </data>
   <data name="EVEMonMainPage" xml:space="preserve">
-    <value>https://github.com/aliacollins/evemon</value>
-    <comment>Maintained by Alia Collins</comment>
+    <value>https://evemon.dev</value>
+    <comment>Official EVEMon website</comment>
   </data>
   <data name="EVEMonForums" xml:space="preserve">
     <value>https://forums.eveonline.com/t/evemon-lives-new-maintainer-v5-1-0-released/504429</value>

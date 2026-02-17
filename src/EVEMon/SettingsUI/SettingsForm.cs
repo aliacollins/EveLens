@@ -13,6 +13,7 @@ using EVEMon.Common.Resources.Skill_Select;
 using EVEMon.Common.Serialization.Settings;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using System;
 using System.Collections;
@@ -33,6 +34,10 @@ namespace EVEMon.SettingsUI
     public partial class SettingsForm : EVEMonForm
     {
         private const string StartupRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+
+        private static readonly Lazy<ILogger?> s_logger = new(() =>
+            AppServices.LoggerFactory?.CreateLogger<SettingsForm>());
+        private static readonly EventId UiEvent = new(5, "UI");
 
         private readonly SerializableSettings m_settings;
         private SerializableSettings m_oldSettings;
@@ -112,6 +117,8 @@ namespace EVEMon.SettingsUI
         {
             if (DesignMode || this.IsDesignModeHosted())
                 return;
+
+            s_logger.Value?.LogInformation(UiEvent, "form.shown: SettingsForm");
 
             // Initialize members
             m_isLoading = true;

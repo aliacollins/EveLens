@@ -231,6 +231,12 @@ namespace EVEMon.About
             });
             y += 40;
 
+            // Website link
+            var websiteLink = CreateLinkLabel("evemon.dev", 15, y);
+            websiteLink.Click += (s, e) => Util.OpenURL(new Uri("https://evemon.dev"));
+            panel.Controls.Add(websiteLink);
+            y += 25;
+
             // GitHub link
             var githubLink = CreateLinkLabel("github.com/aliacollins/evemon", 15, y);
             githubLink.Click += (s, e) => Util.OpenURL(new Uri("https://github.com/aliacollins/evemon"));

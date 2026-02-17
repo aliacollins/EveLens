@@ -13,5 +13,11 @@ namespace EVEMon.Common.Serialization.Settings
 
         [XmlAttribute("time")]
         public DateTime Time { get; set; }
+
+        [XmlAttribute("etag")]
+        public string? ETag { get; set; }
+
+        [XmlAttribute("cachedUntil")]
+        public DateTime CachedUntil { get; set; }
     }
 }

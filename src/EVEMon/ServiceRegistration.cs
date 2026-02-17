@@ -1,5 +1,6 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using EVEMon.Common.Collections.Global;
 using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
@@ -57,6 +58,9 @@ namespace EVEMon
             services.AddSingleton(sp => AppServices.ESIKeys);
             services.AddSingleton(sp => AppServices.MonitoredCharacters);
             services.AddSingleton(sp => AppServices.EVEServer);
+
+            services.AddSingleton<IEsiScheduler>(sp => AppServices.EsiScheduler);
+            services.AddSingleton<ILoggerFactory>(sp => AppServices.LoggerFactory);
 
             s_serviceProvider = services.BuildServiceProvider();
         }

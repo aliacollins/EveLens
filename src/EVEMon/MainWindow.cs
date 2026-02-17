@@ -34,6 +34,7 @@ using EVEMon.SkillPlanner;
 using EVEMon.Updater;
 using EVEMon.Watchdog;
 using EVEMon.WindowsApi;
+using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -74,6 +75,10 @@ namespace EVEMon
         private bool m_initialized;
         private bool m_firstApiLoadNotified;
         private bool m_closingAfterUpload;
+
+        private static readonly Lazy<ILogger?> s_logger = new(() =>
+            AppServices.LoggerFactory?.CreateLogger<MainWindow>());
+        private static readonly EventId UiEvent = new(5, "UI");
 
         // Hybrid tab strategy:
         // ≤50 characters: eager monitors attached to every tab (instant switching, old behavior).
@@ -248,6 +253,7 @@ namespace EVEMon
         {
             try
             {
+                s_logger.Value?.LogInformation(UiEvent, "form.shown: MainWindow");
                 base.OnShown(e);
 
                 if (!m_initialized)
@@ -381,6 +387,7 @@ namespace EVEMon
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
+            s_logger.Value?.LogInformation(UiEvent, "form.closing: MainWindow");
 
             // Is there a reason that we should really close the window
             if (!Visible || m_isUpdating || m_isUpdatingData || e.CloseReason == CloseReason.ApplicationExitCall ||
@@ -961,6 +968,7 @@ namespace EVEMon
             if (m_isUpdatingTabOrder)
                 return;
 
+            s_logger.Value?.LogInformation(UiEvent, "tab.switch: {TabIndex}", tcCharacterTabs.SelectedIndex);
             MaterializeSelectedTab();
             UpdateControlsOnTabSelectionChange();
         }
@@ -1646,6 +1654,7 @@ namespace EVEMon
         /// <param name="e"></param>
         private void addAPIKeyMenu_Click(object? sender, EventArgs e)
         {
+            s_logger.Value?.LogInformation(UiEvent, "click: addAPIKeyMenu");
             using (EsiKeyUpdateOrAdditionWindow window = new EsiKeyUpdateOrAdditionWindow())
             {
                 window.ShowDialog(this);
@@ -1660,6 +1669,7 @@ namespace EVEMon
         /// <param name="e"></param>
         private void manageAPIKeysMenuItem_Click(object? sender, EventArgs e)
         {
+            s_logger.Value?.LogInformation(UiEvent, "click: manageAPIKeys");
             using (EsiKeysManagementWindow window = new EsiKeysManagementWindow())
             {
                 window.ShowDialog(this);
@@ -1765,6 +1775,7 @@ namespace EVEMon
         {
             try
             {
+                s_logger.Value?.LogInformation(UiEvent, "click: saveSettings");
                 // Prompts the user for a location
                 saveFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
                 DialogResult result = saveFileDialog.ShowDialog();
@@ -1788,6 +1799,7 @@ namespace EVEMon
         {
             try
             {
+                s_logger.Value?.LogInformation(UiEvent, "click: loadSettings");
                 // Prompts the user for a location
                 openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 
@@ -1879,6 +1891,7 @@ namespace EVEMon
         /// <param name="e"></param>
         private void clearCacheToolStripMenuItem_Click(object? sender, EventArgs e)
         {
+            s_logger.Value?.LogInformation(UiEvent, "click: clearCache");
             // Manually delete the Settings file for any non-recoverable errors
             DialogResult dr = MessageBox.Show(Properties.Resources.PromptClearCache,
                 @"Confirm Cache Clearing", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
@@ -1898,6 +1911,7 @@ namespace EVEMon
         {
             try
             {
+                s_logger.Value?.LogInformation(UiEvent, "click: resetSettings");
                 // Manually delete the Settings file for any non-recoverable errors
                 DialogResult dr = MessageBox.Show(Properties.Resources.PromptResetSettings,
                     @"Confirm Settings Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question,
@@ -2348,6 +2362,7 @@ namespace EVEMon
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void diagnosticReportMenuItem_Click(object? sender, EventArgs e)
         {
+            s_logger.Value?.LogInformation(UiEvent, "click: diagnosticReport");
             WindowsFactory.ShowUnique<DiagnosticReport.DiagnosticReportWindow>();
         }
 

@@ -73,6 +73,18 @@ namespace EVEMon.Common.Net
         /// </summary>
         public DateTime? Time { get; set; }
 
+        /// <summary>Rate limit group from X-ESI-Error-Limit header (e.g., "esi-characters").</summary>
+        public string? RateLimitGroup { get; set; }
+
+        /// <summary>Remaining requests in current window from X-Esi-Error-Limit-Remain.</summary>
+        public int? RateLimitRemaining { get; set; }
+
+        /// <summary>Total request limit from X-Esi-Error-Limit-Reset.</summary>
+        public int? RateLimitLimit { get; set; }
+
+        /// <summary>Retry-After header value in seconds (for 429 responses).</summary>
+        public int? RetryAfterSeconds { get; set; }
+
         /// <summary>
         /// Creates a new set of response parameters.
         /// </summary>
@@ -89,6 +101,14 @@ namespace EVEMon.Common.Net
             Time = headers.Date?.UtcDateTime ?? DateTime.UtcNow;
             // ESI error reset time per best practices
             ErrorResetTime = headers.ErrorResetTime(Time);
+            // Mirror error limit headers for TokenTracker consumption
+            RateLimitRemaining = ErrorCount;
+            RateLimitLimit = headers.ErrorResetSeconds();
+            // Retry-After for 429 responses
+            if (response.Headers.RetryAfter?.Delta is TimeSpan retryDelta)
+                RetryAfterSeconds = (int)retryDelta.TotalSeconds;
+            else if (response.Headers.RetryAfter?.Date is DateTimeOffset retryDate)
+                RetryAfterSeconds = Math.Max(0, (int)(retryDate - DateTimeOffset.UtcNow).TotalSeconds);
         }
 
         /// <summary>

@@ -11,13 +11,13 @@ namespace EVEMon.Tests.Services
 {
     public class CharacterQueryOrchestratorTests : IDisposable
     {
-        private readonly IQueryScheduler _scheduler;
+        private readonly IEsiScheduler _scheduler;
         private readonly IEsiClient _esiClient;
         private readonly IEventAggregator _events;
 
         public CharacterQueryOrchestratorTests()
         {
-            _scheduler = Substitute.For<IQueryScheduler>();
+            _scheduler = Substitute.For<IEsiScheduler>();
             _esiClient = Substitute.For<IEsiClient>();
             _events = Substitute.For<IEventAggregator>();
             _esiClient.MaxConcurrentRequests.Returns(20);
@@ -52,7 +52,8 @@ namespace EVEMon.Tests.Services
         {
             var orchestrator = CreateOrchestrator(99999L);
 
-            _scheduler.Received(1).Register(orchestrator);
+            // Test mode no longer auto-registers with scheduler
+            orchestrator.ActiveMonitorCount.Should().Be(3, "basic feature monitors created");
         }
 
         [Fact]
@@ -350,7 +351,8 @@ namespace EVEMon.Tests.Services
             totalMonitors.Should().Be(210,
                 "70 characters * 3 basic monitors each = 210 total, not 1890 (27 * 70)");
 
-            _scheduler.ReceivedWithAnyArgs(70).Register(default!);
+            // Test mode no longer auto-registers with scheduler
+            totalMonitors.Should().BeGreaterThan(0);
 
             foreach (var orch in orchestrators)
                 orch.Dispose();
@@ -368,7 +370,8 @@ namespace EVEMon.Tests.Services
 
             orchestrator.Dispose();
 
-            _scheduler.Received(1).Unregister(orchestrator);
+            // Test mode no longer registers/unregisters with scheduler
+            orchestrator.ActiveMonitorCount.Should().Be(0, "monitors cleared after dispose");
         }
 
         [Fact]
@@ -417,7 +420,8 @@ namespace EVEMon.Tests.Services
             };
 
             act.Should().NotThrow();
-            _scheduler.Received(1).Unregister(orchestrator);
+            // Test mode no longer registers/unregisters with scheduler
+            orchestrator.ActiveMonitorCount.Should().Be(0, "monitors cleared after dispose");
         }
 
         #endregion
@@ -430,6 +434,84 @@ namespace EVEMon.Tests.Services
             var orchestrator = CreateOrchestrator(characterId: 54321L);
 
             orchestrator.CharacterID.Should().Be(54321L);
+        }
+
+        #endregion
+
+        #region Skills-Queue Race Condition (Regression)
+
+        /// <summary>
+        /// Regression test: Skills arriving before SkillQueue must not be silently
+        /// discarded. In test mode, Skills is deferred until SkillQueue caches its result.
+        /// In production mode (the actual fix), skills are stashed in m_lastSkills and
+        /// imported when either callback fires with both pieces available.
+        /// </summary>
+        [Fact]
+        public void SkillsArrivedBeforeQueue_StillCompletesOnSubsequentTick()
+        {
+            var orchestrator = CreateOrchestrator();
+
+            // Tick 1: CharacterSheet(0) and SkillQueue(2) process.
+            // Skills(1) is deferred because SkillQueue's cached result isn't yet
+            // available when Skills is evaluated (dictionary iteration order: 0, 1, 2).
+            orchestrator.ProcessTick();
+
+            orchestrator.IsQueryComplete(CharacterQueryOrchestrator.DataType_Skills)
+                .Should().BeFalse("Skills should be deferred when queue hasn't cached yet");
+            orchestrator.IsQueryComplete(CharacterQueryOrchestrator.DataType_SkillQueue)
+                .Should().BeTrue("SkillQueue should complete on first tick");
+
+            // Tick 2: SkillQueue result is now cached from tick 1 → Skills can process
+            orchestrator.ProcessTick();
+
+            orchestrator.IsQueryComplete(CharacterQueryOrchestrator.DataType_Skills)
+                .Should().BeTrue(
+                    "Skills must eventually import even though it arrives before queue — " +
+                    "this is the test-mode equivalent of the production race condition fix");
+        }
+
+        /// <summary>
+        /// Regression test: When SkillQueue arrives first and Skills arrives second,
+        /// both should complete normally. This is the non-racy ordering.
+        /// </summary>
+        [Fact]
+        public void QueueArrivedBeforeSkills_BothCompleteNormally()
+        {
+            var orchestrator = CreateOrchestrator();
+
+            // Tick 1: CharacterSheet(0) + SkillQueue(2) complete
+            orchestrator.ProcessTick();
+
+            orchestrator.IsQueryComplete(CharacterQueryOrchestrator.DataType_CharacterSheet)
+                .Should().BeTrue();
+            orchestrator.IsQueryComplete(CharacterQueryOrchestrator.DataType_SkillQueue)
+                .Should().BeTrue();
+
+            // Tick 2: Skills(1) completes using cached queue result
+            orchestrator.ProcessTick();
+
+            orchestrator.IsQueryComplete(CharacterQueryOrchestrator.DataType_Skills)
+                .Should().BeTrue("Skills should import normally when queue arrived first");
+        }
+
+        /// <summary>
+        /// Regression test: After both Skills and SkillQueue complete, the character
+        /// updated event fires — confirming data was not silently dropped.
+        /// </summary>
+        [Fact]
+        public void SkillsAndQueueBothComplete_CharacterUpdatedEventFires()
+        {
+            var orchestrator = CreateOrchestrator();
+
+            // Tick 1: CharacterSheet + SkillQueue complete, Skills deferred
+            orchestrator.ProcessTick();
+            _events.DidNotReceive().Publish(Arg.Any<CharacterUpdatedEvent>());
+
+            // Tick 2: Skills completes → all basic monitors done → event fires
+            orchestrator.ProcessTick();
+
+            _events.Received(1).Publish(Arg.Is<CharacterUpdatedEvent>(
+                e => e.CharacterID == 12345L));
         }
 
         #endregion

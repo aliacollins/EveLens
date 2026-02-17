@@ -20,7 +20,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_ImplementsICharacterDataQuerying()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -36,7 +36,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_ImplementsICharacterQueryManager()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -52,7 +52,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_ImplementsIDisposable()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -72,7 +72,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void HasCharacterSheetError_InTestMode_ReturnsFalse()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -89,7 +89,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CharacterMarketOrdersQueried_InTestMode_ReturnsTrue()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -106,7 +106,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CharacterContractsQueried_InTestMode_ReturnsTrue()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -122,7 +122,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CharacterIndustryJobsQueried_InTestMode_ReturnsTrue()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -142,7 +142,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_SameInstance_ServesAsBothInterfaces()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -162,7 +162,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_ProcessTick_SharedBetweenInterfaces()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -171,20 +171,17 @@ namespace EVEMon.Tests.Services
             using var orchestrator = new CharacterQueryOrchestrator(
                 scheduler, esiClient, events, 12345L, "Test Char");
 
-            // ProcessTick from ICharacterDataQuerying and IScheduledQueryable
-            // should be the same method
+            // ProcessTick from ICharacterDataQuerying should be callable
             ICharacterDataQuerying asDataQuerying = orchestrator;
-            IScheduledQueryable asSchedulable = orchestrator;
 
-            // Both should be callable without exceptions
+            // Should be callable without exceptions
             asDataQuerying.ProcessTick();
-            asSchedulable.ProcessTick();
         }
 
         [Fact]
         public void CQO_Dispose_SharedBetweenInterfaces()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -209,7 +206,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void TestConstructor_SetsTestMode()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -236,7 +233,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_DisposeTwice_DoesNotThrow()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);
@@ -257,7 +254,7 @@ namespace EVEMon.Tests.Services
         [Fact]
         public void CQO_ProcessTickAfterDispose_IsNoOp()
         {
-            var scheduler = Substitute.For<IQueryScheduler>();
+            var scheduler = Substitute.For<IEsiScheduler>();
             var esiClient = Substitute.For<IEsiClient>();
             var events = Substitute.For<IEventAggregator>();
             esiClient.MaxConcurrentRequests.Returns(20);

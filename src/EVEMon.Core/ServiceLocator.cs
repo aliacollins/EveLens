@@ -38,7 +38,7 @@ namespace EVEMon.Core
     {
         /// <summary>
         /// Gets or sets the trace/diagnostic logging service.
-        /// Delegates to <c>EveMonClient.Trace()</c> in production.
+        /// Powered by standalone <c>TraceService</c> in <c>EVEMon.Common</c>.
         /// </summary>
         public static ITraceService TraceService { get; set; }
 

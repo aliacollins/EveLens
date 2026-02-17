@@ -19,6 +19,7 @@
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.68.0.3536" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.68.0.3544" />
     <PackageReference Include="MailKit" Version="4.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
     <PackageReference Include="NetOfficeFw.Outlook" Version="1.9.2" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />

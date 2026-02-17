@@ -6,8 +6,6 @@ namespace EVEMon.Core.Interfaces
     /// Manages ESI query monitors for a single character.
     /// Supports lazy, on-demand monitor creation to reduce resource usage when many
     /// characters are loaded but only a few are actively viewed.
-    /// Extends <see cref="IScheduledQueryable"/> so it can be registered with
-    /// <see cref="IQueryScheduler"/> for adaptive polling.
     /// </summary>
     /// <remarks>
     /// Each <c>CCPCharacter</c> owns one query manager. Monitors are created lazily
@@ -23,7 +21,7 @@ namespace EVEMon.Core.Interfaces
     /// Production: Typically implemented within the character model layer.
     /// Testing: Provide a stub that tracks requested data types and returns canned states.
     /// </remarks>
-    public interface ICharacterQueryManager : IScheduledQueryable, IDisposable
+    public interface ICharacterQueryManager : IDisposable
     {
         /// <summary>
         /// Requests that a specific ESI data type be actively queried for this character.

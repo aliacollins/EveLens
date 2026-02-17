@@ -22,6 +22,7 @@ using EVEMon.Common.Interfaces;
 using EVEMon.Common.Models;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using Microsoft.Extensions.Logging;
 
 using R = EVEMon.Properties.Resources;
 
@@ -40,6 +41,10 @@ namespace EVEMon.SkillPlanner
         private Plan? m_plan;
         private Character? m_character;
         private Regex m_skill_regex = new Regex(@"(.*)\b(\d+|\w+)", RegexOptions.Compiled);
+
+        private static readonly Lazy<ILogger?> s_logger = new(() =>
+            AppServices.LoggerFactory?.CreateLogger<PlanWindow>());
+        private static readonly EventId UiEvent = new(5, "UI");
 
         private IDisposable? _planNameChangedSub;
         private IDisposable? _settingsChangedSub;
@@ -96,6 +101,8 @@ namespace EVEMon.SkillPlanner
             if (DesignMode || this.IsDesignModeHosted())
                 return;
 
+            s_logger.Value?.LogInformation(UiEvent, "form.shown: PlanWindow");
+
             // Hide Certificate Browser - certificates were removed from EVE Online
             // and replaced by Ship Tree / Masteries (which is shown in Ship Browser)
             tabControl.TabPages.Remove(tpCertificateBrowser);
@@ -149,6 +156,7 @@ namespace EVEMon.SkillPlanner
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
+            s_logger.Value?.LogInformation(UiEvent, "form.closing: PlanWindow");
 
             // Unsubscribe global events
             _planNameChangedSub?.Dispose();

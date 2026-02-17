@@ -124,6 +124,11 @@ namespace EVEMon.Common.QueryMonitor
                 // If there was an error on last try, we use the cached time
                 if (LastResult != null && LastResult.HasError)
                     return LastResult.CachedUntil;
+
+                // If EsiScheduler provided a CachedUntil override, use it
+                if (m_cachedUntilOverride.HasValue && m_cachedUntilOverride.Value > DateTime.UtcNow)
+                    return m_cachedUntilOverride.Value;
+
                 // No error ? Then we compute the next update according to the settings
                 var period = UpdatePeriod.Never;
                 string method = Method.ToString();
@@ -142,6 +147,11 @@ namespace EVEMon.Common.QueryMonitor
                 return nextUpdate;
             }
         }
+
+        /// <summary>
+        /// CachedUntil override set by EsiScheduler for NextUpdate computation.
+        /// </summary>
+        private DateTime? m_cachedUntilOverride;
 
         /// <summary>
         /// Gets the parameters from the last ESI response.
@@ -351,6 +361,35 @@ namespace EVEMon.Common.QueryMonitor
             // Set LastUpdate to current time to prevent immediate retry loop
             // The query will retry after the normal update period
             LastUpdate = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Updates monitor status externally when the fetch is driven by EsiScheduler
+        /// rather than the monitor's own HTTP path. Used for UI status display (throbber).
+        /// </summary>
+        void IQueryMonitorEx.SetExternalStatus(bool isUpdating, DateTime? lastUpdate)
+        {
+            IsUpdating = isUpdating;
+            Enabled = true;
+            if (isUpdating)
+            {
+                Status = QueryStatus.Updating;
+            }
+            else
+            {
+                Status = QueryStatus.Pending;
+                if (lastUpdate.HasValue)
+                    LastUpdate = lastUpdate.Value;
+            }
+        }
+
+        /// <summary>
+        /// Sets the CachedUntil override for NextUpdate computation.
+        /// Called by EsiScheduler closures after a fetch completes with cache metadata.
+        /// </summary>
+        void IQueryMonitorEx.SetCachedUntilOverride(DateTime cachedUntil)
+        {
+            m_cachedUntilOverride = cachedUntil;
         }
 
         /// <summary>

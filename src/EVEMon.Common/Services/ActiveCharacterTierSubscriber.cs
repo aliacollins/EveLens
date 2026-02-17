@@ -31,9 +31,8 @@ namespace EVEMon.Common.Services
                 SetActive(e.CharacterId, true);
             _previousActiveId = e.CharacterId;
 
-            // Wire priority scheduling — SmartQueryScheduler is internal to Common,
-            // so we call it here instead of from the UI layer
-            EveMonClient.SmartQueryScheduler?.SetVisibleCharacter(e.CharacterId);
+            // Wire priority scheduling via EsiScheduler
+            AppServices.EsiScheduler?.SetVisibleCharacter(e.CharacterId);
         }
 
         private static void SetActive(long characterId, bool active)
