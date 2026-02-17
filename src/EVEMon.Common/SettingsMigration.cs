@@ -2,9 +2,9 @@
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Services;
+using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common
 {
@@ -284,7 +284,7 @@ You'll need to add your characters:
 Click OK to continue.";
             }
 
-            MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            AppServices.DialogService.ShowMessage(message, title, DialogButtons.OK, DialogIcon.Information);
             MigrationFromOtherForkDetected = true;
         }
     }

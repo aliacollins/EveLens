@@ -1,7 +1,6 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations.UISettings;
@@ -9,6 +8,8 @@ using EVEMon.Common.Exceptions;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
+using EVEMon.Core.Enumerations;
 using Google;
 using Google.Apis.Auth.OAuth2.Responses;
 
@@ -78,8 +79,9 @@ namespace EVEMon.Common.ExternalCalendar
             // Get the calendar
             if (!OutlookCalendarEvent.OutlookCalendarExist(Settings.Calendar.UseOutlookDefaultCalendar))
             {
-                MessageBox.Show(@"Outlook calendar does not exist. Please check your settings.", @"Outlook Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AppServices.DialogService.ShowMessage(
+                    @"Outlook calendar does not exist. Please check your settings.",
+                    @"Outlook Error", DialogButtons.OK, DialogIcon.Error);
                 return;
             }
 
@@ -168,19 +170,19 @@ namespace EVEMon.Common.ExternalCalendar
             }
             catch (TokenResponseException ex)
             {
-                MessageBox.Show(ex.Error.ErrorDescription, @"Google Calendar");
+                AppServices.DialogService.ShowMessage(ex.Error.ErrorDescription, @"Google Calendar");
             }
             catch (GoogleApiException ex)
             {
-                MessageBox.Show(ex.Error.Message, @"Google Calendar");
+                AppServices.DialogService.ShowMessage(ex.Error.Message, @"Google Calendar");
             }
             catch (APIException ex)
             {
-                MessageBox.Show(ex.Message, ex.ErrorCode ?? @"Google Calendar");
+                AppServices.DialogService.ShowMessage(ex.Message, ex.ErrorCode ?? @"Google Calendar");
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, @"Google Calendar");
+                AppServices.DialogService.ShowMessage(ex.Message, @"Google Calendar");
             }
         }
     }

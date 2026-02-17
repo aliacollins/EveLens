@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EVEMon.Common.Extensions;
+using EVEMon.Common.Services;
+using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common.Helpers
 {
@@ -43,21 +44,21 @@ namespace EVEMon.Common.Helpers
                                "You may have insufficient rights or a synchronization may be occuring. Choosing to " +
                                (allowIgnore ? "abort" : "cancel") + " will make EVEMon quit.";
 
-                    DialogResult result = MessageBox.Show(message, @"Failed to read a file",
+                    DialogChoice result = AppServices.DialogService.ShowMessage(message, @"Failed to read a file",
                         allowIgnore
-                            ? MessageBoxButtons.AbortRetryIgnore
-                            : MessageBoxButtons.RetryCancel,
-                        MessageBoxIcon.Error);
+                            ? DialogButtons.AbortRetryIgnore
+                            : DialogButtons.RetryCancel,
+                        DialogIcon.Error);
 
                     // On abort, we quit the application
-                    if (result == DialogResult.Abort || result == DialogResult.Cancel)
+                    if (result == DialogChoice.Abort || result == DialogChoice.Cancel)
                     {
-                        Application.Exit();
+                        AppServices.ApplicationLifecycle.Exit();
                         return null;
                     }
 
                     // The loop will begin again if the users asked to retry
-                    if (result == DialogResult.Ignore)
+                    if (result == DialogChoice.Ignore)
                         return null;
                 }
             }
@@ -140,18 +141,18 @@ namespace EVEMon.Common.Helpers
                         "insufficient rights or a synchronization may be active. " +
                         "Choosing to abort will make EVEMon quit.";
 
-                    DialogResult result = MessageBox.Show(message, @"Failed to write over a file",
-                        MessageBoxButtons.AbortRetryIgnore,
-                        MessageBoxIcon.Error);
+                    DialogChoice result = AppServices.DialogService.ShowMessage(message, @"Failed to write over a file",
+                        DialogButtons.AbortRetryIgnore,
+                        DialogIcon.Error);
 
                     switch (result)
                     {
                         // On abort, we quit the application
-                        case DialogResult.Abort:
-                            Application.Exit();
+                        case DialogChoice.Abort:
+                            AppServices.ApplicationLifecycle.Exit();
                             return;
                         // The loop will begin again if the users asked to retry
-                        case DialogResult.Ignore:
+                        case DialogChoice.Ignore:
                             return;
                     }
                 }
@@ -228,12 +229,13 @@ namespace EVEMon.Common.Helpers
                                "you will be prompted again.";
 
                     // Display the message box
-                    DialogResult result = MessageBox.Show(message, @"Allow EVEMon to make its files writable",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Error);
+                    DialogChoice result = AppServices.DialogService.ShowMessage(message,
+                        @"Allow EVEMon to make its files writable",
+                        DialogButtons.YesNo,
+                        DialogIcon.Error);
 
                     // User denied us the permission to make files writeable
-                    s_removeReadOnlyAttributes = result != DialogResult.No;
+                    s_removeReadOnlyAttributes = result != DialogChoice.No;
 
                     // Returns the permission granted by the user
                     return s_removeReadOnlyAttributes.Value;

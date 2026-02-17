@@ -248,9 +248,10 @@ namespace EVEMon.CharacterMonitoring
             if (Settings.UI.SafeForWork)
                 return;
 
-            g.DrawImage(loyalty.CorporationImage, new Rectangle(e.Bounds.Left + PadLeft / 2,
-                LoyaltyDetailHeight / 2 - loyalty.CorporationImage.Height / 2 + e.Bounds.Top,
-                loyalty.CorporationImage.Width, loyalty.CorporationImage.Height));
+            Image corpImage = (Image)loyalty.CorporationImage!;
+            g.DrawImage(corpImage, new Rectangle(e.Bounds.Left + PadLeft / 2,
+                LoyaltyDetailHeight / 2 - corpImage.Height / 2 + e.Bounds.Top,
+                corpImage.Width, corpImage.Height));
         }
 
         /// <summary>

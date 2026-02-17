@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EVEMon.Common.Attributes;
 using EVEMon.Common.Collections.Global;
 using CommonEvents = EVEMon.Common.Events;
@@ -378,13 +377,14 @@ namespace EVEMon.Common
                                  "You may have insufficient rights or a synchronization may be taking place.\n\n" +
                                  $"The message was :{Environment.NewLine}{exc.Message}";
 
-                    DialogResult result = MessageBox.Show(msg, @"EVEMon Error", MessageBoxButtons.RetryCancel,
-                        MessageBoxIcon.Error);
+                    var result = AppServices.DialogService.ShowMessage(msg, @"EVEMon Error",
+                        Core.Enumerations.DialogButtons.RetryCancel,
+                        Core.Enumerations.DialogIcon.Error);
 
-                    if (result != DialogResult.Cancel)
+                    if (result != Core.Enumerations.DialogChoice.Cancel)
                         continue;
 
-                    Application.Exit();
+                    AppServices.ApplicationLifecycle.Exit();
                     return;
                 }
             }
@@ -401,7 +401,7 @@ namespace EVEMon.Common
                 string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EVEMon");
 
                 // If settings.xml exists in the app's directory, we use this one
-                EVEMonDataDir = Path.GetDirectoryName(Application.ExecutablePath) ?? appDataPath;
+                EVEMonDataDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                 // Else, we use %APPDATA%\EVEMon
                 if (!File.Exists(SettingsFileNameFullPath))

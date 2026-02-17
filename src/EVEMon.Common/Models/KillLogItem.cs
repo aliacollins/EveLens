@@ -25,7 +25,7 @@ namespace EVEMon.Common.Models
 
         private readonly List<KillLogItem> m_items = new List<KillLogItem>();
         private readonly int m_typeID;
-        private Image m_image;
+        private object? m_image;
 
         #endregion
 
@@ -131,7 +131,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the victim image.
         /// </summary>
-        public Image ItemImage
+        public object? ItemImage
         {
             get
             {
@@ -243,7 +243,7 @@ namespace EVEMon.Common.Models
         private async Task GetItemImageAsync()
         {
             Uri uri = ImageHelper.GetTypeImageURL(m_typeID);
-            Image img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false) as Image;
+            object? img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false);
             if (img != null) {
                 m_image = img;
                 // Notify the subscriber that we got the image
@@ -255,7 +255,7 @@ namespace EVEMon.Common.Models
         /// Gets the default image.
         /// </summary>
         /// <returns></returns>
-        private static Bitmap GetDefaultImage() => new Bitmap(24, 24);
+        private static object? GetDefaultImage() => new Bitmap(24, 24);
 
         #endregion
     }

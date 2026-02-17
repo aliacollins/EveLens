@@ -13,7 +13,9 @@ using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common.Helpers
 {
@@ -33,43 +35,41 @@ namespace EVEMon.Common.Helpers
             Character character = (Character)plans.First().Character;
 
             // Prompt the user to pick a file name
-            using (SaveFileDialog sfdSave = new SaveFileDialog())
+            string? filePath = AppServices.DialogService.ShowSaveDialog(
+                @"Save to File",
+                @"EVEMon Plans Backup Format (*.epb)|*.epb",
+                $"{character.Name} - Plans Backup");
+
+            if (filePath == null)
+                return;
+
+            try
             {
-                sfdSave.FileName = $"{character.Name} - Plans Backup";
-                sfdSave.Title = @"Save to File";
-                sfdSave.Filter = @"EVEMon Plans Backup Format (*.epb)|*.epb";
-                sfdSave.FilterIndex = (int)PlanFormat.Emp;
+                string content = PlanIOHelper.ExportAsXML(plans);
 
-                if (sfdSave.ShowDialog() == DialogResult.Cancel)
-                    return;
-
-                try
-                {
-                    string content = PlanIOHelper.ExportAsXML(plans);
-
-                    // Moves to the final file
-                    await FileHelper.OverwriteOrWarnTheUserAsync(
-                        sfdSave.FileName,
-                        async fs =>
+                // Moves to the final file
+                await FileHelper.OverwriteOrWarnTheUserAsync(
+                    filePath,
+                    async fs =>
+                        {
+                            // Emp is actually compressed xml
+                            Stream stream = new GZipStream(fs, CompressionMode.Compress);
+                            using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
                             {
-                                // Emp is actually compressed xml
-                                Stream stream = new GZipStream(fs, CompressionMode.Compress);
-                                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
-                                {
-                                    await writer.WriteAsync(content);
-                                    await writer.FlushAsync();
-                                    await stream.FlushAsync();
-                                    await fs.FlushAsync();
-                                }
-                                return true;
-                            });
-                }
-                catch (IOException err)
-                {
-                    ExceptionHandler.LogException(err, false);
-                    MessageBox.Show($"There was an error writing out the file:\n\n{err.Message}",
-                                    @"Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                                await writer.WriteAsync(content);
+                                await writer.FlushAsync();
+                                await stream.FlushAsync();
+                                await fs.FlushAsync();
+                            }
+                            return true;
+                        });
+            }
+            catch (IOException err)
+            {
+                ExceptionHandler.LogException(err, false);
+                AppServices.DialogService.ShowMessage(
+                    $"There was an error writing out the file:\n\n{err.Message}",
+                    @"Save Failed", DialogButtons.OK, DialogIcon.Error);
             }
         }
 
@@ -140,67 +140,71 @@ namespace EVEMon.Common.Helpers
             }
 
             // Prompt the user to pick a file name
-            using (SaveFileDialog sfdSave = new SaveFileDialog())
+            string? filePath = AppServices.DialogService.ShowSaveDialog(
+                @"Save to File",
+                @"EVEMon Plan Format (*.emp)|*.emp|XML  Format (*.xml)|*.xml|Text Format (*.txt)|*.txt",
+                planSaveName);
+
+            if (filePath == null)
+                return;
+
+            // Serialize
+            try
             {
-                sfdSave.FileName = planSaveName;
-                sfdSave.Title = @"Save to File";
-                sfdSave.Filter =
-                    @"EVEMon Plan Format (*.emp)|*.emp|XML  Format (*.xml)|*.xml|Text Format (*.txt)|*.txt";
-                sfdSave.FilterIndex = (int)PlanFormat.Emp;
-
-                if (sfdSave.ShowDialog() == DialogResult.Cancel)
-                    return;
-
-                // Serialize
-                try
+                // Determine format from file extension
+                string ext = Path.GetExtension(filePath).ToLowerInvariant();
+                PlanFormat format = ext switch
                 {
-                    PlanFormat format = (PlanFormat)sfdSave.FilterIndex;
+                    ".xml" => PlanFormat.Xml,
+                    ".txt" => PlanFormat.Text,
+                    _ => PlanFormat.Emp, // .emp or any other
+                };
 
-                    string content;
-                    switch (format)
-                    {
-                        case PlanFormat.Emp:
-                        case PlanFormat.Xml:
-                            content = PlanIOHelper.ExportAsXML(plan);
-                            break;
-                        case PlanFormat.Text:
-                            // Prompts the user and returns if canceled
-                            PlanExportSettings settings = PromptUserForPlanExportSettings(plan);
-                            if (settings == null)
-                                return;
+                string content;
+                switch (format)
+                {
+                    case PlanFormat.Emp:
+                    case PlanFormat.Xml:
+                        content = PlanIOHelper.ExportAsXML(plan);
+                        break;
+                    case PlanFormat.Text:
+                        // Prompts the user and returns if canceled
+                        PlanExportSettings settings = PromptUserForPlanExportSettings(plan);
+                        if (settings == null)
+                            return;
 
-                            content = PlanIOHelper.ExportAsText(plan, settings);
-                            break;
-                        default:
-                            throw new NotImplementedException();
-                    }
+                        content = PlanIOHelper.ExportAsText(plan, settings);
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
 
-                    // Moves to the final file
-                    await FileHelper.OverwriteOrWarnTheUserAsync(
-                        sfdSave.FileName,
-                        async fs =>
+                // Moves to the final file
+                await FileHelper.OverwriteOrWarnTheUserAsync(
+                    filePath,
+                    async fs =>
+                        {
+                            Stream stream = fs;
+                            // Emp is actually compressed text
+                            if (format == PlanFormat.Emp)
+                                stream = new GZipStream(fs, CompressionMode.Compress);
+
+                            using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
                             {
-                                Stream stream = fs;
-                                // Emp is actually compressed text
-                                if (format == PlanFormat.Emp)
-                                    stream = new GZipStream(fs, CompressionMode.Compress);
-
-                                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8))
-                                {
-                                    await writer.WriteAsync(content);
-                                    await writer.FlushAsync();
-                                    await stream.FlushAsync();
-                                    await fs.FlushAsync();
-                                }
-                                return true;
-                            });
-                }
-                catch (IOException err)
-                {
-                    ExceptionHandler.LogException(err, true);
-                    MessageBox.Show($"There was an error writing out the file:\n\n{err.Message}",
-                                    @"Save Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                                await writer.WriteAsync(content);
+                                await writer.FlushAsync();
+                                await stream.FlushAsync();
+                                await fs.FlushAsync();
+                            }
+                            return true;
+                        });
+            }
+            catch (IOException err)
+            {
+                ExceptionHandler.LogException(err, true);
+                AppServices.DialogService.ShowMessage(
+                    $"There was an error writing out the file:\n\n{err.Message}",
+                    @"Save Failed", DialogButtons.OK, DialogIcon.Error);
             }
         }
 
@@ -245,68 +249,73 @@ namespace EVEMon.Common.Helpers
 
             bool isAfterPlanExport = plan != null;
 
-            // Open the dialog box
-            using (SaveFileDialog characterSaveDialog = new SaveFileDialog())
+            string filter = @"Text Format|*.txt|CHR Format (EFT)|*.chr|HTML Format|*.html|XML Format (EVEMon)|*.xml";
+            if (!isAfterPlanExport)
+                filter += @"|XML Format (CCP API)|*.xml|PNG Image|*.png";
+
+            string defaultName = $"{character.Name}{(isAfterPlanExport ? $" (after plan {plan.Name})" : string.Empty)}";
+
+            string? filePath = AppServices.DialogService.ShowSaveDialog(
+                $"Save {(isAfterPlanExport ? "After Plan " : string.Empty)}Character Info",
+                filter,
+                defaultName);
+
+            if (filePath == null)
+                return;
+
+            // Serialize
+            try
             {
-                characterSaveDialog.Title = $"Save {(isAfterPlanExport ? "After Plan " : string.Empty)}Character Info";
-                characterSaveDialog.Filter =
-                    @"Text Format|*.txt|CHR Format (EFT)|*.chr|HTML Format|*.html|XML Format (EVEMon)|*.xml";
-
-                if (!isAfterPlanExport)
-                    characterSaveDialog.Filter += @"|XML Format (CCP API)|*.xml|PNG Image|*.png";
-
-                characterSaveDialog.FileName =
-                    $"{character.Name}{(isAfterPlanExport ? $" (after plan {plan.Name})" : string.Empty)}";
-
-                characterSaveDialog.FilterIndex = isAfterPlanExport
-                                                      ? (int)CharacterSaveFormat.EVEMonXML
-                                                      : (int)CharacterSaveFormat.CCPXML;
-
-                if (characterSaveDialog.ShowDialog() == DialogResult.Cancel)
-                    return;
-
-                // Serialize
-                try
+                // Determine format from file extension
+                string ext = Path.GetExtension(filePath).ToLowerInvariant();
+                CharacterSaveFormat format = ext switch
                 {
-                    CharacterSaveFormat format = (CharacterSaveFormat)characterSaveDialog.FilterIndex;
+                    ".txt" => CharacterSaveFormat.Text,
+                    ".chr" => CharacterSaveFormat.EFTCHR,
+                    ".html" => CharacterSaveFormat.HTML,
+                    ".png" => CharacterSaveFormat.PNG,
+                    ".xml" => isAfterPlanExport ? CharacterSaveFormat.EVEMonXML : CharacterSaveFormat.CCPXML,
+                    _ => CharacterSaveFormat.Text,
+                };
 
-                    // Save character with the chosen format to our file
-                    await FileHelper.OverwriteOrWarnTheUserAsync(
-                        characterSaveDialog.FileName,
-                        async fs =>
+                // Save character with the chosen format to our file
+                await FileHelper.OverwriteOrWarnTheUserAsync(
+                    filePath,
+                    async fs =>
+                        {
+                            if (format == CharacterSaveFormat.PNG)
                             {
-                                if (format == CharacterSaveFormat.PNG)
-                                {
-                                    Image image = CharacterMonitorScreenshot;
-                                    image.Save(fs, ImageFormat.Png);
-                                    await fs.FlushAsync();
-                                    return true;
-                                }
-
-                                string content = CharacterExporter.Export(format, character, plan);
-                                if ((format == CharacterSaveFormat.CCPXML) && string.IsNullOrEmpty(content))
-                                {
-                                    MessageBox.Show(
-                                        @"This character has never been downloaded from CCP, cannot find it in the XML cache.",
-                                        @"Cannot export the character", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                    return false;
-                                }
-
-                                using (StreamWriter sw = new StreamWriter(fs))
-                                {
-                                    await sw.WriteAsync(content);
-                                    await sw.FlushAsync();
-                                    await fs.FlushAsync();
-                                }
+                                Image image = CharacterMonitorScreenshot;
+                                image.Save(fs, ImageFormat.Png);
+                                await fs.FlushAsync();
                                 return true;
-                            });
-                }
-                    // Handle exception
-                catch (IOException exc)
-                {
-                    ExceptionHandler.LogException(exc, true);
-                    MessageBox.Show(@"A problem occurred during exportation. The operation has not been completed.");
-                }
+                            }
+
+                            string content = CharacterExporter.Export(format, character, plan);
+                            if ((format == CharacterSaveFormat.CCPXML) && string.IsNullOrEmpty(content))
+                            {
+                                AppServices.DialogService.ShowMessage(
+                                    @"This character has never been downloaded from CCP, cannot find it in the XML cache.",
+                                    @"Cannot export the character", DialogButtons.OK, DialogIcon.Warning);
+                                return false;
+                            }
+
+                            using (StreamWriter sw = new StreamWriter(fs))
+                            {
+                                await sw.WriteAsync(content);
+                                await sw.FlushAsync();
+                                await fs.FlushAsync();
+                            }
+                            return true;
+                        });
+            }
+                // Handle exception
+            catch (IOException exc)
+            {
+                ExceptionHandler.LogException(exc, true);
+                AppServices.DialogService.ShowMessage(
+                    @"A problem occurred during exportation. The operation has not been completed.",
+                    @"Export Failed", DialogButtons.OK, DialogIcon.Error);
             }
         }
 
@@ -345,9 +354,10 @@ namespace EVEMon.Common.Helpers
         /// <returns></returns>
         internal static object ShowNoSupportMessage()
         {
-            MessageBox.Show($"The file is probably from an EVEMon version prior to 1.3.0.{Environment.NewLine}" +
-                            @"This type of file is no longer supported.",
-                            @"File type not supported", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            AppServices.DialogService.ShowMessage(
+                $"The file is probably from an EVEMon version prior to 1.3.0.{Environment.NewLine}" +
+                @"This type of file is no longer supported.",
+                @"File type not supported", DialogButtons.OK, DialogIcon.Information);
 
             return null;
         }

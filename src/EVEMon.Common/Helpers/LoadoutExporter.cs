@@ -1,13 +1,13 @@
 ﻿using EVEMon.Common.Data;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Interfaces;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 
 namespace EVEMon.Common.Helpers
 {
@@ -34,8 +34,7 @@ namespace EVEMon.Common.Helpers
             // Copy to clipboard
             try
             {
-                Clipboard.Clear();
-                Clipboard.SetText(exportText);
+                AppServices.ClipboardService.SetText(exportText);
             }
             catch (ExternalException ex)
             {

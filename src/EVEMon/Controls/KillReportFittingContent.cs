@@ -329,7 +329,7 @@ namespace EVEMon.Controls
             if (Settings.UI.SafeForWork)
                 return;
 
-            g.DrawImage(item.ItemImage, new Rectangle(e.Bounds.Left + inContainerPad + PadLeft * 2,
+            g.DrawImage((Image)item.ItemImage!, new Rectangle(e.Bounds.Left + inContainerPad + PadLeft * 2,
                 e.Bounds.Top + (e.Bounds.Height - ItemImageSize) / 2,
                 ItemImageSize, ItemImageSize));
         }

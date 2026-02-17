@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 using System.Xml;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Enumerations;
@@ -14,7 +13,9 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Comparers;
 using EVEMon.Common.Serialization.Exportation;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common.Helpers
 {
@@ -357,17 +358,23 @@ namespace EVEMon.Common.Helpers
             }
             catch (UnauthorizedAccessException exc)
             {
-                MessageBox.Show(@"Couldn't read the given file, access was denied. Maybe the directory was under synchronization.");
+                AppServices.DialogService.ShowMessage(
+                    @"Couldn't read the given file, access was denied. Maybe the directory was under synchronization.",
+                    @"Import Error", DialogButtons.OK, DialogIcon.Error);
                 ExceptionHandler.LogException(exc, true);
             }
             catch (InvalidDataException exc)
             {
-                MessageBox.Show(@"The file seems to be corrupted, wrong gzip format.");
+                AppServices.DialogService.ShowMessage(
+                    @"The file seems to be corrupted, wrong gzip format.",
+                    @"Import Error", DialogButtons.OK, DialogIcon.Error);
                 ExceptionHandler.LogException(exc, true);
             }
 
             if (result == null && revision >= 0)
-                MessageBox.Show(@"There was a problem with the format of the document.");
+                AppServices.DialogService.ShowMessage(
+                    @"There was a problem with the format of the document.",
+                    @"Import Error", DialogButtons.OK, DialogIcon.Error);
 
             return result;
         }
@@ -385,7 +392,7 @@ namespace EVEMon.Common.Helpers
             OutputPlans result = null;
             try
             {
-                // Is the format compressed ? 
+                // Is the format compressed ?
                 if (filename.EndsWith(".epb", StringComparison.OrdinalIgnoreCase))
                 {
                     string tempFile = Util.UncompressToTempFile(filename);
@@ -407,19 +414,25 @@ namespace EVEMon.Common.Helpers
             }
             catch (UnauthorizedAccessException exc)
             {
-                MessageBox.Show(@"Couldn't read the given file, access was denied. Maybe the directory was under synchronization.");
+                AppServices.DialogService.ShowMessage(
+                    @"Couldn't read the given file, access was denied. Maybe the directory was under synchronization.",
+                    @"Import Error", DialogButtons.OK, DialogIcon.Error);
                 ExceptionHandler.LogException(exc, true);
             }
             catch (InvalidDataException exc)
             {
-                MessageBox.Show(@"The file seems to be corrupted, wrong gzip format.");
+                AppServices.DialogService.ShowMessage(
+                    @"The file seems to be corrupted, wrong gzip format.",
+                    @"Import Error", DialogButtons.OK, DialogIcon.Error);
                 ExceptionHandler.LogException(exc, true);
             }
 
             if (result != null)
                 return result.Plans;
 
-            MessageBox.Show(@"There was a problem with the format of the document.");
+            AppServices.DialogService.ShowMessage(
+                @"There was a problem with the format of the document.",
+                @"Import Error", DialogButtons.OK, DialogIcon.Error);
             return null;
         }
 
@@ -437,17 +450,19 @@ namespace EVEMon.Common.Helpers
 
             if (!ccpCharacter.SkillQueue.Any())
             {
-                MessageBox.Show(@"There are no skills in the characters' queue.",
+                AppServices.DialogService.ShowMessage(
+                    @"There are no skills in the characters' queue.",
                     @"Plan Creation Failure",
-                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    DialogButtons.OK, DialogIcon.Warning);
                 return false;
             }
 
             if (ccpCharacter.Plans.Any(x => x.Name == newPlan.Name))
             {
-                MessageBox.Show(@"There is already a plan with the same name in the characters' Plans.",
+                AppServices.DialogService.ShowMessage(
+                    @"There is already a plan with the same name in the characters' Plans.",
                     @"Plan Creation Failure",
-                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    DialogButtons.OK, DialogIcon.Warning);
                 return false;
             }
 
@@ -460,9 +475,10 @@ namespace EVEMon.Common.Helpers
             // Check if there is already a plan with the same skills
             if (ccpCharacter.Plans.Any(plan => !newPlan.Except(plan, new PlanEntryComparer()).Any()))
             {
-                MessageBox.Show(@"There is already a plan with the same skills in the characters' Plans.",
+                AppServices.DialogService.ShowMessage(
+                    @"There is already a plan with the same skills in the characters' Plans.",
                     @"Plan Creation Failure",
-                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    DialogButtons.OK, DialogIcon.Warning);
                 return false;
             }
 

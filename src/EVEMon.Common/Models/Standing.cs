@@ -20,7 +20,7 @@ namespace EVEMon.Common.Models
         private readonly long m_entityID;
         private readonly Character m_character;
         private string m_entityName;
-        private Image m_image;
+        private object? m_image;
 
         #endregion
 
@@ -70,7 +70,7 @@ namespace EVEMon.Common.Models
         /// Gets or sets the entity image.
         /// </summary>
         /// <value>The entity image.</value>
-        public Image EntityImage
+        public object? EntityImage
         {
             get
             {
@@ -120,7 +120,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         /// <param name="standing">The standing.</param>
         /// <returns></returns>
-        public static Image GetStandingImage(int standing)
+        public static object? GetStandingImage(int standing)
         {
             if (standing <= -5.5)
                 return Properties.Resources.TerribleStanding;
@@ -144,7 +144,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         private async Task GetImageAsync()
         {
-            Image img = await ServiceLocator.ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false) as Image;
+            object? img = await ServiceLocator.ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false);
             if (img != null)
             {
                 m_image = img;
@@ -158,7 +158,7 @@ namespace EVEMon.Common.Models
         /// Gets the default image.
         /// </summary>
         /// <returns></returns>
-        private Image GetDefaultImage()
+        private object? GetDefaultImage()
         {
             switch (Group)
             {

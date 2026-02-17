@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Forms;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
+using EVEMon.Common.Services;
+using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common.Helpers
 {
@@ -22,21 +23,25 @@ namespace EVEMon.Common.Helpers
                 string killLogInfoText = ExportKillLogInfo(killLog);
                 if (string.IsNullOrEmpty(killLogInfoText))
                 {
-                    MessageBox.Show(@"No kill info was available. Nothing has been copied to the clipboard.",
-                        @"Copy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppServices.DialogService.ShowMessage(
+                        @"No kill info was available. Nothing has been copied to the clipboard.",
+                        @"Copy", DialogButtons.OK, DialogIcon.Error);
                     return;
                 }
 
-                Clipboard.SetText(killLogInfoText, TextDataFormat.Text);
-                MessageBox.Show(@"The kill info have been copied to the clipboard.",
-                    @"Copy", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                AppServices.ClipboardService.SetText(killLogInfoText);
+                AppServices.DialogService.ShowMessage(
+                    @"The kill info have been copied to the clipboard.",
+                    @"Copy", DialogButtons.OK, DialogIcon.Information);
             }
             catch (ExternalException ex)
             {
                 // Occurs when another process is using the clipboard
                 ExceptionHandler.LogException(ex, true);
-                MessageBox.Show(@"Couldn't complete the operation, the clipboard is being used by another process. " +
-                                @"Wait a few moments and try again.");
+                AppServices.DialogService.ShowMessage(
+                    @"Couldn't complete the operation, the clipboard is being used by another process. " +
+                    @"Wait a few moments and try again.",
+                    @"Copy", DialogButtons.OK, DialogIcon.Error);
             }
         }
 

@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Data;
 using EVEMon.Common.Extensions;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Helpers
 {
@@ -27,10 +28,11 @@ namespace EVEMon.Common.Helpers
         {
             listViewToExport.ThrowIfNull(nameof(listViewToExport));
 
-            using (var saveFileDialog = new SaveFileDialog())
             {
-                saveFileDialog.Filter = @"Comma Delimited Files (Semicolon) (*.csv)|*.csv";
-                if (saveFileDialog.ShowDialog() != DialogResult.OK)
+                string? saveFileName = AppServices.DialogService.ShowSaveDialog(
+                    @"Export to CSV",
+                    @"Comma Delimited Files (Semicolon) (*.csv)|*.csv");
+                if (saveFileName == null)
                     return;
 
                 var sb = new StringBuilder(8192);
@@ -93,7 +95,7 @@ namespace EVEMon.Common.Helpers
                     sb.AppendLine();
                 }
 
-                File.WriteAllText(saveFileDialog.FileName, sb.ToString());
+                File.WriteAllText(saveFileName, sb.ToString());
             }
         }
 

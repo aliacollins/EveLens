@@ -235,6 +235,7 @@ namespace EVEMon.CharacterMonitoring
         private void DrawItem(Standing standing, DrawItemEventArgs e)
         {
             Graphics g = e.Graphics;
+            Image entityImage = (Image)standing.EntityImage!;
 
             // Draw background
             g.FillRectangle(e.Index % 2 == 0 ? Brushes.White : Brushes.LightGray, e.Bounds);
@@ -262,7 +263,7 @@ namespace EVEMon.CharacterMonitoring
             // Draw texts
             TextRenderer.DrawText(g, standingText, m_standingsBoldFont,
                                   new Rectangle(
-                                      e.Bounds.Left + standing.EntityImage.Width + 4,
+                                      e.Bounds.Left + entityImage.Width + 4,
                                       e.Bounds.Top + (standingsDiffer
                                                           ? PadTop
                                                           : (e.Bounds.Height - standingTextSize.Height) / 2),
@@ -271,7 +272,7 @@ namespace EVEMon.CharacterMonitoring
 
             TextRenderer.DrawText(g, standingStatusText, m_standingsBoldFont,
                                   new Rectangle(
-                                      e.Bounds.Left + standing.EntityImage.Width + 4 + standingTextSize.Width + PadRight,
+                                      e.Bounds.Left + entityImage.Width + 4 + standingTextSize.Width + PadRight,
                                       e.Bounds.Top + (standingsDiffer
                                                           ? PadTop
                                                           : (e.Bounds.Height - standingStatusTextSize.Height) / 2),
@@ -282,7 +283,7 @@ namespace EVEMon.CharacterMonitoring
             {
                 TextRenderer.DrawText(g, standingsDetailsText, m_standingsFont,
                                       new Rectangle(
-                                          e.Bounds.Left + standing.EntityImage.Width + 4,
+                                          e.Bounds.Left + entityImage.Width + 4,
                                           e.Bounds.Top + PadTop + standingTextSize.Height,
                                           standingsDetailsTextSize.Width + PadLeft,
                                           standingsDetailsTextSize.Height), Color.Black);
@@ -292,10 +293,10 @@ namespace EVEMon.CharacterMonitoring
             if (Settings.UI.SafeForWork)
                 return;
 
-            g.DrawImage(standing.EntityImage,
+            g.DrawImage(entityImage,
                         new Rectangle(e.Bounds.Left + PadLeft / 2,
-                                      StandingDetailHeight / 2 - standing.EntityImage.Height / 2 + e.Bounds.Top,
-                                      standing.EntityImage.Width, standing.EntityImage.Height));
+                                      StandingDetailHeight / 2 - entityImage.Height / 2 + e.Bounds.Top,
+                                      entityImage.Width, entityImage.Height));
         }
 
         /// <summary>

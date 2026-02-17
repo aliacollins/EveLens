@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
-using System.Windows.Forms;
 using System.Xml.Serialization;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Extensions;
@@ -16,6 +15,7 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Services;
 using EVEMon.Common.Threading;
+using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common.CloudStorageServices
 {
@@ -418,8 +418,9 @@ namespace EVEMon.Common.CloudStorageServices
             // Quit if user is not authenticated
             if (!IsAuthenticated && !CheckAPIAuthIsValid())
             {
-                MessageBox.Show($"The {Name} API credentials could not be authenticated.", $"{Name} API Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AppServices.DialogService.ShowMessage(
+                    $"The {Name} API credentials could not be authenticated.",
+                    $"{Name} API Error", DialogButtons.OK, DialogIcon.Error);
 
                 return false;
             }
@@ -438,15 +439,16 @@ namespace EVEMon.Common.CloudStorageServices
                     return true;
                 }
 
-                DialogResult dialogResult = MessageBox.Show(result.Error?.ErrorMessage, $"{Name} API Error",
-                    MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Error);
+                DialogChoice dialogChoice = AppServices.DialogService.ShowMessage(
+                    result.Error?.ErrorMessage ?? "Upload failed",
+                    $"{Name} API Error", DialogButtons.AbortRetryIgnore, DialogIcon.Error);
 
-                switch (dialogResult)
+                switch (dialogChoice)
                 {
-                    case DialogResult.Abort:
+                    case DialogChoice.Abort:
                         AppServices.TraceService?.Trace("Failed and Aborted");
                         return false;
-                    case DialogResult.Retry:
+                    case DialogChoice.Retry:
                         continue;
                 }
 
@@ -466,8 +468,9 @@ namespace EVEMon.Common.CloudStorageServices
 
             if (!IsAuthenticated && !CheckAPIAuthIsValid())
             {
-                MessageBox.Show($"The {Name} API credentials could not be authenticated.",
-                    $"{Name} API Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                AppServices.DialogService.ShowMessage(
+                    $"The {Name} API credentials could not be authenticated.",
+                    $"{Name} API Error", DialogButtons.OK, DialogIcon.Warning);
 
                 return null;
             }
@@ -481,8 +484,9 @@ namespace EVEMon.Common.CloudStorageServices
             {
                 if (result.HasError)
                 {
-                    MessageBox.Show($"File could not be downloaded.\n\nThe error was:\n{result.Error?.ErrorMessage}",
-                        $"{Name} API Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppServices.DialogService.ShowMessage(
+                        $"File could not be downloaded.\n\nThe error was:\n{result.Error?.ErrorMessage}",
+                        $"{Name} API Error", DialogButtons.OK, DialogIcon.Error);
                 }
                 else
                 {
@@ -588,26 +592,17 @@ namespace EVEMon.Common.CloudStorageServices
         {
             result.ThrowIfNull(nameof(result));
 
-            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
-            {
-                saveFileDialog.Title = @"EVEMon Settings Backup File Save";
-                saveFileDialog.DefaultExt = "bak";
-                saveFileDialog.Filter = @"EVEMon Settings Backup Files (*.bak)|*.bak";
-                saveFileDialog.FilterIndex = 1;
-                saveFileDialog.RestoreDirectory = true;
+            string? filePath = AppServices.DialogService.ShowSaveDialog(
+                @"EVEMon Settings Backup File Save",
+                @"EVEMon Settings Backup Files (*.bak)|*.bak",
+                $"{result.FileName}.bak",
+                Environment.GetFolderPath(Environment.SpecialFolder.Personal));
 
-                // Prompts the user for a location
-                saveFileDialog.FileName = $"{result.FileName}.bak";
-                saveFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                DialogResult dialogResult = saveFileDialog.ShowDialog();
+            if (filePath == null)
+                return;
 
-                // Save settings file if OK
-                if (dialogResult != DialogResult.OK)
-                    return;
-
-                // Save the file to destination
-                File.WriteAllText(saveFileDialog.FileName, result.FileContent);
-            }
+            // Save the file to destination
+            File.WriteAllText(filePath, result.FileContent);
         }
 
         /// <summary>

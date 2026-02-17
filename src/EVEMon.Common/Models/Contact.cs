@@ -20,7 +20,7 @@ namespace EVEMon.Common.Models
 
         private readonly long m_contactID;
         private readonly ContactType m_contactType;
-        private Image m_image;
+        private object? m_image;
         private string m_contactName;
 
         #endregion
@@ -87,7 +87,7 @@ namespace EVEMon.Common.Models
         /// <summary>
         /// Gets the entity image.
         /// </summary>
-        public Image EntityImage
+        public object? EntityImage
         {
             get
             {
@@ -110,7 +110,7 @@ namespace EVEMon.Common.Models
         /// </summary>
         private async Task GetImageAsync()
         {
-            Image img = await ServiceLocator.ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false) as Image;
+            object? img = await ServiceLocator.ImageService.GetImageAsync(GetImageUrl()).ConfigureAwait(false);
             if (img != null)
             {
                 m_image = img;
@@ -122,7 +122,7 @@ namespace EVEMon.Common.Models
         /// Gets the default image.
         /// </summary>
         /// <returns></returns>
-        private Image GetDefaultImage()
+        private object? GetDefaultImage()
         {
             switch (m_contactType)
             {

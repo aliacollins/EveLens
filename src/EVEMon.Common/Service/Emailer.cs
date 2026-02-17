@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Core.Enumerations;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -258,38 +258,24 @@ namespace EVEMon.Common.Service
                 if (s_isTestMail)
                 {
                     ShowMessageBox(@"The message sent successfully. Please verify that the message was received.",
-                        @"EVEMon Emailer Success", MessageBoxIcon.Information);
+                        @"EVEMon Emailer Success", DialogIcon.Information);
                 }
             }
             catch (Exception e)
             {
                 AppServices.TraceService?.Trace("An error occurred sending email");
                 ExceptionHandler.LogException(e, true);
-                ShowMessageBox(e.Message, @"EVEMon Emailer Error", MessageBoxIcon.Error);
+                ShowMessageBox(e.Message, @"EVEMon Emailer Error", DialogIcon.Error);
             }
         }
 
         /// <summary>
-        /// Shows a message box on the UI thread.
+        /// Shows a message box on the UI thread via the dispatcher.
         /// </summary>
-        private static void ShowMessageBox(string message, string caption, MessageBoxIcon icon)
+        private static void ShowMessageBox(string message, string caption, DialogIcon icon)
         {
-            if (Application.OpenForms.Count > 0 && Application.OpenForms[0] != null)
-            {
-                var form = Application.OpenForms[0];
-                if (form.InvokeRequired)
-                {
-                    form.Invoke(new Action(() => MessageBox.Show(form, message, caption, MessageBoxButtons.OK, icon)));
-                }
-                else
-                {
-                    MessageBox.Show(form, message, caption, MessageBoxButtons.OK, icon);
-                }
-            }
-            else
-            {
-                MessageBox.Show(message, caption, MessageBoxButtons.OK, icon);
-            }
+            AppServices.Dispatcher.Invoke(() =>
+                AppServices.DialogService.ShowMessage(message, caption, DialogButtons.OK, icon));
         }
     }
 }

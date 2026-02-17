@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Xml.Serialization;
+using EVEMon.Core.Enumerations;
 using EVEMon.Common.Collections;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Enumerations.UISettings;
@@ -259,8 +259,9 @@ namespace EVEMon.Common
                 if (s_settings == null)
                 {
                     AppServices.TraceService?.Trace("Failed to load from imported JSON backup");
-                    MessageBox.Show("Failed to load the imported backup. The backup file may be corrupted.",
-                        Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppServices.DialogService.ShowMessage(
+                        "Failed to load the imported backup. The backup file may be corrupted.",
+                        Caption, DialogButtons.OK, DialogIcon.Error);
                     return;
                 }
 
@@ -280,8 +281,9 @@ namespace EVEMon.Common
                 catch (Exception ex)
                 {
                     AppServices.TraceService?.Trace($"RestoreAsync: Failed to read backup file: {ex.Message}");
-                    MessageBox.Show($"Failed to read the backup file: {ex.Message}",
-                        Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppServices.DialogService.ShowMessage(
+                        $"Failed to read the backup file: {ex.Message}",
+                        Caption, DialogButtons.OK, DialogIcon.Error);
                     return;
                 }
 
@@ -303,10 +305,10 @@ Your skill plans and settings will be restored, but you'll need to re-add your c
 
 Do you want to continue?";
 
-                    DialogResult result = MessageBox.Show(message, "Restore from Different Fork",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    DialogChoice result = AppServices.DialogService.ShowMessage(message, "Restore from Different Fork",
+                        DialogButtons.YesNo, DialogIcon.Warning);
 
-                    if (result != DialogResult.Yes)
+                    if (result != DialogChoice.Yes)
                     {
                         AppServices.TraceService?.Trace("RestoreAsync: User cancelled fork migration restore");
                         return;
@@ -328,8 +330,9 @@ Do you want to continue?";
                 if (s_settings == null)
                 {
                     AppServices.TraceService?.Trace("RestoreAsync: Failed to deserialize backup");
-                    MessageBox.Show("Failed to load the backup file. The file may be corrupted or in an incompatible format.",
-                        Caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppServices.DialogService.ShowMessage(
+                        "Failed to load the backup file. The file may be corrupted or in an incompatible format.",
+                        Caption, DialogButtons.OK, DialogIcon.Error);
                     return;
                 }
 

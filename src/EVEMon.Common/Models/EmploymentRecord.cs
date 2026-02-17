@@ -19,7 +19,7 @@ namespace EVEMon.Common.Models
         private readonly long m_corporationId;
 
         private string m_corporationName;
-        private Image m_image;
+        private object? m_image;
 
         #endregion
 
@@ -81,7 +81,7 @@ namespace EVEMon.Common.Models
         /// Gets the corporation image.
         /// </summary>
         /// <value>The corporation image.</value>
-        public Image CorporationImage
+        public object? CorporationImage
         {
             get
             {
@@ -105,7 +105,7 @@ namespace EVEMon.Common.Models
         private async Task GetImageAsync()
         {
             Uri uri = ImageHelper.GetCorporationImageURL(m_corporationId);
-            Image img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false) as Image;
+            object? img = await ServiceLocator.ImageService.GetImageAsync(uri).ConfigureAwait(false);
             if (img != null)
             {
                 m_image = img;

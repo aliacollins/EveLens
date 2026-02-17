@@ -273,10 +273,11 @@ namespace EVEMon.CharacterMonitoring
             if (Settings.UI.SafeForWork)
                 return;
 
-            g.DrawImage(record.CorporationImage,
+            Image corpImage = (Image)record.CorporationImage!;
+            g.DrawImage(corpImage,
                         new Rectangle(e.Bounds.Left + PadLeft / 2,
-                                      EmploymentRecordDetailHeight / 2 - record.CorporationImage.Height / 2 + e.Bounds.Top,
-                                      record.CorporationImage.Width, record.CorporationImage.Height));
+                                      EmploymentRecordDetailHeight / 2 - corpImage.Height / 2 + e.Bounds.Top,
+                                      corpImage.Width, corpImage.Height));
         }
 
         /// <summary>

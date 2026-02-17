@@ -7,6 +7,12 @@ using EVEMon.Common.Scheduling;
 using EVEMon.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
+// Aliases for new platform-agnostic service interfaces
+using IDialogService = EVEMon.Core.Interfaces.IDialogService;
+using IClipboardService = EVEMon.Core.Interfaces.IClipboardService;
+using IApplicationLifecycle = EVEMon.Core.Interfaces.IApplicationLifecycle;
+using IScreenInfo = EVEMon.Core.Interfaces.IScreenInfo;
+
 namespace EVEMon.Common.Services
 {
     /// <summary>
@@ -48,6 +54,10 @@ namespace EVEMon.Common.Services
         private static Lazy<IEsiScheduler> s_esiScheduler = new(() => new EsiScheduler(
             Dispatcher, EventAggregator, EsiClient,
             LoggerFactory?.CreateLogger<EsiScheduler>()));
+        private static Lazy<IDialogService> s_dialogService = new(() => new WinFormsDialogService());
+        private static Lazy<IClipboardService> s_clipboardService = new(() => new WinFormsClipboardService());
+        private static Lazy<IApplicationLifecycle> s_applicationLifecycle = new(() => new WinFormsApplicationLifecycle());
+        private static Lazy<IScreenInfo> s_screenInfo = new(() => new WinFormsScreenInfo());
 
         /// <summary>
         /// Gets the notification collection.
@@ -101,6 +111,26 @@ namespace EVEMon.Common.Services
         /// Provides TCP JSON-lines streaming and System.Diagnostics.Trace bridging.
         /// </summary>
         public static ILoggerFactory LoggerFactory => s_loggerFactory.Value;
+
+        /// <summary>
+        /// Gets the dialog service for platform-agnostic message boxes and file dialogs.
+        /// </summary>
+        public static IDialogService DialogService => s_dialogService.Value;
+
+        /// <summary>
+        /// Gets the clipboard service for platform-agnostic clipboard access.
+        /// </summary>
+        public static IClipboardService ClipboardService => s_clipboardService.Value;
+
+        /// <summary>
+        /// Gets the application lifecycle service for exit/restart.
+        /// </summary>
+        public static IApplicationLifecycle ApplicationLifecycle => s_applicationLifecycle.Value;
+
+        /// <summary>
+        /// Gets the screen information service for display geometry.
+        /// </summary>
+        public static IScreenInfo ScreenInfo => s_screenInfo.Value;
 
         /// <summary>
         /// Gets whether the application is closed.
@@ -274,6 +304,10 @@ namespace EVEMon.Common.Services
         internal static void SetLoggerFactory(ILoggerFactory factory) => s_loggerFactory = new Lazy<ILoggerFactory>(() => factory);
         internal static void SetEVEServer(EveServer server) => s_eveServer = new Lazy<EveServer>(() => server);
         internal static void SetEsiScheduler(IEsiScheduler scheduler) => s_esiScheduler = new Lazy<IEsiScheduler>(() => scheduler);
+        internal static void SetDialogService(IDialogService svc) => s_dialogService = new Lazy<IDialogService>(() => svc);
+        internal static void SetClipboardService(IClipboardService svc) => s_clipboardService = new Lazy<IClipboardService>(() => svc);
+        internal static void SetApplicationLifecycle(IApplicationLifecycle svc) => s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => svc);
+        internal static void SetScreenInfo(IScreenInfo svc) => s_screenInfo = new Lazy<IScreenInfo>(() => svc);
 
         /// <summary>
         /// Bootstraps the application: initializes filesystem paths, trace logging,
@@ -401,6 +435,10 @@ namespace EVEMon.Common.Services
             s_esiScheduler = new Lazy<IEsiScheduler>(() => new EsiScheduler(
                 Dispatcher, EventAggregator, EsiClient,
                 LoggerFactory?.CreateLogger<EsiScheduler>()));
+            s_dialogService = new Lazy<IDialogService>(() => new WinFormsDialogService());
+            s_clipboardService = new Lazy<IClipboardService>(() => new WinFormsClipboardService());
+            s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => new WinFormsApplicationLifecycle());
+            s_screenInfo = new Lazy<IScreenInfo>(() => new WinFormsScreenInfo());
         }
 
         /// <summary>
