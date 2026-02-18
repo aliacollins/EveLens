@@ -32,21 +32,19 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                             PortraitImage.Source = bitmap;
                     }
 
-                    // Location + docked status
+                    // Location + docked status (methods now work without API key check)
                     string location = character.GetLastKnownLocationText();
                     string docked = character.GetLastKnownDockedText();
 
                     LocationText.Text = $"Located in: {location}";
-
-                    if (!string.IsNullOrEmpty(docked))
-                        DockedText.Text = $"Docked at: {docked}";
-                    else
-                        DockedText.Text = "In space";
+                    DockedText.Text = !string.IsNullOrEmpty(docked)
+                        ? $"Docked at: {docked}"
+                        : "In space";
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading portrait: {ex}");
+                System.Diagnostics.Debug.WriteLine($"Error loading header: {ex}");
             }
         }
     }

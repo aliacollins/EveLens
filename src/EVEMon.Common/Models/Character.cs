@@ -653,15 +653,9 @@ namespace EVEMon.Common.Models
             if (LastKnownLocation == null)
                 return EveMonConstants.UnknownText;
 
-            // Show the tooltip on when the user provides api key
-            ESIKey apiKey = Identity.FindAPIKeyWithAccess(ESIAPICharacterMethods.Location);
-            if (apiKey == null)
-                return EveMonConstants.UnknownText;
-
-            // Check if in an NPC station or in an outpost
+            // Data existence proves ESI access — no need to re-check API key bitmask
             var system = (LastKnownStation?.SolarSystem) ?? LastKnownSolarSystem;
 
-            // Not in a solar system ??? Then show default location
             return system != null ? $"{system.FullLocation} ({system.SecurityLevel:N1})"
                 : "Lost in space";
         }
@@ -674,19 +668,11 @@ namespace EVEMon.Common.Models
         {
             if (LastKnownLocation == null)
                 return EveMonConstants.UnknownText;
-            
-            // Show the tooltip on when the user provides api key
-            ESIKey apiKey = Identity.FindAPIKeyWithAccess(ESIAPICharacterMethods.Location);
-            if (apiKey == null)
-                return EveMonConstants.UnknownText;
 
+            // Data existence proves ESI access — no need to re-check API key bitmask
             Station station = LastKnownStation;
-            
-            // Not in any station ?
-            if (station == null)
-                return string.Empty;
 
-            return station.Name;
+            return station?.Name ?? string.Empty;
         }
 
         #endregion
