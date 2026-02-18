@@ -34,11 +34,13 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
         private void LoadData()
         {
-            Character? character = DataContext as Character;
+            Character? character = DataContext as Character
+                ?? (DataContext as ObservableCharacter)?.Character;
             if (character == null)
             {
                 var parent = this.FindAncestorOfType<CharacterMonitorView>();
-                character = parent?.DataContext as Character;
+                character = (parent?.DataContext as ObservableCharacter)?.Character
+                    ?? parent?.DataContext as Character;
             }
             if (character == null) return;
 

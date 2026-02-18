@@ -42,7 +42,7 @@
                 </TextBlock>
 
                 <!-- Balance (prominent) -->
-                <TextBlock Text="{Binding Balance, StringFormat='Balance: {0:N2} ISK'}"
+                <TextBlock Text="{Binding BalanceText}"
                            FontSize="11.5" FontWeight="SemiBold"
                            Foreground="{StaticResource EveSuccessGreenBrush}"
                            Margin="0,2,0,0" />
@@ -60,18 +60,12 @@
                            FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Security Status -->
-                <TextBlock Text="{Binding SecurityStatus, StringFormat='Security Status: {0:N2}'}"
+                <TextBlock Text="{Binding SecurityStatusText}"
                            FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Active Ship -->
-                <TextBlock FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="Active Ship: {0} [{1}]">
-                            <Binding Path="ShipTypeName" />
-                            <Binding Path="ShipName" />
-                        </MultiBinding>
-                    </TextBlock.Text>
-                </TextBlock>
+                <TextBlock Text="{Binding ShipText}"
+                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Location + Docked status -->
                 <TextBlock x:Name="LocationText"
@@ -86,7 +80,7 @@
                 <TextBlock Text="Account Status:" FontSize="11"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            VerticalAlignment="Center" />
-                <TextBlock Text="{Binding EffectiveCharacterStatus}"
+                <TextBlock Text="{Binding AccountStatus}"
                            FontSize="11" FontWeight="SemiBold"
                            Foreground="{StaticResource EveSuccessGreenBrush}"
                            VerticalAlignment="Center" />
@@ -98,22 +92,17 @@
                         HorizontalAlignment="Right"
                         MinWidth="180">
                 <!-- Known Skills -->
-                <TextBlock FontSize="11" HorizontalAlignment="Right"
-                           Foreground="{StaticResource EveTextSecondaryBrush}">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="Known Skills: {0}">
-                            <Binding Path="KnownSkillCount" />
-                        </MultiBinding>
-                    </TextBlock.Text>
-                </TextBlock>
+                <TextBlock Text="{Binding KnownSkillCountText}"
+                           FontSize="11" HorizontalAlignment="Right"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Total SP -->
-                <TextBlock Text="{Binding SkillPoints, StringFormat='Total SP: {0:N0}'}"
+                <TextBlock Text="{Binding SkillPointsText}"
                            FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Free SP -->
-                <TextBlock Text="{Binding FreeSkillPoints, StringFormat='Free SP: {0:N0}'}"
+                <TextBlock Text="{Binding FreeSkillPointsText}"
                            FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
 
@@ -121,7 +110,7 @@
                 <Separator Margin="0,4" Background="{StaticResource EveBorderBrush}" />
 
                 <!-- Bonus Remaps -->
-                <TextBlock Text="{Binding AvailableReMaps, StringFormat='Bonus Remaps: {0}'}"
+                <TextBlock Text="{Binding AvailableRemapsText}"
                            FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
             </StackPanel>

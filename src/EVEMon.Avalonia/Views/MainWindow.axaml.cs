@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Avalonia;
@@ -18,6 +19,7 @@ namespace EVEMon.Avalonia.Views
     public partial class MainWindow : Window
     {
         private readonly MainWindowViewModel _viewModel;
+        private readonly List<ObservableCharacter> _observableCharacters = new();
         private IDisposable? _tickSubscription;
 
         public MainWindow()
@@ -48,13 +50,16 @@ namespace EVEMon.Avalonia.Views
                     FontSize = 12
                 });
 
-                // Character tabs
+                // Character tabs — each gets an ObservableCharacter for INPC binding
                 foreach (Character character in _viewModel.Characters)
                 {
+                    var observable = new ObservableCharacter(character);
+                    _observableCharacters.Add(observable);
+
                     MainTabControl.Items.Add(new TabItem
                     {
                         Header = character.Name,
-                        Content = new CharacterMonitorView { DataContext = character },
+                        Content = new CharacterMonitorView { DataContext = observable },
                         FontSize = 12
                     });
                 }
@@ -348,6 +353,8 @@ namespace EVEMon.Avalonia.Views
         protected override void OnClosed(EventArgs e)
         {
             _tickSubscription?.Dispose();
+            foreach (var oc in _observableCharacters) oc.Dispose();
+            _observableCharacters.Clear();
             _viewModel.Dispose();
             base.OnClosed(e);
         }

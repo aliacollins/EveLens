@@ -1,20 +1,18 @@
 using System;
+using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using EVEMon.Avalonia.Converters;
-using EVEMon.Common.Models;
 using EVEMon.Common.Service;
-using EVEMon.Common.Services;
-using EVEMon.Core.Events;
+using EVEMon.Common.ViewModels;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterMonitorHeader : UserControl
     {
-        private IDisposable? _fetchSub;
-        private Character? _character;
+        private ObservableCharacter? _observable;
 
         public CharacterMonitorHeader()
         {
@@ -26,12 +24,16 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             base.OnDataContextChanged(e);
             try
             {
-                if (DataContext is Character character && character.CharacterID > 0)
+                // Unsubscribe from previous observable
+                if (_observable != null)
+                    _observable.PropertyChanged -= OnObservableChanged;
+
+                if (DataContext is ObservableCharacter oc && oc.CharacterID > 0)
                 {
-                    _character = character;
+                    _observable = oc;
 
                     // Portrait
-                    var image = await ImageService.GetCharacterImageAsync(character.CharacterID);
+                    var image = await ImageService.GetCharacterImageAsync(oc.CharacterID);
                     if (image != null)
                     {
                         var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
@@ -40,17 +42,9 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                             PortraitImage.Source = bitmap;
                     }
 
-                    // Initial display
-                    RefreshInfo();
-
-                    // Subscribe to ALL fetch completions — fires on 304 and 200
-                    _fetchSub?.Dispose();
-                    _fetchSub = AppServices.EventAggregator?.Subscribe<MonitorFetchCompletedEvent>(
-                        evt =>
-                        {
-                            if (evt.CharacterId == _character.CharacterID)
-                                global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshInfo);
-                        });
+                    // Initial display + live updates via INPC
+                    RefreshDisplay(oc);
+                    oc.PropertyChanged += OnObservableChanged;
                 }
             }
             catch (Exception ex)
@@ -59,17 +53,19 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
         }
 
-        private void RefreshInfo()
+        private void OnObservableChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (sender is ObservableCharacter oc)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => RefreshDisplay(oc));
+        }
+
+        private void RefreshDisplay(ObservableCharacter oc)
         {
             try
             {
-                if (_character == null) return;
-
-                LocationText.Text = $"Located in: {_character.GetLastKnownLocationText()}";
-
-                string docked = _character.GetLastKnownDockedText();
-                DockedText.Text = !string.IsNullOrEmpty(docked)
-                    ? $"Docked at: {docked}"
+                LocationText.Text = $"Located in: {oc.LocationText}";
+                DockedText.Text = !string.IsNullOrEmpty(oc.DockedText)
+                    ? $"Docked at: {oc.DockedText}"
                     : "In space";
             }
             catch
@@ -81,8 +77,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
-            _fetchSub?.Dispose();
-            _fetchSub = null;
+            if (_observable != null)
+            {
+                _observable.PropertyChanged -= OnObservableChanged;
+                _observable = null;
+            }
         }
     }
 }
