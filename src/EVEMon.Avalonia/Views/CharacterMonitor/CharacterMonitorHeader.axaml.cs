@@ -4,16 +4,16 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using EVEMon.Avalonia.Converters;
-using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Common.Service;
 using EVEMon.Common.Services;
+using EVEMon.Core.Events;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterMonitorHeader : UserControl
     {
-        private IDisposable? _infoSub;
+        private IDisposable? _fetchSub;
         private Character? _character;
 
         public CharacterMonitorHeader()
@@ -43,12 +43,12 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                     // Initial display
                     RefreshInfo();
 
-                    // Subscribe to info updates (location, ship, etc.)
-                    _infoSub?.Dispose();
-                    _infoSub = AppServices.EventAggregator?.Subscribe<CharacterInfoUpdatedEvent>(
+                    // Subscribe to ALL fetch completions — fires on 304 and 200
+                    _fetchSub?.Dispose();
+                    _fetchSub = AppServices.EventAggregator?.Subscribe<MonitorFetchCompletedEvent>(
                         evt =>
                         {
-                            if (evt.Character == _character)
+                            if (evt.CharacterId == _character.CharacterID)
                                 global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshInfo);
                         });
                 }
@@ -65,10 +65,9 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 if (_character == null) return;
 
-                string location = _character.GetLastKnownLocationText();
-                string docked = _character.GetLastKnownDockedText();
+                LocationText.Text = $"Located in: {_character.GetLastKnownLocationText()}";
 
-                LocationText.Text = $"Located in: {location}";
+                string docked = _character.GetLastKnownDockedText();
                 DockedText.Text = !string.IsNullOrEmpty(docked)
                     ? $"Docked at: {docked}"
                     : "In space";
@@ -82,8 +81,8 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
-            _infoSub?.Dispose();
-            _infoSub = null;
+            _fetchSub?.Dispose();
+            _fetchSub = null;
         }
     }
 }
