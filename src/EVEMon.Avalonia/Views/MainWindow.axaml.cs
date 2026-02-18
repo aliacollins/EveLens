@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -95,10 +96,86 @@ namespace EVEMon.Avalonia.Views
                 EveTimeText.Text = $"EVE Time: {DateTime.UtcNow:HH:mm}";
                 var server = AppServices.EVEServer;
                 ServerStatusText.Text = server?.IsOnline == true ? "Server: Online" : "Server: Offline";
+                UpdateEsiCountdown();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error updating status: {ex}");
+            }
+        }
+
+        private void UpdateEsiCountdown()
+        {
+            try
+            {
+                var now = DateTime.UtcNow;
+                DateTime? soonestUpdate = null;
+                string? soonestMethod = null;
+                int fetchingCount = 0;
+                DateTime lastCompleted = DateTime.MinValue;
+
+                foreach (var character in _viewModel.Characters)
+                {
+                    if (character is not CCPCharacter ccp) continue;
+
+                    foreach (var monitor in ccp.QueryMonitors)
+                    {
+                        // Count actively fetching
+                        if (monitor.Status == Common.Enumerations.QueryStatus.Updating)
+                            fetchingCount++;
+
+                        // Track most recent completion
+                        if (monitor.LastUpdate > lastCompleted && monitor.LastUpdate.Year > 2000)
+                            lastCompleted = monitor.LastUpdate;
+
+                        // Find soonest future update
+                        var next = monitor.NextUpdate;
+                        if (next > now && (soonestUpdate == null || next < soonestUpdate))
+                        {
+                            soonestUpdate = next;
+                            soonestMethod = monitor.Method.ToString();
+                        }
+                    }
+                }
+
+                // Left indicator: what's happening now
+                if (fetchingCount > 0)
+                {
+                    NextUpdateText.Text = $"ESI: {fetchingCount} fetching...";
+                    NextUpdateText.Foreground = global::Avalonia.Media.Brushes.LimeGreen;
+                }
+                else if (soonestUpdate.HasValue)
+                {
+                    var remaining = soonestUpdate.Value - now;
+                    string timeStr = remaining.TotalMinutes >= 1
+                        ? $"{(int)remaining.TotalMinutes}m {remaining.Seconds}s"
+                        : $"{remaining.Seconds}s";
+                    NextUpdateText.Text = $"Next: {soonestMethod} in {timeStr}";
+                    NextUpdateText.Foreground = global::Avalonia.Media.Brushes.Gold;
+                }
+                else
+                {
+                    NextUpdateText.Text = "ESI: idle";
+                    NextUpdateText.Foreground = global::Avalonia.Media.Brushes.Gray;
+                }
+
+                // Right indicator: last refresh time
+                if (lastCompleted > DateTime.MinValue)
+                {
+                    var ago = now - lastCompleted;
+                    string agoStr = ago.TotalSeconds < 60 ? $"{(int)ago.TotalSeconds}s ago"
+                        : ago.TotalMinutes < 60 ? $"{(int)ago.TotalMinutes}m ago"
+                        : $"{(int)ago.TotalHours}h ago";
+                    EsiActivityText.Text = $"Last refresh: {agoStr}";
+                }
+                else
+                {
+                    EsiActivityText.Text = "";
+                }
+            }
+            catch
+            {
+                // Non-critical — don't let countdown crash the app
             }
         }
 

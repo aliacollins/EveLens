@@ -22,16 +22,26 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 if (DataContext is Character character && character.CharacterID > 0)
                 {
+                    // Portrait
                     var image = await ImageService.GetCharacterImageAsync(character.CharacterID);
                     if (image != null)
                     {
                         var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                             image, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                         if (converted is Bitmap bitmap)
-                        {
                             PortraitImage.Source = bitmap;
-                        }
                     }
+
+                    // Location + docked status
+                    string location = character.GetLastKnownLocationText();
+                    string docked = character.GetLastKnownDockedText();
+
+                    LocationText.Text = $"Located in: {location}";
+
+                    if (!string.IsNullOrEmpty(docked))
+                        DockedText.Text = $"Docked at: {docked}";
+                    else
+                        DockedText.Text = "In space";
                 }
             }
             catch (Exception ex)

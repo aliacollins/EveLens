@@ -236,8 +236,17 @@ namespace EVEMon.Common.Scheduling
 
                     case 304: // Not Modified — 1 token cost, no data change
                         job.ConsecutiveNotModified++;
-                        job.CachedUntil = outcome.CachedUntil;
-                        Enqueue(job, outcome.CachedUntil + FetchPolicy.GetJitter(job.Priority));
+                        // ESI 304 responses return stale Expires headers, causing
+                        // CachedUntil to be ~5s from now. Use previous cache duration
+                        // as a floor to avoid re-fetching every 5 seconds.
+                        var nextDue304 = outcome.CachedUntil;
+                        var minWait = DateTime.UtcNow.AddSeconds(30);
+                        if (nextDue304 < minWait && job.CachedUntil > DateTime.UtcNow)
+                            nextDue304 = job.CachedUntil; // Re-use previous cache expiry
+                        else if (nextDue304 < minWait)
+                            nextDue304 = minWait; // Absolute minimum 30s between fetches
+                        job.CachedUntil = nextDue304;
+                        Enqueue(job, nextDue304 + FetchPolicy.GetJitter(job.Priority));
                         break;
 
                     case 401:

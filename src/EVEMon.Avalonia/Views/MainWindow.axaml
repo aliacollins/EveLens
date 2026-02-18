@@ -41,7 +41,10 @@
                 <TextBlock Text="  |  " FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}" />
                 <TextBlock x:Name="ServerStatusText" Text="Server: Unknown" FontSize="11"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
-                <TextBlock DockPanel.Dock="Right" x:Name="NotificationCountText"
+                <TextBlock Text="  |  " FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}" />
+                <TextBlock x:Name="NextUpdateText" Text="" FontSize="11"
+                           Foreground="{StaticResource EveWarningYellowBrush}" />
+                <TextBlock DockPanel.Dock="Right" x:Name="EsiActivityText"
                            Text="" FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
             </DockPanel>
