@@ -1,16 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using EVEMon.Common.Models;
+using EVEMon.Common.ViewModels;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterSkillQueueView : UserControl
     {
+        private SkillQueueViewModel? _viewModel;
+
         public CharacterSkillQueueView()
         {
             InitializeComponent();
@@ -36,25 +38,29 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 var parent = this.FindAncestorOfType<CharacterMonitorView>();
                 character = parent?.DataContext as Character;
             }
-            if (character is not CCPCharacter ccp) return;
+            if (character is not CCPCharacter) return;
 
-            var entries = ccp.SkillQueue
-                .Select(q => new QueueSkillEntry(q))
+            _viewModel ??= new SkillQueueViewModel();
+            _viewModel.Character = character;
+
+            // Wrap VM entries with display entries for AXAML color binding
+            var displayEntries = _viewModel.QueueEntries
+                .Select(e => new QueueDisplayEntry(e))
                 .ToList();
 
-            QueueItems.ItemsSource = entries;
+            QueueItems.ItemsSource = displayEntries;
 
             var status = this.FindControl<TextBlock>("StatusText");
             if (status != null)
             {
-                int training = entries.Count(e => e.IsTraining);
-                status.Text = $"Skills in queue: {entries.Count}" +
-                    (training > 0 ? $"  |  Currently training: {entries.First(e => e.IsTraining).SkillText}" : "  |  Paused");
+                status.Text = $"Skills in queue: {_viewModel.QueueEntries.Count}" +
+                    (_viewModel.TrainingCount > 0 ? $"  |  Currently training: {_viewModel.CurrentTrainingText}" : "  |  Paused");
             }
         }
     }
 
-    internal sealed class QueueSkillEntry
+    /// <summary>Avalonia display wrapper for queued skill with IBrush color properties.</summary>
+    internal sealed class QueueDisplayEntry
     {
         private static readonly IBrush TrainingBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
         private static readonly IBrush CompletedBrush = new SolidColorBrush(Color.Parse("#FFE6A817"));
@@ -62,41 +68,35 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         private static readonly IBrush TrainingBg = new SolidColorBrush(Color.Parse("#FF1A2A2E"));
         private static readonly IBrush NormalBg = new SolidColorBrush(Color.Parse("#FF1A1A2E"));
 
-        public string SkillText { get; }
-        public string RankText { get; }
-        public string StatusText { get; }
-        public string TimeText { get; }
-        public double Progress { get; }
-        public bool IsTraining { get; }
+        public SkillQueueEntry Data { get; }
+
+        // Delegate all data properties
+        public string SkillText => Data.SkillText;
+        public string RankText => Data.RankText;
+        public string StatusText => Data.StatusText;
+        public string TimeText => Data.TimeText;
+        public double Progress => Data.Progress;
+        public bool IsTraining => Data.IsTraining;
+
+        // Avalonia-specific color properties
         public IBrush NameBrush { get; }
         public IBrush StatusBrush { get; }
         public IBrush ProgressBrush { get; }
         public IBrush RowBackground { get; }
 
-        public QueueSkillEntry(QueuedSkill q)
+        public QueueDisplayEntry(SkillQueueEntry data)
         {
-            SkillText = $"{q.SkillName} {ToRoman(q.Level)}";
-            RankText = $"×{q.Rank}";
-            IsTraining = q.IsTraining;
-            Progress = q.FractionCompleted * 100.0;
+            Data = data;
 
-            if (q.IsCompleted)
+            if (data.IsCompleted)
             {
-                StatusText = "Completed";
                 StatusBrush = CompletedBrush;
                 NameBrush = CompletedBrush;
                 ProgressBrush = CompletedBrush;
                 RowBackground = NormalBg;
-                TimeText = "";
             }
-            else if (q.IsTraining)
+            else if (data.IsTraining)
             {
-                var rem = q.RemainingTime;
-                string timeStr = rem.TotalDays >= 1 ? $"{(int)rem.TotalDays}d {rem.Hours}h {rem.Minutes}m"
-                    : rem.TotalHours >= 1 ? $"{(int)rem.TotalHours}h {rem.Minutes}m"
-                    : $"{rem.Minutes}m {rem.Seconds}s";
-                StatusText = "Training";
-                TimeText = $"{timeStr} remaining — ends {q.EndTime:dd MMM HH:mm}";
                 StatusBrush = TrainingBrush;
                 NameBrush = TrainingBrush;
                 ProgressBrush = TrainingBrush;
@@ -104,18 +104,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             else
             {
-                StatusText = "Queued";
-                TimeText = q.EndTime > DateTime.MinValue ? $"Starts {q.StartTime:dd MMM HH:mm}" : "";
                 StatusBrush = PendingBrush;
                 NameBrush = PendingBrush;
                 ProgressBrush = new SolidColorBrush(Color.Parse("#FF0F3460"));
                 RowBackground = NormalBg;
             }
         }
-
-        private static string ToRoman(int level) => level switch
-        {
-            1 => "I", 2 => "II", 3 => "III", 4 => "IV", 5 => "V", _ => level.ToString()
-        };
     }
 }

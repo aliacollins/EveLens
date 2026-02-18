@@ -343,10 +343,14 @@ namespace EVEMon.Tests.Architecture
         public void AllViewModels_WiredInUI_ExceptOrphans()
         {
             // After Phase 4, PlanEditor and SettingsForm are wired too.
-            // Keep exception list for safety in case wiring is reverted.
+            // Avalonia-specific VMs are excluded as they're not wired to WinForms UI.
             var unwired = new HashSet<string>
             {
-                // Currently none — all VMs are wired
+                // Avalonia-specific ViewModels (wired in Avalonia UI, not WinForms)
+                "SkillBrowserViewModel",
+                "AssetBrowserViewModel",
+                "SkillQueueViewModel",
+                "EmploymentTimelineViewModel"
             };
 
             var vmTypes = GetAllViewModelTypes().ToList();

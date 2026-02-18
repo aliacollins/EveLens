@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Avalonia;
@@ -8,11 +7,14 @@ using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using EVEMon.Avalonia.Converters;
 using EVEMon.Common.Models;
+using EVEMon.Common.ViewModels;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterEmploymentHistoryView : UserControl
     {
+        private EmploymentTimelineViewModel? _viewModel;
+
         public CharacterEmploymentHistoryView()
         {
             InitializeComponent();
@@ -40,26 +42,17 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             if (character == null) return;
 
-            var records = character.EmploymentHistory.ToList();
+            _viewModel ??= new EmploymentTimelineViewModel();
+            _viewModel.Character = character;
 
-            // Build timeline entries with duration (newest first = left to right)
-            var timeline = new List<EmploymentTimelineEntry>();
-            var sorted = records.OrderByDescending(r => r.StartDate).ToList();
-
-            for (int i = 0; i < sorted.Count; i++)
-            {
-                var record = sorted[i];
-                DateTime endDate = (i == 0) ? DateTime.UtcNow : sorted[i - 1].StartDate;
-                var duration = endDate - record.StartDate;
-                timeline.Add(new EmploymentTimelineEntry(record, duration, isCurrent: i == 0));
-            }
+            var timeline = _viewModel.TimelineEntries;
 
             TimelineItems.ItemsSource = timeline;
             DateLabels.ItemsSource = timeline;
 
             var statusCtl = this.FindControl<TextBlock>("StatusText");
             if (statusCtl != null)
-                statusCtl.Text = $"Corporations: {records.Count}";
+                statusCtl.Text = $"Corporations: {_viewModel.CorporationCount}";
 
             // Load corp logos after rendering
             global::Avalonia.Threading.Dispatcher.UIThread.Post(
@@ -67,7 +60,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 global::Avalonia.Threading.DispatcherPriority.Background);
         }
 
-        private void LoadCorpLogos(List<EmploymentTimelineEntry> timeline)
+        private void LoadCorpLogos(System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
         {
             try
             {
@@ -94,35 +87,6 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 System.Diagnostics.Debug.WriteLine($"Corp logo load error: {ex}");
             }
-        }
-    }
-
-    internal sealed class EmploymentTimelineEntry
-    {
-        public EmploymentRecord Record { get; }
-        public TimeSpan Duration { get; }
-        public bool IsCurrent { get; }
-        public string CorporationName => Record.CorporationName;
-        public DateTime StartDate => Record.StartDate;
-
-        public string DurationText
-        {
-            get
-            {
-                string prefix = IsCurrent ? "Current - " : "";
-                if (Duration.TotalDays >= 365)
-                    return $"{prefix}{(int)(Duration.TotalDays / 365)}y {(int)(Duration.TotalDays % 365 / 30)}m";
-                if (Duration.TotalDays >= 30)
-                    return $"{prefix}{(int)(Duration.TotalDays / 30)}m {(int)(Duration.TotalDays % 30)}d";
-                return $"{prefix}{(int)Duration.TotalDays}d";
-            }
-        }
-
-        public EmploymentTimelineEntry(EmploymentRecord record, TimeSpan duration, bool isCurrent = false)
-        {
-            Record = record;
-            Duration = duration;
-            IsCurrent = isCurrent;
         }
     }
 }
