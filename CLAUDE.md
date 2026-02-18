@@ -327,6 +327,7 @@ These laws govern all code in `src/EVEMon.Avalonia/`. They extend (not replace) 
 22. **Portrait/Image Loading Is Async Code-Behind** — Character portraits and corporation logos load via `ImageService.GetCharacterImageAsync()` / `CorporationImage` in code-behind after visual tree attachment. Use `DrawingImageToAvaloniaConverter.Instance` to convert `System.Drawing.Image` to `Avalonia.Media.Imaging.Bitmap`. Never block the UI thread.
 23. **Consistent Visual Language** — All views use: 11pt body text, 12pt headers, `EveAccentPrimaryBrush` for names/titles, `EveTextSecondaryBrush` for metadata, `EveTextDisabledBrush` for tertiary info, `EveSuccessGreenBrush` for ISK values, `EveBackgroundMediumBrush` for elevated surfaces. Pill-shaped buttons (CornerRadius=12). Thin modern scrollbars. Full-width expander headers.
 24. **Dispose on Detach** — ViewModels with EventAggregator subscriptions must be disposed in `OnDetachedFromVisualTree`, not `OnUnloaded` (which fires on tab switches and causes crashes).
+25. **ObservableCharacter Is Thin** — `ObservableCharacter` wraps display properties only (≤30). No collections, no methods, no business logic. If it exceeds 30 properties, split or delegate to a sub-VM. Architecture test enforces this cap. Collections belong in dedicated ListViewModels.
 
 ### Avalonia UI Design System (ENFORCED)
 

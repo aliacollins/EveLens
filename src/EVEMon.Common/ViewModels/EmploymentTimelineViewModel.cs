@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Core.Interfaces;
 
@@ -14,7 +15,10 @@ namespace EVEMon.Common.ViewModels
         private List<EmploymentTimelineEntry> _timelineEntries = new();
         private int _corporationCount;
 
-        public EmploymentTimelineViewModel() : base() { }
+        public EmploymentTimelineViewModel() : base()
+        {
+            SubscribeForCharacter<CharacterInfoUpdatedEvent>(e => Reload());
+        }
 
         public EmploymentTimelineViewModel(IEventAggregator agg, IDispatcher? disp = null)
             : base(agg, disp) { }
@@ -35,8 +39,10 @@ namespace EVEMon.Common.ViewModels
         protected override void OnCharacterChanged()
         {
             base.OnCharacterChanged();
-            BuildTimeline();
+            Reload();
         }
+
+        private void Reload() => BuildTimeline();
 
         /// <summary>
         /// Builds the timeline entries from the character's employment history.

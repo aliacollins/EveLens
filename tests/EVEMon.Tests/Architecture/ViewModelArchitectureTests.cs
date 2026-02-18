@@ -410,5 +410,56 @@ namespace EVEMon.Tests.Architecture
         }
 
         #endregion
+
+        #region ObservableCharacter Guardrails
+
+        /// <summary>
+        /// Law 25: ObservableCharacter must not exceed 30 public instance properties.
+        /// Prevents it from becoming a god object like EveMonClient.
+        /// If it exceeds 30, split or delegate to a sub-ViewModel.
+        /// </summary>
+        [Fact]
+        public void ObservableCharacter_DoesNotExceedPropertyLimit()
+        {
+            var properties = typeof(ObservableCharacter)
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            properties.Length.Should().BeLessOrEqualTo(30,
+                "ObservableCharacter must stay thin (≤30 properties). " +
+                "Delegate to sub-ViewModels instead of adding more properties.");
+        }
+
+        /// <summary>
+        /// ObservableCharacter must not expose any collection properties.
+        /// Collections belong in dedicated ListViewModels.
+        /// </summary>
+        [Fact]
+        public void ObservableCharacter_HasNoCollectionProperties()
+        {
+            var properties = typeof(ObservableCharacter)
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (var prop in properties)
+            {
+                var type = prop.PropertyType;
+                bool isCollection = type != typeof(string) &&
+                    typeof(System.Collections.IEnumerable).IsAssignableFrom(type);
+
+                isCollection.Should().BeFalse(
+                    $"ObservableCharacter.{prop.Name} is a collection. " +
+                    "Collections belong in dedicated ListViewModels, not in ObservableCharacter.");
+            }
+        }
+
+        /// <summary>
+        /// ObservableCharacter must implement IDisposable (Law 11: subscriptions must be disposed).
+        /// </summary>
+        [Fact]
+        public void ObservableCharacter_ImplementsIDisposable()
+        {
+            typeof(ObservableCharacter).Should().Implement<IDisposable>();
+        }
+
+        #endregion
     }
 }

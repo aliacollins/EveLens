@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Core.Interfaces;
 
@@ -19,7 +20,11 @@ namespace EVEMon.Common.ViewModels
         private int _totalSkills;
         private long _totalSP;
 
-        public SkillBrowserViewModel() : base() { }
+        public SkillBrowserViewModel() : base()
+        {
+            SubscribeForCharacter<CharacterUpdatedEvent>(e => Rebuild());
+            Subscribe<SettingsChangedEvent>(e => Rebuild());
+        }
 
         public SkillBrowserViewModel(IEventAggregator agg, IDispatcher? disp = null)
             : base(agg, disp) { }
@@ -83,6 +88,11 @@ namespace EVEMon.Common.ViewModels
         protected override void OnCharacterChanged()
         {
             base.OnCharacterChanged();
+            Rebuild();
+        }
+
+        private void Rebuild()
+        {
             BuildGroupData();
             ApplyFilter();
         }

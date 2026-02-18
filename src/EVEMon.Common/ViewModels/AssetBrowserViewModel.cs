@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Core.Interfaces;
 
@@ -19,7 +20,11 @@ namespace EVEMon.Common.ViewModels
         private double _totalValue;
         private int _groupCount;
 
-        public AssetBrowserViewModel() : base() { }
+        public AssetBrowserViewModel() : base()
+        {
+            SubscribeForCharacter<CharacterAssetsUpdatedEvent>(e => Reload());
+            Subscribe<SettingsChangedEvent>(e => Reload());
+        }
 
         public AssetBrowserViewModel(IEventAggregator agg, IDispatcher? disp = null)
             : base(agg, disp) { }
@@ -83,7 +88,11 @@ namespace EVEMon.Common.ViewModels
         protected override void OnCharacterChanged()
         {
             base.OnCharacterChanged();
+            Reload();
+        }
 
+        private void Reload()
+        {
             if (Character is CCPCharacter ccp)
             {
                 _allAssets = ccp.Assets

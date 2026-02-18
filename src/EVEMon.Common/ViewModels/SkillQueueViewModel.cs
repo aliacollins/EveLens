@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Core.Interfaces;
 
@@ -15,7 +16,11 @@ namespace EVEMon.Common.ViewModels
         private int _trainingCount;
         private string _currentTrainingText = string.Empty;
 
-        public SkillQueueViewModel() : base() { }
+        public SkillQueueViewModel() : base()
+        {
+            SubscribeForCharacter<CharacterUpdatedEvent>(e => Reload());
+            Subscribe<SettingsChangedEvent>(e => Reload());
+        }
 
         public SkillQueueViewModel(IEventAggregator agg, IDispatcher? disp = null)
             : base(agg, disp) { }
@@ -46,8 +51,10 @@ namespace EVEMon.Common.ViewModels
         protected override void OnCharacterChanged()
         {
             base.OnCharacterChanged();
-            BuildQueue();
+            Reload();
         }
+
+        private void Reload() => BuildQueue();
 
         /// <summary>
         /// Builds the queue entry list from the character's skill queue.
