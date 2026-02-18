@@ -41,11 +41,22 @@
                     </TextBlock.Text>
                 </TextBlock>
 
-                <!-- Balance (prominent) -->
-                <TextBlock Text="{Binding BalanceText}"
-                           FontSize="11.5" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveSuccessGreenBrush}"
-                           Margin="0,2,0,0" />
+                <!-- Balance (prominent) + change indicator -->
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
+                    <TextBlock Text="{Binding BalanceText}"
+                               FontSize="11.5" FontWeight="SemiBold"
+                               Foreground="{StaticResource EveSuccessGreenBrush}" />
+                    <TextBlock x:Name="BalanceChangeIndicator"
+                               Text="{Binding BalanceChangeText}"
+                               FontSize="10" FontWeight="SemiBold"
+                               VerticalAlignment="Center">
+                        <TextBlock.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.3" />
+                            </Transitions>
+                        </TextBlock.Transitions>
+                    </TextBlock>
+                </StackPanel>
 
                 <!-- Birthday -->
                 <TextBlock Text="{Binding Birthday, StringFormat='Birthday: {0:dd-MM-yyyy HH:mm:ss}'}"

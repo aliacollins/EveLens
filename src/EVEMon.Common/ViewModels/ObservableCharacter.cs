@@ -27,6 +27,9 @@ namespace EVEMon.Common.ViewModels
         // Cached values for change detection
         private string _name = string.Empty;
         private decimal _balance;
+        private decimal _previousBalance;
+        private int _balanceDirection; // -1=down, 0=none, 1=up
+        private string _balanceChangeText = string.Empty;
         private double _securityStatus;
         private string _corporationName = string.Empty;
         private string _allianceName = string.Empty;
@@ -103,6 +106,12 @@ namespace EVEMon.Common.ViewModels
         public string TrainingSkillText { get => _trainingSkillText; private set => SetProperty(ref _trainingSkillText, value); }
         public short AvailableRemaps { get => _availableRemaps; private set => SetProperty(ref _availableRemaps, value); }
 
+        /// <summary>Balance change direction: -1=down, 0=unchanged, 1=up.</summary>
+        public int BalanceDirection { get => _balanceDirection; private set => SetProperty(ref _balanceDirection, value); }
+
+        /// <summary>Formatted balance change text: "▲ +1,234.56" or "▼ -5,678.90" or "".</summary>
+        public string BalanceChangeText { get => _balanceChangeText; private set => SetProperty(ref _balanceChangeText, value); }
+
         // ═══════════════════════════════════════════════════════
         // Derived display strings (computed, not cached)
         // ═══════════════════════════════════════════════════════
@@ -122,8 +131,26 @@ namespace EVEMon.Common.ViewModels
 
         private void Refresh()
         {
+            // Track balance changes
+            var newBalance = _character.Balance;
+            if (_previousBalance != 0 && newBalance != _previousBalance)
+            {
+                var delta = newBalance - _previousBalance;
+                BalanceDirection = delta > 0 ? 1 : -1;
+                string arrow = delta > 0 ? "▲" : "▼";
+                string sign = delta > 0 ? "+" : "";
+                BalanceChangeText = $"{arrow} {sign}{delta:N2} ISK";
+            }
+            else if (_previousBalance == 0 && newBalance > 0)
+            {
+                // First load — no change indicator
+                BalanceDirection = 0;
+                BalanceChangeText = string.Empty;
+            }
+            _previousBalance = newBalance;
+
             Name = _character.Name;
-            Balance = _character.Balance;
+            Balance = newBalance;
             SecurityStatus = _character.SecurityStatus;
             CorporationName = _character.CorporationName;
             AllianceName = _character.AllianceName;

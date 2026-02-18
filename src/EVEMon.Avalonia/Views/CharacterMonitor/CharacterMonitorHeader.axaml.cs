@@ -63,10 +63,26 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             try
             {
+                // Location
                 LocationText.Text = $"Located in: {oc.LocationText}";
                 DockedText.Text = !string.IsNullOrEmpty(oc.DockedText)
                     ? $"Docked at: {oc.DockedText}"
                     : "In space";
+
+                // Balance change indicator color + flash
+                if (oc.BalanceDirection != 0 && BalanceChangeIndicator != null)
+                {
+                    BalanceChangeIndicator.Foreground = oc.BalanceDirection > 0
+                        ? global::Avalonia.Media.Brushes.LimeGreen
+                        : global::Avalonia.Media.Brushes.OrangeRed;
+
+                    // Flash: set opacity to 1, then fade to 0.6 via transition
+                    BalanceChangeIndicator.Opacity = 1.0;
+                    global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        BalanceChangeIndicator.Opacity = 0.7;
+                    }, global::Avalonia.Threading.DispatcherPriority.Background);
+                }
             }
             catch
             {
