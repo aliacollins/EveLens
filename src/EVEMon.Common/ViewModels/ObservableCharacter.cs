@@ -23,6 +23,7 @@ namespace EVEMon.Common.ViewModels
         private readonly Character _character;
         private readonly IDisposable? _subscription;
         private bool _disposed;
+        private DateTime _balanceChangeExpiry;
 
         // Cached values for change detection
         private string _name = string.Empty;
@@ -166,7 +167,7 @@ namespace EVEMon.Common.ViewModels
 
         private void Refresh()
         {
-            // Track balance changes
+            // Track balance changes with auto-clear after 15 seconds
             var newBalance = _character.Balance;
             if (_previousBalance != 0 && newBalance != _previousBalance)
             {
@@ -174,10 +175,17 @@ namespace EVEMon.Common.ViewModels
                 BalanceDirection = delta > 0 ? 1 : -1;
                 string arrow = delta > 0 ? "▲" : "▼";
                 BalanceChangeText = $"{arrow} {FormatISKDelta(delta)} ISK";
+                _balanceChangeExpiry = DateTime.UtcNow.AddSeconds(15);
+            }
+            else if (_balanceChangeExpiry != default && DateTime.UtcNow > _balanceChangeExpiry)
+            {
+                // Auto-clear stale change indicator
+                BalanceDirection = 0;
+                BalanceChangeText = string.Empty;
+                _balanceChangeExpiry = default;
             }
             else if (_previousBalance == 0 && newBalance > 0)
             {
-                // First load — no change indicator
                 BalanceDirection = 0;
                 BalanceChangeText = string.Empty;
             }
