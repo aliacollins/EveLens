@@ -12,6 +12,7 @@ namespace EVEMon.Common.SettingsObjects
     {
         private readonly Collection<string> m_collapsedGroups;
         private readonly Collection<string> m_advancedFeaturesEnabledPages;
+        private readonly Collection<string> m_enabledEndpoints;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CharacterUISettings"/> class.
@@ -21,6 +22,7 @@ namespace EVEMon.Common.SettingsObjects
             SelectedPage = string.Empty;
             m_collapsedGroups = new Collection<string>();
             m_advancedFeaturesEnabledPages = new Collection<string>();
+            m_enabledEndpoints = new Collection<string>();
         }
 
         /// <summary>
@@ -127,6 +129,26 @@ namespace EVEMon.Common.SettingsObjects
                 {
                     foreach (var item in value)
                         m_advancedFeaturesEnabledPages.Add(item);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the on-demand ESI endpoints enabled by the user.
+        /// Stores method names (e.g. "AssetList", "MarketOrders") of user-activated endpoints.
+        /// Empty means only core endpoints are active.
+        /// </summary>
+        [XmlElement("enabledEndpoint")]
+        public Collection<string> EnabledEndpoints
+        {
+            get => m_enabledEndpoints;
+            set
+            {
+                m_enabledEndpoints.Clear();
+                if (value != null)
+                {
+                    foreach (var item in value)
+                        m_enabledEndpoints.Add(item);
                 }
             }
         }

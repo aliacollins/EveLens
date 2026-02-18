@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using EVEMon.Common.Enumerations;
 using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
@@ -14,6 +16,9 @@ namespace EVEMon.Common.ViewModels.Lists
     /// </summary>
     public sealed class KillLogListViewModel : ListViewModel<KillLog, KillLogColumn, KillLogGrouping>
     {
+        private int _killCount;
+        private int _lossCount;
+
         public KillLogListViewModel(IEventAggregator eventAggregator, IDispatcher? dispatcher = null)
             : base(eventAggregator, dispatcher)
         {
@@ -25,6 +30,24 @@ namespace EVEMon.Common.ViewModels.Lists
         {
             SubscribeForCharacter<CharacterKillLogUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
+        }
+
+        /// <summary>
+        /// Gets the number of kills in the current filtered set.
+        /// </summary>
+        public int KillCount
+        {
+            get => _killCount;
+            private set => SetProperty(ref _killCount, value);
+        }
+
+        /// <summary>
+        /// Gets the number of losses in the current filtered set.
+        /// </summary>
+        public int LossCount
+        {
+            get => _lossCount;
+            private set => SetProperty(ref _lossCount, value);
         }
 
         protected override IEnumerable<KillLog> GetSourceItems()
@@ -62,11 +85,38 @@ namespace EVEMon.Common.ViewModels.Lists
         {
             return grouping switch
             {
+                KillLogGrouping.KillsVsLosses => item.Group == KillGroup.Kills ? "Kills" : "Losses",
                 KillLogGrouping.Date => item.KillTime.ToShortDateString(),
                 KillLogGrouping.ShipType => item.Victim.ShipTypeName,
                 KillLogGrouping.Corporation => item.Victim.CorporationName,
                 _ => string.Empty
             };
+        }
+
+        protected override DateTime GetItemTimestamp(KillLog item) => item.KillTime;
+
+        /// <summary>
+        /// Determines whether the given kill log entry is a loss for the current character.
+        /// </summary>
+        public bool IsLoss(KillLog item) => item.Group == KillGroup.Losses;
+
+        /// <summary>
+        /// Updates kill/loss counts from the current Items collection.
+        /// Call after Refresh() has been invoked (e.g. by setting Grouping or TextFilter).
+        /// </summary>
+        public void UpdateCounts()
+        {
+            int kills = 0;
+            int losses = 0;
+            foreach (var item in Items)
+            {
+                if (item.Group == KillGroup.Kills)
+                    kills++;
+                else
+                    losses++;
+            }
+            KillCount = kills;
+            LossCount = losses;
         }
     }
 
@@ -90,8 +140,9 @@ namespace EVEMon.Common.ViewModels.Lists
     public enum KillLogGrouping
     {
         None = 0,
-        Date = 1,
-        ShipType = 2,
-        Corporation = 3
+        KillsVsLosses = 1,
+        Date = 2,
+        ShipType = 3,
+        Corporation = 4
     }
 }

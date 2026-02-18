@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
@@ -14,12 +15,15 @@ namespace EVEMon.Common.ViewModels.Lists
     /// </summary>
     public sealed class WalletTransactionsListViewModel : ListViewModel<WalletTransaction, WalletTransactionColumn, WalletTransactionGrouping>
     {
+        private decimal _netCredit;
+
         public WalletTransactionsListViewModel(IEventAggregator eventAggregator, IDispatcher? dispatcher = null)
             : base(eventAggregator, dispatcher)
         {
             SubscribeForCharacter<CharacterWalletTransactionsUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
             Subscribe<ConquerableStationListUpdatedEvent>(e => Refresh());
+            PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Items)) UpdateNetCredit(); };
         }
 
         public WalletTransactionsListViewModel() : base()
@@ -27,6 +31,16 @@ namespace EVEMon.Common.ViewModels.Lists
             SubscribeForCharacter<CharacterWalletTransactionsUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
             Subscribe<ConquerableStationListUpdatedEvent>(e => Refresh());
+            PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Items)) UpdateNetCredit(); };
+        }
+
+        /// <summary>
+        /// Gets the net credit (sum of all filtered item credits).
+        /// </summary>
+        public decimal NetCredit
+        {
+            get => _netCredit;
+            private set => SetProperty(ref _netCredit, value);
         }
 
         protected override IEnumerable<WalletTransaction> GetSourceItems()
@@ -74,6 +88,15 @@ namespace EVEMon.Common.ViewModels.Lists
                 WalletTransactionGrouping.Location or WalletTransactionGrouping.LocationDesc => item.Station.Name,
                 _ => string.Empty
             };
+        }
+
+        protected override DateTime GetItemTimestamp(WalletTransaction item) => item.Date;
+
+        private void UpdateNetCredit()
+        {
+            NetCredit = Items.Count > 0
+                ? Items.Sum(i => i.Credit)
+                : 0m;
         }
     }
 }

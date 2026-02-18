@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
+using EVEMon.Avalonia.ViewModels;
 using EVEMon.Avalonia.Views.CharacterMonitor;
 using EVEMon.Avalonia.Views.Dialogs;
 using EVEMon.Common.Models;
@@ -21,6 +22,7 @@ namespace EVEMon.Avalonia.Views
         private readonly MainWindowViewModel _viewModel;
         private readonly List<ObservableCharacter> _observableCharacters = new();
         private IDisposable? _tickSubscription;
+        private NotificationCenterViewModel? _notificationVm;
 
         public MainWindow()
         {
@@ -36,6 +38,14 @@ namespace EVEMon.Avalonia.Views
 
             _tickSubscription = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
                 e => Dispatcher.UIThread.Post(() => OnSecondTick(e)));
+
+            // Wire notification center
+            _notificationVm = new NotificationCenterViewModel();
+            MarkReadBtn.Click += (_, _) => { _notificationVm.MarkAllRead(); RefreshNotificationUI(); };
+            ClearAllBtn.Click += (_, _) => { _notificationVm.ClearAll(); RefreshNotificationUI(); };
+            _notificationVm.PropertyChanged += (_, _) =>
+                Dispatcher.UIThread.Post(RefreshNotificationUI);
+            RefreshNotificationUI();
         }
 
         private void BuildTabs()
@@ -350,8 +360,22 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
+        private void RefreshNotificationUI()
+        {
+            if (_notificationVm == null) return;
+            var entries = _notificationVm.Entries;
+            ActivityItems.ItemsSource = entries.Select(e => new ActivityDisplayEntry(e)).ToList();
+            UnreadBadge.IsVisible = _notificationVm.HasUnread;
+            UnreadCountText.Text = _notificationVm.UnreadCount > 99
+                ? "99+"
+                : _notificationVm.UnreadCount.ToString();
+            EmptyActivityText.IsVisible = entries.Count == 0;
+        }
+
         protected override void OnClosed(EventArgs e)
         {
+            _notificationVm?.Save();
+            _notificationVm?.Dispose();
             _tickSubscription?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
             _observableCharacters.Clear();

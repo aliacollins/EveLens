@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shared="clr-namespace:EVEMon.Avalonia.Views.Shared"
              x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterSkillQueueView">
     <DockPanel>
         <Border DockPanel.Dock="Bottom" Padding="10,5"
@@ -8,7 +9,12 @@
             <TextBlock x:Name="StatusText" Text="Skills in queue: 0" FontSize="11"
                        Foreground="{StaticResource EveTextSecondaryBrush}" />
         </Border>
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <!-- Empty state (shown when queue is empty) -->
+            <shared:EmptyState x:Name="EmptyState" IsVisible="False"
+                               Title="No skills in training"
+                               Subtitle="Add skills to your queue in EVE Online to see them here" />
+            <ScrollViewer x:Name="QueueScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
             <ItemsControl x:Name="QueueItems" Margin="0">
                 <ItemsControl.Styles>
                     <Style Selector="ItemsControl > ContentPresenter">
@@ -55,6 +61,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-        </ScrollViewer>
+            </ScrollViewer>
+        </Grid>
     </DockPanel>
 </UserControl>

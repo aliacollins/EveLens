@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
+using EVEMon.Common.Constants;
+using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Common.Services;
@@ -230,6 +232,51 @@ namespace EVEMon.Common.ViewModels
             OnPropertyChanged(nameof(KnownSkillCountText));
             OnPropertyChanged(nameof(AvailableRemapsText));
             OnPropertyChanged(nameof(ShipText));
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // Endpoint control — methods only (stays under 30 property cap)
+        // ═══════════════════════════════════════════════════════
+
+        /// <summary>
+        /// Returns true if the given ESI endpoint is enabled for this character.
+        /// Core endpoints are always enabled. On-demand endpoints require user activation.
+        /// </summary>
+        public bool IsEndpointEnabled(ESIAPICharacterMethods method)
+        {
+            if (EndpointClassification.IsCore(method))
+                return true;
+            return _character.UISettings.EnabledEndpoints.Contains(method.ToString());
+        }
+
+        /// <summary>
+        /// Enables an on-demand ESI endpoint for this character.
+        /// Persists the preference and triggers an immediate fetch.
+        /// </summary>
+        public void EnableEndpoint(ESIAPICharacterMethods method)
+        {
+            if (EndpointClassification.IsCore(method))
+                return;
+            if (_character.UISettings.EnabledEndpoints.Contains(method.ToString()))
+                return;
+
+            if (_character is CCPCharacter ccp)
+                ccp.QueryOrchestrator?.EnableEndpoint(method);
+        }
+
+        /// <summary>
+        /// Disables an on-demand ESI endpoint for this character.
+        /// Persists the preference. Future scheduled fetches will be skipped.
+        /// </summary>
+        public void DisableEndpoint(ESIAPICharacterMethods method)
+        {
+            if (EndpointClassification.IsCore(method))
+                return;
+            if (!_character.UISettings.EnabledEndpoints.Contains(method.ToString()))
+                return;
+
+            if (_character is CCPCharacter ccp)
+                ccp.QueryOrchestrator?.DisableEndpoint(method);
         }
 
         public void Dispose()

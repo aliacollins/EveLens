@@ -14,6 +14,7 @@ namespace EVEMon.Common.ViewModels
     {
         private List<Asset>? _allAssets;
         private List<AssetBrowserGroupEntry> _groups = new();
+        private List<AssetRegionGroup> _hierarchicalGroups = new();
         private string _filter = string.Empty;
         private int _groupMode = 1; // 0=Location, 1=Region, 2=Category, 3=Container
         private long _totalItems;
@@ -30,9 +31,20 @@ namespace EVEMon.Common.ViewModels
             : base(agg, disp) { }
 
         /// <summary>
-        /// Gets the list of asset groups after grouping and filtering.
+        /// Gets the list of flat asset groups (used for Category and Container modes).
         /// </summary>
         public List<AssetBrowserGroupEntry> Groups => _groups;
+
+        /// <summary>
+        /// Gets the hierarchical asset groups (used for Location and Region modes).
+        /// Region > System > Station > Items.
+        /// </summary>
+        public List<AssetRegionGroup> HierarchicalGroups => _hierarchicalGroups;
+
+        /// <summary>
+        /// Gets whether the current group mode uses hierarchical display.
+        /// </summary>
+        public bool IsHierarchical => _groupMode <= 1;
 
         /// <summary>
         /// Gets or sets the grouping mode: 0=Location, 1=Region, 2=Category, 3=Container.
@@ -115,6 +127,7 @@ namespace EVEMon.Common.ViewModels
             if (_allAssets == null)
             {
                 _groups = new List<AssetBrowserGroupEntry>();
+                _hierarchicalGroups = new List<AssetRegionGroup>();
                 _totalItems = 0;
                 _totalValue = 0;
                 _groupCount = 0;
@@ -133,46 +146,189 @@ namespace EVEMon.Common.ViewModels
 
             var items = filtered.ToList();
 
-            Func<Asset, string> groupKeySelector = _groupMode switch
+            if (IsHierarchical)
             {
-                1 => a => a.SolarSystem?.Constellation?.Region?.Name ?? "Unknown",
-                2 => a => a.Item?.CategoryName ?? "Unknown",
-                3 => a => string.IsNullOrEmpty(a.Container) ? "(No container)" : a.Container,
-                _ => a => a.Location ?? "Unknown"
-            };
+                _groups = new List<AssetBrowserGroupEntry>();
+                _hierarchicalGroups = BuildHierarchicalGroups(items);
+                _groupCount = _hierarchicalGroups.Count;
+            }
+            else
+            {
+                _hierarchicalGroups = new List<AssetRegionGroup>();
 
-            _groups = items
-                .GroupBy(groupKeySelector)
-                .OrderBy(g => g.Key)
-                .Select(g => new AssetBrowserGroupEntry(g.Key, g.ToList()))
-                .ToList();
+                Func<Asset, string> groupKeySelector = _groupMode switch
+                {
+                    2 => a => a.Item?.CategoryName ?? "Unknown",
+                    3 => a => string.IsNullOrEmpty(a.Container) ? "(No container)" : a.Container,
+                    _ => a => a.Location ?? "Unknown"
+                };
+
+                _groups = items
+                    .GroupBy(groupKeySelector)
+                    .OrderBy(g => g.Key)
+                    .Select(g => new AssetBrowserGroupEntry(g.Key, g.ToList()))
+                    .ToList();
+
+                _groupCount = _groups.Count;
+            }
 
             _totalItems = items.Sum(a => a.Quantity);
             _totalValue = items.Sum(a => a.Cost);
-            _groupCount = _groups.Count;
+        }
+
+        private static List<AssetRegionGroup> BuildHierarchicalGroups(List<Asset> items)
+        {
+            return items
+                .GroupBy(a => a.SolarSystem?.Constellation?.Region?.Name ?? "Unknown")
+                .OrderBy(rg => rg.Key)
+                .Select(regionGroup =>
+                {
+                    var systems = regionGroup
+                        .GroupBy(a => a.SolarSystem?.Name ?? "Unknown")
+                        .OrderBy(sg => sg.Key)
+                        .Select(systemGroup =>
+                        {
+                            var stations = systemGroup
+                                .GroupBy(a => a.Location ?? "Unknown")
+                                .OrderBy(stg => stg.Key)
+                                .Select(stationGroup => new AssetStationGroup(
+                                    stationGroup.Key,
+                                    stationGroup.ToList()))
+                                .ToList();
+
+                            return new AssetSystemGroup(systemGroup.Key, stations);
+                        })
+                        .ToList();
+
+                    return new AssetRegionGroup(regionGroup.Key, systems);
+                })
+                .ToList();
         }
 
         /// <summary>
-        /// Collapses all asset groups.
+        /// Collapses all asset groups (both flat and hierarchical).
         /// </summary>
         public void CollapseAll()
         {
             foreach (var g in _groups)
                 g.IsExpanded = false;
+
+            foreach (var region in _hierarchicalGroups)
+            {
+                region.IsExpanded = false;
+                foreach (var system in region.Systems)
+                {
+                    system.IsExpanded = false;
+                    foreach (var station in system.Stations)
+                        station.IsExpanded = false;
+                }
+            }
         }
 
         /// <summary>
-        /// Expands all asset groups.
+        /// Expands all asset groups (both flat and hierarchical).
         /// </summary>
         public void ExpandAll()
         {
             foreach (var g in _groups)
                 g.IsExpanded = true;
+
+            foreach (var region in _hierarchicalGroups)
+            {
+                region.IsExpanded = true;
+                foreach (var system in region.Systems)
+                {
+                    system.IsExpanded = true;
+                    foreach (var station in system.Stations)
+                        station.IsExpanded = true;
+                }
+            }
         }
     }
 
     /// <summary>
-    /// Represents a group of assets with summary information.
+    /// Represents a region-level group in the hierarchical asset view.
+    /// </summary>
+    public sealed class AssetRegionGroup
+    {
+        public string Name { get; }
+        public List<AssetSystemGroup> Systems { get; }
+        public bool IsExpanded { get; set; }
+        public int ItemCount { get; }
+        public long TotalQuantity { get; }
+        public double TotalValue { get; }
+
+        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
+        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+
+        public AssetRegionGroup(string name, List<AssetSystemGroup> systems)
+        {
+            Name = name;
+            Systems = systems;
+            ItemCount = systems.Sum(s => s.ItemCount);
+            TotalQuantity = systems.Sum(s => s.TotalQuantity);
+            TotalValue = systems.Sum(s => s.TotalValue);
+            IsExpanded = true;
+        }
+    }
+
+    /// <summary>
+    /// Represents a solar system-level group in the hierarchical asset view.
+    /// </summary>
+    public sealed class AssetSystemGroup
+    {
+        public string Name { get; }
+        public List<AssetStationGroup> Stations { get; }
+        public bool IsExpanded { get; set; }
+        public int ItemCount { get; }
+        public long TotalQuantity { get; }
+        public double TotalValue { get; }
+
+        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
+        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+
+        public AssetSystemGroup(string name, List<AssetStationGroup> stations)
+        {
+            Name = name;
+            Stations = stations;
+            ItemCount = stations.Sum(st => st.ItemCount);
+            TotalQuantity = stations.Sum(st => st.TotalQuantity);
+            TotalValue = stations.Sum(st => st.TotalValue);
+            IsExpanded = true;
+        }
+    }
+
+    /// <summary>
+    /// Represents a station-level group in the hierarchical asset view.
+    /// </summary>
+    public sealed class AssetStationGroup
+    {
+        public string Name { get; }
+        public List<AssetBrowserItemEntry> Items { get; }
+        public bool IsExpanded { get; set; }
+        public int ItemCount { get; }
+        public long TotalQuantity { get; }
+        public double TotalValue { get; }
+
+        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
+        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+
+        public AssetStationGroup(string name, List<Asset> assets)
+        {
+            Name = name;
+            ItemCount = assets.Count;
+            TotalQuantity = assets.Sum(a => a.Quantity);
+            TotalValue = assets.Sum(a => a.Cost);
+            IsExpanded = true;
+            Items = assets
+                .OrderBy(a => a.Item.Name)
+                .Select(a => new AssetBrowserItemEntry(a))
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Represents a group of assets with summary information (flat grouping).
     /// </summary>
     public sealed class AssetBrowserGroupEntry
     {

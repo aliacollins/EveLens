@@ -19,6 +19,8 @@ namespace EVEMon.Common.ViewModels.Lists
     {
         private bool _hideInactive;
         private IssuedFor _showIssuedFor = IssuedFor.All;
+        private int _outstandingCount;
+        private int _completedCount;
 
         public ContractsListViewModel(IEventAggregator eventAggregator, IDispatcher? dispatcher = null)
             : base(eventAggregator, dispatcher)
@@ -26,6 +28,7 @@ namespace EVEMon.Common.ViewModels.Lists
             SubscribeForCharacter<ContractsUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
             Subscribe<ConquerableStationListUpdatedEvent>(e => Refresh());
+            PropertyChanged += OnSelfPropertyChanged;
         }
 
         public ContractsListViewModel() : base()
@@ -33,6 +36,28 @@ namespace EVEMon.Common.ViewModels.Lists
             SubscribeForCharacter<ContractsUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
             Subscribe<ConquerableStationListUpdatedEvent>(e => Refresh());
+            PropertyChanged += OnSelfPropertyChanged;
+        }
+
+        private void OnSelfPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Items))
+                UpdateCounts();
+        }
+
+        private void UpdateCounts()
+        {
+            int outstanding = 0;
+            int completed = 0;
+            foreach (var item in Items)
+            {
+                if (item.IsAvailable)
+                    outstanding++;
+                else if (item.State == ContractState.Finished)
+                    completed++;
+            }
+            OutstandingCount = outstanding;
+            CompletedCount = completed;
         }
 
         public bool HideInactive
@@ -46,6 +71,29 @@ namespace EVEMon.Common.ViewModels.Lists
             get => _showIssuedFor;
             set { if (SetProperty(ref _showIssuedFor, value)) Refresh(); }
         }
+
+        /// <summary>
+        /// Gets the count of outstanding (active) contracts after filtering.
+        /// </summary>
+        public int OutstandingCount
+        {
+            get => _outstandingCount;
+            private set => SetProperty(ref _outstandingCount, value);
+        }
+
+        /// <summary>
+        /// Gets the count of completed (finished) contracts after filtering.
+        /// </summary>
+        public int CompletedCount
+        {
+            get => _completedCount;
+            private set => SetProperty(ref _completedCount, value);
+        }
+
+        /// <summary>
+        /// Returns the issued date for new-item tracking.
+        /// </summary>
+        protected override DateTime GetItemTimestamp(Contract item) => item.Issued;
 
         protected override IEnumerable<Contract> GetSourceItems()
         {

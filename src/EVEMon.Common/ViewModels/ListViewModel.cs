@@ -47,6 +47,8 @@ namespace EVEMon.Common.ViewModels
         private IReadOnlyList<ListGrouping<TItem>> _groupedItems = Array.Empty<ListGrouping<TItem>>();
         private IReadOnlyList<TItem> _items = Array.Empty<TItem>();
         private int _totalItemCount;
+        private DateTime _lastViewedTimestamp = DateTime.MinValue;
+        private int _newItemCount;
 
         /// <summary>
         /// Creates a new list ViewModel with explicit dependencies (testing).
@@ -146,6 +148,25 @@ namespace EVEMon.Common.ViewModels
             private set => SetProperty(ref _totalItemCount, value);
         }
 
+        /// <summary>
+        /// Gets the session-scoped timestamp of when the user last viewed this tab.
+        /// Items with a timestamp after this value are considered "new".
+        /// </summary>
+        public DateTime LastViewedTimestamp
+        {
+            get => _lastViewedTimestamp;
+            private set => SetProperty(ref _lastViewedTimestamp, value);
+        }
+
+        /// <summary>
+        /// Gets the count of items whose timestamp is newer than <see cref="LastViewedTimestamp"/>.
+        /// </summary>
+        public int NewItemCount
+        {
+            get => _newItemCount;
+            private set => SetProperty(ref _newItemCount, value);
+        }
+
         #endregion
 
         #region Abstract Methods (subclass-defined)
@@ -173,6 +194,67 @@ namespace EVEMon.Common.ViewModels
         /// Return null or empty to place the item in a default group.
         /// </summary>
         protected abstract string GetGroupKey(TItem item, TGrouping grouping);
+
+        #endregion
+
+        #region New-Item Tracking
+
+        /// <summary>
+        /// Returns the timestamp for an item, used for new-item tracking.
+        /// Override in subclasses that have timestamped items (e.g., Journal→Date, Mail→SentDate).
+        /// Returns <see cref="DateTime.MinValue"/> by default (no new-item tracking).
+        /// </summary>
+        protected virtual DateTime GetItemTimestamp(TItem item) => DateTime.MinValue;
+
+        /// <summary>
+        /// Marks the current view as seen, updating <see cref="LastViewedTimestamp"/>
+        /// to the current time. Call this in each view's OnAttachedToVisualTree.
+        /// </summary>
+        public void MarkAsViewed()
+        {
+            LastViewedTimestamp = DateTime.UtcNow;
+            UpdateNewItemCount();
+        }
+
+        /// <summary>
+        /// Recalculates <see cref="NewItemCount"/> based on current items and <see cref="LastViewedTimestamp"/>.
+        /// </summary>
+        private void UpdateNewItemCount()
+        {
+            if (_lastViewedTimestamp == DateTime.MinValue)
+            {
+                NewItemCount = 0;
+                return;
+            }
+
+            var source = GetSourceItems();
+            if (source == null)
+            {
+                NewItemCount = 0;
+                return;
+            }
+
+            int count = 0;
+            foreach (var item in source)
+            {
+                var ts = GetItemTimestamp(item);
+                if (ts > _lastViewedTimestamp)
+                    count++;
+            }
+            NewItemCount = count;
+        }
+
+        /// <summary>
+        /// Checks whether a specific item is "new" (its timestamp is after <see cref="LastViewedTimestamp"/>).
+        /// </summary>
+        public bool IsNewItem(TItem item)
+        {
+            if (_lastViewedTimestamp == DateTime.MinValue)
+                return false;
+
+            var ts = GetItemTimestamp(item);
+            return ts > _lastViewedTimestamp;
+        }
 
         #endregion
 
@@ -208,6 +290,7 @@ namespace EVEMon.Common.ViewModels
                 GroupedItems = Array.Empty<ListGrouping<TItem>>();
                 Items = Array.Empty<TItem>();
                 TotalItemCount = 0;
+                NewItemCount = 0;
                 return;
             }
 
@@ -256,6 +339,9 @@ namespace EVEMon.Common.ViewModels
 
                 GroupedItems = groupedByKey;
             }
+
+            // Update new-item tracking
+            UpdateNewItemCount();
         }
 
         /// <summary>

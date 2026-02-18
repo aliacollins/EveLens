@@ -8,11 +8,15 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using EVEMon.Common.Models;
 using EVEMon.Common.ViewModels;
+using EVEMon.Common.Events;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterSkillsView : UserControl
     {
+        private IDisposable? _dataUpdatedSub;
+        private long _characterId;
         private SkillBrowserViewModel? _viewModel;
 
         public CharacterSkillsView()
@@ -23,6 +27,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
+            _dataUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterUpdatedEvent>(OnDataUpdated);
             LoadData();
         }
 
@@ -30,6 +35,13 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             base.OnDataContextChanged(e);
             LoadData();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            _dataUpdatedSub?.Dispose();
+            _dataUpdatedSub = null;
         }
 
         private void LoadData()
@@ -44,8 +56,12 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             if (character == null) return;
 
+            _characterId = character.CharacterID;
             _viewModel ??= new SkillBrowserViewModel();
-            _viewModel.Character = character;
+            if (_viewModel.Character != character)
+                _viewModel.Character = character;
+            else
+                _viewModel.ForceRefresh();
 
             // Wrap VM groups with display entries for AXAML color binding
             var displayGroups = _viewModel.VisibleGroups
@@ -57,6 +73,13 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             var statusCtl = this.FindControl<TextBlock>("StatusText");
             if (statusCtl != null)
                 statusCtl.Text = $"Trained: {_viewModel.TotalTrained} of {_viewModel.TotalSkills} skills  |  Total SP: {_viewModel.TotalSP:N0}";
+        }
+
+
+        private void OnDataUpdated(CharacterUpdatedEvent evt)
+        {
+            if (evt.Character?.CharacterID == _characterId)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
 
         private void OnToggleShowAll(object? sender, RoutedEventArgs e)

@@ -26,7 +26,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Assets")]
         [Description("The assets of a character.")]
-        [Update(UpdatePeriod.Hours2, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
         AssetList = 1 << 1,
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Character Sheet")]
         [Description("A character's sheet listing biography, skills, attributes and implants informations.")]
-        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes15)]
         CharacterSheet = 1 << 4,
 
         /// <summary>
@@ -103,7 +103,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Factional Warfare Stats")]
         [Description("The factional warfare stats of a character.")]
-        [Update(UpdatePeriod.Hours6, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
         FactionalWarfareStats = 1 << 12,
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Industry Jobs")]
         [Description("The industry jobs of a character.")]
-        [Update(UpdatePeriod.Minutes15, UpdatePeriod.Minutes5)]
+        [Update(UpdatePeriod.Minutes5, UpdatePeriod.Minutes2)]
         IndustryJobs = 1 << 14,
 
         /// <summary>
@@ -130,7 +130,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Combat Log")]
         [Description("The combat log of a character.")]
-        [Update(UpdatePeriod.Minutes30, UpdatePeriod.Minutes5)]
+        [Update(UpdatePeriod.Minutes5, UpdatePeriod.Minutes2)]
         KillLog = 1 << 16,
 
         /// <summary>
@@ -144,7 +144,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Loyalty Points")]
         [Description("The Loyalty Point balances of a character.")]
-        [Update(UpdatePeriod.Hours2, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
         LoyaltyPoints = 1L << 36,
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("EVE Mail Messages")]
         [Description("The EVE mails of a character.")]
-        [Update(UpdatePeriod.Minutes15, UpdatePeriod.Minutes5)]
+        [Update(UpdatePeriod.Minutes1, UpdatePeriod.Seconds30)]
         MailMessages = 1 << 18,
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Market Orders")]
         [Description("The market orders of a character.")]
-        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes15)]
+        [Update(UpdatePeriod.Minutes15, UpdatePeriod.Minutes5)]
         MarketOrders = 1 << 21,
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Medals")]
         [Description("The medals of a character.")]
-        [Update(UpdatePeriod.Hours6, UpdatePeriod.Hours2)]
+        [Update(UpdatePeriod.Minutes30, UpdatePeriod.Minutes15)]
         Medals = 1 << 22,
 
         /// <summary>
@@ -187,7 +187,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("EVE Notifications")]
         [Description("The EVE notifications of a character.")]
-        [Update(UpdatePeriod.Minutes15, UpdatePeriod.Minutes15)]
+        [Update(UpdatePeriod.Minutes10, UpdatePeriod.Minutes5)]
         Notifications = 1 << 23,
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Planetary Colonies")]
         [Description("The planetary colonies owned by a character.")]
-        [Update(UpdatePeriod.Minutes30, UpdatePeriod.Minutes15)]
+        [Update(UpdatePeriod.Minutes10, UpdatePeriod.Minutes5)]
         PlanetaryColonies = 1 << 24,
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Research Points")]
         [Description("The research points of a character.")]
-        [Update(UpdatePeriod.Hours2, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
         ResearchPoints = 1 << 26,
 
         /// <summary>
@@ -222,7 +222,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Skill Queue")]
         [Description("The skill queue of a character.")]
-        [Update(UpdatePeriod.Minutes15, UpdatePeriod.Minutes5)]
+        [Update(UpdatePeriod.Minutes1, UpdatePeriod.Minutes1)]
         SkillQueue = 1 << 28,
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("NPC Standings")]
         [Description("The NPC standings of a character.")]
-        [Update(UpdatePeriod.Hours2, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
         Standings = 1 << 30,
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Wallet Journal")]
         [Description("The wallet journal of a character.")]
-        [Update(UpdatePeriod.Hours1, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Minutes5, UpdatePeriod.Minutes2)]
         WalletJournal = 1L << 33,
 
         /// <summary>
@@ -268,13 +268,13 @@ namespace EVEMon.Common.Enumerations.CCPAPI
         /// </summary>
         [Header("Wallet Transactions")]
         [Description("The wallet transactions of a character.")]
-        [Update(UpdatePeriod.Hours1, UpdatePeriod.Hours1)]
+        [Update(UpdatePeriod.Minutes5, UpdatePeriod.Minutes2)]
         WalletTransactions = 1L << 34,
 
         /// <summary>
         /// The personal issued market order history of a character.
         /// </summary>
-        [Update(UpdatePeriod.Hours2, UpdatePeriod.Minutes30)]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]
         MarketOrdersHistory = 1L << 37,
     }
 }

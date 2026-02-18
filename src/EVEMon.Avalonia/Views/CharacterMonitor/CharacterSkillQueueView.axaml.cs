@@ -4,7 +4,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.ViewModels;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
@@ -12,6 +14,8 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
     public partial class CharacterSkillQueueView : UserControl
     {
         private SkillQueueViewModel? _viewModel;
+        private IDisposable? _queueUpdatedSub;
+        private long _characterId;
 
         public CharacterSkillQueueView()
         {
@@ -21,13 +25,30 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
+
+            // Subscribe to skill queue updates so we refresh when the scheduler fetches new data
+            _queueUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterSkillQueueUpdatedEvent>(OnSkillQueueUpdated);
+
             LoadData();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            _queueUpdatedSub?.Dispose();
+            _queueUpdatedSub = null;
         }
 
         protected override void OnDataContextChanged(EventArgs e)
         {
             base.OnDataContextChanged(e);
             LoadData();
+        }
+
+        private void OnSkillQueueUpdated(CharacterSkillQueueUpdatedEvent evt)
+        {
+            if (evt.Character?.CharacterID == _characterId)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
 
         private void LoadData()
@@ -42,8 +63,12 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             if (character is not CCPCharacter) return;
 
+            _characterId = character.CharacterID;
             _viewModel ??= new SkillQueueViewModel();
-            _viewModel.Character = character;
+            if (_viewModel.Character != character)
+                _viewModel.Character = character;
+            else
+                _viewModel.ForceRefresh();
 
             // Wrap VM entries with display entries for AXAML color binding
             var displayEntries = _viewModel.QueueEntries
@@ -52,11 +77,20 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
             QueueItems.ItemsSource = displayEntries;
 
+            // Toggle empty state vs queue list
+            var emptyState = this.FindControl<UserControl>("EmptyState");
+            var scroller = this.FindControl<ScrollViewer>("QueueScroller");
+            bool isEmpty = _viewModel.QueueEntries.Count == 0;
+            if (emptyState != null) emptyState.IsVisible = isEmpty;
+            if (scroller != null) scroller.IsVisible = !isEmpty;
+
             var status = this.FindControl<TextBlock>("StatusText");
             if (status != null)
             {
-                status.Text = $"Skills in queue: {_viewModel.QueueEntries.Count}" +
-                    (_viewModel.TrainingCount > 0 ? $"  |  Currently training: {_viewModel.CurrentTrainingText}" : "  |  Paused");
+                status.Text = isEmpty
+                    ? "No skills in training"
+                    : $"Skills in queue: {_viewModel.QueueEntries.Count}" +
+                      (_viewModel.TrainingCount > 0 ? $"  |  Currently training: {_viewModel.CurrentTrainingText}" : "  |  Paused");
             }
         }
     }

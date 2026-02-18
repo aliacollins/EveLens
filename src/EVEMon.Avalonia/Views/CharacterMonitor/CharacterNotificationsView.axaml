@@ -2,7 +2,28 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterNotificationsView">
 
-    <DockPanel>
+    <Panel>
+        <!-- Enable prompt shown when endpoint is not yet activated -->
+        <Border x:Name="EnablePrompt" IsVisible="False"
+                Background="{StaticResource EveBackgroundDarkBrush}"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <TextBlock Text="Notifications is not enabled for this character."
+                           FontSize="12"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Enable this to start fetching data from EVE Online."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center" />
+                <Button Content="Enable Notifications"
+                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        HorizontalAlignment="Center"
+                        Click="OnEnableEndpoint" />
+            </StackPanel>
+        </Border>
+
+        <DockPanel x:Name="DataContent">
         <!-- Filter bar -->
         <Border DockPanel.Dock="Top" Padding="8,4"
                 Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
@@ -51,5 +72,6 @@
                 <DataGridTextColumn Header="Date" Binding="{Binding SentDate, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
             </DataGrid.Columns>
         </DataGrid>
-    </DockPanel>
+        </DockPanel>
+    </Panel>
 </UserControl>

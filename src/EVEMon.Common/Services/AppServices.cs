@@ -58,6 +58,8 @@ namespace EVEMon.Common.Services
         private static Lazy<IClipboardService> s_clipboardService = new(() => new WinFormsClipboardService());
         private static Lazy<IApplicationLifecycle> s_applicationLifecycle = new(() => new WinFormsApplicationLifecycle());
         private static Lazy<IScreenInfo> s_screenInfo = new(() => new WinFormsScreenInfo());
+        private static Lazy<ActivityLogService> s_activityLog = new(() =>
+            new ActivityLogService(ApplicationPaths.DataDirectory));
 
         /// <summary>
         /// Gets the notification collection.
@@ -131,6 +133,11 @@ namespace EVEMon.Common.Services
         /// Gets the screen information service for display geometry.
         /// </summary>
         public static IScreenInfo ScreenInfo => s_screenInfo.Value;
+
+        /// <summary>
+        /// Gets the activity log service for persisting notification history.
+        /// </summary>
+        public static ActivityLogService ActivityLog => s_activityLog.Value;
 
         /// <summary>
         /// Gets whether the application is closed.
@@ -308,6 +315,7 @@ namespace EVEMon.Common.Services
         internal static void SetClipboardService(IClipboardService svc) => s_clipboardService = new Lazy<IClipboardService>(() => svc);
         internal static void SetApplicationLifecycle(IApplicationLifecycle svc) => s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => svc);
         internal static void SetScreenInfo(IScreenInfo svc) => s_screenInfo = new Lazy<IScreenInfo>(() => svc);
+        internal static void SetActivityLog(ActivityLogService svc) => s_activityLog = new Lazy<ActivityLogService>(() => svc);
 
         /// <summary>
         /// Bootstraps the application: initializes filesystem paths, trace logging,
@@ -439,6 +447,8 @@ namespace EVEMon.Common.Services
             s_clipboardService = new Lazy<IClipboardService>(() => new WinFormsClipboardService());
             s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => new WinFormsApplicationLifecycle());
             s_screenInfo = new Lazy<IScreenInfo>(() => new WinFormsScreenInfo());
+            s_activityLog = new Lazy<ActivityLogService>(() =>
+                new ActivityLogService(ApplicationPaths.DataDirectory));
         }
 
         /// <summary>

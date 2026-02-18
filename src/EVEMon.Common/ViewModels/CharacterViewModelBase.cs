@@ -45,6 +45,12 @@ namespace EVEMon.Common.ViewModels
         }
 
         /// <summary>
+        /// Forces <see cref="OnCharacterChanged"/> even when the Character reference hasn't changed.
+        /// Used by Avalonia views when ESI data arrives for the same character object.
+        /// </summary>
+        public void ForceRefresh() => OnCharacterChanged();
+
+        /// <summary>
         /// Called when <see cref="Character"/> changes. Override to refresh data, re-subscribe
         /// to character-specific events, etc.
         /// </summary>

@@ -69,6 +69,41 @@ The promote script automatically increments version in `SharedAssemblyInfo.cs`, 
 "/mnt/c/Program Files/dotnet/dotnet.exe" publish src/EVEMon/EVEMon.csproj -c Release -r win-x64 --self-contained false -o publish/win-x64
 ```
 
+## TCP Diagnostic Stream (Port 5555)
+
+The app streams structured JSON-lines over TCP for real-time debugging. `TcpJsonLoggerProvider` (registered in `AppServices.cs`) listens on port 5555 (or `EVEMON_DIAG_PORT` env var).
+
+```bash
+# Connect from WSL (app runs on Windows side, use gateway IP — NOT localhost)
+WINHOST=$(ip route show default | awk '{print $3}' | head -1)
+nc $WINHOST 5555
+
+# Helper script with built-in filters
+./scripts/diag-stream.sh              # all events
+./scripts/diag-stream.sh esi          # ESI HTTP requests only
+./scripts/diag-stream.sh fetch        # scheduler fetches only
+./scripts/diag-stream.sh warn         # warnings/errors only
+./scripts/diag-stream.sh evt          # EventAggregator events
+
+# Manual jq filters
+nc $WINHOST 5555 | jq -r 'select(.tag == "ESI") | .msg'        # ESI requests only
+nc $WINHOST 5555 | jq -r 'select(.tag == "FETCH") | .msg'      # Scheduler fetches
+nc $WINHOST 5555 | jq -r 'select(.tag == "EVT") | .msg'        # EventAggregator events
+nc $WINHOST 5555 | jq -r 'select(.lvl == "WRN") | .msg'        # Warnings only
+```
+
+**JSON format:**
+```json
+{"ts":"2026-02-18T06:55:50.210Z","lvl":"INF","tag":"ESI","cat":"HttpClientServiceRequest","msg":"GET /characters/12345/skills → 304 Not Modified (89ms)"}
+{"ts":"...","lvl":"INF","tag":"FETCH","cat":"EsiScheduler","msg":"char47/Skills → 200 OK (180ms), tokens=142/150"}
+{"ts":"...","lvl":"WRN","tag":"WARN","cat":"SmartQueryScheduler","msg":"ESI rate limited — active=18/20"}
+```
+
+**Key files:**
+- Provider: `src/EVEMon.Infrastructure/Logging/TcpJsonLoggerProvider.cs`
+- Registration: `src/EVEMon.Common/Services/AppServices.cs:453`
+- Listens on `IPAddress.Any`, port 5555 by default
+
 ## Commit Guidelines
 
 - **NEVER push to protected branches directly** — pre-push hook blocks it

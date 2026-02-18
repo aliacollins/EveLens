@@ -27,6 +27,11 @@
         <Color x:Key="EveWarningYellow">#FFFFD54F</Color>
         <Color x:Key="EveSuccessGreen">#FF81C784</Color>
 
+        <!-- Standing colors -->
+        <Color x:Key="EveStandingNegative">#FFCF6679</Color>
+        <Color x:Key="EveStandingPositive">#FF64B5F6</Color>
+        <Color x:Key="EveStandingNeutral">#FF707070</Color>
+
         <!-- Hover / interactive -->
         <Color x:Key="EveHoverColor">#FF1E2A4A</Color>
         <SolidColorBrush x:Key="EveHoverBrush" Color="{StaticResource EveHoverColor}" />
@@ -49,6 +54,9 @@
         <SolidColorBrush x:Key="EveErrorRedBrush" Color="{StaticResource EveErrorRed}" />
         <SolidColorBrush x:Key="EveWarningYellowBrush" Color="{StaticResource EveWarningYellow}" />
         <SolidColorBrush x:Key="EveSuccessGreenBrush" Color="{StaticResource EveSuccessGreen}" />
+        <SolidColorBrush x:Key="EveStandingNegativeBrush" Color="{StaticResource EveStandingNegative}" />
+        <SolidColorBrush x:Key="EveStandingPositiveBrush" Color="{StaticResource EveStandingPositive}" />
+        <SolidColorBrush x:Key="EveStandingNeutralBrush" Color="{StaticResource EveStandingNeutral}" />
         <SolidColorBrush x:Key="EveBorderBrush" Color="{StaticResource EveBorderColor}" />
         <SolidColorBrush x:Key="EveBorderFocusedBrush" Color="{StaticResource EveBorderFocused}" />
     </Styles.Resources>
@@ -225,6 +233,11 @@
     <!-- Separator -->
     <Style Selector="Separator">
         <Setter Property="Background" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+
+    <!-- Subtle hover for item rows inside Expanders -->
+    <Style Selector="Border.item-row:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveHoverBrush}" />
     </Style>
 
 </Styles>

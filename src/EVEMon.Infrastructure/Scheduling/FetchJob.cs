@@ -21,6 +21,11 @@ namespace EVEMon.Common.Scheduling
         public int ConsecutiveNotModified { get; set; }
         public bool IsRemoved { get; set; }
         /// <summary>
+        /// True while an HTTP fetch is in-flight for this job. Prevents the dispatch loop
+        /// from dispatching a duplicate concurrent fetch for the same endpoint.
+        /// </summary>
+        public bool IsInFlight { get; set; }
+        /// <summary>
         /// Monotonically increasing schedule version. Incremented each time the job is
         /// re-enqueued. Stale queue entries with old versions are skipped on dequeue.
         /// </summary>

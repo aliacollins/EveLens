@@ -24,11 +24,13 @@ namespace EVEMon.Tests.ViewModels
             public string Name { get; set; } = string.Empty;
             public int Value { get; set; }
             public string Category { get; set; } = string.Empty;
+            public DateTime Timestamp { get; set; } = DateTime.MinValue;
         }
 
         private sealed class TestListViewModel : ListViewModel<TestItem, TestColumn, TestGrouping>
         {
             private readonly List<TestItem> _items;
+            private bool _trackTimestamps;
 
             public TestListViewModel(IEventAggregator aggregator, List<TestItem>? items = null)
                 : base(aggregator)
@@ -41,6 +43,8 @@ namespace EVEMon.Tests.ViewModels
                 _items.Clear();
                 _items.AddRange(items);
             }
+
+            public void EnableTimestampTracking() => _trackTimestamps = true;
 
             protected override IEnumerable<TestItem> GetSourceItems() => _items;
 
@@ -68,6 +72,11 @@ namespace EVEMon.Tests.ViewModels
                     TestGrouping.ByCategory => item.Category,
                     _ => string.Empty
                 };
+            }
+
+            protected override DateTime GetItemTimestamp(TestItem item)
+            {
+                return _trackTimestamps ? item.Timestamp : base.GetItemTimestamp(item);
             }
         }
 
@@ -331,5 +340,173 @@ namespace EVEMon.Tests.ViewModels
 
             vm.TotalItemCount.Should().Be(5);
         }
+
+        #region New-Item Tracking
+
+        [Fact]
+        public void NewItemCount_DefaultZero_WhenNoTimestampTracking()
+        {
+            var vm = new TestListViewModel(CreateAggregator(), CreateSampleItems());
+            vm.Refresh();
+
+            vm.NewItemCount.Should().Be(0);
+        }
+
+        [Fact]
+        public void NewItemCount_DefaultZero_WhenNeverViewed()
+        {
+            var vm = new TestListViewModel(CreateAggregator(), CreateTimestampedItems());
+            vm.EnableTimestampTracking();
+            vm.Refresh();
+
+            vm.NewItemCount.Should().Be(0, "no items are new until MarkAsViewed sets the baseline");
+        }
+
+        [Fact]
+        public void MarkAsViewed_SetsLastViewedTimestamp()
+        {
+            var vm = new TestListViewModel(CreateAggregator());
+            vm.LastViewedTimestamp.Should().Be(DateTime.MinValue);
+
+            vm.MarkAsViewed();
+
+            vm.LastViewedTimestamp.Should().BeAfter(DateTime.MinValue);
+            vm.LastViewedTimestamp.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+        }
+
+        [Fact]
+        public void NewItemCount_CountsItemsAfterLastViewed()
+        {
+            var vm = new TestListViewModel(CreateAggregator(), CreateTimestampedItems());
+            vm.EnableTimestampTracking();
+
+            // Mark as viewed — sets LastViewedTimestamp to "now"
+            vm.MarkAsViewed();
+            var viewedAt = vm.LastViewedTimestamp;
+            vm.NewItemCount.Should().Be(0, "all existing items are older than LastViewedTimestamp");
+
+            // Add a new item that's in the future
+            vm.SetItems(new List<TestItem>
+            {
+                new TestItem { Name = "Old", Value = 1, Category = "A", Timestamp = viewedAt.AddMinutes(-5) },
+                new TestItem { Name = "New1", Value = 2, Category = "A", Timestamp = viewedAt.AddMinutes(1) },
+                new TestItem { Name = "New2", Value = 3, Category = "B", Timestamp = viewedAt.AddMinutes(2) },
+            });
+            vm.Refresh();
+
+            vm.NewItemCount.Should().Be(2, "two items have timestamps after LastViewedTimestamp");
+        }
+
+        [Fact]
+        public void IsNewItem_ReturnsFalse_WhenNeverViewed()
+        {
+            var items = CreateTimestampedItems();
+            var vm = new TestListViewModel(CreateAggregator(), items);
+            vm.EnableTimestampTracking();
+            vm.Refresh();
+
+            vm.IsNewItem(items[0]).Should().BeFalse("never viewed means no items are new");
+        }
+
+        [Fact]
+        public void IsNewItem_ReturnsTrueForNewerItems()
+        {
+            var vm = new TestListViewModel(CreateAggregator());
+            vm.EnableTimestampTracking();
+            vm.MarkAsViewed();
+            var viewedAt = vm.LastViewedTimestamp;
+
+            var oldItem = new TestItem { Name = "Old", Timestamp = viewedAt.AddMinutes(-1) };
+            var newItem = new TestItem { Name = "New", Timestamp = viewedAt.AddMinutes(1) };
+
+            vm.IsNewItem(oldItem).Should().BeFalse();
+            vm.IsNewItem(newItem).Should().BeTrue();
+        }
+
+        [Fact]
+        public void MarkAsViewed_PastItemsAreNotNew()
+        {
+            var vm = new TestListViewModel(CreateAggregator());
+            vm.EnableTimestampTracking();
+
+            // Items with timestamps in the past
+            vm.SetItems(new List<TestItem>
+            {
+                new TestItem { Name = "Past1", Value = 1, Category = "A", Timestamp = DateTime.UtcNow.AddHours(-2) },
+                new TestItem { Name = "Past2", Value = 2, Category = "B", Timestamp = DateTime.UtcNow.AddHours(-1) },
+            });
+
+            // Mark as viewed sets LastViewedTimestamp to UtcNow, which is after all items
+            vm.MarkAsViewed();
+            vm.NewItemCount.Should().Be(0, "all items are in the past relative to MarkAsViewed time");
+        }
+
+        [Fact]
+        public void MarkAsViewed_MovesTimestampForward()
+        {
+            var vm = new TestListViewModel(CreateAggregator());
+            vm.EnableTimestampTracking();
+            vm.MarkAsViewed();
+            var first = vm.LastViewedTimestamp;
+
+            System.Threading.Thread.Sleep(15);
+            vm.MarkAsViewed();
+            var second = vm.LastViewedTimestamp;
+
+            second.Should().BeAfter(first);
+        }
+
+        [Fact]
+        public void NewItemCount_PropertyChanged_Fires()
+        {
+            var vm = new TestListViewModel(CreateAggregator(), CreateTimestampedItems());
+            vm.EnableTimestampTracking();
+            bool fired = false;
+            ((INotifyPropertyChanged)vm).PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(vm.NewItemCount))
+                    fired = true;
+            };
+
+            vm.Refresh();
+
+            // NewItemCount goes from 0 to 0 (no change), but the setter fires PropertyChanged
+            // Test MarkAsViewed which sets LastViewedTimestamp, triggering UpdateNewItemCount
+            vm.MarkAsViewed();
+            // fired may or may not be true depending on whether value changed
+            // So let's test with items that actually change the count
+            fired = false;
+            vm.SetItems(new List<TestItem>
+            {
+                new TestItem { Name = "New", Timestamp = vm.LastViewedTimestamp.AddMinutes(1) },
+            });
+            vm.Refresh();
+
+            fired.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Refresh_WithNullSource_ResetsNewItemCount()
+        {
+            var vm = new TestListViewModel(CreateAggregator());
+            vm.EnableTimestampTracking();
+            vm.MarkAsViewed();
+            vm.Refresh();
+
+            vm.NewItemCount.Should().Be(0);
+        }
+
+        private static List<TestItem> CreateTimestampedItems()
+        {
+            var baseTime = new DateTime(2025, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+            return new List<TestItem>
+            {
+                new TestItem { Name = "Item1", Value = 1, Category = "A", Timestamp = baseTime.AddHours(-3) },
+                new TestItem { Name = "Item2", Value = 2, Category = "A", Timestamp = baseTime.AddHours(-2) },
+                new TestItem { Name = "Item3", Value = 3, Category = "B", Timestamp = baseTime.AddHours(-1) },
+            };
+        }
+
+        #endregion
     }
 }

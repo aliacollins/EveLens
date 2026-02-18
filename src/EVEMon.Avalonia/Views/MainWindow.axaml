@@ -42,11 +42,102 @@
                 <TextBlock x:Name="ServerStatusText" Text="Server: Unknown" FontSize="11"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
                 <TextBlock Text="  |  " FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}" />
-                <TextBlock x:Name="NextUpdateText" Text="" FontSize="11"
-                           Foreground="{StaticResource EveWarningYellowBrush}" />
+
+                <!-- Right-docked items (outermost first) -->
                 <TextBlock DockPanel.Dock="Right" x:Name="EsiActivityText"
                            Text="" FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                <!-- Notification bell with flyout -->
+                <Button x:Name="NotificationBellBtn" DockPanel.Dock="Right"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="8,0" VerticalAlignment="Center"
+                        Cursor="Hand" ToolTip.Tip="Activity Log">
+                    <Button.Flyout>
+                        <Flyout Placement="TopEdgeAlignedRight">
+                            <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                    BorderBrush="{StaticResource EveBorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="0" MinWidth="360" MaxHeight="480">
+                                <DockPanel>
+                                    <!-- Header -->
+                                    <Border DockPanel.Dock="Top" Padding="12,8"
+                                            BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                                        <DockPanel>
+                                            <TextBlock Text="Activity Log" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                                        HorizontalAlignment="Right" Spacing="6">
+                                                <Button x:Name="MarkReadBtn" Content="Mark Read"
+                                                        FontSize="10" Padding="8,2" CornerRadius="10"
+                                                        Background="Transparent"
+                                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
+                                                <Button x:Name="ClearAllBtn" Content="Clear"
+                                                        FontSize="10" Padding="8,2" CornerRadius="10"
+                                                        Background="Transparent"
+                                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </Border>
+                                    <!-- Empty state -->
+                                    <TextBlock x:Name="EmptyActivityText"
+                                               Text="No recent activity"
+                                               FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="0,40" IsVisible="False" />
+                                    <!-- Activity list -->
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl x:Name="ActivityItems">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Padding="12,6"
+                                                            BorderBrush="{StaticResource EveBorderBrush}"
+                                                            BorderThickness="0,0,0,1">
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <StackPanel Spacing="2">
+                                                                <TextBlock Text="{Binding Description}" FontSize="11"
+                                                                           Foreground="{Binding DescriptionBrush}"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           ToolTip.Tip="{Binding Description}" />
+                                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                    <TextBlock Text="{Binding CharacterName}" FontSize="10"
+                                                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                                               IsVisible="{Binding HasCharacter}" />
+                                                                    <TextBlock Text="{Binding CategoryDisplay}" FontSize="10"
+                                                                               Foreground="{StaticResource EveTextDisabledBrush}" />
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                            <TextBlock Grid.Column="1" Text="{Binding TimeAgo}" FontSize="10"
+                                                                       Foreground="{StaticResource EveTextDisabledBrush}"
+                                                                       VerticalAlignment="Top" Margin="8,0,0,0" />
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </DockPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                    <!-- Bell icon with badge -->
+                    <Panel>
+                        <TextBlock Text="&#x1F514;" FontSize="14" VerticalAlignment="Center" />
+                        <Border x:Name="UnreadBadge" IsVisible="False"
+                                Background="{StaticResource EveErrorRedBrush}"
+                                CornerRadius="7" MinWidth="14" Height="14"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Margin="8,-4,-6,0" Padding="3,0">
+                            <TextBlock x:Name="UnreadCountText" Text="0" FontSize="9"
+                                       Foreground="White" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                    </Panel>
+                </Button>
+
+                <!-- Remaining space: next update countdown -->
+                <TextBlock x:Name="NextUpdateText" Text="" FontSize="11"
+                           Foreground="{StaticResource EveWarningYellowBrush}" />
             </DockPanel>
         </Border>
 

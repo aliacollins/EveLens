@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Extensions;
@@ -13,7 +14,8 @@ using EVEMon.Common.QueryMonitor;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Service;
-using EVEMon.Common.Threading;
+// NOTE: Do NOT use EVEMon.Common.Threading.Dispatcher (WinForms-only).
+// Use AppServices.Dispatcher which is AvaloniaDispatcher in the Avalonia app.
 using EVEMon.Core.Events;
 using EVEMon.Core.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -698,12 +700,17 @@ namespace EVEMon.Common.Services
                 if (target == null)
                     return new FetchOutcome { StatusCode = 0 };
 
+                // Skip non-core endpoints that the user hasn't enabled
+                if (!EndpointClassification.IsCore(method) &&
+                    !target.UISettings.EnabledEndpoints.Contains(method.ToString()))
+                    return new FetchOutcome { StatusCode = 0 };
+
                 var esiKey = target.Identity.FindAPIKeyWithAccess(method);
                 if (esiKey == null || EsiErrors.IsErrorCountExceeded)
                     return new FetchOutcome { StatusCode = 0 };
 
                 // Set monitor to Updating for UI throbber
-                Dispatcher.Post(() => monitor?.SetExternalStatus(true));
+                AppServices.Dispatcher?.Post(() => monitor?.SetExternalStatus(true));
 
                 var lastResponse = etag != null
                     ? new ResponseParams(0) { ETag = etag }
@@ -721,7 +728,7 @@ namespace EVEMon.Common.Services
                 // Marshal callback to UI thread and update monitor status + timer
                 if (!result.HasError && result.HasData && result.Result != null)
                 {
-                    Dispatcher.Post(() =>
+                    AppServices.Dispatcher?.Post(() =>
                     {
                         onSuccess(result.Result);
                         monitor?.SetExternalStatus(false, DateTime.UtcNow);
@@ -731,7 +738,7 @@ namespace EVEMon.Common.Services
                 }
                 else
                 {
-                    Dispatcher.Post(() =>
+                    AppServices.Dispatcher?.Post(() =>
                     {
                         if (result.HasError && onError != null && target.ShouldNotifyError(result, method))
                             onError(target, result);
@@ -768,12 +775,17 @@ namespace EVEMon.Common.Services
                 if (target == null)
                     return new FetchOutcome { StatusCode = 0 };
 
+                // Skip non-core endpoints that the user hasn't enabled
+                if (!EndpointClassification.IsCore(method) &&
+                    !target.UISettings.EnabledEndpoints.Contains(method.ToString()))
+                    return new FetchOutcome { StatusCode = 0 };
+
                 var esiKey = target.Identity.FindAPIKeyWithAccess(method);
                 if (esiKey == null || EsiErrors.IsErrorCountExceeded)
                     return new FetchOutcome { StatusCode = 0 };
 
                 // Set monitor to Updating for UI throbber
-                Dispatcher.Post(() => monitor?.SetExternalStatus(true));
+                AppServices.Dispatcher?.Post(() => monitor?.SetExternalStatus(true));
 
                 var lastResponse = etag != null
                     ? new ResponseParams(0) { ETag = etag }
@@ -791,7 +803,7 @@ namespace EVEMon.Common.Services
                 // Marshal callback to UI thread and update monitor status + timer
                 if (!result.HasError && result.HasData && result.Result != null)
                 {
-                    Dispatcher.Post(() =>
+                    AppServices.Dispatcher?.Post(() =>
                     {
                         onSuccess(result.Result);
                         monitor?.SetExternalStatus(false, DateTime.UtcNow);
@@ -801,7 +813,7 @@ namespace EVEMon.Common.Services
                 }
                 else
                 {
-                    Dispatcher.Post(() =>
+                    AppServices.Dispatcher?.Post(() =>
                     {
                         if (result.HasError && onError != null && target.ShouldNotifyError(result, method))
                             onError(target, result);
@@ -1012,6 +1024,54 @@ namespace EVEMon.Common.Services
         }
 
         /// <summary>
+        /// Enables an on-demand endpoint for this character.
+        /// Adds to settings, saves, and forces an immediate fetch via the scheduler.
+        /// </summary>
+        internal void EnableEndpoint(ESIAPICharacterMethods method)
+        {
+            if (EndpointClassification.IsCore(method))
+                return;
+
+            var target = m_ccpCharacter;
+            if (target == null)
+                return;
+
+            string methodName = method.ToString();
+            if (!target.UISettings.EnabledEndpoints.Contains(methodName))
+                target.UISettings.EnabledEndpoints.Add(methodName);
+
+            Settings.Save();
+
+            // Force immediate fetch — the closure will now pass the enabled check
+            AppServices.EsiScheduler?.ForceRefresh(_characterId, (long)method);
+
+            AppServices.TraceService?.Trace(
+                $"CharacterQueryOrchestrator - {target.Name} enabled endpoint {methodName}");
+        }
+
+        /// <summary>
+        /// Disables an on-demand endpoint for this character.
+        /// Removes from settings and saves. Future scheduled fetches will be skipped.
+        /// </summary>
+        internal void DisableEndpoint(ESIAPICharacterMethods method)
+        {
+            if (EndpointClassification.IsCore(method))
+                return;
+
+            var target = m_ccpCharacter;
+            if (target == null)
+                return;
+
+            string methodName = method.ToString();
+            target.UISettings.EnabledEndpoints.Remove(methodName);
+
+            Settings.Save();
+
+            AppServices.TraceService?.Trace(
+                $"CharacterQueryOrchestrator - {target.Name} disabled endpoint {methodName}");
+        }
+
+        /// <summary>
         /// Sets whether this character's tab is currently active (visible) in the UI.
         /// When active, Tier 1 (Detail) monitors are enabled. When inactive, they are disabled.
         /// Called by <see cref="ActiveCharacterTierSubscriber"/> in response to tab switches.
@@ -1068,8 +1128,8 @@ namespace EVEMon.Common.Services
             if (m_characterSheetUpdating)
                 FinishCharacterSheetUpdated();
 
-            // Drive all monitors' update checks from this single tick handler
-            // instead of each monitor subscribing to FiveSecondTick individually.
+            // Drive monitor display-status updates (Disabled/NoNetwork/Pending etc.)
+            // Monitors are display-only — no HTTP fetching. EsiScheduler is the sole fetcher.
             foreach (var monitor in m_characterQueryMonitors!)
                 monitor.UpdateTick();
         }
@@ -1469,7 +1529,7 @@ namespace EVEMon.Common.Services
                     }).ConfigureAwait(false);
 
                 // Marshal back to UI thread for processing
-                Dispatcher.Invoke(() => OnCharacterAttributesUpdated(result));
+                AppServices.Dispatcher?.Invoke(() => OnCharacterAttributesUpdated(result));
             }
         }
 
@@ -1525,11 +1585,11 @@ namespace EVEMon.Common.Services
                         }).ConfigureAwait(false);
 
                     // Marshal back to UI thread for processing
-                    Dispatcher.Invoke(() => OnMarketOrdersCompleted(historyResult, regularOrders));
+                    AppServices.Dispatcher?.Invoke(() => OnMarketOrdersCompleted(historyResult, regularOrders));
                 }
                 else
                 {
-                    Dispatcher.Invoke(() => OnMarketOrdersCompleted(null, regularOrders));
+                    AppServices.Dispatcher?.Invoke(() => OnMarketOrdersCompleted(null, regularOrders));
                 }
             }
         }

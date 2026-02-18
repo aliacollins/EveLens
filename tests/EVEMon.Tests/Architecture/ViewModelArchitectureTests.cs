@@ -350,7 +350,10 @@ namespace EVEMon.Tests.Architecture
                 "SkillBrowserViewModel",
                 "AssetBrowserViewModel",
                 "SkillQueueViewModel",
-                "EmploymentTimelineViewModel"
+                "EmploymentTimelineViewModel",
+                "NotificationCenterViewModel",
+                "ContactsListViewModel",
+                "StandingsListViewModel"
             };
 
             var vmTypes = GetAllViewModelTypes().ToList();

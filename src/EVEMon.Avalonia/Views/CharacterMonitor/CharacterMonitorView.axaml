@@ -7,69 +7,115 @@
         <!-- Character header docked to top -->
         <local:CharacterMonitorHeader DockPanel.Dock="Top" DataContext="{Binding}" />
 
-        <!-- Sub-tabs with compact headers -->
-        <TabControl TabStripPlacement="Top" Padding="0" FontSize="11">
+        <!-- Tab area with gear button overlay -->
+        <Panel>
+            <!-- Sub-tabs with compact headers -->
+            <TabControl x:Name="SubTabs" TabStripPlacement="Top" Padding="0" FontSize="11">
 
-            <!-- Character info tabs -->
-            <TabItem Header="Skills" FontSize="11">
-                <local:CharacterSkillsView />
-            </TabItem>
-            <TabItem Header="Queue" FontSize="11">
-                <local:CharacterSkillQueueView />
-            </TabItem>
-            <TabItem Header="Employment" FontSize="11">
-                <local:CharacterEmploymentHistoryView />
-            </TabItem>
-            <TabItem Header="Standings" FontSize="11">
-                <local:CharacterStandingsView />
-            </TabItem>
-            <TabItem Header="Contacts" FontSize="11">
-                <local:CharacterContactsView />
-            </TabItem>
-            <TabItem Header="FW" FontSize="11">
-                <local:CharacterFactionalWarfareView />
-            </TabItem>
-            <TabItem Header="Medals" FontSize="11">
-                <local:CharacterMedalsView />
-            </TabItem>
-            <TabItem Header="LP" FontSize="11">
-                <local:CharacterLoyaltyView />
-            </TabItem>
+                <!-- Character info tabs -->
+                <TabItem Header="Skills" FontSize="11">
+                    <local:CharacterSkillsView />
+                </TabItem>
+                <TabItem Header="Queue" FontSize="11">
+                    <local:CharacterSkillQueueView />
+                </TabItem>
+                <TabItem x:Name="TabEmployment" Header="Employment" FontSize="11">
+                    <local:CharacterEmploymentHistoryView />
+                </TabItem>
+                <TabItem x:Name="TabStandings" Header="Standings" FontSize="11">
+                    <local:CharacterStandingsView />
+                </TabItem>
+                <TabItem x:Name="TabContacts" Header="Contacts" FontSize="11">
+                    <local:CharacterContactsView />
+                </TabItem>
+                <TabItem x:Name="TabFW" Header="FW" FontSize="11">
+                    <local:CharacterFactionalWarfareView />
+                </TabItem>
+                <TabItem x:Name="TabMedals" Header="Medals" FontSize="11">
+                    <local:CharacterMedalsView />
+                </TabItem>
+                <TabItem x:Name="TabLP" Header="LP" FontSize="11">
+                    <local:CharacterLoyaltyView />
+                </TabItem>
 
-            <!-- Data tabs -->
-            <TabItem Header="Assets" FontSize="11">
-                <local:CharacterAssetsView />
-            </TabItem>
-            <TabItem Header="Orders" FontSize="11">
-                <local:CharacterMarketOrdersView />
-            </TabItem>
-            <TabItem Header="Contracts" FontSize="11">
-                <local:CharacterContractsView />
-            </TabItem>
-            <TabItem Header="Industry" FontSize="11">
-                <local:CharacterIndustryJobsView />
-            </TabItem>
-            <TabItem Header="Journal" FontSize="11">
-                <local:CharacterWalletJournalView />
-            </TabItem>
-            <TabItem Header="Transactions" FontSize="11">
-                <local:CharacterWalletTransactionsView />
-            </TabItem>
-            <TabItem Header="Mail" FontSize="11">
-                <local:CharacterMailMessagesView />
-            </TabItem>
-            <TabItem Header="Notify" FontSize="11">
-                <local:CharacterNotificationsView />
-            </TabItem>
-            <TabItem Header="Kills" FontSize="11">
-                <local:CharacterKillLogView />
-            </TabItem>
-            <TabItem Header="PI" FontSize="11">
-                <local:CharacterPlanetaryView />
-            </TabItem>
-            <TabItem Header="Research" FontSize="11">
-                <local:CharacterResearchPointsView />
-            </TabItem>
-        </TabControl>
+                <!-- Data tabs -->
+                <TabItem x:Name="TabAssets" Header="Assets" FontSize="11">
+                    <local:CharacterAssetsView />
+                </TabItem>
+                <TabItem x:Name="TabOrders" Header="Orders" FontSize="11">
+                    <local:CharacterMarketOrdersView />
+                </TabItem>
+                <TabItem x:Name="TabContracts" Header="Contracts" FontSize="11">
+                    <local:CharacterContractsView />
+                </TabItem>
+                <TabItem x:Name="TabIndustry" Header="Industry" FontSize="11">
+                    <local:CharacterIndustryJobsView />
+                </TabItem>
+                <TabItem x:Name="TabJournal" Header="Journal" FontSize="11">
+                    <local:CharacterWalletJournalView />
+                </TabItem>
+                <TabItem x:Name="TabTransactions" Header="Transactions" FontSize="11">
+                    <local:CharacterWalletTransactionsView />
+                </TabItem>
+                <TabItem x:Name="TabMail" Header="Mail" FontSize="11">
+                    <local:CharacterMailMessagesView />
+                </TabItem>
+                <TabItem x:Name="TabNotify" Header="Notify" FontSize="11">
+                    <local:CharacterNotificationsView />
+                </TabItem>
+                <TabItem x:Name="TabKills" Header="Kills" FontSize="11">
+                    <local:CharacterKillLogView />
+                </TabItem>
+                <TabItem x:Name="TabPI" Header="PI" FontSize="11">
+                    <local:CharacterPlanetaryView />
+                </TabItem>
+                <TabItem x:Name="TabResearch" Header="Research" FontSize="11">
+                    <local:CharacterResearchPointsView />
+                </TabItem>
+            </TabControl>
+
+            <!-- Gear button — inline with tab strip at top-right -->
+            <Button x:Name="EndpointGearBtn"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Background="Transparent" BorderThickness="0"
+                    Padding="8,4" Margin="4,2"
+                    FontSize="13"
+                    Foreground="{StaticResource EveTextSecondaryBrush}"
+                    ToolTip.Tip="Manage ESI Endpoints">
+                <Button.Content>&#x2699;</Button.Content>
+                <Button.Flyout>
+                    <Flyout Placement="BottomEdgeAlignedRight">
+                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                BorderBrush="{StaticResource EveBorderBrush}"
+                                BorderThickness="1" CornerRadius="6"
+                                Padding="12" MinWidth="260" MaxHeight="420">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="ESI Endpoints" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                                <TextBlock Text="Choose which data to fetch for this character."
+                                           FontSize="10"
+                                           Foreground="{StaticResource EveTextDisabledBrush}"
+                                           TextWrapping="Wrap" />
+                                <Separator Margin="0,2" />
+
+                                <!-- Endpoint toggles populated in code-behind -->
+                                <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="EndpointToggles" Spacing="3" />
+                                </ScrollViewer>
+
+                                <Separator Margin="0,2" />
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            HorizontalAlignment="Right">
+                                    <Button Content="Enable All" FontSize="10" Padding="10,3"
+                                            CornerRadius="12" Click="OnEnableAllEndpoints" />
+                                    <Button Content="Disable All" FontSize="10" Padding="10,3"
+                                            CornerRadius="12" Click="OnDisableAllEndpoints" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+        </Panel>
     </DockPanel>
 </UserControl>

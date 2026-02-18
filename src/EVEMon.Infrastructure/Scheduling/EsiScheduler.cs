@@ -152,6 +152,14 @@ namespace EVEMon.Common.Scheduling
                             authState.Status == AuthStatus.AuthFailed)
                             continue;
 
+                        // Skip if already in-flight (prevents duplicate concurrent fetches)
+                        if (job.IsInFlight)
+                        {
+                            // Re-enqueue without version bump so it retries after current fetch completes
+                            lock (_queue) { _queue.Enqueue((job, job.ScheduleVersion), DateTime.UtcNow.AddSeconds(5)); }
+                            continue;
+                        }
+
                         // Check rate limit
                         if (!_tokenTracker.CanFetch(job.CharacterId, job.RateGroup))
                         {
@@ -208,6 +216,7 @@ namespace EVEMon.Common.Scheduling
 
         private async Task ExecuteFetchAsync(FetchJob job, CancellationToken ct)
         {
+            job.IsInFlight = true;
             await _concurrencyGate.WaitAsync(ct).ConfigureAwait(false);
             Interlocked.Increment(ref _activeFetches);
             try
@@ -236,6 +245,15 @@ namespace EVEMon.Common.Scheduling
 
                     case 304: // Not Modified — 1 token cost, no data change
                         job.ConsecutiveNotModified++;
+                        // After 5 consecutive 304s, clear ETag to force a full GET.
+                        // ESI ETags can go stale (data changed server-side but ETag
+                        // wasn't invalidated). This ensures we eventually get fresh data
+                        // for all endpoints: skills, contracts, contacts, notifications, etc.
+                        if (job.ConsecutiveNotModified >= 5)
+                        {
+                            job.ETag = null;
+                            job.ConsecutiveNotModified = 0;
+                        }
                         // ESI 304 responses return stale Expires headers, causing
                         // CachedUntil to be ~5s from now. Use previous cache duration
                         // as a floor to avoid re-fetching every 5 seconds.
@@ -266,8 +284,11 @@ namespace EVEMon.Common.Scheduling
                         Enqueue(job, DateTime.UtcNow.AddMinutes(2));
                         break;
 
-                    case 0: // Skipped (no ESI key, errors exceeded, etc.)
-                        Enqueue(job, DateTime.UtcNow.AddMinutes(1));
+                    case 0: // Skipped (no ESI key, errors exceeded, endpoint disabled, etc.)
+                        // Use a long backoff to prevent disabled endpoints from flooding the queue.
+                        // 7 chars × 19 disabled endpoints = 133 jobs; at 1-minute re-enqueue they
+                        // starve real fetches. 30-minute backoff keeps them dormant.
+                        Enqueue(job, DateTime.UtcNow.AddMinutes(30));
                         break;
 
                     default:
@@ -295,6 +316,7 @@ namespace EVEMon.Common.Scheduling
             }
             finally
             {
+                job.IsInFlight = false;
                 Interlocked.Decrement(ref _activeFetches);
                 _concurrencyGate.Release();
             }
@@ -408,6 +430,7 @@ namespace EVEMon.Common.Scheduling
                     foreach (var job in jobs)
                     {
                         job.Generation = _generations[charId];
+                        job.ETag = null; // Clear ETag so fetch does a full GET, not conditional
                         Enqueue(job, DateTime.UtcNow);
                     }
                 }
@@ -418,6 +441,7 @@ namespace EVEMon.Common.Scheduling
                     {
                         if (job.EndpointMethod == endpointMethod)
                         {
+                            job.ETag = null; // Clear ETag so fetch does a full GET, not conditional
                             Enqueue(job, DateTime.UtcNow);
                             break;
                         }
@@ -452,7 +476,11 @@ namespace EVEMon.Common.Scheduling
                 var key = (charId, state.Method);
                 if (_jobLookup.TryGetValue(key, out var job))
                 {
-                    job.ETag = state.ETag;
+                    // Do NOT restore ETags — the first fetch after launch should always be
+                    // a clean GET. CCP's cache nodes may have rotated between sessions, and
+                    // stale ETags cause perpetual 304s even when data has changed.
+                    // Only restore CachedUntil to avoid re-fetching data that hasn't expired.
+                    job.ETag = null;
                     job.CachedUntil = state.CachedUntil ?? default;
                 }
             }

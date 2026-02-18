@@ -14,8 +14,16 @@ namespace EVEMon.Common.SettingsObjects
             {
                 case UpdatePeriod.Never:
                     return TimeSpan.MaxValue;
+                case UpdatePeriod.Seconds30:
+                    return TimeSpan.FromSeconds(30);
+                case UpdatePeriod.Minutes1:
+                    return TimeSpan.FromMinutes(1);
+                case UpdatePeriod.Minutes2:
+                    return TimeSpan.FromMinutes(2);
                 case UpdatePeriod.Minutes5:
                     return TimeSpan.FromMinutes(5);
+                case UpdatePeriod.Minutes10:
+                    return TimeSpan.FromMinutes(10);
                 case UpdatePeriod.Minutes15:
                     return TimeSpan.FromMinutes(15);
                 case UpdatePeriod.Minutes30:

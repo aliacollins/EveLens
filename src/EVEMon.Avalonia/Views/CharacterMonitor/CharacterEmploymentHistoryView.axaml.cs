@@ -3,17 +3,28 @@ using System.Globalization;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
 using EVEMon.Avalonia.Converters;
 using EVEMon.Common.Models;
 using EVEMon.Common.ViewModels;
+using Avalonia.Interactivity;
+using EVEMon.Common.Constants;
+using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Events;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterEmploymentHistoryView : UserControl
     {
+        private IDisposable? _dataUpdatedSub;
+        private long _characterId;
         private EmploymentTimelineViewModel? _viewModel;
+        private bool _isPanning;
+        private Point _panStart;
+        private double _panStartOffset;
 
         public CharacterEmploymentHistoryView()
         {
@@ -23,6 +34,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
+            _dataUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterUpdatedEvent>(OnDataUpdated);
+            TimelineScroller.PointerPressed += OnScrollerPointerPressed;
+            TimelineScroller.PointerMoved += OnScrollerPointerMoved;
+            TimelineScroller.PointerReleased += OnScrollerPointerReleased;
+            TimelineScroller.PointerWheelChanged += OnScrollerPointerWheel;
             LoadData();
         }
 
@@ -30,6 +46,17 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             base.OnDataContextChanged(e);
             LoadData();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnDetachedFromVisualTree(e);
+            TimelineScroller.PointerPressed -= OnScrollerPointerPressed;
+            TimelineScroller.PointerMoved -= OnScrollerPointerMoved;
+            TimelineScroller.PointerReleased -= OnScrollerPointerReleased;
+            TimelineScroller.PointerWheelChanged -= OnScrollerPointerWheel;
+            _dataUpdatedSub?.Dispose();
+            _dataUpdatedSub = null;
         }
 
         private void LoadData()
@@ -44,8 +71,27 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             if (character == null) return;
 
+            _characterId = character.CharacterID;
+
+            // Check if on-demand endpoint is enabled
+            var parentView = this.FindAncestorOfType<CharacterMonitorView>();
+            var oc = parentView?.DataContext as ObservableCharacter;
+            var prompt = this.FindControl<Border>("EnablePrompt");
+            var content = this.FindControl<DockPanel>("DataContent");
+            if (oc != null && !oc.IsEndpointEnabled(ESIAPICharacterMethods.EmploymentHistory))
+            {
+                if (prompt != null) prompt.IsVisible = true;
+                if (content != null) content.IsVisible = false;
+                return;
+            }
+            if (prompt != null) prompt.IsVisible = false;
+            if (content != null) content.IsVisible = true;
+
             _viewModel ??= new EmploymentTimelineViewModel();
-            _viewModel.Character = character;
+            if (_viewModel.Character != character)
+                _viewModel.Character = character;
+            else
+                _viewModel.ForceRefresh();
 
             var timeline = _viewModel.TimelineEntries;
 
@@ -89,6 +135,62 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 System.Diagnostics.Debug.WriteLine($"Corp logo load error: {ex}");
             }
+        }
+
+        private void OnScrollerPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            var props = e.GetCurrentPoint(TimelineScroller).Properties;
+            if (props.IsLeftButtonPressed || props.IsMiddleButtonPressed)
+            {
+                _isPanning = true;
+                _panStart = e.GetPosition(TimelineScroller);
+                _panStartOffset = TimelineScroller.Offset.X;
+                e.Pointer.Capture(TimelineScroller);
+                e.Handled = true;
+            }
+        }
+
+        private void OnScrollerPointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_isPanning) return;
+            var current = e.GetPosition(TimelineScroller);
+            var delta = _panStart.X - current.X;
+            TimelineScroller.Offset = new Vector(
+                Math.Max(0, Math.Min(_panStartOffset + delta, TimelineScroller.Extent.Width - TimelineScroller.Viewport.Width)),
+                0);
+            e.Handled = true;
+        }
+
+        private void OnScrollerPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            if (!_isPanning) return;
+            _isPanning = false;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        }
+
+        private void OnScrollerPointerWheel(object? sender, PointerWheelEventArgs e)
+        {
+            // Convert vertical wheel to horizontal scroll
+            var scrollAmount = -e.Delta.Y * 48;
+            var newOffset = TimelineScroller.Offset.X + scrollAmount;
+            newOffset = Math.Max(0, Math.Min(newOffset, TimelineScroller.Extent.Width - TimelineScroller.Viewport.Width));
+            TimelineScroller.Offset = new Vector(newOffset, 0);
+            e.Handled = true;
+        }
+
+        private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
+        {
+            var parentView = this.FindAncestorOfType<CharacterMonitorView>();
+            var oc = parentView?.DataContext as ObservableCharacter;
+            oc?.EnableEndpoint(ESIAPICharacterMethods.EmploymentHistory);
+            LoadData();
+        }
+
+        private void OnDataUpdated(CharacterUpdatedEvent evt)
+        {
+            if (evt.Character?.CharacterID == _characterId)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
     }
 }

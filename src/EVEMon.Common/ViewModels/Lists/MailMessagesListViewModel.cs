@@ -74,5 +74,7 @@ namespace EVEMon.Common.ViewModels.Lists
                 _ => string.Empty
             };
         }
+
+        protected override DateTime GetItemTimestamp(EveMailMessage item) => item.SentDate;
     }
 }

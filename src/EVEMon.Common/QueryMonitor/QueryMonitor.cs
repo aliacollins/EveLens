@@ -236,60 +236,28 @@ namespace EVEMon.Common.QueryMonitor
         }
 
         /// <summary>
-        /// Updates on every second.
+        /// Updates display status on every tick. Display-only — no HTTP fetching.
+        /// All HTTP fetching is handled exclusively by EsiScheduler via the orchestrator's
+        /// fetch closures. Monitors are pure display objects (Status, LastUpdate, IsUpdating)
+        /// for the UI throbber. SetExternalStatus() is the bridge from scheduler to monitor.
         /// </summary>
         private void UpdateOnOneSecondTick()
         {
-            // Are we already updating?
+            // Only update display status — never initiate HTTP requests.
+            // EsiScheduler is the sole fetcher; it calls SetExternalStatus() to
+            // update IsUpdating/Status/LastUpdate for the UI throbber.
             if (!IsUpdating)
             {
-                m_isCanceled = false;
                 if (!Enabled)
-                    // Monitor is disabled
                     Status = QueryStatus.Disabled;
                 else if (!NetworkMonitor.IsNetworkAvailable)
-                    // No network connection
                     Status = QueryStatus.NoNetwork;
                 else if (!IsServerStatusQuery && !AppServices.EVEServer.IsOnline)
-                {
-                    // Server is offline (downtime) - pause all queries except ServerStatus
                     Status = QueryStatus.ServerOffline;
-                }
                 else if (!HasESIKey)
-                    // No valid ESI key
                     Status = QueryStatus.NoESIKey;
-                else if (EsiErrors.IsErrorCountExceeded || (!m_forceUpdate && NextUpdate >
-                        DateTime.UtcNow))
-                {
-                    // Not time to update yet - stay in Pending state
-                    // Note: We don't check HasAccess here to avoid timer jumpiness
-                    // HasAccess will be checked when it's actually time to update
-                    Status = QueryStatus.Pending;
-
-                    // Debug: Log why we're staying pending when overdue
-                    if (NextUpdate <= DateTime.UtcNow)
-                    {
-                        var reason = EsiErrors.IsErrorCountExceeded
-                            ? $"ErrorCountExceeded (resets at {EsiErrors.ErrorCountResetTime:HH:mm:ss})"
-                            : $"Unknown (m_forceUpdate={m_forceUpdate}, NextUpdate={NextUpdate:HH:mm:ss}, Now={DateTime.UtcNow:HH:mm:ss})";
-                        AppServices.TraceService?.Trace($"QueryMonitor.Pending - {Method} overdue but not starting: {reason}");
-                    }
-                }
                 else
-                {
-                    // It's time to update - now check if we have access
-                    if (!HasAccess)
-                    {
-                        Status = QueryStatus.NoAccess;
-                        return;
-                    }
-                    // Start the update
-                    IsUpdating = true;
-                    Status = QueryStatus.Updating;
-                    AppServices.TraceService?.Trace($"QueryMonitor.Starting - {Method}");
-                    // Fire and forget the async query - result will be handled via OnQueried
-                    _ = QueryAsyncCoreAsync(AppServices.APIProviders.CurrentProvider);
-                }
+                    Status = QueryStatus.Pending;
             }
         }
 

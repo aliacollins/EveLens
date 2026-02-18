@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Events;
 using EVEMon.Common.Extensions;
@@ -14,19 +15,56 @@ namespace EVEMon.Common.ViewModels.Lists
     /// </summary>
     public sealed class WalletJournalListViewModel : ListViewModel<WalletJournal, WalletJournalColumn, WalletJournalGrouping>
     {
+        private string? _typeFilter;
+        private IReadOnlyList<string> _availableTypes = Array.Empty<string>();
+        private decimal _netAmount;
+
         public WalletJournalListViewModel(IEventAggregator eventAggregator, IDispatcher? dispatcher = null)
             : base(eventAggregator, dispatcher)
         {
-            SubscribeForCharacter<CharacterWalletJournalUpdatedEvent>(e => Refresh());
+            SubscribeForCharacter<CharacterWalletJournalUpdatedEvent>(e => { UpdateAvailableTypes(); Refresh(); });
             Subscribe<SettingsChangedEvent>(e => Refresh());
             Subscribe<EveIDToNameUpdatedEvent>(e => Refresh());
+            PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Items)) UpdateNetAmount(); };
         }
 
         public WalletJournalListViewModel() : base()
         {
-            SubscribeForCharacter<CharacterWalletJournalUpdatedEvent>(e => Refresh());
+            SubscribeForCharacter<CharacterWalletJournalUpdatedEvent>(e => { UpdateAvailableTypes(); Refresh(); });
             Subscribe<SettingsChangedEvent>(e => Refresh());
             Subscribe<EveIDToNameUpdatedEvent>(e => Refresh());
+            PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Items)) UpdateNetAmount(); };
+        }
+
+        /// <summary>
+        /// Gets or sets the type filter. When set, only journal entries matching this type are shown.
+        /// </summary>
+        public string? TypeFilter
+        {
+            get => _typeFilter;
+            set
+            {
+                if (SetProperty(ref _typeFilter, value))
+                    Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Gets the distinct types available in the source data for filtering.
+        /// </summary>
+        public IReadOnlyList<string> AvailableTypes
+        {
+            get => _availableTypes;
+            private set => SetProperty(ref _availableTypes, value);
+        }
+
+        /// <summary>
+        /// Gets the net amount (sum of all filtered item amounts).
+        /// </summary>
+        public decimal NetAmount
+        {
+            get => _netAmount;
+            private set => SetProperty(ref _netAmount, value);
         }
 
         protected override IEnumerable<WalletJournal> GetSourceItems()
@@ -34,7 +72,12 @@ namespace EVEMon.Common.ViewModels.Lists
             if (Character is not CCPCharacter ccp)
                 return Array.Empty<WalletJournal>();
 
-            return ccp.WalletJournal;
+            var items = ccp.WalletJournal;
+
+            if (!string.IsNullOrEmpty(_typeFilter))
+                return items.Where(j => string.Equals(j.Type, _typeFilter, StringComparison.OrdinalIgnoreCase));
+
+            return items;
         }
 
         protected override bool MatchesFilter(WalletJournal x, string filter)
@@ -74,6 +117,37 @@ namespace EVEMon.Common.ViewModels.Lists
                 WalletJournalGrouping.Recipient or WalletJournalGrouping.RecipientDesc => item.Recipient,
                 _ => string.Empty
             };
+        }
+
+        protected override DateTime GetItemTimestamp(WalletJournal item) => item.Date;
+
+        protected override void OnCharacterChanged()
+        {
+            UpdateAvailableTypes();
+            base.OnCharacterChanged();
+        }
+
+        private void UpdateAvailableTypes()
+        {
+            if (Character is not CCPCharacter ccp)
+            {
+                AvailableTypes = Array.Empty<string>();
+                return;
+            }
+
+            AvailableTypes = ccp.WalletJournal
+                .Select(j => j.Type)
+                .Where(t => !string.IsNullOrEmpty(t))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private void UpdateNetAmount()
+        {
+            NetAmount = Items.Count > 0
+                ? Items.Sum(i => i.Amount)
+                : 0m;
         }
     }
 }
