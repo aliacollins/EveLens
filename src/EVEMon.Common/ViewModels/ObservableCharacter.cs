@@ -116,14 +116,49 @@ namespace EVEMon.Common.ViewModels
         // Derived display strings (computed, not cached)
         // ═══════════════════════════════════════════════════════
 
-        public string BalanceText => $"{Balance:N2} ISK";
+        public string BalanceText => $"{FormatISK(Balance)} ISK";
         public string SecurityStatusText => $"Security Status: {SecurityStatus:N2}";
-        public string SkillPointsText => $"Total SP: {SkillPoints:N0}";
-        public string FreeSkillPointsText => $"Free SP: {FreeSkillPoints:N0}";
+        public string SkillPointsText => $"Total SP: {FormatLargeNumber(SkillPoints)}";
+        public string FreeSkillPointsText => $"Free SP: {FormatLargeNumber(FreeSkillPoints)}";
         public string KnownSkillCountText => $"Known Skills: {KnownSkillCount}";
         public string AvailableRemapsText => $"Bonus Remaps: {AvailableRemaps}";
         public string ShipText => !string.IsNullOrEmpty(ShipTypeName) && !string.IsNullOrEmpty(ShipName)
             ? $"Active Ship: {ShipTypeName} [{ShipName}]" : "Active Ship: Unknown";
+
+        // ═══════════════════════════════════════════════════════
+        // Formatting helpers — compact notation for large numbers
+        // ═══════════════════════════════════════════════════════
+
+        /// <summary>Format ISK with compact notation: 1.23T, 4.56B, 789.12M, or full number if under 1M.</summary>
+        internal static string FormatISK(decimal amount)
+        {
+            var abs = Math.Abs(amount);
+            if (abs >= 1_000_000_000_000m) return $"{amount / 1_000_000_000_000m:N2}T";
+            if (abs >= 1_000_000_000m) return $"{amount / 1_000_000_000m:N2}B";
+            if (abs >= 1_000_000m) return $"{amount / 1_000_000m:N2}M";
+            return $"{amount:N2}";
+        }
+
+        /// <summary>Format ISK delta with sign and compact notation.</summary>
+        internal static string FormatISKDelta(decimal delta)
+        {
+            var abs = Math.Abs(delta);
+            string sign = delta >= 0 ? "+" : "";
+            if (abs >= 1_000_000_000_000m) return $"{sign}{delta / 1_000_000_000_000m:N2}T";
+            if (abs >= 1_000_000_000m) return $"{sign}{delta / 1_000_000_000m:N2}B";
+            if (abs >= 1_000_000m) return $"{sign}{delta / 1_000_000m:N2}M";
+            if (abs >= 1_000m) return $"{sign}{delta / 1_000m:N1}K";
+            return $"{sign}{delta:N2}";
+        }
+
+        /// <summary>Format large numbers with compact notation: 27.1M, 1.2B, or full if under 1M.</summary>
+        internal static string FormatLargeNumber(long value)
+        {
+            var abs = Math.Abs(value);
+            if (abs >= 1_000_000_000) return $"{value / 1_000_000_000.0:N2}B";
+            if (abs >= 1_000_000) return $"{value / 1_000_000.0:N1}M";
+            return $"{value:N0}";
+        }
 
         // ═══════════════════════════════════════════════════════
         // Refresh — re-reads ALL properties from model, INPC fires for changes
@@ -138,8 +173,7 @@ namespace EVEMon.Common.ViewModels
                 var delta = newBalance - _previousBalance;
                 BalanceDirection = delta > 0 ? 1 : -1;
                 string arrow = delta > 0 ? "▲" : "▼";
-                string sign = delta > 0 ? "+" : "";
-                BalanceChangeText = $"{arrow} {sign}{delta:N2} ISK";
+                BalanceChangeText = $"{arrow} {FormatISKDelta(delta)} ISK";
             }
             else if (_previousBalance == 0 && newBalance > 0)
             {
