@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using EVEMon.Common.Models;
 using EVEMon.Common.ViewModels;
-using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Events;
 using EVEMon.Common.Services;
@@ -84,22 +85,36 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
             if (!hasData) return;
 
-            // Toggle between hierarchical and flat display
-            var flatScroll = this.FindControl<ScrollViewer>("FlatScrollViewer");
-            var hierScroll = this.FindControl<ScrollViewer>("HierarchicalScrollViewer");
+            // Flatten all groups into a single list for the DataGrid (Law 20: .ToList())
+            var flatItems = new List<AssetFlatEntry>();
 
             if (_viewModel.IsHierarchical)
             {
-                if (flatScroll != null) flatScroll.IsVisible = false;
-                if (hierScroll != null) hierScroll.IsVisible = true;
-                HierarchicalGroupsList.ItemsSource = _viewModel.HierarchicalGroups;
+                // Hierarchical mode: flatten region→system→station→items
+                foreach (var region in _viewModel.HierarchicalGroups)
+                {
+                    foreach (var system in region.Systems)
+                    {
+                        foreach (var station in system.Stations)
+                        {
+                            string locationText = $"{station.Name}, {system.Name}";
+                            foreach (var item in station.Items)
+                                flatItems.Add(new AssetFlatEntry(item, region.Name, locationText));
+                        }
+                    }
+                }
             }
             else
             {
-                if (flatScroll != null) flatScroll.IsVisible = true;
-                if (hierScroll != null) hierScroll.IsVisible = false;
-                AssetGroupsList.ItemsSource = _viewModel.Groups;
+                // Flat mode: flatten group→items
+                foreach (var group in _viewModel.Groups)
+                {
+                    foreach (var item in group.Items)
+                        flatItems.Add(new AssetFlatEntry(item, group.Name, item.LocationShort));
+                }
             }
+
+            AssetsGrid.ItemsSource = flatItems;
 
             var statusCtl = this.FindControl<TextBlock>("StatusText");
             if (statusCtl != null)
@@ -130,18 +145,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             LoadData();
         }
 
-        private void OnCollapseAll(object? sender, RoutedEventArgs e)
+        private void OnCopyItemName(object? sender, RoutedEventArgs e)
         {
-            if (_viewModel == null) return;
-            _viewModel.CollapseAll();
-            LoadData();
-        }
-
-        private void OnExpandAll(object? sender, RoutedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            _viewModel.ExpandAll();
-            LoadData();
+            var item = AssetsGrid.SelectedItem as AssetFlatEntry;
+            if (item != null)
+                TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(item.ItemName);
         }
 
         private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
@@ -156,6 +164,25 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             if (evt.Character?.CharacterID == _characterId)
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
+        }
+    }
+
+    /// <summary>Flat display entry for asset DataGrid rows.</summary>
+    internal sealed class AssetFlatEntry
+    {
+        public string ItemName { get; }
+        public string QuantityText { get; }
+        public string LocationText { get; }
+        public string ValueText { get; }
+        public string GroupName { get; }
+
+        public AssetFlatEntry(AssetBrowserItemEntry item, string groupName, string locationText)
+        {
+            ItemName = item.ItemName;
+            QuantityText = item.QuantityText;
+            LocationText = locationText;
+            ValueText = item.ValueText;
+            GroupName = groupName;
         }
     }
 }

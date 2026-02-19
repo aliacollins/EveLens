@@ -1,0 +1,194 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:EVEMon.Avalonia.Views.PlanEditor"
+             x:Class="EVEMon.Avalonia.Views.PlanEditor.PlanUnifiedView">
+    <DockPanel>
+        <!-- Dashboard cards row (hidden by default, toggleable) -->
+        <Border x:Name="CardsPanel" DockPanel.Dock="Top" Padding="10,8"
+                Background="{StaticResource EveBackgroundDarkBrush}" IsVisible="False">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="+ Add Skills" FontSize="10"
+                        Padding="10,4" CornerRadius="10" Margin="8,0,0,0"
+                        VerticalAlignment="Top" Click="OnAddSkills" />
+                <UniformGrid Columns="3" x:Name="CardsRow">
+                    <local:PlanGoalCard x:Name="GoalCard" />
+                    <local:PlanTimeCard x:Name="TimeCard" />
+                    <local:PlanCostCard x:Name="CostCard" />
+                </UniformGrid>
+            </DockPanel>
+        </Border>
+
+        <!-- Compact stats header -->
+        <Border DockPanel.Dock="Top" Padding="10,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="SkillCountText" FontSize="10"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="TrainingTimeText" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="FinishDateText" FontSize="10"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="InjectorText" FontSize="10"
+                               Foreground="{StaticResource EveSuccessGreenBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="TotalSpText" FontSize="10"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <ToggleButton x:Name="CardsToggle" Content="Cards" IsChecked="False"
+                                  FontSize="9" Padding="6,2" CornerRadius="8"
+                                  Click="OnCardsToggle" />
+                    <Button Content="+ Add Skills" FontSize="9" Padding="6,2"
+                            CornerRadius="8" Click="OnAddSkills" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Dense DataGrid -->
+        <DataGrid x:Name="PlanGrid" Classes="plan-grid"
+                  AutoGenerateColumns="False"
+                  CanUserResizeColumns="True" CanUserReorderColumns="True" CanUserSortColumns="True"
+                  IsReadOnly="True"
+                  HeadersVisibility="Column"
+                  Background="{StaticResource EveBackgroundDarkBrush}"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{StaticResource EveBorderBrush}"
+                  SelectionMode="Extended">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Plan to Level">
+                        <MenuItem Header="Level I" Click="OnPlanToLevel" Tag="1" />
+                        <MenuItem Header="Level II" Click="OnPlanToLevel" Tag="2" />
+                        <MenuItem Header="Level III" Click="OnPlanToLevel" Tag="3" />
+                        <MenuItem Header="Level IV" Click="OnPlanToLevel" Tag="4" />
+                        <MenuItem Header="Level V" Click="OnPlanToLevel" Tag="5" />
+                    </MenuItem>
+                    <Separator />
+                    <MenuItem x:Name="MoveUpMenuItem" Header="Move Up" Click="OnMoveUp" InputGesture="Alt+Up" />
+                    <MenuItem x:Name="MoveDownMenuItem" Header="Move Down" Click="OnMoveDown" InputGesture="Alt+Down" />
+                    <MenuItem Header="Move to Top" Click="OnMoveToTop" />
+                    <MenuItem Header="Change Priority..." Click="OnChangePriority" />
+                    <MenuItem Header="View/Change Note..." Click="OnChangeNote" />
+                    <Separator />
+                    <MenuItem Header="Copy to Clipboard" Click="OnCopyToClipboard" />
+                    <Separator />
+                    <MenuItem Header="Remove from Plan" Click="OnRemoveFromPlan" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <!-- Skill Name: bold, fills available space -->
+                <DataGridTemplateColumn Header="SKILL NAME" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Panel>
+                                <Border Width="3" Background="{StaticResource EveAccentPrimaryBrush}"
+                                        HorizontalAlignment="Left" IsVisible="{Binding IsNewlyAdded}" />
+                                <Border Width="3" Background="{StaticResource EveWarningYellowBrush}"
+                                        HorizontalAlignment="Left" IsVisible="{Binding IsRecentlyMoved}" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                    <TextBlock Text="{Binding SkillName}" FontSize="10" FontWeight="Bold"
+                                               Foreground="{StaticResource EveTextPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <Button Content="&#x25B2;" FontSize="7" Padding="3,0" CornerRadius="3"
+                                            Background="Transparent" Foreground="{StaticResource EveTextDisabledBrush}"
+                                            BorderThickness="0" Click="OnMoveItemUp"
+                                            IsVisible="{Binding CanMoveUp}" Margin="6,0,0,0"
+                                            ToolTip.Tip="Move Up" Cursor="Hand" />
+                                    <Button Content="&#x25BC;" FontSize="7" Padding="3,0" CornerRadius="3"
+                                            Background="Transparent" Foreground="{StaticResource EveTextDisabledBrush}"
+                                            BorderThickness="0" Click="OnMoveItemDown"
+                                            IsVisible="{Binding CanMoveDown}" Margin="1,0,0,0"
+                                            ToolTip.Tip="Move Down" Cursor="Hand" />
+                                </StackPanel>
+                            </Panel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Training Time: right-aligned, color-coded -->
+                <DataGridTemplateColumn Header="TRAINING TIME" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding TrainingTimeText}" FontSize="10"
+                                       Foreground="{Binding TimeBrush}"
+                                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Margin="0,0,6,0"
+                                       ToolTip.Tip="{Binding FinishDateText}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Rank: centered number -->
+                <DataGridTemplateColumn Header="RANK" Width="45">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding RankText}" FontSize="10"
+                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Primary Attribute: capsule pill -->
+                <DataGridTemplateColumn Header="PRIMARY" Width="95">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Background="{Binding PrimaryAttrPillBg}"
+                                    CornerRadius="8" Padding="6,1" Margin="2,2"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding PrimaryAttr}" FontSize="9"
+                                           Foreground="{Binding PrimaryAttrBrush}"
+                                           HorizontalAlignment="Center" />
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Secondary Attribute: capsule pill -->
+                <DataGridTemplateColumn Header="SECONDARY" Width="95">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Background="{Binding SecondaryAttrPillBg}"
+                                    CornerRadius="8" Padding="6,1" Margin="2,2"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding SecondaryAttr}" FontSize="9"
+                                           Foreground="{Binding SecondaryAttrBrush}"
+                                           HorizontalAlignment="Center" />
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Group: left-aligned -->
+                <DataGridTemplateColumn Header="GROUP" Width="140">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding GroupName}" FontSize="10"
+                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="4,0,0,0"
+                                       TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- SP/Hour: right-aligned -->
+                <DataGridTemplateColumn Header="SP/HOUR" Width="65">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding SpPerHourText}" FontSize="10"
+                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Margin="0,0,6,0" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>

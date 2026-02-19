@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -10,6 +11,7 @@ using Avalonia.Threading;
 using EVEMon.Avalonia.ViewModels;
 using EVEMon.Avalonia.Views.CharacterMonitor;
 using EVEMon.Avalonia.Views.Dialogs;
+using EVEMon.Avalonia.Views.PlanEditor;
 using EVEMon.Common.Models;
 using EVEMon.Common.Services;
 using EVEMon.Common.ViewModels;
@@ -35,6 +37,11 @@ namespace EVEMon.Avalonia.Views
             BuildTabs();
 
             WireMenuItems();
+
+            // Disable plan menus initially (Overview tab active)
+            NewPlanMenuItem.IsEnabled = false;
+            ManagePlansMenuItem.IsEnabled = false;
+            MainTabControl.SelectionChanged += OnTabSelectionChanged;
 
             _tickSubscription = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
                 e => Dispatcher.UIThread.Post(() => OnSecondTick(e)));
@@ -90,11 +97,12 @@ namespace EVEMon.Avalonia.Views
             ExitMenuItem.Click += OnExitClick;
 
             // Plans menu
-            NewPlanMenuItem.Click += OnPlansClick;
-            ManagePlansMenuItem.Click += OnPlansClick;
+            NewPlanMenuItem.Click += OnNewPlanClick;
+            ManagePlansMenuItem.Click += OnManagePlansClick;
 
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
+            ClearCacheMenuItem.Click += OnClearCacheClick;
             SettingsMenuItem.Click += OnSettingsClick;
 
             // Help menu
@@ -262,20 +270,98 @@ namespace EVEMon.Avalonia.Views
         {
             try
             {
+                var characters = _viewModel.Characters.ToList();
+                if (characters.Count == 0)
+                {
+                    var emptyDialog = new Window
+                    {
+                        Title = "Manage Characters",
+                        Width = 320, Height = 130,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new TextBlock
+                        {
+                            Text = "No characters to manage. Use Add Character to get started.",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            Margin = new Thickness(20)
+                        }
+                    };
+                    await emptyDialog.ShowDialog(this);
+                    return;
+                }
+
+                var listBox = new ListBox
+                {
+                    ItemsSource = characters.Select(c => c.Name).ToList(),
+                    FontSize = 12,
+                    Margin = new Thickness(0, 0, 0, 8)
+                };
+                listBox.SelectedIndex = 0;
+
+                var deleteBtn = new Button
+                {
+                    Content = "Delete Selected",
+                    FontSize = 11,
+                    Padding = new Thickness(12, 5),
+                    CornerRadius = new CornerRadius(12),
+                    Foreground = global::Avalonia.Media.Brushes.Red,
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
                 var dialog = new Window
                 {
                     Title = "Manage Characters",
-                    Width = 300,
-                    Height = 150,
+                    Width = 360, Height = 350,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new TextBlock
+                    Content = new DockPanel
                     {
-                        Text = "Manage Characters — Coming soon",
-                        VerticalAlignment = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(20)
+                        Margin = new Thickness(12),
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = "Select a character:",
+                                FontSize = 12,
+                                Margin = new Thickness(0, 0, 0, 8),
+                                [DockPanel.DockProperty] = Dock.Top
+                            },
+                            new Panel
+                            {
+                                Children = { deleteBtn },
+                                HorizontalAlignment = HorizontalAlignment.Right,
+                                [DockPanel.DockProperty] = Dock.Bottom
+                            },
+                            listBox
+                        }
                     }
                 };
+
+                deleteBtn.Click += async (_, _) =>
+                {
+                    try
+                    {
+                        int idx = listBox.SelectedIndex;
+                        if (idx < 0 || idx >= characters.Count) return;
+
+                        var character = characters[idx];
+                        bool confirmed = await ShowConfirmationDialog(
+                            "Delete Character",
+                            $"Delete {character.Name}? This will remove the character and all associated ESI keys.");
+
+                        if (confirmed)
+                        {
+                            AppServices.Characters.Remove(character);
+                            dialog.Close();
+                            RebuildCharacterTabs();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error deleting character: {ex}");
+                    }
+                };
+
                 await dialog.ShowDialog(this);
             }
             catch (Exception ex)
@@ -284,29 +370,216 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
-        private async void OnPlansClick(object? sender, RoutedEventArgs e)
+        /// <summary>
+        /// Returns the character whose tab is currently selected, or null if Overview is active.
+        /// </summary>
+        private Character? GetSelectedCharacter()
+        {
+            int index = MainTabControl.SelectedIndex;
+            // Index 0 is Overview; character tabs start at 1
+            if (index <= 0 || index - 1 >= _observableCharacters.Count)
+                return null;
+
+            return _observableCharacters[index - 1].Character;
+        }
+
+        private async void OnNewPlanClick(object? sender, RoutedEventArgs e)
         {
             try
             {
-                var dialog = new Window
+                var character = GetSelectedCharacter();
+                if (character == null)
                 {
-                    Title = "Plans",
-                    Width = 300,
-                    Height = 150,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new TextBlock
+                    var dialog = new Window
                     {
-                        Text = "Plans — Coming soon",
-                        VerticalAlignment = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(20)
+                        Title = "No Character",
+                        Width = 320, Height = 130,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new TextBlock
+                        {
+                            Text = _observableCharacters.Count > 0
+                            ? "Select a character tab first."
+                            : "Add a character before creating a plan.",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            Margin = new Thickness(20)
+                        }
+                    };
+                    await dialog.ShowDialog(this);
+                    return;
+                }
+
+                // Prompt for plan name
+                int planCount = character.Plans.Count;
+                var nameBox = new TextBox
+                {
+                    Text = $"Plan {planCount + 1}",
+                    FontSize = 12,
+                    Margin = new Thickness(0, 8, 0, 0),
+                    Watermark = "Enter plan name..."
+                };
+
+                var createBtn = new Button
+                {
+                    Content = "Create",
+                    FontSize = 11,
+                    Padding = new Thickness(12, 5),
+                    CornerRadius = new CornerRadius(12),
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Margin = new Thickness(0, 12, 0, 0)
+                };
+
+                string? planName = null;
+                var nameDialog = new Window
+                {
+                    Title = "New Plan",
+                    Width = 340, Height = 170,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Content = new StackPanel
+                    {
+                        Margin = new Thickness(16),
+                        Children =
+                        {
+                            new TextBlock { Text = "Plan name:", FontSize = 12 },
+                            nameBox,
+                            createBtn
+                        }
                     }
                 };
-                await dialog.ShowDialog(this);
+
+                nameBox.AttachedToVisualTree += (_, _) => nameBox.SelectAll();
+                createBtn.Click += (_, _) =>
+                {
+                    planName = nameBox.Text?.Trim();
+                    if (!string.IsNullOrEmpty(planName))
+                        nameDialog.Close();
+                };
+
+                await nameDialog.ShowDialog(this);
+                if (string.IsNullOrEmpty(planName)) return;
+
+                var plan = new Plan(character) { Name = planName };
+                character.Plans.Add(plan);
+
+                var editorWindow = new PlanEditorWindow
+                {
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+                editorWindow.Initialize(plan, character);
+                editorWindow.Show(this);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error: {ex}");
+                Debug.WriteLine($"Error creating plan: {ex}");
+            }
+        }
+
+        private async void OnManagePlansClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var character = GetSelectedCharacter();
+                if (character == null || character.Plans.Count == 0)
+                {
+                    var dialog = new Window
+                    {
+                        Title = "No Plans",
+                        Width = 320, Height = 130,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new TextBlock
+                        {
+                            Text = character == null
+                                ? (_observableCharacters.Count > 0 ? "Select a character tab first." : "Add a character before managing plans.")
+                                : $"{character.Name} has no plans. Use New Plan to create one.",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            Margin = new Thickness(20)
+                        }
+                    };
+                    await dialog.ShowDialog(this);
+                    return;
+                }
+
+                // If only one plan, open it directly
+                if (character.Plans.Count == 1)
+                {
+                    var editorWindow = new PlanEditorWindow
+                    {
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    };
+                    editorWindow.Initialize(character.Plans.First(), character);
+                    editorWindow.Show(this);
+                    return;
+                }
+
+                // Multiple plans — show picker dialog
+                var plans = character.Plans.ToList();
+                var listBox = new ListBox
+                {
+                    ItemsSource = plans.Select(p => p.Name).ToList(),
+                    FontSize = 12,
+                    Margin = new Thickness(0, 0, 0, 8)
+                };
+                listBox.SelectedIndex = 0;
+
+                var openBtn = new Button
+                {
+                    Content = "Open Plan",
+                    FontSize = 11,
+                    Padding = new Thickness(12, 5),
+                    CornerRadius = new CornerRadius(12),
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
+                var picker = new Window
+                {
+                    Title = $"Plans — {character.Name}",
+                    Width = 340, Height = 320,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Content = new DockPanel
+                    {
+                        Margin = new Thickness(12),
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = "Select a plan to open:",
+                                FontSize = 12,
+                                Margin = new Thickness(0, 0, 0, 8),
+                                [DockPanel.DockProperty] = Dock.Top
+                            },
+                            new Panel
+                            {
+                                Children = { openBtn },
+                                HorizontalAlignment = HorizontalAlignment.Right,
+                                [DockPanel.DockProperty] = Dock.Bottom
+                            },
+                            listBox
+                        }
+                    }
+                };
+
+                openBtn.Click += (_, _) =>
+                {
+                    int idx = listBox.SelectedIndex;
+                    if (idx >= 0 && idx < plans.Count)
+                    {
+                        picker.Close();
+                        var editorWindow = new PlanEditorWindow
+                        {
+                            WindowStartupLocation = WindowStartupLocation.CenterOwner
+                        };
+                        editorWindow.Initialize(plans[idx], character);
+                        editorWindow.Show(this);
+                    }
+                };
+
+                await picker.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error managing plans: {ex}");
             }
         }
 
@@ -370,6 +643,118 @@ namespace EVEMon.Avalonia.Views
                 ? "99+"
                 : _notificationVm.UnreadCount.ToString();
             EmptyActivityText.IsVisible = entries.Count == 0;
+        }
+
+        private void OnTabSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            bool hasCharacter = GetSelectedCharacter() != null;
+            NewPlanMenuItem.IsEnabled = hasCharacter;
+            ManagePlansMenuItem.IsEnabled = hasCharacter;
+        }
+
+        internal async void DeleteCharacterWithConfirmation(Character character)
+        {
+            try
+            {
+                bool confirmed = await ShowConfirmationDialog(
+                    "Delete Character",
+                    $"Delete {character.Name}? This will remove the character and all associated ESI keys.");
+
+                if (confirmed)
+                {
+                    AppServices.Characters.Remove(character);
+                    RebuildCharacterTabs();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error deleting character: {ex}");
+            }
+        }
+
+        private async Task<bool> ShowConfirmationDialog(string title, string message)
+        {
+            bool result = false;
+
+            var okBtn = new Button
+            {
+                Content = "OK",
+                FontSize = 11,
+                Padding = new Thickness(12, 5),
+                CornerRadius = new CornerRadius(12),
+                Foreground = global::Avalonia.Media.Brushes.Red
+            };
+            var cancelBtn = new Button
+            {
+                Content = "Cancel",
+                FontSize = 11,
+                Padding = new Thickness(12, 5),
+                CornerRadius = new CornerRadius(12)
+            };
+
+            var dialog = new Window
+            {
+                Title = title,
+                Width = 380, Height = 160,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new DockPanel
+                {
+                    Margin = new Thickness(16),
+                    Children =
+                    {
+                        new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 8,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            Margin = new Thickness(0, 12, 0, 0),
+                            [DockPanel.DockProperty] = Dock.Bottom,
+                            Children = { okBtn, cancelBtn }
+                        },
+                        new TextBlock
+                        {
+                            Text = message,
+                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            FontSize = 12,
+                            VerticalAlignment = VerticalAlignment.Center
+                        }
+                    }
+                }
+            };
+
+            okBtn.Click += (_, _) => { result = true; dialog.Close(); };
+            cancelBtn.Click += (_, _) => { dialog.Close(); };
+
+            await dialog.ShowDialog(this);
+            return result;
+        }
+
+        private async void OnClearCacheClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                bool confirmed = await ShowConfirmationDialog(
+                    "Clear Cache",
+                    "Clear all cached images, portraits, and data files? This cannot be undone.");
+
+                if (confirmed)
+                {
+                    AppServices.ClearCache();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error clearing cache: {ex}");
+            }
+        }
+
+        private void RebuildCharacterTabs()
+        {
+            foreach (var oc in _observableCharacters) oc.Dispose();
+            _observableCharacters.Clear();
+            MainTabControl.Items.Clear();
+            _viewModel.RefreshCharacters();
+            BuildTabs();
         }
 
         protected override void OnClosed(EventArgs e)

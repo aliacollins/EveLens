@@ -36,6 +36,12 @@
         <Color x:Key="EveHoverColor">#FF1E2A4A</Color>
         <SolidColorBrush x:Key="EveHoverBrush" Color="{StaticResource EveHoverColor}" />
 
+        <!-- Selection / alternating rows -->
+        <Color x:Key="EveSelectedColor">#FF1A3A6A</Color>
+        <SolidColorBrush x:Key="EveSelectedBrush" Color="{StaticResource EveSelectedColor}" />
+        <Color x:Key="EveAlternateRowColor">#FF151525</Color>
+        <SolidColorBrush x:Key="EveAlternateRowBrush" Color="{StaticResource EveAlternateRowColor}" />
+
         <!-- Border / separator -->
         <Color x:Key="EveBorderColor">#FF2A2A4A</Color>
         <Color x:Key="EveBorderFocused">#FF0F3460</Color>
@@ -178,10 +184,6 @@
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="Padding" Value="10,4" />
     </Style>
-    <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
-    </Style>
-
     <!-- CheckBox -->
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
@@ -233,11 +235,123 @@
     <!-- Separator -->
     <Style Selector="Separator">
         <Setter Property="Background" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="Margin" Value="4,2" />
     </Style>
 
-    <!-- Subtle hover for item rows inside Expanders -->
+    <!-- ContextMenu -->
+    <Style Selector="ContextMenu">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+    <Style Selector="MenuItem">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="Padding" Value="6,4" />
+    </Style>
+    <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+    </Style>
+
+    <!-- Group header: lightweight collapsible section header (replaces heavy Expander chrome) -->
+    <Style Selector="Border.group-header">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="Padding" Value="8,6" />
+    </Style>
+    <Style Selector="Border.group-header:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+
+    <!-- Item row: hover, selected, alternating -->
+    <Style Selector="Border.item-row">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
     <Style Selector="Border.item-row:pointerover">
         <Setter Property="Background" Value="{StaticResource EveHoverBrush}" />
+    </Style>
+    <Style Selector="Border.item-row.selected">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="17,3,8,3" />
+    </Style>
+    <Style Selector="Border.item-row.selected:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+    </Style>
+    <Style Selector="Border.item-row-alt">
+        <Setter Property="Background" Value="{StaticResource EveAlternateRowBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.item-row-alt:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveHoverBrush}" />
+    </Style>
+    <Style Selector="Border.item-row-alt.selected">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="17,3,8,3" />
+    </Style>
+    <Style Selector="Border.item-row-alt.selected:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+    </Style>
+
+    <!-- DataGrid alternating rows + row hover -->
+    <Style Selector="DataGridRow:nth-child(even) /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveAlternateRowBrush}" />
+    </Style>
+    <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveHoverBrush}" />
+    </Style>
+
+    <!-- ToggleButton checked: gold foreground + bottom indicator for active tabs -->
+    <Style Selector="ToggleButton:checked">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="10,4,10,2" />
+    </Style>
+    <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Attribute Colors (EVE character attributes)
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <Styles.Resources>
+        <Color x:Key="EveAttrIntColor">#FF4FC3F7</Color>
+        <Color x:Key="EveAttrPerColor">#FFEF5350</Color>
+        <Color x:Key="EveAttrChaColor">#FF66BB6A</Color>
+        <Color x:Key="EveAttrWilColor">#FFAB47BC</Color>
+        <Color x:Key="EveAttrMemColor">#FFFFA726</Color>
+        <SolidColorBrush x:Key="EveAttrIntBrush" Color="{StaticResource EveAttrIntColor}" />
+        <SolidColorBrush x:Key="EveAttrPerBrush" Color="{StaticResource EveAttrPerColor}" />
+        <SolidColorBrush x:Key="EveAttrChaBrush" Color="{StaticResource EveAttrChaColor}" />
+        <SolidColorBrush x:Key="EveAttrWilBrush" Color="{StaticResource EveAttrWilColor}" />
+        <SolidColorBrush x:Key="EveAttrMemBrush" Color="{StaticResource EveAttrMemColor}" />
+    </Styles.Resources>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Plan DataGrid Styles (.plan-grid class)
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <Style Selector="DataGrid.plan-grid">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RowHeight" Value="24" />
+    </Style>
+    <Style Selector="DataGrid.plan-grid DataGridRow">
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="FontSize" Value="10" />
+    </Style>
+    <Style Selector="DataGrid.plan-grid DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+    <Style Selector="DataGrid.plan-grid DataGridColumnHeader">
+        <Setter Property="FontSize" Value="9" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextDisabledBrush}" />
+        <Setter Property="Padding" Value="4,3" />
+        <Setter Property="MinHeight" Value="24" />
     </Style>
 
 </Styles>

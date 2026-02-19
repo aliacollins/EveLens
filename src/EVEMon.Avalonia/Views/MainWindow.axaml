@@ -16,10 +16,13 @@
             </MenuItem>
             <MenuItem Header="_Plans">
                 <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan..." />
-                <MenuItem x:Name="ManagePlansMenuItem" Header="Ma_nage Plans..." />
+                <Separator />
+                <MenuItem x:Name="ManagePlansMenuItem" Header="_Open Plan..." />
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison..." />
+                <Separator />
+                <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache..." />
                 <Separator />
                 <MenuItem x:Name="SettingsMenuItem" Header="_Settings..." />
             </MenuItem>

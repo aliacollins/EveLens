@@ -22,7 +22,6 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
     public partial class CharacterContactsView : UserControl
     {
         private ContactsListViewModel? _viewModel;
-        private readonly List<ContactDisplayGroup> _displayGroups = new();
 
         public CharacterContactsView()
         {
@@ -85,24 +84,17 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             if (_viewModel == null) return;
 
             var groups = _viewModel.GroupedItems;
-            _displayGroups.Clear();
+
+            // Flatten all groups into a single list for the DataGrid (Law 20: .ToList())
+            var flatItems = new List<ContactDisplayEntry>();
             foreach (var g in groups)
             {
-                var displayName = string.IsNullOrEmpty(g.Key) ? "All Contacts" : g.Key;
-                _displayGroups.Add(new ContactDisplayGroup(displayName, g.Items));
+                string groupName = string.IsNullOrEmpty(g.Key) ? "All Contacts" : g.Key;
+                foreach (var contact in g.Items)
+                    flatItems.Add(new ContactDisplayEntry(contact, groupName));
             }
 
-            ContactGroupsList.ItemsSource = null;
-            ContactGroupsList.ItemsSource = _displayGroups;
-
-            var isEmpty = _viewModel.TotalItemCount == 0;
-            EmptyState.IsVisible = isEmpty;
-            MainScroller.IsVisible = !isEmpty;
-
-            // Trigger async portrait loading
-            foreach (var group in _displayGroups)
-                foreach (var entry in group.Items)
-                    entry.LoadPortrait();
+            ContactsGrid.ItemsSource = flatItems;
 
             var status = this.FindControl<TextBlock>("StatusText");
             if (status != null)
@@ -135,20 +127,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             RebuildDisplay();
         }
 
-        private void OnCollapseAll(object? sender, RoutedEventArgs e)
+        private void OnCopyName(object? sender, RoutedEventArgs e)
         {
-            foreach (var g in _displayGroups)
-                g.IsExpanded = false;
-            ContactGroupsList.ItemsSource = null;
-            ContactGroupsList.ItemsSource = _displayGroups;
-        }
-
-        private void OnExpandAll(object? sender, RoutedEventArgs e)
-        {
-            foreach (var g in _displayGroups)
-                g.IsExpanded = true;
-            ContactGroupsList.ItemsSource = null;
-            ContactGroupsList.ItemsSource = _displayGroups;
+            var item = ContactsGrid.SelectedItem as ContactDisplayEntry;
+            if (item != null)
+                TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(item.Name);
         }
 
         private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
@@ -160,59 +143,25 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         }
     }
 
-    internal sealed class ContactDisplayGroup
-    {
-        public string Name { get; }
-        public string CountText { get; }
-        public bool IsExpanded { get; set; } = true;
-        public List<ContactDisplayEntry> Items { get; }
-
-        public ContactDisplayGroup(string name, IReadOnlyList<Contact> contacts)
-        {
-            Name = name;
-            CountText = $"{contacts.Count} contacts";
-            Items = contacts.Select(c => new ContactDisplayEntry(c)).ToList();
-        }
-    }
-
-    internal sealed class ContactDisplayEntry : INotifyPropertyChanged
+    internal sealed class ContactDisplayEntry
     {
         private static readonly IBrush PositiveBrush = new SolidColorBrush(Color.Parse("#FF64B5F6"));
         private static readonly IBrush NegativeBrush = new SolidColorBrush(Color.Parse("#FFCF6679"));
         private static readonly IBrush NeutralBrush = new SolidColorBrush(Color.Parse("#FF707070"));
 
         private readonly Contact _contact;
-        private Bitmap? _portrait;
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        public ContactDisplayEntry(Contact contact)
+        public ContactDisplayEntry(Contact contact, string groupName)
         {
             _contact = contact;
+            GroupName = groupName;
         }
 
         public string Name => _contact.Name;
-        public string Initial => string.IsNullOrEmpty(_contact.Name) ? "?" : _contact.Name[..1].ToUpperInvariant();
         public double StandingValue => _contact.Standing;
         public string StandingText => _contact.Standing.ToString("+0.00;-0.00;0.00");
-        public bool IsPositive => _contact.Standing > 0;
-        public bool IsNegative => _contact.Standing < 0;
         public string WatchlistText => _contact.IsInWatchlist ? "\u2605" : string.Empty;
-        public bool HasPortrait => _portrait != null;
-
-        public Bitmap? Portrait
-        {
-            get => _portrait;
-            private set
-            {
-                if (_portrait != value)
-                {
-                    _portrait = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(HasPortrait));
-                }
-            }
-        }
+        public string GroupName { get; }
 
         public IBrush StandingBrush
         {
@@ -222,44 +171,6 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 if (_contact.Standing < 0) return NegativeBrush;
                 return NeutralBrush;
             }
-        }
-
-        public void LoadPortrait()
-        {
-            // Try to convert the current image immediately
-            var entityImage = _contact.EntityImage;
-            if (entityImage != null)
-            {
-                var bmp = DrawingImageToAvaloniaConverter.Instance.Convert(
-                    entityImage, typeof(Bitmap), null, CultureInfo.InvariantCulture) as Bitmap;
-                if (bmp != null)
-                {
-                    Portrait = bmp;
-                    return;
-                }
-            }
-
-            // Subscribe for async image updates
-            _contact.ContactImageUpdated += OnContactImageUpdated;
-        }
-
-        private void OnContactImageUpdated(object? sender, EventArgs e)
-        {
-            var entityImage = _contact.EntityImage;
-            if (entityImage == null) return;
-
-            var bmp = DrawingImageToAvaloniaConverter.Instance.Convert(
-                entityImage, typeof(Bitmap), null, CultureInfo.InvariantCulture) as Bitmap;
-
-            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                Portrait = bmp;
-            });
-        }
-
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

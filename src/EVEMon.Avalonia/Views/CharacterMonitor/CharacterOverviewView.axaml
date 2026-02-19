@@ -14,6 +14,12 @@
                     <Button Background="Transparent" BorderThickness="0" Padding="0" Margin="4"
                             Cursor="Hand" HorizontalContentAlignment="Stretch"
                             Click="OnCharacterCardClick">
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Delete Character..." Click="OnDeleteCharacter"
+                                          Tag="{Binding}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
                         <Border Background="{StaticResource EveBackgroundMediumBrush}"
                                 BorderBrush="{StaticResource EveBorderBrush}"
                                 BorderThickness="1" CornerRadius="6"

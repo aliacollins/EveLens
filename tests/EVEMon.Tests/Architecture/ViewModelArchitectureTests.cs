@@ -58,11 +58,19 @@ namespace EVEMon.Tests.Architecture
         [Fact]
         public void AllViewModels_InheritFromViewModelBase()
         {
+            // Data-projection classes that end in "ViewModel" but are simple DTOs,
+            // not event-subscribing ViewModels requiring disposal.
+            var dataProjectionExclusions = new HashSet<string>
+            {
+                "ItemPropertiesViewModel"
+            };
+
             // Every concrete ViewModel in the ViewModels namespace should inherit from ViewModelBase
             var vmTypes = ViewModelAssembly.GetTypes()
                 .Where(t => t.IsClass && !t.IsAbstract &&
                        t.Namespace != null && t.Namespace.Contains("ViewModels") &&
-                       t.Name.EndsWith("ViewModel"));
+                       t.Name.EndsWith("ViewModel") &&
+                       !dataProjectionExclusions.Contains(t.Name));
 
             vmTypes.Should().NotBeEmpty("there should be ViewModel classes");
 
@@ -353,7 +361,21 @@ namespace EVEMon.Tests.Architecture
                 "EmploymentTimelineViewModel",
                 "NotificationCenterViewModel",
                 "ContactsListViewModel",
-                "StandingsListViewModel"
+                "StandingsListViewModel",
+                // Plan Editor ViewModels (Avalonia Plan Editor window)
+                "PlanEditorWindowViewModel",
+                "PlanDashboardViewModel",
+                "PlanGoalCardViewModel",
+                "PlanTimeCardViewModel",
+                "PlanCostCardViewModel",
+                "PlanSkillListViewModel",
+                "PlanOptimizerViewModel",
+                "PlanEntryDetailViewModel",
+                // Plan Editor Browser ViewModels
+                "PlanSkillBrowserViewModel",
+                "ShipBrowserViewModel",
+                "ItemBrowserViewModel",
+                "BlueprintBrowserViewModel"
             };
 
             var vmTypes = GetAllViewModelTypes().ToList();

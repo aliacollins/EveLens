@@ -30,7 +30,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             try
             {
-                var characters = AppServices.MonitoredCharacters.ToList();
+                var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
                 CharacterCards.ItemsSource = characters;
 
                 // Load portraits and training info after items are rendered
@@ -72,7 +72,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 var trainingTexts = this.GetVisualDescendants().OfType<TextBlock>()
                     .Where(t => t.Name == "TrainingText").ToList();
 
-                var characters = AppServices.MonitoredCharacters.ToList();
+                var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
                 for (int i = 0; i < Math.Min(trainingTexts.Count, characters.Count); i++)
                 {
                     var character = characters[i];
@@ -102,6 +102,25 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
         }
 
+        private void OnDeleteCharacter(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Character? character = null;
+                if (sender is MenuItem { Tag: Character c })
+                    character = c;
+
+                if (character == null) return;
+
+                var mainWindow = this.FindAncestorOfType<MainWindow>();
+                mainWindow?.DeleteCharacterWithConfirmation(character);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error: {ex}");
+            }
+        }
+
         private void OnCharacterCardClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -117,7 +136,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                         if (tabControl != null)
                         {
                             // Character tabs start at index 1 (0 = Overview)
-                            var characters = AppServices.MonitoredCharacters.ToList();
+                            var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
                             int charIndex = characters.IndexOf(character);
                             if (charIndex >= 0 && charIndex + 1 < tabControl.Items.Count)
                             {

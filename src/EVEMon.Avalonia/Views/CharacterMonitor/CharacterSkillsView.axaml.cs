@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -63,18 +64,15 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             else
                 _viewModel.ForceRefresh();
 
-            // Wrap VM groups with display entries for AXAML color binding
-            var displayGroups = _viewModel.VisibleGroups
-                .Select(g => new SkillDisplayGroup(g))
+            // Flatten all skills into a single list for the DataGrid (Law 20: .ToList())
+            var flatItems = _viewModel.VisibleGroups
+                .SelectMany(g => g.VisibleSkills.Select(s => new SkillDisplayEntry(s, g.Name)))
                 .ToList();
 
-            SkillGroupsList.ItemsSource = displayGroups;
+            SkillsGrid.ItemsSource = flatItems;
 
-            var statusCtl = this.FindControl<TextBlock>("StatusText");
-            if (statusCtl != null)
-                statusCtl.Text = $"Trained: {_viewModel.TotalTrained} of {_viewModel.TotalSkills} skills  |  Total SP: {_viewModel.TotalSP:N0}";
+            StatusText.Text = $"Trained: {_viewModel.TotalTrained} of {_viewModel.TotalSkills} skills  |  Total SP: {_viewModel.TotalSP:N0}";
         }
-
 
         private void OnDataUpdated(CharacterUpdatedEvent evt)
         {
@@ -107,35 +105,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             LoadData();
         }
 
-        private void OnCollapseAll(object? sender, RoutedEventArgs e)
+        private void OnCopySkillName(object? sender, RoutedEventArgs e)
         {
-            if (_viewModel == null) return;
-            _viewModel.CollapseAll();
-            LoadData();
-        }
-
-        private void OnExpandAll(object? sender, RoutedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            _viewModel.ExpandAll();
-            LoadData();
-        }
-    }
-
-    /// <summary>Avalonia display wrapper for skill group with color properties.</summary>
-    internal sealed class SkillDisplayGroup
-    {
-        public SkillBrowserGroupEntry Data { get; }
-        public string Name => Data.Name;
-        public string TrainedCountText => Data.TrainedCountText;
-        public string SPText => Data.SPText;
-        public bool IsExpanded => Data.IsExpanded;
-        public List<SkillDisplayEntry> VisibleSkills { get; }
-
-        public SkillDisplayGroup(SkillBrowserGroupEntry data)
-        {
-            Data = data;
-            VisibleSkills = data.VisibleSkills.Select(s => new SkillDisplayEntry(s)).ToList();
+            var item = SkillsGrid.SelectedItem as SkillDisplayEntry;
+            if (item != null)
+                TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(item.Name);
         }
     }
 
@@ -150,12 +124,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
         public SkillBrowserSkillEntry Data { get; }
 
-        // Delegate all data properties
         public string Name => Data.Name;
         public string RankText => Data.RankText;
         public string SPText => Data.SPText;
+        public string GroupName { get; }
 
-        // Avalonia-specific color properties
         public IBrush NameColor => Data.IsKnown ? TrainedColor : UntrainedColor;
         public IBrush Block1Color => GetBlockColor(1);
         public IBrush Block2Color => GetBlockColor(2);
@@ -163,9 +136,10 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         public IBrush Block4Color => GetBlockColor(4);
         public IBrush Block5Color => GetBlockColor(5);
 
-        public SkillDisplayEntry(SkillBrowserSkillEntry data)
+        public SkillDisplayEntry(SkillBrowserSkillEntry data, string groupName)
         {
             Data = data;
+            GroupName = groupName;
         }
 
         private IBrush GetBlockColor(int lvl)

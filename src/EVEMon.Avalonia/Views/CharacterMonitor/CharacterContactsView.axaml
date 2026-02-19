@@ -1,13 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:shared="clr-namespace:EVEMon.Avalonia.Views.Shared"
-             xmlns:converters="clr-namespace:EVEMon.Avalonia.Converters"
              x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterContactsView">
-
-    <UserControl.Resources>
-        <converters:StandingColorConverter x:Key="StandingColorConverter" />
-        <converters:StandingWidthConverter x:Key="StandingWidthConverter" />
-    </UserControl.Resources>
 
     <Panel>
         <!-- Enable prompt shown when endpoint is not yet activated -->
@@ -36,7 +29,7 @@
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
-                    <!-- Right side: group selector + collapse/expand -->
+                    <!-- Right side: group selector -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
                                 VerticalAlignment="Center">
                         <TextBlock Text="Group by:" FontSize="11" VerticalAlignment="Center"
@@ -48,10 +41,6 @@
                             <ComboBoxItem Content="Contact Group" />
                             <ComboBoxItem Content="Standing Bracket" />
                         </ComboBox>
-                        <Button Content="Collapse All" FontSize="11" Padding="10,4"
-                                CornerRadius="12" Click="OnCollapseAll" />
-                        <Button Content="Expand All" FontSize="11" Padding="10,4"
-                                CornerRadius="12" Click="OnExpandAll" />
                     </StackPanel>
 
                     <!-- Left side: search with clear -->
@@ -86,157 +75,70 @@
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
             </Border>
 
-            <!-- Empty state + scrollable content overlap in Grid -->
-            <Grid>
-                <shared:EmptyState x:Name="EmptyState" IsVisible="False"
-                                   Title="No contacts found"
-                                   Subtitle="This character has no contacts, or none match the current filter" />
-
-                <!-- Grouped contact list -->
-                <ScrollViewer x:Name="MainScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="ContactGroupsList" Margin="0"
-                                  HorizontalAlignment="Stretch">
-                        <ItemsControl.Styles>
-                            <Style Selector="ItemsControl > ContentPresenter">
-                                <Setter Property="HorizontalAlignment" Value="Stretch" />
-                            </Style>
-                        </ItemsControl.Styles>
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
+            <!-- Dense DataGrid -->
+            <DataGrid x:Name="ContactsGrid" Classes="plan-grid"
+                      AutoGenerateColumns="False"
+                      CanUserResizeColumns="True" CanUserReorderColumns="True" CanUserSortColumns="True"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      Background="{StaticResource EveBackgroundDarkBrush}"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="{StaticResource EveBorderBrush}"
+                      SelectionMode="Extended">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Copy Name" Click="OnCopyName" />
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <!-- Name -->
+                    <DataGridTemplateColumn Header="NAME" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Expander IsExpanded="{Binding IsExpanded}"
-                                          HorizontalAlignment="Stretch"
-                                          Padding="0" Margin="0,0,0,1">
-
-                                    <!-- Group header -->
-                                    <Expander.Header>
-                                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
-                                                Padding="10,6" HorizontalAlignment="Stretch">
-                                            <Grid ColumnDefinitions="*,Auto"
-                                                  HorizontalAlignment="Stretch">
-                                                <TextBlock Grid.Column="0"
-                                                           Text="{Binding Name}"
-                                                           FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                           VerticalAlignment="Center"
-                                                           TextTrimming="CharacterEllipsis" />
-                                                <TextBlock Grid.Column="1"
-                                                           Text="{Binding CountText}"
-                                                           FontSize="11"
-                                                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                           VerticalAlignment="Center"
-                                                           Margin="12,0" />
-                                            </Grid>
-                                        </Border>
-                                    </Expander.Header>
-
-                                    <!-- Items in group -->
-                                    <ItemsControl ItemsSource="{Binding Items}"
-                                                  HorizontalAlignment="Stretch">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Vertical" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Classes="item-row" Padding="20,4,10,4"
-                                                        Background="{StaticResource EveBackgroundDarkBrush}"
-                                                        BorderBrush="{StaticResource EveBorderBrush}"
-                                                        BorderThickness="0,0,0,0.5"
-                                                        HorizontalAlignment="Stretch">
-                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
-                                                          HorizontalAlignment="Stretch"
-                                                          MinHeight="32">
-                                                        <!-- Portrait -->
-                                                        <Border Grid.Column="0" Width="32" Height="32"
-                                                                CornerRadius="16"
-                                                                Background="{StaticResource EveBackgroundMediumBrush}"
-                                                                Margin="0,0,10,0"
-                                                                VerticalAlignment="Center"
-                                                                ClipToBounds="True">
-                                                            <Panel>
-                                                                <TextBlock Text="{Binding Initial}"
-                                                                           FontSize="14" FontWeight="SemiBold"
-                                                                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                                           HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center"
-                                                                           IsVisible="{Binding !HasPortrait}" />
-                                                                <Image Source="{Binding Portrait}" Width="32" Height="32"
-                                                                       Stretch="UniformToFill"
-                                                                       IsVisible="{Binding HasPortrait}" />
-                                                            </Panel>
-                                                        </Border>
-
-                                                        <!-- Name -->
-                                                        <TextBlock Grid.Column="1"
-                                                                   Text="{Binding Name}"
-                                                                   FontSize="11"
-                                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis" />
-
-                                                        <!-- Standing bar: 120px total, center origin -->
-                                                        <Border Grid.Column="2" Width="120" Height="10"
-                                                                CornerRadius="3"
-                                                                Background="{StaticResource EveBackgroundDarkestBrush}"
-                                                                VerticalAlignment="Center"
-                                                                Margin="8,0">
-                                                            <Panel>
-                                                                <!-- Center line -->
-                                                                <Border Width="1" Height="10"
-                                                                        Background="{StaticResource EveTextDisabledBrush}"
-                                                                        HorizontalAlignment="Center" />
-                                                                <!-- Negative bar (left of center) -->
-                                                                <Border Width="{Binding StandingValue, Converter={StaticResource StandingWidthConverter}}"
-                                                                        Height="8" CornerRadius="2"
-                                                                        Background="{StaticResource EveStandingNegativeBrush}"
-                                                                        HorizontalAlignment="Center"
-                                                                        Margin="-60,0,0,0"
-                                                                        IsVisible="{Binding IsNegative}" />
-                                                                <!-- Positive bar (right of center) -->
-                                                                <Border Width="{Binding StandingValue, Converter={StaticResource StandingWidthConverter}}"
-                                                                        Height="8" CornerRadius="2"
-                                                                        Background="{StaticResource EveStandingPositiveBrush}"
-                                                                        HorizontalAlignment="Center"
-                                                                        Margin="60,0,0,0"
-                                                                        IsVisible="{Binding IsPositive}" />
-                                                            </Panel>
-                                                        </Border>
-
-                                                        <!-- Standing value -->
-                                                        <TextBlock Grid.Column="3"
-                                                                   Text="{Binding StandingText}"
-                                                                   FontSize="11"
-                                                                   Foreground="{Binding StandingBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   MinWidth="40"
-                                                                   TextAlignment="Right"
-                                                                   Margin="4,0" />
-
-                                                        <!-- Watchlist indicator -->
-                                                        <TextBlock Grid.Column="4"
-                                                                   Text="{Binding WatchlistText}"
-                                                                   FontSize="10"
-                                                                   Foreground="{StaticResource EveWarningYellowBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   Margin="8,0,0,0"
-                                                                   MinWidth="16" />
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Expander>
+                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="Bold"
+                                           Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                           TextTrimming="CharacterEllipsis" />
                             </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Grid>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Standing -->
+                    <DataGridTemplateColumn Header="STANDING" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding StandingText}" FontSize="10"
+                                           Foreground="{Binding StandingBrush}"
+                                           VerticalAlignment="Center" HorizontalAlignment="Right"
+                                           Margin="0,0,6,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Watchlist -->
+                    <DataGridTemplateColumn Header="WATCH" Width="50">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding WatchlistText}" FontSize="10"
+                                           Foreground="{StaticResource EveWarningYellowBrush}"
+                                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- Group -->
+                    <DataGridTemplateColumn Header="GROUP" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding GroupName}" FontSize="10"
+                                           Foreground="{StaticResource EveTextDisabledBrush}"
+                                           VerticalAlignment="Center" Margin="4,0,0,0"
+                                           TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
         </DockPanel>
     </Panel>
 </UserControl>
