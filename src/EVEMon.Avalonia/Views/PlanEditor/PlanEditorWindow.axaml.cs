@@ -3,7 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
+using EVEMon.Common.Helpers;
 using EVEMon.Common.Models;
+using EVEMon.Common.SettingsObjects;
 using EVEMon.Common.ViewModels;
 
 namespace EVEMon.Avalonia.Views.PlanEditor
@@ -16,8 +19,6 @@ namespace EVEMon.Avalonia.Views.PlanEditor
         private PlanShipBrowserView? _shipBrowserView;
         private PlanItemBrowserView? _itemBrowserView;
         private PlanBlueprintBrowserView? _blueprintBrowserView;
-        private PlanOptimizerFlyout? _optimizerFlyout;
-
         public PlanEditorWindow()
         {
             InitializeComponent();
@@ -95,25 +96,6 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             ShowSkillsTab();
         }
 
-        private void ShowOptimizerTab()
-        {
-            if (_viewModel == null) return;
-            _optimizerFlyout ??= new PlanOptimizerFlyout();
-            ContentPanel.Children.Clear();
-            ContentPanel.Children.Add(_optimizerFlyout);
-            SetActiveTab(OptimizeTab);
-
-            // Trigger optimization if plan is available
-            var plan = _viewModel.Plan;
-            var character = _viewModel.Character as Character;
-            if (plan != null && character != null)
-            {
-                var vm = new Common.ViewModels.PlanOptimizerViewModel();
-                _optimizerFlyout.SetViewModel(vm);
-                _optimizerFlyout.RunOptimization(plan, character);
-            }
-        }
-
         private void SetActiveTab(ToggleButton active)
         {
             PlanTab.IsChecked = active == PlanTab;
@@ -121,7 +103,6 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             ShipsTab.IsChecked = active == ShipsTab;
             ItemsTab.IsChecked = active == ItemsTab;
             BlueprintsTab.IsChecked = active == BlueprintsTab;
-            OptimizeTab.IsChecked = active == OptimizeTab;
         }
 
         private void OnTabClicked(object? sender, RoutedEventArgs e)
@@ -131,7 +112,6 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             else if (sender == ShipsTab) ShowShipsTab();
             else if (sender == ItemsTab) ShowItemsTab();
             else if (sender == BlueprintsTab) ShowBlueprintsTab();
-            else if (sender == OptimizeTab) ShowOptimizerTab();
         }
 
         private void OnSearchChanged(object? sender, TextChangedEventArgs e)
@@ -150,9 +130,53 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 _unifiedView.RefreshSkillList("");
         }
 
-        private void OnExport(object? sender, RoutedEventArgs e)
+        private async void OnExport(object? sender, RoutedEventArgs e)
         {
-            // TODO: Export functionality
+            try
+            {
+                if (_viewModel?.Plan == null) return;
+
+                var topLevel = TopLevel.GetTopLevel(this);
+                if (topLevel == null) return;
+
+                var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Export Plan",
+                    SuggestedFileName = _viewModel.Plan.Name,
+                    FileTypeChoices = new[]
+                    {
+                        new FilePickerFileType("Text Files") { Patterns = new[] { "*.txt" } },
+                        new FilePickerFileType("Plan Files") { Patterns = new[] { "*.emp" } },
+                    }
+                });
+
+                if (result == null) return;
+
+                string path = result.Path.LocalPath;
+                string content;
+
+                if (path.EndsWith(".emp", StringComparison.OrdinalIgnoreCase))
+                {
+                    content = PlanIOHelper.ExportAsXML(_viewModel.Plan);
+                }
+                else
+                {
+                    var settings = new PlanExportSettings
+                    {
+                        EntryNumber = true,
+                        EntryTrainingTimes = true,
+                        FooterCount = true,
+                        FooterTotalTime = true,
+                    };
+                    content = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
+                }
+
+                await System.IO.File.WriteAllTextAsync(path, content);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Export failed: {ex.Message}");
+            }
         }
 
         internal void UpdateStatusBar()

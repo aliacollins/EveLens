@@ -9,8 +9,9 @@ namespace EVEMon.Avalonia.ViewModels
     /// Avalonia display wrapper for PlanEntry with IBrush properties.
     /// Contains zero business logic per Law 16.
     /// </summary>
-    internal sealed class PlanEntryDisplayItem
+    internal sealed class PlanEntryDisplayItem : IPlanDisplayItem
     {
+        public PlanDisplayItemKind Kind => PlanDisplayItemKind.SkillEntry;
         private static readonly IBrush TrainingColor = new SolidColorBrush(Color.Parse("#FFE6A817"));
         private static readonly IBrush MissingColor = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
         private static readonly IBrush TrainedColor = new SolidColorBrush(Color.Parse("#FF707070"));
@@ -34,6 +35,11 @@ namespace EVEMon.Avalonia.ViewModels
         private static readonly IBrush AttrWilPillBg = new SolidColorBrush(Color.Parse("#25AB47BC"));
         private static readonly IBrush AttrMemPillBg = new SolidColorBrush(Color.Parse("#25FFA726"));
         private static readonly IBrush AttrDefaultPillBg = new SolidColorBrush(Color.Parse("#15AAAAAA"));
+
+        // SP/hr color coding brushes
+        private static readonly IBrush SpHrGreenBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
+        private static readonly IBrush SpHrYellowBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
+        private static readonly IBrush SpHrRedBrush = new SolidColorBrush(Color.Parse("#FFEF5350"));
 
         // Priority color brushes
         private static readonly IBrush PriorityHighBrush = new SolidColorBrush(Color.Parse("#FFCF6679"));
@@ -89,6 +95,43 @@ namespace EVEMon.Avalonia.ViewModels
         public bool IsRecentlyMoved { get; set; }
         public bool CanMoveUp { get; set; }
         public bool CanMoveDown { get; set; }
+
+        /// <summary>
+        /// Segment average SP/hr, set externally during segmented list building.
+        /// Used to determine SP/hr color coding.
+        /// </summary>
+        public double SegmentAverageSpPerHour { get; set; }
+
+        /// <summary>
+        /// SP/hr color brush: green if at/above segment average, red if significantly below.
+        /// </summary>
+        public IBrush SpPerHourBrush
+        {
+            get
+            {
+                if (SegmentAverageSpPerHour <= 0 || Entry.SpPerHour <= 0)
+                    return AttrDefaultBrush;
+                double ratio = Entry.SpPerHour / SegmentAverageSpPerHour;
+                if (ratio >= 0.95) return SpHrGreenBrush;
+                if (ratio >= 0.70) return SpHrYellowBrush;
+                return SpHrRedBrush;
+            }
+        }
+
+        /// <summary>
+        /// Character's current trained level for the skill (0-5).
+        /// </summary>
+        public int TrainedLevel { get; set; }
+
+        /// <summary>
+        /// Target level for the plan entry (1-5).
+        /// </summary>
+        public int TargetLevel => (int)Entry.Level;
+
+        /// <summary>
+        /// Whether the character is currently training this skill.
+        /// </summary>
+        public bool IsCurrentlyTraining => Status == PlanEntryStatus.Training;
         public string ItemRowClass => IsAlternate ? "item-row-alt" : "item-row";
         public IBrush RowBackground => IsAlternate ? AlternateBg : NormalBg;
 

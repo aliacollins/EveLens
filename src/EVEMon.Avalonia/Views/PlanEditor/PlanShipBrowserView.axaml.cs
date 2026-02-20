@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EVEMon.Avalonia.Converters;
@@ -12,6 +13,7 @@ using EVEMon.Avalonia.ViewModels;
 using EVEMon.Common.Data;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Helpers;
+using EVEMon.Common.Models;
 using EVEMon.Common.Service;
 using EVEMon.Common.ViewModels;
 
@@ -186,9 +188,47 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             }
             else
             {
+                // Build a lookup from the ship's StaticSkillLevel prerequisites
+                // so we can compute training time and planned status
+                var shipPrereqs = _viewModel?.SelectedShip?.Prerequisites?.ToList();
+                var character = _viewModel?.Character as Character;
+                var plan = _planEditor?.Plan;
+
                 foreach (var prereq in detail.Prerequisites)
                 {
-                    PrereqsList.Children.Add(CreatePrereqRow(prereq));
+                    // Find the matching StaticSkillLevel for this prereq
+                    var staticPrereq = shipPrereqs?.FirstOrDefault(
+                        p => p.Skill.Name == prereq.Name && p.Level == prereq.RequiredLevel);
+
+                    string? trainingTimeText = null;
+                    bool isPlanned = false;
+
+                    if (staticPrereq != null && !prereq.IsMet)
+                    {
+                        // Compute training time
+                        if (character != null)
+                        {
+                            try
+                            {
+                                var scratchpad = new CharacterScratchpad(character);
+                                scratchpad.Train(new StaticSkillLevel(staticPrereq.Skill, staticPrereq.Level));
+                                trainingTimeText = FormatTrainingTime(scratchpad.TrainingTime);
+                            }
+                            catch
+                            {
+                                // Graceful fallback if scratchpad fails
+                            }
+                        }
+
+                        // Check if skill is already planned
+                        if (plan != null)
+                        {
+                            int plannedLevel = plan.GetPlannedLevel(staticPrereq.Skill);
+                            isPlanned = plannedLevel >= staticPrereq.Level;
+                        }
+                    }
+
+                    PrereqsList.Children.Add(CreatePrereqRow(prereq, trainingTimeText, isPlanned));
                 }
             }
 
@@ -278,10 +318,11 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             }
         }
 
-        private Grid CreatePrereqRow(ShipPrerequisiteInfo prereq)
+        private Grid CreatePrereqRow(ShipPrerequisiteInfo prereq, string? trainingTimeText, bool isPlanned)
         {
-            var grid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*") };
+            var grid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto") };
 
+            // Check/cross indicator
             grid.Children.Add(new TextBlock
             {
                 Text = prereq.IsMet ? "\u2713 " : "\u2717 ",
@@ -289,9 +330,11 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveSuccessGreenBrush")!
                     : (IBrush)this.FindResource("EveErrorRedBrush")!,
+                VerticalAlignment = VerticalAlignment.Center,
                 [Grid.ColumnProperty] = 0
             });
 
+            // Skill name and level
             grid.Children.Add(new TextBlock
             {
                 Text = prereq.DisplayText,
@@ -299,10 +342,47 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveTextSecondaryBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
+                VerticalAlignment = VerticalAlignment.Center,
                 [Grid.ColumnProperty] = 1
             });
 
+            // Training time (only for unmet skills)
+            if (!prereq.IsMet && trainingTimeText != null)
+            {
+                grid.Children.Add(new TextBlock
+                {
+                    Text = trainingTimeText,
+                    FontSize = 10,
+                    Foreground = (IBrush)this.FindResource("EveTextSecondaryBrush")!,
+                    Margin = new global::Avalonia.Thickness(8, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    [Grid.ColumnProperty] = 2
+                });
+            }
+
+            // "Planned" badge (only for unmet skills already in the plan)
+            if (!prereq.IsMet && isPlanned)
+            {
+                grid.Children.Add(new TextBlock
+                {
+                    Text = "Planned",
+                    FontSize = 10,
+                    Foreground = (IBrush)this.FindResource("EveWarningYellowBrush")!,
+                    Margin = new global::Avalonia.Thickness(8, 0, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    [Grid.ColumnProperty] = 3
+                });
+            }
+
             return grid;
+        }
+
+        private static string FormatTrainingTime(TimeSpan time)
+        {
+            if (time <= TimeSpan.Zero) return "Done";
+            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
+            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
+            return $"{(int)time.TotalMinutes}m";
         }
 
         private void OnPlanToFly(object? sender, RoutedEventArgs e)

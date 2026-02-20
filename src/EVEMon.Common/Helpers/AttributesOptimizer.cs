@@ -151,7 +151,9 @@ namespace EVEMon.Common.Helpers
         {
             plan.ThrowIfNull(nameof(plan));
 
-            CharacterScratchpad scratchpad = new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet));
+            CharacterScratchpad scratchpad = plan.ChosenImplantSet != null
+                ? new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet))
+                : new CharacterScratchpad(plan.Character);
             ApplyPlanBoosterBonus(scratchpad, plan);
             Collection<RemappingResult> remappingList = new Collection<RemappingResult>();
             Collection<ISkillLevel> list = new Collection<ISkillLevel>();
@@ -187,7 +189,9 @@ namespace EVEMon.Common.Helpers
         {
             plan.ThrowIfNull(nameof(plan));
 
-            CharacterScratchpad scratchpad = new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet));
+            CharacterScratchpad scratchpad = plan.ChosenImplantSet != null
+                ? new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet))
+                : new CharacterScratchpad(plan.Character);
             ApplyPlanBoosterBonus(scratchpad, plan);
             RemappingResult remapping = new RemappingResult(scratchpad);
 
@@ -216,7 +220,9 @@ namespace EVEMon.Common.Helpers
             plan.ThrowIfNull(nameof(plan));
 
             // Create a character without any skill
-            CharacterScratchpad scratchpad = new CharacterScratchpad(character.After(plan.ChosenImplantSet));
+            CharacterScratchpad scratchpad = plan.ChosenImplantSet != null
+                ? new CharacterScratchpad(character.After(plan.ChosenImplantSet))
+                : new CharacterScratchpad(character);
             ApplyPlanBoosterBonus(scratchpad, plan);
             scratchpad.ClearSkills();
 

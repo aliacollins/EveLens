@@ -60,9 +60,6 @@
                 <ToggleButton x:Name="BlueprintsTab" Content="Blueprints"
                               FontSize="11" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
-                <ToggleButton x:Name="OptimizeTab" Content="Optimize"
-                              FontSize="11" Padding="12,5" CornerRadius="12"
-                              Click="OnTabClicked" />
             </StackPanel>
         </Border>
 
