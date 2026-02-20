@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.Dialogs.SettingsPages.PortableEveClientsSettingsPage">
+
+    <StackPanel Spacing="12">
+        <TextBlock Text="Portable EVE Clients" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+        <TextBlock Text="Add paths to portable EVE Online client installations. These settings are unavailable when EVE client data is found in the default location."
+                   TextWrapping="Wrap" FontSize="12" Foreground="Gray" />
+
+        <TextBlock x:Name="DisabledNote"
+                   Text="Portable EVE client settings are disabled because EVE data was found in the default location."
+                   TextWrapping="Wrap" FontSize="12" Foreground="Orange"
+                   IsVisible="False" Margin="0,0,0,4" />
+
+        <Separator Margin="0,4" />
+
+        <StackPanel x:Name="ClientsPanel" Spacing="6" />
+
+        <Button x:Name="AddButton" Content="Add Installation"
+                HorizontalAlignment="Left"
+                Padding="10,4" CornerRadius="12" />
+    </StackPanel>
+</UserControl>

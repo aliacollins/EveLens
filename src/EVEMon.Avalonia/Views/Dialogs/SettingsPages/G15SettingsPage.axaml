@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EVEMon.Avalonia.Views.Dialogs.SettingsPages.G15SettingsPage">
+
+    <StackPanel Spacing="12">
+        <TextBlock Text="Logitech Keyboards" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+        <CheckBox x:Name="EnabledCheckBox" Content="Enable G15/G19 LCD support" />
+
+        <Separator Margin="0,4" />
+
+        <StackPanel x:Name="G15OptionsPanel" Spacing="10" Margin="8,0,0,0">
+            <TextBlock Text="Character Cycling" FontWeight="SemiBold" />
+            <StackPanel Spacing="6" Margin="8,0,0,0">
+                <CheckBox x:Name="UseCharCycleCheckBox" Content="Cycle through characters" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Cycle interval (seconds):" VerticalAlignment="Center" />
+                    <NumericUpDown x:Name="CharCycleInterval" Minimum="1" Maximum="60" Value="20" Width="80" />
+                </StackPanel>
+            </StackPanel>
+
+            <Separator Margin="0,4" />
+
+            <TextBlock Text="Time Format Cycling" FontWeight="SemiBold" />
+            <StackPanel Spacing="6" Margin="8,0,0,0">
+                <CheckBox x:Name="UseTimeCycleCheckBox" Content="Cycle through time formats" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Cycle interval (seconds):" VerticalAlignment="Center" />
+                    <NumericUpDown x:Name="TimeCycleInterval" Minimum="1" Maximum="30" Value="10" Width="80" />
+                </StackPanel>
+            </StackPanel>
+
+            <Separator Margin="0,4" />
+
+            <TextBlock Text="Display Options" FontWeight="SemiBold" />
+            <StackPanel Spacing="6" Margin="8,0,0,0">
+                <CheckBox x:Name="ShowSystemTimeCheckBox" Content="Show system time" />
+                <CheckBox x:Name="ShowEVETimeCheckBox" Content="Show EVE time" />
+            </StackPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
