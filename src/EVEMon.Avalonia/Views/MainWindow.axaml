@@ -3,6 +3,7 @@
         xmlns:local="clr-namespace:EVEMon.Avalonia.Views.CharacterMonitor"
         x:Class="EVEMon.Avalonia.Views.MainWindow"
         Title="EVEMon"
+        Icon="avares://EVEMon.Avalonia/Properties/EVEMon.ico"
         Width="1024" Height="768">
 
     <DockPanel>
@@ -12,12 +13,20 @@
                 <MenuItem x:Name="AddCharMenuItem" Header="_Add Character..." />
                 <MenuItem x:Name="ManageCharsMenuItem" Header="_Manage Characters..." />
                 <Separator />
+                <MenuItem x:Name="ManageGroupsMenuItem" Header="Manage _Groups..." />
+                <Separator />
+                <MenuItem x:Name="RestoreSettingsMenuItem" Header="_Restore Settings..." />
+                <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings..." />
+                <MenuItem x:Name="ResetSettingsMenuItem" Header="Re_set Settings" />
+                <Separator />
                 <MenuItem x:Name="ExitMenuItem" Header="E_xit" />
             </MenuItem>
             <MenuItem Header="_Plans">
                 <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan..." />
+                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans..." />
                 <Separator />
-                <MenuItem x:Name="ManagePlansMenuItem" Header="_Open Plan..." />
+                <MenuItem x:Name="ImportPlanMenuItem" Header="_Import Plan from File..." />
+                <MenuItem x:Name="CreateFromQueueMenuItem" Header="_Create Plan from Queue" />
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison..." />

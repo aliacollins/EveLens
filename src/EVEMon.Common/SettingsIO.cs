@@ -220,6 +220,9 @@ namespace EVEMon.Common
             foreach (var scope in EsiCustomScopes)
                 serial.EsiCustomScopes.Add(scope);
 
+            foreach (var group in CharacterGroups)
+                serial.CharacterGroups.Add(group);
+
             serial.Characters.AddRange(AppServices.DataStore.ExportCharacters());
             AppServices.TraceService?.Trace($"{serial.Characters.Count} characters exported");
             serial.ESIKeys.AddRange(AppServices.DataStore.ExportESIKeys());

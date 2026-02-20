@@ -85,16 +85,26 @@
                            FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
             </StackPanel>
 
-            <!-- Column 1, Row 1: Account status -->
+            <!-- Column 1, Row 1: Account status with override ComboBox -->
             <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal"
-                        Margin="0,6,0,0" Spacing="6">
+                        Margin="0,6,0,0" Spacing="8">
                 <TextBlock Text="Account Status:" FontSize="11"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            VerticalAlignment="Center" />
-                <TextBlock Text="{Binding AccountStatus}"
-                           FontSize="11" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveSuccessGreenBrush}"
-                           VerticalAlignment="Center" />
+                <!-- Effective status badge -->
+                <Border x:Name="StatusBadge" CornerRadius="10" Padding="8,2"
+                        VerticalAlignment="Center">
+                    <TextBlock x:Name="StatusBadgeText" FontSize="10" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                </Border>
+                <!-- Override ComboBox -->
+                <ComboBox x:Name="StatusOverrideCombo" FontSize="10" Padding="6,2"
+                          MinWidth="80" VerticalAlignment="Center"
+                          SelectionChanged="OnStatusOverrideChanged">
+                    <ComboBoxItem Content="Auto" />
+                    <ComboBoxItem Content="Alpha" />
+                    <ComboBoxItem Content="Omega" />
+                </ComboBox>
             </StackPanel>
 
             <!-- Column 2: Skills summary (right-aligned) -->

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -1456,6 +1457,145 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                     Margin = new Thickness(0, 6, 0, 0),
                 };
                 SidebarContent.Children.Add(hintTb);
+            }
+
+            // ── Clone Training Times ──
+            BuildCloneComparisonSection();
+
+            // ── Owned Skillbooks ──
+            BuildOwnedSkillbooksSection();
+        }
+
+        private void BuildCloneComparisonSection()
+        {
+            try
+            {
+                var character = _viewModel?.Character as Character;
+                var plan = _viewModel?.DisplayPlan;
+                if (character == null || plan == null) return;
+
+                AddThinDivider("Clone Training Times");
+
+                foreach (var implantSet in character.ImplantSets)
+                {
+                    try
+                    {
+                        var scratchpad = character.After(implantSet);
+                        var time = plan.GetTotalTime(scratchpad, true);
+                        string bonusText = GetImplantBonusText(implantSet);
+
+                        SidebarContent.Children.Add(new TextBlock
+                        {
+                            Text = $"{implantSet.Name} {bonusText}: {FormatTime(time)}",
+                            FontSize = 10,
+                            Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                            Margin = new Thickness(4, 1, 0, 0),
+                        });
+                    }
+                    catch { /* Skip sets that fail computation */ }
+                }
+
+                // No Implants time
+                try
+                {
+                    var noneSet = character.ImplantSets.None;
+                    var noneScratchpad = character.After(noneSet);
+                    var noneTime = plan.GetTotalTime(noneScratchpad, true);
+                    SidebarContent.Children.Add(new TextBlock
+                    {
+                        Text = $"No Implants: {FormatTime(noneTime)}",
+                        FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                        Margin = new Thickness(4, 1, 0, 0),
+                    });
+                }
+                catch { }
+
+                // Edit Sets button
+                var editBtn = new Button
+                {
+                    Content = "Edit Sets...",
+                    FontSize = 9,
+                    Padding = new Thickness(8, 3),
+                    CornerRadius = new CornerRadius(10),
+                    Margin = new Thickness(0, 4, 0, 0),
+                };
+                editBtn.Click += async (_, _) =>
+                {
+                    try
+                    {
+                        var editor = new EVEMon.Avalonia.Views.Dialogs.ImplantSetEditorWindow();
+                        editor.Initialize(character);
+                        var parentWindow = this.FindAncestorOfType<Window>();
+                        if (parentWindow != null)
+                            await editor.ShowDialog(parentWindow);
+                        BuildSidebarContent();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error opening implant editor: {ex}");
+                    }
+                };
+                SidebarContent.Children.Add(editBtn);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error building clone comparison: {ex}");
+            }
+        }
+
+        private static string GetImplantBonusText(ImplantSet set)
+        {
+            long maxBonus = 0;
+            foreach (var implant in set)
+            {
+                if (implant.Bonus > maxBonus)
+                    maxBonus = implant.Bonus;
+            }
+            return maxBonus > 0 ? $"(+{maxBonus})" : "";
+        }
+
+        private void BuildOwnedSkillbooksSection()
+        {
+            try
+            {
+                var character = _viewModel?.Character as Character;
+                if (character == null) return;
+
+                var ownedBooks = character.Skills
+                    .Where(s => s.IsOwned && !s.IsKnown)
+                    .OrderBy(s => s.Name)
+                    .ToList();
+
+                if (ownedBooks.Count == 0) return;
+
+                AddThinDivider($"Owned Skillbooks ({ownedBooks.Count})");
+
+                foreach (var skill in ownedBooks.Take(20))
+                {
+                    SidebarContent.Children.Add(new TextBlock
+                    {
+                        Text = skill.Name,
+                        FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                        Margin = new Thickness(4, 1, 0, 0),
+                    });
+                }
+
+                if (ownedBooks.Count > 20)
+                {
+                    SidebarContent.Children.Add(new TextBlock
+                    {
+                        Text = $"... and {ownedBooks.Count - 20} more",
+                        FontSize = 10,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                        Margin = new Thickness(4, 2, 0, 0),
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error building skillbooks section: {ex}");
             }
         }
 

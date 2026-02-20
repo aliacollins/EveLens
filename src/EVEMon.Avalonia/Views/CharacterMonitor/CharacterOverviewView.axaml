@@ -3,62 +3,6 @@
              x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterOverviewView">
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <ItemsControl x:Name="CharacterCards" Margin="16,12">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Button Background="Transparent" BorderThickness="0" Padding="0" Margin="4"
-                            Cursor="Hand" HorizontalContentAlignment="Stretch"
-                            Click="OnCharacterCardClick">
-                        <Button.ContextMenu>
-                            <ContextMenu>
-                                <MenuItem Header="Delete Character..." Click="OnDeleteCharacter"
-                                          Tag="{Binding}" />
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
-                                BorderBrush="{StaticResource EveBorderBrush}"
-                                BorderThickness="1" CornerRadius="6"
-                                Padding="12,10" Width="300" MinHeight="90">
-                            <Grid ColumnDefinitions="68,*">
-                                <!-- Portrait -->
-                                <Border Grid.Column="0" Width="56" Height="56"
-                                        Background="{StaticResource EveBackgroundDarkestBrush}"
-                                        BorderBrush="{StaticResource EveBorderBrush}"
-                                        BorderThickness="1" CornerRadius="4"
-                                        VerticalAlignment="Top" Margin="0,0,12,0">
-                                    <Image Width="56" Height="56" Stretch="UniformToFill"
-                                           Tag="{Binding CharacterID}" />
-                                </Border>
-
-                                <!-- Info -->
-                                <StackPanel Grid.Column="1" Spacing="1">
-                                    <!-- Name -->
-                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold"
-                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                               TextTrimming="CharacterEllipsis" />
-                                    <!-- ISK -->
-                                    <TextBlock Text="{Binding Balance, StringFormat='{}{0:N2} ISK'}"
-                                               FontSize="11"
-                                               Foreground="{StaticResource EveSuccessGreenBrush}" />
-                                    <!-- SP -->
-                                    <TextBlock Text="{Binding SkillPoints, StringFormat='{}{0:N0} SP'}"
-                                               FontSize="11"
-                                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                                    <!-- Training status -->
-                                    <TextBlock x:Name="TrainingText" FontSize="10"
-                                               Foreground="{StaticResource EveWarningYellowBrush}"
-                                               TextTrimming="CharacterEllipsis" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </Button>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <StackPanel x:Name="OverviewPanel" Margin="16,12" Spacing="8" />
     </ScrollViewer>
 </UserControl>

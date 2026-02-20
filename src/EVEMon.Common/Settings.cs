@@ -166,6 +166,11 @@ namespace EVEMon.Common
         /// </summary>
         public static IList<string> EsiCustomScopes { get; private set; } = new List<string>();
 
+        /// <summary>
+        /// Gets the character group settings for organizing the overview.
+        /// </summary>
+        public static IList<CharacterGroupSettings> CharacterGroups { get; private set; } = new List<CharacterGroupSettings>();
+
         #endregion
 
 
@@ -211,6 +216,9 @@ namespace EVEMon.Common
                 // ESI scope settings
                 EsiScopePreset = s_settings.EsiScopePreset ?? "FullMonitoring";
                 EsiCustomScopes = new List<string>(s_settings.EsiCustomScopes);
+
+                // Character groups
+                CharacterGroups = new List<CharacterGroupSettings>(s_settings.CharacterGroups);
 
                 // Scheduler
                 Scheduler.Import(s_settings.Scheduler);

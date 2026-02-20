@@ -2,17 +2,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EVEMon.Avalonia.Views.Dialogs.SettingsPages.NotificationsSettingsPage">
 
-    <StackPanel Spacing="12">
-        <TextBlock Text="Notifications" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="12" Margin="0,0,12,0">
+            <TextBlock Text="Notifications" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
 
-        <CheckBox x:Name="PlaySoundOnSkillCompleteCheckBox"
-                  Content="Play sound when skill training completes" />
+            <CheckBox x:Name="PlaySoundOnSkillCompleteCheckBox"
+                      Content="Play sound when skill training completes" />
 
-        <Separator Margin="0,4" />
+            <Separator Margin="0,4" />
 
-        <TextBlock Text="Notification categories and behaviors will be configurable in a future update."
-                   FontSize="13"
-                   Foreground="Gray"
-                   TextWrapping="Wrap" />
-    </StackPanel>
+            <TextBlock Text="Notification Categories" FontWeight="SemiBold" />
+            <TextBlock Text="Configure how each notification category behaves."
+                       FontSize="12" Foreground="Gray" Margin="0,0,0,4" />
+
+            <!-- Header row -->
+            <Grid ColumnDefinitions="*,140,100" Margin="0,0,0,2">
+                <TextBlock Text="Category" FontWeight="SemiBold" FontSize="11" />
+                <TextBlock Grid.Column="1" Text="ToolTip Behaviour" FontWeight="SemiBold" FontSize="11" />
+                <TextBlock Grid.Column="2" Text="Main Window" FontWeight="SemiBold" FontSize="11" />
+            </Grid>
+
+            <StackPanel x:Name="CategoriesPanel" Spacing="4" />
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

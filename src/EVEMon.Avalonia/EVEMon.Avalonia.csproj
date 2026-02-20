@@ -9,6 +9,7 @@
     <RootNamespace>EVEMon.Avalonia</RootNamespace>
     <AssemblyName>EVEMon.Avalonia</AssemblyName>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationIcon>Properties\EVEMon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Avalonia NuGet Packages -->
@@ -30,6 +31,11 @@
   <!-- Shared AssemblyInfo -->
   <ItemGroup>
     <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <!-- Application icon as Avalonia resource -->
+  <ItemGroup>
+    <AvaloniaResource Include="Properties\EVEMon.ico" />
   </ItemGroup>
 
   <!-- Copy ESI credentials file to output if it exists -->

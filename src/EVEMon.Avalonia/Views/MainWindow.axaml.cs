@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using EVEMon.Avalonia.ViewModels;
 using EVEMon.Avalonia.Views.CharacterMonitor;
@@ -41,6 +42,8 @@ namespace EVEMon.Avalonia.Views
             // Disable plan menus initially (Overview tab active)
             NewPlanMenuItem.IsEnabled = false;
             ManagePlansMenuItem.IsEnabled = false;
+            ImportPlanMenuItem.IsEnabled = false;
+            CreateFromQueueMenuItem.IsEnabled = false;
             MainTabControl.SelectionChanged += OnTabSelectionChanged;
 
             _tickSubscription = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
@@ -94,11 +97,17 @@ namespace EVEMon.Avalonia.Views
             // File menu
             AddCharMenuItem.Click += OnAddCharacterClick;
             ManageCharsMenuItem.Click += OnManageCharactersClick;
+            ManageGroupsMenuItem.Click += OnManageGroupsClick;
+            RestoreSettingsMenuItem.Click += OnRestoreSettingsClick;
+            SaveSettingsMenuItem.Click += OnSaveSettingsClick;
+            ResetSettingsMenuItem.Click += OnResetSettingsClick;
             ExitMenuItem.Click += OnExitClick;
 
             // Plans menu
             NewPlanMenuItem.Click += OnNewPlanClick;
             ManagePlansMenuItem.Click += OnManagePlansClick;
+            ImportPlanMenuItem.Click += OnImportPlanClick;
+            CreateFromQueueMenuItem.Click += OnCreateFromQueueClick;
 
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
@@ -199,6 +208,86 @@ namespace EVEMon.Avalonia.Views
             catch
             {
                 // Non-critical — don't let countdown crash the app
+            }
+        }
+
+        private async void OnRestoreSettingsClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var fileTypes = new[]
+                {
+                    new FilePickerFileType("JSON Settings") { Patterns = new[] { "*.json" } },
+                    new FilePickerFileType("XML Settings") { Patterns = new[] { "*.xml" } },
+                    new FilePickerFileType("Backup Files") { Patterns = new[] { "*.bak" } },
+                    new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                };
+
+                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Restore Settings",
+                    AllowMultiple = false,
+                    FileTypeFilter = fileTypes
+                });
+
+                if (files.Count == 0) return;
+
+                string path = files[0].Path.LocalPath;
+                await Common.Settings.RestoreAsync(path);
+                RebuildCharacterTabs();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error restoring settings: {ex}");
+            }
+        }
+
+        private async void OnSaveSettingsClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var fileTypes = new[]
+                {
+                    new FilePickerFileType("JSON Settings") { Patterns = new[] { "*.json" } },
+                    new FilePickerFileType("XML Settings") { Patterns = new[] { "*.xml" } }
+                };
+
+                var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                {
+                    Title = "Save Settings",
+                    DefaultExtension = "json",
+                    SuggestedFileName = "EVEMon-settings-backup",
+                    FileTypeChoices = fileTypes
+                });
+
+                if (file == null) return;
+
+                string path = file.Path.LocalPath;
+                await Common.Settings.CopySettingsAsync(path);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error saving settings: {ex}");
+            }
+        }
+
+        private async void OnResetSettingsClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                bool confirmed = await ShowConfirmationDialog(
+                    "Reset Settings",
+                    "Reset all settings to their defaults? This cannot be undone.");
+
+                if (confirmed)
+                {
+                    await Common.Settings.ResetAsync();
+                    RebuildCharacterTabs();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error resetting settings: {ex}");
             }
         }
 
@@ -479,18 +568,18 @@ namespace EVEMon.Avalonia.Views
             try
             {
                 var character = GetSelectedCharacter();
-                if (character == null || character.Plans.Count == 0)
+                if (character == null)
                 {
                     var dialog = new Window
                     {
-                        Title = "No Plans",
+                        Title = "No Character",
                         Width = 320, Height = 130,
                         WindowStartupLocation = WindowStartupLocation.CenterOwner,
                         Content = new TextBlock
                         {
-                            Text = character == null
-                                ? (_observableCharacters.Count > 0 ? "Select a character tab first." : "Add a character before managing plans.")
-                                : $"{character.Name} has no plans. Use New Plan to create one.",
+                            Text = _observableCharacters.Count > 0
+                                ? "Select a character tab first."
+                                : "Add a character before managing plans.",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
                             TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
@@ -501,85 +590,136 @@ namespace EVEMon.Avalonia.Views
                     return;
                 }
 
-                // If only one plan, open it directly
-                if (character.Plans.Count == 1)
+                var managePlansWindow = new ManagePlansWindow();
+                managePlansWindow.Initialize(character);
+                await managePlansWindow.ShowDialog(this);
+
+                // If a plan was selected to open, open it in the editor
+                if (managePlansWindow.SelectedPlan != null)
                 {
                     var editorWindow = new PlanEditorWindow
                     {
                         WindowStartupLocation = WindowStartupLocation.CenterOwner
                     };
-                    editorWindow.Initialize(character.Plans.First(), character);
+                    editorWindow.Initialize(managePlansWindow.SelectedPlan, character);
                     editorWindow.Show(this);
-                    return;
                 }
-
-                // Multiple plans — show picker dialog
-                var plans = character.Plans.ToList();
-                var listBox = new ListBox
-                {
-                    ItemsSource = plans.Select(p => p.Name).ToList(),
-                    FontSize = 12,
-                    Margin = new Thickness(0, 0, 0, 8)
-                };
-                listBox.SelectedIndex = 0;
-
-                var openBtn = new Button
-                {
-                    Content = "Open Plan",
-                    FontSize = 11,
-                    Padding = new Thickness(12, 5),
-                    CornerRadius = new CornerRadius(12),
-                    HorizontalAlignment = HorizontalAlignment.Right
-                };
-
-                var picker = new Window
-                {
-                    Title = $"Plans — {character.Name}",
-                    Width = 340, Height = 320,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new DockPanel
-                    {
-                        Margin = new Thickness(12),
-                        Children =
-                        {
-                            new TextBlock
-                            {
-                                Text = "Select a plan to open:",
-                                FontSize = 12,
-                                Margin = new Thickness(0, 0, 0, 8),
-                                [DockPanel.DockProperty] = Dock.Top
-                            },
-                            new Panel
-                            {
-                                Children = { openBtn },
-                                HorizontalAlignment = HorizontalAlignment.Right,
-                                [DockPanel.DockProperty] = Dock.Bottom
-                            },
-                            listBox
-                        }
-                    }
-                };
-
-                openBtn.Click += (_, _) =>
-                {
-                    int idx = listBox.SelectedIndex;
-                    if (idx >= 0 && idx < plans.Count)
-                    {
-                        picker.Close();
-                        var editorWindow = new PlanEditorWindow
-                        {
-                            WindowStartupLocation = WindowStartupLocation.CenterOwner
-                        };
-                        editorWindow.Initialize(plans[idx], character);
-                        editorWindow.Show(this);
-                    }
-                };
-
-                await picker.ShowDialog(this);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error managing plans: {ex}");
+            }
+        }
+
+        private async void OnManageGroupsClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var groupsWindow = new ManageGroupsWindow();
+                await groupsWindow.ShowDialog(this);
+
+                // Refresh overview to reflect group changes
+                foreach (var item in MainTabControl.Items)
+                {
+                    if (item is TabItem tabItem && tabItem.Content is CharacterOverviewView overview)
+                    {
+                        // Force re-render by detaching/attaching
+                        overview.RefreshView();
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error managing groups: {ex}");
+            }
+        }
+
+        private async void OnImportPlanClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var character = GetSelectedCharacter();
+                if (character == null) return;
+
+                var fileTypes = new[]
+                {
+                    new FilePickerFileType("EVEMon Plan") { Patterns = new[] { "*.emp", "*.xml" } },
+                    new FilePickerFileType("All Files") { Patterns = new[] { "*" } }
+                };
+
+                var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                {
+                    Title = "Import Plan",
+                    AllowMultiple = false,
+                    FileTypeFilter = fileTypes
+                });
+
+                if (files.Count == 0) return;
+
+                string path = files[0].Path.LocalPath;
+                string planName = System.IO.Path.GetFileNameWithoutExtension(path);
+                var plan = new Plan(character) { Name = planName };
+                character.Plans.Add(plan);
+
+                var editorWindow = new PlanEditorWindow
+                {
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+                editorWindow.Initialize(plan, character);
+                editorWindow.Show(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error importing plan: {ex}");
+            }
+        }
+
+        private async void OnCreateFromQueueClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var character = GetSelectedCharacter();
+                if (character is not CCPCharacter ccp)
+                {
+                    var dialog = new Window
+                    {
+                        Title = "Create from Queue",
+                        Width = 320, Height = 130,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new TextBlock
+                        {
+                            Text = "This feature requires a CCP character with an active skill queue.",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            Margin = new Thickness(20)
+                        }
+                    };
+                    await dialog.ShowDialog(this);
+                    return;
+                }
+
+                var plan = new Plan(character) { Name = "From Skill Queue" };
+                foreach (var queueItem in ccp.SkillQueue)
+                {
+                    if (queueItem.Skill != null && queueItem.Skill.StaticData != null)
+                    {
+                        plan.PlanTo(queueItem.Skill.StaticData, queueItem.Level);
+                    }
+                }
+                character.Plans.Add(plan);
+
+                var editorWindow = new PlanEditorWindow
+                {
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+                editorWindow.Initialize(plan, character);
+                editorWindow.Show(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error creating plan from queue: {ex}");
             }
         }
 
@@ -650,6 +790,8 @@ namespace EVEMon.Avalonia.Views
             bool hasCharacter = GetSelectedCharacter() != null;
             NewPlanMenuItem.IsEnabled = hasCharacter;
             ManagePlansMenuItem.IsEnabled = hasCharacter;
+            ImportPlanMenuItem.IsEnabled = hasCharacter;
+            CreateFromQueueMenuItem.IsEnabled = hasCharacter;
         }
 
         internal async void DeleteCharacterWithConfirmation(Character character)

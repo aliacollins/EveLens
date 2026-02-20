@@ -14,13 +14,23 @@ namespace EVEMon.Avalonia.Views.Dialogs
         private readonly Dictionary<string, UserControl> _pages = new();
         private string _selectedPageKey = string.Empty;
 
-        // Strongly-typed references to the 6 MUST HAVE pages for apply
+        // Strongly-typed references to all settings pages for apply
         private GeneralSettingsPage? _generalPage;
         private UpdatesSettingsPage? _updatesPage;
         private NetworkSettingsPage? _networkPage;
         private MainWindowSettingsPage? _mainWindowPage;
         private SkillPlannerSettingsPage? _skillPlannerPage;
         private NotificationsSettingsPage? _notificationsPage;
+        private TrayIconSettingsPage? _trayIconPage;
+        private MarketPriceProvidersSettingsPage? _marketPricePage;
+        private G15SettingsPage? _g15Page;
+        private PortableEveClientsSettingsPage? _portableEvePage;
+        private IconsSettingsPage? _iconsPage;
+        private MessagesSettingsPage? _messagesPage;
+        private SchedulerSettingsPage? _schedulerPage;
+        private ExternalCalendarSettingsPage? _externalCalendarPage;
+        private EmailNotificationsSettingsPage? _emailNotificationsPage;
+        private EsiScopeSettingsPage? _esiScopePage;
 
         public SettingsWindow()
         {
@@ -51,6 +61,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
             general.Items.Add(CreateItem("Logitech Keyboards", "g15Page"));
             general.Items.Add(CreateItem("Portable EVE Clients", "portableEveClientsPage"));
             general.Items.Add(CreateItem("Market Price Providers", "marketPriceProvidersPage"));
+            general.Items.Add(CreateItem("ESI Scopes", "esiScopePage"));
 
             // Main Window
             var mainWindow = CreateItem("Main Window", "mainWindowPage");
@@ -71,16 +82,12 @@ namespace EVEMon.Avalonia.Views.Dialogs
             var notifications = CreateItem("Notifications", "notificationsPage");
             notifications.Items.Add(CreateItem("Skill Completion Mails", "emailNotificationsPage"));
 
-            // Cloud Storage Service (disabled)
-            var cloudStorage = CreateItem("Cloud Storage Service", "cloudStoragePage");
-
             CategoryTree.Items.Add(general);
             CategoryTree.Items.Add(mainWindow);
             CategoryTree.Items.Add(skillPlanner);
             CategoryTree.Items.Add(trayIcon);
             CategoryTree.Items.Add(scheduler);
             CategoryTree.Items.Add(notifications);
-            CategoryTree.Items.Add(cloudStorage);
         }
 
         private static TreeViewItem CreateItem(string header, string tag)
@@ -95,13 +102,23 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
         private void BuildPages()
         {
-            // 6 MUST HAVE pages with real settings controls
+            // All settings pages
             _generalPage = new GeneralSettingsPage(_settings);
             _updatesPage = new UpdatesSettingsPage(_settings);
             _networkPage = new NetworkSettingsPage(_settings);
             _mainWindowPage = new MainWindowSettingsPage(_settings);
             _skillPlannerPage = new SkillPlannerSettingsPage(_settings);
             _notificationsPage = new NotificationsSettingsPage(_settings);
+            _trayIconPage = new TrayIconSettingsPage(_settings);
+            _marketPricePage = new MarketPriceProvidersSettingsPage(_settings);
+            _g15Page = new G15SettingsPage(_settings);
+            _portableEvePage = new PortableEveClientsSettingsPage(_settings);
+            _iconsPage = new IconsSettingsPage(_settings);
+            _messagesPage = new MessagesSettingsPage(_settings);
+            _schedulerPage = new SchedulerSettingsPage(_settings);
+            _externalCalendarPage = new ExternalCalendarSettingsPage(_settings);
+            _emailNotificationsPage = new EmailNotificationsSettingsPage(_settings);
+            _esiScopePage = new EsiScopeSettingsPage(_settings);
 
             _pages["generalPage"] = _generalPage;
             _pages["updatesPage"] = _updatesPage;
@@ -109,34 +126,16 @@ namespace EVEMon.Avalonia.Views.Dialogs
             _pages["mainWindowPage"] = _mainWindowPage;
             _pages["skillPlannerPage"] = _skillPlannerPage;
             _pages["notificationsPage"] = _notificationsPage;
-
-            // Deferred pages with placeholder content
-            string[] deferredPages = new[]
-            {
-                "g15Page", "portableEveClientsPage", "marketPriceProvidersPage",
-                "iconsPage", "messagesPage", "trayIconPage",
-                "schedulerUIPage", "externalCalendarPage",
-                "emailNotificationsPage", "cloudStoragePage"
-            };
-
-            foreach (string key in deferredPages)
-            {
-                _pages[key] = CreatePlaceholderPage();
-            }
-        }
-
-        private static UserControl CreatePlaceholderPage()
-        {
-            var page = new UserControl();
-            var text = new TextBlock
-            {
-                Text = "This settings page will be available in a future update.",
-                FontSize = 13,
-                Foreground = global::Avalonia.Media.Brushes.Gray,
-                Margin = new global::Avalonia.Thickness(0, 8, 0, 0)
-            };
-            page.Content = text;
-            return page;
+            _pages["trayIconPage"] = _trayIconPage;
+            _pages["marketPriceProvidersPage"] = _marketPricePage;
+            _pages["g15Page"] = _g15Page;
+            _pages["portableEveClientsPage"] = _portableEvePage;
+            _pages["iconsPage"] = _iconsPage;
+            _pages["messagesPage"] = _messagesPage;
+            _pages["schedulerUIPage"] = _schedulerPage;
+            _pages["externalCalendarPage"] = _externalCalendarPage;
+            _pages["emailNotificationsPage"] = _emailNotificationsPage;
+            _pages["esiScopePage"] = _esiScopePage;
         }
 
         private void WireEvents()
@@ -176,6 +175,16 @@ namespace EVEMon.Avalonia.Views.Dialogs
             _mainWindowPage?.ApplyToSettings();
             _skillPlannerPage?.ApplyToSettings();
             _notificationsPage?.ApplyToSettings();
+            _trayIconPage?.ApplyToSettings();
+            _marketPricePage?.ApplyToSettings();
+            _g15Page?.ApplyToSettings();
+            _portableEvePage?.ApplyToSettings();
+            _iconsPage?.ApplyToSettings();
+            _messagesPage?.ApplyToSettings();
+            _schedulerPage?.ApplyToSettings();
+            _externalCalendarPage?.ApplyToSettings();
+            _emailNotificationsPage?.ApplyToSettings();
+            _esiScopePage?.ApplyToSettings();
         }
 
         private async void OnOkClick(object? sender, RoutedEventArgs e)

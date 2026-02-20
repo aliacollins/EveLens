@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EVEMon.Avalonia.Views.Dialogs.ImplantSetEditorWindow"
+        Title="Implant Set Editor"
+        Width="700" Height="550"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource EveBackgroundDarkBrush}">
+
+    <Grid ColumnDefinitions="200,*" Margin="12">
+        <!-- Left: Implant set list -->
+        <DockPanel Grid.Column="0" Margin="0,0,8,0">
+            <TextBlock DockPanel.Dock="Top" Text="Implant Sets" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                       Margin="0,0,0,6" />
+
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6"
+                        Margin="0,6,0,0">
+                <Button x:Name="NewCustomBtn" Content="New Custom" FontSize="10"
+                        Padding="8,3" CornerRadius="12" Click="OnNewCustomClick" />
+                <Button x:Name="RenameSetBtn" Content="Rename" FontSize="10"
+                        Padding="8,3" CornerRadius="12" Click="OnRenameClick" />
+                <Button x:Name="DeleteSetBtn" Content="Delete" FontSize="10"
+                        Padding="8,3" CornerRadius="12"
+                        Foreground="{StaticResource EveErrorRedBrush}"
+                        Click="OnDeleteClick" />
+            </StackPanel>
+
+            <ListBox x:Name="SetListBox"
+                     Background="{StaticResource EveBackgroundMediumBrush}"
+                     SelectionChanged="OnSetSelected" />
+        </DockPanel>
+
+        <!-- Right: Implant slots + summary -->
+        <DockPanel Grid.Column="1" Margin="8,0,0,0">
+            <TextBlock DockPanel.Dock="Top" x:Name="SlotHeader" Text="Select an implant set"
+                       FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                       Margin="0,0,0,6" />
+
+            <!-- Bottom: Bonus summary -->
+            <Border DockPanel.Dock="Bottom" Padding="8,6"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    CornerRadius="6" Margin="0,8,0,0">
+                <TextBlock x:Name="BonusSummaryText" FontSize="11"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+            </Border>
+
+            <!-- Slot ComboBoxes -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="SlotPanel" Spacing="6" />
+            </ScrollViewer>
+        </DockPanel>
+    </Grid>
+</Window>

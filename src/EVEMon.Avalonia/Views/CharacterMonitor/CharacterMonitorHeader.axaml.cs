@@ -3,8 +3,10 @@ using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EVEMon.Avalonia.Converters;
+using EVEMon.Common.Models;
 using EVEMon.Common.Service;
 using EVEMon.Common.ViewModels;
 
@@ -13,6 +15,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
     public partial class CharacterMonitorHeader : UserControl
     {
         private ObservableCharacter? _observable;
+        private bool _suppressComboChange;
 
         public CharacterMonitorHeader()
         {
@@ -41,6 +44,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                         if (converted is Bitmap bitmap)
                             PortraitImage.Source = bitmap;
                     }
+
+                    // Set initial ComboBox selection
+                    _suppressComboChange = true;
+                    StatusOverrideCombo.SelectedIndex = (int)oc.Character.AccountStatusSettings;
+                    _suppressComboChange = false;
 
                     // Initial display + live updates via INPC
                     RefreshDisplay(oc);
@@ -83,10 +91,37 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                         BalanceChangeIndicator.Opacity = 0.7;
                     }, global::Avalonia.Threading.DispatcherPriority.Background);
                 }
+
+                // Account status badge
+                var effectiveStatus = oc.Character.EffectiveCharacterStatus;
+                bool isOmega = effectiveStatus == AccountStatus.Omega;
+                StatusBadgeText.Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha";
+                StatusBadge.Background = isOmega
+                    ? new SolidColorBrush(Color.Parse("#2200C853"))
+                    : new SolidColorBrush(Color.Parse("#22FF6D00"));
+                StatusBadgeText.Foreground = isOmega
+                    ? new SolidColorBrush(Color.Parse("#FF00C853"))
+                    : new SolidColorBrush(Color.Parse("#FFFF6D00"));
             }
             catch
             {
                 // Non-critical display
+            }
+        }
+
+        private void OnStatusOverrideChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (_suppressComboChange || _observable == null) return;
+                int index = StatusOverrideCombo.SelectedIndex;
+                if (index < 0) return;
+                _observable.Character.AccountStatusSettings = (AccountStatusMode)index;
+                RefreshDisplay(_observable);
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error changing account status: {ex}");
             }
         }
 

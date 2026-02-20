@@ -17,6 +17,7 @@ namespace EVEMon.Common.Serialization.Settings
         private readonly Collection<MonitoredCharacterSettings> m_monitoredCharacters;
 
         private readonly Collection<string> m_esiCustomScopes;
+        private readonly Collection<CharacterGroupSettings> m_characterGroups;
 
         public SerializableSettings()
         {
@@ -25,6 +26,7 @@ namespace EVEMon.Common.Serialization.Settings
             m_characters = new Collection<SerializableSettingsCharacter>();
             m_monitoredCharacters = new Collection<MonitoredCharacterSettings>();
             m_esiCustomScopes = new Collection<string>();
+            m_characterGroups = new Collection<CharacterGroupSettings>();
             SSOClientID = string.Empty;
             SSOClientSecret = string.Empty;
             CloudStorageServiceProvider = new CloudStorageServiceProviderSettings();
@@ -124,5 +126,9 @@ namespace EVEMon.Common.Serialization.Settings
         [XmlArray("esiCustomScopes")]
         [XmlArrayItem("scope")]
         public Collection<string> EsiCustomScopes => m_esiCustomScopes;
+
+        [XmlArray("characterGroups")]
+        [XmlArrayItem("group")]
+        public Collection<CharacterGroupSettings> CharacterGroups => m_characterGroups;
     }
 }
