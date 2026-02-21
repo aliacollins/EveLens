@@ -101,7 +101,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 if (item == null) return;
 
                 var clone = item.Plan.Clone();
-                clone.Name = $"Copy of {item.Plan.Name}";
+                clone.Name = _character.Plans.GetUniqueName($"Copy of {item.Plan.Name}");
                 _character.Plans.Add(clone);
                 RefreshGrid();
             }
@@ -118,7 +118,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 var item = GetSelectedItem();
                 if (item == null) return;
 
-                string? name = await ShowNameInputDialog("Rename Plan", item.Plan.Name);
+                string? name = await ShowNameInputDialog("Rename Plan", item.Plan.Name, item.Plan);
                 if (string.IsNullOrWhiteSpace(name)) return;
 
                 item.Plan.Name = name;
@@ -175,6 +175,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
                 string path = files[0].Path.LocalPath;
                 string planName = Path.GetFileNameWithoutExtension(path);
+                planName = _character.Plans.GetUniqueName(planName);
                 var plan = new Plan(_character) { Name = planName };
                 _character.Plans.Add(plan);
                 RefreshGrid();
@@ -191,7 +192,8 @@ namespace EVEMon.Avalonia.Views.Dialogs
             {
                 if (_character is not CCPCharacter ccp) return;
 
-                var plan = new Plan(_character) { Name = "From Skill Queue" };
+                string planName = _character.Plans.GetUniqueName("From Skill Queue");
+                var plan = new Plan(_character) { Name = planName };
                 foreach (var queueItem in ccp.SkillQueue)
                 {
                     if (queueItem.Skill?.StaticData != null)
@@ -215,8 +217,12 @@ namespace EVEMon.Avalonia.Views.Dialogs
             return $"{ts.Minutes}m {ts.Seconds}s";
         }
 
-        private async Task<string?> ShowNameInputDialog(string title, string defaultName)
+        private async Task<string?> ShowNameInputDialog(string title, string defaultName,
+            Plan? excludeFromCheck = null)
         {
+            if (_character == null) return null;
+            var plans = _character.Plans;
+
             string? result = null;
             var nameBox = new TextBox
             {
@@ -224,6 +230,16 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 FontSize = 12,
                 Margin = new Thickness(0, 8, 0, 0),
                 Watermark = "Enter plan name..."
+            };
+
+            var errorText = new TextBlock
+            {
+                Text = "A plan with this name already exists.",
+                FontSize = 10,
+                Foreground = (global::Avalonia.Media.IBrush?)Application.Current?.FindResource("EveErrorRedBrush")
+                             ?? global::Avalonia.Media.Brushes.Red,
+                Margin = new Thickness(0, 4, 0, 0),
+                IsVisible = false
             };
 
             var okBtn = new Button
@@ -236,10 +252,19 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 Margin = new Thickness(0, 12, 0, 0)
             };
 
+            nameBox.TextChanged += (_, _) =>
+            {
+                string? current = nameBox.Text?.Trim();
+                bool isEmpty = string.IsNullOrEmpty(current);
+                bool isDuplicate = !isEmpty && plans.ContainsName(current!, excludeFromCheck);
+                errorText.IsVisible = isDuplicate;
+                okBtn.IsEnabled = !isEmpty && !isDuplicate;
+            };
+
             var dialog = new Window
             {
                 Title = title,
-                Width = 320, Height = 160,
+                Width = 320, Height = 175,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Content = new StackPanel
                 {
@@ -248,6 +273,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
                     {
                         new TextBlock { Text = "Plan name:", FontSize = 12 },
                         nameBox,
+                        errorText,
                         okBtn
                     }
                 }
@@ -257,7 +283,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
             okBtn.Click += (_, _) =>
             {
                 result = nameBox.Text?.Trim();
-                if (!string.IsNullOrEmpty(result))
+                if (!string.IsNullOrEmpty(result) && !plans.ContainsName(result, excludeFromCheck))
                     dialog.Close();
             };
 

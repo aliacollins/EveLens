@@ -35,6 +35,36 @@ namespace EVEMon.Common.Models.Collections
         public Plan this[string name] => Items.FirstOrDefault(plan => plan.Name == name);
 
         /// <summary>
+        /// Returns true if a plan with the given name already exists (case-insensitive).
+        /// Optionally excludes a specific plan from the check (for rename scenarios).
+        /// </summary>
+        public bool ContainsName(string name, Plan? exclude = null)
+        {
+            return Items.Any(p => p != exclude &&
+                string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Returns a unique variant of the given name by appending " (2)", " (3)", etc.
+        /// If the name is already unique, returns it unchanged.
+        /// </summary>
+        public string GetUniqueName(string baseName)
+        {
+            if (!ContainsName(baseName))
+                return baseName;
+
+            int suffix = 2;
+            string candidate;
+            do
+            {
+                candidate = $"{baseName} ({suffix})";
+                suffix++;
+            } while (ContainsName(candidate));
+
+            return candidate;
+        }
+
+        /// <summary>
         /// When we add a plan, we may have to clone it (and maybe changed the character it is bound to) and connects it.
         /// </summary>
         /// <param name="item"></param>

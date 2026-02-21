@@ -952,12 +952,22 @@ namespace EVEMon.Avalonia.Views
 
                 // Prompt for plan name
                 int planCount = character.Plans.Count;
+                string defaultName = character.Plans.GetUniqueName($"Plan {planCount + 1}");
                 var nameBox = new TextBox
                 {
-                    Text = $"Plan {planCount + 1}",
+                    Text = defaultName,
                     FontSize = 12,
                     Margin = new Thickness(0, 8, 0, 0),
                     Watermark = "Enter plan name..."
+                };
+
+                var errorText = new TextBlock
+                {
+                    Text = "A plan with this name already exists.",
+                    FontSize = 10,
+                    Foreground = FindStripBrush("EveErrorRedBrush", Brushes.Red),
+                    Margin = new Thickness(0, 4, 0, 0),
+                    IsVisible = false
                 };
 
                 var createBtn = new Button
@@ -970,11 +980,20 @@ namespace EVEMon.Avalonia.Views
                     Margin = new Thickness(0, 12, 0, 0)
                 };
 
+                nameBox.TextChanged += (_, _) =>
+                {
+                    string? current = nameBox.Text?.Trim();
+                    bool isEmpty = string.IsNullOrEmpty(current);
+                    bool isDuplicate = !isEmpty && character.Plans.ContainsName(current!);
+                    errorText.IsVisible = isDuplicate;
+                    createBtn.IsEnabled = !isEmpty && !isDuplicate;
+                };
+
                 string? planName = null;
                 var nameDialog = new Window
                 {
                     Title = "New Plan",
-                    Width = 340, Height = 170,
+                    Width = 340, Height = 185,
                     WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     Content = new StackPanel
                     {
@@ -983,6 +1002,7 @@ namespace EVEMon.Avalonia.Views
                         {
                             new TextBlock { Text = "Plan name:", FontSize = 12 },
                             nameBox,
+                            errorText,
                             createBtn
                         }
                     }
@@ -992,7 +1012,7 @@ namespace EVEMon.Avalonia.Views
                 createBtn.Click += (_, _) =>
                 {
                     planName = nameBox.Text?.Trim();
-                    if (!string.IsNullOrEmpty(planName))
+                    if (!string.IsNullOrEmpty(planName) && !character.Plans.ContainsName(planName))
                         nameDialog.Close();
                 };
 
@@ -1103,6 +1123,7 @@ namespace EVEMon.Avalonia.Views
 
                 string path = files[0].Path.LocalPath;
                 string planName = System.IO.Path.GetFileNameWithoutExtension(path);
+                planName = character.Plans.GetUniqueName(planName);
                 var plan = new Plan(character) { Name = planName };
                 character.Plans.Add(plan);
 
@@ -1144,7 +1165,8 @@ namespace EVEMon.Avalonia.Views
                     return;
                 }
 
-                var plan = new Plan(character) { Name = "From Skill Queue" };
+                string planName = character.Plans.GetUniqueName("From Skill Queue");
+                var plan = new Plan(character) { Name = planName };
                 foreach (var queueItem in ccp.SkillQueue)
                 {
                     if (queueItem.Skill != null && queueItem.Skill.StaticData != null)
