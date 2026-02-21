@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 using EVEMon.Avalonia.Views.Dialogs.SettingsPages;
 using EVEMon.Common;
 using EVEMon.Common.Serialization.Settings;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Avalonia.Views.Dialogs
 {
@@ -133,6 +138,8 @@ namespace EVEMon.Avalonia.Views.Dialogs
             _emailNotificationsPage = new EmailNotificationsSettingsPage(_settings);
             _esiScopePage = new EsiScopeSettingsPage(_settings);
 
+            _generalPage.RestartRequested += OnRestartRequested;
+
             _pages["generalPage"] = _generalPage;
             _pages["updatesPage"] = _updatesPage;
             _pages["networkPage"] = _networkPage;
@@ -232,6 +239,82 @@ namespace EVEMon.Avalonia.Views.Dialogs
             {
                 System.Diagnostics.Debug.WriteLine($"Error applying settings: {ex}");
             }
+        }
+
+        private async void OnRestartRequested()
+        {
+            try
+            {
+                bool confirmed = await ShowRestartConfirmation();
+                if (!confirmed)
+                    return;
+
+                CollectSettingsFromPages();
+                await Settings.ImportAsync(_settings, true);
+                Close();
+                AppServices.ApplicationLifecycle.Restart();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error during restart: {ex}");
+            }
+        }
+
+        private async Task<bool> ShowRestartConfirmation()
+        {
+            bool result = false;
+
+            var restartBtn = new Button
+            {
+                Content = "Restart",
+                FontSize = 11,
+                Padding = new Thickness(12, 5),
+                CornerRadius = new CornerRadius(12)
+            };
+            var cancelBtn = new Button
+            {
+                Content = "Cancel",
+                FontSize = 11,
+                Padding = new Thickness(12, 5),
+                CornerRadius = new CornerRadius(12)
+            };
+
+            var dialog = new Window
+            {
+                Title = "Restart EVEMon",
+                Width = 420, Height = 170,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                CanResize = false,
+                Content = new DockPanel
+                {
+                    Margin = new Thickness(16),
+                    Children =
+                    {
+                        new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 8,
+                            HorizontalAlignment = HorizontalAlignment.Right,
+                            Margin = new Thickness(0, 12, 0, 0),
+                            [DockPanel.DockProperty] = Dock.Bottom,
+                            Children = { restartBtn, cancelBtn }
+                        },
+                        new TextBlock
+                        {
+                            Text = "EVEMon will restart to apply the new theme.\nPlease save any work in progress (e.g., skill plans being edited).",
+                            TextWrapping = TextWrapping.Wrap,
+                            FontSize = 12,
+                            VerticalAlignment = VerticalAlignment.Center
+                        }
+                    }
+                }
+            };
+
+            restartBtn.Click += (_, _) => { result = true; dialog.Close(); };
+            cancelBtn.Click += (_, _) => { dialog.Close(); };
+
+            await dialog.ShowDialog(this);
+            return result;
         }
     }
 }

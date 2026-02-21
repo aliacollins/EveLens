@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EVEMon.Avalonia.Converters;
@@ -14,12 +15,23 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterMonitorHeader : UserControl
     {
+        private static readonly SolidColorBrush OmegaBorderBrush = new(Color.Parse("#FFE6A817"));
+        private static readonly SolidColorBrush AlphaBorderBrush = new(Color.Parse("#FFFF6D00"));
+        private static readonly SolidColorBrush OmegaTextBrush = new(Color.Parse("#FF00C853"));
+        private static readonly SolidColorBrush AlphaTextBrush = new(Color.Parse("#FFFF6D00"));
+
+        private static readonly string[] OverrideLabels = { "Auto-detect", "Alpha override", "Omega override" };
+
         private ObservableCharacter? _observable;
-        private bool _suppressComboChange;
 
         public CharacterMonitorHeader()
         {
             InitializeComponent();
+
+            // Wire flyout menu items
+            AutoDetectItem.Click += (_, _) => SetAccountOverride(0);
+            EmulateAlphaItem.Click += (_, _) => SetAccountOverride(1);
+            EmulateOmegaItem.Click += (_, _) => SetAccountOverride(2);
         }
 
         protected override async void OnDataContextChanged(EventArgs e)
@@ -27,7 +39,6 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             base.OnDataContextChanged(e);
             try
             {
-                // Unsubscribe from previous observable
                 if (_observable != null)
                     _observable.PropertyChanged -= OnObservableChanged;
 
@@ -45,12 +56,13 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                             PortraitImage.Source = bitmap;
                     }
 
-                    // Set initial ComboBox selection
-                    _suppressComboChange = true;
-                    StatusOverrideCombo.SelectedIndex = (int)oc.Character.AccountStatusSettings;
-                    _suppressComboChange = false;
+                    // Race/Bloodline (static — set once)
+                    var c = oc.Character;
+                    bool hasRace = !string.IsNullOrEmpty(c.Race)
+                                   && !c.Race.Equals("(unset)", StringComparison.OrdinalIgnoreCase);
+                    RaceText.Text = hasRace ? $"{c.Gender} - {c.Race} - {c.Bloodline}" : "";
+                    RaceText.IsVisible = hasRace;
 
-                    // Initial display + live updates via INPC
                     RefreshDisplay(oc);
                     oc.PropertyChanged += OnObservableChanged;
                 }
@@ -77,31 +89,43 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                     ? $"Docked at: {oc.DockedText}"
                     : "In space";
 
-                // Balance change indicator color + flash
+                // Alliance (always shown — em dash when none to prevent layout shift)
+                bool hasAlliance = !string.IsNullOrEmpty(oc.AllianceName)
+                                   && !oc.AllianceName.Equals("(None)", StringComparison.OrdinalIgnoreCase);
+                AllianceText.Text = hasAlliance
+                    ? $"Alliance: {oc.AllianceName}"
+                    : "Alliance: \u2014";
+
+                // Balance change flash
                 if (oc.BalanceDirection != 0 && BalanceChangeIndicator != null)
                 {
                     BalanceChangeIndicator.Foreground = oc.BalanceDirection > 0
-                        ? global::Avalonia.Media.Brushes.LimeGreen
-                        : global::Avalonia.Media.Brushes.OrangeRed;
-
-                    // Flash: set opacity to 1, then fade to 0.6 via transition
+                        ? Brushes.LimeGreen : Brushes.OrangeRed;
                     BalanceChangeIndicator.Opacity = 1.0;
-                    global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                    {
-                        BalanceChangeIndicator.Opacity = 0.7;
-                    }, global::Avalonia.Threading.DispatcherPriority.Background);
+                    global::Avalonia.Threading.Dispatcher.UIThread.Post(
+                        () => BalanceChangeIndicator.Opacity = 0.7,
+                        global::Avalonia.Threading.DispatcherPriority.Background);
                 }
 
-                // Account status badge
+                // Account status — portrait border + label
                 var effectiveStatus = oc.Character.EffectiveCharacterStatus;
                 bool isOmega = effectiveStatus == AccountStatus.Omega;
-                StatusBadgeText.Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha";
-                StatusBadge.Background = isOmega
-                    ? new SolidColorBrush(Color.Parse("#2200C853"))
-                    : new SolidColorBrush(Color.Parse("#22FF6D00"));
-                StatusBadgeText.Foreground = isOmega
-                    ? new SolidColorBrush(Color.Parse("#FF00C853"))
-                    : new SolidColorBrush(Color.Parse("#FFFF6D00"));
+                PortraitBorder.BorderBrush = isOmega ? OmegaBorderBrush : AlphaBorderBrush;
+                AccountStatusLabel.Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha";
+                AccountStatusLabel.Foreground = isOmega ? OmegaTextBrush : AlphaTextBrush;
+
+                // Override mode label
+                int overrideIndex = (int)oc.Character.AccountStatusSettings;
+                OverrideModeLabel.Text = overrideIndex >= 0 && overrideIndex < OverrideLabels.Length
+                    ? OverrideLabels[overrideIndex] : OverrideLabels[0];
+
+                // Inline stats
+                var inv = CultureInfo.InvariantCulture;
+                StatsLine.Text = string.Join("  \u00b7  ",
+                    $"Skills: {oc.KnownSkillCount.ToString("N0", inv)}",
+                    $"SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints)}",
+                    $"Free SP: {ObservableCharacter.FormatLargeNumber(oc.FreeSkillPoints)}",
+                    $"Remaps: {oc.AvailableRemaps}");
             }
             catch
             {
@@ -109,17 +133,15 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
         }
 
-        private void OnStatusOverrideChanged(object? sender, SelectionChangedEventArgs e)
+        private void SetAccountOverride(int index)
         {
             try
             {
-                if (_suppressComboChange || _observable == null) return;
-                int index = StatusOverrideCombo.SelectedIndex;
-                if (index < 0) return;
+                if (_observable == null) return;
                 _observable.Character.AccountStatusSettings = (AccountStatusMode)index;
                 RefreshDisplay(_observable);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error changing account status: {ex}");
             }

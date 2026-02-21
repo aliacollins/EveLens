@@ -1,6 +1,6 @@
 ﻿using EVEMon.Common.Constants;
 using EVEMon.Common.Helpers;
-using EVEMon.Common.Threading;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Specialized;
 using System.IO;
@@ -82,7 +82,7 @@ namespace EVEMon.Common.Service
         {
             if (string.IsNullOrEmpty(state))
                 throw new ArgumentNullException("state");
-            WaitForCodeAsync(state).ContinueWith((result) => Dispatcher.Invoke(() =>
+            WaitForCodeAsync(state).ContinueWith((result) => AppServices.Dispatcher?.Invoke(() =>
                 callback?.Invoke(result)));
         }
 

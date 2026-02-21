@@ -5,7 +5,6 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -54,7 +53,7 @@ namespace EVEMon.Common.Service
             Util.DownloadJsonAsync<EsiAPITokenInfo>(url, new RequestParams()
             {
                 Authentication = token
-            }).ContinueWith((result) => Dispatcher.Invoke(() =>
+            }).ContinueWith((result) => AppServices.Dispatcher?.Invoke(() =>
             {
                 // Run the callback on the dispatcher thread
                 callback?.Invoke(result.Result);
@@ -131,7 +130,7 @@ namespace EVEMon.Common.Service
                         // spec
                         response = TokenFromString(encodedToken, false, obtained);
                 }
-                Dispatcher.Invoke(() => callback?.Invoke(response));
+                AppServices.Dispatcher?.Invoke(() => callback?.Invoke(response));
             });
         }
 

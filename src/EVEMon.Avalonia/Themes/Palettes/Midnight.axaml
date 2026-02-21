@@ -1,0 +1,82 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Midnight Palette — Pure black OLED-friendly, maximum contrast
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <Styles.Resources>
+        <!-- Background palette -->
+        <Color x:Key="EveBackgroundDarkest">#FF000000</Color>
+        <Color x:Key="EveBackgroundDark">#FF0A0A0A</Color>
+        <Color x:Key="EveBackgroundMedium">#FF141414</Color>
+        <Color x:Key="EveBackgroundLight">#FF1E1E1E</Color>
+
+        <!-- Accent colors (bright gold) -->
+        <Color x:Key="EveAccentPrimary">#FFFFD700</Color>
+        <Color x:Key="EveAccentSecondary">#FFFFC107</Color>
+        <Color x:Key="EveAccentDimmed">#FFFF9800</Color>
+
+        <!-- Text colors -->
+        <Color x:Key="EveTextPrimary">#FFFFFFFF</Color>
+        <Color x:Key="EveTextSecondary">#FFB0B0B0</Color>
+        <Color x:Key="EveTextDisabled">#FF606060</Color>
+
+        <!-- Status colors -->
+        <Color x:Key="EveErrorRed">#FFFF5252</Color>
+        <Color x:Key="EveWarningYellow">#FFFFD740</Color>
+        <Color x:Key="EveSuccessGreen">#FF69F0AE</Color>
+
+        <!-- Standing colors -->
+        <Color x:Key="EveStandingNegative">#FFFF5252</Color>
+        <Color x:Key="EveStandingPositive">#FF448AFF</Color>
+        <Color x:Key="EveStandingNeutral">#FF606060</Color>
+
+        <!-- Hover / interactive -->
+        <Color x:Key="EveHoverColor">#FF1A1A1A</Color>
+        <SolidColorBrush x:Key="EveHoverBrush" Color="{StaticResource EveHoverColor}" />
+
+        <!-- Selection / alternating rows -->
+        <Color x:Key="EveSelectedColor">#FF2A2A00</Color>
+        <SolidColorBrush x:Key="EveSelectedBrush" Color="{StaticResource EveSelectedColor}" />
+        <Color x:Key="EveAlternateRowColor">#FF080808</Color>
+        <SolidColorBrush x:Key="EveAlternateRowBrush" Color="{StaticResource EveAlternateRowColor}" />
+
+        <!-- Border / separator -->
+        <Color x:Key="EveBorderColor">#FF2A2A2A</Color>
+        <Color x:Key="EveBorderFocused">#FF3A3A3A</Color>
+
+        <!-- Brushes for easy binding -->
+        <SolidColorBrush x:Key="EveBackgroundDarkestBrush" Color="{StaticResource EveBackgroundDarkest}" />
+        <SolidColorBrush x:Key="EveBackgroundDarkBrush" Color="{StaticResource EveBackgroundDark}" />
+        <SolidColorBrush x:Key="EveBackgroundMediumBrush" Color="{StaticResource EveBackgroundMedium}" />
+        <SolidColorBrush x:Key="EveBackgroundLightBrush" Color="{StaticResource EveBackgroundLight}" />
+        <SolidColorBrush x:Key="EveAccentPrimaryBrush" Color="{StaticResource EveAccentPrimary}" />
+        <SolidColorBrush x:Key="EveAccentSecondaryBrush" Color="{StaticResource EveAccentSecondary}" />
+        <SolidColorBrush x:Key="EveAccentDimmedBrush" Color="{StaticResource EveAccentDimmed}" />
+        <SolidColorBrush x:Key="EveTextPrimaryBrush" Color="{StaticResource EveTextPrimary}" />
+        <SolidColorBrush x:Key="EveTextSecondaryBrush" Color="{StaticResource EveTextSecondary}" />
+        <SolidColorBrush x:Key="EveTextDisabledBrush" Color="{StaticResource EveTextDisabled}" />
+        <SolidColorBrush x:Key="EveErrorRedBrush" Color="{StaticResource EveErrorRed}" />
+        <SolidColorBrush x:Key="EveWarningYellowBrush" Color="{StaticResource EveWarningYellow}" />
+        <SolidColorBrush x:Key="EveSuccessGreenBrush" Color="{StaticResource EveSuccessGreen}" />
+        <SolidColorBrush x:Key="EveStandingNegativeBrush" Color="{StaticResource EveStandingNegative}" />
+        <SolidColorBrush x:Key="EveStandingPositiveBrush" Color="{StaticResource EveStandingPositive}" />
+        <SolidColorBrush x:Key="EveStandingNeutralBrush" Color="{StaticResource EveStandingNeutral}" />
+        <SolidColorBrush x:Key="EveBorderBrush" Color="{StaticResource EveBorderColor}" />
+        <SolidColorBrush x:Key="EveBorderFocusedBrush" Color="{StaticResource EveBorderFocused}" />
+
+        <!-- Attribute colors -->
+        <Color x:Key="EveAttrIntColor">#FF4FC3F7</Color>
+        <Color x:Key="EveAttrPerColor">#FFEF5350</Color>
+        <Color x:Key="EveAttrChaColor">#FF66BB6A</Color>
+        <Color x:Key="EveAttrWilColor">#FFAB47BC</Color>
+        <Color x:Key="EveAttrMemColor">#FFFFA726</Color>
+        <SolidColorBrush x:Key="EveAttrIntBrush" Color="{StaticResource EveAttrIntColor}" />
+        <SolidColorBrush x:Key="EveAttrPerBrush" Color="{StaticResource EveAttrPerColor}" />
+        <SolidColorBrush x:Key="EveAttrChaBrush" Color="{StaticResource EveAttrChaColor}" />
+        <SolidColorBrush x:Key="EveAttrWilBrush" Color="{StaticResource EveAttrWilColor}" />
+        <SolidColorBrush x:Key="EveAttrMemBrush" Color="{StaticResource EveAttrMemColor}" />
+    </Styles.Resources>
+
+</Styles>

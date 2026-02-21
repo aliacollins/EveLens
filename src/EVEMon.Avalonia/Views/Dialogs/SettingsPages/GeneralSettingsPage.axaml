@@ -5,6 +5,22 @@
     <StackPanel Spacing="12">
         <TextBlock Text="General" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
 
+        <!-- Appearance -->
+        <TextBlock Text="Appearance" FontSize="14" FontWeight="SemiBold" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="Theme:" VerticalAlignment="Center" />
+            <ComboBox x:Name="ThemeCombo" Width="180" />
+        </StackPanel>
+        <StackPanel x:Name="ThemeRestartPanel" Orientation="Horizontal" Spacing="8" IsVisible="False">
+            <TextBlock Text="Restart EVEMon to apply the new theme"
+                       FontSize="10" Foreground="{StaticResource EveWarningYellowBrush}"
+                       VerticalAlignment="Center" />
+            <Button x:Name="RestartNowButton" Content="Restart Now"
+                    CornerRadius="12" Padding="10,4" FontSize="10" />
+        </StackPanel>
+
+        <Separator Margin="0,4" />
+
         <CheckBox x:Name="RunAtStartupCheckBox"
                   Content="Run EVEMon at Startup"
                   IsEnabled="False"

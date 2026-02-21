@@ -56,8 +56,12 @@ namespace EVEMon.Common.Collections.Global
         /// <param name="notify"></param>
         public void Remove(Character character, bool notify = true)
         {
-            Items.Remove(character);
+            // Monitored must be set false BEFORE removing from Items —
+            // the Monitored setter goes through ServiceLocator.CharacterRepository.SetMonitored()
+            // which looks the character up in AppServices.Characters. If we remove first,
+            // the lookup returns null and the MonitoredCharacterCollection is never updated.
             character.Monitored = false;
+            Items.Remove(character);
 
             if (character is CCPCharacter) {
                 var keys = character.Identity.ESIKeys;

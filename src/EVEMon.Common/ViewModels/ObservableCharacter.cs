@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EVEMon.Common.Constants;
@@ -120,10 +121,10 @@ namespace EVEMon.Common.ViewModels
         // ═══════════════════════════════════════════════════════
 
         public string BalanceText => $"{FormatISK(Balance)} ISK";
-        public string SecurityStatusText => $"Security Status: {SecurityStatus:N2}";
+        public string SecurityStatusText => $"Security Status: {SecurityStatus.ToString("N2", CultureInfo.InvariantCulture)}";
         public string SkillPointsText => $"Total SP: {FormatLargeNumber(SkillPoints)}";
         public string FreeSkillPointsText => $"Free SP: {FormatLargeNumber(FreeSkillPoints)}";
-        public string KnownSkillCountText => $"Known Skills: {KnownSkillCount}";
+        public string KnownSkillCountText => $"Known Skills: {KnownSkillCount.ToString("N0", CultureInfo.InvariantCulture)}";
         public string AvailableRemapsText => $"Bonus Remaps: {AvailableRemaps}";
         public string ShipText => !string.IsNullOrEmpty(ShipTypeName) && !string.IsNullOrEmpty(ShipName)
             ? $"Active Ship: {ShipTypeName} [{ShipName}]" : "Active Ship: Unknown";
@@ -133,34 +134,37 @@ namespace EVEMon.Common.ViewModels
         // ═══════════════════════════════════════════════════════
 
         /// <summary>Format ISK with compact notation: 1.23T, 4.56B, 789.12M, or full number if under 1M.</summary>
-        internal static string FormatISK(decimal amount)
+        public static string FormatISK(decimal amount)
         {
+            var inv = CultureInfo.InvariantCulture;
             var abs = Math.Abs(amount);
-            if (abs >= 1_000_000_000_000m) return $"{amount / 1_000_000_000_000m:N2}T";
-            if (abs >= 1_000_000_000m) return $"{amount / 1_000_000_000m:N2}B";
-            if (abs >= 1_000_000m) return $"{amount / 1_000_000m:N2}M";
-            return $"{amount:N2}";
+            if (abs >= 1_000_000_000_000m) return (amount / 1_000_000_000_000m).ToString("N2", inv) + "T";
+            if (abs >= 1_000_000_000m) return (amount / 1_000_000_000m).ToString("N2", inv) + "B";
+            if (abs >= 1_000_000m) return (amount / 1_000_000m).ToString("N2", inv) + "M";
+            return amount.ToString("N2", inv);
         }
 
         /// <summary>Format ISK delta with sign and compact notation.</summary>
-        internal static string FormatISKDelta(decimal delta)
+        public static string FormatISKDelta(decimal delta)
         {
+            var inv = CultureInfo.InvariantCulture;
             var abs = Math.Abs(delta);
             string sign = delta >= 0 ? "+" : "";
-            if (abs >= 1_000_000_000_000m) return $"{sign}{delta / 1_000_000_000_000m:N2}T";
-            if (abs >= 1_000_000_000m) return $"{sign}{delta / 1_000_000_000m:N2}B";
-            if (abs >= 1_000_000m) return $"{sign}{delta / 1_000_000m:N2}M";
-            if (abs >= 1_000m) return $"{sign}{delta / 1_000m:N1}K";
-            return $"{sign}{delta:N2}";
+            if (abs >= 1_000_000_000_000m) return sign + (delta / 1_000_000_000_000m).ToString("N2", inv) + "T";
+            if (abs >= 1_000_000_000m) return sign + (delta / 1_000_000_000m).ToString("N2", inv) + "B";
+            if (abs >= 1_000_000m) return sign + (delta / 1_000_000m).ToString("N2", inv) + "M";
+            if (abs >= 1_000m) return sign + (delta / 1_000m).ToString("N1", inv) + "K";
+            return sign + delta.ToString("N2", inv);
         }
 
         /// <summary>Format large numbers with compact notation: 27.1M, 1.2B, or full if under 1M.</summary>
-        internal static string FormatLargeNumber(long value)
+        public static string FormatLargeNumber(long value)
         {
+            var inv = CultureInfo.InvariantCulture;
             var abs = Math.Abs(value);
-            if (abs >= 1_000_000_000) return $"{value / 1_000_000_000.0:N2}B";
-            if (abs >= 1_000_000) return $"{value / 1_000_000.0:N1}M";
-            return $"{value:N0}";
+            if (abs >= 1_000_000_000) return (value / 1_000_000_000.0).ToString("N2", inv) + "B";
+            if (abs >= 1_000_000) return (value / 1_000_000.0).ToString("N1", inv) + "M";
+            return value.ToString("N0", inv);
         }
 
         // ═══════════════════════════════════════════════════════

@@ -51,6 +51,13 @@ namespace EVEMon.Common.SettingsObjects
         }
 
         /// <summary>
+        /// Gets or sets the name of the active theme palette (e.g. "DarkSpace", "CaldariBlue").
+        /// Changes require an app restart to take effect.
+        /// </summary>
+        [XmlElement("themeName")]
+        public string ThemeName { get; set; } = "DarkSpace";
+
+        /// <summary>
         /// When true, removes images and colours to make EVEMon looks like some boring business application.
         /// </summary>
         [XmlElement("safeForWork")]

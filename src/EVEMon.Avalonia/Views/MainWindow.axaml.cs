@@ -1,19 +1,28 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using EVEMon.Avalonia.Converters;
+using EVEMon.Common.Helpers;
 using EVEMon.Avalonia.ViewModels;
 using EVEMon.Avalonia.Views.CharacterMonitor;
 using EVEMon.Avalonia.Views.Dialogs;
 using EVEMon.Avalonia.Views.PlanEditor;
+using EVEMon.Common.Enumerations;
 using EVEMon.Common.Models;
+using EVEMon.Common.Service;
 using EVEMon.Common.Services;
 using EVEMon.Common.ViewModels;
 using EVEMon.Core.Events;
@@ -24,7 +33,16 @@ namespace EVEMon.Avalonia.Views
     {
         private readonly MainWindowViewModel _viewModel;
         private readonly List<ObservableCharacter> _observableCharacters = new();
+        private readonly Dictionary<long, CharacterMonitorView> _cachedViews = new();
+        private CharacterOverviewView? _overviewView;
+        private Character? _selectedCharacter;
+        private Button? _selectedSlotButton;
+        private bool _isPanning;
+        private Point _panStart;
+        private double _panStartOffset;
         private IDisposable? _tickSubscription;
+        private IDisposable? _collectionChangedSub;
+        private IDisposable? _monitoredChangedSub;
         private NotificationCenterViewModel? _notificationVm;
 
         public MainWindow()
@@ -35,19 +53,21 @@ namespace EVEMon.Avalonia.Views
             DataContext = _viewModel;
 
             _viewModel.RefreshCharacters();
-            BuildTabs();
 
+            // Wire overview button and scroll handlers (once, before strip build)
+            OverviewBtn.Click += (_, _) => SelectCharacter(null);
+            WireScrollHandlers();
+
+            BuildCharacterStrip();
             WireMenuItems();
-
-            // Disable plan menus initially (Overview tab active)
-            NewPlanMenuItem.IsEnabled = false;
-            ManagePlansMenuItem.IsEnabled = false;
-            ImportPlanMenuItem.IsEnabled = false;
-            CreateFromQueueMenuItem.IsEnabled = false;
-            MainTabControl.SelectionChanged += OnTabSelectionChanged;
 
             _tickSubscription = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
                 e => Dispatcher.UIThread.Post(() => OnSecondTick(e)));
+
+            _collectionChangedSub = AppServices.EventAggregator?.Subscribe<Common.Events.CharacterCollectionChangedEvent>(
+                _ => Dispatcher.UIThread.Post(OnCharacterCollectionChanged));
+            _monitoredChangedSub = AppServices.EventAggregator?.Subscribe<Common.Events.MonitoredCharacterCollectionChangedEvent>(
+                _ => Dispatcher.UIThread.Post(OnCharacterCollectionChanged));
 
             // Wire notification center
             _notificationVm = new NotificationCenterViewModel();
@@ -58,49 +78,397 @@ namespace EVEMon.Avalonia.Views
             RefreshNotificationUI();
         }
 
-        private void BuildTabs()
+        #region Portrait Strip
+
+        private void BuildCharacterStrip()
         {
             try
             {
-                // Overview tab
-                MainTabControl.Items.Add(new TabItem
-                {
-                    Header = "Overview",
-                    Content = new CharacterOverviewView(),
-                    FontSize = 12
-                });
+                _overviewView ??= new CharacterOverviewView();
 
-                // Character tabs — each gets an ObservableCharacter for INPC binding
                 foreach (Character character in _viewModel.Characters)
                 {
                     var observable = new ObservableCharacter(character);
                     _observableCharacters.Add(observable);
 
-                    MainTabControl.Items.Add(new TabItem
-                    {
-                        Header = character.Name,
-                        Content = new CharacterMonitorView { DataContext = observable },
-                        FontSize = 12
-                    });
+                    var slot = BuildCharacterSlot(character);
+                    CharStrip.Children.Add(slot);
                 }
 
-                MainTabControl.SelectedIndex = 0;
+                SelectCharacter(null);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error building tabs: {ex}");
+                Debug.WriteLine($"Error building character strip: {ex}");
             }
         }
+
+        private Button BuildCharacterSlot(Character character)
+        {
+            // 32×32 portrait
+            var portraitImage = new Image
+            {
+                Width = 32, Height = 32,
+                Stretch = Stretch.UniformToFill
+            };
+            portraitImage.Tag = character.CharacterID;
+
+            var portraitRing = new Border
+            {
+                Width = 36, Height = 36,
+                ClipToBounds = true,
+                Child = portraitImage
+            };
+            portraitRing.Classes.Add("portrait-ring");
+
+            // ESI status dot (bottom-right)
+            var (dotColor, _) = GetCharacterEsiStatus(character);
+            var esiDot = new Border
+            {
+                Width = 10, Height = 10,
+                CornerRadius = new CornerRadius(5),
+                Background = dotColor,
+                BorderBrush = FindStripBrush("EveBackgroundDarkBrush", Brushes.Black),
+                BorderThickness = new Thickness(1.5),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Margin = new Thickness(0, 0, -1, -1),
+                Tag = "EsiDot"
+            };
+
+            var portraitGrid = new Grid
+            {
+                Width = 36, Height = 36,
+                Children = { portraitRing, esiDot }
+            };
+
+            // First name below portrait
+            var nameText = new TextBlock
+            {
+                Text = character.Name.Split(' ')[0],
+                FontSize = 9,
+                MaxWidth = 50,
+                TextAlignment = TextAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Tag = "SlotName"
+            };
+
+            var slotPanel = new StackPanel
+            {
+                Spacing = 2,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Children = { portraitGrid, nameText }
+            };
+
+            var btn = new Button
+            {
+                Content = slotPanel,
+                DataContext = character,
+                Width = 56,
+                [ToolTip.TipProperty] = BuildCharacterTooltip(character)
+            };
+            btn.Classes.Add("char-slot");
+            btn.Click += (_, _) => SelectCharacter(character);
+
+            // Load portrait async
+            LoadSlotPortrait(portraitImage, character.CharacterID);
+
+            return btn;
+        }
+
+        /// <summary>
+        /// Selects a character (or overview if null) and swaps the main content area.
+        /// </summary>
+        public void SelectCharacter(Character? character)
+        {
+            // Remove highlight from previous selection
+            if (_selectedSlotButton != null)
+            {
+                _selectedSlotButton.Classes.Remove("selected");
+                var prevRing = FindPortraitRing(_selectedSlotButton);
+                prevRing?.Classes.Remove("selected");
+                var prevName = FindSlotName(_selectedSlotButton);
+                if (prevName != null)
+                    prevName.Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray);
+            }
+
+            _selectedCharacter = character;
+
+            if (character == null)
+            {
+                // Show Overview
+                MainContent.Content = _overviewView;
+                OverviewBtn.Classes.Add("selected");
+                _selectedSlotButton = OverviewBtn;
+
+                var ring = FindPortraitRing(OverviewBtn);
+                ring?.Classes.Add("selected");
+                var name = FindSlotName(OverviewBtn);
+                if (name != null)
+                    name.Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold);
+            }
+            else
+            {
+                // Find and highlight the slot button
+                var slotBtn = CharStrip.Children.OfType<Button>()
+                    .FirstOrDefault(b => b.DataContext is Character c && c.CharacterID == character.CharacterID);
+
+                if (slotBtn != null)
+                {
+                    slotBtn.Classes.Add("selected");
+                    _selectedSlotButton = slotBtn;
+
+                    var ring = FindPortraitRing(slotBtn);
+                    ring?.Classes.Add("selected");
+                    var nameText = FindSlotName(slotBtn);
+                    if (nameText != null)
+                        nameText.Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold);
+
+                    // Scroll the strip so the selected slot is visible
+                    ScrollSlotIntoView(slotBtn);
+                }
+
+                // Get or create CharacterMonitorView
+                if (!_cachedViews.TryGetValue(character.CharacterID, out var monitorView))
+                {
+                    var observable = _observableCharacters.FirstOrDefault(
+                        oc => oc.Character.CharacterID == character.CharacterID);
+                    if (observable == null)
+                    {
+                        observable = new ObservableCharacter(character);
+                        _observableCharacters.Add(observable);
+                    }
+
+                    monitorView = new CharacterMonitorView { DataContext = observable };
+                    _cachedViews[character.CharacterID] = monitorView;
+                }
+
+                MainContent.Content = monitorView;
+            }
+
+            // Update plan menu state
+            bool hasChar = _selectedCharacter != null;
+            NewPlanMenuItem.IsEnabled = hasChar;
+            ManagePlansMenuItem.IsEnabled = hasChar;
+            ImportPlanMenuItem.IsEnabled = hasChar;
+            CreateFromQueueMenuItem.IsEnabled = hasChar;
+        }
+
+        /// <summary>
+        /// Public navigation entry point — called from overview card clicks.
+        /// </summary>
+        public void NavigateToCharacter(Character character)
+        {
+            SelectCharacter(character);
+        }
+
+        private void RebuildCharacterStrip()
+        {
+            foreach (var oc in _observableCharacters) oc.Dispose();
+            _observableCharacters.Clear();
+            _cachedViews.Clear();
+            CharStrip.Children.Clear();
+            _selectedSlotButton = null;
+            _selectedCharacter = null;
+
+            _viewModel.RefreshCharacters();
+            BuildCharacterStrip();
+        }
+
+        private void WireScrollHandlers()
+        {
+            // Arrow buttons
+            ScrollLeftBtn.Click += (_, _) =>
+            {
+                AnimateStripScroll(CharStripScroll.Offset.X - 200);
+            };
+            ScrollRightBtn.Click += (_, _) =>
+            {
+                AnimateStripScroll(CharStripScroll.Offset.X + 200);
+            };
+
+            // Mouse wheel → horizontal scroll
+            CharStripScroll.PointerWheelChanged += (_, e) =>
+            {
+                double delta = e.Delta.Y * 50;
+                AnimateStripScroll(CharStripScroll.Offset.X - delta);
+                e.Handled = true;
+            };
+
+            // Drag-to-scroll (same pattern as Employment History timeline)
+            CharStripScroll.PointerPressed += OnStripPointerPressed;
+            CharStripScroll.PointerMoved += OnStripPointerMoved;
+            CharStripScroll.PointerReleased += OnStripPointerReleased;
+        }
+
+        private void OnStripPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            var props = e.GetCurrentPoint(CharStripScroll).Properties;
+            if (props.IsLeftButtonPressed || props.IsMiddleButtonPressed)
+            {
+                _isPanning = true;
+                _panStart = e.GetPosition(CharStripScroll);
+                _panStartOffset = CharStripScroll.Offset.X;
+                e.Pointer.Capture(CharStripScroll);
+            }
+        }
+
+        private void OnStripPointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_isPanning) return;
+            var current = e.GetPosition(CharStripScroll);
+            double delta = _panStart.X - current.X;
+            double maxOffset = Math.Max(0, CharStripScroll.Extent.Width - CharStripScroll.Viewport.Width);
+            CharStripScroll.Offset = new Vector(
+                Math.Max(0, Math.Min(_panStartOffset + delta, maxOffset)), 0);
+        }
+
+        private void OnStripPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            if (!_isPanning) return;
+            _isPanning = false;
+            e.Pointer.Capture(null);
+        }
+
+        private void AnimateStripScroll(double targetX)
+        {
+            double maxOffset = Math.Max(0, CharStripScroll.Extent.Width - CharStripScroll.Viewport.Width);
+            CharStripScroll.Offset = new Vector(
+                Math.Max(0, Math.Min(targetX, maxOffset)), 0);
+        }
+
+        /// <summary>
+        /// Scrolls the portrait strip so the given slot button is visible.
+        /// </summary>
+        private void ScrollSlotIntoView(Button slotBtn)
+        {
+            // Get the slot's position relative to the StackPanel
+            int index = CharStrip.Children.IndexOf(slotBtn);
+            if (index < 0) return;
+
+            // Each slot is ~56px wide + 2px spacing
+            double slotLeft = index * 58;
+            double slotRight = slotLeft + 56;
+            double viewLeft = CharStripScroll.Offset.X;
+            double viewRight = viewLeft + CharStripScroll.Viewport.Width;
+
+            if (slotLeft < viewLeft)
+            {
+                // Slot is off the left edge — scroll left with some padding
+                AnimateStripScroll(slotLeft - 10);
+            }
+            else if (slotRight > viewRight)
+            {
+                // Slot is off the right edge — scroll right with some padding
+                AnimateStripScroll(slotRight - CharStripScroll.Viewport.Width + 10);
+            }
+        }
+
+        private async void LoadSlotPortrait(Image portraitImage, long characterId)
+        {
+            try
+            {
+                var drawingImage = await ImageService.GetCharacterImageAsync(characterId);
+                if (drawingImage != null)
+                {
+                    var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                        drawingImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
+                    if (converted is Bitmap bitmap)
+                        portraitImage.Source = bitmap;
+                }
+            }
+            catch
+            {
+                // Portrait load failure is non-fatal
+            }
+        }
+
+        private static string BuildCharacterTooltip(Character character)
+        {
+            var parts = new List<string> { character.Name };
+            parts.Add($"ISK: {character.Balance:N2}");
+            parts.Add($"SP: {character.SkillPoints:N0}");
+
+            if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
+            {
+                var skill = ccp.CurrentlyTrainingSkill;
+                var remaining = skill.RemainingTime;
+                string timeStr = remaining.TotalHours >= 24
+                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
+                    : remaining.TotalHours >= 1
+                        ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
+                        : $"{remaining.Minutes}m {remaining.Seconds}s";
+                parts.Add($"Training: {skill.SkillName} {skill.Level} ({timeStr})");
+            }
+            else
+            {
+                parts.Add("Training: Paused");
+            }
+
+            return string.Join("\n", parts);
+        }
+
+        private static (IBrush dotColor, bool isFetching) GetCharacterEsiStatus(Character character)
+        {
+            IBrush yellowBrush = FindStripBrush("EveWarningYellowBrush", Brushes.Yellow);
+            IBrush greenBrush = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen);
+            IBrush redBrush = FindStripBrush("EveErrorRedBrush", Brushes.Red);
+            IBrush grayBrush = FindStripBrush("EveTextDisabledBrush", Brushes.Gray);
+
+            if (character is not CCPCharacter ccp)
+                return (grayBrush, false);
+
+            try
+            {
+                bool anyUpdating = false;
+                bool anyNoKey = false;
+                foreach (var monitor in ccp.QueryMonitors)
+                {
+                    if (monitor.IsUpdating) anyUpdating = true;
+                    if (monitor.Status == QueryStatus.NoESIKey) anyNoKey = true;
+                }
+
+                if (anyUpdating) return (yellowBrush, true);
+                if (anyNoKey || ccp.QueryMonitors.HasErrors) return (redBrush, false);
+                if (ccp.HasCompletedFirstUpdate) return (greenBrush, false);
+            }
+            catch { /* non-fatal */ }
+
+            return (grayBrush, false);
+        }
+
+        private static IBrush FindStripBrush(string resourceKey, IBrush fallback)
+        {
+            return (IBrush?)Application.Current?.FindResource(resourceKey) ?? fallback;
+        }
+
+        private static Border? FindPortraitRing(Button btn)
+        {
+            return btn.GetVisualDescendants().OfType<Border>()
+                .FirstOrDefault(b => b.Classes.Contains("portrait-ring"));
+        }
+
+        private static TextBlock? FindSlotName(Button btn)
+        {
+            return btn.GetVisualDescendants().OfType<TextBlock>()
+                .FirstOrDefault(t => t.Tag is string s && s == "SlotName");
+        }
+
+        #endregion
 
         private void WireMenuItems()
         {
             // File menu
             AddCharMenuItem.Click += OnAddCharacterClick;
+            CreateBlankCharMenuItem.Click += OnCreateBlankCharacterClick;
             ManageCharsMenuItem.Click += OnManageCharactersClick;
             ManageGroupsMenuItem.Click += OnManageGroupsClick;
             RestoreSettingsMenuItem.Click += OnRestoreSettingsClick;
             SaveSettingsMenuItem.Click += OnSaveSettingsClick;
             ResetSettingsMenuItem.Click += OnResetSettingsClick;
+            SettingsMenuItem.Click += OnSettingsClick;
             ExitMenuItem.Click += OnExitClick;
 
             // Plans menu
@@ -113,7 +481,6 @@ namespace EVEMon.Avalonia.Views
             CharCompMenuItem.Click += OnCharCompClick;
             SkillConstellationMenuItem.Click += OnSkillConstellationClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
-            SettingsMenuItem.Click += OnSettingsClick;
 
             // Help menu
             UserGuideMenuItem.Click += OnUserGuideClick;
@@ -137,6 +504,22 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
+        /// <summary>
+        /// Rebuilds the portrait strip when the character collection changes via any path
+        /// (delete from overview, manage characters dialog, ESI key revocation, etc.).
+        /// </summary>
+        private void OnCharacterCollectionChanged()
+        {
+            try
+            {
+                RebuildCharacterStrip();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error handling collection change: {ex}");
+            }
+        }
+
         private void UpdateEsiCountdown()
         {
             try
@@ -154,7 +537,7 @@ namespace EVEMon.Avalonia.Views
                     foreach (var monitor in ccp.QueryMonitors)
                     {
                         // Count actively fetching
-                        if (monitor.Status == Common.Enumerations.QueryStatus.Updating)
+                        if (monitor.Status == QueryStatus.Updating)
                             fetchingCount++;
 
                         // Track most recent completion
@@ -175,7 +558,7 @@ namespace EVEMon.Avalonia.Views
                 if (fetchingCount > 0)
                 {
                     NextUpdateText.Text = $"ESI: {fetchingCount} fetching...";
-                    NextUpdateText.Foreground = global::Avalonia.Media.Brushes.LimeGreen;
+                    NextUpdateText.Foreground = Brushes.LimeGreen;
                 }
                 else if (soonestUpdate.HasValue)
                 {
@@ -184,12 +567,12 @@ namespace EVEMon.Avalonia.Views
                         ? $"{(int)remaining.TotalMinutes}m {remaining.Seconds}s"
                         : $"{remaining.Seconds}s";
                     NextUpdateText.Text = $"Next: {soonestMethod} in {timeStr}";
-                    NextUpdateText.Foreground = global::Avalonia.Media.Brushes.Gold;
+                    NextUpdateText.Foreground = Brushes.Gold;
                 }
                 else
                 {
                     NextUpdateText.Text = "ESI: idle";
-                    NextUpdateText.Foreground = global::Avalonia.Media.Brushes.Gray;
+                    NextUpdateText.Foreground = Brushes.Gray;
                 }
 
                 // Right indicator: last refresh time
@@ -235,7 +618,7 @@ namespace EVEMon.Avalonia.Views
 
                 string path = files[0].Path.LocalPath;
                 await Common.Settings.RestoreAsync(path);
-                RebuildCharacterTabs();
+                RebuildCharacterStrip();
             }
             catch (Exception ex)
             {
@@ -283,7 +666,7 @@ namespace EVEMon.Avalonia.Views
                 if (confirmed)
                 {
                     await Common.Settings.ResetAsync();
-                    RebuildCharacterTabs();
+                    RebuildCharacterStrip();
                 }
             }
             catch (Exception ex)
@@ -330,7 +713,7 @@ namespace EVEMon.Avalonia.Views
                             Content = new TextBlock
                             {
                                 Text = $"SettingsWindow constructor failed:\n\n{ctorEx}",
-                                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                                TextWrapping = TextWrapping.Wrap,
                                 FontSize = 11,
                                 Margin = new Thickness(16)
                             }
@@ -358,7 +741,7 @@ namespace EVEMon.Avalonia.Views
                             Content = new TextBlock
                             {
                                 Text = $"Settings failed:\n\n{ex}",
-                                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                                TextWrapping = TextWrapping.Wrap,
                                 FontSize = 11,
                                 Margin = new Thickness(16)
                             }
@@ -387,21 +770,10 @@ namespace EVEMon.Avalonia.Views
         {
             try
             {
-                var dialog = new Window
-                {
-                    Title = "Add Character",
-                    Width = 300,
-                    Height = 150,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new TextBlock
-                    {
-                        Text = "Add Character — Coming soon",
-                        VerticalAlignment = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(20)
-                    }
-                };
+                var dialog = new AddCharacterWindow();
                 await dialog.ShowDialog(this);
+                if (dialog.CharacterImported)
+                    RebuildCharacterStrip();
             }
             catch (Exception ex)
             {
@@ -409,11 +781,26 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
+        private async void OnCreateBlankCharacterClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new CreateBlankCharacterWindow();
+                await dialog.ShowDialog(this);
+                if (dialog.CharacterCreated)
+                    RebuildCharacterStrip();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error creating blank character: {ex}");
+            }
+        }
+
         private async void OnManageCharactersClick(object? sender, RoutedEventArgs e)
         {
             try
             {
-                var characters = _viewModel.Characters.ToList();
+                var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
                 if (characters.Count == 0)
                 {
                     var emptyDialog = new Window
@@ -426,7 +813,7 @@ namespace EVEMon.Avalonia.Views
                             Text = "No characters to manage. Use Add Character to get started.",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20)
                         }
                     };
@@ -448,7 +835,7 @@ namespace EVEMon.Avalonia.Views
                     FontSize = 11,
                     Padding = new Thickness(12, 5),
                     CornerRadius = new CornerRadius(12),
-                    Foreground = global::Avalonia.Media.Brushes.Red,
+                    Foreground = Brushes.Red,
                     HorizontalAlignment = HorizontalAlignment.Right
                 };
 
@@ -494,9 +881,25 @@ namespace EVEMon.Avalonia.Views
 
                         if (confirmed)
                         {
-                            AppServices.Characters.Remove(character);
-                            dialog.Close();
-                            RebuildCharacterTabs();
+                            try
+                            {
+                                AppServices.Characters.Remove(character);
+                            }
+                            catch (Exception rmEx)
+                            {
+                                Debug.WriteLine($"Error during character removal: {rmEx}");
+                            }
+
+                            // Update the dialog's local list and UI
+                            characters.RemoveAt(idx);
+                            listBox.ItemsSource = characters.Select(c => c.Name).ToList();
+                            if (characters.Count == 0)
+                                dialog.Close();
+                            else
+                                listBox.SelectedIndex = Math.Min(idx, characters.Count - 1);
+
+                            // Always rebuild regardless of whether Remove threw
+                            RebuildCharacterStrip();
                         }
                     }
                     catch (Exception ex)
@@ -514,16 +917,11 @@ namespace EVEMon.Avalonia.Views
         }
 
         /// <summary>
-        /// Returns the character whose tab is currently selected, or null if Overview is active.
+        /// Returns the character currently selected in the portrait strip, or null if Overview is active.
         /// </summary>
         private Character? GetSelectedCharacter()
         {
-            int index = MainTabControl.SelectedIndex;
-            // Index 0 is Overview; character tabs start at 1
-            if (index <= 0 || index - 1 >= _observableCharacters.Count)
-                return null;
-
-            return _observableCharacters[index - 1].Character;
+            return _selectedCharacter;
         }
 
         private async void OnNewPlanClick(object? sender, RoutedEventArgs e)
@@ -636,7 +1034,7 @@ namespace EVEMon.Avalonia.Views
                                 : "Add a character before managing plans.",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20)
                         }
                     };
@@ -673,15 +1071,7 @@ namespace EVEMon.Avalonia.Views
                 await groupsWindow.ShowDialog(this);
 
                 // Refresh overview to reflect group changes
-                foreach (var item in MainTabControl.Items)
-                {
-                    if (item is TabItem tabItem && tabItem.Content is CharacterOverviewView overview)
-                    {
-                        // Force re-render by detaching/attaching
-                        overview.RefreshView();
-                        break;
-                    }
-                }
+                _overviewView?.RefreshView();
             }
             catch (Exception ex)
             {
@@ -746,7 +1136,7 @@ namespace EVEMon.Avalonia.Views
                             Text = "This feature requires a CCP character with an active skill queue.",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20)
                         }
                     };
@@ -810,7 +1200,7 @@ namespace EVEMon.Avalonia.Views
                 var character = GetSelectedCharacter();
                 if (character == null)
                 {
-                    // Use first character if on Overview tab
+                    // Use first character if on Overview
                     character = _viewModel.Characters.FirstOrDefault();
                 }
                 if (character == null)
@@ -825,7 +1215,7 @@ namespace EVEMon.Avalonia.Views
                             Text = "Add a character to view the skill constellation.",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20)
                         }
                     };
@@ -852,7 +1242,7 @@ namespace EVEMon.Avalonia.Views
                             Text = $"Failed to open skill constellation:\n{ex.Message}",
                             VerticalAlignment = VerticalAlignment.Center,
                             HorizontalAlignment = HorizontalAlignment.Center,
-                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20),
                             FontSize = 11
                         }
@@ -899,15 +1289,6 @@ namespace EVEMon.Avalonia.Views
             EmptyActivityText.IsVisible = entries.Count == 0;
         }
 
-        private void OnTabSelectionChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            bool hasCharacter = GetSelectedCharacter() != null;
-            NewPlanMenuItem.IsEnabled = hasCharacter;
-            ManagePlansMenuItem.IsEnabled = hasCharacter;
-            ImportPlanMenuItem.IsEnabled = hasCharacter;
-            CreateFromQueueMenuItem.IsEnabled = hasCharacter;
-        }
-
         internal async void DeleteCharacterWithConfirmation(Character character)
         {
             try
@@ -916,11 +1297,21 @@ namespace EVEMon.Avalonia.Views
                     "Delete Character",
                     $"Delete {character.Name}? This will remove the character and all associated ESI keys.");
 
-                if (confirmed)
+                if (!confirmed) return;
+
+                try
                 {
                     AppServices.Characters.Remove(character);
-                    RebuildCharacterTabs();
                 }
+                catch (Exception ex)
+                {
+                    // character.Dispose() inside Remove can throw —
+                    // character is already removed from collections at this point
+                    Debug.WriteLine($"Error during character removal: {ex}");
+                }
+
+                // Always rebuild regardless of whether Remove threw
+                RebuildCharacterStrip();
             }
             catch (Exception ex)
             {
@@ -938,7 +1329,7 @@ namespace EVEMon.Avalonia.Views
                 FontSize = 11,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
-                Foreground = global::Avalonia.Media.Brushes.Red
+                Foreground = Brushes.Red
             };
             var cancelBtn = new Button
             {
@@ -970,7 +1361,7 @@ namespace EVEMon.Avalonia.Views
                         new TextBlock
                         {
                             Text = message,
-                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            TextWrapping = TextWrapping.Wrap,
                             FontSize = 12,
                             VerticalAlignment = VerticalAlignment.Center
                         }
@@ -1004,22 +1395,16 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
-        private void RebuildCharacterTabs()
-        {
-            foreach (var oc in _observableCharacters) oc.Dispose();
-            _observableCharacters.Clear();
-            MainTabControl.Items.Clear();
-            _viewModel.RefreshCharacters();
-            BuildTabs();
-        }
-
         protected override void OnClosed(EventArgs e)
         {
             _notificationVm?.Save();
             _notificationVm?.Dispose();
             _tickSubscription?.Dispose();
+            _collectionChangedSub?.Dispose();
+            _monitoredChangedSub?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
             _observableCharacters.Clear();
+            _cachedViews.Clear();
             _viewModel.Dispose();
             base.OnClosed(e);
         }

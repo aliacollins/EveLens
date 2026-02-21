@@ -1,0 +1,107 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EVEMon.Avalonia.Views.Dialogs.AddCharacterWindow"
+        Title="Add Character"
+        Width="420" Height="220"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <Grid Margin="20">
+        <!-- State: Ready -->
+        <Border x:Name="ReadyPanel" IsVisible="True">
+            <StackPanel VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="Sign in with EVE Online"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <TextBlock Text="Click below to open your browser and authenticate with CCP."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
+                            HorizontalAlignment="Right">
+                    <Button x:Name="OpenLoginBtn"
+                            Content="Open EVE Login"
+                            FontSize="11" Padding="14,6"
+                            CornerRadius="12"
+                            Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                    <Button x:Name="CancelReadyBtn"
+                            Content="Cancel"
+                            FontSize="11" Padding="14,6"
+                            CornerRadius="12" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- State: Waiting -->
+        <Border x:Name="WaitingPanel" IsVisible="False">
+            <StackPanel VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="Waiting for login..."
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveWarningYellowBrush}" />
+                <TextBlock Text="Complete the login in your browser, then return here."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+                <ProgressBar IsIndeterminate="True" Margin="0,8,0,0"
+                             Height="3"
+                             Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <Button x:Name="CancelWaitingBtn"
+                        Content="Cancel"
+                        FontSize="11" Padding="14,6"
+                        CornerRadius="12"
+                        HorizontalAlignment="Right"
+                        Margin="0,8,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- State: Success -->
+        <Border x:Name="SuccessPanel" IsVisible="False">
+            <StackPanel VerticalAlignment="Center" Spacing="8">
+                <TextBlock x:Name="CharacterNameText"
+                           Text="Character Name"
+                           FontSize="16" FontWeight="Bold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <TextBlock Text="Character ESI key verified successfully."
+                           FontSize="11"
+                           Foreground="{StaticResource EveSuccessGreenBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
+                            HorizontalAlignment="Right">
+                    <Button x:Name="AddCharacterBtn"
+                            Content="Add Character"
+                            FontSize="11" Padding="14,6"
+                            CornerRadius="12"
+                            Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                    <Button x:Name="CancelSuccessBtn"
+                            Content="Cancel"
+                            FontSize="11" Padding="14,6"
+                            CornerRadius="12" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- State: Error -->
+        <Border x:Name="ErrorPanel" IsVisible="False">
+            <StackPanel VerticalAlignment="Center" Spacing="8">
+                <TextBlock Text="Authentication failed"
+                           FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveErrorRedBrush}" />
+                <TextBlock x:Name="ErrorMessageText"
+                           Text="An error occurred."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
+                            HorizontalAlignment="Right">
+                    <Button x:Name="TryAgainBtn"
+                            Content="Try Again"
+                            FontSize="11" Padding="14,6"
+                            CornerRadius="12" />
+                    <Button x:Name="CancelErrorBtn"
+                            Content="Cancel"
+                            FontSize="11" Padding="14,6"
+                            CornerRadius="12" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

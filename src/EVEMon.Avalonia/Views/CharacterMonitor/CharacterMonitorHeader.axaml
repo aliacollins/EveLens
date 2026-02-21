@@ -5,44 +5,68 @@
     <Border Background="{StaticResource EveBackgroundMediumBrush}"
             BorderBrush="{StaticResource EveBorderBrush}"
             BorderThickness="0,0,0,1"
-            Padding="10,8" MinHeight="148">
-        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+            Padding="10,8">
+        <Grid ColumnDefinitions="Auto,*">
 
-            <!-- Column 0: Character portrait -->
-            <Border Grid.Column="0" Grid.RowSpan="2"
-                    Width="128" Height="128"
-                    Margin="0,0,12,0"
-                    Background="{StaticResource EveBackgroundDarkestBrush}"
-                    BorderBrush="{StaticResource EveBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="2"
-                    VerticalAlignment="Top">
-                <Image x:Name="PortraitImage"
-                       Width="128" Height="128"
-                       Stretch="UniformToFill" />
-            </Border>
+            <!-- Column 0: Portrait + account status -->
+            <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,12,0"
+                        VerticalAlignment="Top">
+                <!-- Portrait with account-status-colored border -->
+                <Border x:Name="PortraitBorder"
+                        Width="132" Height="132"
+                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                        BorderThickness="2"
+                        CornerRadius="2">
+                    <Image x:Name="PortraitImage"
+                           Width="128" Height="128"
+                           Stretch="UniformToFill" />
+                </Border>
 
-            <!-- Column 1, Row 0: Character name + bio info -->
-            <StackPanel Grid.Column="1" Grid.Row="0" Spacing="1" Margin="0,0,16,0">
+                <!-- Account status + override flyout -->
+                <Button x:Name="StatusOverrideBtn"
+                        Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Center"
+                        Padding="6,3" Cursor="Hand"
+                        ToolTip.Tip="Click to change account status">
+                    <StackPanel Spacing="0" HorizontalAlignment="Center">
+                        <TextBlock x:Name="AccountStatusLabel"
+                                   FontSize="11" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="3"
+                                    HorizontalAlignment="Center">
+                            <TextBlock x:Name="OverrideModeLabel"
+                                       FontSize="8.5"
+                                       Foreground="{StaticResource EveTextDisabledBrush}" />
+                            <TextBlock Text="&#x25BE;" FontSize="8"
+                                       Foreground="{StaticResource EveTextDisabledBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
+                    <Button.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedLeft">
+                            <MenuItem x:Name="AutoDetectItem" Header="Auto-detect" />
+                            <Separator />
+                            <MenuItem x:Name="EmulateAlphaItem" Header="Emulate Alpha" />
+                            <MenuItem x:Name="EmulateOmegaItem" Header="Emulate Omega" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </StackPanel>
+
+            <!-- Column 1: Character info + inline stats -->
+            <StackPanel Grid.Column="1" Spacing="1">
                 <!-- Name -->
                 <TextBlock Text="{Binding Name}"
                            FontSize="15" FontWeight="Bold"
-                           Foreground="{StaticResource EveAccentPrimaryBrush}"
-                           Margin="0,0,0,2" />
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
 
-                <!-- Race/Bloodline line -->
-                <TextBlock FontSize="11.5" Foreground="{StaticResource EveTextSecondaryBrush}">
-                    <TextBlock.Text>
-                        <MultiBinding StringFormat="{}{0} - {1} - {2}">
-                            <Binding Path="Gender" />
-                            <Binding Path="Race" />
-                            <Binding Path="Bloodline" />
-                        </MultiBinding>
-                    </TextBlock.Text>
-                </TextBlock>
+                <!-- Race / Bloodline (hidden when unset) -->
+                <TextBlock x:Name="RaceText" FontSize="11"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           IsVisible="False" />
 
                 <!-- Balance (prominent) + change indicator -->
-                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,1,0,2">
                     <TextBlock Text="{Binding BalanceText}"
                                FontSize="11.5" FontWeight="SemiBold"
                                Foreground="{StaticResource EveSuccessGreenBrush}" />
@@ -58,16 +82,12 @@
                     </TextBlock>
                 </StackPanel>
 
-                <!-- Birthday -->
-                <TextBlock Text="{Binding Birthday, StringFormat='Birthday: {0:dd-MM-yyyy HH:mm:ss}'}"
-                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
-
                 <!-- Corporation -->
                 <TextBlock Text="{Binding CorporationName, StringFormat='Corporation: {0}'}"
                            FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
-                <!-- Alliance -->
-                <TextBlock Text="{Binding AllianceName, StringFormat='Alliance: {0}'}"
+                <!-- Alliance (always shown to prevent layout shift) -->
+                <TextBlock x:Name="AllianceText"
                            FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Security Status -->
@@ -83,57 +103,13 @@
                            FontSize="11" Foreground="{StaticResource EveSuccessGreenBrush}" />
                 <TextBlock x:Name="DockedText"
                            FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
-            </StackPanel>
 
-            <!-- Column 1, Row 1: Account status with override ComboBox -->
-            <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal"
-                        Margin="0,6,0,0" Spacing="8">
-                <TextBlock Text="Account Status:" FontSize="11"
-                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                           VerticalAlignment="Center" />
-                <!-- Effective status badge -->
-                <Border x:Name="StatusBadge" CornerRadius="10" Padding="8,2"
-                        VerticalAlignment="Center">
-                    <TextBlock x:Name="StatusBadgeText" FontSize="10" FontWeight="SemiBold"
-                               VerticalAlignment="Center" />
+                <!-- Inline stats line -->
+                <Border BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0"
+                        Margin="0,4,0,0" Padding="0,4,0,0">
+                    <TextBlock x:Name="StatsLine" FontSize="10"
+                               Foreground="{StaticResource EveTextDisabledBrush}" />
                 </Border>
-                <!-- Override ComboBox -->
-                <ComboBox x:Name="StatusOverrideCombo" FontSize="10" Padding="6,2"
-                          MinWidth="80" VerticalAlignment="Center"
-                          SelectionChanged="OnStatusOverrideChanged">
-                    <ComboBoxItem Content="Auto" />
-                    <ComboBoxItem Content="Alpha" />
-                    <ComboBoxItem Content="Omega" />
-                </ComboBox>
-            </StackPanel>
-
-            <!-- Column 2: Skills summary (right-aligned) -->
-            <StackPanel Grid.Column="2" Grid.RowSpan="2"
-                        Spacing="2" VerticalAlignment="Top"
-                        HorizontalAlignment="Right"
-                        MinWidth="180">
-                <!-- Known Skills -->
-                <TextBlock Text="{Binding KnownSkillCountText}"
-                           FontSize="11" HorizontalAlignment="Right"
-                           Foreground="{StaticResource EveTextSecondaryBrush}" />
-
-                <!-- Total SP -->
-                <TextBlock Text="{Binding SkillPointsText}"
-                           FontSize="11" HorizontalAlignment="Right"
-                           Foreground="{StaticResource EveTextSecondaryBrush}" />
-
-                <!-- Free SP -->
-                <TextBlock Text="{Binding FreeSkillPointsText}"
-                           FontSize="11" HorizontalAlignment="Right"
-                           Foreground="{StaticResource EveTextSecondaryBrush}" />
-
-                <!-- Separator -->
-                <Separator Margin="0,4" Background="{StaticResource EveBorderBrush}" />
-
-                <!-- Bonus Remaps -->
-                <TextBlock Text="{Binding AvailableRemapsText}"
-                           FontSize="11" HorizontalAlignment="Right"
-                           Foreground="{StaticResource EveTextSecondaryBrush}" />
             </StackPanel>
 
         </Grid>

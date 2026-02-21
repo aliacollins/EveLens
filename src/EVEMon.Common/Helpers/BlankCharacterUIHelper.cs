@@ -262,14 +262,13 @@ namespace EVEMon.Common.Helpers
         }
 
         /// <summary>
-        /// Gets the starting skills.
+        /// Gets the starting skills for a given race.
         /// </summary>
-        /// <returns></returns>
-        private static Dictionary<int, int> GetStartingSkills()
+        internal static Dictionary<int, int> GetStartingSkills(Race race)
         {
             Dictionary<int, int> startingSkills = new Dictionary<int, int>();
 
-            switch (Race)
+            switch (race)
             {
                 case Race.Amarr:
                     startingSkills = s_allRaceSkills.Concat(s_amarrRaceSkills).ToDictionary(x => x.Key, x => x.Value);
@@ -287,6 +286,11 @@ namespace EVEMon.Common.Helpers
             return startingSkills;
         }
 
+        /// <summary>
+        /// Gets the starting skills using the current static Race property.
+        /// </summary>
+        private static Dictionary<int, int> GetStartingSkills() => GetStartingSkills(Race);
+
         #endregion
 
 
@@ -294,6 +298,8 @@ namespace EVEMon.Common.Helpers
 
         /// <summary>
         /// Creates a blank character directly in memory and adds it to the collection.
+        /// Forces an immediate settings save so the character persists even if the app
+        /// is closed before the next coalescing timer tick.
         /// </summary>
         public static void AddBlankCharacter()
         {
@@ -308,6 +314,9 @@ namespace EVEMon.Common.Helpers
             var uriCharacter = new UriCharacter(identity, null, serial);
             uriCharacter.Monitored = true;
             AppServices.Characters.Add(uriCharacter);
+
+            // Force immediate persist — don't rely on the 10s coalescing timer
+            Settings.SaveImmediateAsync().ConfigureAwait(false);
         }
 
         #endregion

@@ -5,6 +5,6 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
-        <StyleInclude Source="avares://EVEMon.Avalonia/Themes/EVEMonTheme.axaml" />
+        <!-- Palette + EVEMonTheme loaded programmatically in Initialize() -->
     </Application.Styles>
 </Application>

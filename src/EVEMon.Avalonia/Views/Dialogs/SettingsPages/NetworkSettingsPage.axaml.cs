@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using EVEMon.Common.Serialization.Settings;
 
 namespace EVEMon.Avalonia.Views.Dialogs.SettingsPages
@@ -18,6 +19,7 @@ namespace EVEMon.Avalonia.Views.Dialogs.SettingsPages
             _settings = settings;
             LoadFromSettings();
             UseProxyCheckBox.IsCheckedChanged += (_, _) => UpdateProxyPanelState();
+            UseDefaultCredentialsButton.Click += OnUseDefaultCredentialsClick;
         }
 
         private void LoadFromSettings()
@@ -33,6 +35,12 @@ namespace EVEMon.Avalonia.Views.Dialogs.SettingsPages
         private void UpdateProxyPanelState()
         {
             ProxyPanel.IsEnabled = UseProxyCheckBox.IsChecked == true;
+        }
+
+        private void OnUseDefaultCredentialsClick(object? sender, RoutedEventArgs e)
+        {
+            ClientIdTextBox.Text = string.Empty;
+            ClientSecretTextBox.Text = string.Empty;
         }
 
         public void ApplyToSettings()

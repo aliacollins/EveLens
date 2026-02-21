@@ -100,6 +100,59 @@ namespace EVEMon.Tests.Architecture
                 $"Violations: {string.Join(", ", violations)}");
         }
 
+        /// <summary>
+        /// SSO services must use AppServices.Dispatcher (cross-platform) not
+        /// EVEMon.Common.Threading.Dispatcher (WinForms-only).
+        /// Prevents regression of the Part 1 migration.
+        /// </summary>
+        [Fact]
+        public void SSOServices_UseAppServicesDispatcher_NotStaticDispatcher()
+        {
+            string? commonDir = FindProjectDirectory("src/EVEMon.Common");
+            if (commonDir == null)
+                return;
+
+            var ssoFiles = new[]
+            {
+                Path.Combine(commonDir, "Service", "SSOAuthenticationService.cs"),
+                Path.Combine(commonDir, "Service", "SSOWebServerHttpListener.cs"),
+            };
+
+            var violations = new List<string>();
+
+            foreach (var file in ssoFiles)
+            {
+                if (!File.Exists(file))
+                    continue;
+
+                string content = File.ReadAllText(file);
+                string fileName = Path.GetFileName(file);
+
+                // Must not import the old static Dispatcher
+                if (content.Contains("using EVEMon.Common.Threading;"))
+                    violations.Add($"{fileName}: still imports EVEMon.Common.Threading");
+
+                // Must not call Dispatcher.Invoke (without AppServices. prefix)
+                // Match standalone Dispatcher.Invoke but not AppServices.Dispatcher?.Invoke
+                var lines = content.Split('\n');
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string line = lines[i].Trim();
+                    if (line.StartsWith("//")) continue;
+                    if (line.Contains("Dispatcher.Invoke") &&
+                        !line.Contains("AppServices.Dispatcher"))
+                    {
+                        violations.Add($"{fileName}:{i + 1}: uses Dispatcher.Invoke instead of AppServices.Dispatcher?.Invoke");
+                    }
+                }
+            }
+
+            violations.Should().BeEmpty(
+                "SSO services must use AppServices.Dispatcher?.Invoke (cross-platform), " +
+                "not EVEMon.Common.Threading.Dispatcher.Invoke (WinForms-only). " +
+                $"Violations: {string.Join("; ", violations)}");
+        }
+
         private static string? FindProjectDirectory(string relativePath)
         {
             // Walk up from the test assembly location to find the repo root

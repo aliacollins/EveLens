@@ -35,6 +35,11 @@
                 <TextBox x:Name="ClientSecretTextBox" Width="280"
                          PasswordChar="*" />
             </StackPanel>
+            <Button x:Name="UseDefaultCredentialsButton"
+                    Content="Use Default"
+                    HorizontalAlignment="Left"
+                    CornerRadius="12" Padding="10,4" FontSize="11"
+                    ToolTip.Tip="Clear custom credentials and use the built-in EVEMon defaults" />
         </StackPanel>
     </StackPanel>
 </UserControl>

@@ -553,6 +553,28 @@ namespace EVEMon.Tests.Settings
         }
 
         [Fact]
+        public void RoundTrip_BlankCharacter_NullAddress_PreservesAsUriCharacter()
+        {
+            var settings = new SerializableSettings();
+            var uriChar = new SerializableUriCharacter();
+            uriChar.Guid = Guid.NewGuid();
+            uriChar.ID = 9999999;
+            uriChar.Name = "Blank Pilot";
+            uriChar.Race = "Amarr";
+            // Address is null — this is a blank (local) character
+            settings.Characters.Add(uriChar);
+
+            string json = JsonSerializer.Serialize(settings, JsonOptions);
+            var result = JsonSerializer.Deserialize<SerializableSettings>(json, JsonOptions);
+
+            result!.Characters.Should().HaveCount(1);
+            var resultChar = result.Characters[0].Should().BeOfType<SerializableUriCharacter>().Subject;
+            resultChar.Name.Should().Be("Blank Pilot");
+            resultChar.ID.Should().Be(9999999);
+            resultChar.Address.Should().BeNull();
+        }
+
+        [Fact]
         public void RoundTrip_MixedCharacterTypes_OrderPreserved()
         {
             var settings = new SerializableSettings();

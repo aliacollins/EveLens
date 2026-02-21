@@ -2,73 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════════
-         EVEMon Dark Theme — EVE Online Inspired
-         ═══════════════════════════════════════════════════════════════ -->
-
-    <Styles.Resources>
-        <!-- Background palette -->
-        <Color x:Key="EveBackgroundDarkest">#FF0D0D1A</Color>
-        <Color x:Key="EveBackgroundDark">#FF1A1A2E</Color>
-        <Color x:Key="EveBackgroundMedium">#FF16213E</Color>
-        <Color x:Key="EveBackgroundLight">#FF0F3460</Color>
-
-        <!-- Accent colors (EVE gold/amber) -->
-        <Color x:Key="EveAccentPrimary">#FFE6A817</Color>
-        <Color x:Key="EveAccentSecondary">#FFC9A227</Color>
-        <Color x:Key="EveAccentDimmed">#FF8B7420</Color>
-
-        <!-- Text colors (brighter for readability) -->
-        <Color x:Key="EveTextPrimary">#FFF0F0F0</Color>
-        <Color x:Key="EveTextSecondary">#FFAAAAAA</Color>
-        <Color x:Key="EveTextDisabled">#FF707070</Color>
-
-        <!-- Status colors -->
-        <Color x:Key="EveErrorRed">#FFCF6679</Color>
-        <Color x:Key="EveWarningYellow">#FFFFD54F</Color>
-        <Color x:Key="EveSuccessGreen">#FF81C784</Color>
-
-        <!-- Standing colors -->
-        <Color x:Key="EveStandingNegative">#FFCF6679</Color>
-        <Color x:Key="EveStandingPositive">#FF64B5F6</Color>
-        <Color x:Key="EveStandingNeutral">#FF707070</Color>
-
-        <!-- Hover / interactive -->
-        <Color x:Key="EveHoverColor">#FF1E2A4A</Color>
-        <SolidColorBrush x:Key="EveHoverBrush" Color="{StaticResource EveHoverColor}" />
-
-        <!-- Selection / alternating rows -->
-        <Color x:Key="EveSelectedColor">#FF1A3A6A</Color>
-        <SolidColorBrush x:Key="EveSelectedBrush" Color="{StaticResource EveSelectedColor}" />
-        <Color x:Key="EveAlternateRowColor">#FF151525</Color>
-        <SolidColorBrush x:Key="EveAlternateRowBrush" Color="{StaticResource EveAlternateRowColor}" />
-
-        <!-- Border / separator -->
-        <Color x:Key="EveBorderColor">#FF2A2A4A</Color>
-        <Color x:Key="EveBorderFocused">#FF0F3460</Color>
-
-        <!-- Brushes for easy binding -->
-        <SolidColorBrush x:Key="EveBackgroundDarkestBrush" Color="{StaticResource EveBackgroundDarkest}" />
-        <SolidColorBrush x:Key="EveBackgroundDarkBrush" Color="{StaticResource EveBackgroundDark}" />
-        <SolidColorBrush x:Key="EveBackgroundMediumBrush" Color="{StaticResource EveBackgroundMedium}" />
-        <SolidColorBrush x:Key="EveBackgroundLightBrush" Color="{StaticResource EveBackgroundLight}" />
-        <SolidColorBrush x:Key="EveAccentPrimaryBrush" Color="{StaticResource EveAccentPrimary}" />
-        <SolidColorBrush x:Key="EveAccentSecondaryBrush" Color="{StaticResource EveAccentSecondary}" />
-        <SolidColorBrush x:Key="EveAccentDimmedBrush" Color="{StaticResource EveAccentDimmed}" />
-        <SolidColorBrush x:Key="EveTextPrimaryBrush" Color="{StaticResource EveTextPrimary}" />
-        <SolidColorBrush x:Key="EveTextSecondaryBrush" Color="{StaticResource EveTextSecondary}" />
-        <SolidColorBrush x:Key="EveTextDisabledBrush" Color="{StaticResource EveTextDisabled}" />
-        <SolidColorBrush x:Key="EveErrorRedBrush" Color="{StaticResource EveErrorRed}" />
-        <SolidColorBrush x:Key="EveWarningYellowBrush" Color="{StaticResource EveWarningYellow}" />
-        <SolidColorBrush x:Key="EveSuccessGreenBrush" Color="{StaticResource EveSuccessGreen}" />
-        <SolidColorBrush x:Key="EveStandingNegativeBrush" Color="{StaticResource EveStandingNegative}" />
-        <SolidColorBrush x:Key="EveStandingPositiveBrush" Color="{StaticResource EveStandingPositive}" />
-        <SolidColorBrush x:Key="EveStandingNeutralBrush" Color="{StaticResource EveStandingNeutral}" />
-        <SolidColorBrush x:Key="EveBorderBrush" Color="{StaticResource EveBorderColor}" />
-        <SolidColorBrush x:Key="EveBorderFocusedBrush" Color="{StaticResource EveBorderFocused}" />
-    </Styles.Resources>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         Control Style Overrides
+         EVEMon Theme — Control Style Overrides
+         Colors/brushes are defined in Palettes/*.axaml (loaded first)
          ═══════════════════════════════════════════════════════════════ -->
 
     <!-- TextBlock -->
@@ -487,21 +422,91 @@
     </Style>
 
     <!-- ═══════════════════════════════════════════════════════════════
-         Attribute Colors (EVE character attributes)
+         Character Portrait Strip Styles
          ═══════════════════════════════════════════════════════════════ -->
 
-    <Styles.Resources>
-        <Color x:Key="EveAttrIntColor">#FF4FC3F7</Color>
-        <Color x:Key="EveAttrPerColor">#FFEF5350</Color>
-        <Color x:Key="EveAttrChaColor">#FF66BB6A</Color>
-        <Color x:Key="EveAttrWilColor">#FFAB47BC</Color>
-        <Color x:Key="EveAttrMemColor">#FFFFA726</Color>
-        <SolidColorBrush x:Key="EveAttrIntBrush" Color="{StaticResource EveAttrIntColor}" />
-        <SolidColorBrush x:Key="EveAttrPerBrush" Color="{StaticResource EveAttrPerColor}" />
-        <SolidColorBrush x:Key="EveAttrChaBrush" Color="{StaticResource EveAttrChaColor}" />
-        <SolidColorBrush x:Key="EveAttrWilBrush" Color="{StaticResource EveAttrWilColor}" />
-        <SolidColorBrush x:Key="EveAttrMemBrush" Color="{StaticResource EveAttrMemColor}" />
-    </Styles.Resources>
+    <!-- char-slot: transparent button for portrait strip slots -->
+    <Style Selector="Button.char-slot">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="4,4" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.char-slot:pointerover">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.char-slot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.char-slot:pressed">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RenderTransform" Value="none" />
+    </Style>
+    <Style Selector="Button.char-slot:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.char-slot.selected">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <!-- strip-arrow: scroll arrow buttons flanking the portrait strip -->
+    <Style Selector="Button.strip-arrow">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Opacity" Value="0.5" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.strip-arrow:pointerover">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Background" Value="#18FFFFFF" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.strip-arrow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.strip-arrow:pressed">
+        <Setter Property="Background" Value="#28FFFFFF" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RenderTransform" Value="none" />
+    </Style>
+    <Style Selector="Button.strip-arrow:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- portrait-ring: border around portrait with gold highlight when selected -->
+    <Style Selector="Border.portrait-ring">
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.portrait-ring.selected">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
 
     <!-- ═══════════════════════════════════════════════════════════════
          Plan DataGrid Styles (.plan-grid class)

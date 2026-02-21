@@ -1,8 +1,10 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.Styling;
 using EVEMon.Avalonia.Services;
 using EVEMon.Avalonia.Views;
 using EVEMon.Common;
@@ -20,6 +22,16 @@ namespace EVEMon.Avalonia
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
+
+            // Load palette (colors/brushes) FIRST, then control styles that reference them.
+            // Theme preference is stored in a plain text file so it can be read before
+            // EveMonClient/Settings are initialized.
+            string theme = ReadThemePreference();
+            var paletteUri = new Uri($"avares://EVEMon.Avalonia/Themes/Palettes/{theme}.axaml");
+            Styles.Add(new StyleInclude(paletteUri) { Source = paletteUri });
+
+            var themeUri = new Uri("avares://EVEMon.Avalonia/Themes/EVEMonTheme.axaml");
+            Styles.Add(new StyleInclude(themeUri) { Source = themeUri });
         }
 
         public override void OnFrameworkInitializationCompleted()
@@ -116,6 +128,28 @@ namespace EVEMon.Avalonia
                     AppServices.Shutdown();
                 }
             };
+        }
+
+        private static string ReadThemePreference()
+        {
+            try
+            {
+                string path = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "EVEMon", "theme.txt");
+                if (File.Exists(path))
+                {
+                    string name = File.ReadAllText(path).Trim();
+                    if (!string.IsNullOrEmpty(name))
+                        return name;
+                }
+            }
+            catch
+            {
+                // Fall through to default
+            }
+
+            return "DarkSpace";
         }
     }
 }

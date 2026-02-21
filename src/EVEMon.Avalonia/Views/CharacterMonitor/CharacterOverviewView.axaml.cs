@@ -3,23 +3,43 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Avalonia;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using EVEMon.Avalonia.Converters;
 using EVEMon.Common;
+using EVEMon.Common.Enumerations;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
 using EVEMon.Common.Service;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Core.Events;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterOverviewView : UserControl
     {
+        private IDisposable? _fetchCompletedSub;
+        private IDisposable? _secondTickSub;
+        private IDisposable? _collectionChangedSub;
+
+        // Track previous ISK/SP values per character for flash-on-change
+        private readonly Dictionary<long, decimal> _prevBalances = new();
+        private readonly Dictionary<long, long> _prevSkillPoints = new();
+
+        // Toggle for fetching dot pulse (alternates each second tick)
+        private bool _fetchingDotBright;
+
+        // Only animate the staggered fade-in on first application load
+        private bool _initialLoadDone;
+
+
         public CharacterOverviewView()
         {
             InitializeComponent();
@@ -28,7 +48,29 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
+
+            _fetchCompletedSub ??= AppServices.EventAggregator?.Subscribe<MonitorFetchCompletedEvent>(
+                evt => Dispatcher.UIThread.Post(() => OnFetchCompleted(evt)));
+
+            _secondTickSub ??= AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
+                _ => Dispatcher.UIThread.Post(OnSecondTick));
+
+            _collectionChangedSub ??= AppServices.EventAggregator?.Subscribe<MonitoredCharacterCollectionChangedEvent>(
+                _ => Dispatcher.UIThread.Post(OnCollectionChanged));
+
             LoadData();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            _fetchCompletedSub?.Dispose();
+            _fetchCompletedSub = null;
+            _secondTickSub?.Dispose();
+            _secondTickSub = null;
+            _collectionChangedSub?.Dispose();
+            _collectionChangedSub = null;
+
+            base.OnDetachedFromVisualTree(e);
         }
 
         /// <summary>
@@ -39,17 +81,22 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             LoadData();
         }
 
+        #region Initial Load
+
         private void LoadData()
         {
             try
             {
                 OverviewPanel.Children.Clear();
+                _prevBalances.Clear();
+                _prevSkillPoints.Clear();
+
                 var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
                 var groups = Settings.CharacterGroups;
+                int cardIndex = 0;
 
                 if (groups.Count > 0)
                 {
-                    // Render grouped characters
                     var assignedGuids = new HashSet<Guid>();
 
                     foreach (var group in groups)
@@ -63,26 +110,33 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                         foreach (var guid in group.CharacterGuids)
                             assignedGuids.Add(guid);
 
-                        BuildGroupSection(group.Name, groupChars);
+                        BuildGroupSection(group.Name, groupChars, ref cardIndex);
                     }
 
-                    // Ungrouped characters
                     var ungrouped = characters.Where(c => !assignedGuids.Contains(c.Guid)).ToList();
                     if (ungrouped.Count > 0)
                     {
-                        BuildGroupSection("Ungrouped", ungrouped);
+                        BuildGroupSection("Ungrouped", ungrouped, ref cardIndex);
                     }
                 }
                 else
                 {
-                    // No groups — flat card layout
-                    var wrap = BuildCardWrapPanel(characters);
+                    var wrap = BuildCardWrapPanel(characters, ref cardIndex);
                     OverviewPanel.Children.Add(wrap);
                 }
 
-                // Load portraits and training info after items are rendered
-                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => LoadPortraitsAndTraining(),
-                    global::Avalonia.Threading.DispatcherPriority.Background);
+                // Seed balance/SP tracking
+                foreach (var c in characters)
+                {
+                    _prevBalances[c.CharacterID] = c.Balance;
+                    _prevSkillPoints[c.CharacterID] = c.SkillPoints;
+                }
+
+                // Load portraits after items are rendered
+                Dispatcher.UIThread.Post(() => LoadPortraitsAndTraining(),
+                    DispatcherPriority.Background);
+
+                _initialLoadDone = true;
             }
             catch (Exception ex)
             {
@@ -90,9 +144,8 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
         }
 
-        private void BuildGroupSection(string groupName, List<Character> characters)
+        private void BuildGroupSection(string groupName, List<Character> characters, ref int cardIndex)
         {
-            // Thin gold divider with group name
             var divider = new DockPanel { Margin = new Thickness(0, 4, 0, 2) };
 
             var label = new TextBlock
@@ -100,7 +153,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 Text = groupName,
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = (IBrush?)Application.Current?.FindResource("EveAccentPrimaryBrush") ?? Brushes.Gold,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
                 [DockPanel.DockProperty] = Dock.Left
@@ -110,7 +163,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 Text = $"{characters.Count}",
                 FontSize = 10,
-                Foreground = (IBrush?)Application.Current?.FindResource("EveTextDisabledBrush") ?? Brushes.Gray,
+                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
                 [DockPanel.DockProperty] = Dock.Left
@@ -119,7 +172,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             var line = new Border
             {
                 Height = 1,
-                Background = (IBrush?)Application.Current?.FindResource("EveAccentPrimaryBrush") ?? Brushes.Gold,
+                Background = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 Opacity = 0.3,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -129,37 +182,63 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             divider.Children.Add(line);
 
             OverviewPanel.Children.Add(divider);
-            OverviewPanel.Children.Add(BuildCardWrapPanel(characters));
+            OverviewPanel.Children.Add(BuildCardWrapPanel(characters, ref cardIndex));
         }
 
-        private WrapPanel BuildCardWrapPanel(List<Character> characters)
+        private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex)
         {
             var wrap = new WrapPanel { Orientation = Orientation.Horizontal };
 
             foreach (var character in characters)
             {
-                wrap.Children.Add(BuildCharacterCard(character));
+                var card = BuildCharacterCard(character, cardIndex);
+                wrap.Children.Add(card);
+                cardIndex++;
             }
 
             return wrap;
         }
 
-        private Button BuildCharacterCard(Character character)
+        #endregion
+
+        #region Card Builder
+
+        private Button BuildCharacterCard(Character character, int staggerIndex)
         {
-            // Portrait
+            // Portrait with ESI status badge overlay (Teams-style)
             var portraitImage = new Image { Width = 56, Height = 56, Stretch = Stretch.UniformToFill };
             portraitImage.Tag = character.CharacterID;
 
             var portraitBorder = new Border
             {
                 Width = 56, Height = 56,
-                Background = (IBrush?)Application.Current?.FindResource("EveBackgroundDarkestBrush") ?? Brushes.Black,
-                BorderBrush = (IBrush?)Application.Current?.FindResource("EveBorderBrush") ?? Brushes.Gray,
+                Background = FindBrush("EveBackgroundDarkestBrush", Brushes.Black),
+                BorderBrush = FindBrush("EveBorderBrush", Brushes.Gray),
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(4),
+                Child = portraitImage
+            };
+
+            var (dotColor, isFetching) = GetEsiStatus(character);
+            var esiDot = new Border
+            {
+                Width = 12, Height = 12,
+                CornerRadius = new CornerRadius(6),
+                Background = dotColor,
+                BorderBrush = FindBrush("EveBackgroundDarkBrush", Brushes.Black),
+                BorderThickness = new Thickness(2),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Tag = "EsiDot"
+            };
+
+            // Grid overlays the dot on the portrait
+            var portraitContainer = new Grid
+            {
+                Width = 56, Height = 56,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 0, 12, 0),
-                Child = portraitImage
+                Children = { portraitBorder, esiDot }
             };
 
             // Info panel
@@ -169,23 +248,45 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 Text = character.Name,
                 FontSize = 13, FontWeight = FontWeight.Bold,
-                Foreground = (IBrush?)Application.Current?.FindResource("EveAccentPrimaryBrush") ?? Brushes.Gold,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
 
-            infoPanel.Children.Add(new TextBlock
+            var iskText = new TextBlock
             {
                 Text = $"{character.Balance:N2} ISK",
                 FontSize = 11,
-                Foreground = (IBrush?)Application.Current?.FindResource("EveSuccessGreenBrush") ?? Brushes.LimeGreen,
-            });
+                Foreground = FindBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
+                Tag = "IskText",
+                Transitions = new global::Avalonia.Animation.Transitions
+                {
+                    new global::Avalonia.Animation.DoubleTransition
+                    {
+                        Property = OpacityProperty,
+                        Duration = TimeSpan.FromMilliseconds(300),
+                        Easing = new QuadraticEaseOut()
+                    }
+                }
+            };
+            infoPanel.Children.Add(iskText);
 
-            infoPanel.Children.Add(new TextBlock
+            var spText = new TextBlock
             {
                 Text = $"{character.SkillPoints:N0} SP",
                 FontSize = 11,
-                Foreground = (IBrush?)Application.Current?.FindResource("EveTextSecondaryBrush") ?? Brushes.Gray,
-            });
+                Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                Tag = "SpText",
+                Transitions = new global::Avalonia.Animation.Transitions
+                {
+                    new global::Avalonia.Animation.DoubleTransition
+                    {
+                        Property = OpacityProperty,
+                        Duration = TimeSpan.FromMilliseconds(300),
+                        Easing = new QuadraticEaseOut()
+                    }
+                }
+            };
+            infoPanel.Children.Add(spText);
 
             // Account status badge
             bool isOmega = character.EffectiveCharacterStatus == AccountStatus.Omega;
@@ -214,46 +315,29 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             var trainingText = new TextBlock
             {
                 FontSize = 10,
-                Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow,
-                TextTrimming = TextTrimming.CharacterEllipsis
+                Foreground = FindBrush("EveWarningYellowBrush", Brushes.Yellow),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Tag = "TrainingText"
             };
-            trainingText.Tag = "TrainingText";
-
-            if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
-            {
-                var skill = ccp.CurrentlyTrainingSkill;
-                var remaining = skill.RemainingTime;
-                string timeStr = remaining.TotalHours >= 24
-                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
-                    : remaining.TotalHours >= 1
-                        ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
-                        : $"{remaining.Minutes}m {remaining.Seconds}s";
-                trainingText.Text = $"Training: {skill.SkillName} {skill.Level} ({timeStr})";
-            }
-            else
-            {
-                trainingText.Text = "Paused";
-                trainingText.Foreground = Brushes.Gray;
-            }
+            UpdateTrainingText(trainingText, character);
             infoPanel.Children.Add(trainingText);
 
             var cardGrid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("68,*") };
-            Grid.SetColumn(portraitBorder, 0);
+            Grid.SetColumn(portraitContainer, 0);
             Grid.SetColumn(infoPanel, 1);
-            cardGrid.Children.Add(portraitBorder);
+            cardGrid.Children.Add(portraitContainer);
             cardGrid.Children.Add(infoPanel);
 
             var cardBorder = new Border
             {
-                Background = (IBrush?)Application.Current?.FindResource("EveBackgroundMediumBrush") ?? Brushes.DarkGray,
-                BorderBrush = (IBrush?)Application.Current?.FindResource("EveBorderBrush") ?? Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(6),
                 Padding = new Thickness(12, 10),
                 Width = 300,
                 MinHeight = 90,
                 Child = cardGrid
             };
+            cardBorder.Classes.Add("card");
+
+            bool animate = !_initialLoadDone;
 
             var btn = new Button
             {
@@ -264,8 +348,41 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Content = cardBorder,
-                DataContext = character
+                DataContext = character,
+                Opacity = animate ? 0 : 1
             };
+
+            if (animate)
+            {
+                btn.Transitions = new global::Avalonia.Animation.Transitions
+                {
+                    new global::Avalonia.Animation.DoubleTransition
+                    {
+                        Property = OpacityProperty,
+                        Duration = TimeSpan.FromMilliseconds(300),
+                        Easing = new QuadraticEaseOut()
+                    }
+                };
+
+                int delayMs = staggerIndex * 50;
+                if (delayMs > 0)
+                {
+                    var timer = new DispatcherTimer(DispatcherPriority.Render)
+                    {
+                        Interval = TimeSpan.FromMilliseconds(delayMs)
+                    };
+                    timer.Tick += (_, _) =>
+                    {
+                        timer.Stop();
+                        btn.Opacity = 1;
+                    };
+                    timer.Start();
+                }
+                else
+                {
+                    Dispatcher.UIThread.Post(() => btn.Opacity = 1, DispatcherPriority.Render);
+                }
+            }
 
             // Context menu
             var deleteItem = new MenuItem { Header = "Delete Character...", Tag = character };
@@ -277,11 +394,329 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             return btn;
         }
 
+        private (IBrush dotColor, bool isFetching) GetEsiStatus(Character character)
+        {
+            var yellowBrush = FindBrush("EveWarningYellowBrush", Brushes.Yellow);
+            var greenBrush = FindBrush("EveSuccessGreenBrush", Brushes.LimeGreen);
+            var redBrush = FindBrush("EveErrorRedBrush", Brushes.Red);
+            var grayBrush = FindBrush("EveTextDisabledBrush", Brushes.Gray);
+
+            if (character is not CCPCharacter ccp)
+                return (grayBrush, false);
+
+            bool anyUpdating = false;
+            bool anyNoKey = false;
+            bool hasErrors = false;
+
+            try
+            {
+                foreach (var monitor in ccp.QueryMonitors)
+                {
+                    if (monitor.IsUpdating)
+                        anyUpdating = true;
+                    if (monitor.Status == QueryStatus.NoESIKey)
+                        anyNoKey = true;
+                }
+
+                hasErrors = ccp.QueryMonitors.HasErrors;
+            }
+            catch
+            {
+                return (grayBrush, false);
+            }
+
+            if (anyUpdating)
+                return (yellowBrush, true);
+
+            if (anyNoKey)
+                return (redBrush, false);
+
+            if (hasErrors)
+                return (redBrush, false);
+
+            if (ccp.HasCompletedFirstUpdate)
+                return (greenBrush, false);
+
+            return (grayBrush, false);
+        }
+
+        #endregion
+
+        #region Event Handlers — Incremental Updates
+
+        private void OnFetchCompleted(MonitorFetchCompletedEvent evt)
+        {
+            try
+            {
+                var card = FindCardByCharacterId(evt.CharacterId);
+                if (card == null) return;
+
+                var character = card.DataContext as Character;
+                if (character == null) return;
+
+                // Update ISK
+                var iskBlock = FindTaggedDescendant<TextBlock>(card, "IskText");
+                if (iskBlock != null)
+                {
+                    string newIsk = $"{character.Balance:N2} ISK";
+                    if (iskBlock.Text != newIsk)
+                    {
+                        iskBlock.Text = newIsk;
+                        FlashTextBlock(iskBlock);
+                    }
+                    _prevBalances[character.CharacterID] = character.Balance;
+                }
+
+                // Update SP
+                var spBlock = FindTaggedDescendant<TextBlock>(card, "SpText");
+                if (spBlock != null)
+                {
+                    string newSp = $"{character.SkillPoints:N0} SP";
+                    if (spBlock.Text != newSp)
+                    {
+                        spBlock.Text = newSp;
+                        FlashTextBlock(spBlock);
+                    }
+                    _prevSkillPoints[character.CharacterID] = character.SkillPoints;
+                }
+
+                // Update training text
+                var trainingBlock = FindTaggedDescendant<TextBlock>(card, "TrainingText");
+                if (trainingBlock != null)
+                    UpdateTrainingText(trainingBlock, character);
+
+                // Update ESI status
+                UpdateEsiStatus(card, character);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Overview fetch update error: {ex}");
+            }
+        }
+
+        private void OnSecondTick()
+        {
+            try
+            {
+                _fetchingDotBright = !_fetchingDotBright;
+
+                foreach (var card in GetAllCardButtons())
+                {
+                    var character = card.DataContext as Character;
+                    if (character == null) continue;
+
+                    // Tick training countdown every second
+                    var trainingBlock = FindTaggedDescendant<TextBlock>(card, "TrainingText");
+                    if (trainingBlock != null)
+                        UpdateTrainingText(trainingBlock, character);
+
+                    // Pulse the dot for actively fetching characters
+                    var dot = FindTaggedDescendant<Border>(card, "EsiDot");
+                    if (dot != null && character is CCPCharacter ccp)
+                    {
+                        bool anyUpdating = false;
+                        try
+                        {
+                            foreach (var monitor in ccp.QueryMonitors)
+                            {
+                                if (monitor.IsUpdating) { anyUpdating = true; break; }
+                            }
+                        }
+                        catch { /* ignore */ }
+
+                        if (anyUpdating)
+                            dot.Opacity = _fetchingDotBright ? 1.0 : 0.4;
+                        else if (dot.Opacity < 1.0)
+                            dot.Opacity = 1.0; // restore after fetching ends
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Overview tick error: {ex}");
+            }
+        }
+
+        private void OnCollectionChanged()
+        {
+            try
+            {
+                // If groups are active, fall back to full rebuild (group membership may have changed)
+                if (Settings.CharacterGroups.Count > 0)
+                {
+                    LoadData();
+                    return;
+                }
+
+                var currentChars = AppServices.Characters.Where(c => c.Monitored).ToList();
+                var existingCards = GetAllCardButtons().ToList();
+                var existingIds = new HashSet<long>(
+                    existingCards
+                        .Select(b => (b.DataContext as Character)?.CharacterID ?? 0)
+                        .Where(id => id != 0));
+
+                var currentIds = new HashSet<long>(currentChars.Select(c => c.CharacterID));
+
+                // Find the WrapPanel (should be the only/first one in ungrouped mode)
+                var wrap = OverviewPanel.Children.OfType<WrapPanel>().FirstOrDefault();
+                if (wrap == null)
+                {
+                    // No wrap panel yet — full rebuild
+                    LoadData();
+                    return;
+                }
+
+                // Remove deleted characters
+                var toRemove = existingCards
+                    .Where(b => b.DataContext is Character c && !currentIds.Contains(c.CharacterID))
+                    .ToList();
+
+                foreach (var card in toRemove)
+                {
+                    // Fade out then remove
+                    card.Opacity = 0;
+                    var timer = new DispatcherTimer(DispatcherPriority.Render)
+                    {
+                        Interval = TimeSpan.FromMilliseconds(350)
+                    };
+                    var capturedCard = card;
+                    var capturedWrap = wrap;
+                    timer.Tick += (_, _) =>
+                    {
+                        timer.Stop();
+                        capturedWrap.Children.Remove(capturedCard);
+                    };
+                    timer.Start();
+
+                    if (card.DataContext is Character removed)
+                    {
+                        _prevBalances.Remove(removed.CharacterID);
+                        _prevSkillPoints.Remove(removed.CharacterID);
+                    }
+                }
+
+                // Add new characters
+                var newChars = currentChars.Where(c => !existingIds.Contains(c.CharacterID)).ToList();
+                int staggerBase = wrap.Children.Count;
+                foreach (var character in newChars)
+                {
+                    var card = BuildCharacterCard(character, staggerBase);
+                    wrap.Children.Add(card);
+                    staggerBase++;
+
+                    _prevBalances[character.CharacterID] = character.Balance;
+                    _prevSkillPoints[character.CharacterID] = character.SkillPoints;
+                }
+
+                // Load portraits for any new cards
+                if (newChars.Count > 0)
+                {
+                    Dispatcher.UIThread.Post(() => LoadPortraitsForCharacters(
+                        newChars.Select(c => c.CharacterID).ToHashSet()),
+                        DispatcherPriority.Background);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Overview collection change error: {ex}");
+            }
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private static void UpdateTrainingText(TextBlock textBlock, Character character)
+        {
+            if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
+            {
+                var skill = ccp.CurrentlyTrainingSkill;
+                var remaining = skill.RemainingTime;
+                string timeStr = remaining.TotalHours >= 24
+                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
+                    : remaining.TotalHours >= 1
+                        ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
+                        : $"{remaining.Minutes}m {remaining.Seconds}s";
+                textBlock.Text = $"Training: {skill.SkillName} {skill.Level} ({timeStr})";
+                textBlock.Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow;
+            }
+            else
+            {
+                textBlock.Text = "Paused";
+                textBlock.Foreground = Brushes.Gray;
+            }
+        }
+
+        private void UpdateEsiStatus(Button card, Character character)
+        {
+            var (dotColor, isFetching) = GetEsiStatus(character);
+
+            var dot = FindTaggedDescendant<Border>(card, "EsiDot");
+            if (dot != null)
+            {
+                dot.Background = dotColor;
+                if (isFetching)
+                    dot.Opacity = _fetchingDotBright ? 1.0 : 0.4;
+                else
+                    dot.Opacity = 1.0;
+            }
+        }
+
+        private static void FlashTextBlock(TextBlock tb)
+        {
+            tb.Opacity = 0.5;
+            // The DoubleTransition on Opacity handles the smooth fade back to 1.0
+            Dispatcher.UIThread.Post(() => tb.Opacity = 1.0, DispatcherPriority.Render);
+        }
+
+        private Button? FindCardByCharacterId(long characterId)
+        {
+            foreach (var card in GetAllCardButtons())
+            {
+                if (card.DataContext is Character c && c.CharacterID == characterId)
+                    return card;
+            }
+            return null;
+        }
+
+        private IEnumerable<Button> GetAllCardButtons()
+        {
+            foreach (var child in OverviewPanel.Children)
+            {
+                if (child is WrapPanel wrap)
+                {
+                    foreach (var item in wrap.Children)
+                    {
+                        if (item is Button btn && btn.DataContext is Character)
+                            yield return btn;
+                    }
+                }
+            }
+        }
+
+        private static T? FindTaggedDescendant<T>(Control root, string tag) where T : Control
+        {
+            foreach (var descendant in root.GetVisualDescendants())
+            {
+                if (descendant is T typed && typed.Tag is string s && s == tag)
+                    return typed;
+            }
+            return null;
+        }
+
+        private static IBrush FindBrush(string resourceKey, IBrush fallback)
+        {
+            return (IBrush?)Application.Current?.FindResource(resourceKey) ?? fallback;
+        }
+
+        #endregion
+
+        #region Portrait Loading
+
         private async void LoadPortraitsAndTraining()
         {
             try
             {
-                // Find all Image controls with CharacterID tags and load their portraits
                 var images = this.GetVisualDescendants().OfType<Image>()
                     .Where(img => img.Tag is long).ToList();
 
@@ -307,6 +742,40 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 System.Diagnostics.Debug.WriteLine($"Portrait load error: {ex}");
             }
         }
+
+        private async void LoadPortraitsForCharacters(HashSet<long> characterIds)
+        {
+            try
+            {
+                var images = this.GetVisualDescendants().OfType<Image>()
+                    .Where(img => img.Tag is long id && characterIds.Contains(id)).ToList();
+
+                foreach (var img in images)
+                {
+                    long charId = (long)img.Tag!;
+                    try
+                    {
+                        var drawingImage = await ImageService.GetCharacterImageAsync(charId);
+                        if (drawingImage != null)
+                        {
+                            var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                                drawingImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
+                            if (converted is Bitmap bitmap)
+                                img.Source = bitmap;
+                        }
+                    }
+                    catch { /* portrait load failure is non-fatal */ }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Portrait load error: {ex}");
+            }
+        }
+
+        #endregion
+
+        #region Click Handlers
 
         private void OnDeleteCharacter(object? sender, RoutedEventArgs e)
         {
@@ -334,19 +803,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 if (sender is Button btn && btn.DataContext is Character character)
                 {
                     var mainWindow = this.FindAncestorOfType<MainWindow>();
-                    if (mainWindow != null)
-                    {
-                        var tabControl = mainWindow.FindControl<TabControl>("MainTabControl");
-                        if (tabControl != null)
-                        {
-                            var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
-                            int charIndex = characters.IndexOf(character);
-                            if (charIndex >= 0 && charIndex + 1 < tabControl.Items.Count)
-                            {
-                                tabControl.SelectedIndex = charIndex + 1;
-                            }
-                        }
-                    }
+                    mainWindow?.NavigateToCharacter(character);
                 }
             }
             catch (Exception ex)
@@ -354,5 +811,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 System.Diagnostics.Debug.WriteLine($"Card click error: {ex}");
             }
         }
+
+        #endregion
     }
 }
