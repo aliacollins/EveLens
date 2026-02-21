@@ -2,148 +2,140 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="EVEMon.Avalonia.Views.Dialogs.AboutWindow"
         Title="About EVEMon NexT"
-        Width="520" Height="560"
+        Width="880" Height="520"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
 
-    <DockPanel>
-        <!-- Footer -->
-        <Border DockPanel.Dock="Bottom" Padding="16,8"
-                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0"
-                Background="{StaticResource EveBackgroundDarkBrush}">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Right" Text="Fly safe. o7" FontSize="10"
-                           Foreground="{StaticResource EveTextDisabledBrush}"
-                           VerticalAlignment="Center" />
-                <Button x:Name="OkButton" Content="Close" DockPanel.Dock="Right"
-                        FontSize="11" Padding="14,4" CornerRadius="12"
-                        Margin="0,0,16,0" VerticalAlignment="Center" />
-                <TextBlock Text="EVE Online and all related logos are trademarks of CCP hf."
-                           FontSize="9" Foreground="{StaticResource EveTextDisabledBrush}"
-                           VerticalAlignment="Center" />
-            </DockPanel>
+    <!-- 3-column layout matching the reference design -->
+    <Grid ColumnDefinitions="220,*,220">
+
+        <!-- LEFT COLUMN: App info, maintainer, links -->
+        <Border Grid.Column="0"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                Padding="16,20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="4">
+                    <!-- Title -->
+                    <TextBlock Text="EVEMon NexT" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}" />
+
+                    <TextBlock x:Name="VersionText" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                    <!-- Description -->
+                    <TextBlock Text="EVE Online Character Monitor&#x0a;Skill Planner"
+                               FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}"
+                               TextWrapping="Wrap" Margin="0,8,0,0" />
+
+                    <!-- Links -->
+                    <Button x:Name="WebsiteLink" Content="evemon.dev"
+                            FontSize="11" Padding="0" Margin="0,8,0,0"
+                            Background="Transparent" BorderThickness="0"
+                            Foreground="{StaticResource EveAccentSecondaryBrush}"
+                            Cursor="Hand" HorizontalAlignment="Left" />
+                    <Button x:Name="GitHubLink" Content="github.com/aliacollins/evemon"
+                            FontSize="11" Padding="0"
+                            Background="Transparent" BorderThickness="0"
+                            Foreground="{StaticResource EveAccentSecondaryBrush}"
+                            Cursor="Hand" HorizontalAlignment="Left" />
+
+                    <!-- Maintainer -->
+                    <TextBlock Text="MAINTAINER" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               Margin="0,16,0,4" />
+                    <TextBlock Text="Alia Collins" FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource EveTextPrimaryBrush}" />
+                    <TextBlock Text="Active Developer" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+
+                    <!-- Support -->
+                    <TextBlock Text="SUPPORT EVEMON" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               Margin="0,16,0,4" />
+                    <TextBlock Text="I don't accept donations.&#x0a;Please donate to Peter Han&#x0a;or the original EVEMonDevTeam&#x0a;who built this tool."
+                               FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}"
+                               TextWrapping="Wrap" />
+
+                    <!-- Close button -->
+                    <Button x:Name="OkButton" Content="Close"
+                            FontSize="11" Padding="14,5" CornerRadius="12"
+                            HorizontalAlignment="Left" Margin="0,20,0,0" />
+                </StackPanel>
+            </ScrollViewer>
         </Border>
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,20">
-            <StackPanel Spacing="6">
+        <!-- MIDDLE COLUMN: Built with AI, External APIs, Build Tools, Roadmap -->
+        <Border Grid.Column="1" Padding="20,20"
+                Background="{StaticResource EveBackgroundDarkBrush}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="4">
 
-                <!-- Header -->
-                <DockPanel Margin="0,0,0,8">
-                    <!-- App icon -->
-                    <Border DockPanel.Dock="Left" Width="56" Height="56" CornerRadius="14"
-                            Background="{StaticResource EveBackgroundMediumBrush}"
-                            BorderBrush="{StaticResource EveAccentPrimaryBrush}"
-                            BorderThickness="1" Margin="0,0,16,0"
-                            VerticalAlignment="Top">
-                        <TextBlock Text="EM" FontSize="14" FontWeight="Bold"
-                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <!-- Built with AI -->
+                    <TextBlock Text="BUILT WITH AI" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBlock Text="Continued maintenance is made possible through AI-assisted development tools."
+                               FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}"
+                               TextWrapping="Wrap" Margin="0,0,0,12" />
 
-                    <StackPanel>
-                        <TextBlock Text="EVEMon NexT" FontSize="22" FontWeight="Bold"
-                                   Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
-                            <TextBlock x:Name="VersionText" FontSize="11"
-                                       Foreground="{StaticResource EveTextDisabledBrush}" />
-                            <TextBlock Text="|" FontSize="11"
-                                       Foreground="{StaticResource EveTextDisabledBrush}" />
-                            <TextBlock x:Name="BuildInfoText" FontSize="11"
-                                       Foreground="{StaticResource EveTextDisabledBrush}" />
-                        </StackPanel>
-                        <TextBlock Text="Character Intelligence for EVE Online"
-                                   FontSize="11" Margin="0,4,0,0"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    </StackPanel>
-                </DockPanel>
+                    <!-- External APIs -->
+                    <TextBlock Text="EXTERNAL APIs" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBlock Text="CCP Games - ESI API" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="EVEMarketer - Market Data" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="Fuzzwork - Static Data" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="Stack Overflow - Solutions" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                               Margin="0,0,0,12" />
 
-                <Separator Margin="0,8" />
+                    <!-- Build Tools -->
+                    <TextBlock Text="BUILD TOOLS" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBlock Text=".NET 8.0 - Runtime" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="Avalonia UI - Cross-platform" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="Claude Code - Anthropic" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                               Margin="0,0,0,12" />
 
-                <!-- About -->
-                <TextBlock FontSize="12" Foreground="{StaticResource EveTextSecondaryBrush}"
-                           TextWrapping="Wrap" LineHeight="20">
-                    EVEMon NexT is a complete rebuild of EVEMon — the character monitoring
-                    and skill planning tool that EVE Online players have relied on since 2006.
-                    Dark theme, modern plan editor, cross-platform architecture, and the same
-                    skill optimization engine under the hood.
-                </TextBlock>
+                    <!-- Roadmap -->
+                    <TextBlock Text="ROADMAP" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               Margin="0,0,0,4" />
+                    <TextBlock Text="&#x2022; UI Modernization" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="&#x2022; Enhanced Skill Planning" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="&#x2022; Better ESI Integration" FontSize="11"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
 
-                <Separator Margin="0,8" />
-
-                <!-- Hall of Fame -->
-                <TextBlock Text="HALL OF FAME" FontSize="10" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveTextDisabledBrush}"
-                           LetterSpacing="2" Margin="0,0,0,8" />
-
-                <TextBlock FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}"
-                           TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,12">
-                    Every person who contributed to EVEMon across its 20-year history.
-                </TextBlock>
-
-                <ItemsControl x:Name="ContributorsList" />
-
-                <Separator Margin="0,12" />
-
-                <!-- Built With -->
-                <TextBlock Text="BUILT WITH" FontSize="10" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveTextDisabledBrush}"
-                           LetterSpacing="2" Margin="0,0,0,8" />
-
-                <StackPanel Spacing="3" Margin="8,0,0,0">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="Claude Code" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                        <TextBlock Text="by Anthropic — AI-assisted development" FontSize="11"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text="Avalonia UI" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                        <TextBlock Text="— Cross-platform .NET desktop framework" FontSize="11"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <TextBlock Text=".NET 8" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                        <TextBlock Text="— Runtime and SDK" FontSize="11"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    </StackPanel>
+                    <!-- Copyright at bottom of middle column -->
+                    <TextBlock x:Name="CopyrightText" FontSize="9" Margin="0,20,0,0"
+                               Foreground="{StaticResource EveTextDisabledBrush}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="Licensed under GPL v2" FontSize="9"
+                               Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock Text="EVE Online and all related logos are trademarks of CCP hf."
+                               FontSize="9" Foreground="{StaticResource EveTextDisabledBrush}"
+                               TextWrapping="Wrap" />
                 </StackPanel>
+            </ScrollViewer>
+        </Border>
 
-                <Separator Margin="0,12" />
+        <!-- RIGHT COLUMN: Contributors -->
+        <Border Grid.Column="2"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                Padding="16,20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="ContributorsPanel" Spacing="2" />
+            </ScrollViewer>
+        </Border>
 
-                <!-- Links -->
-                <TextBlock Text="LINKS" FontSize="10" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveTextDisabledBrush}"
-                           LetterSpacing="2" Margin="0,0,0,8" />
-
-                <StackPanel Orientation="Horizontal" Spacing="8" Margin="8,0,0,0">
-                    <Button x:Name="WebsiteLink" Content="evemon.dev"
-                            FontSize="11" Padding="10,4" CornerRadius="12"
-                            Background="Transparent"
-                            Foreground="{StaticResource EveAccentSecondaryBrush}"
-                            Cursor="Hand" />
-                    <Button x:Name="GitHubLink" Content="GitHub"
-                            FontSize="11" Padding="10,4" CornerRadius="12"
-                            Background="Transparent"
-                            Foreground="{StaticResource EveAccentSecondaryBrush}"
-                            Cursor="Hand" />
-                    <Button x:Name="IssuesLink" Content="Report a Bug"
-                            FontSize="11" Padding="10,4" CornerRadius="12"
-                            Background="Transparent"
-                            Foreground="{StaticResource EveAccentSecondaryBrush}"
-                            Cursor="Hand" />
-                </StackPanel>
-
-                <Separator Margin="0,12" />
-
-                <!-- Legal -->
-                <TextBlock x:Name="CopyrightText" FontSize="10"
-                           Foreground="{StaticResource EveTextDisabledBrush}" />
-                <TextBlock Text="Licensed under GNU General Public License v2 (GPL v2)"
-                           FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
-
-            </StackPanel>
-        </ScrollViewer>
-    </DockPanel>
+    </Grid>
 </Window>

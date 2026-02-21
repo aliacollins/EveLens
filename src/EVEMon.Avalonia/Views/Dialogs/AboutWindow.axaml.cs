@@ -4,13 +4,10 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Layout;
 using Avalonia.Media;
 using EVEMon.Common.Services;
 
@@ -36,103 +33,104 @@ namespace EVEMon.Avalonia.Views.Dialogs
                     : fvi.ProductVersion ?? fvi.FileVersion ?? "Unknown";
 
                 string bitness = Environment.Is64BitProcess ? "64-bit" : "32-bit";
-                VersionText.Text = $"v{version} | {bitness}";
-                BuildInfoText.Text = $".NET {Environment.Version} | Avalonia";
+                VersionText.Text = $"Version {version} | {bitness}";
                 CopyrightText.Text = BuildInfo.Copyright;
             }
             catch
             {
                 VersionText.Text = "Version information unavailable";
-                BuildInfoText.Text = string.Empty;
                 CopyrightText.Text = BuildInfo.Copyright;
             }
         }
 
         private void PopulateContributors()
         {
-            var contributors = new List<(string Name, string Role)>
-            {
-                ("Alia Collins", "EVEMon NexT lead"),
-                ("Six Anari", "Original creator"),
-                ("Jimi C", "Lead developer"),
-                ("stillfront", "Core team"),
-                ("Peter Han", "ESI maintainer"),
-                ("Desmont McCallock", "ESI implementation"),
-                ("Tonto Aansen", "Contributor"),
-                ("Saeka Tansen", "Contributor"),
-                ("MrCue", "Contributor"),
-                ("Candle", "Contributor"),
-                ("InfinitasX", "Community maintainer"),
-                ("Adrienne Adler", "Contributor"),
-                ("Torgo", "Contributor"),
-                ("alebrophy", "Contributor"),
-                ("DiagonalyStraight", "Contributor"),
-                ("Lukas Friedrichsen", "Contributor"),
-                ("Claude (Anthropic)", "AI development partner"),
-            };
-
             var goldBrush = (IBrush?)Application.Current?.FindResource("EveAccentPrimaryBrush") ?? Brushes.Gold;
             var textBrush = (IBrush?)Application.Current?.FindResource("EveTextPrimaryBrush") ?? Brushes.White;
-            var dimBrush = (IBrush?)Application.Current?.FindResource("EveTextDisabledBrush") ?? Brushes.Gray;
-            var bgBrush = (IBrush?)Application.Current?.FindResource("EveBackgroundMediumBrush") ?? Brushes.DarkGray;
+            var dimBrush = (IBrush?)Application.Current?.FindResource("EveTextSecondaryBrush") ?? Brushes.Gray;
 
-            var panel = new WrapPanel
+            // Header
+            AddSectionHeader("CONTRIBUTORS");
+            AddName("Originally by Six Anari", dimBrush);
+            AddSpacer(8);
+
+            // Active Developer
+            AddSectionHeader("ACTIVE DEVELOPER");
+            AddName("Alia Collins", goldBrush);
+            AddSpacer(8);
+
+            // Developers (Retired)
+            AddSectionHeader("DEVELOPERS (RETIRED)");
+            foreach (var name in new[]
             {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-
-            foreach (var (name, role) in contributors)
+                "Peter Han", "Blitz Bandis", "Jimi", "Araan Sunn",
+                "Six Anari", "Anders Chydenius", "Brad Stone",
+                "Eewec Ourbyni", "Richard Slater", "Vehlin",
+                "Collin Grady", "DCShadow", "DonQuiche", "Grauw",
+                "Jalon Mevek", "Labogh", "romanl", "Safrax",
+                "Stevil Knevil", "TheBelgarion"
+            })
             {
-                var initial = new TextBlock
-                {
-                    Text = name[0].ToString(),
-                    FontSize = 9,
-                    FontWeight = FontWeight.Bold,
-                    Foreground = goldBrush,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-
-                var initialCircle = new Border
-                {
-                    Width = 18, Height = 18,
-                    CornerRadius = new CornerRadius(9),
-                    Background = bgBrush,
-                    Child = initial
-                };
-
-                var nameText = new TextBlock
-                {
-                    Text = name,
-                    FontSize = 11,
-                    Foreground = textBrush,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
-
-                var chip = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 5,
-                    Children = { initialCircle, nameText }
-                };
-
-                var chipBorder = new Border
-                {
-                    Padding = new Thickness(4, 3, 10, 3),
-                    Margin = new Thickness(3),
-                    CornerRadius = new CornerRadius(12),
-                    Background = Brushes.Transparent,
-                    BorderBrush = (IBrush?)Application.Current?.FindResource("EveBorderBrush") ?? Brushes.DarkGray,
-                    BorderThickness = new Thickness(1),
-                    Child = chip,
-                    [ToolTip.TipProperty] = role
-                };
-
-                panel.Children.Add(chipBorder);
+                AddName(name, textBrush);
             }
+            AddSpacer(8);
 
-            ContributorsList.Items.Add(panel);
+            // Consultants
+            AddSectionHeader("CONSULTANTS");
+            foreach (var name in new[]
+            {
+                "Desmont McCallock", "Tonto Aansen", "Saeka Tansen",
+                "MrCue", "Candle"
+            })
+            {
+                AddName(name, textBrush);
+            }
+            AddSpacer(8);
+
+            // Community Contributors
+            AddSectionHeader("COMMUNITY");
+            foreach (var name in new[]
+            {
+                "InfinitasX", "Adrienne Adler", "Torgo",
+                "alebrophy", "DiagonalyStraight", "Lukas Friedrichsen"
+            })
+            {
+                AddName(name, textBrush);
+            }
+            AddSpacer(8);
+
+            // AI
+            AddSectionHeader("AI PARTNER");
+            AddName("Claude (Anthropic)", textBrush);
+        }
+
+        private void AddSectionHeader(string text)
+        {
+            var goldBrush = (IBrush?)Application.Current?.FindResource("EveAccentPrimaryBrush") ?? Brushes.Gold;
+            ContributorsPanel.Children.Add(new TextBlock
+            {
+                Text = text,
+                FontSize = 10,
+                FontWeight = FontWeight.Bold,
+                Foreground = goldBrush,
+                Margin = new Thickness(0, 4, 0, 2)
+            });
+        }
+
+        private void AddName(string name, IBrush foreground)
+        {
+            ContributorsPanel.Children.Add(new TextBlock
+            {
+                Text = name,
+                FontSize = 11,
+                Foreground = foreground,
+                Margin = new Thickness(8, 1, 0, 1)
+            });
+        }
+
+        private void AddSpacer(double height)
+        {
+            ContributorsPanel.Children.Add(new Border { Height = height });
         }
 
         private void WireEvents()
@@ -140,7 +138,6 @@ namespace EVEMon.Avalonia.Views.Dialogs
             OkButton.Click += (_, _) => Close();
             WebsiteLink.Click += (_, _) => OpenUrl(BuildInfo.Website);
             GitHubLink.Click += (_, _) => OpenUrl(BuildInfo.Repository);
-            IssuesLink.Click += (_, _) => OpenUrl(BuildInfo.Repository + "/issues");
         }
 
         private static void OpenUrl(string url)
