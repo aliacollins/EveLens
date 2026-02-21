@@ -111,6 +111,7 @@ namespace EVEMon.Avalonia.Views
 
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
+            SkillConstellationMenuItem.Click += OnSkillConstellationClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
             SettingsMenuItem.Click += OnSettingsClick;
 
@@ -305,14 +306,67 @@ namespace EVEMon.Avalonia.Views
 
         private async void OnSettingsClick(object? sender, RoutedEventArgs e)
         {
+            Window? errDialog = null;
             try
             {
-                var settingsWindow = new SettingsWindow();
+                // Step 1: prove the click fires
+                Debug.WriteLine("Settings click fired");
+
+                // Step 2: try creating the window
+                SettingsWindow? settingsWindow = null;
+                try
+                {
+                    settingsWindow = new SettingsWindow();
+                }
+                catch (Exception ctorEx)
+                {
+                    errDialog = new Window
+                    {
+                        Title = "Settings Constructor Error",
+                        Width = 600, Height = 400,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new ScrollViewer
+                        {
+                            Content = new TextBlock
+                            {
+                                Text = $"SettingsWindow constructor failed:\n\n{ctorEx}",
+                                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                                FontSize = 11,
+                                Margin = new Thickness(16)
+                            }
+                        }
+                    };
+                    await errDialog.ShowDialog(this);
+                    return;
+                }
+
+                // Step 3: show it
                 await settingsWindow.ShowDialog(this);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error opening settings: {ex}");
+                try
+                {
+                    errDialog = new Window
+                    {
+                        Title = "Settings Error",
+                        Width = 600, Height = 400,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new ScrollViewer
+                        {
+                            Content = new TextBlock
+                            {
+                                Text = $"Settings failed:\n\n{ex}",
+                                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                                FontSize = 11,
+                                Margin = new Thickness(16)
+                            }
+                        }
+                    };
+                    await errDialog.ShowDialog(this);
+                }
+                catch { }
             }
         }
 
@@ -746,6 +800,66 @@ namespace EVEMon.Avalonia.Views
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error: {ex}");
+            }
+        }
+
+        private async void OnSkillConstellationClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var character = GetSelectedCharacter();
+                if (character == null)
+                {
+                    // Use first character if on Overview tab
+                    character = _viewModel.Characters.FirstOrDefault();
+                }
+                if (character == null)
+                {
+                    var dialog = new Window
+                    {
+                        Title = "No Character",
+                        Width = 320, Height = 130,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new TextBlock
+                        {
+                            Text = "Add a character to view the skill constellation.",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            Margin = new Thickness(20)
+                        }
+                    };
+                    await dialog.ShowDialog(this);
+                    return;
+                }
+
+                var window = new SkillConstellationWindow();
+                window.Initialize(character);
+                window.Show(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening skill constellation: {ex}");
+                try
+                {
+                    var errDialog = new Window
+                    {
+                        Title = "Error",
+                        Width = 500, Height = 200,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new TextBlock
+                        {
+                            Text = $"Failed to open skill constellation:\n{ex.Message}",
+                            VerticalAlignment = VerticalAlignment.Center,
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                            Margin = new Thickness(20),
+                            FontSize = 11
+                        }
+                    };
+                    await errDialog.ShowDialog(this);
+                }
+                catch { }
             }
         }
 

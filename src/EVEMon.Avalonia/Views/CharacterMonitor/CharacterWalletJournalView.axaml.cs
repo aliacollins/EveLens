@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Enumerations.UISettings;
@@ -125,23 +128,26 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             if (_viewModel == null) return;
 
-            var grid = this.FindControl<DataGrid>("ItemsGrid");
+            var groupsList = this.FindControl<ItemsControl>("JournalGroupsList");
+            var scrollViewer = this.FindControl<ScrollViewer>("GroupedList");
             var emptyState = this.FindControl<Shared.EmptyState>("EmptyState");
 
-            var items = _viewModel.Items.ToList();
+            var groupedItems = _viewModel.GroupedItems;
 
-            if (items.Count == 0)
+            if (groupedItems.Count == 0 || _viewModel.TotalItemCount == 0)
             {
-                if (grid != null) grid.IsVisible = false;
+                if (scrollViewer != null) scrollViewer.IsVisible = false;
                 if (emptyState != null) emptyState.IsVisible = true;
             }
             else
             {
-                if (grid != null)
+                if (groupsList != null)
                 {
-                    grid.IsVisible = true;
-                    grid.ItemsSource = items;
+                    groupsList.ItemsSource = groupedItems
+                        .Select(g => new JournalGroupDisplay(g))
+                        .ToList();
                 }
+                if (scrollViewer != null) scrollViewer.IsVisible = true;
                 if (emptyState != null) emptyState.IsVisible = false;
             }
         }
@@ -234,5 +240,87 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             if (evt.Character?.CharacterID == _characterId)
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is not Border border) return;
+            if (border.DataContext is JournalGroupDisplay group)
+            {
+                group.IsExpanded = !group.IsExpanded;
+            }
+        }
+
+        private void OnCollapseAll(object? sender, RoutedEventArgs e)
+        {
+            var groupsList = this.FindControl<ItemsControl>("JournalGroupsList");
+            if (groupsList?.ItemsSource is not IEnumerable<JournalGroupDisplay> groups) return;
+            foreach (var g in groups) g.IsExpanded = false;
+        }
+
+        private void OnExpandAll(object? sender, RoutedEventArgs e)
+        {
+            var groupsList = this.FindControl<ItemsControl>("JournalGroupsList");
+            if (groupsList?.ItemsSource is not IEnumerable<JournalGroupDisplay> groups) return;
+            foreach (var g in groups) g.IsExpanded = true;
+        }
+    }
+
+    /// <summary>
+    /// Display model for a journal group — compact chevron header with INPC for expand/collapse.
+    /// </summary>
+    internal sealed class JournalGroupDisplay : INotifyPropertyChanged
+    {
+        private bool _isExpanded = true;
+
+        public string Name { get; }
+        public string CountText { get; }
+        public List<JournalEntryDisplay> Items { get; }
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
+            }
+        }
+
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public JournalGroupDisplay(ListGrouping<WalletJournal> group)
+        {
+            Name = group.Key;
+            CountText = $"{group.Items.Count} {(group.Items.Count == 1 ? "entry" : "entries")}";
+            Items = group.Items.Select(j => new JournalEntryDisplay(j)).ToList();
+        }
+    }
+
+    /// <summary>
+    /// Display wrapper for a journal entry — adds Avalonia-specific properties.
+    /// </summary>
+    internal sealed class JournalEntryDisplay
+    {
+        private readonly WalletJournal _journal;
+
+        public JournalEntryDisplay(WalletJournal journal)
+        {
+            _journal = journal;
+        }
+
+        public DateTime Date => _journal.Date;
+        public string Type => _journal.Type;
+        public string Reason => _journal.Reason;
+        public decimal Amount => _journal.Amount;
+        public decimal Balance => _journal.Balance;
+        public string Issuer => _journal.Issuer;
+        public string Recipient => _journal.Recipient;
+
+        public IBrush AmountBrush => Amount >= 0
+            ? Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush ?? Brushes.LightGreen
+            : Application.Current?.FindResource("EveErrorRedBrush") as IBrush ?? Brushes.Red;
     }
 }

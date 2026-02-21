@@ -32,42 +32,55 @@
         <DockPanel x:Name="DataContent">
             <!-- Toolbar -->
             <Border DockPanel.Dock="Top" Padding="10,7"
-                    Background="{StaticResource EveBackgroundMediumBrush}">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <!-- Pill search bar -->
-                    <Border CornerRadius="14"
-                            Background="{StaticResource EveBackgroundDarkBrush}"
-                            Padding="4,0" MinWidth="220">
-                        <DockPanel>
-                            <Button x:Name="ClearFilterButton"
-                                    DockPanel.Dock="Right"
-                                    Content="&#x2715;" FontSize="10"
-                                    Background="Transparent" BorderThickness="0"
-                                    Padding="6,0" Cursor="Hand"
-                                    IsVisible="False"
-                                    Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox"
-                                     Watermark="Search journal..."
-                                     Background="Transparent" BorderThickness="0"
-                                     FontSize="11" Padding="8,5"
-                                     TextChanged="OnFilterTextChanged" />
-                        </DockPanel>
-                    </Border>
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center">
+                        <Button Content="Collapse All" FontSize="11" Padding="10,4"
+                                CornerRadius="12" Click="OnCollapseAll" />
+                        <Button Content="Expand All" FontSize="11" Padding="10,4"
+                                CornerRadius="12" Click="OnExpandAll" />
+                    </StackPanel>
 
-                    <!-- Type filter -->
-                    <TextBlock Text="Type:" FontSize="11" VerticalAlignment="Center"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <ComboBox x:Name="TypeFilterCombo" FontSize="11"
-                              MinWidth="140" Padding="8,4"
-                              SelectionChanged="OnTypeFilterChanged" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- Pill search bar -->
+                        <Border CornerRadius="14"
+                                Background="{StaticResource EveBackgroundDarkestBrush}"
+                                BorderBrush="{StaticResource EveBorderBrush}"
+                                BorderThickness="1" Padding="0"
+                                MinWidth="240" MaxWidth="320">
+                            <DockPanel>
+                                <Button x:Name="ClearFilterButton"
+                                        DockPanel.Dock="Right"
+                                        Content="&#x2715;" FontSize="10"
+                                        Background="Transparent" BorderThickness="0"
+                                        Padding="8,4" CornerRadius="0,14,14,0"
+                                        IsVisible="False"
+                                        Click="OnClearFilter" />
+                                <TextBox x:Name="FilterBox"
+                                         Watermark="Search journal..."
+                                         Background="Transparent" BorderThickness="0"
+                                         FontSize="11" Padding="10,5"
+                                         TextChanged="OnFilterTextChanged" />
+                            </DockPanel>
+                        </Border>
 
-                    <!-- Grouping -->
-                    <TextBlock Text="Group:" FontSize="11" VerticalAlignment="Center"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <ComboBox x:Name="GroupingCombo" FontSize="11"
-                              MinWidth="140" Padding="8,4"
-                              SelectionChanged="OnGroupingChanged" />
-                </StackPanel>
+                        <!-- Type filter -->
+                        <TextBlock Text="Type:" FontSize="11" VerticalAlignment="Center"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
+                        <ComboBox x:Name="TypeFilterCombo" FontSize="11"
+                                  MinWidth="140" Padding="8,4"
+                                  SelectionChanged="OnTypeFilterChanged" />
+
+                        <!-- Grouping -->
+                        <TextBlock Text="Group:" FontSize="11" VerticalAlignment="Center"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
+                        <ComboBox x:Name="GroupingCombo" FontSize="11"
+                                  MinWidth="140" Padding="8,4"
+                                  SelectionChanged="OnGroupingChanged" />
+                    </StackPanel>
+                </DockPanel>
             </Border>
 
             <!-- Status bar -->
@@ -84,52 +97,85 @@
                                    Title="No journal entries"
                                    Subtitle="Wallet journal entries will appear here when available" />
 
-                <!-- Data grid -->
-                <DataGrid x:Name="ItemsGrid"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      CanUserReorderColumns="True"
-                      CanUserResizeColumns="True"
-                      CanUserSortColumns="True"
-                      GridLinesVisibility="Horizontal"
-                      BorderThickness="0"
-                      Background="{StaticResource EveBackgroundDarkBrush}"
-                      Foreground="{StaticResource EveTextPrimaryBrush}"
-                      FontSize="11">
-                <DataGrid.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem Header="Copy Entry" />
-                        <MenuItem Header="Copy Amount" />
-                        <Separator />
-                        <MenuItem Header="Export to CSV..." />
-                    </ContextMenu>
-                </DataGrid.ContextMenu>
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
-                    <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="150" />
-                    <DataGridTemplateColumn Header="Amount" Width="130">
-                        <DataGridTemplateColumn.CellTemplate>
+                <!-- Grouped journal list with chevron headers -->
+                <ScrollViewer x:Name="GroupedList" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="JournalGroupsList" Margin="0" HorizontalAlignment="Stretch">
+                        <ItemsControl.Styles>
+                            <Style Selector="ItemsControl > ContentPresenter">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            </Style>
+                        </ItemsControl.Styles>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Amount, StringFormat=\{0:N2\} ISK}"
-                                           Foreground="{Binding Amount, Converter={StaticResource AmountColor}}"
-                                           VerticalAlignment="Center" Padding="4,0" />
+                                <StackPanel>
+                                    <!-- Group header: ▸ Name   count -->
+                                    <Border Classes="group-header" HorizontalAlignment="Stretch"
+                                            PointerPressed="OnGroupHeaderClicked">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
+                                            <TextBlock Grid.Column="0" Text="{Binding Chevron}"
+                                                       FontSize="11" Width="16"
+                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                       FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="2" Text="{Binding CountText}"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" Margin="8,0" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Journal entry rows -->
+                                    <ItemsControl ItemsSource="{Binding Items}"
+                                                  HorizontalAlignment="Stretch"
+                                                  IsVisible="{Binding IsExpanded}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Classes="item-row" Padding="24,4,8,4"
+                                                        Background="{StaticResource EveBackgroundDarkBrush}"
+                                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                                        BorderThickness="0,0,0,0.5" HorizontalAlignment="Stretch">
+                                                    <Grid ColumnDefinitions="140,*,130,130" HorizontalAlignment="Stretch">
+                                                        <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat=\{0:yyyy-MM-dd HH:mm\}}"
+                                                                   FontSize="10" Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                                   VerticalAlignment="Center" />
+                                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center" Margin="8,0">
+                                                            <TextBlock Text="{Binding Type}" FontSize="11"
+                                                                       Foreground="{StaticResource EveTextPrimaryBrush}"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding Reason}" FontSize="10"
+                                                                       Foreground="{StaticResource EveTextDisabledBrush}"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat=\{0:N2\} ISK}"
+                                                                   FontSize="11" Foreground="{Binding AmountBrush}"
+                                                                   TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                        <TextBlock Grid.Column="3" Text="{Binding Balance, StringFormat=\{0:N2\} ISK}"
+                                                                   FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                                                                   TextAlignment="Right" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Balance" Width="130">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Balance, StringFormat=\{0:N2\} ISK}"
-                                           Foreground="{StaticResource EveSuccessGreenBrush}"
-                                           VerticalAlignment="Center" Padding="4,0" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Issuer" Binding="{Binding Issuer}" Width="130" />
-                    <DataGridTextColumn Header="Recipient" Binding="{Binding Recipient}" Width="130" />
-                    <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="200" />
-                </DataGrid.Columns>
-                </DataGrid>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </Grid>
         </DockPanel>
     </Panel>

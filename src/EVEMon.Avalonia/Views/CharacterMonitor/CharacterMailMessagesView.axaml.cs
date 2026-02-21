@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
@@ -125,42 +126,6 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
             MailGroupsList.ItemsSource = groups;
             StatusText.Text = $"Mail: {_viewModel.TotalItemCount} message{(_viewModel.TotalItemCount == 1 ? "" : "s")}";
-
-            // Wire Expander expand events for mail body fetch
-            WireExpanderEvents();
-        }
-
-        private void WireExpanderEvents()
-        {
-            // Defer to next layout pass so the ItemsControl has rendered its children
-            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                foreach (var expander in FindMailExpanders())
-                {
-                    expander.PropertyChanged -= OnMailExpanderPropertyChanged;
-                    expander.PropertyChanged += OnMailExpanderPropertyChanged;
-                }
-            }, global::Avalonia.Threading.DispatcherPriority.Loaded);
-        }
-
-        private IEnumerable<Expander> FindMailExpanders()
-        {
-            // Find all nested Expanders whose DataContext is a MailDisplayEntry
-            return MailGroupsList.GetLogicalDescendants()
-                .OfType<Expander>()
-                .Where(ex => ex.DataContext is MailDisplayEntry);
-        }
-
-        private void OnMailExpanderPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-        {
-            if (e.Property != Expander.IsExpandedProperty)
-                return;
-
-            if (sender is Expander { IsExpanded: true, DataContext: MailDisplayEntry entry })
-            {
-                if (!entry.HasBody)
-                    entry.Mail.GetMailBody();
-            }
         }
 
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -222,31 +187,48 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             PopulateView();
         }
 
-        private void OnOpenMail(object? sender, RoutedEventArgs e)
+        private void OnMailItemClicked(object? sender, PointerPressedEventArgs e)
         {
-            if (sender is Button { Tag: MailDisplayEntry entry })
+            if (sender is Border { Tag: MailDisplayEntry entry })
             {
-                var window = new MailReadingWindow();
-                window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText, entry.BodyText);
-                window.Show();
+                // Check if body is available
+                if (!entry.HasBody)
+                {
+                    // Trigger download
+                    entry.Mail.GetMailBody();
+
+                    // Show window with loading message
+                    var window = new MailReadingWindow();
+                    window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText,
+                        "Loading mail body from EVE servers...\n\nPlease wait a moment and try reopening this message.");
+                    window.Show();
+                }
+                else
+                {
+                    // Body is already available
+                    var window = new MailReadingWindow();
+                    window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText, entry.BodyText);
+                    window.Show();
+                }
             }
+        }
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Border { DataContext: MailGroupEntry group })
+                group.IsExpanded = !group.IsExpanded;
         }
 
         private void OnCollapseAll(object? sender, RoutedEventArgs e)
         {
-            foreach (var expander in MailGroupsList.GetLogicalDescendants().OfType<Expander>())
-                expander.IsExpanded = false;
+            if (MailGroupsList.ItemsSource is IEnumerable<MailGroupEntry> groups)
+                foreach (var g in groups) g.IsExpanded = false;
         }
 
         private void OnExpandAll(object? sender, RoutedEventArgs e)
         {
-            foreach (var expander in MailGroupsList.GetLogicalDescendants().OfType<Expander>())
-            {
-                expander.IsExpanded = true;
-                // Trigger body fetch for mail expanders
-                if (expander.DataContext is MailDisplayEntry entry && !entry.HasBody)
-                    entry.Mail.GetMailBody();
-            }
+            if (MailGroupsList.ItemsSource is IEnumerable<MailGroupEntry> groups)
+                foreach (var g in groups) g.IsExpanded = true;
         }
     }
 }

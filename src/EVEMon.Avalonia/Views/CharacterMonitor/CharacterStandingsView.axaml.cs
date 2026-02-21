@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -152,6 +153,12 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             StandingGroupsList.ItemsSource = _displayGroups;
         }
 
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Border border && border.DataContext is StandingDisplayGroup group)
+                group.IsExpanded = !group.IsExpanded;
+        }
+
         private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
         {
             var parentView = this.FindAncestorOfType<CharacterMonitorView>();
@@ -161,12 +168,29 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         }
     }
 
-    internal sealed class StandingDisplayGroup
+    internal sealed class StandingDisplayGroup : INotifyPropertyChanged
     {
+        private bool _isExpanded = true;
+
         public string Name { get; }
         public string CountText { get; }
-        public bool IsExpanded { get; set; } = true;
         public List<StandingDisplayEntry> Items { get; }
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
+            }
+        }
+
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public StandingDisplayGroup(string name, IReadOnlyList<Standing> standings)
         {

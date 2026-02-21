@@ -28,9 +28,6 @@
                 <TabItem x:Name="TabContacts" Header="Contacts" FontSize="11">
                     <local:CharacterContactsView />
                 </TabItem>
-                <TabItem x:Name="TabFW" Header="FW" FontSize="11">
-                    <local:CharacterFactionalWarfareView />
-                </TabItem>
                 <TabItem x:Name="TabMedals" Header="Medals" FontSize="11">
                     <local:CharacterMedalsView />
                 </TabItem>
@@ -65,12 +62,6 @@
                 </TabItem>
                 <TabItem x:Name="TabKills" Header="Kills" FontSize="11">
                     <local:CharacterKillLogView />
-                </TabItem>
-                <TabItem x:Name="TabPI" Header="PI" FontSize="11">
-                    <local:CharacterPlanetaryView />
-                </TabItem>
-                <TabItem x:Name="TabResearch" Header="Research" FontSize="11">
-                    <local:CharacterResearchPointsView />
                 </TabItem>
             </TabControl>
 

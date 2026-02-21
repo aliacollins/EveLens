@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -47,6 +48,8 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
         private void LoadData()
         {
+            if (this.GetVisualRoot() == null) return;
+
             Character? character = DataContext as Character
                 ?? (DataContext as ObservableCharacter)?.Character;
             if (character == null)
@@ -64,12 +67,9 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             else
                 _viewModel.ForceRefresh();
 
-            // Flatten all skills into a single list for the DataGrid (Law 20: .ToList())
-            var flatItems = _viewModel.VisibleGroups
-                .SelectMany(g => g.VisibleSkills.Select(s => new SkillDisplayEntry(s, g.Name)))
+            SkillGroupsList.ItemsSource = _viewModel.VisibleGroups
+                .Select(g => new SkillGroupDisplay(g))
                 .ToList();
-
-            SkillsGrid.ItemsSource = flatItems;
 
             StatusText.Text = $"Trained: {_viewModel.TotalTrained} of {_viewModel.TotalSkills} skills  |  Total SP: {_viewModel.TotalSP:N0}";
         }
@@ -78,6 +78,15 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             if (evt.Character?.CharacterID == _characterId)
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
+        }
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is not Border border) return;
+            if (border.DataContext is SkillGroupDisplay group)
+            {
+                group.IsExpanded = !group.IsExpanded;
+            }
         }
 
         private void OnToggleShowAll(object? sender, RoutedEventArgs e)
@@ -105,47 +114,106 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             LoadData();
         }
 
-        private void OnCopySkillName(object? sender, RoutedEventArgs e)
+        private void OnCollapseAll(object? sender, RoutedEventArgs e)
         {
-            var item = SkillsGrid.SelectedItem as SkillDisplayEntry;
-            if (item != null)
-                TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(item.Name);
+            if (SkillGroupsList.ItemsSource is not IEnumerable<SkillGroupDisplay> groups) return;
+            foreach (var g in groups) g.IsExpanded = false;
+        }
+
+        private void OnExpandAll(object? sender, RoutedEventArgs e)
+        {
+            if (SkillGroupsList.ItemsSource is not IEnumerable<SkillGroupDisplay> groups) return;
+            foreach (var g in groups) g.IsExpanded = true;
         }
     }
 
-    /// <summary>Avalonia display wrapper for skill with IBrush color properties.</summary>
-    internal sealed class SkillDisplayEntry
+    /// <summary>
+    /// Display model for a skill group — compact chevron header with INPC for expand/collapse.
+    /// </summary>
+    internal sealed class SkillGroupDisplay : INotifyPropertyChanged
+    {
+        private bool _isExpanded;
+
+        public string Name { get; }
+        public string CountText { get; }
+        public string SPText { get; }
+        public List<SkillDisplay> Skills { get; }
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
+            }
+        }
+
+        /// <summary>▸ collapsed, ▾ expanded — same as plan editor sidebar.</summary>
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public SkillGroupDisplay(SkillBrowserGroupEntry group)
+        {
+            Name = group.Name;
+            CountText = $"{group.TrainedCount} / {group.TotalCount}";
+            SPText = FormatSP(group.TrainedSP);
+            _isExpanded = group.IsExpanded;
+            Skills = group.VisibleSkills.Select(s => new SkillDisplay(s)).ToList();
+        }
+
+        private static string FormatSP(long sp)
+        {
+            if (sp >= 1_000_000) return $"{sp / 1_000_000.0:N1}M SP";
+            if (sp >= 1_000) return $"{sp / 1_000.0:N0}K SP";
+            if (sp > 0) return $"{sp:N0} SP";
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// Display model for a single skill row.
+    /// </summary>
+    internal sealed class SkillDisplay
     {
         private static readonly IBrush FilledBlock = new SolidColorBrush(Color.Parse("#FFE6A817"));
         private static readonly IBrush EmptyBlock = new SolidColorBrush(Color.Parse("#FF2A2A4A"));
         private static readonly IBrush TrainingBlock = new SolidColorBrush(Color.Parse("#FF81C784"));
-        private static readonly IBrush TrainedColor = new SolidColorBrush(Color.Parse("#FFE0E0E0"));
-        private static readonly IBrush UntrainedColor = new SolidColorBrush(Color.Parse("#FF555555"));
+        private static readonly IBrush TrainedColor = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
+        private static readonly IBrush UntrainedColor = new SolidColorBrush(Color.Parse("#FF505060"));
+        private static readonly IBrush TrainingColor = new SolidColorBrush(Color.Parse("#FF81C784"));
 
-        public SkillBrowserSkillEntry Data { get; }
+        public string Name { get; }
+        public string RankText { get; }
+        public string SPText { get; }
+        public IBrush NameBrush { get; }
+        public IBrush Block1 { get; }
+        public IBrush Block2 { get; }
+        public IBrush Block3 { get; }
+        public IBrush Block4 { get; }
+        public IBrush Block5 { get; }
 
-        public string Name => Data.Name;
-        public string RankText => Data.RankText;
-        public string SPText => Data.SPText;
-        public string GroupName { get; }
-
-        public IBrush NameColor => Data.IsKnown ? TrainedColor : UntrainedColor;
-        public IBrush Block1Color => GetBlockColor(1);
-        public IBrush Block2Color => GetBlockColor(2);
-        public IBrush Block3Color => GetBlockColor(3);
-        public IBrush Block4Color => GetBlockColor(4);
-        public IBrush Block5Color => GetBlockColor(5);
-
-        public SkillDisplayEntry(SkillBrowserSkillEntry data, string groupName)
+        public SkillDisplay(SkillBrowserSkillEntry skill)
         {
-            Data = data;
-            GroupName = groupName;
+            Name = skill.Name;
+            RankText = skill.RankText;
+            SPText = skill.SPText;
+            NameBrush = skill.IsTraining ? TrainingColor
+                : skill.IsKnown ? TrainedColor : UntrainedColor;
+            Block1 = BlockColor(1, skill);
+            Block2 = BlockColor(2, skill);
+            Block3 = BlockColor(3, skill);
+            Block4 = BlockColor(4, skill);
+            Block5 = BlockColor(5, skill);
         }
 
-        private IBrush GetBlockColor(int lvl)
+        private static IBrush BlockColor(int lvl, SkillBrowserSkillEntry s)
         {
-            if (lvl <= Data.Level) return FilledBlock;
-            if (Data.IsTraining && lvl == Data.Level + 1) return TrainingBlock;
+            if (lvl <= s.Level) return FilledBlock;
+            if (s.IsTraining && lvl == s.Level + 1) return TrainingBlock;
             return EmptyBlock;
         }
     }

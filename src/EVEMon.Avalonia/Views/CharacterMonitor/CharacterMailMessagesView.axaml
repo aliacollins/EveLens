@@ -106,39 +106,31 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Expander IsExpanded="{Binding IsExpanded}"
-                                      HorizontalAlignment="Stretch"
-                                      Padding="0" Margin="0,0,0,1">
-                                <!-- Group header -->
-                                <Expander.Header>
-                                    <Border Background="{StaticResource EveBackgroundMediumBrush}"
-                                            Padding="10,6" HorizontalAlignment="Stretch">
-                                        <Grid ColumnDefinitions="*,Auto"
-                                              HorizontalAlignment="Stretch">
-                                            <TextBlock Grid.Column="0"
-                                                       Text="{Binding Name}"
-                                                       FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                       VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding CountText}"
-                                                       FontSize="11"
-                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                       VerticalAlignment="Center"
-                                                       Margin="12,0" />
-                                        </Grid>
-                                    </Border>
-                                </Expander.Header>
+                            <StackPanel>
+                                <!-- Group header: ▸ Name   Count -->
+                                <Border Classes="group-header" HorizontalAlignment="Stretch"
+                                        PointerPressed="OnGroupHeaderClicked">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
+                                        <TextBlock Grid.Column="0" Text="{Binding Chevron}"
+                                                   FontSize="11" Width="16"
+                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                   FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" Text="{Binding CountText}"
+                                                   FontSize="10"
+                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                   VerticalAlignment="Center" Margin="8,0" />
+                                    </Grid>
+                                </Border>
 
                                 <!-- Mail items in group -->
                                 <ItemsControl ItemsSource="{Binding Items}"
-                                              HorizontalAlignment="Stretch">
-                                    <ItemsControl.Styles>
-                                        <Style Selector="ItemsControl > ContentPresenter">
-                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                        </Style>
-                                    </ItemsControl.Styles>
+                                              HorizontalAlignment="Stretch"
+                                              IsVisible="{Binding IsExpanded}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <StackPanel Orientation="Vertical" />
@@ -146,85 +138,64 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <!-- Each mail as an Expander -->
-                                            <Expander IsExpanded="{Binding IsExpanded}"
-                                                      HorizontalAlignment="Stretch"
-                                                      Padding="0" Margin="0">
-                                                <!-- Mail header (collapsed view) -->
-                                                <Expander.Header>
-                                                    <Border Background="{StaticResource EveBackgroundDarkBrush}"
-                                                            Padding="12,6,12,6"
-                                                            BorderBrush="{StaticResource EveBorderBrush}"
-                                                            BorderThickness="0,0,0,0.5"
-                                                            HorizontalAlignment="Stretch">
-                                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                                              RowDefinitions="Auto,Auto"
-                                                              HorizontalAlignment="Stretch">
-                                                            <!-- Row 0: [new dot] [Sender] Subject [Date] -->
-                                                            <Ellipse Grid.Row="0" Grid.Column="0"
-                                                                     Width="6" Height="6"
-                                                                     Fill="{StaticResource EveAccentPrimaryBrush}"
-                                                                     IsVisible="{Binding IsNew}"
-                                                                     VerticalAlignment="Center"
-                                                                     Margin="0,0,8,0" />
-                                                            <TextBlock Grid.Row="0" Grid.Column="1"
-                                                                       Text="{Binding SenderName}"
-                                                                       FontSize="11" FontWeight="SemiBold"
-                                                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="0,0,10,0"
-                                                                       MaxWidth="160"
-                                                                       TextTrimming="CharacterEllipsis" />
-                                                            <TextBlock Grid.Row="0" Grid.Column="2"
-                                                                       Text="{Binding Subject}"
-                                                                       FontSize="11"
-                                                                       Foreground="{StaticResource EveTextPrimaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       ToolTip.Tip="{Binding Subject}" />
-                                                            <TextBlock Grid.Row="0" Grid.Column="3"
-                                                                       Text="{Binding SentDateText}"
-                                                                       FontSize="10"
-                                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       Margin="10,0,0,0" />
-                                                            <!-- Row 1: Recipient info -->
-                                                            <TextBlock Grid.Row="1" Grid.Column="1"
-                                                                       Grid.ColumnSpan="3"
-                                                                       Text="{Binding RecipientText}"
-                                                                       FontSize="10"
-                                                                       Foreground="{StaticResource EveTextDisabledBrush}"
-                                                                       VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="0,2,0,0" />
-                                                        </Grid>
-                                                    </Border>
-                                                </Expander.Header>
-
-                                                <!-- Mail body (expanded content) -->
-                                                <Border Background="{StaticResource EveBackgroundDarkestBrush}"
-                                                        Padding="12" Margin="20,0,0,0"
-                                                        CornerRadius="4">
-                                                    <DockPanel>
-                                                        <Button DockPanel.Dock="Right" Content="Open"
-                                                                FontSize="10" Padding="8,3" CornerRadius="10"
-                                                                VerticalAlignment="Top" Margin="8,0,0,0"
-                                                                Click="OnOpenMail" Tag="{Binding}" />
-                                                        <ScrollViewer MaxHeight="300"
-                                                                      VerticalScrollBarVisibility="Auto"
-                                                                      HorizontalScrollBarVisibility="Disabled">
-                                                            <TextBlock Text="{Binding BodyText}"
-                                                                       FontSize="11"
-                                                                       Foreground="{StaticResource EveTextPrimaryBrush}"
-                                                                       TextWrapping="Wrap" />
-                                                        </ScrollViewer>
-                                                    </DockPanel>
-                                                </Border>
-                                            </Expander>
+                                            <!-- Each mail as a clickable item row -->
+                                            <Border Classes="item-row"
+                                                    Background="{StaticResource EveBackgroundDarkBrush}"
+                                                    Padding="12,6,12,6"
+                                                    BorderBrush="{StaticResource EveBorderBrush}"
+                                                    BorderThickness="0,0,0,0.5"
+                                                    HorizontalAlignment="Stretch"
+                                                    Cursor="Hand"
+                                                    PointerPressed="OnMailItemClicked">
+                                                <Border.Tag>
+                                                    <Binding />
+                                                </Border.Tag>
+                                                <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                                      RowDefinitions="Auto,Auto"
+                                                      HorizontalAlignment="Stretch">
+                                                    <!-- Row 0: [new dot] [Sender] Subject [Date] -->
+                                                    <Ellipse Grid.Row="0" Grid.Column="0"
+                                                             Width="6" Height="6"
+                                                             Fill="{StaticResource EveAccentPrimaryBrush}"
+                                                             IsVisible="{Binding IsNew}"
+                                                             VerticalAlignment="Center"
+                                                             Margin="0,0,8,0" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="1"
+                                                               Text="{Binding SenderName}"
+                                                               FontSize="11" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,0,10,0"
+                                                               MaxWidth="160"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="2"
+                                                               Text="{Binding Subject}"
+                                                               FontSize="11"
+                                                               Foreground="{StaticResource EveTextPrimaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               ToolTip.Tip="{Binding Subject}" />
+                                                    <TextBlock Grid.Row="0" Grid.Column="3"
+                                                               Text="{Binding SentDateText}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               Margin="10,0,0,0" />
+                                                    <!-- Row 1: Recipient info -->
+                                                    <TextBlock Grid.Row="1" Grid.Column="1"
+                                                               Grid.ColumnSpan="3"
+                                                               Text="{Binding RecipientText}"
+                                                               FontSize="10"
+                                                               Foreground="{StaticResource EveTextDisabledBrush}"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Margin="0,2,0,0" />
+                                                </Grid>
+                                            </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                            </Expander>
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

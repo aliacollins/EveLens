@@ -1,15 +1,19 @@
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using EVEMon.Common.Enumerations.CCPAPI;
+using EVEMon.Common.Enumerations.UISettings;
+using EVEMon.Common.Events;
 using EVEMon.Common.Models;
+using EVEMon.Common.Services;
 using EVEMon.Common.ViewModels;
 using EVEMon.Common.ViewModels.Lists;
-using Avalonia.Interactivity;
-using EVEMon.Common.Constants;
-using EVEMon.Common.Enumerations.CCPAPI;
-using EVEMon.Common.Events;
-using EVEMon.Common.Services;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
 {
@@ -18,6 +22,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         private IDisposable? _dataUpdatedSub;
         private long _characterId;
         private NotificationsListViewModel? _viewModel;
+        private bool _populatingCombo;
 
         public CharacterNotificationsView()
         {
@@ -40,6 +45,8 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
         private void LoadData()
         {
+            if (this.GetVisualRoot() == null) return;
+
             Character? character = DataContext as Character
                 ?? (DataContext as ObservableCharacter)?.Character;
             if (character == null)
@@ -71,7 +78,109 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 _viewModel.Character = character;
             else
                 _viewModel.ForceRefresh();
-            DataContext = _viewModel;
+
+            PopulateGroupingCombo();
+            UpdateList();
+            UpdateStatusBar();
+        }
+
+        private void PopulateGroupingCombo()
+        {
+            if (_viewModel == null) return;
+            _populatingCombo = true;
+
+            var groupCombo = this.FindControl<ComboBox>("GroupingCombo");
+            if (groupCombo != null)
+            {
+                var groupings = new[]
+                {
+                    "Group by Type",
+                    "Group by Type (Desc)",
+                    "Group by Date",
+                    "Group by Date (Desc)",
+                    "Group by Sender",
+                    "Group by Sender (Desc)"
+                };
+                groupCombo.ItemsSource = groupings;
+                groupCombo.SelectedIndex = (int)_viewModel.Grouping;
+            }
+
+            _populatingCombo = false;
+        }
+
+        private void UpdateList()
+        {
+            if (_viewModel == null) return;
+
+            var groupsList = this.FindControl<ItemsControl>("NotificationsGroupsList");
+            var scrollViewer = this.FindControl<ScrollViewer>("GroupedList");
+            var emptyState = this.FindControl<TextBlock>("EmptyState");
+
+            var groupedItems = _viewModel.GroupedItems;
+
+            if (groupedItems.Count == 0 || _viewModel.TotalItemCount == 0)
+            {
+                if (scrollViewer != null) scrollViewer.IsVisible = false;
+                if (emptyState != null) emptyState.IsVisible = true;
+            }
+            else
+            {
+                if (groupsList != null)
+                {
+                    groupsList.ItemsSource = groupedItems
+                        .Select(g => new NotificationGroupDisplay(g))
+                        .ToList();
+                }
+                if (scrollViewer != null) scrollViewer.IsVisible = true;
+                if (emptyState != null) emptyState.IsVisible = false;
+            }
+        }
+
+        private void UpdateStatusBar()
+        {
+            if (_viewModel == null) return;
+
+            var statusText = this.FindControl<TextBlock>("StatusText");
+            if (statusText != null)
+            {
+                statusText.Text = $"Notifications: {_viewModel.TotalItemCount} {(_viewModel.TotalItemCount == 1 ? "item" : "items")}";
+            }
+        }
+
+        private void OnFilterTextChanged(object? sender, TextChangedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            var filterBox = this.FindControl<TextBox>("FilterBox");
+            var clearBtn = this.FindControl<Button>("ClearFilterButton");
+            var text = filterBox?.Text ?? string.Empty;
+
+            if (clearBtn != null)
+                clearBtn.IsVisible = !string.IsNullOrEmpty(text);
+
+            _viewModel.TextFilter = text;
+            UpdateList();
+            UpdateStatusBar();
+        }
+
+        private void OnClearFilter(object? sender, RoutedEventArgs e)
+        {
+            var filterBox = this.FindControl<TextBox>("FilterBox");
+            if (filterBox != null)
+                filterBox.Text = string.Empty;
+        }
+
+        private void OnGroupingChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_populatingCombo || _viewModel == null) return;
+
+            var combo = this.FindControl<ComboBox>("GroupingCombo");
+            if (combo != null)
+            {
+                _viewModel.Grouping = (EVENotificationsGrouping)combo.SelectedIndex;
+                UpdateList();
+                UpdateStatusBar();
+            }
         }
 
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -95,6 +204,63 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             if (evt.Character?.CharacterID == _characterId)
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
+        }
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is not Border border) return;
+            if (border.DataContext is NotificationGroupDisplay group)
+            {
+                group.IsExpanded = !group.IsExpanded;
+            }
+        }
+
+        private void OnCollapseAll(object? sender, RoutedEventArgs e)
+        {
+            var groupsList = this.FindControl<ItemsControl>("NotificationsGroupsList");
+            if (groupsList?.ItemsSource is not IEnumerable<NotificationGroupDisplay> groups) return;
+            foreach (var g in groups) g.IsExpanded = false;
+        }
+
+        private void OnExpandAll(object? sender, RoutedEventArgs e)
+        {
+            var groupsList = this.FindControl<ItemsControl>("NotificationsGroupsList");
+            if (groupsList?.ItemsSource is not IEnumerable<NotificationGroupDisplay> groups) return;
+            foreach (var g in groups) g.IsExpanded = true;
+        }
+    }
+
+    /// <summary>
+    /// Display model for a notification group — compact chevron header with INPC for expand/collapse.
+    /// </summary>
+    internal sealed class NotificationGroupDisplay : INotifyPropertyChanged
+    {
+        private bool _isExpanded = true;
+
+        public string Name { get; }
+        public string CountText { get; }
+        public List<EveNotification> Items { get; }
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
+            }
+        }
+
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public NotificationGroupDisplay(ListGrouping<EveNotification> group)
+        {
+            Name = group.Key;
+            CountText = $"{group.Items.Count} {(group.Items.Count == 1 ? "notification" : "notifications")}";
+            Items = group.Items.ToList();
         }
     }
 }

@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using Avalonia.VisualTree;
-using EVEMon.Avalonia.Converters;
 using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Models;
@@ -49,6 +47,8 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
         private void LoadData()
         {
+            if (this.GetVisualRoot() == null) return;
+
             Character? character = DataContext as Character
                 ?? (DataContext as ObservableCharacter)?.Character;
             if (character == null)
@@ -59,7 +59,6 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             if (character == null) return;
 
-            // Check if on-demand endpoint is enabled
             var parentView = this.FindAncestorOfType<CharacterMonitorView>();
             var oc = parentView?.DataContext as ObservableCharacter;
             var prompt = this.FindControl<Border>("EnablePrompt");
@@ -83,28 +82,25 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         {
             if (_viewModel == null) return;
 
-            var groups = _viewModel.GroupedItems;
+            var grouped = _viewModel.GroupedItems;
+            var displayGroups = new List<ContactGroupDisplay>();
 
-            // Flatten all groups into a single list for the DataGrid (Law 20: .ToList())
-            var flatItems = new List<ContactDisplayEntry>();
-            foreach (var g in groups)
+            foreach (var g in grouped)
             {
-                string groupName = string.IsNullOrEmpty(g.Key) ? "All Contacts" : g.Key;
-                foreach (var contact in g.Items)
-                    flatItems.Add(new ContactDisplayEntry(contact, groupName));
+                string name = string.IsNullOrEmpty(g.Key) ? "All Contacts" : g.Key;
+                var contacts = g.Items.Select(c => new ContactDisplay(c)).ToList();
+                if (contacts.Count > 0)
+                    displayGroups.Add(new ContactGroupDisplay(name, contacts));
             }
 
-            ContactsGrid.ItemsSource = flatItems;
-
-            var status = this.FindControl<TextBlock>("StatusText");
-            if (status != null)
-                status.Text = $"Contacts: {_viewModel.TotalItemCount}";
+            ContactGroupsList.ItemsSource = displayGroups;
+            StatusText.Text = $"Contacts: {_viewModel.TotalItemCount}";
         }
 
         private void OnGroupByChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (_viewModel == null) return;
-            var idx = GroupByCombo.SelectedIndex;
+            int idx = GroupByCombo.SelectedIndex;
             if (idx < 0) return;
             _viewModel.Grouping = (ContactGrouping)idx;
             RebuildDisplay();
@@ -127,11 +123,32 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             RebuildDisplay();
         }
 
-        private void OnCopyName(object? sender, RoutedEventArgs e)
+        private void OnCollapseAll(object? sender, RoutedEventArgs e)
         {
-            var item = ContactsGrid.SelectedItem as ContactDisplayEntry;
-            if (item != null)
-                TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(item.Name);
+            if (ContactGroupsList.ItemsSource is IEnumerable<ContactGroupDisplay> groups)
+            {
+                foreach (var g in groups)
+                    g.IsExpanded = false;
+                ContactGroupsList.ItemsSource = null;
+                ContactGroupsList.ItemsSource = groups;
+            }
+        }
+
+        private void OnExpandAll(object? sender, RoutedEventArgs e)
+        {
+            if (ContactGroupsList.ItemsSource is IEnumerable<ContactGroupDisplay> groups)
+            {
+                foreach (var g in groups)
+                    g.IsExpanded = true;
+                ContactGroupsList.ItemsSource = null;
+                ContactGroupsList.ItemsSource = groups;
+            }
+        }
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Border border && border.DataContext is ContactGroupDisplay group)
+                group.IsExpanded = !group.IsExpanded;
         }
 
         private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
@@ -143,7 +160,39 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
         }
     }
 
-    internal sealed class ContactDisplayEntry
+    internal sealed class ContactGroupDisplay : INotifyPropertyChanged
+    {
+        private bool _isExpanded = true;
+
+        public string Name { get; }
+        public string CountText { get; }
+        public List<ContactDisplay> Contacts { get; }
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
+            }
+        }
+
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public ContactGroupDisplay(string name, List<ContactDisplay> contacts)
+        {
+            Name = name;
+            Contacts = contacts;
+            CountText = $"{contacts.Count}";
+        }
+    }
+
+    internal sealed class ContactDisplay
     {
         private static readonly IBrush PositiveBrush = new SolidColorBrush(Color.Parse("#FF64B5F6"));
         private static readonly IBrush NegativeBrush = new SolidColorBrush(Color.Parse("#FFCF6679"));
@@ -151,17 +200,11 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
 
         private readonly Contact _contact;
 
-        public ContactDisplayEntry(Contact contact, string groupName)
-        {
-            _contact = contact;
-            GroupName = groupName;
-        }
+        public ContactDisplay(Contact contact) { _contact = contact; }
 
         public string Name => _contact.Name;
-        public double StandingValue => _contact.Standing;
         public string StandingText => _contact.Standing.ToString("+0.00;-0.00;0.00");
         public string WatchlistText => _contact.IsInWatchlist ? "\u2605" : string.Empty;
-        public string GroupName { get; }
 
         public IBrush StandingBrush
         {
@@ -171,6 +214,67 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 if (_contact.Standing < 0) return NegativeBrush;
                 return NeutralBrush;
             }
+        }
+
+        public IBrush NameBrush
+        {
+            get
+            {
+                // Linear interpolation from standing -10 to +10 with softer color anchors
+                double standing = _contact.Standing;
+
+                // Clamp to -10/+10 range
+                if (standing <= -10)
+                    return new SolidColorBrush(Color.Parse("#FFAD3030")); // Muted dark red
+                if (standing >= 10)
+                    return new SolidColorBrush(Color.Parse("#FF2196F3")); // Brighter medium blue
+
+                // Map standing to color gradient
+                if (standing < -5)
+                {
+                    // -10 to -5: muted dark red to softer pink-red
+                    double t = (standing + 10) / 5.0; // 0 at -10, 1 at -5
+                    return InterpolateColor(
+                        Color.Parse("#FFAD3030"),  // -10: muted dark red
+                        Color.Parse("#FFCF6679"),  // -5: EVE error red (softer)
+                        t);
+                }
+                else if (standing < 0)
+                {
+                    // -5 to 0: softer pink-red to neutral gray
+                    double t = (standing + 5) / 5.0; // 0 at -5, 1 at 0
+                    return InterpolateColor(
+                        Color.Parse("#FFCF6679"),  // -5: EVE error red
+                        Color.Parse("#FF8B949E"),  // 0: neutral light gray
+                        t);
+                }
+                else if (standing <= 5)
+                {
+                    // 0 to +5: neutral gray to EVE standing blue
+                    double t = standing / 5.0; // 0 at 0, 1 at +5
+                    return InterpolateColor(
+                        Color.Parse("#FF8B949E"),  // 0: neutral light gray
+                        Color.Parse("#FF64B5F6"),  // +5: EVE standing blue
+                        t);
+                }
+                else
+                {
+                    // +5 to +10: EVE standing blue to brighter medium blue
+                    double t = (standing - 5) / 5.0; // 0 at +5, 1 at +10
+                    return InterpolateColor(
+                        Color.Parse("#FF64B5F6"),  // +5: EVE standing blue
+                        Color.Parse("#FF2196F3"),  // +10: brighter medium blue
+                        t);
+                }
+            }
+        }
+
+        private static IBrush InterpolateColor(Color c1, Color c2, double t)
+        {
+            byte r = (byte)(c1.R + (c2.R - c1.R) * t);
+            byte g = (byte)(c1.G + (c2.G - c1.G) * t);
+            byte b = (byte)(c1.B + (c2.B - c1.B) * t);
+            return new SolidColorBrush(Color.FromRgb(r, g, b));
         }
     }
 }

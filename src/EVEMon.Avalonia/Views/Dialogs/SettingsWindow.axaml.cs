@@ -102,6 +102,19 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
         private void BuildPages()
         {
+            try
+            {
+                BuildPagesCore();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error building settings pages: {ex}");
+                // Still show what we can — at minimum the General page
+            }
+        }
+
+        private void BuildPagesCore()
+        {
             // All settings pages
             _generalPage = new GeneralSettingsPage(_settings);
             _updatesPage = new UpdatesSettingsPage(_settings);

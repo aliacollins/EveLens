@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
@@ -186,6 +188,12 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             KillGroupsList.ItemsSource = _groups;
         }
 
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Border border && border.DataContext is KillLogGroupDisplay group)
+                group.IsExpanded = !group.IsExpanded;
+        }
+
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
@@ -211,20 +219,36 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
     }
 
     /// <summary>
-    /// Display model for a group of kill log entries in the Expander view.
+    /// Display model for a group of kill log entries in the chevron view.
     /// </summary>
-    internal sealed class KillLogGroupDisplay
+    internal sealed class KillLogGroupDisplay : INotifyPropertyChanged
     {
+        private bool _isExpanded = true;
+
         public string Name { get; }
         public List<KillLogItemDisplay> Items { get; }
-        public bool IsExpanded { get; set; }
         public string ItemCountText { get; }
+
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                if (_isExpanded == value) return;
+                _isExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
+            }
+        }
+
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         public KillLogGroupDisplay(string name, List<KillLogItemDisplay> items)
         {
             Name = string.IsNullOrEmpty(name) ? "All" : name;
             Items = items;
-            IsExpanded = true;
             ItemCountText = $"{items.Count} entries";
         }
     }

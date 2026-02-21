@@ -249,17 +249,26 @@ namespace EVEMon.Common.ViewModels
     /// <summary>
     /// Represents a region-level group in the hierarchical asset view.
     /// </summary>
-    public sealed class AssetRegionGroup
+    public sealed class AssetRegionGroup : System.ComponentModel.INotifyPropertyChanged
     {
+        private bool _isExpanded;
+
         public string Name { get; }
         public List<AssetSystemGroup> Systems { get; }
-        public bool IsExpanded { get; set; }
         public int ItemCount { get; }
         public long TotalQuantity { get; }
         public double TotalValue { get; }
 
-        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
-        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set { if (_isExpanded == value) return; _isExpanded = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsExpanded))); PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Chevron))); }
+        }
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+        public string CountText => $"{ItemCount} items";
+        public string SummaryText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
         public AssetRegionGroup(string name, List<AssetSystemGroup> systems)
         {
@@ -268,24 +277,31 @@ namespace EVEMon.Common.ViewModels
             ItemCount = systems.Sum(s => s.ItemCount);
             TotalQuantity = systems.Sum(s => s.TotalQuantity);
             TotalValue = systems.Sum(s => s.TotalValue);
-            IsExpanded = true;
         }
     }
 
     /// <summary>
     /// Represents a solar system-level group in the hierarchical asset view.
     /// </summary>
-    public sealed class AssetSystemGroup
+    public sealed class AssetSystemGroup : System.ComponentModel.INotifyPropertyChanged
     {
+        private bool _isExpanded;
+
         public string Name { get; }
         public List<AssetStationGroup> Stations { get; }
-        public bool IsExpanded { get; set; }
         public int ItemCount { get; }
         public long TotalQuantity { get; }
         public double TotalValue { get; }
 
-        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
-        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set { if (_isExpanded == value) return; _isExpanded = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsExpanded))); PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Chevron))); }
+        }
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+        public string CountText => $"{ItemCount} items";
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
         public AssetSystemGroup(string name, List<AssetStationGroup> stations)
         {
@@ -294,24 +310,32 @@ namespace EVEMon.Common.ViewModels
             ItemCount = stations.Sum(st => st.ItemCount);
             TotalQuantity = stations.Sum(st => st.TotalQuantity);
             TotalValue = stations.Sum(st => st.TotalValue);
-            IsExpanded = true;
         }
     }
 
     /// <summary>
     /// Represents a station-level group in the hierarchical asset view.
     /// </summary>
-    public sealed class AssetStationGroup
+    public sealed class AssetStationGroup : System.ComponentModel.INotifyPropertyChanged
     {
+        private bool _isExpanded;
+
         public string Name { get; }
         public List<AssetBrowserItemEntry> Items { get; }
-        public bool IsExpanded { get; set; }
         public int ItemCount { get; }
         public long TotalQuantity { get; }
         public double TotalValue { get; }
 
-        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
-        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set { if (_isExpanded == value) return; _isExpanded = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsExpanded))); PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Chevron))); }
+        }
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+        public string CountText => $"{ItemCount} items";
+        public string SummaryText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
         public AssetStationGroup(string name, List<Asset> assets)
         {
@@ -319,7 +343,6 @@ namespace EVEMon.Common.ViewModels
             ItemCount = assets.Count;
             TotalQuantity = assets.Sum(a => a.Quantity);
             TotalValue = assets.Sum(a => a.Cost);
-            IsExpanded = true;
             Items = assets
                 .OrderBy(a => a.Item.Name)
                 .Select(a => new AssetBrowserItemEntry(a))
@@ -330,19 +353,27 @@ namespace EVEMon.Common.ViewModels
     /// <summary>
     /// Represents a group of assets with summary information (flat grouping).
     /// </summary>
-    public sealed class AssetBrowserGroupEntry
+    public sealed class AssetBrowserGroupEntry : System.ComponentModel.INotifyPropertyChanged
     {
+        private bool _isExpanded;
+
         public string Name { get; }
         public List<AssetBrowserItemEntry> Items { get; }
-        public bool IsExpanded { get; set; }
         public int ItemCount { get; }
         public long TotalQuantity { get; }
         public double TotalValue { get; }
         public double TotalVolume { get; }
 
-        public string ItemCountText => $"{ItemCount} items ({TotalQuantity:N0} units)";
-        public string ValueText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
-        public string VolumeText => $"{TotalVolume:N0} m³";
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set { if (_isExpanded == value) return; _isExpanded = value; PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsExpanded))); PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(Chevron))); }
+        }
+        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
+        public string CountText => $"{ItemCount} items";
+        public string SummaryText => TotalValue > 0 ? $"{TotalValue:N0} ISK" : "";
+
+        public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
 
         public AssetBrowserGroupEntry(string name, List<Asset> assets)
         {
@@ -351,7 +382,6 @@ namespace EVEMon.Common.ViewModels
             TotalQuantity = assets.Sum(a => a.Quantity);
             TotalValue = assets.Sum(a => a.Cost);
             TotalVolume = assets.Sum(a => a.TotalVolume);
-            IsExpanded = true;
             Items = assets
                 .OrderBy(a => a.Item.Name)
                 .Select(a => new AssetBrowserItemEntry(a))
