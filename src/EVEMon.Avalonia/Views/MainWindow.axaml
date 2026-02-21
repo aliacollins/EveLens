@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:EVEMon.Avalonia.Views.CharacterMonitor"
         x:Class="EVEMon.Avalonia.Views.MainWindow"
-        Title="EVEMon"
+        Title="EVEMon NexT"
         Icon="avares://EVEMon.Avalonia/Properties/EVEMon.ico"
         Width="1024" Height="768">
 
@@ -58,6 +58,10 @@
                 <TextBlock Text="  |  " FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}" />
 
                 <!-- Right-docked items (outermost first) -->
+                <TextBlock DockPanel.Dock="Right"
+                           Text="EVEMon NexT | evemon.dev | GPL v2" FontSize="10"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           VerticalAlignment="Center" Margin="8,0,0,0" />
                 <TextBlock DockPanel.Dock="Right" x:Name="EsiActivityText"
                            Text="" FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />

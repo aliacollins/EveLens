@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyDescription("EVEMon Offline Character Utility for ESI - https://evemon.dev")]
+[assembly: AssemblyDescription("EVEMon NexT — Character Intelligence for EVE Online — evemon.dev")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Alia Collins")]
-[assembly: AssemblyProduct("EVEMon")]
+[assembly: AssemblyCompany("EVEMon NexT")]
+[assembly: AssemblyProduct("EVEMon NexT")]
 [assembly: AssemblyCopyright("Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
