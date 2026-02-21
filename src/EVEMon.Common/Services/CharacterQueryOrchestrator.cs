@@ -1624,6 +1624,7 @@ namespace EVEMon.Common.Services
                 allOrders.SetAllIssuedBy(target.CharacterID);
                 target.CharacterMarketOrders.Import(allOrders, IssuedFor.Character,
                     endedOrders);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "market_orders", allOrders);
                 // CharacterMarketOrdersUpdated
                 AppServices.TraceService?.Trace($"CharacterMarketOrdersUpdated: {target.Name}");
                 (target as CCPCharacter)?.OnCharacterMarketOrdersUpdated(endedOrders);
@@ -1652,6 +1653,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.Standings.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "standings", result);
                 // CharacterStandingsUpdated
                 AppServices.TraceService?.Trace($"CharacterStandingsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterStandingsUpdatedEvent(target.CharacterID, target.Name));
@@ -1676,6 +1678,7 @@ namespace EVEMon.Common.Services
                 }
                 else
                     target.IsFactionalWarfareNotEnlisted = true;
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "factional_warfare", result);
                 // CharacterFactionalWarfareStatsUpdated
                 AppServices.TraceService?.Trace($"CharacterFactionalWarfareStatsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CommonEvents.CharacterFactionalWarfareStatsUpdatedEvent(target));
@@ -1690,6 +1693,8 @@ namespace EVEMon.Common.Services
             var target = m_ccpCharacter;
             // Character may have been deleted since we queried
             if (target != null)
+            {
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "assets", result);
                 TaskHelper.RunCPUBoundTaskAsync(() => target.Assets.Import(result)).
                     ContinueWith(_ =>
                     {
@@ -1702,6 +1707,7 @@ namespace EVEMon.Common.Services
                             AppServices.EventAggregator?.Publish(new CommonEvents.CharacterAssetsUpdatedEvent(target));
                         });
                     });
+            }
         }
 
         /// <summary>
@@ -1717,6 +1723,7 @@ namespace EVEMon.Common.Services
                     contract.APIMethod = ESIAPICharacterMethods.Contracts;
                 var endedContracts = new List<Contract>();
                 target.CharacterContracts.Import(result, endedContracts);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "contracts", result);
                 // CharacterContractsUpdated
                 AppServices.TraceService?.Trace($"CharacterContractsUpdated: {target.Name}");
                 (target as CCPCharacter)?.OnCharacterContractsUpdated(endedContracts);
@@ -1749,6 +1756,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.WalletJournal.Import(result.ToXMLItem().WalletJournal);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "wallet_journal", result);
                 // CharacterWalletJournalUpdated
                 AppServices.TraceService?.Trace($"CharacterWalletJournalUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletJournalUpdatedEvent(target));
@@ -1765,6 +1773,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.WalletTransactions.Import(result.ToXMLItem().WalletTransactions);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "wallet_transactions", result);
                 // CharacterWalletTransactionsUpdated
                 AppServices.TraceService?.Trace($"CharacterWalletTransactionsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CommonEvents.CharacterWalletTransactionsUpdatedEvent(target));
@@ -1781,6 +1790,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.CharacterIndustryJobs.Import(result, IssuedFor.Character);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "industry_jobs", result);
                 // CharacterIndustryJobsUpdated
                 AppServices.TraceService?.Trace($"CharacterIndustryJobsUpdated: {target.Name}");
                 (target as CCPCharacter)?.OnCharacterIndustryJobsUpdated();
@@ -1799,6 +1809,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.ResearchPoints.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "research", result);
                 // CharacterResearchPointsUpdated
                 AppServices.TraceService?.Trace($"CharacterResearchPointsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterResearchUpdatedEvent(target.CharacterID, target.Name));
@@ -1821,6 +1832,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.EVEMailMessages.Import(result.ToXMLItem().Messages);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "mail_headers", result);
                 int newMessages = target.EVEMailMessages.NewMessages;
                 if (newMessages != 0)
                     AppServices.Notifications.NotifyNewEVEMailMessages(target, newMessages);
@@ -1837,6 +1849,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.EVEMailingLists.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "mailing_lists", result);
             }
         }
 
@@ -1850,6 +1863,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.EVENotifications.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "notifications", result);
                 int newNotify = target.EVENotifications.NewNotifications;
                 if (newNotify != 0)
                     AppServices.Notifications.NotifyNewEVENotifications(target, newNotify);
@@ -1871,6 +1885,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.Contacts.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "contacts", result);
                 // CharacterContactsUpdated
                 AppServices.TraceService?.Trace($"CharacterContactsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterContactsUpdatedEvent(target.CharacterID, target.Name));
@@ -1888,6 +1903,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.CharacterMedals.Import(result, true);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "medals", result);
                 // CharacterMedalsUpdated
                 AppServices.TraceService?.Trace($"CharacterMedalsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterMedalsUpdatedEvent(target.CharacterID, target.Name));
@@ -1905,6 +1921,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.KillLog.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "kill_log", result);
                 // CharacterKillLogUpdated
                 AppServices.TraceService?.Trace($"CharacterKillLogUpdated: {m_ccpCharacter.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterKillLogUpdatedEvent(m_ccpCharacter.CharacterID, m_ccpCharacter.Name));
@@ -1927,6 +1944,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.UpcomingCalendarEvents.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "calendar", result);
                 // CharacterUpcomingCalendarEventsUpdated
                 AppServices.TraceService?.Trace($"CharacterUpcomingCalendarEventsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterCalendarUpdatedEvent(target.CharacterID, target.Name));
@@ -1947,6 +1965,7 @@ namespace EVEMon.Common.Services
                 AppServices.Notifications.InvalidateCharacterPlanetaryPinCompleted(target);
 
                 target.PlanetaryColonies.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "planetary", result);
                 // CharacterPlanetaryColoniesUpdated
                 AppServices.TraceService?.Trace($"CharacterPlanetaryColoniesUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterPlanetaryUpdatedEvent(target.CharacterID, target.Name));
@@ -1964,6 +1983,7 @@ namespace EVEMon.Common.Services
             if (target != null)
             {
                 target.LoyaltyPoints.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "loyalty", result);
                 // CharacterLoyaltyPointsUpdated
                 AppServices.TraceService?.Trace($"CharacterLoyaltyPointsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterLoyaltyUpdatedEvent(target.CharacterID, target.Name));

@@ -68,6 +68,9 @@ namespace EVEMon.Common.Collections.Global
                 oldKeys.ForEach(esiKey => AppServices.ESIKeys.Remove(esiKey));
             }
 
+            // Clear cached ESI data for this character
+            _ = AppServices.CharacterDataCache.ClearCharacterAsync(character.CharacterID);
+
             // Dispose
             character.Dispose();
 

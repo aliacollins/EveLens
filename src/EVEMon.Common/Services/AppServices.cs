@@ -60,6 +60,7 @@ namespace EVEMon.Common.Services
         private static Lazy<IScreenInfo> s_screenInfo = new(() => new WinFormsScreenInfo());
         private static Lazy<ActivityLogService> s_activityLog = new(() =>
             new ActivityLogService(ApplicationPaths.DataDirectory));
+        private static Lazy<ICharacterDataCache> s_characterDataCache = new(() => new CharacterDataCacheService());
 
         /// <summary>
         /// Gets the notification collection.
@@ -138,6 +139,11 @@ namespace EVEMon.Common.Services
         /// Gets the activity log service for persisting notification history.
         /// </summary>
         public static ActivityLogService ActivityLog => s_activityLog.Value;
+
+        /// <summary>
+        /// Gets the character data cache for persisting live ESI data to disk.
+        /// </summary>
+        public static ICharacterDataCache CharacterDataCache => s_characterDataCache.Value;
 
         /// <summary>
         /// Gets whether the application is closed.
@@ -316,6 +322,7 @@ namespace EVEMon.Common.Services
         internal static void SetApplicationLifecycle(IApplicationLifecycle svc) => s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => svc);
         internal static void SetScreenInfo(IScreenInfo svc) => s_screenInfo = new Lazy<IScreenInfo>(() => svc);
         internal static void SetActivityLog(ActivityLogService svc) => s_activityLog = new Lazy<ActivityLogService>(() => svc);
+        internal static void SetCharacterDataCache(ICharacterDataCache svc) => s_characterDataCache = new Lazy<ICharacterDataCache>(() => svc);
 
         /// <summary>
         /// Bootstraps the application: initializes filesystem paths, trace logging,
@@ -449,6 +456,7 @@ namespace EVEMon.Common.Services
             s_screenInfo = new Lazy<IScreenInfo>(() => new WinFormsScreenInfo());
             s_activityLog = new Lazy<ActivityLogService>(() =>
                 new ActivityLogService(ApplicationPaths.DataDirectory));
+            s_characterDataCache = new Lazy<ICharacterDataCache>(() => new CharacterDataCacheService());
         }
 
         /// <summary>

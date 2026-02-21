@@ -395,6 +395,98 @@ namespace EVEMon.Common.Models
         #endregion
 
 
+        #region Cache Restore
+
+        /// <summary>
+        /// Restores live ESI data from the local disk cache.
+        /// Called during startup after Import(serial) but before the ESI scheduler starts,
+        /// so character tabs are populated instantly.
+        /// </summary>
+        internal async System.Threading.Tasks.Task RestoreFromCacheAsync()
+        {
+            var cache = AppServices.CharacterDataCache;
+            long id = CharacterID;
+
+            var assets = await cache.LoadAsync<Serialization.Esi.EsiAPIAssetList>(id, "assets");
+            if (assets != null) Assets.Import(assets);
+
+            var contacts = await cache.LoadAsync<Serialization.Esi.EsiAPIContactsList>(id, "contacts");
+            if (contacts != null) Contacts.Import(contacts);
+
+            var standings = await cache.LoadAsync<Serialization.Esi.EsiAPIStandings>(id, "standings");
+            if (standings != null) Standings.Import(standings);
+
+            var mailHeaders = await cache.LoadAsync<Serialization.Esi.EsiAPIMailMessages>(id, "mail_headers");
+            if (mailHeaders != null) EVEMailMessages.Import(mailHeaders.ToXMLItem().Messages);
+
+            var mailingLists = await cache.LoadAsync<Serialization.Esi.EsiAPIMailingLists>(id, "mailing_lists");
+            if (mailingLists != null) EVEMailingLists.Import(mailingLists);
+
+            var notifications = await cache.LoadAsync<Serialization.Esi.EsiAPINotifications>(id, "notifications");
+            if (notifications != null) EVENotifications.Import(notifications);
+
+            var walletJournal = await cache.LoadAsync<Serialization.Esi.EsiAPIWalletJournal>(id, "wallet_journal");
+            if (walletJournal != null) WalletJournal.Import(walletJournal.ToXMLItem().WalletJournal);
+
+            var walletTxns = await cache.LoadAsync<Serialization.Esi.EsiAPIWalletTransactions>(id, "wallet_transactions");
+            if (walletTxns != null) WalletTransactions.Import(walletTxns.ToXMLItem().WalletTransactions);
+
+            var killLog = await cache.LoadAsync<Serialization.Esi.EsiAPIKillLog>(id, "kill_log");
+            if (killLog != null) KillLog.Import(killLog);
+
+            var planetary = await cache.LoadAsync<Serialization.Esi.EsiAPIPlanetaryColoniesList>(id, "planetary");
+            if (planetary != null) PlanetaryColonies.Import(planetary);
+
+            var research = await cache.LoadAsync<Serialization.Esi.EsiAPIResearchPoints>(id, "research");
+            if (research != null) ResearchPoints.Import(research);
+
+            var loyalty = await cache.LoadAsync<Serialization.Esi.EsiAPILoyality>(id, "loyalty");
+            if (loyalty != null) LoyaltyPoints.Import(loyalty);
+
+            var calendar = await cache.LoadAsync<Serialization.Esi.EsiAPICalendarEvents>(id, "calendar");
+            if (calendar != null) UpcomingCalendarEvents.Import(calendar);
+
+            var medals = await cache.LoadAsync<Serialization.Esi.EsiAPIMedals>(id, "medals");
+            if (medals != null) CharacterMedals.Import(medals, true);
+
+            var contracts = await cache.LoadAsync<Serialization.Esi.EsiAPIContracts>(id, "contracts");
+            if (contracts != null)
+            {
+                foreach (var contract in contracts)
+                    contract.APIMethod = Enumerations.CCPAPI.ESIAPICharacterMethods.Contracts;
+                var endedContracts = new System.Collections.Generic.List<Contract>();
+                CharacterContracts.Import(contracts, endedContracts);
+            }
+
+            var marketOrders = await cache.LoadAsync<Serialization.Esi.EsiAPIMarketOrders>(id, "market_orders");
+            if (marketOrders != null)
+            {
+                marketOrders.SetAllIssuedBy(id);
+                var endedOrders = new System.Collections.Generic.LinkedList<MarketOrder>();
+                CharacterMarketOrders.Import(marketOrders, Enumerations.IssuedFor.Character, endedOrders);
+            }
+
+            var industryJobs = await cache.LoadAsync<Serialization.Esi.EsiAPIIndustryJobs>(id, "industry_jobs");
+            if (industryJobs != null) CharacterIndustryJobs.Import(industryJobs, Enumerations.IssuedFor.Character);
+
+            var fwStats = await cache.LoadAsync<Serialization.Esi.EsiAPIFactionalWarfareStats>(id, "factional_warfare");
+            if (fwStats != null)
+            {
+                if (fwStats.FactionID != 0)
+                {
+                    IsFactionalWarfareNotEnlisted = false;
+                    FactionalWarfareStats = new FactionalWarfareStats(fwStats);
+                }
+                else
+                    IsFactionalWarfareNotEnlisted = true;
+            }
+
+            AppServices.TraceService?.Trace($"RestoreFromCacheAsync: {Name} — cache restored");
+        }
+
+        #endregion
+
+
         #region Importing & Exporting
 
         /// <summary>

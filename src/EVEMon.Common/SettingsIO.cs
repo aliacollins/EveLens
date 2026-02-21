@@ -34,6 +34,9 @@ namespace EVEMon.Common
             // Clear JSON files (they'll be recreated empty on next save)
             SettingsFileManager.ClearAllJsonFiles();
 
+            // Clear cached ESI data
+            await AppServices.CharacterDataCache.ClearAllAsync();
+
             s_settings = new SerializableSettings();
 
             IsRestoring = true;
@@ -71,6 +74,11 @@ namespace EVEMon.Common
 
             IsRestoring = true;
             await TaskHelper.RunCPUBoundTaskAsync(() => ImportData());
+
+            // Restore cached ESI data from disk so character tabs are populated immediately
+            foreach (var character in AppServices.Characters.OfType<CCPCharacter>())
+                await character.RestoreFromCacheAsync();
+
             await SaveImmediateAsync();
             IsRestoring = false;
         }
