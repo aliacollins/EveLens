@@ -22,6 +22,12 @@ namespace EVEMon.Common.SettingsObjects
         }
 
         /// <summary>
+        /// Gets or sets a value indicating whether OS notifications (toasts) are shown.
+        /// </summary>
+        [XmlElement("showOSNotifications")]
+        public bool ShowOSNotifications { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets a value indicating whether [play sound on skill completion].
         /// </summary>
         /// <value>

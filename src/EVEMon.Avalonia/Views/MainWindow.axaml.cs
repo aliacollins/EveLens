@@ -31,6 +31,10 @@ using EVEMon.Common.Service;
 using EVEMon.Common.Services;
 using EVEMon.Common.ViewModels;
 using EVEMon.Core.Events;
+using EVEMon.Avalonia.Services;
+using EVEMon.Common.CustomEventArgs;
+using EVEMon.Common.Events;
+using EVEMon.Common.Notifications;
 
 namespace EVEMon.Avalonia.Views
 {
@@ -49,10 +53,16 @@ namespace EVEMon.Avalonia.Views
         private IDisposable? _collectionChangedSub;
         private IDisposable? _monitoredChangedSub;
         private NotificationCenterViewModel? _notificationVm;
+        private IDisposable? _updateAvailableSub;
+        private IDisposable? _dataUpdateAvailableSub;
+        private IDisposable? _notificationSentSub;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            if (AppServices.IsDebugBuild)
+                Title += " [DEBUG]";
 
             _viewModel = new MainWindowViewModel();
             DataContext = _viewModel;
@@ -81,6 +91,17 @@ namespace EVEMon.Avalonia.Views
             _notificationVm.PropertyChanged += (_, _) =>
                 Dispatcher.UIThread.Post(RefreshNotificationUI);
             RefreshNotificationUI();
+
+            // Native OS toast notifications (cross-platform)
+            _notificationSentSub = AppServices.EventAggregator?.Subscribe<NotificationSentEvent>(
+                e => OnNotificationSent(e));
+
+            // Enable update checking
+            Common.UpdateManager.Enabled = Common.Settings.Updates.CheckEVEMonVersion;
+            _updateAvailableSub = AppServices.EventAggregator?.Subscribe<UpdateAvailableEvent>(
+                e => Dispatcher.UIThread.Post(() => OnUpdateAvailable(e)));
+            _dataUpdateAvailableSub = AppServices.EventAggregator?.Subscribe<DataUpdateAvailableEvent>(
+                e => Dispatcher.UIThread.Post(() => OnDataUpdateAvailable(e)));
         }
 
         #region Portrait Strip
@@ -488,10 +509,278 @@ namespace EVEMon.Avalonia.Views
             ClearCacheMenuItem.Click += OnClearCacheClick;
 
             // Help menu
+            CheckUpdatesMenuItem.Click += OnCheckUpdatesClick;
             UserGuideMenuItem.Click += OnUserGuideClick;
             ReportIssueMenuItem.Click += OnReportIssueClick;
             AboutMenuItem.Click += OnAboutClick;
 
+            // Debug menu (only in debug builds)
+            if (AppServices.IsDebugBuild)
+                BuildDebugMenu();
+        }
+
+        private void BuildDebugMenu()
+        {
+            var debugMenu = new MenuItem { Header = "_Debug" };
+
+            // ── Update Dialogs ──
+            var updateSubMenu = new MenuItem { Header = "Update Dialogs" };
+
+            var testAppUpdate = new MenuItem { Header = "App Update Available" };
+            testAppUpdate.Click += async (_, _) =>
+            {
+                try
+                {
+                    var fakeArgs = new UpdateAvailableEventArgs(
+                        new Uri("https://github.com/aliacollins/evemon/releases"),
+                        new Uri("https://github.com/aliacollins/evemon/releases/download/v5.3.0/EVEMon-install-5.3.0.exe"),
+                        "- Redesigned plan editor with drag-and-drop reordering\n"
+                        + "- New skill constellation visualizer\n"
+                        + "- Fixed ESI token refresh on 30+ character accounts\n"
+                        + "- Improved attribute optimizer accuracy\n"
+                        + "- Dark theme refinements across all views",
+                        new Version(AppServices.FileVersionInfo.FileVersion ?? "5.2.0.0"),
+                        new Version(5, 3, 0, 0),
+                        "d41d8cd98f00b204e9800998ecf8427e",
+                        canAutoInstall: false,
+                        installArgs: string.Empty);
+
+                    var dialog = new UpdateNotifyWindow();
+                    dialog.Initialize(fakeArgs);
+                    await dialog.ShowDialog(this);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error showing test update dialog: {ex}");
+                }
+            };
+
+            var testMajorUpdate = new MenuItem { Header = "Major Version Update" };
+            testMajorUpdate.Click += async (_, _) =>
+            {
+                try
+                {
+                    var fakeArgs = new UpdateAvailableEventArgs(
+                        new Uri("https://github.com/aliacollins/evemon/releases"),
+                        new Uri("https://github.com/aliacollins/evemon/releases/download/v6.0.0/EVEMon-install-6.0.0.exe"),
+                        "EVEMon 6.0 — Major Release\n\n"
+                        + "- Full Linux and macOS support\n"
+                        + "- New skill browser with 3D constellation view\n"
+                        + "- Real-time market data streaming\n"
+                        + "- Complete UI overhaul with customizable themes\n\n"
+                        + "This is a major version upgrade. Your settings will be migrated automatically.",
+                        new Version(AppServices.FileVersionInfo.FileVersion ?? "5.2.0.0"),
+                        new Version(6, 0, 0, 0),
+                        "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+                        canAutoInstall: true,
+                        installArgs: "/S /D=%EVEMON_EXECUTABLE_PATH%");
+
+                    var dialog = new UpdateNotifyWindow();
+                    dialog.Initialize(fakeArgs);
+                    await dialog.ShowDialog(this);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error showing test major update dialog: {ex}");
+                }
+            };
+
+            var testDataUpdate = new MenuItem { Header = "Data Files Update" };
+            testDataUpdate.Click += async (_, _) =>
+            {
+                try
+                {
+                    var fakeFiles = new System.Collections.ObjectModel.Collection<Common.Serialization.PatchXml.SerializableDatafile>
+                    {
+                        new() { Name = "eve-skills-en-US.xml.gz", Date = "2026-02-20", Message = "Updated skill tree for Equinox expansion" },
+                        new() { Name = "eve-items-en-US.xml.gz", Date = "2026-02-20", Message = "New module stats" },
+                        new() { Name = "eve-blueprints-en-US.xml.gz", Date = "2026-02-18", Message = "Blueprint material changes" }
+                    };
+                    var fakeArgs = new DataUpdateAvailableEventArgs(fakeFiles);
+
+                    var dialog = new DataUpdateNotifyWindow();
+                    dialog.Initialize(fakeArgs);
+                    await dialog.ShowDialog(this);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error showing test data update dialog: {ex}");
+                }
+            };
+
+            var testUpToDate = new MenuItem { Header = "Up-to-Date Result" };
+            testUpToDate.Click += async (_, _) =>
+            {
+                try
+                {
+                    string currentVersion = AppServices.FileVersionInfo.FileVersion ?? "Unknown";
+                    var dialog = new Window
+                    {
+                        Title = "Check for Updates",
+                        Width = 380, Height = 160,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new StackPanel
+                        {
+                            Margin = new Thickness(20),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Spacing = 8,
+                            Children =
+                            {
+                                new TextBlock
+                                {
+                                    Text = $"Current version: v{currentVersion}",
+                                    FontSize = 12,
+                                    Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
+                                },
+                                new TextBlock
+                                {
+                                    Text = "You are running the latest version.",
+                                    FontSize = 11,
+                                    Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)
+                                }
+                            }
+                        }
+                    };
+                    await dialog.ShowDialog(this);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error showing test up-to-date dialog: {ex}");
+                }
+            };
+
+            updateSubMenu.Items.Add(testAppUpdate);
+            updateSubMenu.Items.Add(testMajorUpdate);
+            updateSubMenu.Items.Add(testDataUpdate);
+            updateSubMenu.Items.Add(testUpToDate);
+
+            // ── Notification Events ──
+            var notifySubMenu = new MenuItem { Header = "Fire Notification Events" };
+
+            var fireSkillComplete = new MenuItem { Header = "Skill Completed" };
+            fireSkillComplete.Click += (_, _) =>
+            {
+                try
+                {
+                    var character = GetSelectedCharacter() ?? _viewModel.Characters.FirstOrDefault();
+                    string charName = character?.Name ?? "Test Pilot";
+                    var sender = (object?)character ?? AppServices.EVEServer ?? new object();
+                    var args = new Common.Notifications.NotificationEventArgs(sender, Common.Notifications.NotificationCategory.SkillCompletion)
+                    {
+                        Description = $"{charName} has completed training Caldari Battleship V.",
+                        Priority = Common.Notifications.NotificationPriority.Information
+                    };
+                    AppServices.EventAggregator?.Publish(new NotificationSentEvent(args));
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            var fireAccountExpiry = new MenuItem { Header = "Account Expiring" };
+            fireAccountExpiry.Click += (_, _) =>
+            {
+                try
+                {
+                    var character = GetSelectedCharacter() ?? _viewModel.Characters.FirstOrDefault();
+                    if (character == null) return;
+                    var args = new Common.Notifications.NotificationEventArgs(character, Common.Notifications.NotificationCategory.AccountExpiration)
+                    {
+                        Description = $"{character.Name}'s Omega status expires in 3 days.",
+                        Priority = Common.Notifications.NotificationPriority.Warning
+                    };
+                    AppServices.EventAggregator?.Publish(new NotificationSentEvent(args));
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            var fireServerStatus = new MenuItem { Header = "Server Status Changed" };
+            fireServerStatus.Click += (_, _) =>
+            {
+                try
+                {
+                    AppServices.EventAggregator?.Publish(Common.Events.ServerStatusUpdatedEvent.Instance);
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            var fireSettingsChanged = new MenuItem { Header = "Settings Changed" };
+            fireSettingsChanged.Click += (_, _) =>
+            {
+                try
+                {
+                    AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            notifySubMenu.Items.Add(fireSkillComplete);
+            notifySubMenu.Items.Add(fireAccountExpiry);
+            notifySubMenu.Items.Add(fireServerStatus);
+            notifySubMenu.Items.Add(fireSettingsChanged);
+
+            // ── Dialogs ──
+            var dialogSubMenu = new MenuItem { Header = "Open Dialogs" };
+
+            var openSettings = new MenuItem { Header = "Settings Window" };
+            openSettings.Click += OnSettingsClick;
+
+            var openAbout = new MenuItem { Header = "About Window" };
+            openAbout.Click += OnAboutClick;
+
+            var openSkillConst = new MenuItem { Header = "Skill Constellation" };
+            openSkillConst.Click += OnSkillConstellationClick;
+
+            dialogSubMenu.Items.Add(openSettings);
+            dialogSubMenu.Items.Add(openAbout);
+            dialogSubMenu.Items.Add(openSkillConst);
+
+            // ── Character Events ──
+            var charSubMenu = new MenuItem { Header = "Fire Character Events" };
+
+            var fireCharUpdated = new MenuItem { Header = "Character Updated" };
+            fireCharUpdated.Click += (_, _) =>
+            {
+                try
+                {
+                    var character = GetSelectedCharacter() ?? _viewModel.Characters.FirstOrDefault();
+                    if (character == null) return;
+                    AppServices.EventAggregator?.Publish(new Common.Events.CharacterUpdatedEvent(character));
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            var fireCollectionChanged = new MenuItem { Header = "Collection Changed" };
+            fireCollectionChanged.Click += (_, _) =>
+            {
+                try
+                {
+                    AppServices.EventAggregator?.Publish(Common.Events.CharacterCollectionChangedEvent.Instance);
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            var fireQueueUpdated = new MenuItem { Header = "Skill Queue Updated" };
+            fireQueueUpdated.Click += (_, _) =>
+            {
+                try
+                {
+                    var character = GetSelectedCharacter() ?? _viewModel.Characters.FirstOrDefault();
+                    if (character == null) return;
+                    AppServices.EventAggregator?.Publish(new Common.Events.CharacterSkillQueueUpdatedEvent(character));
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            charSubMenu.Items.Add(fireCharUpdated);
+            charSubMenu.Items.Add(fireCollectionChanged);
+            charSubMenu.Items.Add(fireQueueUpdated);
+
+            // ── Assemble ──
+            debugMenu.Items.Add(updateSubMenu);
+            debugMenu.Items.Add(notifySubMenu);
+            debugMenu.Items.Add(charSubMenu);
+            debugMenu.Items.Add(new Separator());
+            debugMenu.Items.Add(dialogSubMenu);
+            MainMenu.Items.Add(debugMenu);
         }
 
         private void OnSecondTick(SecondTickEvent _)
@@ -1280,6 +1569,76 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
+        private async void OnCheckUpdatesClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string currentVersion = AppServices.FileVersionInfo.FileVersion ?? "Unknown";
+
+                // Listen for an update event triggered by the forced check
+                UpdateAvailableEventArgs? foundUpdate = null;
+                var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
+                IDisposable? tempSub = null;
+                tempSub = AppServices.EventAggregator?.Subscribe<UpdateAvailableEvent>(evt =>
+                {
+                    foundUpdate = evt.Args;
+                    tcs.TrySetResult(true);
+                });
+
+                // Force an immediate check
+                Common.UpdateManager.CheckNow();
+
+                // Wait up to 15 seconds for a response
+                var timeout = Task.Delay(TimeSpan.FromSeconds(15));
+                await Task.WhenAny(tcs.Task, timeout);
+                tempSub?.Dispose();
+
+                if (foundUpdate != null)
+                {
+                    // Update found — show the update dialog
+                    var dialog = new UpdateNotifyWindow();
+                    dialog.Initialize(foundUpdate);
+                    await dialog.ShowDialog(this);
+                }
+                else
+                {
+                    // No update available
+                    var upToDateDialog = new Window
+                    {
+                        Title = "Check for Updates",
+                        Width = 380, Height = 160,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Content = new StackPanel
+                        {
+                            Margin = new Thickness(20),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Spacing = 8,
+                            Children =
+                            {
+                                new TextBlock
+                                {
+                                    Text = $"Current version: v{currentVersion}",
+                                    FontSize = 12,
+                                    Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
+                                },
+                                new TextBlock
+                                {
+                                    Text = "You are running the latest version.",
+                                    FontSize = 11,
+                                    Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)
+                                }
+                            }
+                        }
+                    };
+                    await upToDateDialog.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error checking for updates: {ex}");
+            }
+        }
+
         private void OnUserGuideClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -1422,6 +1781,52 @@ namespace EVEMon.Avalonia.Views
             }
         }
 
+        private void OnNotificationSent(NotificationSentEvent e)
+        {
+            try
+            {
+                if (!Common.Settings.Notifications.ShowOSNotifications)
+                    return;
+
+                var args = e.Args;
+                string title = args.SenderCharacter?.Name ?? "EVEMon NexT";
+                string message = args.Description ?? args.Category.ToString();
+                NativeNotificationService.Show(title, message);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing native notification: {ex}");
+            }
+        }
+
+        private async void OnUpdateAvailable(UpdateAvailableEvent e)
+        {
+            try
+            {
+                var dialog = new UpdateNotifyWindow();
+                dialog.Initialize(e.Args);
+                await dialog.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing update notification: {ex}");
+            }
+        }
+
+        private async void OnDataUpdateAvailable(DataUpdateAvailableEvent e)
+        {
+            try
+            {
+                var dialog = new DataUpdateNotifyWindow();
+                dialog.Initialize(e.Args);
+                await dialog.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing data update notification: {ex}");
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             _notificationVm?.Save();
@@ -1429,6 +1834,9 @@ namespace EVEMon.Avalonia.Views
             _tickSubscription?.Dispose();
             _collectionChangedSub?.Dispose();
             _monitoredChangedSub?.Dispose();
+            _updateAvailableSub?.Dispose();
+            _dataUpdateAvailableSub?.Dispose();
+            _notificationSentSub?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
             _observableCharacters.Clear();
             _cachedViews.Clear();

@@ -2,43 +2,470 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="EVEMon.Avalonia.Views.Dialogs.SettingsWindow"
         Title="EVEMon Settings"
-        Width="800" Height="550"
-        WindowStartupLocation="CenterOwner"
-        CanResize="False">
+        Width="560" Height="750"
+        MinWidth="480" MinHeight="500"
+        WindowStartupLocation="CenterOwner">
 
-    <DockPanel Margin="8">
-        <!-- Bottom: OK / Cancel / Apply buttons -->
-        <StackPanel DockPanel.Dock="Bottom"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Spacing="8"
-                    Margin="0,8,0,0">
-            <Button x:Name="OkButton" Content="OK" Width="80" />
-            <Button x:Name="CancelButton" Content="Cancel" Width="80" />
-            <Button x:Name="ApplyButton" Content="Apply" Width="80" IsEnabled="False" />
-        </StackPanel>
+    <!-- Override Expander header styling for clean section headers -->
+    <Window.Styles>
+        <!-- Reset the ToggleButton inside Expander to flat section-header style -->
+        <Style Selector="Expander /template/ ToggleButton#PART_toggle">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundMediumBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundLightBrush}" />
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART_toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART_toggle:checked">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,7" />
+        </Style>
+        <Style Selector="Expander /template/ ToggleButton#PART_toggle:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
 
-        <!-- Separator above buttons -->
-        <Separator DockPanel.Dock="Bottom" Margin="0,8,0,0" />
+        <!-- Expander body: no extra padding from template -->
+        <Style Selector="Expander">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+    </Window.Styles>
 
-        <!-- Left: Category tree -->
-        <TreeView x:Name="CategoryTree"
-                  DockPanel.Dock="Left"
-                  Width="210"
-                  Margin="0,0,8,0"
-                  SelectionMode="Single">
-            <TreeView.Styles>
-                <Style Selector="TreeViewItem">
-                    <Setter Property="IsExpanded" Value="True" />
-                </Style>
-            </TreeView.Styles>
-        </TreeView>
-
-        <!-- Right: Settings page content -->
-        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
-                BorderThickness="1"
-                Padding="12">
-            <ContentControl x:Name="PageContent" />
+    <DockPanel>
+        <!-- Bottom: Save / Cancel buttons -->
+        <Border DockPanel.Dock="Bottom"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource EveBackgroundMediumBrush}"
+                Padding="16,10">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <Button x:Name="CancelButton" Content="Cancel"
+                        CornerRadius="12" Padding="16,6" FontSize="11" />
+                <Button x:Name="SaveButton" Content="Save"
+                        CornerRadius="12" Padding="16,6" FontSize="11" />
+            </StackPanel>
         </Border>
+
+        <!-- Search bar -->
+        <Border DockPanel.Dock="Top"
+                Margin="16,12,16,4"
+                Background="{DynamicResource EveBackgroundDarkestBrush}"
+                CornerRadius="14"
+                Padding="12,6">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Text="&#x1F50D;" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" FontSize="12" />
+                <TextBox x:Name="SearchBox" Grid.Column="1"
+                         Watermark="Search settings..."
+                         BorderThickness="0" Background="Transparent"
+                         FontSize="11" />
+                <Button x:Name="SearchClearButton" Grid.Column="2"
+                        Content="&#x2715;" FontSize="10"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="4,2" VerticalAlignment="Center"
+                        IsVisible="False" Cursor="Hand" />
+            </Grid>
+        </Border>
+
+        <!-- Section navigation bar -->
+        <Border DockPanel.Dock="Top"
+                Margin="16,4,16,0"
+                Padding="0,2">
+            <StackPanel x:Name="NavBar" Orientation="Horizontal" Spacing="4">
+                <Button x:Name="NavAppearance" Content="Appearance"
+                        CornerRadius="10" Padding="8,3" FontSize="10"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                <Button x:Name="NavWindow" Content="Window"
+                        CornerRadius="10" Padding="8,3" FontSize="10"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                <Button x:Name="NavNotifications" Content="Notifications"
+                        CornerRadius="10" Padding="8,3" FontSize="10"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                <Button x:Name="NavData" Content="Data"
+                        CornerRadius="10" Padding="8,3" FontSize="10"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                <Button x:Name="NavNetwork" Content="Network"
+                        CornerRadius="10" Padding="8,3" FontSize="10"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand" />
+                <Button x:Name="NavEsi" Content="ESI"
+                        CornerRadius="10" Padding="8,3" FontSize="10"
+                        Background="Transparent" BorderThickness="0" Cursor="Hand" />
+            </StackPanel>
+        </Border>
+
+        <!-- Scrollable content -->
+        <ScrollViewer x:Name="SettingsScroller"
+                      VerticalScrollBarVisibility="Auto"
+                      Padding="16,8,16,16">
+            <StackPanel x:Name="SectionsPanel" Spacing="6">
+
+                <!-- ═══════════════════════════════════════ -->
+                <!-- APPEARANCE                              -->
+                <!-- ═══════════════════════════════════════ -->
+                <Expander x:Name="AppearanceExpander" IsExpanded="True">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="APPEARANCE" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" x:Name="AppearanceChevron" Text="&#x25BE;"
+                                       FontSize="14" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="8" Margin="4,4,0,4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Theme" VerticalAlignment="Center" FontSize="11" Width="120" />
+                            <ComboBox x:Name="ThemeCombo" Width="200" FontSize="11" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="ThemeRestartPanel" Orientation="Horizontal" Spacing="8"
+                                    IsVisible="False" Margin="128,0,0,0">
+                            <TextBlock Text="Restart required to apply"
+                                       FontSize="10" Foreground="{DynamicResource EveWarningYellowBrush}"
+                                       VerticalAlignment="Center" />
+                            <Button x:Name="RestartNowButton" Content="Restart Now"
+                                    CornerRadius="12" Padding="10,4" FontSize="10" />
+                        </StackPanel>
+
+                        <CheckBox x:Name="SafeForWorkCheckBox" FontSize="11"
+                                  Content="Safe for work mode (hide portraits and colors)" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Compatibility" VerticalAlignment="Center" FontSize="11" Width="120" />
+                            <ComboBox x:Name="CompatibilityCombo" Width="140" FontSize="11">
+                                <ComboBoxItem Content="Default" />
+                                <ComboBoxItem Content="Wine" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <Button x:Name="OpenDataDirButton" Content="Open Data Directory"
+                                CornerRadius="12" Padding="10,4" FontSize="11"
+                                HorizontalAlignment="Left" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Expander>
+
+                <!-- ═══════════════════════════════════════ -->
+                <!-- WINDOW BEHAVIOR                         -->
+                <!-- ═══════════════════════════════════════ -->
+                <Expander x:Name="WindowBehaviorExpander" IsExpanded="True">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="WINDOW BEHAVIOR" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" x:Name="WindowChevron" Text="&#x25BE;"
+                                       FontSize="14" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="8" Margin="4,4,0,4">
+                        <TextBlock Text="Tray Icon" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                        <StackPanel Spacing="4" Margin="12,0,0,0">
+                            <RadioButton x:Name="TrayDisabledRadio" Content="Disabled"
+                                         GroupName="TrayBehaviour" FontSize="11" />
+                            <RadioButton x:Name="TrayMinimizedRadio" Content="Show when minimized"
+                                         GroupName="TrayBehaviour" FontSize="11" />
+                            <RadioButton x:Name="TrayAlwaysRadio" Content="Always visible"
+                                         GroupName="TrayBehaviour" FontSize="11" />
+                        </StackPanel>
+
+                        <TextBlock Text="Close Button" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,4,0,0" />
+                        <StackPanel Spacing="4" Margin="12,0,0,0">
+                            <RadioButton x:Name="CloseExitRadio" Content="Exit the application"
+                                         GroupName="CloseBehaviour" FontSize="11" />
+                            <RadioButton x:Name="CloseMinTrayRadio" Content="Minimize to system tray"
+                                         GroupName="CloseBehaviour" FontSize="11" />
+                            <RadioButton x:Name="CloseMinTaskbarRadio" Content="Minimize to taskbar"
+                                         GroupName="CloseBehaviour" FontSize="11" />
+                        </StackPanel>
+
+                        <TextBlock Text="Tray Popup" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,4,0,0" />
+                        <StackPanel Spacing="4" Margin="12,0,0,0">
+                            <RadioButton x:Name="PopupFormRadio" Content="Popup form"
+                                         GroupName="PopupStyle" FontSize="11" />
+                            <RadioButton x:Name="PopupTooltipRadio" Content="Windows tooltip"
+                                         GroupName="PopupStyle" FontSize="11" />
+                            <RadioButton x:Name="PopupDisabledRadio" Content="Disabled"
+                                         GroupName="PopupStyle" FontSize="11" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- ═══════════════════════════════════════ -->
+                <!-- NOTIFICATIONS                           -->
+                <!-- ═══════════════════════════════════════ -->
+                <Expander x:Name="NotificationsExpander" IsExpanded="True">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="NOTIFICATIONS" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" x:Name="NotificationsChevron" Text="&#x25BE;"
+                                       FontSize="14" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="8" Margin="4,4,0,4">
+                        <CheckBox x:Name="OsNotificationsCheckBox" FontSize="11"
+                                  Content="Show OS notifications (toasts)" />
+
+                        <CheckBox x:Name="PlaySoundCheckBox" FontSize="11"
+                                  Content="Play sound on skill completion" />
+
+                        <!-- Email Alerts -->
+                        <TextBlock Text="Email Alerts" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,4,0,0" />
+
+                        <CheckBox x:Name="SendMailCheckBox" FontSize="11"
+                                  Content="Send email when skill training completes" />
+
+                        <StackPanel x:Name="EmailOptionsPanel" Spacing="8" Margin="12,0,0,0" IsEnabled="False">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Provider" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <ComboBox x:Name="EmailProviderCombo" Width="140" FontSize="11">
+                                    <ComboBoxItem Content="Gmail" />
+                                    <ComboBoxItem Content="Outlook" />
+                                    <ComboBoxItem Content="Yahoo" />
+                                    <ComboBoxItem Content="Custom" />
+                                    <ComboBoxItem Content="Default" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="SMTP Server" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <TextBox x:Name="SmtpServerTextBox" Width="200" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Port" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <NumericUpDown x:Name="EmailPortNumber" Minimum="1" Maximum="65535" Value="25"
+                                               Width="100" FontSize="11" />
+                                <CheckBox x:Name="RequiresSslCheckBox" Content="SSL/TLS" FontSize="11" Margin="8,0,0,0" />
+                            </StackPanel>
+
+                            <CheckBox x:Name="EmailAuthCheckBox" Content="Requires authentication" FontSize="11" />
+                            <StackPanel x:Name="EmailAuthPanel" Spacing="6" Margin="12,0,0,0" IsEnabled="False">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Username" VerticalAlignment="Center" FontSize="11" Width="80" />
+                                    <TextBox x:Name="EmailAuthUserTextBox" Width="200" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Password" VerticalAlignment="Center" FontSize="11" Width="80" />
+                                    <TextBox x:Name="EmailAuthPasswordTextBox" Width="200" FontSize="11"
+                                             PasswordChar="&#x25CF;" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="From" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <TextBox x:Name="EmailFromTextBox" Width="200" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="To" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <TextBox x:Name="EmailToTextBox" Width="200" FontSize="11" />
+                            </StackPanel>
+
+                            <CheckBox x:Name="EmailShortFormatCheckBox" Content="Use short email format"
+                                      FontSize="11" />
+                        </StackPanel>
+
+                        <!-- External Calendar -->
+                        <TextBlock Text="External Calendar" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,4,0,0" />
+
+                        <CheckBox x:Name="CalendarEnabledCheckBox" FontSize="11"
+                                  Content="Enable external calendar integration" />
+
+                        <StackPanel x:Name="CalendarOptionsPanel" Spacing="8" Margin="12,0,0,0" IsEnabled="False">
+                            <StackPanel Spacing="4">
+                                <RadioButton x:Name="GoogleCalendarRadio" Content="Google Calendar"
+                                             GroupName="CalendarProvider" FontSize="11" />
+                                <RadioButton x:Name="OutlookCalendarRadio" Content="Microsoft Outlook"
+                                             GroupName="CalendarProvider" FontSize="11" />
+                            </StackPanel>
+
+                            <!-- Google Calendar options -->
+                            <StackPanel x:Name="GoogleCalendarPanel" Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Calendar Name" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                    <TextBox x:Name="GoogleCalNameTextBox" Width="200" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Reminder" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                    <ComboBox x:Name="GoogleReminderCombo" Width="120" FontSize="11">
+                                        <ComboBoxItem Content="Email" />
+                                        <ComboBoxItem Content="Pop-up" />
+                                        <ComboBoxItem Content="SMS" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Outlook options -->
+                            <StackPanel x:Name="OutlookCalendarPanel" Spacing="6">
+                                <CheckBox x:Name="OutlookDefaultCalCheckBox" Content="Use default calendar"
+                                          FontSize="11" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Calendar Path" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                    <TextBox x:Name="OutlookCalPathTextBox" Width="200" FontSize="11" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <CheckBox x:Name="CalendarRemindingCheckBox" Content="Enable reminders" FontSize="11" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Interval (min)" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                <NumericUpDown x:Name="CalendarRemindingInterval" Minimum="1" Maximum="120"
+                                               Value="10" Width="80" FontSize="11" />
+                            </StackPanel>
+
+                            <CheckBox x:Name="CalendarAltRemindingCheckBox" Content="Use alternate reminding times"
+                                      FontSize="11" />
+                            <Grid ColumnDefinitions="Auto,Auto,Auto,8,Auto,Auto,Auto" Margin="0,2,0,0">
+                                <TextBlock Text="Early" VerticalAlignment="Center" FontSize="11" Width="50" />
+                                <TimePicker x:Name="CalendarEarlyTimePicker" Grid.Column="1"
+                                            ClockIdentifier="24HourClock" />
+                                <TextBlock Grid.Column="2" Width="8" />
+                                <TextBlock Text="Late" Grid.Column="4" VerticalAlignment="Center" FontSize="11" />
+                                <TimePicker x:Name="CalendarLateTimePicker" Grid.Column="5"
+                                            ClockIdentifier="24HourClock" Margin="8,0,0,0" />
+                            </Grid>
+
+                            <CheckBox x:Name="CalendarLastQueuedOnlyCheckBox" Content="Export last queued skill only"
+                                      FontSize="11" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- ═══════════════════════════════════════ -->
+                <!-- DATA & UPDATES                          -->
+                <!-- ═══════════════════════════════════════ -->
+                <Expander x:Name="DataUpdatesExpander" IsExpanded="True">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="DATA &amp; UPDATES" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" x:Name="DataChevron" Text="&#x25BE;"
+                                       FontSize="14" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="8" Margin="4,4,0,4">
+                        <CheckBox x:Name="CheckForUpdatesCheckBox" FontSize="11"
+                                  Content="Check for EVEMon updates" />
+
+                        <CheckBox x:Name="CheckTimeCheckBox" FontSize="11"
+                                  Content="Check system clock sync on startup" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                            <TextBlock Text="Market Price Provider" VerticalAlignment="Center"
+                                       FontSize="11" Width="140" />
+                            <ComboBox x:Name="MarketPriceProviderCombo" Width="200" FontSize="11" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- ═══════════════════════════════════════ -->
+                <!-- NETWORK                                 -->
+                <!-- ═══════════════════════════════════════ -->
+                <Expander x:Name="NetworkExpander" IsExpanded="True">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="NETWORK" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" x:Name="NetworkChevron" Text="&#x25BE;"
+                                       FontSize="14" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="8" Margin="4,4,0,4">
+                        <TextBlock Text="HTTP Proxy" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" />
+
+                        <CheckBox x:Name="UseProxyCheckBox" Content="Use custom proxy" FontSize="11" />
+
+                        <StackPanel x:Name="ProxyPanel" Spacing="6" Margin="12,0,0,0" IsEnabled="False">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Host" VerticalAlignment="Center" FontSize="11" Width="40" />
+                                <TextBox x:Name="ProxyHostTextBox" Width="220" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Port" VerticalAlignment="Center" FontSize="11" Width="40" />
+                                <TextBox x:Name="ProxyPortTextBox" Width="80" FontSize="11" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <TextBlock Text="SSO Credentials" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,8,0,0" />
+
+                        <StackPanel Spacing="6">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Client ID" VerticalAlignment="Center" FontSize="11" Width="90" />
+                                <TextBox x:Name="SsoClientIdTextBox" Width="280" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Client Secret" VerticalAlignment="Center" FontSize="11" Width="90" />
+                                <TextBox x:Name="SsoClientSecretTextBox" Width="280" FontSize="11"
+                                         PasswordChar="*" />
+                            </StackPanel>
+                            <Button x:Name="UseDefaultCredentialsButton" Content="Use Default"
+                                    CornerRadius="12" Padding="10,4" FontSize="11"
+                                    HorizontalAlignment="Left"
+                                    ToolTip.Tip="Clear custom credentials and use the built-in EVEMon defaults" />
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
+                <!-- ═══════════════════════════════════════ -->
+                <!-- ESI SCOPES                              -->
+                <!-- ═══════════════════════════════════════ -->
+                <Expander x:Name="EsiScopesExpander" IsExpanded="True">
+                    <Expander.Header>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="ESI SCOPES" FontSize="12" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                            <TextBlock Grid.Column="1" x:Name="EsiChevron" Text="&#x25BE;"
+                                       FontSize="14" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                    </Expander.Header>
+                    <StackPanel Spacing="8" Margin="4,4,0,8">
+                        <TextBlock Text="Controls which API scopes EVEMon requests when authenticating."
+                                   TextWrapping="Wrap" FontSize="10"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" />
+
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Preset" VerticalAlignment="Center" FontSize="11" Width="60" />
+                            <ComboBox x:Name="EsiPresetCombo" Width="240" FontSize="11" />
+                        </StackPanel>
+
+                        <TextBlock x:Name="EsiPresetDescription" Text=""
+                                   TextWrapping="Wrap" FontSize="10"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" />
+
+                        <Button x:Name="CustomizeScopesButton" Content="Customize Scopes..."
+                                CornerRadius="12" Padding="10,4" FontSize="11"
+                                HorizontalAlignment="Left" />
+
+                        <TextBlock Text="Changes take effect the next time you authenticate a character."
+                                   TextWrapping="Wrap" FontSize="10"
+                                   Foreground="{DynamicResource EveTextDisabledBrush}" />
+                    </StackPanel>
+                </Expander>
+
+            </StackPanel>
+        </ScrollViewer>
     </DockPanel>
 </Window>

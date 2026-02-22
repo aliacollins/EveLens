@@ -25,14 +25,24 @@ namespace EVEMon.Avalonia.Services
 
         public void Exit()
         {
+            App.IsExiting = true;
             _lifetime.Shutdown();
         }
 
         public void Restart()
         {
+            App.IsExiting = true;
             string? exePath = Environment.ProcessPath;
             if (exePath != null)
-                Process.Start(exePath);
+            {
+                // Pass --restart-delay so the new process waits for this instance
+                // to fully exit and release the named semaphore before proceeding.
+                Process.Start(new ProcessStartInfo(exePath)
+                {
+                    Arguments = "--restart-delay",
+                    UseShellExecute = true
+                });
+            }
 
             _lifetime.Shutdown();
         }
