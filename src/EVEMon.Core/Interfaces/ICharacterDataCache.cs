@@ -33,6 +33,11 @@ namespace EVEMon.Core.Interfaces
         Task<T?> LoadAsync<T>(long characterId, string endpointKey) where T : class;
 
         /// <summary>
+        /// Delete cached data for a single endpoint of a character.
+        /// </summary>
+        Task ClearEndpointAsync(long characterId, string endpointKey);
+
+        /// <summary>
         /// Delete all cached data for a character.
         /// </summary>
         Task ClearCharacterAsync(long characterId);

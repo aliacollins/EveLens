@@ -63,6 +63,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             var parentView = this.FindAncestorOfType<CharacterMonitorView>();
             var oc = parentView?.DataContext as ObservableCharacter;
             var prompt = this.FindControl<Border>("EnablePrompt");
+            var scopePrompt = this.FindControl<Border>("ScopePrompt");
             var content = this.FindControl<DockPanel>("DataContent");
             if (oc != null && !oc.IsEndpointEnabled(ESIAPICharacterMethods.WalletTransactions))
             {
@@ -71,6 +72,14 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 return;
             }
             if (prompt != null) prompt.IsVisible = false;
+
+            if (oc != null && !oc.HasScopeFor(ESIAPICharacterMethods.WalletTransactions))
+            {
+                if (scopePrompt != null) scopePrompt.IsVisible = true;
+                if (content != null) content.IsVisible = false;
+                return;
+            }
+            if (scopePrompt != null) scopePrompt.IsVisible = false;
             if (content != null) content.IsVisible = true;
 
             _viewModel ??= new WalletTransactionsListViewModel();

@@ -67,10 +67,22 @@ namespace EVEMon.Common.Models
             : this()
         {
             ID = serial.ID;
-            AccessMask = serial.AccessMask;
             m_monitored = serial.Monitored;
-
             RefreshToken = serial.RefreshToken ?? string.Empty;
+
+            // Load authorized scopes; migrate from legacy AccessMask if needed
+            if (serial.AuthorizedScopes != null && serial.AuthorizedScopes.Count > 0)
+            {
+                _authorizedScopes = new List<string>(serial.AuthorizedScopes);
+            }
+#pragma warning disable CS0618 // AccessMask is obsolete
+            else if (serial.AccessMask == ulong.MaxValue)
+            {
+                // Legacy key with full access — default to all scopes
+                _authorizedScopes = new List<string>(Services.EsiScopePresets.AllScopes);
+            }
+#pragma warning restore CS0618
+            // else: empty scopes (invalid or zero-mask key)
         }
 
         /// <summary>
@@ -111,11 +123,34 @@ namespace EVEMon.Common.Models
         public string RefreshToken { get; private set; }
 
         /// <summary>
-        /// Gets or sets the access mask.
+        /// The ESI scopes that were granted when this key was authenticated.
         /// </summary>
-        /// <value>The access mask.</value>
+        private List<string> _authorizedScopes = new();
+
+        /// <summary>
+        /// Gets the ESI scopes that were granted when this key was authenticated.
+        /// </summary>
         [XmlIgnore]
-        public ulong AccessMask { get; private set; }
+        public IReadOnlyList<string> AuthorizedScopes => _authorizedScopes;
+
+        /// <summary>
+        /// Returns true if this key includes the specified ESI scope.
+        /// </summary>
+        public bool HasScope(string scope) => _authorizedScopes.Contains(scope);
+
+        /// <summary>
+        /// Returns true if this key has the scope required for the given character API method.
+        /// Returns true for public endpoints that require no scope.
+        /// </summary>
+        public bool HasAccessTo(ESIAPICharacterMethods method)
+            => Constants.EsiScopeMapping.HasScope(_authorizedScopes, method);
+
+        /// <summary>
+        /// Returns true if this key has the scope required for the given corporation API method.
+        /// Returns true for public endpoints that require no scope.
+        /// </summary>
+        public bool HasAccessTo(ESIAPICorporationMethods method)
+            => Constants.EsiScopeMapping.HasCorpScope(_authorizedScopes, method);
 
         /// <summary>
         /// Returns true if an error occurred while last trying to refresh this key.
@@ -460,12 +495,12 @@ namespace EVEMon.Common.Models
         /// <returns></returns>
         internal SerializableESIKey Export()
         {
-            SerializableESIKey serial = new SerializableESIKey
+            var serial = new SerializableESIKey
             {
                 ID = ID,
                 RefreshToken = RefreshToken,
-                AccessMask = AccessMask,
                 Monitored = m_monitored,
+                AuthorizedScopes = new List<string>(_authorizedScopes),
             };
 
             return serial;
@@ -496,8 +531,13 @@ namespace EVEMon.Common.Models
         {
             e.ThrowIfNull(nameof(e));
 
+            // Detect scopes that were revoked during re-authentication
+            var revokedScopes = _authorizedScopes
+                .Where(oldScope => !e.AuthorizedScopes.Contains(oldScope))
+                .ToList();
+
             RefreshToken = e.RefreshToken;
-            AccessMask = e.AccessMask;
+            _authorizedScopes = new List<string>(e.AuthorizedScopes);
             // Throw out old access token
             AccessToken = string.Empty;
             m_keyExpires = DateTime.MinValue;
@@ -510,6 +550,10 @@ namespace EVEMon.Common.Models
             // Assign this API key to the new identities and create CCP characters
             var cid = e.Identity;
             cid.ESIKeys.Add(this);
+
+            // Clear stale data for any scopes that were revoked
+            if (revokedScopes.Count > 0 && cid.CCPCharacter != null)
+                cid.CCPCharacter.ClearRevokedScopeData(revokedScopes);
 
             // Retrieves the ccp character and create one if none
             if (cid.CCPCharacter != null)

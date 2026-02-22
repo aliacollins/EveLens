@@ -34,7 +34,6 @@ namespace EVEMon.Common.Models.Collections
         private IssuedFor AdjustIssuer(IssuedFor issuedFor, EsiOrderListItem srcOrder)
         {
             var orderFor = issuedFor;
-            const ulong MARKET_ORDER_MASK = (ulong)ESIAPICharacterMethods.MarketOrders;
             // Orders in corporation endpoint are unconditionally for corp, the character
             // endpoint has a special field since *some* are for corp, why...
             if (srcOrder.IsCorporation)
@@ -46,9 +45,9 @@ namespace EVEMon.Common.Models.Collections
                 // Find matching character identity, if any
                 var issuer = AppServices.CharacterIdentities.FirstOrDefault(character =>
                     character.CharacterID == srcOrder.IssuedBy);
-                // If the character is monitored and has access mask to market
+                // If the character is monitored and has the market orders scope
                 if (issuer != null && (issuer.CCPCharacter?.Monitored ?? false) && issuer.
-                        ESIKeys.Any(key => (key.AccessMask & MARKET_ORDER_MASK) != 0UL))
+                        ESIKeys.Any(key => key.HasAccessTo(ESIAPICharacterMethods.MarketOrders)))
                     orderFor = IssuedFor.None;
             }
             return orderFor;

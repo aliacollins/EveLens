@@ -246,6 +246,36 @@
         <Setter Property="Cursor" Value="Hand" />
     </Style>
 
+    <!-- ── ToggleSwitch: gold accent when on, compact (no On/Off labels) ── -->
+    <Style Selector="ToggleSwitch">
+        <Style.Resources>
+            <!-- On state: gold track -->
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#FFD4A017" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#FFFFC107" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#FFCB9515" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#FFD4A017" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#FFFFC107" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFCB9515" />
+            <!-- On state: white knob -->
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFFFFFFF" />
+            <!-- Off state: dark track, gray knob -->
+            <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#FF2A3050" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#FF343D60" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPressed" Color="#FF222840" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#FF3A4A70" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOffPointerOver" Color="#FF4A5A80" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOffPressed" Color="#FF3A4A70" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOff" Color="#FF8899B0" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPointerOver" Color="#FFA0B0C8" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPressed" Color="#FF8899B0" />
+        </Style.Resources>
+        <Setter Property="OnContent" Value="{x:Null}" />
+        <Setter Property="OffContent" Value="{x:Null}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
     <!-- ── Card: reusable elevated surface (Border only — supports BoxShadow) ── -->
     <Style Selector="Border.card">
         <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />

@@ -2,140 +2,92 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="EVEMon.Avalonia.Views.Dialogs.AboutWindow"
         Title="About EVEMon NexT"
-        Width="880" Height="520"
+        Width="720" Height="680"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
 
-    <!-- 3-column layout matching the reference design -->
-    <Grid ColumnDefinitions="220,*,220">
+    <DockPanel>
 
-        <!-- LEFT COLUMN: App info, maintainer, links -->
-        <Border Grid.Column="0"
-                Background="{StaticResource EveBackgroundMediumBrush}"
-                Padding="16,20">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="4">
-                    <!-- Title -->
-                    <TextBlock Text="EVEMon NexT" FontSize="24" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}" />
+        <!-- Header section -->
+        <Border DockPanel.Dock="Top" Padding="24,20,24,0">
+            <DockPanel>
+                <!-- App icon -->
+                <Border DockPanel.Dock="Left" Width="56" Height="56" CornerRadius="14"
+                        Margin="0,0,20,0" VerticalAlignment="Top"
+                        Background="{StaticResource EveBackgroundMediumBrush}"
+                        BorderThickness="1" BorderBrush="{StaticResource EveAccentDimmedBrush}">
+                    <Panel>
+                        <TextBlock Text="EM" FontSize="11" FontWeight="ExtraBold"
+                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                   LetterSpacing="0.5"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Border Background="{StaticResource EveAccentSecondaryBrush}"
+                                CornerRadius="3" Padding="4,1"
+                                HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                Margin="0,0,-2,-2">
+                            <TextBlock Text="NxT" FontSize="7" FontWeight="Bold"
+                                       Foreground="{StaticResource EveBackgroundDarkestBrush}" />
+                        </Border>
+                    </Panel>
+                </Border>
 
-                    <TextBlock x:Name="VersionText" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-
-                    <!-- Description -->
-                    <TextBlock Text="EVE Online Character Monitor&#x0a;Skill Planner"
+                <!-- Title and info -->
+                <StackPanel VerticalAlignment="Top">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="EVEMon " FontSize="20" FontWeight="Light"
+                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
+                        <TextBlock Text="NexT" FontSize="20" FontWeight="Bold"
+                                   FontStyle="Italic"
+                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                        <TextBlock x:Name="VersionText" FontSize="11"
+                                   Foreground="{StaticResource EveTextDisabledBrush}" />
+                        <TextBlock Text="." FontSize="10"
+                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text=".NET 8 . Avalonia" FontSize="11"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="Character intelligence for EVE Online. Built on 20 years of community work."
                                FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}"
-                               TextWrapping="Wrap" Margin="0,8,0,0" />
-
-                    <!-- Links -->
-                    <Button x:Name="WebsiteLink" Content="evemon.dev"
-                            FontSize="11" Padding="0" Margin="0,8,0,0"
-                            Background="Transparent" BorderThickness="0"
-                            Foreground="{StaticResource EveAccentSecondaryBrush}"
-                            Cursor="Hand" HorizontalAlignment="Left" />
-                    <Button x:Name="GitHubLink" Content="github.com/aliacollins/evemon"
-                            FontSize="11" Padding="0"
-                            Background="Transparent" BorderThickness="0"
-                            Foreground="{StaticResource EveAccentSecondaryBrush}"
-                            Cursor="Hand" HorizontalAlignment="Left" />
-
-                    <!-- Maintainer -->
-                    <TextBlock Text="MAINTAINER" FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                               Margin="0,16,0,4" />
-                    <TextBlock Text="Alia Collins" FontSize="13" FontWeight="SemiBold"
-                               Foreground="{StaticResource EveTextPrimaryBrush}" />
-                    <TextBlock Text="Active Developer" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-
-                    <!-- Support -->
-                    <TextBlock Text="SUPPORT EVEMON" FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                               Margin="0,16,0,4" />
-                    <TextBlock Text="I don't accept donations.&#x0a;Please donate to Peter Han&#x0a;or the original EVEMonDevTeam&#x0a;who built this tool."
-                               FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}"
-                               TextWrapping="Wrap" />
-
-                    <!-- Close button -->
-                    <Button x:Name="OkButton" Content="Close"
-                            FontSize="11" Padding="14,5" CornerRadius="12"
-                            HorizontalAlignment="Left" Margin="0,20,0,0" />
+                               Margin="0,6,0,0" TextWrapping="Wrap" />
                 </StackPanel>
-            </ScrollViewer>
+            </DockPanel>
         </Border>
 
-        <!-- MIDDLE COLUMN: Built with AI, External APIs, Build Tools, Roadmap -->
-        <Border Grid.Column="1" Padding="20,20"
-                Background="{StaticResource EveBackgroundDarkBrush}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="4">
-
-                    <!-- Built with AI -->
-                    <TextBlock Text="BUILT WITH AI" FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                               Margin="0,0,0,4" />
-                    <TextBlock Text="Continued maintenance is made possible through AI-assisted development tools."
-                               FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}"
-                               TextWrapping="Wrap" Margin="0,0,0,12" />
-
-                    <!-- External APIs -->
-                    <TextBlock Text="EXTERNAL APIs" FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                               Margin="0,0,0,4" />
-                    <TextBlock Text="CCP Games - ESI API" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="EVEMarketer - Market Data" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="Fuzzwork - Static Data" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="Stack Overflow - Solutions" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}"
-                               Margin="0,0,0,12" />
-
-                    <!-- Build Tools -->
-                    <TextBlock Text="BUILD TOOLS" FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                               Margin="0,0,0,4" />
-                    <TextBlock Text=".NET 8.0 - Runtime" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="Avalonia UI - Cross-platform" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="Claude Code - Anthropic" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}"
-                               Margin="0,0,0,12" />
-
-                    <!-- Roadmap -->
-                    <TextBlock Text="ROADMAP" FontSize="10" FontWeight="Bold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                               Margin="0,0,0,4" />
-                    <TextBlock Text="&#x2022; UI Modernization" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="&#x2022; Enhanced Skill Planning" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="&#x2022; Better ESI Integration" FontSize="11"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-
-                    <!-- Copyright at bottom of middle column -->
-                    <TextBlock x:Name="CopyrightText" FontSize="9" Margin="0,20,0,0"
-                               Foreground="{StaticResource EveTextDisabledBrush}"
-                               TextWrapping="Wrap" />
-                    <TextBlock Text="Licensed under GPL v2" FontSize="9"
-                               Foreground="{StaticResource EveTextDisabledBrush}" />
-                    <TextBlock Text="EVE Online and all related logos are trademarks of CCP hf."
-                               FontSize="9" Foreground="{StaticResource EveTextDisabledBrush}"
-                               TextWrapping="Wrap" />
-                </StackPanel>
-            </ScrollViewer>
+        <!-- Tab bar -->
+        <Border DockPanel.Dock="Top" Padding="24,12,24,0"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <StackPanel x:Name="TabBar" Orientation="Horizontal" Spacing="4" />
         </Border>
 
-        <!-- RIGHT COLUMN: Contributors -->
-        <Border Grid.Column="2"
-                Background="{StaticResource EveBackgroundMediumBrush}"
-                Padding="16,20">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel x:Name="ContributorsPanel" Spacing="2" />
-            </ScrollViewer>
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom" Padding="24,8"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0"
+                Background="{StaticResource EveBackgroundMediumBrush}">
+            <DockPanel>
+                <TextBlock Text="EVE Online and all related logos are trademarks of CCP hf."
+                           FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="Fly safe. o7" FontSize="10"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           HorizontalAlignment="Right" DockPanel.Dock="Right"
+                           VerticalAlignment="Center" />
+            </DockPanel>
         </Border>
 
-    </Grid>
+        <!-- Close button -->
+        <Border DockPanel.Dock="Bottom" Padding="24,10">
+            <Button x:Name="OkButton" Content="Close"
+                    FontSize="11" Padding="20,6" CornerRadius="12"
+                    HorizontalAlignment="Right" />
+        </Border>
+
+        <!-- Tab content area (no scroll — window is large enough) -->
+        <Border Padding="24,16,24,8">
+            <Panel x:Name="TabContent" />
+        </Border>
+
+    </DockPanel>
 </Window>

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using EVEMon.Common.Collections;
+using EVEMon.Common.Constants;
 using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.CCPAPI;
@@ -20,6 +21,7 @@ using EVEMon.Common.Serialization.Settings;
 using Microsoft.Extensions.Logging;
 using EVEMon.Common.Extensions;
 using EVEMon.Core;
+using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.Models
 {
@@ -857,6 +859,86 @@ namespace EVEMon.Common.Models
         {
             // Fires the event regarding industry jobs update
             m_services.OnIndustryJobsUpdated(this);
+        }
+
+        /// <summary>
+        /// Clears in-memory collections and on-disk cache files for scopes that have been
+        /// revoked during re-authentication. Resets lazy fields to fresh empty instances
+        /// so the UI no longer displays stale data.
+        /// </summary>
+        /// <param name="revokedScopes">The ESI scopes that were removed.</param>
+        internal void ClearRevokedScopeData(IEnumerable<string> revokedScopes)
+        {
+            var cache = AppServices.CharacterDataCache;
+            long id = CharacterID;
+
+            foreach (string scope in revokedScopes)
+            {
+                // Delete cache files for this scope
+                foreach (string cacheKey in EsiScopeMapping.GetCacheKeysForScope(scope))
+                {
+                    _ = cache.ClearEndpointAsync(id, cacheKey);
+                }
+
+                // Reset in-memory lazy collections to empty instances
+                switch (scope)
+                {
+                    case "esi-wallet.read_character_wallet.v1":
+                        _walletJournal = new Lazy<WalletJournalCollection>(() => new WalletJournalCollection(this));
+                        _walletTransactions = new Lazy<WalletTransactionsCollection>(() => new WalletTransactionsCollection(this));
+                        break;
+                    case "esi-assets.read_assets.v1":
+                        _assets = new Lazy<AssetCollection>(() => new AssetCollection(this));
+                        break;
+                    case "esi-markets.read_character_orders.v1":
+                        _characterMarketOrders = new Lazy<MarketOrderCollection>(() => new MarketOrderCollection(this));
+                        break;
+                    case "esi-contracts.read_character_contracts.v1":
+                        _characterContracts = new Lazy<ContractCollection>(() => new ContractCollection(this));
+                        break;
+                    case "esi-industry.read_character_jobs.v1":
+                        _characterIndustryJobs = new Lazy<IndustryJobCollection>(() => new IndustryJobCollection(this));
+                        break;
+                    case "esi-mail.read_mail.v1":
+                        _eveMailMessages = new Lazy<EveMailMessageCollection>(() => new EveMailMessageCollection(this));
+                        _eveMailingLists = new Lazy<EveMailingListCollection>(() => new EveMailingListCollection(this));
+                        break;
+                    case "esi-characters.read_notifications.v1":
+                        _eveNotifications = new Lazy<EveNotificationCollection>(() => new EveNotificationCollection(this));
+                        break;
+                    case "esi-characters.read_contacts.v1":
+                        _contacts = new Lazy<ContactCollection>(() => new ContactCollection(this));
+                        break;
+                    case "esi-characters.read_standings.v1":
+                        _standings = new Lazy<StandingCollection>(() => new StandingCollection(this));
+                        break;
+                    case "esi-characters.read_medals.v1":
+                        _characterMedals = new Lazy<MedalCollection>(() => new MedalCollection(this));
+                        break;
+                    case "esi-characters.read_fw_stats.v1":
+                        FactionalWarfareStats = null;
+                        IsFactionalWarfareNotEnlisted = true;
+                        break;
+                    case "esi-characters.read_agents_research.v1":
+                        _researchPoints = new Lazy<ResearchPointCollection>(() => new ResearchPointCollection(this));
+                        break;
+                    case "esi-killmails.read_killmails.v1":
+                        _killLog = new Lazy<KillLogCollection>(() => new KillLogCollection(this));
+                        break;
+                    case "esi-calendar.read_calendar_events.v1":
+                        _upcomingCalendarEvents = new Lazy<UpcomingCalendarEventCollection>(() => new UpcomingCalendarEventCollection(this));
+                        break;
+                    case "esi-planets.manage_planets.v1":
+                        _planetaryColonies = new Lazy<PlanetaryColonyCollection>(() => new PlanetaryColonyCollection(this));
+                        break;
+                    case "esi-characters.read_loyalty.v1":
+                        _loyaltyPoints = new Lazy<LoyaltyCollection>(() => new LoyaltyCollection(this));
+                        break;
+                }
+            }
+
+            // Notify UI so tabs refresh with cleared data
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(this));
         }
 
         /// <summary>

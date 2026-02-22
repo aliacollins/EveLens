@@ -54,6 +54,18 @@ namespace EVEMon.Common
         }
 
         /// <summary>
+        /// Forces an immediate update check, regardless of the current schedule.
+        /// Temporarily enables the update manager if it was disabled.
+        /// </summary>
+        public static void CheckNow()
+        {
+            s_enabled = true;
+            s_checkScheduled = false;
+            s_errorRetryCount = 0;
+            ScheduleCheck(TimeSpan.Zero);
+        }
+
+        /// <summary>
         /// Deletes the installation files.
         /// </summary>
         public static void DeleteInstallationFiles()
@@ -270,7 +282,7 @@ namespace EVEMon.Common
                 MostRecentDeniedUpgrade) : new Version();
 
             // Is the program out of date and user has not previously denied this version?
-            if (currentVersion < newestVersion & mostRecentDeniedVersion < newestVersion)
+            if (currentVersion < newestVersion && mostRecentDeniedVersion < newestVersion)
             {
                 // Quit if newest release is null
                 // (Shouldn't happen but it's nice to be prepared)
@@ -331,7 +343,7 @@ namespace EVEMon.Common
                 : new Version();
 
             // Is there is a new major version and the user has not previously denied it?
-            if (currentVersion >= newestVersion | mostRecentDeniedMajorUpgrade >= newestVersion)
+            if (currentVersion >= newestVersion || mostRecentDeniedMajorUpgrade >= newestVersion)
                 return;
             // Reset the most recent denied version
             Settings.Updates.MostRecentDeniedMajorUpgrade = string.Empty;

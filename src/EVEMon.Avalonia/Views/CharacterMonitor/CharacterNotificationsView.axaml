@@ -23,6 +23,16 @@
             </StackPanel>
         </Border>
 
+        <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
+            <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+            </StackPanel>
+        </Border>
+
         <DockPanel x:Name="DataContent">
             <!-- Toolbar -->
             <Border DockPanel.Dock="Top" Padding="10,7"

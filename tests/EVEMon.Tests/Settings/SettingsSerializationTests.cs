@@ -66,15 +66,15 @@ namespace EVEMon.Tests.Settings
             {
                 ID = 12345678,
                 RefreshToken = "test-token-abc",
-                AccessMask = 1024,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1" }
             });
 
             var result = XmlRoundTrip(settings);
             result.ESIKeys.Should().HaveCount(1);
             result.ESIKeys[0].ID.Should().Be(12345678);
             result.ESIKeys[0].RefreshToken.Should().Be("test-token-abc");
-            result.ESIKeys[0].AccessMask.Should().Be(1024);
+            result.ESIKeys[0].AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
             result.ESIKeys[0].Monitored.Should().BeTrue();
         }
 
@@ -123,14 +123,14 @@ namespace EVEMon.Tests.Settings
             {
                 ID = 98765432,
                 RefreshToken = "refresh-token-xyz",
-                AccessMask = ulong.MaxValue,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1", "esi-wallet.read_character_wallet.v1" }
             };
 
             var result = XmlRoundTrip(key);
             result.ID.Should().Be(98765432);
             result.RefreshToken.Should().Be("refresh-token-xyz");
-            result.AccessMask.Should().Be(ulong.MaxValue);
+            result.AuthorizedScopes.Should().HaveCount(2);
             result.Monitored.Should().BeTrue();
         }
 

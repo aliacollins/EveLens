@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using EVEMon.Common.Data;
 using EVEMon.Common.Models;
@@ -16,21 +17,29 @@ namespace EVEMon.Avalonia.Views.PlanEditor
 {
     public partial class PlanEntryDetailPanel : UserControl
     {
+        private PlanEntry? _currentEntry;
+
         public PlanEntryDetailPanel()
         {
             InitializeComponent();
+            NotesTextBox.LostFocus += OnNotesLostFocus;
         }
 
         internal void ShowEntry(PlanEntryDisplayItem? item, Character? character)
         {
+            // Save notes from previous entry before switching
+            SaveCurrentNotes();
+
             if (item == null)
             {
+                _currentEntry = null;
                 DetailBorder.IsVisible = false;
                 return;
             }
 
             DetailBorder.IsVisible = true;
             PlanEntry entry = item.Entry;
+            _currentEntry = entry;
             StaticSkill skill = entry.Skill;
 
             DetailSkillName.Text = item.SkillName;
@@ -42,11 +51,31 @@ namespace EVEMon.Avalonia.Views.PlanEditor
 
             var prereqs = BuildPrereqList(skill, character);
             PrereqList.ItemsSource = prereqs;
+
+            // Load notes
+            NotesTextBox.Text = entry.Notes ?? string.Empty;
         }
 
         public void Hide()
         {
+            SaveCurrentNotes();
+            _currentEntry = null;
             DetailBorder.IsVisible = false;
+        }
+
+        private void OnNotesLostFocus(object? sender, RoutedEventArgs e)
+        {
+            SaveCurrentNotes();
+        }
+
+        private void SaveCurrentNotes()
+        {
+            if (_currentEntry == null) return;
+            string newNotes = NotesTextBox.Text ?? string.Empty;
+            if (_currentEntry.Notes != newNotes)
+            {
+                _currentEntry.Notes = newNotes;
+            }
         }
 
         private static List<PrereqDisplayItem> BuildPrereqList(StaticSkill skill, Character? character)

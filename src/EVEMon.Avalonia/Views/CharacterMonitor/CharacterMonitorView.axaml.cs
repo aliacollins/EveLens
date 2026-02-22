@@ -81,7 +81,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 var tab = this.FindControl<TabItem>(kvp.Value);
                 if (tab != null)
-                    tab.IsVisible = oc.IsEndpointEnabled(kvp.Key);
+                    tab.IsVisible = oc.IsEndpointEnabled(kvp.Key) && oc.HasScopeFor(kvp.Key);
             }
         }
 
@@ -106,7 +106,7 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             {
                 var method = kvp.Value;
                 string displayName = EndpointClassification.EndpointDisplayName(method);
-                bool isEnabled = oc.IsEndpointEnabled(method);
+                bool isEnabled = oc.IsEndpointEnabled(method) && oc.HasScopeFor(method);
 
                 var cb = new CheckBox
                 {

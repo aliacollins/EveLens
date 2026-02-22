@@ -194,14 +194,16 @@ namespace EVEMon.Common
 
             try
             {
-                // API settings: Only override if custom values were persisted (not empty defaults).
-                // When loading from JSON, SSOClientID/Secret may be empty strings — don't
-                // overwrite the esi-credentials.json / embedded defaults with blanks.
-                if (!string.IsNullOrEmpty(s_settings.SSOClientID)
-                    && s_settings.SSOClientID != DefaultClientID)
+                // API settings: empty string means "use defaults" (user clicked Use Default).
+                // Non-empty, non-default values are custom credentials the user entered.
+                if (string.IsNullOrEmpty(s_settings.SSOClientID))
+                    SSOClientID = DefaultClientID;
+                else
                     SSOClientID = s_settings.SSOClientID;
-                if (!string.IsNullOrEmpty(s_settings.SSOClientSecret)
-                    && s_settings.SSOClientSecret != DefaultClientSecret)
+
+                if (string.IsNullOrEmpty(s_settings.SSOClientSecret))
+                    SSOClientSecret = DefaultClientSecret;
+                else
                     SSOClientSecret = s_settings.SSOClientSecret;
 
                 // User settings

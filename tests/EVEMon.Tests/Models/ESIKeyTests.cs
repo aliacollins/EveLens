@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 using EVEMon.Common.Serialization.Settings;
@@ -69,11 +70,15 @@ namespace EVEMon.Tests.Models
         }
 
         [Fact]
-        public void SerializableESIKey_XmlRoundTrip_PreservesAccessMask()
+        public void SerializableESIKey_XmlRoundTrip_PreservesAuthorizedScopes()
         {
-            var key = new SerializableESIKey { AccessMask = ulong.MaxValue };
+            var key = new SerializableESIKey
+            {
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1", "esi-wallet.read_character_wallet.v1" }
+            };
             var result = XmlRoundTrip(key);
-            result.AccessMask.Should().Be(ulong.MaxValue);
+            result.AuthorizedScopes.Should().HaveCount(2);
+            result.AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
         }
 
         [Fact]
@@ -121,17 +126,18 @@ namespace EVEMon.Tests.Models
         }
 
         [Fact]
-        public void ESIKey_FromSerialized_PreservesAccessMask()
+        public void ESIKey_FromSerialized_PreservesAuthorizedScopes()
         {
             var serial = new SerializableESIKey
             {
                 ID = 1,
-                AccessMask = 8388607,
-                Monitored = false
+                Monitored = false,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1", "esi-skills.read_skillqueue.v1" }
             };
 
             var key = new Common.Models.ESIKey(serial);
-            key.AccessMask.Should().Be(8388607UL);
+            key.AuthorizedScopes.Should().HaveCount(2);
+            key.AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
         }
 
         [Fact]
@@ -288,8 +294,8 @@ namespace EVEMon.Tests.Models
             {
                 ID = 2119000001,
                 RefreshToken = "rt_token",
-                AccessMask = 999,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1" }
             };
 
             var key = new Common.Models.ESIKey(serial);
@@ -297,7 +303,7 @@ namespace EVEMon.Tests.Models
 
             exported.ID.Should().Be(2119000001);
             exported.RefreshToken.Should().Be("rt_token");
-            exported.AccessMask.Should().Be(999UL);
+            exported.AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
             exported.Monitored.Should().BeTrue();
         }
 
@@ -308,8 +314,8 @@ namespace EVEMon.Tests.Models
             {
                 ID = 12345,
                 RefreshToken = "rt_round_trip",
-                AccessMask = 4294967295,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1", "esi-wallet.read_character_wallet.v1" }
             };
 
             var key = new Common.Models.ESIKey(original);
@@ -317,7 +323,7 @@ namespace EVEMon.Tests.Models
 
             exported.ID.Should().Be(original.ID);
             exported.RefreshToken.Should().Be(original.RefreshToken);
-            exported.AccessMask.Should().Be(original.AccessMask);
+            exported.AuthorizedScopes.Should().BeEquivalentTo(original.AuthorizedScopes);
             exported.Monitored.Should().Be(original.Monitored);
         }
 

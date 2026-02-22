@@ -19,3 +19,4 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("EVEMon.Tests")]
 [assembly: InternalsVisibleTo("EVEMon.Avalonia")]
+[assembly: InternalsVisibleTo("EVEMon NexT")]

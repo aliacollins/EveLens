@@ -93,6 +93,22 @@ namespace EVEMon.Common.Services
             }
         }
 
+        public Task ClearEndpointAsync(long characterId, string endpointKey)
+        {
+            try
+            {
+                string filePath = GetFilePath(characterId, endpointKey);
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"CharacterDataCache.ClearEndpointAsync failed for {characterId}/{endpointKey}: {ex.Message}");
+            }
+            return Task.CompletedTask;
+        }
+
         public Task ClearCharacterAsync(long characterId)
         {
             try

@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.Collections.Generic;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Settings;
 using FluentAssertions;
@@ -83,8 +84,11 @@ namespace EVEMon.Tests.Models
             {
                 ID = 42,
                 RefreshToken = "rt_token",
+#pragma warning disable CS0618
                 AccessMask = 8388607,
-                Monitored = true
+#pragma warning restore CS0618
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1" }
             };
             var key = new ESIKey(serial);
 
@@ -93,7 +97,7 @@ namespace EVEMon.Tests.Models
 
             // Assert — only RefreshToken should change
             key.ID.Should().Be(42);
-            key.AccessMask.Should().Be(8388607UL);
+            key.AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
             key.Monitored.Should().BeTrue();
             key.RefreshToken.Should().BeEmpty();
         }
@@ -181,7 +185,9 @@ namespace EVEMon.Tests.Models
             {
                 ID = 90000001,
                 RefreshToken = "rt_stale_backup_token",
+#pragma warning disable CS0618
                 AccessMask = ulong.MaxValue,
+#pragma warning restore CS0618
                 Monitored = true
             };
             var key = new ESIKey(serial);
@@ -194,7 +200,8 @@ namespace EVEMon.Tests.Models
             key.HasError.Should().BeTrue();
             key.RefreshToken.Should().BeEmpty();
             key.ID.Should().Be(90000001);
-            key.AccessMask.Should().Be(ulong.MaxValue);
+            // Legacy MaxValue AccessMask migrates to full scopes
+            key.AuthorizedScopes.Should().NotBeEmpty();
             key.Monitored.Should().BeTrue();
         }
 
@@ -262,8 +269,8 @@ namespace EVEMon.Tests.Models
             {
                 ID = 1,
                 RefreshToken = "rt_original_token",
-                AccessMask = 999,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1" }
             };
             var key = new ESIKey(serial);
 
@@ -274,7 +281,7 @@ namespace EVEMon.Tests.Models
             // Assert — export reflects cleared state
             exported.RefreshToken.Should().BeEmpty();
             exported.ID.Should().Be(1);
-            exported.AccessMask.Should().Be(999UL);
+            exported.AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
             exported.Monitored.Should().BeTrue();
         }
 

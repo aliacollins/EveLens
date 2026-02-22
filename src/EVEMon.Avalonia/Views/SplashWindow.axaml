@@ -1,0 +1,59 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EVEMon.Avalonia.Views.SplashWindow"
+        Title="EVEMon NexT"
+        Width="400" Height="250"
+        CanResize="False"
+        SystemDecorations="None"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource EveBackgroundDarkBrush}"
+        TransparencyLevelHint="None">
+
+    <Border BorderBrush="{StaticResource EveBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6">
+        <Grid RowDefinitions="*,Auto,Auto,Auto">
+
+            <!-- Title area -->
+            <StackPanel Grid.Row="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center"
+                        Spacing="4">
+                <TextBlock Text="EVEMon NexT"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Character Intelligence for EVE Online"
+                           FontSize="12"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="evemon.dev"
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center"
+                           Margin="0,4,0,0" />
+            </StackPanel>
+
+            <!-- Progress bar -->
+            <ProgressBar Grid.Row="1"
+                         IsIndeterminate="True"
+                         Height="3"
+                         Margin="30,0"
+                         Foreground="{StaticResource EveAccentPrimaryBrush}"
+                         Background="{StaticResource EveBackgroundMediumBrush}" />
+
+            <!-- Status text -->
+            <TextBlock x:Name="StatusTextBlock"
+                       Grid.Row="2"
+                       Text="Starting..."
+                       FontSize="11"
+                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                       HorizontalAlignment="Center"
+                       Margin="0,10,0,0" />
+
+            <!-- Bottom spacing -->
+            <Panel Grid.Row="3" Height="20" />
+        </Grid>
+    </Border>
+</Window>

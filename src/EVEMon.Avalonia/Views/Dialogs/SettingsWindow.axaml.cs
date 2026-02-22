@@ -28,11 +28,10 @@ namespace EVEMon.Avalonia.Views.Dialogs
         private string _initialTheme = string.Empty;
         private bool _isUpdating;
 
-        // Section expanders + keywords for search filtering
-        private readonly List<(Expander Expander, string[] Keywords)> _sections = new();
-
-        // Section expanders + nav buttons + chevron indicators for jump navigation
-        private readonly List<(Expander Expander, Button NavButton, TextBlock Chevron)> _navPairs = new();
+        // Sidebar navigation: section name → (content panel, nav button, keywords)
+        private readonly Dictionary<string, (StackPanel Panel, Button NavButton, string[] Keywords)> _sectionMap = new();
+        private readonly List<string> _sectionNames = new();
+        private string _activeSection = string.Empty;
 
         public SettingsWindow()
         {
@@ -41,46 +40,60 @@ namespace EVEMon.Avalonia.Views.Dialogs
             // Work on a copy of settings (same pattern as WinForms SettingsForm)
             _settings = Settings.Export();
 
-            BuildSectionMaps();
+            BuildSectionMap();
             LoadSettings();
             WireEvents();
+
+            // Select first section on open
+            SelectSection("Appearance");
         }
 
-        private void BuildSectionMaps()
+        private void BuildSectionMap()
         {
-            _sections.Add((AppearanceExpander, new[]
-            {
-                "appearance", "theme", "safe for work", "compatibility", "wine", "data directory"
-            }));
-            _sections.Add((WindowBehaviorExpander, new[]
-            {
-                "window", "behavior", "behaviour", "tray", "icon", "close", "minimize",
-                "popup", "taskbar", "system tray"
-            }));
-            _sections.Add((NotificationsExpander, new[]
-            {
-                "notification", "notifications", "sound", "skill", "email", "mail", "smtp",
-                "calendar", "google", "outlook", "reminder", "toast", "alert"
-            }));
-            _sections.Add((DataUpdatesExpander, new[]
-            {
-                "data", "update", "updates", "market", "price", "provider", "clock"
-            }));
-            _sections.Add((NetworkExpander, new[]
-            {
-                "network", "proxy", "sso", "client", "secret", "credentials", "http"
-            }));
-            _sections.Add((EsiScopesExpander, new[]
-            {
-                "esi", "scope", "scopes", "api", "oauth", "authenticate"
-            }));
+            AddSection("Appearance", AppearancePanel, NavAppearance,
+                new[] { "appearance", "theme", "safe for work", "compatibility", "wine", "data directory" });
+            AddSection("Window", WindowPanel, NavWindow,
+                new[] { "window", "behavior", "behaviour", "tray", "icon", "close", "minimize",
+                        "popup", "taskbar", "system tray" });
+            AddSection("Notifications", NotificationsPanel, NavNotifications,
+                new[] { "notification", "notifications", "sound", "skill", "email", "mail", "smtp",
+                        "calendar", "google", "outlook", "reminder", "toast", "alert" });
+            AddSection("Data", DataPanel, NavData,
+                new[] { "data", "update", "updates", "market", "price", "provider", "clock" });
+            AddSection("Network", NetworkPanel, NavNetwork,
+                new[] { "network", "proxy", "sso", "client", "secret", "credentials", "http" });
+            AddSection("ESI", EsiPanel, NavEsi,
+                new[] { "esi", "scope", "scopes", "api", "oauth", "authenticate" });
+        }
 
-            _navPairs.Add((AppearanceExpander, NavAppearance, AppearanceChevron));
-            _navPairs.Add((WindowBehaviorExpander, NavWindow, WindowChevron));
-            _navPairs.Add((NotificationsExpander, NavNotifications, NotificationsChevron));
-            _navPairs.Add((DataUpdatesExpander, NavData, DataChevron));
-            _navPairs.Add((NetworkExpander, NavNetwork, NetworkChevron));
-            _navPairs.Add((EsiScopesExpander, NavEsi, EsiChevron));
+        private void AddSection(string name, StackPanel panel, Button navButton, string[] keywords)
+        {
+            _sectionMap[name] = (panel, navButton, keywords);
+            _sectionNames.Add(name);
+        }
+
+        private void SelectSection(string name)
+        {
+            if (!_sectionMap.ContainsKey(name))
+                return;
+
+            _activeSection = name;
+
+            foreach (var sn in _sectionNames)
+            {
+                var (panel, navButton, _) = _sectionMap[sn];
+                bool isActive = sn == name;
+
+                panel.IsVisible = isActive;
+
+                if (isActive)
+                    navButton.Classes.Add("active");
+                else
+                    navButton.Classes.Remove("active");
+            }
+
+            // Reset scroll to top when switching sections
+            ContentScroller.Offset = new Vector(0, 0);
         }
 
         private void LoadSettings()
@@ -89,21 +102,21 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
             // --- Appearance ---
             PopulateThemeCombo();
-            SafeForWorkCheckBox.IsChecked = _settings.UI.SafeForWork;
+            SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
             CompatibilityCombo.SelectedIndex = (int)_settings.Compatibility;
 
             // --- Window Behavior ---
             LoadTraySettings();
 
             // --- Notifications ---
-            OsNotificationsCheckBox.IsChecked = _settings.Notifications.ShowOSNotifications;
-            PlaySoundCheckBox.IsChecked = _settings.Notifications.PlaySoundOnSkillCompletion;
+            OsNotificationsToggle.IsChecked = _settings.Notifications.ShowOSNotifications;
+            PlaySoundToggle.IsChecked = _settings.Notifications.PlaySoundOnSkillCompletion;
             LoadEmailSettings();
             LoadCalendarSettings();
 
             // --- Data & Updates ---
-            CheckForUpdatesCheckBox.IsChecked = _settings.Updates.CheckEVEMonVersion;
-            CheckTimeCheckBox.IsChecked = _settings.Updates.CheckTimeOnStartup;
+            CheckForUpdatesToggle.IsChecked = _settings.Updates.CheckEVEMonVersion;
+            CheckTimeToggle.IsChecked = _settings.Updates.CheckTimeOnStartup;
             PopulateMarketPriceProviders();
 
             // --- Network ---
@@ -175,8 +188,8 @@ namespace EVEMon.Avalonia.Views.Dialogs
         {
             var n = _settings.Notifications;
 
-            SendMailCheckBox.IsChecked = n.SendMailAlert;
-            EmailOptionsPanel.IsEnabled = n.SendMailAlert;
+            SendMailToggle.IsChecked = n.SendMailAlert;
+            EmailOptionsPanel.IsVisible = n.SendMailAlert;
 
             int providerIdx = n.EmailSmtpServerProvider switch
             {
@@ -189,24 +202,24 @@ namespace EVEMon.Avalonia.Views.Dialogs
             EmailProviderCombo.SelectedIndex = providerIdx;
             SmtpServerTextBox.Text = n.EmailSmtpServerAddress ?? string.Empty;
             EmailPortNumber.Value = n.EmailPortNumber;
-            RequiresSslCheckBox.IsChecked = n.EmailServerRequiresSsl;
+            RequiresSslToggle.IsChecked = n.EmailServerRequiresSsl;
 
-            EmailAuthCheckBox.IsChecked = n.EmailAuthenticationRequired;
-            EmailAuthPanel.IsEnabled = n.EmailAuthenticationRequired;
+            EmailAuthToggle.IsChecked = n.EmailAuthenticationRequired;
+            EmailAuthPanel.IsVisible = n.EmailAuthenticationRequired;
             EmailAuthUserTextBox.Text = n.EmailAuthenticationUserName ?? string.Empty;
             EmailAuthPasswordTextBox.Text = n.EmailAuthenticationPassword ?? string.Empty;
 
             EmailFromTextBox.Text = n.EmailFromAddress ?? string.Empty;
             EmailToTextBox.Text = n.EmailToAddress ?? string.Empty;
-            EmailShortFormatCheckBox.IsChecked = n.UseEmailShortFormat;
+            EmailShortFormatToggle.IsChecked = n.UseEmailShortFormat;
         }
 
         private void LoadCalendarSettings()
         {
             var cal = _settings.Calendar;
 
-            CalendarEnabledCheckBox.IsChecked = cal.Enabled;
-            CalendarOptionsPanel.IsEnabled = cal.Enabled;
+            CalendarEnabledToggle.IsChecked = cal.Enabled;
+            CalendarOptionsPanel.IsVisible = cal.Enabled;
 
             if (cal.Provider == CalendarProvider.Google)
                 GoogleCalendarRadio.IsChecked = true;
@@ -244,8 +257,8 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
         private void LoadNetworkSettings()
         {
-            UseProxyCheckBox.IsChecked = _settings.Proxy.Enabled;
-            ProxyPanel.IsEnabled = _settings.Proxy.Enabled;
+            UseProxyToggle.IsChecked = _settings.Proxy.Enabled;
+            ProxyPanel.IsVisible = _settings.Proxy.Enabled;
             ProxyHostTextBox.Text = _settings.Proxy.Host ?? string.Empty;
             ProxyPortTextBox.Text = _settings.Proxy.Port.ToString();
 
@@ -285,6 +298,208 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 EsiPresetCombo.SelectedIndex = selectedIndex;
 
             UpdateEsiDescription();
+            LoadCharacterScopeTable();
+        }
+
+        private void LoadCharacterScopeTable()
+        {
+            var characters = AppServices.Characters;
+            if (characters == null || !characters.Any())
+            {
+                NoCharactersLabel.IsVisible = true;
+                CharacterScopePanel.Children.Clear();
+                return;
+            }
+
+            NoCharactersLabel.IsVisible = false;
+            string currentGlobalPreset = GetSelectedEsiPresetKey();
+
+            var groups = new Dictionary<string, CharacterScopeGroupEntry>();
+
+            foreach (var character in characters)
+            {
+                var ccpChar = character as Common.Models.CCPCharacter;
+                if (ccpChar == null) continue;
+
+                var key = ccpChar.Identity?.ESIKeys.FirstOrDefault(k => k.Monitored);
+                string detectedKey;
+
+                if (key == null || key.AuthorizedScopes.Count == 0)
+                    detectedKey = "NoScopes";
+                else
+                    detectedKey = EsiScopePresets.DetectPreset(key.AuthorizedScopes);
+
+                if (!groups.TryGetValue(detectedKey, out var group))
+                {
+                    string groupDisplayName;
+                    if (detectedKey == "NoScopes")
+                        groupDisplayName = "No Scopes";
+                    else if (EsiScopePresets.PresetDisplayNames.TryGetValue(detectedKey, out string? gdn))
+                        groupDisplayName = gdn;
+                    else
+                        groupDisplayName = detectedKey;
+
+                    group = new CharacterScopeGroupEntry
+                    {
+                        GroupName = groupDisplayName,
+                        PresetKey = detectedKey,
+                        IsCurrentPreset = detectedKey == currentGlobalPreset
+                    };
+                    groups[detectedKey] = group;
+                }
+
+                bool needsReauth = detectedKey != currentGlobalPreset;
+
+                group.Characters.Add(new CharacterScopeEntry
+                {
+                    Name = character.Name ?? "Unknown",
+                    NeedsReauth = needsReauth,
+                    Character = ccpChar
+                });
+            }
+
+            foreach (var g in groups.Values)
+                g.CharacterCount = g.Characters.Count;
+
+            var ordered = groups.Values
+                .OrderByDescending(g => g.IsCurrentPreset)
+                .ThenBy(g => g.GroupName)
+                .ToList();
+
+            BuildCharacterScopeGroups(ordered);
+        }
+
+        private void BuildCharacterScopeGroups(List<CharacterScopeGroupEntry> groups)
+        {
+            CharacterScopePanel.Children.Clear();
+
+            foreach (var group in groups)
+            {
+                // Group header
+                var headerGrid = new Grid
+                {
+                    ColumnDefinitions = ColumnDefinitions.Parse("*,Auto"),
+                    Margin = new Thickness(0, 4, 0, 2)
+                };
+
+                var headerLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                headerLeft.Children.Add(new TextBlock
+                {
+                    Text = group.GroupName,
+                    FontSize = 11,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = FindBrush("EveAccentPrimaryBrush"),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                headerLeft.Children.Add(new TextBlock
+                {
+                    Text = $"({group.CharacterCount})",
+                    FontSize = 10,
+                    Foreground = FindBrush("EveTextDisabledBrush"),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                Grid.SetColumn(headerLeft, 0);
+                headerGrid.Children.Add(headerLeft);
+
+                if (group.IsCurrentPreset)
+                {
+                    var checkMark = new TextBlock
+                    {
+                        Text = "\u2713",
+                        FontSize = 11,
+                        Foreground = FindBrush("EveSuccessGreenBrush"),
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    Grid.SetColumn(checkMark, 1);
+                    headerGrid.Children.Add(checkMark);
+                }
+
+                CharacterScopePanel.Children.Add(headerGrid);
+
+                // Character rows
+                foreach (var entry in group.Characters)
+                {
+                    var rowGrid = new Grid
+                    {
+                        ColumnDefinitions = ColumnDefinitions.Parse("*,Auto"),
+                        Margin = new Thickness(12, 2, 0, 2)
+                    };
+
+                    var nameBlock = new TextBlock
+                    {
+                        Text = entry.Name,
+                        FontSize = 11,
+                        Foreground = FindBrush("EveTextPrimaryBrush"),
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                    Grid.SetColumn(nameBlock, 0);
+                    rowGrid.Children.Add(nameBlock);
+
+                    if (entry.NeedsReauth)
+                    {
+                        var reauthBtn = new Button
+                        {
+                            Content = "Re-authenticate",
+                            FontSize = 10,
+                            Padding = new Thickness(8, 2),
+                            CornerRadius = new CornerRadius(10),
+                            Foreground = FindBrush("EveWarningYellowBrush"),
+                            Background = Brushes.Transparent,
+                            BorderThickness = new Thickness(1),
+                            BorderBrush = FindBrush("EveWarningYellowBrush"),
+                            Tag = entry.Character,
+                            Cursor = new global::Avalonia.Input.Cursor(
+                                global::Avalonia.Input.StandardCursorType.Hand)
+                        };
+                        reauthBtn.Click += OnReauthCharacterClick;
+                        Grid.SetColumn(reauthBtn, 1);
+                        rowGrid.Children.Add(reauthBtn);
+                    }
+
+                    CharacterScopePanel.Children.Add(rowGrid);
+                }
+            }
+        }
+
+        private async void OnReauthCharacterClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Apply the current preset selection so ESI scopes are correct during re-auth
+                string presetKey = GetSelectedEsiPresetKey();
+                Settings.EsiScopePreset = presetKey;
+
+                var dialog = new AddCharacterWindow();
+                await dialog.ShowDialog(this);
+
+                if (dialog.CharacterImported)
+                    LoadCharacterScopeTable();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error re-authenticating: {ex}");
+            }
+        }
+
+        private static IBrush FindBrush(string resourceKey)
+        {
+            return (IBrush?)Application.Current?.FindResource(resourceKey) ?? Brushes.Gray;
+        }
+
+        private sealed class CharacterScopeEntry
+        {
+            public string Name { get; set; } = string.Empty;
+            public bool NeedsReauth { get; set; }
+            public Common.Models.CCPCharacter? Character { get; set; }
+        }
+
+        private sealed class CharacterScopeGroupEntry
+        {
+            public string GroupName { get; set; } = string.Empty;
+            public string PresetKey { get; set; } = string.Empty;
+            public int CharacterCount { get; set; }
+            public bool IsCurrentPreset { get; set; }
+            public List<CharacterScopeEntry> Characters { get; set; } = new();
         }
 
         private void WireEvents()
@@ -293,18 +508,11 @@ namespace EVEMon.Avalonia.Views.Dialogs
             SearchBox.TextChanged += OnSearchTextChanged;
             SearchClearButton.Click += (_, _) => { SearchBox.Text = string.Empty; };
 
-            // Navigation buttons + chevron indicators
-            foreach (var (expander, navButton, chevron) in _navPairs)
+            // Sidebar navigation
+            foreach (var sn in _sectionNames)
             {
-                navButton.Click += (_, _) => ScrollToExpander(expander);
-
-                // Update chevron when expand/collapse changes
-                // ▾ = expanded (U+25BE), ▸ = collapsed (U+25B8)
-                expander.PropertyChanged += (_, e) =>
-                {
-                    if (e.Property == Expander.IsExpandedProperty)
-                        chevron.Text = expander.IsExpanded ? "\u25BE" : "\u25B8";
-                };
+                var sectionName = sn; // capture for closure
+                _sectionMap[sn].NavButton.Click += (_, _) => SelectSection(sectionName);
             }
 
             // Buttons
@@ -321,22 +529,22 @@ namespace EVEMon.Avalonia.Views.Dialogs
             TrayMinimizedRadio.IsCheckedChanged += (_, _) => UpdateTrayDisables();
             TrayAlwaysRadio.IsCheckedChanged += (_, _) => UpdateTrayDisables();
 
-            // Email
-            SendMailCheckBox.IsCheckedChanged += (_, _) =>
-                EmailOptionsPanel.IsEnabled = SendMailCheckBox.IsChecked == true;
-            EmailAuthCheckBox.IsCheckedChanged += (_, _) =>
-                EmailAuthPanel.IsEnabled = EmailAuthCheckBox.IsChecked == true;
+            // Email — master toggle reveals/hides sub-panel
+            SendMailToggle.IsCheckedChanged += (_, _) =>
+                EmailOptionsPanel.IsVisible = SendMailToggle.IsChecked == true;
+            EmailAuthToggle.IsCheckedChanged += (_, _) =>
+                EmailAuthPanel.IsVisible = EmailAuthToggle.IsChecked == true;
             EmailProviderCombo.SelectionChanged += OnEmailProviderSelectionChanged;
 
-            // Calendar
-            CalendarEnabledCheckBox.IsCheckedChanged += (_, _) =>
-                CalendarOptionsPanel.IsEnabled = CalendarEnabledCheckBox.IsChecked == true;
+            // Calendar — master toggle reveals/hides sub-panel
+            CalendarEnabledToggle.IsCheckedChanged += (_, _) =>
+                CalendarOptionsPanel.IsVisible = CalendarEnabledToggle.IsChecked == true;
             GoogleCalendarRadio.IsCheckedChanged += (_, _) => UpdateCalendarProviderPanels();
             OutlookCalendarRadio.IsCheckedChanged += (_, _) => UpdateCalendarProviderPanels();
 
-            // Proxy
-            UseProxyCheckBox.IsCheckedChanged += (_, _) =>
-                ProxyPanel.IsEnabled = UseProxyCheckBox.IsChecked == true;
+            // Proxy — master toggle reveals/hides sub-panel
+            UseProxyToggle.IsCheckedChanged += (_, _) =>
+                ProxyPanel.IsVisible = UseProxyToggle.IsChecked == true;
             UseDefaultCredentialsButton.Click += (_, _) =>
             {
                 SsoClientIdTextBox.Text = string.Empty;
@@ -348,26 +556,6 @@ namespace EVEMon.Avalonia.Views.Dialogs
             CustomizeScopesButton.Click += OnCustomizeScopesClick;
         }
 
-        // --- Navigation ---
-
-        private void ScrollToExpander(Expander expander)
-        {
-            // Ensure the section is expanded
-            expander.IsExpanded = true;
-
-            // Scroll the expander into view
-            // Use a brief delay so the layout can update after expansion
-            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                var transform = expander.TransformToVisual(SectionsPanel);
-                if (transform != null)
-                {
-                    var point = transform.Value.Transform(new Point(0, 0));
-                    SettingsScroller.Offset = new Vector(0, Math.Max(0, point.Y));
-                }
-            }, global::Avalonia.Threading.DispatcherPriority.Loaded);
-        }
-
         // --- Search ---
 
         private void OnSearchTextChanged(object? sender, TextChangedEventArgs e)
@@ -377,30 +565,29 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
             if (string.IsNullOrEmpty(query))
             {
-                // Show all sections and nav buttons
-                foreach (var (expander, _) in _sections)
-                    expander.IsVisible = true;
-                foreach (var (_, navButton, _) in _navPairs)
-                    navButton.IsVisible = true;
+                // Show all sidebar buttons and restore active section
+                foreach (var sn in _sectionNames)
+                    _sectionMap[sn].NavButton.IsVisible = true;
+
+                if (!string.IsNullOrEmpty(_activeSection))
+                    SelectSection(_activeSection);
                 return;
             }
 
-            // Filter sections by keyword match
-            foreach (var (expander, keywords) in _sections)
+            // Filter sidebar buttons by keyword match, auto-select first match
+            string? firstMatch = null;
+            foreach (var sn in _sectionNames)
             {
+                var (_, navButton, keywords) = _sectionMap[sn];
                 bool matches = keywords.Any(k => k.Contains(query));
-                expander.IsVisible = matches;
+                navButton.IsVisible = matches;
 
-                // Also expand matching sections so their content is visible
-                if (matches)
-                    expander.IsExpanded = true;
+                if (matches && firstMatch == null)
+                    firstMatch = sn;
             }
 
-            // Sync nav button visibility with section visibility
-            foreach (var (expander, navButton, _) in _navPairs)
-            {
-                navButton.IsVisible = expander.IsVisible;
-            }
+            if (firstMatch != null)
+                SelectSection(firstMatch);
         }
 
         // --- Theme ---
@@ -469,17 +656,17 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 case 0: // Gmail
                     SmtpServerTextBox.Text = "smtp.gmail.com";
                     EmailPortNumber.Value = 587;
-                    RequiresSslCheckBox.IsChecked = true;
+                    RequiresSslToggle.IsChecked = true;
                     break;
                 case 1: // Outlook
                     SmtpServerTextBox.Text = "smtp-mail.outlook.com";
                     EmailPortNumber.Value = 587;
-                    RequiresSslCheckBox.IsChecked = true;
+                    RequiresSslToggle.IsChecked = true;
                     break;
                 case 2: // Yahoo
                     SmtpServerTextBox.Text = "smtp.mail.yahoo.com";
                     EmailPortNumber.Value = 465;
-                    RequiresSslCheckBox.IsChecked = true;
+                    RequiresSslToggle.IsChecked = true;
                     break;
             }
         }
@@ -531,6 +718,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 return;
 
             UpdateEsiDescription();
+            LoadCharacterScopeTable();
         }
 
         private async void OnCustomizeScopesClick(object? sender, RoutedEventArgs e)
@@ -588,7 +776,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
         private void CollectSettings()
         {
             // Appearance
-            _settings.UI.SafeForWork = SafeForWorkCheckBox.IsChecked == true;
+            _settings.UI.SafeForWork = SafeForWorkToggle.IsChecked == true;
             _settings.Compatibility = (CompatibilityMode)Math.Max(0, CompatibilityCombo.SelectedIndex);
 
             int selectedThemeIndex = Math.Max(0, ThemeCombo.SelectedIndex);
@@ -622,12 +810,12 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 _settings.UI.SystemTrayPopup.Style = TrayPopupStyles.Disabled;
 
             // Notifications
-            _settings.Notifications.ShowOSNotifications = OsNotificationsCheckBox.IsChecked == true;
-            _settings.Notifications.PlaySoundOnSkillCompletion = PlaySoundCheckBox.IsChecked == true;
+            _settings.Notifications.ShowOSNotifications = OsNotificationsToggle.IsChecked == true;
+            _settings.Notifications.PlaySoundOnSkillCompletion = PlaySoundToggle.IsChecked == true;
 
             // Email
             var n = _settings.Notifications;
-            n.SendMailAlert = SendMailCheckBox.IsChecked == true;
+            n.SendMailAlert = SendMailToggle.IsChecked == true;
             n.EmailSmtpServerProvider = EmailProviderCombo.SelectedIndex switch
             {
                 0 => "Gmail",
@@ -638,17 +826,17 @@ namespace EVEMon.Avalonia.Views.Dialogs
             };
             n.EmailSmtpServerAddress = SmtpServerTextBox.Text ?? string.Empty;
             n.EmailPortNumber = (int)(EmailPortNumber.Value ?? 25);
-            n.EmailServerRequiresSsl = RequiresSslCheckBox.IsChecked == true;
-            n.EmailAuthenticationRequired = EmailAuthCheckBox.IsChecked == true;
+            n.EmailServerRequiresSsl = RequiresSslToggle.IsChecked == true;
+            n.EmailAuthenticationRequired = EmailAuthToggle.IsChecked == true;
             n.EmailAuthenticationUserName = EmailAuthUserTextBox.Text ?? string.Empty;
             n.EmailAuthenticationPassword = EmailAuthPasswordTextBox.Text ?? string.Empty;
             n.EmailFromAddress = EmailFromTextBox.Text ?? string.Empty;
             n.EmailToAddress = EmailToTextBox.Text ?? string.Empty;
-            n.UseEmailShortFormat = EmailShortFormatCheckBox.IsChecked == true;
+            n.UseEmailShortFormat = EmailShortFormatToggle.IsChecked == true;
 
             // Calendar
             var cal = _settings.Calendar;
-            cal.Enabled = CalendarEnabledCheckBox.IsChecked == true;
+            cal.Enabled = CalendarEnabledToggle.IsChecked == true;
             cal.Provider = GoogleCalendarRadio.IsChecked == true
                 ? CalendarProvider.Google
                 : CalendarProvider.Outlook;
@@ -664,14 +852,14 @@ namespace EVEMon.Avalonia.Views.Dialogs
             cal.LastQueuedSkillOnly = CalendarLastQueuedOnlyCheckBox.IsChecked == true;
 
             // Data & Updates
-            _settings.Updates.CheckEVEMonVersion = CheckForUpdatesCheckBox.IsChecked == true;
-            _settings.Updates.CheckTimeOnStartup = CheckTimeCheckBox.IsChecked == true;
+            _settings.Updates.CheckEVEMonVersion = CheckForUpdatesToggle.IsChecked == true;
+            _settings.Updates.CheckTimeOnStartup = CheckTimeToggle.IsChecked == true;
 
             if (MarketPriceProviderCombo.SelectedItem is string provName)
                 _settings.MarketPricer.ProviderName = provName;
 
             // Network
-            _settings.Proxy.Enabled = UseProxyCheckBox.IsChecked == true;
+            _settings.Proxy.Enabled = UseProxyToggle.IsChecked == true;
             _settings.Proxy.Host = ProxyHostTextBox.Text ?? string.Empty;
             if (int.TryParse(ProxyPortTextBox.Text, out int port) && port >= 0 && port <= 65535)
                 _settings.Proxy.Port = port;

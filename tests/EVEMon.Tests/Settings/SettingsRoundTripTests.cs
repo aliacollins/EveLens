@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -104,14 +105,13 @@ namespace EVEMon.Tests.Settings
             {
                 ID = 90000001,
                 RefreshToken = "rt-token-1",
-                AccessMask = 4096,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1" }
             });
             original.ESIKeys.Add(new SerializableESIKey
             {
                 ID = 90000002,
                 RefreshToken = "rt-token-2",
-                AccessMask = 8192,
                 Monitored = false
             });
 
@@ -122,7 +122,7 @@ namespace EVEMon.Tests.Settings
             result.ESIKeys.Should().HaveCount(2);
             result.ESIKeys[0].ID.Should().Be(90000001);
             result.ESIKeys[0].RefreshToken.Should().Be("rt-token-1");
-            result.ESIKeys[0].AccessMask.Should().Be(4096);
+            result.ESIKeys[0].AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
             result.ESIKeys[0].Monitored.Should().BeTrue();
             result.ESIKeys[1].ID.Should().Be(90000002);
             result.ESIKeys[1].Monitored.Should().BeFalse();

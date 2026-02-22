@@ -137,6 +137,7 @@ namespace EVEMon.Avalonia.ViewModels
         /// Whether the character is currently training this skill.
         /// </summary>
         public bool IsCurrentlyTraining => Status == PlanEntryStatus.Training;
+        public bool HasNotes => !string.IsNullOrWhiteSpace(Entry.Notes);
         public string ItemRowClass => IsAlternate ? "item-row-alt" : "item-row";
         public IBrush RowBackground => IsAlternate ? AlternateBg : NormalBg;
 

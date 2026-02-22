@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Xml.Serialization;
@@ -109,21 +110,20 @@ namespace EVEMon.Tests.Models
             {
                 ID = 2119000001,
                 RefreshToken = "rt_abc123def456",
-                AccessMask = 8388607,
-                Monitored = true
+                Monitored = true,
+                AuthorizedScopes = new List<string> { "esi-skills.read_skills.v1" }
             });
             settings.ESIKeys.Add(new SerializableESIKey
             {
                 ID = 2119000002,
                 RefreshToken = "rt_xyz789",
-                AccessMask = 0,
                 Monitored = false
             });
 
             var result = XmlRoundTrip(settings);
             result.ESIKeys.Should().HaveCount(2);
             result.ESIKeys[0].ID.Should().Be(2119000001);
-            result.ESIKeys[0].AccessMask.Should().Be(8388607);
+            result.ESIKeys[0].AuthorizedScopes.Should().Contain("esi-skills.read_skills.v1");
             result.ESIKeys[1].Monitored.Should().BeFalse();
         }
 

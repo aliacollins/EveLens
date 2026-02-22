@@ -450,19 +450,6 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 PrereqSection.IsVisible = false;
             }
 
-            // Add to Plan button
-            if (node.Level < 5)
-            {
-                AddToPlanBtn.IsVisible = true;
-                AddToPlanBtn.Content = node.IsTraining ? "Currently Training" : "Add to Plan";
-                AddToPlanBtn.Background = new SolidColorBrush(Color.FromArgb(0x18, avColor.R, avColor.G, avColor.B));
-                AddToPlanBtn.BorderBrush = new SolidColorBrush(Color.FromArgb(0x35, avColor.R, avColor.G, avColor.B));
-                AddToPlanBtn.Foreground = new SolidColorBrush(avColor);
-            }
-            else
-            {
-                AddToPlanBtn.IsVisible = false;
-            }
         }
 
         private static SkillGroupInfo CreateDemoGroup(string name, int index)

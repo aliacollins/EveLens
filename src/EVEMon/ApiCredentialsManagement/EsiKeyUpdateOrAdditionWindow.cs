@@ -18,6 +18,7 @@ using EVEMon.Common.Service;
 using EVEMon.SettingsUI;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -289,13 +290,13 @@ namespace EVEMon.ApiCredentialsManagement
                 m_keyValid = true;
             }
             // Issue a warning if the ESI key has no scopes
-            if (e.AccessMask == 0UL)
+            if (e.AuthorizedScopes.Count == 0)
             {
                 WarningLabel.Text = Properties.Resources.ErrorNoScopes;
                 WarningLabel.Visible = true;
             }
-            // Issue a warning if the ESI key does not have the basic scopes
-            else if (e.AccessMask < (long)CCPAPIMethodsEnum.BasicCharacterFeatures)
+            // Issue a warning if the ESI key doesn't have basic skill scopes
+            else if (!e.AuthorizedScopes.Contains("esi-skills.read_skills.v1"))
             {
                 WarningLabel.Text = Properties.Resources.ErrorFewScopes;
                 WarningLabel.Visible = true;

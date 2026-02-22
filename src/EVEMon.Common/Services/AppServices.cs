@@ -473,7 +473,9 @@ namespace EVEMon.Common.Services
             {
                 builder.SetMinimumLevel(LogLevel.Debug);
                 builder.AddProvider(new TraceLoggerProvider());
+#if DEBUG
                 builder.AddProvider(new TcpJsonLoggerProvider());
+#endif
             });
             return factory;
         }

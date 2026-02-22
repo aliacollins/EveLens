@@ -1121,6 +1121,15 @@ namespace EVEMon.Avalonia.Views.PlanEditor
         {
             if (_viewModel == null) return;
 
+            SidebarContent.Children.Add(new TextBlock
+            {
+                Text = "Training time, skill count, and completion date for your current plan.",
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 6),
+            });
+
             var character = _viewModel.Character as Character;
             var stats = _viewModel.PlanStats;
 
@@ -1212,7 +1221,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             // ── Attributes ──
             if (character != null)
             {
-                AddThinDivider("Attributes");
+                AddThinDivider("Attributes", "Your current base attributes and implant bonuses.");
 
                 var allAttrs = new[]
                 {
@@ -1300,7 +1309,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 }
 
                 // ── Implants (compact pills) ──
-                AddThinDivider("Implants");
+                AddThinDivider("Implants", "Active attribute implants in your current clone.");
                 var implantFlow = new WrapPanel { Margin = new Thickness(0, 0, 0, 2) };
                 int emptySlots = 0;
 
@@ -1354,7 +1363,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 SidebarContent.Children.Add(implantFlow);
 
                 // ── Remap (one line) ──
-                AddThinDivider("Remap");
+                AddThinDivider("Remap", "Neural remap availability and bonus remaps.");
 
                 int bonusRemaps = character.AvailableReMaps;
                 bool canRemapNow = bonusRemaps > 0
@@ -1407,7 +1416,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             }
 
             // ── Plan attribute spread ──
-            AddThinDivider("Plan spread");
+            AddThinDivider("Plan spread", "How your plan's skill points are distributed across attributes.");
             BuildPlanMixBars();
 
             // ── Savings teaser ──
@@ -1479,7 +1488,11 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 var plan = _viewModel?.DisplayPlan;
                 if (character == null || plan == null) return;
 
-                AddThinDivider("Clone Training Times");
+                AddThinDivider("Clone Training Times", "Compare plan time across your jump clones.");
+
+                // Collect all clone times
+                var cloneEntries = new List<(string Name, string Bonus, TimeSpan Time, bool IsActive)>();
+                bool isFirst = true;
 
                 foreach (var implantSet in character.ImplantSets)
                 {
@@ -1488,38 +1501,159 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                         var scratchpad = character.After(implantSet);
                         var time = plan.GetTotalTime(scratchpad, true);
                         string bonusText = GetImplantBonusText(implantSet);
-
-                        SidebarContent.Children.Add(new TextBlock
-                        {
-                            Text = $"{implantSet.Name} {bonusText}: {FormatTime(time)}",
-                            FontSize = 10,
-                            Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
-                            Margin = new Thickness(4, 1, 0, 0),
-                        });
+                        cloneEntries.Add((implantSet.Name, bonusText, time, isFirst));
+                        isFirst = false;
                     }
                     catch { /* Skip sets that fail computation */ }
                 }
 
-                // No Implants time
+                // No Implants baseline
                 try
                 {
                     var noneSet = character.ImplantSets.None;
                     var noneScratchpad = character.After(noneSet);
                     var noneTime = plan.GetTotalTime(noneScratchpad, true);
-                    SidebarContent.Children.Add(new TextBlock
-                    {
-                        Text = $"No Implants: {FormatTime(noneTime)}",
-                        FontSize = 10,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
-                        Margin = new Thickness(4, 1, 0, 0),
-                    });
+                    cloneEntries.Add(("No Implants", "", noneTime, false));
                 }
                 catch { }
+
+                if (cloneEntries.Count == 0) return;
+
+                // Find fastest time for delta calculations and bar scaling
+                var fastestTime = cloneEntries.Min(e => e.Time);
+                var slowestTime = cloneEntries.Max(e => e.Time);
+                double timeRange = (slowestTime - fastestTime).TotalSeconds;
+
+                foreach (var (name, bonus, time, active) in cloneEntries)
+                {
+                    bool isFastest = time == fastestTime;
+                    var delta = time - fastestTime;
+
+                    // Row container
+                    var card = new Border
+                    {
+                        Background = isFastest
+                            ? new SolidColorBrush(Color.Parse("#1081C784"))
+                            : Brushes.Transparent,
+                        CornerRadius = new CornerRadius(4),
+                        Padding = new Thickness(8, 5),
+                        Margin = new Thickness(0, 1),
+                    };
+                    var cardStack = new StackPanel { Spacing = 3 };
+
+                    // Line 1: clone name (full width, trimmed if long)
+                    var namePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+                    if (active)
+                    {
+                        namePanel.Children.Add(new TextBlock
+                        {
+                            Text = "\u25CF",
+                            FontSize = 8,
+                            Foreground = GoldBrush,
+                            VerticalAlignment = VerticalAlignment.Center,
+                        });
+                    }
+
+                    string displayName = name;
+                    if (!string.IsNullOrEmpty(bonus))
+                        displayName += $" {bonus}";
+
+                    namePanel.Children.Add(new TextBlock
+                    {
+                        Text = displayName,
+                        FontSize = 10,
+                        FontWeight = active ? FontWeight.SemiBold : FontWeight.Regular,
+                        Foreground = active
+                            ? new SolidColorBrush(Color.Parse("#FFF0F0F0"))
+                            : new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                    });
+                    ToolTip.SetTip(namePanel, displayName);
+                    cardStack.Children.Add(namePanel);
+
+                    // Line 2: time + delta badge
+                    var timeRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                    timeRow.Children.Add(new TextBlock
+                    {
+                        Text = FormatTime(time),
+                        FontSize = 12,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = isFastest
+                            ? new SolidColorBrush(Color.Parse("#FF81C784"))
+                            : new SolidColorBrush(Color.Parse("#FFD0D0D0")),
+                    });
+
+                    if (isFastest && cloneEntries.Count > 1)
+                    {
+                        timeRow.Children.Add(new Border
+                        {
+                            Background = new SolidColorBrush(Color.Parse("#2081C784")),
+                            CornerRadius = new CornerRadius(4),
+                            Padding = new Thickness(5, 1),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Child = new TextBlock
+                            {
+                                Text = "fastest",
+                                FontSize = 8,
+                                Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
+                            },
+                        });
+                    }
+                    else if (delta > TimeSpan.Zero)
+                    {
+                        timeRow.Children.Add(new Border
+                        {
+                            Background = new SolidColorBrush(Color.Parse("#18CF6679")),
+                            CornerRadius = new CornerRadius(4),
+                            Padding = new Thickness(5, 1),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Child = new TextBlock
+                            {
+                                Text = $"+{FormatTimeCompact(delta)} slower",
+                                FontSize = 8,
+                                Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
+                            },
+                        });
+                    }
+                    cardStack.Children.Add(timeRow);
+
+                    // Line 3: comparison bar
+                    double barMaxWidth = 220;
+                    // Bar represents how close to fastest (fastest = full, slowest = shorter)
+                    double fraction = timeRange > 0
+                        ? 1.0 - (delta.TotalSeconds / timeRange)
+                        : 1.0;
+                    fraction = Math.Max(0.15, Math.Min(1.0, fraction));
+
+                    var barBg = new Border
+                    {
+                        Height = 3,
+                        CornerRadius = new CornerRadius(2),
+                        Background = new SolidColorBrush(Color.Parse("#FF252535")),
+                    };
+                    var barFill = new Border
+                    {
+                        Width = fraction * barMaxWidth,
+                        Height = 3,
+                        CornerRadius = new CornerRadius(2),
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        Background = isFastest
+                            ? new SolidColorBrush(Color.Parse("#FF81C784"))
+                            : new SolidColorBrush(Color.Parse("#FF505068")),
+                    };
+                    var barContainer = new Panel();
+                    barContainer.Children.Add(barBg);
+                    barContainer.Children.Add(barFill);
+                    cardStack.Children.Add(barContainer);
+
+                    card.Child = cardStack;
+                    SidebarContent.Children.Add(card);
+                }
 
                 // Edit Sets button
                 var editBtn = new Button
                 {
-                    Content = "Edit Sets...",
+                    Content = "Edit Sets\u2026",
                     FontSize = 9,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(10),
@@ -1574,7 +1708,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
 
                 if (ownedBooks.Count == 0) return;
 
-                AddThinDivider($"Owned Skillbooks ({ownedBooks.Count})");
+                AddThinDivider($"Owned Skillbooks ({ownedBooks.Count})", "Skillbooks in your assets that match planned skills.");
 
                 foreach (var skill in ownedBooks.Take(20))
                 {
@@ -1604,7 +1738,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             }
         }
 
-        private void AddThinDivider(string label)
+        private void AddThinDivider(string label, string? description = null)
         {
             var dividerPanel = new DockPanel { Margin = new Thickness(0, 8, 0, 4) };
 
@@ -1626,6 +1760,18 @@ namespace EVEMon.Avalonia.Views.PlanEditor
             });
 
             SidebarContent.Children.Add(dividerPanel);
+
+            if (!string.IsNullOrEmpty(description))
+            {
+                SidebarContent.Children.Add(new TextBlock
+                {
+                    Text = description,
+                    FontSize = 9,
+                    Foreground = new SolidColorBrush(Color.Parse("#FF585868")),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 2),
+                });
+            }
         }
 
         private static void AddStatCell(Grid grid, int row, int col, string value, string label)
@@ -1668,6 +1814,15 @@ namespace EVEMon.Avalonia.Views.PlanEditor
         {
             if (_viewModel == null) return;
 
+            SidebarContent.Children.Add(new TextBlock
+            {
+                Text = "Find the best attribute remap to minimize your training time.",
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 6),
+            });
+
             // ── State 1: Calculating ──
             if (_optimizerVm?.IsCalculating == true)
             {
@@ -1706,7 +1861,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                     Margin = new Thickness(0, 2, 0, 0),
                 });
 
-                if (hasSavings)
+                if (hasSavings || _optimizerVm.IsManuallyEdited)
                 {
                     var resultRow = new StackPanel
                     {
@@ -1714,25 +1869,66 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                         Spacing = 6,
                         Margin = new Thickness(0, 2, 0, 8),
                     };
-                    resultRow.Children.Add(new TextBlock
+
+                    if (hasSavings)
                     {
-                        Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
-                        FontSize = 16,
-                        FontWeight = FontWeight.Bold,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                    });
-                    resultRow.Children.Add(new TextBlock
+                        resultRow.Children.Add(new TextBlock
+                        {
+                            Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
+                            FontSize = 16,
+                            FontWeight = FontWeight.Bold,
+                            Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
+                        });
+                        resultRow.Children.Add(new TextBlock
+                        {
+                            Text = $"({FormatTime(savings)} faster)",
+                            FontSize = 12,
+                            Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
+                            VerticalAlignment = VerticalAlignment.Bottom,
+                            Margin = new Thickness(0, 0, 0, 1),
+                        });
+                    }
+                    else if (_optimizerVm.OptimalDuration > _optimizerVm.CurrentDuration)
                     {
-                        Text = $"({FormatTime(savings)} faster)",
-                        FontSize = 12,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                        VerticalAlignment = VerticalAlignment.Bottom,
-                        Margin = new Thickness(0, 0, 0, 1),
-                    });
+                        var penalty = _optimizerVm.OptimalDuration - _optimizerVm.CurrentDuration;
+                        resultRow.Children.Add(new TextBlock
+                        {
+                            Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
+                            FontSize = 16,
+                            FontWeight = FontWeight.Bold,
+                            Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
+                        });
+                        resultRow.Children.Add(new TextBlock
+                        {
+                            Text = $"({FormatTime(penalty)} slower)",
+                            FontSize = 12,
+                            Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
+                            VerticalAlignment = VerticalAlignment.Bottom,
+                            Margin = new Thickness(0, 0, 0, 1),
+                        });
+                    }
+                    else
+                    {
+                        resultRow.Children.Add(new TextBlock
+                        {
+                            Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
+                            FontSize = 16,
+                            FontWeight = FontWeight.Bold,
+                            Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
+                        });
+                        resultRow.Children.Add(new TextBlock
+                        {
+                            Text = "(no change)",
+                            FontSize = 12,
+                            Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
+                            VerticalAlignment = VerticalAlignment.Bottom,
+                            Margin = new Thickness(0, 0, 0, 1),
+                        });
+                    }
                     SidebarContent.Children.Add(resultRow);
 
                     // ── What to change ──
-                    AddThinDivider("Change your attributes to");
+                    AddThinDivider("Change your attributes to", "Optimal base attributes for this plan.");
                     BuildAttributeComparisonGrid();
 
                     // Remap status
@@ -1788,7 +1984,7 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                     // ── Most improved skills ──
                     if (_optimizerVm.SkillImpacts.Count > 0)
                     {
-                        AddThinDivider("Most improved skills");
+                        AddThinDivider("Most improved skills", "Skills that benefit the most from this remap.");
 
                         var topSkills = _optimizerVm.SkillImpacts
                             .Where(s => s.TimeSaved > TimeSpan.Zero)
@@ -2254,6 +2450,11 @@ namespace EVEMon.Avalonia.Views.PlanEditor
                 attrSpWeight[sec] += sp / 2;   // secondary contributes half
             }
 
+            // Determine plan's primary and secondary dominant attributes
+            var ranked = attrSpWeight.OrderByDescending(kv => kv.Value).ToList();
+            var planPrimary = ranked.Count > 0 ? ranked[0].Key : (EveAttribute?)null;
+            var planSecondary = ranked.Count > 1 && ranked[1].Value > 0 ? ranked[1].Key : (EveAttribute?)null;
+
             // Find missing implants sorted by plan relevance
             var recommendations = new List<(EveAttribute attr, long weight, int currentBonus)>();
             foreach (var attr in allAttrs)
@@ -2270,67 +2471,114 @@ namespace EVEMon.Avalonia.Views.PlanEditor
 
             recommendations.Sort((a, b) => b.weight.CompareTo(a.weight));
 
-            SidebarContent.Children.Add(new TextBlock
-            {
-                Text = "2. Consider these implants",
-                FontSize = 11,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Color.Parse("#FFF0F0F0")),
-                Margin = new Thickness(0, 10, 0, 4),
-            });
+            AddThinDivider("Consider these implants",
+                "Prioritize your plan\u2019s primary and secondary attributes \u2014 those 2 matter most.");
 
             long maxWeight = recommendations.Max(r => r.weight);
 
             foreach (var (attr, weight, currentBonus) in recommendations)
             {
                 double relevance = maxWeight > 0 ? (double)weight / maxWeight : 0;
-                if (relevance < 0.1) continue; // skip irrelevant attributes
+                if (relevance < 0.05) continue; // skip truly irrelevant attributes
 
-                string impact;
-                IBrush impactBrush;
-                if (relevance > 0.7)
+                // Determine role in this plan
+                string role;
+                IBrush roleBrush;
+                string roleBg;
+                if (attr == planPrimary)
                 {
-                    impact = "high impact";
-                    impactBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
+                    role = "Primary";
+                    roleBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
+                    roleBg = "#2081C784";
                 }
-                else if (relevance > 0.3)
+                else if (attr == planSecondary)
                 {
-                    impact = "moderate impact";
-                    impactBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
+                    role = "Secondary";
+                    roleBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
+                    roleBg = "#20FFD54F";
                 }
                 else
                 {
-                    impact = "low impact";
-                    impactBrush = new SolidColorBrush(Color.Parse("#FF707070"));
+                    role = "Minor";
+                    roleBrush = new SolidColorBrush(Color.Parse("#FF606060"));
+                    roleBg = "#10FFFFFF";
                 }
 
-                string slotText = currentBonus > 0
-                    ? $"+5 {GetAttributeFullName(attr)} (upgrade from +{currentBonus})"
-                    : $"+5 {GetAttributeFullName(attr)}";
-
-                var row = new StackPanel { Margin = new Thickness(8, 2, 0, 0) };
-                var topLine = new StackPanel
+                // Card row
+                var card = new Border
                 {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 6,
+                    Background = new SolidColorBrush(Color.Parse("#08FFFFFF")),
+                    CornerRadius = new CornerRadius(5),
+                    Padding = new Thickness(8, 6),
+                    Margin = new Thickness(0, 2),
                 };
-                topLine.Children.Add(new TextBlock
+                var cardStack = new StackPanel { Spacing = 3 };
+
+                // Line 1: attribute name + role badge
+                var topRow = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,Auto") };
+
+                var namePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+                namePanel.Children.Add(new TextBlock
                 {
-                    Text = slotText,
+                    Text = $"+5 {GetAttributeFullName(attr)}",
                     FontSize = 11,
+                    FontWeight = FontWeight.SemiBold,
                     Foreground = GetAttributeBrush(attr),
                     VerticalAlignment = VerticalAlignment.Center,
                 });
-                topLine.Children.Add(new TextBlock
+                if (currentBonus > 0)
                 {
-                    Text = $"\u2014 {impact}",
-                    FontSize = 10,
-                    Foreground = impactBrush,
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-                row.Children.Add(topLine);
+                    namePanel.Children.Add(new TextBlock
+                    {
+                        Text = $"(+{currentBonus} now)",
+                        FontSize = 9,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+                }
+                topRow.Children.Add(namePanel);
 
-                SidebarContent.Children.Add(row);
+                var roleBadge = new Border
+                {
+                    Background = new SolidColorBrush(Color.Parse(roleBg)),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(6, 1),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Child = new TextBlock
+                    {
+                        Text = role,
+                        FontSize = 9,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = roleBrush,
+                    },
+                };
+                Grid.SetColumn(roleBadge, 1);
+                topRow.Children.Add(roleBadge);
+                cardStack.Children.Add(topRow);
+
+                // Line 2: impact bar
+                double barMaxWidth = 200;
+                var barBg = new Border
+                {
+                    Height = 3,
+                    CornerRadius = new CornerRadius(2),
+                    Background = new SolidColorBrush(Color.Parse("#FF252535")),
+                };
+                var barFill = new Border
+                {
+                    Width = Math.Max(4, relevance * barMaxWidth),
+                    Height = 3,
+                    CornerRadius = new CornerRadius(2),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Background = GetAttributeBrush(attr),
+                };
+                var barContainer = new Panel();
+                barContainer.Children.Add(barBg);
+                barContainer.Children.Add(barFill);
+                cardStack.Children.Add(barContainer);
+
+                card.Child = cardStack;
+                SidebarContent.Children.Add(card);
             }
         }
 
@@ -2491,14 +2739,22 @@ namespace EVEMon.Avalonia.Views.PlanEditor
 
         private void BuildAddPanel()
         {
-            // Placeholder — keep existing browser tabs for now
+            SidebarContent.Children.Add(new TextBlock
+            {
+                Text = "Browse and add skills to your training plan.",
+                FontSize = 10,
+                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 6),
+            });
+
             SidebarContent.Children.Add(new TextBlock
             {
                 Text = "Use the Skills, Ships, Items, or Blueprints tabs to add skills to your plan.",
                 FontSize = 10,
                 Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 8),
+                Margin = new Thickness(0, 0, 0, 8),
             });
 
             var addBtn = new Button

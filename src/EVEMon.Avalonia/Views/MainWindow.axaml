@@ -3,43 +3,45 @@
         xmlns:local="clr-namespace:EVEMon.Avalonia.Views.CharacterMonitor"
         x:Class="EVEMon.Avalonia.Views.MainWindow"
         Title="EVEMon NexT"
-        Icon="avares://EVEMon.Avalonia/Properties/EVEMon.ico"
+        Icon="avares://EVEMon NexT/Properties/EVEMon.ico"
         Width="1024" Height="768">
 
     <DockPanel>
         <!-- Menu bar -->
-        <Menu DockPanel.Dock="Top">
+        <Menu x:Name="MainMenu" DockPanel.Dock="Top">
             <MenuItem Header="_File">
-                <MenuItem x:Name="AddCharMenuItem" Header="_Add Character..." />
-                <MenuItem x:Name="CreateBlankCharMenuItem" Header="Create _Blank Character..." />
-                <MenuItem x:Name="ManageCharsMenuItem" Header="_Manage Characters..." />
+                <MenuItem x:Name="AddCharMenuItem" Header="_Add Character" />
+                <MenuItem x:Name="CreateBlankCharMenuItem" Header="Create _Blank Character" />
+                <MenuItem x:Name="ManageCharsMenuItem" Header="_Manage Characters" />
                 <Separator />
-                <MenuItem x:Name="ManageGroupsMenuItem" Header="Manage _Groups..." />
+                <MenuItem x:Name="ManageGroupsMenuItem" Header="Manage _Groups" />
                 <Separator />
-                <MenuItem x:Name="RestoreSettingsMenuItem" Header="_Restore Settings..." />
-                <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings..." />
+                <MenuItem x:Name="RestoreSettingsMenuItem" Header="_Restore Settings" />
+                <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings" />
                 <MenuItem x:Name="ResetSettingsMenuItem" Header="Re_set Settings" />
                 <Separator />
-                <MenuItem x:Name="SettingsMenuItem" Header="_Settings..." />
+                <MenuItem x:Name="SettingsMenuItem" Header="_Settings" />
                 <Separator />
                 <MenuItem x:Name="ExitMenuItem" Header="E_xit" />
             </MenuItem>
             <MenuItem Header="_Plans">
-                <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan..." />
-                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans..." />
+                <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan" />
+                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans" />
                 <Separator />
-                <MenuItem x:Name="ImportPlanMenuItem" Header="_Import Plan from File..." />
+                <MenuItem x:Name="ImportPlanMenuItem" Header="_Import Plan from File" />
                 <MenuItem x:Name="CreateFromQueueMenuItem" Header="_Create Plan from Queue" />
             </MenuItem>
             <MenuItem Header="_Tools">
-                <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison..." />
-                <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization..." />
+                <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison" />
+                <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
                 <Separator />
-                <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache..." />
+                <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache" />
             </MenuItem>
             <MenuItem Header="_Help">
+                <MenuItem x:Name="CheckUpdatesMenuItem" Header="_Check for Updates" />
+                <Separator />
                 <MenuItem x:Name="UserGuideMenuItem" Header="_User Guide" />
-                <MenuItem x:Name="ReportIssueMenuItem" Header="_Report Issue..." />
+                <MenuItem x:Name="ReportIssueMenuItem" Header="_Report Issue" />
                 <Separator />
                 <MenuItem x:Name="AboutMenuItem" Header="_About EVEMon" />
             </MenuItem>
@@ -48,8 +50,9 @@
         <!-- Status bar -->
         <Border DockPanel.Dock="Bottom" Padding="8,3"
                 Background="{StaticResource EveBackgroundMediumBrush}"
-                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <DockPanel>
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0"
+                ClipToBounds="False">
+            <DockPanel ClipToBounds="False">
                 <TextBlock x:Name="EveTimeText" Text="EVE Time: --:--" FontSize="11"
                            Foreground="{StaticResource EveAccentSecondaryBrush}" />
                 <TextBlock Text="  |  " FontSize="11" Foreground="{StaticResource EveTextDisabledBrush}" />
@@ -66,6 +69,7 @@
                 <Button x:Name="NotificationBellBtn" DockPanel.Dock="Right"
                         Background="Transparent" BorderThickness="0"
                         Padding="8,0" VerticalAlignment="Center"
+                        ClipToBounds="False"
                         Cursor="Hand" ToolTip.Tip="Activity Log">
                     <Button.Flyout>
                         <Flyout Placement="TopEdgeAlignedRight">
@@ -135,7 +139,7 @@
                         </Flyout>
                     </Button.Flyout>
                     <!-- Bell icon with badge -->
-                    <Panel>
+                    <Panel ClipToBounds="False">
                         <TextBlock Text="&#x1F514;" FontSize="14" VerticalAlignment="Center" />
                         <Border x:Name="UnreadBadge" IsVisible="False"
                                 Background="{StaticResource EveErrorRedBrush}"

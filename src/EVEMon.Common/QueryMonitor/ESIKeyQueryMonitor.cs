@@ -42,8 +42,13 @@ namespace EVEMon.Common.QueryMonitor
                 if (Method is ESIAPIGenericMethods)
                     return true;
 
-                ulong method = (ulong)(ESIAPICharacterMethods)Method;
-                return method == (m_esiKey.AccessMask & method);
+                if (Method is ESIAPICharacterMethods charMethod)
+                    return m_esiKey.HasAccessTo(charMethod);
+
+                if (Method is ESIAPICorporationMethods corpMethod)
+                    return m_esiKey.HasAccessTo(corpMethod);
+
+                return true;
             }
         }
 

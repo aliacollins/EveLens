@@ -60,11 +60,13 @@ namespace EVEMon.Common
         {
             s_settings = serial;
 
-            Import();
+            // IsRestoring suppresses event-triggered auto-saves during Import()
             IsRestoring = true;
+            Import();
+            IsRestoring = false;
+
             if (saveImmediate)
                 await SaveImmediateAsync();
-            IsRestoring = false;
         }
 
         /// <summary>

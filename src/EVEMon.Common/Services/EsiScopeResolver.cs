@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.Collections.Generic;
+using System.Linq;
 using EVEMon.Common.Constants;
 
 namespace EVEMon.Common.Services
@@ -19,20 +21,28 @@ namespace EVEMon.Common.Services
         /// </summary>
         public static string GetActiveScopes()
         {
+            return string.Join(" ", GetActiveScopesList());
+        }
+
+        /// <summary>
+        /// Returns the active ESI scopes as a list of individual scope strings,
+        /// based on the current preset in Settings. Used to store per-character scopes.
+        /// </summary>
+        public static List<string> GetActiveScopesList()
+        {
             string preset = Settings.EsiScopePreset;
 
             if (preset == EsiScopePresets.Custom)
             {
                 var customScopes = Settings.EsiCustomScopes;
                 if (customScopes != null && customScopes.Count > 0)
-                    return string.Join(" ", customScopes);
+                    return customScopes.ToList();
             }
 
             if (preset == EsiScopePresets.FullMonitoring)
-                return NetworkConstants.SSOScopes;
+                return new List<string>(EsiScopePresets.AllScopes);
 
-            var scopes = EsiScopePresets.GetScopesForPreset(preset);
-            return string.Join(" ", scopes);
+            return EsiScopePresets.GetScopesForPreset(preset).ToList();
         }
     }
 }

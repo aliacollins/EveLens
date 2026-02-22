@@ -259,6 +259,28 @@ namespace EVEMon.Common.ViewModels
         }
 
         /// <summary>
+        /// Returns true if the character's ESI key has the scope required for this method.
+        /// </summary>
+        public bool HasScopeFor(ESIAPICharacterMethods method)
+        {
+            var key = _character.Identity.FindAPIKeyWithAccess(method);
+            return key != null;
+        }
+
+        /// <summary>
+        /// Returns the detected scope preset label for this character's ESI key.
+        /// </summary>
+        public string ScopePresetName
+        {
+            get
+            {
+                var key = _character.Identity.ESIKeys.FirstOrDefault(k => k.Monitored);
+                if (key == null || key.AuthorizedScopes.Count == 0) return "None";
+                return EsiScopePresets.DetectPreset(key.AuthorizedScopes);
+            }
+        }
+
+        /// <summary>
         /// Enables an on-demand ESI endpoint for this character.
         /// Persists the preference and triggers an immediate fetch.
         /// </summary>

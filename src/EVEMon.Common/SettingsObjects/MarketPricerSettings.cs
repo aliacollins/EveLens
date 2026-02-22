@@ -27,7 +27,10 @@ namespace EVEMon.Common.SettingsObjects
                     s_pricer[pricer.Name] = pricer;
                 }
 
-                ProviderName = s_pricer.FirstOrDefault().Key ?? string.Empty;
+                // Default to zKillboard if available, otherwise first alphabetically
+                ProviderName = s_pricer.ContainsKey("zKillboard")
+                    ? "zKillboard"
+                    : s_pricer.FirstOrDefault().Key ?? string.Empty;
             }
             catch (System.Reflection.ReflectionTypeLoadException e)
             {

@@ -90,6 +90,13 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
             EnablePrompt.IsVisible = false;
 
+            if (oc != null && !oc.HasScopeFor(ESIAPICharacterMethods.AssetList))
+            {
+                ScopePrompt.IsVisible = true;
+                return;
+            }
+            ScopePrompt.IsVisible = false;
+
             _viewModel ??= new AssetBrowserViewModel();
             if (_viewModel.Character != character)
                 _viewModel.Character = character;

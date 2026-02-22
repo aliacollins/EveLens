@@ -24,6 +24,7 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Service;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
+using EVEMon.Avalonia.Views.Dialogs;
 using EVEMon.Core.Events;
 
 namespace EVEMon.Avalonia.Views.CharacterMonitor
@@ -97,6 +98,14 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
                 _prevSkillPoints.Clear();
 
                 var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
+
+                if (characters.Count == 0)
+                {
+                    BuildWelcomeState();
+                    _initialLoadDone = true;
+                    return;
+                }
+
                 var groups = Settings.CharacterGroups;
                 int cardIndex = 0;
 
@@ -202,6 +211,82 @@ namespace EVEMon.Avalonia.Views.CharacterMonitor
             }
 
             return wrap;
+        }
+
+        private void BuildWelcomeState()
+        {
+            var container = new StackPanel
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Spacing = 12,
+                Margin = new Thickness(0, 80, 0, 0)
+            };
+
+            container.Children.Add(new TextBlock
+            {
+                Text = "Welcome to EVEMon NexT",
+                FontSize = 15,
+                FontWeight = FontWeight.Bold,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center
+            });
+
+            container.Children.Add(new TextBlock
+            {
+                Text = "Add your first character to start monitoring\nskills, wallet, assets, and more.",
+                FontSize = 11,
+                Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 360
+            });
+
+            var addButton = new Button
+            {
+                Content = "Add Character",
+                FontSize = 11,
+                Padding = new Thickness(16, 6),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                Background = Brushes.Transparent,
+                BorderBrush = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(12),
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand)
+            };
+            addButton.Click += OnAddCharacterFromWelcome;
+            container.Children.Add(addButton);
+
+            container.Children.Add(new TextBlock
+            {
+                Text = "You can also add characters from the File menu.",
+                FontSize = 10,
+                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 4, 0, 0)
+            });
+
+            OverviewPanel.Children.Add(container);
+        }
+
+        private async void OnAddCharacterFromWelcome(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var mainWindow = this.FindAncestorOfType<MainWindow>();
+                if (mainWindow == null) return;
+
+                var dialog = new AddCharacterWindow();
+                await dialog.ShowDialog(mainWindow);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Welcome add character error: {ex}");
+            }
         }
 
         #endregion

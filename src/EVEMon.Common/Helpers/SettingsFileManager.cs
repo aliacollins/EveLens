@@ -950,13 +950,26 @@ namespace EVEMon.Common.Helpers
                 // Convert ESI keys
                 foreach (var esiKey in credentials?.EsiKeys ?? new List<JsonEsiKey>())
                 {
-                    settings.ESIKeys.Add(new SerializableESIKey
+                    var serialKey = new SerializableESIKey
                     {
                         ID = esiKey.CharacterId,
                         RefreshToken = esiKey.RefreshToken ?? string.Empty,
-                        AccessMask = esiKey.AccessMask,
-                        Monitored = esiKey.Monitored
-                    });
+                        Monitored = esiKey.Monitored,
+                    };
+
+                    // Migrate: use AuthorizedScopes if present, else derive from legacy AccessMask
+                    if (esiKey.AuthorizedScopes != null && esiKey.AuthorizedScopes.Count > 0)
+                    {
+                        serialKey.AuthorizedScopes = new List<string>(esiKey.AuthorizedScopes);
+                    }
+#pragma warning disable CS0618 // AccessMask is obsolete
+                    else if (esiKey.AccessMask == ulong.MaxValue)
+                    {
+                        serialKey.AuthorizedScopes = new List<string>(Services.EsiScopePresets.AllScopes);
+                    }
+#pragma warning restore CS0618
+
+                    settings.ESIKeys.Add(serialKey);
                 }
 
                 // Build maps for character ID to Guid and UISettings
@@ -1339,8 +1352,19 @@ namespace EVEMon.Common.Helpers
     {
         public long CharacterId { get; set; }
         public string? RefreshToken { get; set; }
+
+        /// <summary>
+        /// Legacy bitflag access mask. Kept for backward-compatible deserialization.
+        /// </summary>
+        [Obsolete("Use AuthorizedScopes instead.")]
         public ulong AccessMask { get; set; }
+
         public bool Monitored { get; set; }
+
+        /// <summary>
+        /// ESI scope strings that were granted when this key was authenticated.
+        /// </summary>
+        public List<string> AuthorizedScopes { get; set; } = new();
     }
 
     /// <summary>

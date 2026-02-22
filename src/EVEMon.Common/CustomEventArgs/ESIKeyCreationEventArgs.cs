@@ -10,6 +10,7 @@ using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
 using System;
+using System.Collections.Generic;
 using CommonEvents = EVEMon.Common.Events;
 
 namespace EVEMon.Common.CustomEventArgs
@@ -31,8 +32,8 @@ namespace EVEMon.Common.CustomEventArgs
 
             ID = id;
             RefreshToken = refreshToken;
-            // At some point the ability to use limited scopes would be nice
-            AccessMask = ulong.MaxValue;
+            // Capture the scopes that were requested for this authentication
+            AuthorizedScopes = EsiScopeResolver.GetActiveScopesList();
 
             if (charInfo.HasError)
                 CCPError = new CCPAPIError()
@@ -79,10 +80,9 @@ namespace EVEMon.Common.CustomEventArgs
         public string RefreshToken { get; }
 
         /// <summary>
-        /// Gets or sets the access mask.
+        /// Gets the ESI scopes that were granted for this authentication.
         /// </summary>
-        /// <value>The access mask.</value>
-        public ulong AccessMask { get; }
+        public IReadOnlyList<string> AuthorizedScopes { get; }
         
         /// <summary>
         /// Gets or sets the expiration.
