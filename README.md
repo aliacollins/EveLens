@@ -1,130 +1,106 @@
-# EVEMon
+# EVEMon NexT
+
+**Character Intelligence for EVE Online**
 
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
-[![ALPHA](https://img.shields.io/badge/branch-ALPHA-red.svg)]()
-
-## Project Status / Fork Note
-
-This repository is **Alia Collins' independent fork** of EVEMon. My goal is to build features that matter and ship them fast - including **DarkMon** (dark mode for EVEMon).
-
-There is also an **established community-maintained fork** here:
-https://github.com/mgoeppner/evemon
-
-- If you want the long-running community fork: **use mgoeppner/evemon**
-- If you want my fork (building what matters, shipping fast): **use this repo**
-
-**Lineage / credit:** EVEMon is originally by the EVEMonDevTeam and Peter Han, and many community contributors. Full history and attribution are preserved in this repository.
+[![Cross-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-brightgreen.svg)]()
+[![ALPHA](https://img.shields.io/badge/channel-ALPHA-red.svg)]()
 
 ---
 
-## Current Version: 5.1.3-alpha.6
+## What Is EVEMon NexT?
+
+EVEMon NexT is the next generation of EVEMon — the character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
+
+This is a complete rebuild. The legacy WinForms application (EVEMon 5.x) has been retired. This repository is now EVEMon NexT only.
+
+**Current Version: 1.0.0-alpha.1**
 
 ---
 
-## Installation
+## Downloads
 
-**Recommended:** Download the installer which automatically installs .NET 8 if needed:
-- [EVEMon Installer](https://github.com/aliacollins/evemon/releases/tag/alpha)
+| Platform | Download | Requirements |
+|----------|----------|-------------|
+| **Windows (Installer)** | [EVEMon-install.exe](https://github.com/aliacollins/evemon/releases/tag/alpha) | Installs .NET 8 automatically |
+| **Windows (Portable)** | [ZIP](https://github.com/aliacollins/evemon/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux x64** | [ZIP](https://github.com/aliacollins/evemon/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS Apple Silicon** | [ZIP](https://github.com/aliacollins/evemon/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
-**Manual:** Download the portable ZIP and ensure you have:
-- Windows 10/11
-- [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+**Linux/macOS:** Extract the ZIP, then run:
+```bash
+dotnet "EVEMon NexT.dll"
+```
 
 ---
 
-## What's New in 5.1.3
+## Features
 
-### Bug Fixes
-- **#14 Virtual-mode ListView crash** — Fixed `InvalidOperationException` when opening assets with 500+ items
-- **#15 Font rendering quality** — ClearType rendering for overview panel, Segoe UI for footer/assets
-- **#17 60+ character tick cascade** — Reduced event handlers from ~2,760 to ~300 (89% reduction), re-entrancy guard prevents crash
+### Cross-Platform
+EVEMon NexT runs natively on Windows, Linux, and macOS from a single codebase. System tray, notifications, clipboard, and dialogs all use native platform APIs. Same features, same UI, same updates on every platform.
 
-### New Features
-- **One-click crash reporting** — Secure diagnostic report pipeline with 8-phase PII sanitizer
-- **Redesigned crash dialog** — Prominent Submit Report button, Copy Details, Data Directory access
-- **ESI key status indicators** — Color-coded connection status on character overview
-- **Simplified blank character creation** — Single-click instead of save-to-XML two-step
+### 6 Dark Themes
+Six color palettes inspired by New Eden's empires. Every control respects the active theme.
 
-### Infrastructure
-- Settings migration hardening for imported/blank characters
-- UpdateManager null guard for malformed update XML
-- Promote script fix for detached HEAD during merge
+- **Dark Space** (default) — navy + gold
+- **Caldari Blue** — cool steel blues
+- **Amarr Gold** — warm golds and ambers
+- **Minmatar Rust** — earthy oranges
+- **Gallente Green** — teals and greens
+- **Midnight** — deep purples
 
-### Previous (5.1.2) Features
+### ESI Scope Control
+You choose what data EVEMon can access. Three presets (Full, Standard, Skill Planner Only) or custom selection from 16 feature categories. When you re-authenticate with fewer scopes, NexT automatically detects revoked permissions, clears stale data, and deletes disk caches for those endpoints.
 
-**Modern Framework (.NET 8 Migration)**
-- Migrated from .NET Framework 4.8 to .NET 8
-- Improved performance, security, and future compatibility
-- SDK-style project format for easier maintenance
-- Full 64-bit native support
+### Skill Constellation
+GPU-accelerated interactive visualization of EVE's ~400-skill tree rendered as a star constellation. Skills as stars, prerequisites as connecting lines, skill groups as colored nebula clusters. Zoom, pan, search, click-to-inspect. Trained skills glow, training skills pulse.
 
-**New Installer**
-- One-click installer with automatic .NET 8 runtime download
-- Settings backup before upgrade (automatic)
-- Fork notice for users migrating from older versions
-- Silent install support for auto-updates
+### Character Monitoring
+Full character monitoring across 20+ data tabs: Skills, Skill Queue, Assets, Market Orders, Contracts, Industry Jobs, Wallet Journal, Wallet Transactions, Mail, Notifications, Kill Log, Planetary Industry, Research Points, Standings, Contacts, Employment History, Medals, Loyalty Points, Factional Warfare.
 
-**Auto-Update System**
-- Seamless background updates
-- Automatic app restart after update completes
-- Separate alpha/beta/stable update channels
-- No manual downloads required
+### Skill Planning
+Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browsers. Entry detail panel with prerequisite tracking and completion checkmarks. Inline duplicate name prevention.
 
-**Performance Improvements**
-- Splash screen with loading progress indicators
-- Tiered update timers (1s/5s/30s) reduce CPU usage by 60%+
-- Event batching reduces UI thrashing during bulk updates
-- Virtual ListView handles 5000+ assets smoothly
-- Optimized for 100+ character accounts
-
-**User Experience Enhancements**
-- Loading indicators during API fetch operations
-- Toast notifications for connection status changes
-- ESI key warning indicators (expired/invalid tokens)
-- Modern About dialog with dark/light theme toggle
-
-**Skill Planning**
-- Booster injection simulation (cerebral accelerators)
-- Accurate training time with accelerator bonuses
-
-### Bug Fixes
-
-- **Settings not saving** - Fixed revision number detection that caused settings to reset
-- **Fork migration** - Seamless migration from peterhaneve and mgoeppner versions
-- **Certificate Browser** - Tab hidden (CCP removed certificates from EVE)
-- **30+ character crash** - Fixed Hammertime API removal causing crashes
-- **Structure lookups** - Proper request deduplication prevents API spam
-
-### Technical Changes
-
-- **JSON settings format** - Auto-migrates from legacy XML, atomic writes prevent corruption
-- **Per-character settings files** - Better organization, reduced file size
-- **Window title shows version** - Easy identification of which version you're running
+### More
+- **Native OS notifications** — skill completions via system notification center
+- **Activity center** — bell icon with 200-entry event log
+- **Character grouping** — organize characters by purpose
+- **Balance change indicator** — real-time ISK delta with directional arrows
+- **Data cache** — near-instant tab loading, limited offline viewing
+- **Per-character endpoint manager** — toggle individual ESI endpoints on/off
+- **Auto-update** — background update checking with alpha/beta/stable channels
 
 ---
 
 ## Alpha Changelog (Cumulative)
 
-- **Fix #14:** Virtual-mode ListView crash when opening assets with 500+ items
-- **Fix #15:** Font rendering quality — ClearType for overview, Segoe UI for footer/assets
-- **Fix #17:** 60+ character tick cascade — 89% handler reduction, re-entrancy guard
-- **One-click crash reporting** with 8-phase PII sanitizer and webhook pipeline
-- **Redesigned crash dialog** with prominent Submit Report button
-- **ESI key status indicators** — No API Key, Connecting, Re-auth Required, Error
-- **Simplified blank character creation** — single-click instead of save-to-XML
-- Hardened settings migration for imported/blank characters
-- Guard UpdateManager against null TopicAddress/PatchAddress
-- Fix promote.ps1 detached HEAD bug during merge to alpha/beta
+- Cross-platform: Windows, Linux, macOS from single codebase
+- 6 EVE-faction dark themes with runtime switching
+- ESI scope selector with dynamic revocation handling
+- Skill constellation GPU-accelerated visualization
+- Native OS notifications (Windows/Linux/macOS)
+- Activity/notification center with event history
+- Character grouping and balance change tracking
+- Character data cache with offline support
+- Redesigned plan editor with multi-tab browsers
+- Per-character endpoint manager
+- Settings redesign: single scrollable page
+- About window with 57+ contributor history
+- WinForms removed — Avalonia-only, net8.0 target
+- ImageService migrated from System.Drawing to SkiaSharp
+- Outlook calendar integration removed (Google Calendar remains)
+- 1,511 tests passing, 14 architectural laws enforced
 
 ---
 
 ## Features Being Tested
 
-- **One-click crash reporting** — Submit diagnostic reports directly from the crash dialog
-- **ESI key status indicators** — Visual connection status on character overview
-- **Performance with 60+ characters** — Reduced event handler overhead
-- **Font rendering improvements** — ClearType and modern font stack
+- Cross-platform stability on Linux and macOS
+- Theme switching across all views
+- ESI scope revocation and cache invalidation
+- Skill constellation performance with large skill sets
+- Native notifications on all three platforms
 
 ---
 
@@ -134,15 +110,13 @@ https://github.com/mgoeppner/evemon
 |---------|----------|----------|
 | Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evemon/releases/latest) |
 | Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evemon/releases/tag/beta) |
-| **Alpha** | Experimental features(you are here) | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
+| **Alpha** (you are here) | Experimental features | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
 
 ---
 
 ## Report Issues
 
-Found a bug? Please report it!
-
-- [GitHub Issues](https://github.com/aliacollins/evemon/issues)
+Found a bug? Please report it: [GitHub Issues](https://github.com/aliacollins/evemon/issues)
 
 ---
 
@@ -152,24 +126,18 @@ Found a bug? Please report it!
 
 ---
 
-## License
+## Credits
 
-GPL v2 - See [LICENSE](src/EVEMon.Common/Resources/License/gpl.txt) for details.
+EVEMon was originally created by the **EVEMonDevTeam** (Jimi Charalampidis and 57+ contributors, 2006-2015) and maintained by **Peter Han** (2015-2021). Their work over 20 years built the foundation that EVEMon NexT stands on.
+
+- [Original EVEMonDevTeam](https://github.com/evemondevteam/)
+- [Peter Han's fork](https://github.com/peterhaneve/evemon)
+- [Community fork (mgoeppner)](https://github.com/mgoeppner/evemon)
+
+I don't accept donations. If you want to support EVEMon, please donate to Peter Han or the original EVEMonDevTeam.
 
 ---
 
-## Credits
+## License
 
-### Previous Maintainer
-**Peter Han** (EVE Online)
-- [GitHub (upstream fork)](https://github.com/peterhaneve/evemon)
-
-### Original Creator
-**EVEMonDevTeam**
-- [GitHub](https://github.com/evemondevteam/)
-- [Bitbucket](https://bitbucket.org/EVEMonDevTeam)
-- [Website](https://evemondevteam.github.io/evemon/)
-- [Documentation](https://evemon.readthedocs.org/)
-
-### Support the Project
-I don't accept donations. If you want to support EVEMon, please donate to Peter Han or the original EVEMonDevTeam who built this tool over many years.
+GPL v2 — See [LICENSE](src/EVEMon.Common/Resources/License/gpl.txt)
