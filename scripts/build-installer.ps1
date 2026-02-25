@@ -36,12 +36,12 @@ try {
     Write-Host "Building EVEMon Installer v$Version" -ForegroundColor Cyan
     Write-Host "======================================" -ForegroundColor Cyan
 
-    # Step 1: Build EVEMon
+    # Step 1: Build EVEMon Avalonia
     if (-not $SkipBuild) {
         Write-Host ""
         Write-Host "Step 1: Building EVEMon..." -ForegroundColor Yellow
 
-        dotnet publish "src\EVEMon\EVEMon.csproj" -c Release -r win-x64 --self-contained false -o "publish\win-x64"
+        dotnet publish "src\EVEMon.Avalonia\EVEMon.Avalonia.csproj" -c Release -r win-x64 --self-contained false -o "publish\win-x64"
 
         if ($LASTEXITCODE -ne 0) {
             Write-Host "Build failed!" -ForegroundColor Red

@@ -18,23 +18,39 @@ if ($Version -notmatch '^\d+\.\d+\.\d+$') {
 
 Write-Host "Creating stable release v$Version..." -ForegroundColor Cyan
 
-# Build fresh
-Write-Host "Building EVEMon Release..." -ForegroundColor Cyan
+# Build all platforms
 Push-Location $RepoRoot
-dotnet publish "src\EVEMon\EVEMon.csproj" -c Release -r win-x64 --self-contained false -o "publish\win-x64"
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Build failed!" -ForegroundColor Red
-    Pop-Location
-    exit 1
+$AvaloniaProject = "src\EVEMon.Avalonia\EVEMon.Avalonia.csproj"
+
+Write-Host "Building Windows x64..." -ForegroundColor Yellow
+dotnet publish $AvaloniaProject -c Release -r win-x64 --self-contained false -o "publish\win-x64"
+if ($LASTEXITCODE -ne 0) { Write-Host "Windows build failed!" -ForegroundColor Red; Pop-Location; exit 1 }
+
+Write-Host "Building Linux x64..." -ForegroundColor Yellow
+dotnet publish $AvaloniaProject -c Release -r linux-x64 --self-contained false -o "publish\linux-x64"
+if ($LASTEXITCODE -ne 0) { Write-Host "Linux build failed!" -ForegroundColor Red; Pop-Location; exit 1 }
+
+Write-Host "Building macOS ARM64..." -ForegroundColor Yellow
+dotnet publish $AvaloniaProject -c Release -r osx-arm64 --self-contained false -o "publish\osx-arm64"
+if ($LASTEXITCODE -ne 0) { Write-Host "macOS build failed!" -ForegroundColor Red; Pop-Location; exit 1 }
+
+Write-Host "All platforms built successfully." -ForegroundColor Green
+
+# Create zips for each platform
+$winZip = "publish\EVEMon-$Version-win-x64.zip"
+$linuxZip = "publish\EVEMon-$Version-linux-x64.zip"
+$macZip = "publish\EVEMon-$Version-osx-arm64.zip"
+
+foreach ($zip in @($winZip, $linuxZip, $macZip)) {
+    if (Test-Path $zip) { Remove-Item $zip }
 }
 
-# Create zip with version in name
-$zipPath = "publish\EVEMon-$Version-win-x64.zip"
-if (Test-Path $zipPath) { Remove-Item $zipPath }
-Compress-Archive -Path "publish\win-x64\*" -DestinationPath $zipPath
+Compress-Archive -Path "publish\win-x64\*" -DestinationPath $winZip
+Compress-Archive -Path "publish\linux-x64\*" -DestinationPath $linuxZip
+Compress-Archive -Path "publish\osx-arm64\*" -DestinationPath $macZip
 
-# Build installer (graceful fallback if Inno Setup not available)
+# Build Windows installer (graceful fallback if Inno Setup not available)
 Write-Host "Building installer..." -ForegroundColor Cyan
 & "$ScriptDir\build-installer.ps1" -Version $Version -SkipBuild
 
@@ -42,7 +58,7 @@ $installerPath = "publish\EVEMon-install-$Version.exe"
 $hasInstaller = Test-Path $installerPath
 
 if (-not $hasInstaller) {
-    Write-Host "Warning: Installer build failed or Inno Setup not installed. Continuing with ZIP only." -ForegroundColor Yellow
+    Write-Host "Warning: Installer build failed or Inno Setup not installed. Continuing with ZIPs only." -ForegroundColor Yellow
 }
 
 # Create git tag (handle existing tag from prior attempt)
@@ -63,7 +79,6 @@ if ($readmeContent -match "## What's New in [0-9.]+\s*([\s\S]*?)(?=\r?\n---\r?\n
     $recentChanges = $Matches[1].Trim()
 }
 
-# Fallback: Read from CHANGELOG.md if README section is empty
 if (-not $recentChanges) {
     Write-Host "README 'What's New' section not found, falling back to CHANGELOG.md" -ForegroundColor Yellow
     $changelog = Get-Content "$RepoRoot\CHANGELOG.md" -Raw
@@ -75,28 +90,28 @@ if (-not $recentChanges) {
     }
 }
 
-# Generate release notes file (avoids PowerShell parsing issues with markdown)
+# Generate release notes file
 $releaseNotesPath = "$RepoRoot\publish\release-notes-stable.md"
 $releaseNotes = @"
 ## EVEMon v$Version
 
-### Installation Options
+### Downloads
 
-**Option 1: Installer (Recommended)**
-1. Download ``EVEMon-install-$Version.exe``
-2. Run the installer
-3. Follow the setup wizard
-4. The installer will download .NET 8 Desktop Runtime if needed
+| Platform | File | Requirements |
+|----------|------|-------------|
+| **Windows (Installer)** | ``EVEMon-install-$Version.exe`` | Installs .NET 8 automatically |
+| **Windows (Portable)** | ``EVEMon-$Version-win-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux x64** | ``EVEMon-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS Apple Silicon** | ``EVEMon-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
-**Option 2: Portable ZIP**
-1. Download ``EVEMon-$Version-win-x64.zip``
-2. Extract to a folder
-3. Run ``EVEMon.exe``
-4. Requires [.NET 8.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+### Installation
 
-### Requirements
-- Windows 10/11 (x64)
-- .NET 8.0 Desktop Runtime (installer downloads automatically)
+**Windows:** Run the installer or extract the portable ZIP.
+
+**Linux/macOS:**
+1. Install [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+2. Extract the ZIP
+3. Run: ``dotnet "EVEMon NexT.dll"``
 
 ### First Time Setup
 1. Run EVEMon
@@ -123,12 +138,11 @@ $ErrorActionPreference = "SilentlyContinue"
 gh release delete "v$Version" --yes --repo aliacollins/evemon 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"
 
-# Upload files based on what's available
-if ($hasInstaller) {
-    gh release create "v$Version" $zipPath $installerPath --title "EVEMon v$Version" --notes-file $releaseNotesPath --repo aliacollins/evemon
-} else {
-    gh release create "v$Version" $zipPath --title "EVEMon v$Version" --notes-file $releaseNotesPath --repo aliacollins/evemon
-}
+# Upload all files
+$uploadFiles = @($winZip, $linuxZip, $macZip)
+if ($hasInstaller) { $uploadFiles += $installerPath }
+
+gh release create "v$Version" @uploadFiles --title "EVEMon v$Version" --notes-file $releaseNotesPath --repo aliacollins/evemon
 
 Pop-Location
 

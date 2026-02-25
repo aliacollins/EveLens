@@ -11,11 +11,11 @@
 #define MyAppName "EVEMon"
 #define MyAppPublisher "Alia Collins"
 #define MyAppURL "https://github.com/aliacollins/evemon"
-#define MyAppExeName "EVEMon.exe"
+#define MyAppExeName "EVEMon NexT.exe"
 
-; .NET 8.0 Desktop Runtime download URL (x64)
-#define DotNet8DownloadUrl "https://download.visualstudio.microsoft.com/download/pr/76e5dbb2-6ae3-4629-9a84-527f8571571b/09002599b32d5d01dc3aa5ef68b5e2ae/windowsdesktop-runtime-8.0.11-win-x64.exe"
-#define DotNet8InstallerFile "windowsdesktop-runtime-8.0.11-win-x64.exe"
+; .NET 8.0 Runtime download URL (x64) - standard runtime, not Windows Desktop
+#define DotNet8DownloadUrl "https://download.visualstudio.microsoft.com/download/pr/76e5dbb2-6ae3-4629-9a84-527f8571571b/09002599b32d5d01dc3aa5ef68b5e2ae/dotnet-runtime-8.0.11-win-x64.exe"
+#define DotNet8InstallerFile "dotnet-runtime-8.0.11-win-x64.exe"
 
 [Setup]
 AppId={{8B3D3C6F-5A7E-4B9A-9D5C-3F2A1B4C5D6E}
@@ -33,7 +33,7 @@ LicenseFile=..\src\EVEMon.Common\Resources\License\gpl.txt
 ; Output to publish folder with name matching UpdateManager pattern
 OutputDir=..\publish
 OutputBaseFilename=EVEMon-install-{#MyAppVersion}
-SetupIconFile=..\src\EVEMon\Properties\EVEMon.ico
+SetupIconFile=..\src\EVEMon.Avalonia\Properties\EVEMon.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -45,7 +45,7 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 ; Auto-update support: close running EVEMon before installing
 CloseApplications=force
-CloseApplicationsFilter=EVEMon.exe
+CloseApplicationsFilter=EVEMon NexT.exe
 RestartApplications=no
 
 [Languages]
@@ -93,7 +93,7 @@ var
   S: String;
 begin
   S := 'You are installing EVEMon v{#MyAppVersion}' + #13#10;
-  S := S + '(Alia Collins Fork)' + #13#10#13#10;
+  S := S + '(Alia Collins Fork - Avalonia Cross-Platform)' + #13#10#13#10;
 
   // Add warning for alpha/beta
   if IsAlphaVersion then
@@ -109,25 +109,30 @@ begin
     S := S + 'It may contain bugs. Report issues on GitHub.' + #13#10#13#10;
   end;
 
-  S := S + '─────────────────────────────────────────' + #13#10#13#10;
+  S := S + #$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500 + #13#10#13#10;
 
   S := S + 'This version is built on peterhaneve''s EVEMon and is now' + #13#10;
   S := S + 'maintained by Alia Collins.' + #13#10#13#10;
 
   S := S + 'GitHub: https://github.com/aliacollins/evemon' + #13#10#13#10;
 
-  S := S + '─────────────────────────────────────────' + #13#10#13#10;
+  S := S + #$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500 + #13#10#13#10;
 
   S := S + 'YOUR DATA' + #13#10#13#10;
 
-  S := S + '• Skill plans will be preserved' + #13#10;
-  S := S + '• Settings will be preserved' + #13#10;
-  S := S + '• Characters will need to be re-added (ESI login required)' + #13#10#13#10;
+  S := S + '  Skill plans will be preserved' + #13#10;
+  S := S + '  Settings will be preserved' + #13#10;
+  S := S + '  Characters will need to be re-added (ESI login required)' + #13#10#13#10;
 
   S := S + 'If you have an older EVEMon installation, your settings' + #13#10;
   S := S + 'folder will be backed up automatically just in case.' + #13#10#13#10;
 
-  S := S + '─────────────────────────────────────────' + #13#10#13#10;
+  S := S + #$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500#$2500 + #13#10#13#10;
+
+  S := S + 'CROSS-PLATFORM' + #13#10#13#10;
+
+  S := S + 'EVEMon now runs on Windows, Linux, and macOS!' + #13#10;
+  S := S + 'Linux/macOS users: download the portable ZIP from GitHub.' + #13#10#13#10;
 
   S := S + 'SUPPORT THE PROJECT' + #13#10#13#10;
 
@@ -180,7 +185,7 @@ begin
     Log('No existing EVEMon settings folder found');
 end;
 
-function IsDotNet8DesktopInstalled: Boolean;
+function IsDotNet8Installed: Boolean;
 var
   ResultCode: Integer;
   TempFile: String;
@@ -189,8 +194,8 @@ begin
   Result := False;
   TempFile := ExpandConstant('{tmp}\dotnet_check.txt');
 
-  // Run dotnet --list-runtimes and save to temp file
-  if Exec('cmd.exe', '/c dotnet --list-runtimes 2>nul | findstr /C:"Microsoft.WindowsDesktop.App 8." > "' + TempFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  // Check for .NET 8 runtime (not Windows Desktop - we're Avalonia now)
+  if Exec('cmd.exe', '/c dotnet --list-runtimes 2>nul | findstr /C:"Microsoft.NETCore.App 8." > "' + TempFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
     if LoadStringFromFile(TempFile, Output) then
     begin
@@ -236,14 +241,14 @@ begin
 
   if CurPageID = wpReady then
   begin
-    // Check if .NET 8 Desktop Runtime is installed
-    if not IsDotNet8DesktopInstalled then
+    // Check if .NET 8 Runtime is installed
+    if not IsDotNet8Installed then
     begin
       DotNetRequired := True;
 
-      if MsgBox('EVEMon requires .NET 8.0 Desktop Runtime which is not installed.'#13#10#13#10 +
+      if MsgBox('EVEMon requires .NET 8.0 Runtime which is not installed.'#13#10#13#10 +
                 'Would you like to download and install it now?'#13#10#13#10 +
-                '(Size: approximately 55 MB)', mbConfirmation, MB_YESNO) = IDYES then
+                '(Size: approximately 30 MB)', mbConfirmation, MB_YESNO) = IDYES then
       begin
         DownloadPage.Clear;
         DownloadPage.Add('{#DotNet8DownloadUrl}', '{#DotNet8InstallerFile}', '');
@@ -256,7 +261,7 @@ begin
             DotNetInstaller := ExpandConstant('{tmp}\{#DotNet8InstallerFile}');
             if FileExists(DotNetInstaller) then
             begin
-              Log('Running .NET 8 Desktop Runtime installer...');
+              Log('Running .NET 8 Runtime installer...');
               // /quiet for silent install, /norestart to prevent restart
               if not Exec(DotNetInstaller, '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
               begin
@@ -268,7 +273,7 @@ begin
                 // ResultCode 3010 means success but restart required
                 if ResultCode = 3010 then
                 begin
-                  MsgBox('.NET 8 Desktop Runtime installed successfully.'#13#10 +
+                  MsgBox('.NET 8 Runtime installed successfully.'#13#10 +
                          'A system restart may be required after EVEMon installation.', mbInformation, MB_OK);
                 end
                 else
@@ -292,7 +297,7 @@ begin
       else
       begin
         // User declined to download .NET
-        Result := MsgBox('EVEMon will not run without .NET 8.0 Desktop Runtime.'#13#10#13#10 +
+        Result := MsgBox('EVEMon will not run without .NET 8.0 Runtime.'#13#10#13#10 +
                          'You can download it later from:'#13#10 +
                          'https://dotnet.microsoft.com/download/dotnet/8.0'#13#10#13#10 +
                          'Continue installation anyway?', mbConfirmation, MB_YESNO) = IDYES;
@@ -326,7 +331,7 @@ begin
   if DotNetRequired then
   begin
     S := S + 'Prerequisites to install:' + NewLine;
-    S := S + Space + '.NET 8.0 Desktop Runtime' + NewLine + NewLine;
+    S := S + Space + '.NET 8.0 Runtime' + NewLine + NewLine;
   end;
 
   if MemoDirInfo <> '' then
