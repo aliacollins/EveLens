@@ -6,7 +6,6 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -112,7 +111,7 @@ namespace EVEMon.Common.CloudStorageServices.GoogleDrive
         /// <value>
         /// The logo.
         /// </value>
-        public override Image Logo => CloudStorageServiceResources.GoogleDriveLogo;
+        public override object? Logo => CloudStorageServiceResources.GoogleDriveLogo;
 
         #endregion
 

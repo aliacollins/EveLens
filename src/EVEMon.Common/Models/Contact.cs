@@ -4,7 +4,6 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using EVEMon.Common.Data;
@@ -138,7 +137,7 @@ namespace EVEMon.Common.Models
                 case ContactType.Alliance:
                     return Properties.Resources.DefaultAllianceImage32;
             }
-            return new Bitmap(32, 32);
+            return null;
         }
 
         /// <summary>

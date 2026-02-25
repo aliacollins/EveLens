@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -23,13 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\EVEMon.Avalonia\EVEMon.Avalonia.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Common\EVEMon.Common.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Core\EVEMon.Core.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Data\EVEMon.Data.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Serialization\EVEMon.Serialization.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Models\EVEMon.Models.csproj" />
     <ProjectReference Include="..\..\src\EVEMon.Infrastructure\EVEMon.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\EVEMon\EVEMon.csproj" />
   </ItemGroup>
 
   <!-- Shared AssemblyInfo -->

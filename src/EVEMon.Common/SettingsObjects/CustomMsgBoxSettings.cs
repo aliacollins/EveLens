@@ -3,7 +3,6 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
-using System.Windows.Forms;
 using System.Xml.Serialization;
 
 namespace EVEMon.Common.SettingsObjects
@@ -26,10 +25,11 @@ namespace EVEMon.Common.SettingsObjects
         public bool ShowDialogBox { get; set; }
 
         /// <summary>
-        /// Gets or sets the dialog result.
+        /// Gets or sets the dialog result as an integer.
+        /// Previously used System.Windows.Forms.DialogResult; now stored as int for cross-platform compatibility.
         /// </summary>
         /// <value>The dialog result.</value>
         [XmlAttribute("dialogResult")]
-        public DialogResult DialogResult { get; set; }
+        public int DialogResult { get; set; }
     }
 }

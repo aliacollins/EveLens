@@ -9,12 +9,10 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Windows.Forms;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Net;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 
 namespace EVEMon.Common.Helpers
 {
@@ -41,16 +39,6 @@ namespace EVEMon.Common.Helpers
             string clientId = AppServices.IsDebugBuild ? "2" : "1";
 
             string screenResolution = "0x0";
-            try
-            {
-                var screen = Screen.PrimaryScreen;
-                if (screen != null)
-                    screenResolution = $"{screen.WorkingArea.Width}x{screen.WorkingArea.Height}";
-            }
-            catch (Exception)
-            {
-                // Screen may not be available in headless/service contexts
-            }
 
             s_parameters = new GampParameters
             {
@@ -119,7 +107,7 @@ namespace EVEMon.Common.Helpers
                 else
                 {
                     // Reschedule later
-                    Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEvent(type, category,
+                    AppServices.Dispatcher?.Schedule(TimeSpan.FromMinutes(1), () => TrackEvent(type, category,
                         action));
                     if (AppServices.IsDebugBuild)
                         AppServices.TraceService?.Trace($"in {TimeSpan.FromMinutes(1)}");
@@ -160,14 +148,14 @@ namespace EVEMon.Common.Helpers
                                 AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromDays(1)}",
                                     printMethod: false);
                         }
-                        Dispatcher.Schedule(TimeSpan.FromDays(1), () => TrackStart(type, DailyStartText));
+                        AppServices.Dispatcher?.Schedule(TimeSpan.FromDays(1), () => TrackStart(type, DailyStartText));
                     });
                 });
             }
             else
             {
                 // Reschedule later
-                Dispatcher.Schedule(TimeSpan.FromMinutes(1), () => TrackEventAsync(type,
+                AppServices.Dispatcher?.Schedule(TimeSpan.FromMinutes(1), () => TrackEventAsync(type,
                     category, action));
                 if (AppServices.IsDebugBuild)
                     AppServices.TraceService?.Trace($"GAnalyticsTracker.TrackEventAsync - in {TimeSpan.FromMinutes(1)}",

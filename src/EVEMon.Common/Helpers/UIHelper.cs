@@ -5,15 +5,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
+using SkiaSharp;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using EVEMon.Common.Controls;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Extensions;
@@ -29,7 +26,7 @@ namespace EVEMon.Common.Helpers
     /// </summary>
     public static class UIHelper
     {
-        public static Bitmap CharacterMonitorScreenshot { get; set; }
+        public static SKBitmap? CharacterMonitorScreenshot { get; set; }
 
         /// <summary>
         /// Saves the plans to a file.
@@ -215,29 +212,17 @@ namespace EVEMon.Common.Helpers
 
         /// <summary>
         /// Prompt the user to select plan exportation settings.
+        /// Uses current saved settings directly (cross-platform; no WinForms dialog).
         /// </summary>
         /// <returns></returns>
         public static PlanExportSettings PromptUserForPlanExportSettings(Plan plan)
         {
             PlanExportSettings settings = Settings.Exportation.PlanToText;
-            using (CopySaveOptionsWindow f = new CopySaveOptionsWindow(settings, plan, false))
-            {
-                if (settings.Markup == MarkupType.Undefined)
-                    settings.Markup = MarkupType.None;
 
-                f.ShowDialog();
-                if (f.DialogResult == DialogResult.Cancel)
-                    return null;
+            if (settings.Markup == MarkupType.Undefined)
+                settings.Markup = MarkupType.None;
 
-                // Save the new settings
-                if (!f.SetAsDefault)
-                    return settings;
-
-                Settings.Exportation.PlanToText = settings;
-                Settings.Save();
-
-                return settings;
-            }
+            return settings;
         }
 
         /// <summary>
@@ -290,8 +275,12 @@ namespace EVEMon.Common.Helpers
                         {
                             if (format == CharacterSaveFormat.PNG)
                             {
-                                Image image = CharacterMonitorScreenshot;
-                                image.Save(fs, ImageFormat.Png);
+                                SKBitmap? image = CharacterMonitorScreenshot;
+                                if (image != null)
+                                {
+                                    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                                    data.SaveTo(fs);
+                                }
                                 await fs.FlushAsync();
                                 return true;
                             }
@@ -321,35 +310,6 @@ namespace EVEMon.Common.Helpers
                 AppServices.DialogService.ShowMessage(
                     @"A problem occurred during exportation. The operation has not been completed.",
                     @"Export Failed", DialogButtons.OK, DialogIcon.Error);
-            }
-        }
-
-        /// <summary>
-        /// Adds the plans as toolstrip items to the list.
-        /// </summary>
-        /// <param name="plans">The plans.</param>
-        /// <param name="list">The list.</param>
-        /// <param name="initialize">The initialize.</param>
-        /// <exception cref="System.ArgumentNullException"></exception>
-        public static void AddTo(this IEnumerable<Plan> plans, ToolStripItemCollection list,
-                                 Action<ToolStripMenuItem, Plan> initialize)
-        {
-            plans.ThrowIfNull(nameof(plans));
-
-            list.ThrowIfNull(nameof(list));
-
-            initialize.ThrowIfNull(nameof(initialize));
-
-            //Scroll through plans
-            foreach (Plan plan in plans)
-            {
-                ToolStripMenuItem item;
-                using (ToolStripMenuItem planItem = new ToolStripMenuItem(plan.Name))
-                {
-                    initialize(planItem, plan);
-                    item = planItem;
-                }
-                list.Add(item);
             }
         }
 

@@ -4,32 +4,35 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using EVEMon.Core.Interfaces;
 
 namespace EVEMon.Common.Services
 {
     /// <summary>
-    /// Strangler Fig wrapper for the static <see cref="Threading.Dispatcher"/> class.
-    /// Implements <see cref="IDispatcher"/> by delegating to the existing static methods.
+    /// Default fallback <see cref="IDispatcher"/> implementation that executes actions
+    /// inline on the calling thread. In production, the Avalonia UI layer replaces this
+    /// with <c>AvaloniaDispatcher</c> via <c>AppServices.SetDispatcher()</c>.
     /// </summary>
     internal sealed class DispatcherService : IDispatcher
     {
         /// <inheritdoc />
         public void Invoke(Action action)
         {
-            Threading.Dispatcher.Invoke(action);
+            action();
         }
 
         /// <inheritdoc />
         public void Post(Action action)
         {
-            Threading.Dispatcher.Post(action);
+            action();
         }
 
         /// <inheritdoc />
         public void Schedule(TimeSpan delay, Action action)
         {
-            Threading.Dispatcher.Schedule(delay, action);
+            Task.Delay(delay).ContinueWith(_ => action(), TaskScheduler.Default);
         }
     }
 }

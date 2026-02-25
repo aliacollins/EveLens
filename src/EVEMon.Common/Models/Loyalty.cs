@@ -4,7 +4,6 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
 using System.Threading.Tasks;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;

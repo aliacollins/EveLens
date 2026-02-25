@@ -59,10 +59,10 @@ namespace EVEMon.Common.Services
         private static Lazy<IEsiScheduler> s_esiScheduler = new(() => new EsiScheduler(
             Dispatcher, EventAggregator, EsiClient,
             LoggerFactory?.CreateLogger<EsiScheduler>()));
-        private static Lazy<IDialogService> s_dialogService = new(() => new WinFormsDialogService());
-        private static Lazy<IClipboardService> s_clipboardService = new(() => new WinFormsClipboardService());
-        private static Lazy<IApplicationLifecycle> s_applicationLifecycle = new(() => new WinFormsApplicationLifecycle());
-        private static Lazy<IScreenInfo> s_screenInfo = new(() => new WinFormsScreenInfo());
+        private static Lazy<IDialogService> s_dialogService = new(() => new NullDialogService());
+        private static Lazy<IClipboardService> s_clipboardService = new(() => new NullClipboardService());
+        private static Lazy<IApplicationLifecycle> s_applicationLifecycle = new(() => new NullApplicationLifecycle());
+        private static Lazy<IScreenInfo> s_screenInfo = new(() => new NullScreenInfo());
         private static Lazy<ActivityLogService> s_activityLog = new(() =>
             new ActivityLogService(ApplicationPaths.DataDirectory));
         private static Lazy<ICharacterDataCache> s_characterDataCache = new(() => new CharacterDataCacheService());
@@ -455,10 +455,10 @@ namespace EVEMon.Common.Services
             s_esiScheduler = new Lazy<IEsiScheduler>(() => new EsiScheduler(
                 Dispatcher, EventAggregator, EsiClient,
                 LoggerFactory?.CreateLogger<EsiScheduler>()));
-            s_dialogService = new Lazy<IDialogService>(() => new WinFormsDialogService());
-            s_clipboardService = new Lazy<IClipboardService>(() => new WinFormsClipboardService());
-            s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => new WinFormsApplicationLifecycle());
-            s_screenInfo = new Lazy<IScreenInfo>(() => new WinFormsScreenInfo());
+            s_dialogService = new Lazy<IDialogService>(() => new NullDialogService());
+            s_clipboardService = new Lazy<IClipboardService>(() => new NullClipboardService());
+            s_applicationLifecycle = new Lazy<IApplicationLifecycle>(() => new NullApplicationLifecycle());
+            s_screenInfo = new Lazy<IScreenInfo>(() => new NullScreenInfo());
             s_activityLog = new Lazy<ActivityLogService>(() =>
                 new ActivityLogService(ApplicationPaths.DataDirectory));
             s_characterDataCache = new Lazy<ICharacterDataCache>(() => new CharacterDataCacheService());

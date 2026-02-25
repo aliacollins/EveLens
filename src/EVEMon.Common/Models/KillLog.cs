@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using EVEMon.Common.Constants;
@@ -202,7 +201,7 @@ namespace EVEMon.Common.Models
         /// Gets the default image.
         /// </summary>
         /// <returns></returns>
-        private static object? GetDefaultImage() => new Bitmap(32, 32);
+        private static object? GetDefaultImage() => null;
 
         #endregion
 

@@ -8,14 +8,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Data;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Net;
 using EVEMon.Common.Serialization.PatchXml;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using EVEMon.Common.CustomEventArgs;
 using CommonEvents = EVEMon.Common.Events;
 
@@ -129,7 +127,7 @@ namespace EVEMon.Common
         private static void ScheduleCheck(TimeSpan time)
         {
             s_checkScheduled = true;
-            Dispatcher.Schedule(time, () => _ = BeginCheckWithErrorHandlingAsync());
+            AppServices.Dispatcher?.Schedule(time, () => _ = BeginCheckWithErrorHandlingAsync());
             AppServices.TraceService?.Trace("in " + time);
         }
 
@@ -212,7 +210,7 @@ namespace EVEMon.Common
             }
 
             // Process the result on the UI thread
-            Dispatcher.Invoke(() => OnCheckCompleted(result));
+            AppServices.Dispatcher?.Invoke(() => OnCheckCompleted(result));
         }
 
         /// <summary>
@@ -306,7 +304,7 @@ namespace EVEMon.Common
                 if (!string.IsNullOrEmpty(additionalArgs) && additionalArgs.Contains(
                     "%EVEMON_EXECUTABLE_PATH%"))
                 {
-                    string? appPath = Path.GetDirectoryName(Application.ExecutablePath);
+                    string? appPath = AppContext.BaseDirectory;
                     installArgs = $"{installArgs} {additionalArgs}";
                     installArgs = installArgs.Replace("%EVEMON_EXECUTABLE_PATH%", appPath);
                 }

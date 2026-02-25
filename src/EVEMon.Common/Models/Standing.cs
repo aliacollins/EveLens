@@ -4,7 +4,6 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
 using System.Threading.Tasks;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
@@ -174,7 +173,7 @@ namespace EVEMon.Common.Models
                 case StandingGroup.Factions:
                     return Properties.Resources.DefaultAllianceImage32;
             }
-            return new Bitmap(32, 32);
+            return null;
         }
 
         /// <summary>

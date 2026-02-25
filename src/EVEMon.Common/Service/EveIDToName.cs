@@ -14,7 +14,6 @@ using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using EVEMon.Core.Events;
 using System;
 using System.Collections.Generic;
@@ -231,7 +230,7 @@ namespace EVEMon.Common.Service
                     }).ConfigureAwait(false);
 
                 // Marshal back to UI thread for processing
-                Dispatcher.Invoke(() => OnQueryAPICharacterNameUpdated(result));
+                AppServices.Dispatcher?.Invoke(() => OnQueryAPICharacterNameUpdated(result));
             }
 
             private void OnQueryAPICharacterNameUpdated(EsiResult<EsiAPICharacterNames> result)

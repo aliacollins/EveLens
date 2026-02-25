@@ -8,7 +8,6 @@ using EVEMon.Common.CustomEventArgs;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Net;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using System;
 using System.Linq;
 using System.Net;
@@ -33,7 +32,7 @@ namespace EVEMon.Common.Helpers
         /// </summary>
         public static void ScheduleCheck(TimeSpan time)
         {
-            Dispatcher.Schedule(time, () => BeginCheckAsync().ConfigureAwait(false));
+            AppServices.Dispatcher?.Schedule(time, () => BeginCheckAsync().ConfigureAwait(false));
             AppServices.TraceService?.Trace($"in {time}");
         }
 

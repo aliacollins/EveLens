@@ -4,11 +4,11 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using EVEMon.Common.Extensions;
+using SkiaSharp;
 
 namespace EVEMon.Common.Net
 {
@@ -21,7 +21,7 @@ namespace EVEMon.Common.Net
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <param name="param">The request parameters. If null, defaults will be used.</param>
-        public static async Task<DownloadResult<Image>> DownloadImageAsync(Uri url,
+        public static async Task<DownloadResult<SKBitmap>> DownloadImageAsync(Uri url,
             RequestParams param = null)
         {
             string urlValidationError;
@@ -41,7 +41,7 @@ namespace EVEMon.Common.Net
             }
             catch (HttpWebClientServiceException ex)
             {
-                return new DownloadResult<Image>(null, ex);
+                return new DownloadResult<SKBitmap>(null, ex);
             }
         }
 
@@ -52,27 +52,27 @@ namespace EVEMon.Common.Net
         /// <param name="stream">The stream.</param>
         /// <param name="response">The response from the server.</param>
         /// <returns></returns>
-        private static DownloadResult<Image> GetImage(Uri requestBaseUrl, Stream stream,
+        private static DownloadResult<SKBitmap> GetImage(Uri requestBaseUrl, Stream stream,
             HttpResponseMessage response)
         {
-            Image image = null;
+            SKBitmap image = null;
             HttpWebClientServiceException error = null;
             var param = new ResponseParams(response);
             if (stream == null)
             {
                 error = HttpWebClientServiceException.Exception(requestBaseUrl,
                     new ArgumentNullException(nameof(stream)));
-                return new DownloadResult<Image>(null, error, param);
+                return new DownloadResult<SKBitmap>(null, error, param);
             }
             try
             {
-                image = Image.FromStream(Util.ZlibUncompress(stream), true);
+                image = SKBitmap.Decode(Util.ZlibUncompress(stream));
             }
             catch (ArgumentException ex)
             {
                 error = HttpWebClientServiceException.ImageException(requestBaseUrl, ex);
             }
-            return new DownloadResult<Image>(image, error, param);
+            return new DownloadResult<SKBitmap>(image, error, param);
         }
     }
 }

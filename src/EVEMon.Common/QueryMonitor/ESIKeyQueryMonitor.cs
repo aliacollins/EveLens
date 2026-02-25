@@ -9,7 +9,7 @@ using EVEMon.Common.Enumerations.CCPAPI;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Threading;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.QueryMonitor
 {
@@ -66,12 +66,12 @@ namespace EVEMon.Common.QueryMonitor
                     m_esiKey.AccessToken)).ConfigureAwait(false);
 
                 // Marshal back to UI thread and call OnQueried for proper bookkeeping
-                Dispatcher.Invoke(() => OnQueried(result));
+                AppServices.Dispatcher?.Invoke(() => OnQueried(result));
             }
             catch (Exception ex)
             {
                 // Ensure IsUpdating is reset even if an exception occurs
-                Dispatcher.Invoke(() => ResetUpdatingState(ex));
+                AppServices.Dispatcher?.Invoke(() => ResetUpdatingState(ex));
             }
         }
 

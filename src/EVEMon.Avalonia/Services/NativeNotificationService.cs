@@ -77,13 +77,24 @@ namespace EVEMon.Avalonia.Services
                         "</visual>" +
                     "</toast>";
 
-                var doc = new Windows.Data.Xml.Dom.XmlDocument();
-                doc.LoadXml(toastXml);
+                // Use reflection to invoke WinRT toast APIs to avoid compile-time dependency
+                // on net8.0-windows TFM (keeping cross-platform net8.0 target).
+                var xmlDocType = Type.GetType("Windows.Data.Xml.Dom.XmlDocument, Microsoft.Windows.SDK.NET");
+                if (xmlDocType == null)
+                {
+                    Logger.LogWarning("WinRT XmlDocument type not available — falling back to silent notification");
+                    return;
+                }
+                var doc = Activator.CreateInstance(xmlDocType)!;
+                xmlDocType.GetMethod("LoadXml")!.Invoke(doc, new object[] { toastXml });
 
-                var toast = new Windows.UI.Notifications.ToastNotification(doc);
-                var notifier = Windows.UI.Notifications.ToastNotificationManager
-                    .CreateToastNotifier(AppId);
-                notifier.Show(toast);
+                var toastNotificationType = Type.GetType("Windows.UI.Notifications.ToastNotification, Microsoft.Windows.SDK.NET")!;
+                var toast = Activator.CreateInstance(toastNotificationType, doc)!;
+
+                var managerType = Type.GetType("Windows.UI.Notifications.ToastNotificationManager, Microsoft.Windows.SDK.NET")!;
+                var notifier = managerType.GetMethod("CreateToastNotifier", new[] { typeof(string) })!
+                    .Invoke(null, new object[] { AppId })!;
+                notifier.GetType().GetMethod("Show")!.Invoke(notifier, new[] { toast });
 
                 Logger.LogInformation("Windows toast shown via WinRT API (AUMID={AppId})", AppId);
             }

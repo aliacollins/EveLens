@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.IO;
 using System.Threading;
 using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
@@ -16,18 +17,47 @@ namespace EVEMon.Common
 
         private static InstanceManager s_instanceManager;
 
-        private readonly Semaphore m_semaphore;
         private readonly bool m_createdNew;
+        private FileStream m_lockFile;
+        private RegisteredWaitHandle m_waitHandle;
+        private EventWaitHandle m_signal;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="InstanceManager"/> class.
+        /// Uses a file-based lock for cross-platform single-instance detection,
+        /// and a named EventWaitHandle for inter-process signaling.
         /// </summary>
         private InstanceManager()
         {
-            using (Semaphore semaphore = new Semaphore(0, 1, "EVEMonInstance", out m_createdNew))
+            string lockPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "EVEMon", ".instance-lock");
+
+            try
             {
-                ThreadPool.RegisterWaitForSingleObject(semaphore, SemaphoreReleased, null, -1, false);
-                m_semaphore = semaphore;
+                Directory.CreateDirectory(Path.GetDirectoryName(lockPath)!);
+                m_lockFile = new FileStream(lockPath, FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite, FileShare.None);
+                m_createdNew = true;
+            }
+            catch (IOException)
+            {
+                // File is locked by another instance
+                m_createdNew = false;
+            }
+
+            // Set up cross-process signaling via named EventWaitHandle
+            try
+            {
+                m_signal = new EventWaitHandle(false, EventResetMode.AutoReset, "EVEMonInstanceSignal",
+                    out _);
+                m_waitHandle = ThreadPool.RegisterWaitForSingleObject(
+                    m_signal, SignalReceived, null, -1, false);
+            }
+            catch (Exception e)
+            {
+                // Named events may not be available on all platforms; degrade gracefully
+                ExceptionHandler.LogException(e, false);
             }
         }
 
@@ -44,25 +74,23 @@ namespace EVEMon.Common
         public static InstanceManager Instance => s_instanceManager ?? (s_instanceManager = new InstanceManager());
 
         /// <summary>
-        /// Fires the event.
+        /// Fires the event when signaled by another instance.
         /// </summary>
-        /// <param name="o">The o.</param>
-        /// <param name="b">if set to <c>true</c> [b].</param>
-        private void SemaphoreReleased(object o, bool b)
+        private void SignalReceived(object o, bool b)
         {
             Signaled?.ThreadSafeInvoke(this, new EventArgs());
         }
 
         /// <summary>
-        /// Releases the semaphore.
+        /// Signals the existing instance (e.g., to bring it to the foreground).
         /// </summary>
         public void Signal()
         {
             try
             {
-                m_semaphore.Release();
+                m_signal?.Set();
             }
-            catch (SemaphoreFullException e)
+            catch (Exception e)
             {
                 ExceptionHandler.LogException(e, false);
             }

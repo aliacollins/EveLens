@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
 
 namespace EVEMon.Common.Models.Comparers
 {
@@ -14,17 +13,17 @@ namespace EVEMon.Common.Models.Comparers
     /// </summary>
     public sealed class ContractItemComparer : Comparer<ContractItem>
     {
-        private readonly ColumnHeader m_column;
+        private readonly int m_columnIndex;
         private readonly bool m_isAscending;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ContractItemComparer"/> class.
         /// </summary>
-        /// <param name="column">The column.</param>
+        /// <param name="columnIndex">The column index.</param>
         /// <param name="isAscending">Is ascending flag.</param>
-        public ContractItemComparer(ColumnHeader column, bool isAscending)
+        public ContractItemComparer(int columnIndex, bool isAscending)
         {
-            m_column = column;
+            m_columnIndex = columnIndex;
             m_isAscending = isAscending;
         }
 
@@ -70,7 +69,7 @@ namespace EVEMon.Common.Models.Comparers
         /// </returns>
         private int CompareCore(ContractItem x, ContractItem y)
         {
-            switch (m_column.Index)
+            switch (m_columnIndex)
             {
                 case 0:
                     return string.Compare(x.Item.Name, y.Item.Name, StringComparison.CurrentCulture);

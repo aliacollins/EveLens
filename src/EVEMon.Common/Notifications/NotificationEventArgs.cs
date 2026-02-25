@@ -5,7 +5,7 @@
 
 using System;
 using EVEMon.Common.Models;
-using EVEMon.Common.Threading;
+using EVEMon.Common.Services;
 
 namespace EVEMon.Common.Notifications
 {
@@ -105,7 +105,7 @@ namespace EVEMon.Common.Notifications
         /// <param name="callback">The callback.</param>
         public static void ScheduleAction(TimeSpan time, Action callback)
         {
-            Dispatcher.Schedule(time, callback.Invoke);
+            AppServices.Dispatcher?.Schedule(time, callback.Invoke);
         }
 
         /// <summary>

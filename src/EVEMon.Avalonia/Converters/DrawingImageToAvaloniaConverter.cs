@@ -4,18 +4,16 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using Avalonia.Data.Converters;
+using SkiaSharp;
 
 namespace EVEMon.Avalonia.Converters
 {
     /// <summary>
-    /// Converts a System.Drawing.Image or System.Drawing.Bitmap to an Avalonia.Media.Imaging.Bitmap.
-    /// This bridges the WinForms image infrastructure in EVEMon.Common to Avalonia's rendering pipeline.
+    /// Converts an SkiaSharp.SKBitmap to an Avalonia.Media.Imaging.Bitmap.
+    /// This bridges the SkiaSharp image infrastructure in EVEMon.Common to Avalonia's rendering pipeline.
     /// </summary>
     public sealed class DrawingImageToAvaloniaConverter : IValueConverter
     {
@@ -23,34 +21,18 @@ namespace EVEMon.Avalonia.Converters
 
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            if (value is not System.Drawing.Bitmap drawingBitmap)
-            {
-                if (value is System.Drawing.Image drawingImage)
-                {
-                    // Image may not be a Bitmap directly; convert it
-                    drawingBitmap = new System.Drawing.Bitmap(drawingImage);
-                }
-                else
-                {
-                    return null;
-                }
-            }
+            if (value is not SKBitmap skBitmap)
+                return null;
 
             try
             {
-                using var ms = new MemoryStream();
-                drawingBitmap.Save(ms, ImageFormat.Png);
-                ms.Position = 0;
-                return new global::Avalonia.Media.Imaging.Bitmap(ms);
+                using var data = skBitmap.Encode(SKEncodedImageFormat.Png, 100);
+                using var stream = new MemoryStream(data.ToArray());
+                return new global::Avalonia.Media.Imaging.Bitmap(stream);
             }
-            catch (ExternalException)
+            catch (Exception)
             {
-                // GDI+ error — image may be disposed or corrupt
-                return null;
-            }
-            catch (ArgumentException)
-            {
-                // Invalid image data
+                // Image may be disposed or corrupt
                 return null;
             }
         }

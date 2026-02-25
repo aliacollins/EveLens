@@ -4,18 +4,16 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using EVEMon.Common.Constants;
 using EVEMon.Common.Enumerations;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Net;
 using EVEMon.Common.Services;
+using SkiaSharp;
 
 namespace EVEMon.Common.Service
 {
@@ -33,7 +31,7 @@ namespace EVEMon.Common.Service
         /// Asynchronously downloads a character portrait from its ID.
         /// </summary>
         /// <param name="charId"></param>
-        public static async Task<Image> GetCharacterImageAsync(long charId)
+        public static async Task<SKBitmap> GetCharacterImageAsync(long charId)
         {
             string path = string.Format(CultureConstants.InvariantCulture,
                 NetworkConstants.CCPPortraits, charId, (int)EveImageSize.x128);
@@ -44,37 +42,25 @@ namespace EVEMon.Common.Service
         /// <summary>
         /// Asynchronously downloads an alliance image.
         /// </summary>
-        /// <param name="pictureBox">The picture box.</param>
         /// <param name="allianceID">The alliance ID.</param>
-        public static Task GetAllianceImageAsync(PictureBox pictureBox, long allianceID)
+        /// <param name="size">The image size in pixels.</param>
+        public static async Task<SKBitmap> GetAllianceImageAsync(long allianceID, int size = 128)
         {
             string path = string.Format(CultureConstants.InvariantCulture, NetworkConstants.
-                CCPAllianceLogo, allianceID, pictureBox.Width);
-            return GetImageAsync(pictureBox, path);
+                CCPAllianceLogo, allianceID, size);
+            return await GetImageAsync(GetImageServerBaseUri(path)).ConfigureAwait(false);
         }
 
         /// <summary>
         /// Asynchronously downloads a corporation image.
         /// </summary>
-        /// <param name="pictureBox">The picture box.</param>
         /// <param name="corporationID">The corporation ID.</param>
-        public static Task GetCorporationImageAsync(PictureBox pictureBox, long corporationID)
+        /// <param name="size">The image size in pixels.</param>
+        public static async Task<SKBitmap> GetCorporationImageAsync(long corporationID, int size = 128)
         {
             string path = string.Format(CultureConstants.InvariantCulture, NetworkConstants.
-                CCPCorporationLogo, corporationID, pictureBox.Width);
-            return GetImageAsync(pictureBox, path);
-        }
-
-        /// <summary>
-        /// Called when image gets downloaded.
-        /// </summary>
-        /// <param name="pictureBox">The picture box.</param>
-        /// <param name="path">The path.</param>
-        private static async Task GetImageAsync(PictureBox pictureBox, string path)
-        {
-            Image image = await GetImageAsync(GetImageServerBaseUri(path)).ConfigureAwait(false);
-            pictureBox.Image = image ?? pictureBox.InitialImage;
-            pictureBox.Update();
+                CCPCorporationLogo, corporationID, size);
+            return await GetImageAsync(GetImageServerBaseUri(path)).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -82,9 +68,9 @@ namespace EVEMon.Common.Service
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <param name="useCache">if set to <c>true</c> [use cache].</param>
-        public static async Task<Image> GetImageAsync(Uri url, bool useCache = true)
+        public static async Task<SKBitmap> GetImageAsync(Uri url, bool useCache = true)
         {
-            DownloadResult<Image> result;
+            DownloadResult<SKBitmap> result;
 
             // Cache not to be used ?
             if (!useCache)
@@ -93,7 +79,7 @@ namespace EVEMon.Common.Service
                 return GetImage(result);
             }
 
-            Image image = GetImageFromCache(GetCacheName(url));
+            SKBitmap image = GetImageFromCache(GetCacheName(url));
             if (image != null)
                 return image;
 
@@ -113,7 +99,7 @@ namespace EVEMon.Common.Service
         /// <param name="filename">The filename.</param>
         /// <param name="directory">The directory.</param>
         /// <returns></returns>
-        public static Image GetImageFromCache(string filename, string directory = null)
+        public static SKBitmap GetImageFromCache(string filename, string directory = null)
         {
             // First check whether the image exists in cache
             EveMonClient.EnsureCacheDirInit();
@@ -127,12 +113,8 @@ namespace EVEMon.Common.Service
             {
                 // Load the data into a MemoryStream before returning the image to avoid file
                 // locking
-                Image image;
                 byte[] imageBytes = File.ReadAllBytes(cacheFileName);
-                using (MemoryStream stream = new MemoryStream(imageBytes))
-                {
-                    image = Image.FromStream(stream);
-                }
+                SKBitmap image = SKBitmap.Decode(imageBytes);
                 return image;
             }
             catch (ArgumentException e)
@@ -156,7 +138,7 @@ namespace EVEMon.Common.Service
         /// Callback used when images are downloaded.
         /// </summary>
         /// <param name="result">The result.</param>
-        private static Image GetImage(DownloadResult<Image> result)
+        private static SKBitmap GetImage(DownloadResult<SKBitmap> result)
         {
             if (result.Error == null)
                 return result.Result;
@@ -176,7 +158,7 @@ namespace EVEMon.Common.Service
         /// <param name="filename">The filename.</param>
         /// <param name="directory">The directory.</param>
         /// <returns></returns>
-        public static async Task AddImageToCacheAsync(Image image, string filename,
+        public static async Task AddImageToCacheAsync(SKBitmap image, string filename,
             string directory = null)
         {
             // Saves the image file
@@ -189,7 +171,8 @@ namespace EVEMon.Common.Service
                 await FileHelper.OverwriteOrWarnTheUserAsync(cacheFileName,
                     async fs =>
                     {
-                        ((Image)image.Clone()).Save(fs, ImageFormat.Png);
+                        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+                        data.SaveTo(fs);
                         await fs.FlushAsync();
                         return true;
                     }).ConfigureAwait(false);

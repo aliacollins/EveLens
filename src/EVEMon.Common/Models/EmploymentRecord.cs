@@ -8,7 +8,6 @@ using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Core;
 using System;
-using System.Drawing;
 using System.Threading.Tasks;
 
 namespace EVEMon.Common.Models

@@ -9,7 +9,6 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -355,7 +354,7 @@ namespace EVEMon.Common.Service
         /// </summary>
         private void OnDataChanged()
         {
-            Dispatcher.Invoke(() =>
+            AppServices.Dispatcher?.Invoke(() =>
             {
                 AppServices.Notifications.InvalidateAPIError();
                 DataChanged?.Invoke(this, EventArgs.Empty);

@@ -20,7 +20,6 @@ using EVEMon.Common.Models;
 using EVEMon.Common.Models.Extended;
 using EVEMon.Common.Net;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace EVEMon.Common
@@ -115,7 +114,7 @@ namespace EVEMon.Common
         /// <param name="thread">The thread.</param>
         public static void Run(Thread thread)
         {
-            Dispatcher.Run(thread);
+            // Dispatcher lifecycle is managed by the UI framework (Avalonia)
             Trace();
         }
 
@@ -141,7 +140,7 @@ namespace EVEMon.Common
             s_apiRequestQueue?.Dispose();
             s_apiRequestQueue = null;
 
-            Dispatcher.Shutdown();
+            // Dispatcher lifecycle is managed by the UI framework (Avalonia)
             Trace();
         }
 
@@ -277,7 +276,7 @@ namespace EVEMon.Common
                     return s_defaultEvePortraitCacheFolders;
 
                 s_defaultEvePortraitCacheFolders = Settings.PortableEveInstallations.EVEClients
-                    .Select(eveClientInstallation => $"{eveClientInstallation.Path}\\cache\\Pictures\\Characters")
+                    .Select(eveClientInstallation => Path.Combine(eveClientInstallation.Path, "cache", "Pictures", "Characters"))
                     .Where(Directory.Exists).ToList();
 
                 if (s_defaultEvePortraitCacheFolders.Any())
@@ -444,7 +443,7 @@ namespace EVEMon.Common
         private static void InitializeDefaultEvePortraitCachePath()
         {
             string localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            EVEApplicationDataDir = $"{localApplicationData}\\CCP\\EVE";
+            EVEApplicationDataDir = Path.Combine(localApplicationData, "CCP", "EVE");
 
             // Check folder exists
             if (!Directory.Exists(EVEApplicationDataDir))
@@ -461,7 +460,7 @@ namespace EVEMon.Common
                 return;
 
             s_defaultEvePortraitCacheFolders = tranquilityFolders
-                .Select(traquilityFolder => $"{EVEApplicationDataDir}\\{traquilityFolder.Name}\\cache\\Pictures\\Characters")
+                .Select(traquilityFolder => Path.Combine(EVEApplicationDataDir, traquilityFolder.Name, "cache", "Pictures", "Characters"))
                 .Where(Directory.Exists);
 
             EvePortraitCacheFolders = s_defaultEvePortraitCacheFolders;

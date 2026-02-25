@@ -9,8 +9,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
-using EVEMon.Common.Controls;
 
 namespace EVEMon.Common.Service
 {
@@ -123,7 +123,19 @@ namespace EVEMon.Common.Service
             // http://msdn.microsoft.com/en-us/library/windows/desktop/ms686234.aspx and
             // http://msdn.microsoft.com/en-us/library/windows/desktop/ms682606.aspx
             if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                NativeMethods.EmptyWorkingSet(Process.GetCurrentProcess().Handle);
+            {
+                try
+                {
+                    EmptyWorkingSet(Process.GetCurrentProcess().Handle);
+                }
+                catch
+                {
+                    // P/Invoke may fail on non-Windows platforms; ignore
+                }
+            }
         }
+
+        [DllImport("psapi.dll", SetLastError = true)]
+        private static extern bool EmptyWorkingSet(IntPtr hProcess);
     }
 }

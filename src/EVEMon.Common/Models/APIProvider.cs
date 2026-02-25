@@ -10,7 +10,7 @@ using EVEMon.Common.Net;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
-using EVEMon.Common.Threading;
+using EVEMon.Common.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -228,17 +228,17 @@ namespace EVEMon.Common.Models
                 object? callbackState = state.State;
                 if (esiResult.HasError)
                     // Invoke the callback if an error occurred
-                    Dispatcher.Invoke(() => callback.Invoke(esiResult, callbackState));
+                    AppServices.Dispatcher?.Invoke(() => callback.Invoke(esiResult, callbackState));
                 else if (!esiResult.HasData)
                     // This should not occur
-                    Dispatcher.Invoke(() => callback.Invoke(first, callbackState));
+                    AppServices.Dispatcher?.Invoke(() => callback.Invoke(first, callbackState));
                 else
                 {
                     if (first.Result != null && esiResult.Result != null)
                         first.Result.AddRange(esiResult.Result);
                     if (page >= state.LastPage)
                         // All pages fetched
-                        Dispatcher.Invoke(() => callback.Invoke(first, callbackState));
+                        AppServices.Dispatcher?.Invoke(() => callback.Invoke(first, callbackState));
                     else
                         // Go to the next page
                         QueryEsiPageHelper(method, callback, data, state.NextPage());
@@ -293,7 +293,7 @@ namespace EVEMon.Common.Models
                         pages, state));
                 else
                     // Invokes the callback
-                    Dispatcher.Invoke(() => callback.Invoke(esiResult, state));
+                    AppServices.Dispatcher?.Invoke(() => callback.Invoke(esiResult, state));
             };
 
             if (queue != null)
@@ -338,7 +338,7 @@ namespace EVEMon.Common.Models
                 ).ContinueWith(task =>
                 {
                     // Invokes the callback
-                    Dispatcher.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
+                    AppServices.Dispatcher?.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
                 });
             }
             else
@@ -346,7 +346,7 @@ namespace EVEMon.Common.Models
                 Util.DownloadJsonAsync<T>(url, requestParams).ContinueWith(task =>
                 {
                     // Invokes the callback
-                    Dispatcher.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
+                    AppServices.Dispatcher?.Invoke(() => callback.Invoke(GetESIResult(task.Result), state));
                 });
             }
         }

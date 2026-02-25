@@ -6,7 +6,6 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -19,7 +18,6 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Serialization;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 using EVEMon.Core.Enumerations;
 
 namespace EVEMon.Common.CloudStorageServices
@@ -127,7 +125,7 @@ namespace EVEMon.Common.CloudStorageServices
         /// <value>
         /// The logo.
         /// </value>
-        public virtual Image? Logo => null;
+        public virtual object? Logo => null;
 
         /// <summary>
         /// Gets the providers.
@@ -551,7 +549,7 @@ namespace EVEMon.Common.CloudStorageServices
             AppServices.TraceService?.Trace($"CloudStorageServiceProvider.DownloadSettingsFileAsync - {resultText}", printMethod: false);
 
             if (!result.HasError && result.Result != null)
-                Dispatcher.Invoke(() => SaveSettingsFile(result.Result));
+                AppServices.Dispatcher?.Invoke(() => SaveSettingsFile(result.Result));
         }
 
         /// <summary>

@@ -11,7 +11,6 @@ using EVEMon.Common.Extensions;
 using EVEMon.Common.Models;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
-using EVEMon.Common.Threading;
 
 namespace EVEMon.Common.QueryMonitor
 {
@@ -66,7 +65,7 @@ namespace EVEMon.Common.QueryMonitor
                 // endlessly retrying with a stale token.
                 if (result.ResponseCode == (int)HttpStatusCode.Unauthorized)
                 {
-                    Dispatcher.Invoke(() =>
+                    AppServices.Dispatcher?.Invoke(() =>
                     {
                         foreach (var key in m_character.Identity.ESIKeys)
                         {
@@ -81,12 +80,12 @@ namespace EVEMon.Common.QueryMonitor
                 }
 
                 // Marshal back to UI thread and call OnQueried for proper bookkeeping
-                Dispatcher.Invoke(() => OnQueried(result));
+                AppServices.Dispatcher?.Invoke(() => OnQueried(result));
             }
             catch (Exception ex)
             {
                 // Ensure IsUpdating is reset even if an exception occurs
-                Dispatcher.Invoke(() => ResetUpdatingState(ex));
+                AppServices.Dispatcher?.Invoke(() => ResetUpdatingState(ex));
             }
         }
 

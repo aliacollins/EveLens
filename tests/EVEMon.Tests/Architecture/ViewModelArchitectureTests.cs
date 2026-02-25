@@ -26,7 +26,8 @@ namespace EVEMon.Tests.Architecture
     public class ViewModelArchitectureTests
     {
         private static readonly Assembly ViewModelAssembly = typeof(ViewModelBase).Assembly;
-        private static readonly Assembly UIAssembly = typeof(EVEMon.MainWindow).Assembly;
+        // UI assembly — Avalonia UI controls
+        private static readonly Assembly UIAssembly = typeof(EVEMon.Avalonia.App).Assembly;
 
         private static IEnumerable<Type> GetAllViewModelTypes()
         {
@@ -191,7 +192,7 @@ namespace EVEMon.Tests.Architecture
         #region VM-to-Control Pairing
 
         /// <summary>
-        /// Maps each ListViewModel subclass to its expected UI control.
+        /// Maps each ListViewModel subclass to its expected Avalonia UI control.
         /// Prevents orphaned VMs or missing control wiring.
         /// </summary>
         [Fact]
@@ -199,17 +200,17 @@ namespace EVEMon.Tests.Architecture
         {
             var mapping = new Dictionary<string, string>
             {
-                { "AssetsListViewModel", "CharacterAssetsList" },
-                { "MarketOrdersListViewModel", "CharacterMarketOrdersList" },
-                { "ContractsListViewModel", "CharacterContractsList" },
-                { "IndustryJobsListViewModel", "CharacterIndustryJobsList" },
-                { "WalletJournalListViewModel", "CharacterWalletJournalList" },
-                { "WalletTransactionsListViewModel", "CharacterWalletTransactionsList" },
-                { "MailMessagesListViewModel", "CharacterEveMailMessagesList" },
-                { "NotificationsListViewModel", "CharacterEveNotificationsList" },
-                { "KillLogListViewModel", "CharacterKillLogList" },
-                { "PlanetaryListViewModel", "CharacterPlanetaryList" },
-                { "ResearchPointsListViewModel", "CharacterResearchPointsList" },
+                { "AssetsListViewModel", "CharacterAssetsView" },
+                { "MarketOrdersListViewModel", "CharacterMarketOrdersView" },
+                { "ContractsListViewModel", "CharacterContractsView" },
+                { "IndustryJobsListViewModel", "CharacterIndustryJobsView" },
+                { "WalletJournalListViewModel", "CharacterWalletJournalView" },
+                { "WalletTransactionsListViewModel", "CharacterWalletTransactionsView" },
+                { "MailMessagesListViewModel", "CharacterMailMessagesView" },
+                { "NotificationsListViewModel", "CharacterNotificationsView" },
+                { "KillLogListViewModel", "CharacterKillLogView" },
+                { "PlanetaryListViewModel", "CharacterPlanetaryView" },
+                { "ResearchPointsListViewModel", "CharacterResearchPointsView" },
             };
 
             var uiTypes = UIAssembly.GetTypes();
@@ -235,11 +236,11 @@ namespace EVEMon.Tests.Architecture
         {
             var controlNames = new[]
             {
-                "CharacterAssetsList", "CharacterMarketOrdersList", "CharacterContractsList",
-                "CharacterIndustryJobsList", "CharacterWalletJournalList",
-                "CharacterWalletTransactionsList", "CharacterEveMailMessagesList",
-                "CharacterEveNotificationsList", "CharacterKillLogList",
-                "CharacterPlanetaryList", "CharacterResearchPointsList",
+                "CharacterAssetsView", "CharacterMarketOrdersView", "CharacterContractsView",
+                "CharacterIndustryJobsView", "CharacterWalletJournalView",
+                "CharacterWalletTransactionsView", "CharacterMailMessagesView",
+                "CharacterNotificationsView", "CharacterKillLogView",
+                "CharacterPlanetaryView", "CharacterResearchPointsView",
             };
 
             var oldMethodNames = new[] { "IsTextMatching", "UpdateSort", "UpdateContentByGroup", "UpdateContentByGroupAsync" };
@@ -355,32 +356,24 @@ namespace EVEMon.Tests.Architecture
         [Fact]
         public void AllViewModels_WiredInUI_ExceptOrphans()
         {
-            // After Phase 4, PlanEditor and SettingsForm are wired too.
-            // Avalonia-specific VMs are excluded as they're not wired to WinForms UI.
+            // ViewModels that are not directly wired to an Avalonia UI control via a field.
+            // Some are used indirectly (e.g., sub-VMs composed by other VMs),
+            // others are WinForms-specific and not yet ported.
             var unwired = new HashSet<string>
             {
-                // Avalonia-specific ViewModels (wired in Avalonia UI, not WinForms)
-                "SkillBrowserViewModel",
-                "AssetBrowserViewModel",
-                "SkillQueueViewModel",
-                "EmploymentTimelineViewModel",
-                "NotificationCenterViewModel",
-                "ContactsListViewModel",
-                "StandingsListViewModel",
-                // Plan Editor ViewModels (Avalonia Plan Editor window)
+                // WinForms-era VMs not ported to Avalonia
+                "CharacterMonitorBodyViewModel",
+                "SettingsFormViewModel",
+                // AssetsListViewModel replaced by AssetBrowserViewModel in Avalonia
+                "AssetsListViewModel",
+                // Plan Editor sub-ViewModels (composed by PlanEditorViewModel, not directly wired)
                 "PlanEditorWindowViewModel",
                 "PlanDashboardViewModel",
                 "PlanGoalCardViewModel",
                 "PlanTimeCardViewModel",
                 "PlanCostCardViewModel",
                 "PlanSkillListViewModel",
-                "PlanOptimizerViewModel",
                 "PlanEntryDetailViewModel",
-                // Plan Editor Browser ViewModels
-                "PlanSkillBrowserViewModel",
-                "ShipBrowserViewModel",
-                "ItemBrowserViewModel",
-                "BlueprintBrowserViewModel"
             };
 
             var vmTypes = GetAllViewModelTypes().ToList();
@@ -446,7 +439,6 @@ namespace EVEMon.Tests.Architecture
         /// <summary>
         /// Law 25: ObservableCharacter must not exceed 30 public instance properties.
         /// Prevents it from becoming a god object like EveMonClient.
-        /// If it exceeds 30, split or delegate to a sub-ViewModel.
         /// </summary>
         [Fact]
         public void ObservableCharacter_DoesNotExceedPropertyLimit()

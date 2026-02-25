@@ -17,7 +17,6 @@ using EVEMon.Common.Serialization.Esi;
 using EVEMon.Common.Serialization.Eve;
 using EVEMon.Common.Services;
 using EVEMon.Common.SettingsObjects;
-using EVEMon.Common.Threading;
 using EVEMon.Core.Events;
 
 namespace EVEMon.Common.QueryMonitor
@@ -280,13 +279,13 @@ namespace EVEMon.Common.QueryMonitor
                     .ConfigureAwait(false);
 
                 // Marshal back to UI thread and invoke callback
-                Dispatcher.Invoke(() => OnQueried(result));
+                AppServices.Dispatcher?.Invoke(() => OnQueried(result));
             }
             catch (Exception ex)
             {
                 // Ensure IsUpdating is reset even if an exception occurs
                 // Also log the exception for debugging
-                Dispatcher.Invoke(() => ResetUpdatingState(ex));
+                AppServices.Dispatcher?.Invoke(() => ResetUpdatingState(ex));
             }
         }
 
