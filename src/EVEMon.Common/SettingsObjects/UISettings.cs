@@ -69,6 +69,13 @@ namespace EVEMon.Common.SettingsObjects
         public bool SafeForWork { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the app minimizes to system tray on close (Avalonia).
+        /// When true, closing the window hides to tray; when false, close exits the app.
+        /// </summary>
+        [XmlElement("minimizeToTray")]
+        public bool MinimizeToTray { get; set; }
+
+        /// <summary>
         /// Gets or sets the main window close behaviour.
         /// </summary>
         /// <value>The main window close behaviour.</value>
@@ -319,6 +326,22 @@ namespace EVEMon.Common.SettingsObjects
                     foreach (var tip in value)
                         m_confirmedTips.Add(tip);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Migrates old tray/close settings to the single MinimizeToTray boolean.
+        /// Called once after deserialization to infer the new setting from the old enums
+        /// when the user hasn't explicitly set MinimizeToTray yet.
+        /// </summary>
+        internal void MigrateToMinimizeToTray()
+        {
+            // If the old close behaviour was MinimizeToTray and the tray icon wasn't disabled,
+            // the user intended minimize-to-tray behavior.
+            if (MainWindowCloseBehaviour == CloseBehaviour.MinimizeToTray &&
+                SystemTrayIcon != SystemTrayBehaviour.Disabled)
+            {
+                MinimizeToTray = true;
             }
         }
     }

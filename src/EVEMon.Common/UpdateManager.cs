@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -288,8 +289,6 @@ namespace EVEMon.Common
                 // (Shouldn't happen but it's nice to be prepared)
                 if (newestRelease == null)
                     return;
-                // Reset the most recent denied version
-                Settings.Updates.MostRecentDeniedUpgrade = string.Empty;
 
                 if (string.IsNullOrEmpty(newestRelease.TopicAddress) ||
                     string.IsNullOrEmpty(newestRelease.PatchAddress))
@@ -312,9 +311,30 @@ namespace EVEMon.Common
                     installArgs = installArgs.Replace("%EVEMON_EXECUTABLE_PATH%", appPath);
                 }
 
+                // Collect intermediate releases between current and newest (same major)
+                var releaseHistory = new List<ReleaseSummary>();
+                if (result.Releases != null)
+                {
+                    var intermediateReleases = result.Releases
+                        .Where(r => r.Version != null)
+                        .Select(r => new { Release = r, Ver = Version.Parse(r.Version!) })
+                        .Where(r => r.Ver.Major == currentVersion.Major
+                                    && r.Ver > currentVersion
+                                    && r.Ver <= newestVersion)
+                        .OrderByDescending(r => r.Ver);
+
+                    foreach (var entry in intermediateReleases)
+                    {
+                        releaseHistory.Add(new ReleaseSummary(
+                            entry.Ver,
+                            entry.Release.Date ?? string.Empty,
+                            entry.Release.Message ?? string.Empty));
+                    }
+                }
+
                 // Requests a notification to subscribers and quit
                 var updateArgs = new UpdateAvailableEventArgs(forumUrl, installerUrl, updateMessage,
-                    currentVersion, newestVersion, md5Sum, canAutoInstall, installArgs);
+                    currentVersion, newestVersion, md5Sum, canAutoInstall, installArgs, releaseHistory);
                 AppServices.EventAggregator?.Publish(new CommonEvents.UpdateAvailableEvent(updateArgs));
                 return;
             }
@@ -345,8 +365,6 @@ namespace EVEMon.Common
             // Is there is a new major version and the user has not previously denied it?
             if (currentVersion >= newestVersion || mostRecentDeniedMajorUpgrade >= newestVersion)
                 return;
-            // Reset the most recent denied version
-            Settings.Updates.MostRecentDeniedMajorUpgrade = string.Empty;
             var majorUpdateArgs = new UpdateAvailableEventArgs(null, null, null, currentVersion,
                 newestVersion, null, false, null);
             AppServices.EventAggregator?.Publish(new CommonEvents.UpdateAvailableEvent(majorUpdateArgs));

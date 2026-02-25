@@ -54,7 +54,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 new[] { "appearance", "theme", "safe for work", "compatibility", "wine", "data directory" });
             AddSection("Window", WindowPanel, NavWindow,
                 new[] { "window", "behavior", "behaviour", "tray", "icon", "close", "minimize",
-                        "popup", "taskbar", "system tray" });
+                        "system tray" });
             AddSection("Notifications", NotificationsPanel, NavNotifications,
                 new[] { "notification", "notifications", "sound", "skill", "email", "mail", "smtp",
                         "calendar", "google", "outlook", "reminder", "toast", "alert" });
@@ -142,46 +142,7 @@ namespace EVEMon.Avalonia.Views.Dialogs
 
         private void LoadTraySettings()
         {
-            switch (_settings.UI.SystemTrayIcon)
-            {
-                case SystemTrayBehaviour.Disabled:
-                    TrayDisabledRadio.IsChecked = true;
-                    break;
-                case SystemTrayBehaviour.ShowWhenMinimized:
-                    TrayMinimizedRadio.IsChecked = true;
-                    break;
-                case SystemTrayBehaviour.AlwaysVisible:
-                    TrayAlwaysRadio.IsChecked = true;
-                    break;
-            }
-
-            switch (_settings.UI.MainWindowCloseBehaviour)
-            {
-                case CloseBehaviour.Exit:
-                    CloseExitRadio.IsChecked = true;
-                    break;
-                case CloseBehaviour.MinimizeToTray:
-                    CloseMinTrayRadio.IsChecked = true;
-                    break;
-                case CloseBehaviour.MinimizeToTaskbar:
-                    CloseMinTaskbarRadio.IsChecked = true;
-                    break;
-            }
-
-            switch (_settings.UI.SystemTrayPopup.Style)
-            {
-                case TrayPopupStyles.PopupForm:
-                    PopupFormRadio.IsChecked = true;
-                    break;
-                case TrayPopupStyles.WindowsTooltip:
-                    PopupTooltipRadio.IsChecked = true;
-                    break;
-                case TrayPopupStyles.Disabled:
-                    PopupDisabledRadio.IsChecked = true;
-                    break;
-            }
-
-            UpdateTrayDisables();
+            MinimizeToTrayToggle.IsChecked = _settings.UI.MinimizeToTray;
         }
 
         private void LoadEmailSettings()
@@ -524,11 +485,6 @@ namespace EVEMon.Avalonia.Views.Dialogs
             RestartNowButton.Click += OnRestartNowClick;
             OpenDataDirButton.Click += OnOpenDataDirClick;
 
-            // Tray behavior
-            TrayDisabledRadio.IsCheckedChanged += (_, _) => UpdateTrayDisables();
-            TrayMinimizedRadio.IsCheckedChanged += (_, _) => UpdateTrayDisables();
-            TrayAlwaysRadio.IsCheckedChanged += (_, _) => UpdateTrayDisables();
-
             // Email — master toggle reveals/hides sub-panel
             SendMailToggle.IsCheckedChanged += (_, _) =>
                 EmailOptionsPanel.IsVisible = SendMailToggle.IsChecked == true;
@@ -632,16 +588,6 @@ namespace EVEMon.Avalonia.Views.Dialogs
             {
                 // Silently fail if directory cannot be opened
             }
-        }
-
-        // --- Tray ---
-
-        private void UpdateTrayDisables()
-        {
-            CloseMinTrayRadio.IsEnabled = TrayDisabledRadio.IsChecked != true;
-
-            if (TrayDisabledRadio.IsChecked == true && CloseMinTrayRadio.IsChecked == true)
-                CloseExitRadio.IsChecked = true;
         }
 
         // --- Email provider presets ---
@@ -787,27 +733,8 @@ namespace EVEMon.Avalonia.Views.Dialogs
                 ThemeManager.WriteThemePreference(themeName);
             }
 
-            // Window Behavior — Tray
-            if (TrayDisabledRadio.IsChecked == true)
-                _settings.UI.SystemTrayIcon = SystemTrayBehaviour.Disabled;
-            else if (TrayMinimizedRadio.IsChecked == true)
-                _settings.UI.SystemTrayIcon = SystemTrayBehaviour.ShowWhenMinimized;
-            else if (TrayAlwaysRadio.IsChecked == true)
-                _settings.UI.SystemTrayIcon = SystemTrayBehaviour.AlwaysVisible;
-
-            if (CloseExitRadio.IsChecked == true)
-                _settings.UI.MainWindowCloseBehaviour = CloseBehaviour.Exit;
-            else if (CloseMinTrayRadio.IsChecked == true)
-                _settings.UI.MainWindowCloseBehaviour = CloseBehaviour.MinimizeToTray;
-            else if (CloseMinTaskbarRadio.IsChecked == true)
-                _settings.UI.MainWindowCloseBehaviour = CloseBehaviour.MinimizeToTaskbar;
-
-            if (PopupFormRadio.IsChecked == true)
-                _settings.UI.SystemTrayPopup.Style = TrayPopupStyles.PopupForm;
-            else if (PopupTooltipRadio.IsChecked == true)
-                _settings.UI.SystemTrayPopup.Style = TrayPopupStyles.WindowsTooltip;
-            else if (PopupDisabledRadio.IsChecked == true)
-                _settings.UI.SystemTrayPopup.Style = TrayPopupStyles.Disabled;
+            // Window Behavior — single MinimizeToTray toggle
+            _settings.UI.MinimizeToTray = MinimizeToTrayToggle.IsChecked == true;
 
             // Notifications
             _settings.Notifications.ShowOSNotifications = OsNotificationsToggle.IsChecked == true;

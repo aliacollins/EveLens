@@ -17,7 +17,6 @@ using EVEMon.Avalonia.Services;
 using EVEMon.Avalonia.Views;
 using EVEMon.Common;
 using EVEMon.Common.Collections.Global;
-using EVEMon.Common.Enumerations.UISettings;
 using EVEMon.Common.Helpers;
 using EVEMon.Common.Service;
 using EVEMon.Common.Services;
@@ -129,14 +128,11 @@ namespace EVEMon.Avalonia
             // Close splash and restore normal shutdown behavior before creating the main window
             splash.Close();
 
-            // If tray icon can keep the app running (minimize-to-tray), use explicit shutdown
-            // so hiding the main window doesn't terminate the process
-            var closeBehaviour = Settings.UI.MainWindowCloseBehaviour;
-            var trayMode = Settings.UI.SystemTrayIcon;
-            desktop.ShutdownMode = (closeBehaviour == CloseBehaviour.MinimizeToTray &&
-                                    trayMode != SystemTrayBehaviour.Disabled)
-                ? ShutdownMode.OnExplicitShutdown
-                : ShutdownMode.OnMainWindowClose;
+            // Always use explicit shutdown — the Closing handler decides whether
+            // to hide (tray) or trigger desktop.Shutdown() (exit). This avoids a
+            // race condition where ShutdownMode is still OnExplicitShutdown when
+            // the user changes MinimizeToTray and closes before the Post() executes.
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
             // Phase 9: Start the tick timer (replaces WinForms Dispatcher.Run timer)
             var timer = new global::Avalonia.Threading.DispatcherTimer
@@ -170,8 +166,7 @@ namespace EVEMon.Avalonia
                 }
                 finally
                 {
-                    _trayIcon?.Dispose();
-                    _trayIcon = null;
+                    DestroyTrayIcon();
                     _settingsSaveSubscriber?.Dispose();
                     AppServices.Shutdown();
                 }
@@ -182,85 +177,96 @@ namespace EVEMon.Avalonia
         {
             try
             {
-                var trayBehaviour = Settings.UI.SystemTrayIcon;
-
-                // Build context menu
-                _trayMenu = new NativeMenu();
-
-                var showItem = new NativeMenuItem("Show EVEMon");
-                showItem.Click += (_, _) => ShowMainWindow(desktop);
-                _trayMenu.Add(showItem);
-
-                _trayMenu.Add(new NativeMenuItemSeparator());
-
-                var exitItem = new NativeMenuItem("Exit");
-                exitItem.Click += (_, _) =>
-                {
-                    IsExiting = true;
-                    _trayIcon?.Dispose();
-                    _trayIcon = null;
-                    desktop.Shutdown();
-                };
-                _trayMenu.Add(exitItem);
-
-                // Create tray icon
-                _trayIcon = new TrayIcon
-                {
-                    ToolTipText = AppServices.ProductNameWithVersion,
-                    Menu = _trayMenu,
-                    Icon = LoadTrayIcon(),
-                    IsVisible = trayBehaviour == SystemTrayBehaviour.AlwaysVisible
-                };
-
-                _trayIcon.Clicked += (_, _) => ShowMainWindow(desktop);
-
-                // Handle window close → minimize-to-tray
+                // Handle window close → minimize-to-tray or explicit exit
                 if (desktop.MainWindow != null)
                 {
                     desktop.MainWindow.Closing += (_, e) =>
                     {
-                        // When exiting from tray or explicit shutdown, let the close proceed
                         if (IsExiting)
                             return;
 
-                        var closeBehaviour = Settings.UI.MainWindowCloseBehaviour;
-                        var trayMode = Settings.UI.SystemTrayIcon;
-
-                        if (closeBehaviour == CloseBehaviour.MinimizeToTray &&
-                            trayMode != SystemTrayBehaviour.Disabled)
+                        if (Settings.UI.MinimizeToTray)
                         {
                             e.Cancel = true;
                             desktop.MainWindow.Hide();
-                            if (_trayIcon != null)
-                                _trayIcon.IsVisible = true;
                         }
-                        else if (closeBehaviour == CloseBehaviour.MinimizeToTaskbar)
+                        else
                         {
-                            e.Cancel = true;
-                            desktop.MainWindow.WindowState = WindowState.Minimized;
-                        }
-                        // CloseBehaviour.Exit → let it close normally
-                    };
-
-                    // Show/hide tray on minimize (for ShowWhenMinimized mode)
-                    desktop.MainWindow.PropertyChanged += (_, e) =>
-                    {
-                        if (e.Property != Window.WindowStateProperty || _trayIcon == null) return;
-                        var state = (WindowState)(e.NewValue ?? WindowState.Normal);
-                        var trayMode = Settings.UI.SystemTrayIcon;
-
-                        if (trayMode == SystemTrayBehaviour.ShowWhenMinimized)
-                        {
-                            _trayIcon.IsVisible = state == WindowState.Minimized;
+                            // Trigger explicit shutdown after the window closes
+                            IsExiting = true;
+                            Dispatcher.UIThread.Post(() => desktop.Shutdown());
                         }
                     };
                 }
+
+                // Only create the tray icon if the setting is on
+                if (Settings.UI.MinimizeToTray)
+                    CreateTrayIcon(desktop);
+
+                // When settings change, create or destroy tray icon dynamically
+                AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(_ =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        try
+                        {
+                            bool enabled = Settings.UI.MinimizeToTray;
+
+                            if (enabled && _trayIcon == null)
+                                CreateTrayIcon(desktop);
+                            else if (!enabled && _trayIcon != null)
+                                DestroyTrayIcon();
+                        }
+                        catch (Exception ex)
+                        {
+                            AppServices.TraceService?.Trace(
+                                $"Tray settings update failed: {ex.Message}", printMethod: false);
+                        }
+                    });
+                });
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error setting up tray icon: {ex}");
                 AppServices.TraceService?.Trace($"Tray icon setup failed: {ex.Message}", printMethod: false);
             }
+        }
+
+        private void CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            _trayMenu = new NativeMenu();
+
+            var showItem = new NativeMenuItem("Show EVEMon");
+            showItem.Click += (_, _) => ShowMainWindow(desktop);
+            _trayMenu.Add(showItem);
+
+            _trayMenu.Add(new NativeMenuItemSeparator());
+
+            var exitItem = new NativeMenuItem("Exit");
+            exitItem.Click += (_, _) =>
+            {
+                IsExiting = true;
+                DestroyTrayIcon();
+                desktop.Shutdown();
+            };
+            _trayMenu.Add(exitItem);
+
+            _trayIcon = new TrayIcon
+            {
+                ToolTipText = AppServices.ProductNameWithVersion,
+                Menu = _trayMenu,
+                Icon = LoadTrayIcon(),
+                IsVisible = true
+            };
+
+            _trayIcon.Clicked += (_, _) => ShowMainWindow(desktop);
+        }
+
+        private void DestroyTrayIcon()
+        {
+            _trayIcon?.Dispose();
+            _trayIcon = null;
+            _trayMenu = null;
         }
 
         private static WindowIcon? LoadTrayIcon()
@@ -278,10 +284,24 @@ namespace EVEMon.Avalonia
 
         private static void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
         {
-            if (desktop.MainWindow == null) return;
-            desktop.MainWindow.Show();
-            desktop.MainWindow.WindowState = WindowState.Normal;
-            desktop.MainWindow.Activate();
+            Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    var window = desktop.MainWindow;
+                    if (window == null)
+                        return;
+
+                    window.Show();
+                    window.WindowState = WindowState.Normal;
+                    window.Activate();
+                }
+                catch (Exception ex)
+                {
+                    AppServices.TraceService?.Trace(
+                        $"ShowMainWindow failed: {ex.Message}", printMethod: false);
+                }
+            });
         }
 
         private static string ReadThemePreference()

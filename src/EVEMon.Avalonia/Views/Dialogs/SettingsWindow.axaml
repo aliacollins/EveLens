@@ -4,6 +4,7 @@
         Title="EVEMon Settings"
         Width="700" Height="580"
         MinWidth="560" MinHeight="480"
+        UseLayoutRounding="True"
         WindowStartupLocation="CenterOwner">
 
     <Window.Styles>
@@ -21,9 +22,9 @@
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Transitions">
                 <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.12" />
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
-                    <BrushTransition Property="Foreground" Duration="0:0:0.12" />
+                    <BrushTransition Property="Background" Duration="0:0:0.06" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.06" />
+                    <BrushTransition Property="Foreground" Duration="0:0:0.06" />
                 </Transitions>
             </Setter>
         </Style>
@@ -118,7 +119,7 @@
                     <Button x:Name="NavWindow" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
                             <TextBlock Text="Window" FontSize="11" />
-                            <TextBlock Text="Tray icon, close, popup"
+                            <TextBlock Text="Tray icon, close behavior"
                                        FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
@@ -229,54 +230,17 @@
                                    FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
-                        <!-- Tray Icon -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Tray Icon" FontSize="11" FontWeight="SemiBold" />
-                            <TextBlock Text="Control the system tray icon visibility."
-                                       FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-                            <StackPanel Spacing="4" Margin="12,4,0,0">
-                                <RadioButton x:Name="TrayDisabledRadio" Content="Disabled"
-                                             GroupName="TrayBehaviour" FontSize="11" />
-                                <RadioButton x:Name="TrayMinimizedRadio" Content="Show when minimized"
-                                             GroupName="TrayBehaviour" FontSize="11" />
-                                <RadioButton x:Name="TrayAlwaysRadio" Content="Always visible"
-                                             GroupName="TrayBehaviour" FontSize="11" />
+                        <!-- Minimize to Tray -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Minimize to Tray" FontSize="11" />
+                                <TextBlock Text="When enabled, closing the window minimizes EVEMon to the system tray instead of exiting. Click the tray icon to restore."
+                                           TextWrapping="Wrap" FontSize="10"
+                                           Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
-                        </StackPanel>
-
-                        <Separator />
-
-                        <!-- Close Button -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Close Button" FontSize="11" FontWeight="SemiBold" />
-                            <TextBlock Text="Choose what happens when the window close button is clicked."
-                                       FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-                            <StackPanel Spacing="4" Margin="12,4,0,0">
-                                <RadioButton x:Name="CloseExitRadio" Content="Exit the application"
-                                             GroupName="CloseBehaviour" FontSize="11" />
-                                <RadioButton x:Name="CloseMinTrayRadio" Content="Minimize to system tray"
-                                             GroupName="CloseBehaviour" FontSize="11" />
-                                <RadioButton x:Name="CloseMinTaskbarRadio" Content="Minimize to taskbar"
-                                             GroupName="CloseBehaviour" FontSize="11" />
-                            </StackPanel>
-                        </StackPanel>
-
-                        <Separator />
-
-                        <!-- Tray Popup -->
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Tray Popup" FontSize="11" FontWeight="SemiBold" />
-                            <TextBlock Text="Style of popup shown when hovering the tray icon."
-                                       FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-                            <StackPanel Spacing="4" Margin="12,4,0,0">
-                                <RadioButton x:Name="PopupFormRadio" Content="Popup form"
-                                             GroupName="PopupStyle" FontSize="11" />
-                                <RadioButton x:Name="PopupTooltipRadio" Content="Windows tooltip"
-                                             GroupName="PopupStyle" FontSize="11" />
-                                <RadioButton x:Name="PopupDisabledRadio" Content="Disabled"
-                                             GroupName="PopupStyle" FontSize="11" />
-                            </StackPanel>
-                        </StackPanel>
+                            <ToggleSwitch x:Name="MinimizeToTrayToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
                     </StackPanel>
 
                     <!-- ═══════════════════════════════════════ -->

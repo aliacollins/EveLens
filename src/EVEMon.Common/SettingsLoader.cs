@@ -83,6 +83,13 @@ namespace EVEMon.Common
             // Loading settings
             // If there are none, we create them from scratch
             IsRestoring = true;
+
+            // One-time migration: infer MinimizeToTray from old tray/close enums.
+            // Must run before Import() so the migrated value is picked up,
+            // and only here (not in Import()) so saves don't re-migrate.
+            if (s_settings != null)
+                s_settings.UI.MigrateToMinimizeToTray();
+
             Import();
             IsRestoring = false;
 

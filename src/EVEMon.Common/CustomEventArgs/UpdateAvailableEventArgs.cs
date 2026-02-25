@@ -4,9 +4,27 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 
 namespace EVEMon.Common.CustomEventArgs
 {
+    /// <summary>
+    /// Represents a single release entry for display in the update dialog.
+    /// </summary>
+    public sealed class ReleaseSummary
+    {
+        public ReleaseSummary(Version version, string date, string message)
+        {
+            Version = version;
+            Date = date;
+            Message = message;
+        }
+
+        public Version Version { get; }
+        public string Date { get; }
+        public string Message { get; }
+    }
+
     public sealed class UpdateAvailableEventArgs : EventArgs
     {
         /// <summary>
@@ -20,9 +38,11 @@ namespace EVEMon.Common.CustomEventArgs
         /// <param name="md5Sum">The MD5 sum.</param>
         /// <param name="canAutoInstall">if set to <c>true</c> [can auto install].</param>
         /// <param name="installArgs">The install args.</param>
+        /// <param name="releaseHistory">Optional list of intermediate releases.</param>
         public UpdateAvailableEventArgs(Uri forumUrl, Uri installerUrl, string updateMessage,
                                         Version currentVersion, Version newestVersion, string md5Sum,
-                                        bool canAutoInstall, string installArgs)
+                                        bool canAutoInstall, string installArgs,
+                                        IReadOnlyList<ReleaseSummary> releaseHistory = null)
         {
             ForumUrl = forumUrl;
             InstallerUrl = installerUrl;
@@ -32,6 +52,7 @@ namespace EVEMon.Common.CustomEventArgs
             MD5Sum = md5Sum;
             CanAutoInstall = canAutoInstall;
             AutoInstallArguments = installArgs;
+            ReleaseHistory = releaseHistory ?? Array.Empty<ReleaseSummary>();
         }
 
         /// <summary>
@@ -83,5 +104,11 @@ namespace EVEMon.Common.CustomEventArgs
         /// </summary>
         /// <value>The auto install arguments.</value>
         public string AutoInstallArguments { get; }
+
+        /// <summary>
+        /// Gets the list of intermediate releases between the current version and newest version,
+        /// sorted descending by version (newest first).
+        /// </summary>
+        public IReadOnlyList<ReleaseSummary> ReleaseHistory { get; }
     }
 }

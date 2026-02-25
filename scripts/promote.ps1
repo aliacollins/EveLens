@@ -245,7 +245,51 @@ function Update-PatchXml {
     $tagName = if ($Channel -eq "stable") { "v$Version" } else { $Channel }
     $installerName = "EVEMon-install-$($Version -replace '-.*','').exe"
 
-    $content = @"
+    $maxReleases = 10
+
+    if (Test-Path $file) {
+        # Load existing XML and prepend the new release, keeping up to $maxReleases
+        [xml]$xml = Get-Content $file -Raw
+        $releases = $xml.SelectSingleNode("//releases")
+
+        $newRelease = $xml.CreateElement("release")
+
+        $dateEl = $xml.CreateElement("date"); $dateEl.InnerText = $date
+        $versionEl = $xml.CreateElement("version"); $versionEl.InnerText = $assemblyVersion
+        $urlEl = $xml.CreateElement("url"); $urlEl.InnerText = "https://github.com/aliacollins/evemon/releases/tag/$tagName"
+        $patchUrlEl = $xml.CreateElement("autopatchurl"); $patchUrlEl.InnerText = "https://github.com/aliacollins/evemon/releases/download/$tagName/$installerName"
+        $patchArgsEl = $xml.CreateElement("autopatchargs"); $patchArgsEl.InnerText = "/SILENT"
+        $messageEl = $xml.CreateElement("message")
+        $cdata = $xml.CreateCDataSection("EVEMon $Version`n`n$Message")
+        $messageEl.AppendChild($cdata) | Out-Null
+
+        $newRelease.AppendChild($dateEl) | Out-Null
+        $newRelease.AppendChild($versionEl) | Out-Null
+        $newRelease.AppendChild($urlEl) | Out-Null
+        $newRelease.AppendChild($patchUrlEl) | Out-Null
+        $newRelease.AppendChild($patchArgsEl) | Out-Null
+        $newRelease.AppendChild($messageEl) | Out-Null
+
+        # Prepend new release as first child
+        if ($releases.HasChildNodes) {
+            $releases.InsertBefore($newRelease, $releases.FirstChild) | Out-Null
+        } else {
+            $releases.AppendChild($newRelease) | Out-Null
+        }
+
+        # Trim to keep at most $maxReleases
+        $releaseNodes = $releases.SelectNodes("release")
+        while ($releaseNodes.Count -gt $maxReleases) {
+            $releases.RemoveChild($releaseNodes[$releaseNodes.Count - 1]) | Out-Null
+            $releaseNodes = $releases.SelectNodes("release")
+        }
+
+        if (-not $DryRun) {
+            $xml.Save($file)
+        }
+    } else {
+        # No existing file — create from scratch
+        $content = @"
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   $($Channel.ToUpper()) Update Channel
@@ -269,8 +313,9 @@ $Message]]></message>
 </evemon>
 "@
 
-    if (-not $DryRun) {
-        Set-Content $file $content
+        if (-not $DryRun) {
+            Set-Content $file $content
+        }
     }
     Write-Success "$fileName updated"
 }
