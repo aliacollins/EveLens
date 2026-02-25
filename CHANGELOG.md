@@ -1,161 +1,141 @@
-# Changelog
-
-All notable changes to EVEMon will be documented in this file.
+# Changelog — EVEMon NexT
 
 ---
 
-# EVEMon 5.2.0 — Project Phoenix
+## IMPORTANT: Legacy EVEMon Is Retired
 
-> A ground-up re-architecture of EVEMon's internals — same app you know, built to last another decade.
+**EVEMon NexT v1.0.0 replaces all previous EVEMon versions (5.x and earlier).**
 
-Project Phoenix disassembles the monolithic EVEMon.Common into six purpose-built assemblies,
-replaces all static event wiring with a centralized EventAggregator, and introduces
-dependency injection throughout. Your settings, plans, and characters carry forward unchanged.
+The legacy WinForms application has been fully retired. This repository now contains only EVEMon NexT — a cross-platform Avalonia application targeting .NET 8 on **Windows, Linux, and macOS**.
 
-Full details and downloads at **https://evemon.dev**
+If you are running EVEMon 5.1.x or earlier:
+- Your settings and skill plans carry forward automatically
+- ESI tokens will need re-authentication (OAuth tokens are not transferable)
+- The WinForms UI is gone — EVEMon NexT uses Avalonia
 
----
-
-## What's New for Users
-
-### Features
-- **ESI Scope Selector** — choose exactly what data EVEMon can access. Three presets (Full Monitoring, Standard, Skill Planner Only) or build your own from 15 feature groups. Your choice is saved and respected on every login.
-- **Bulk Re-authentication** — after restoring a settings backup, re-auth all your characters in one window instead of clicking through each one. Also available from File → Re-authenticate All Characters.
-- **Settings Backup Improvements** — import and export in both JSON and XML formats. Fork migration detection warns you and safely clears stale tokens when restoring backups from other EVEMon forks.
-- **ESI Key Status Indicators** — character list now shows connection state: No API Key, Connecting, Re-auth Required, or Error.
-- **One-Click Crash Reporting** — redesigned crash dialog with a Submit Report button. Reports are PII-sanitized through an 8-phase pipeline before submission.
-- **Simplified Blank Characters** — single-click creation instead of the old save-to-XML workflow.
-
-### Privacy & Security
-- ESI scope presets give you granular control over what CCP data EVEMon requests — you no longer have to authorize everything.
-- ESI refresh tokens are automatically cleared when restoring settings from backup, preventing stale token reuse.
-- Fork migration detection clears ESI keys from imported settings that belong to a different EVEMon fork.
-- Crash reports strip file paths, character names, token fragments, and system identifiers before transmission.
-
-### Performance & Stability
-- **30+ character support** — SmartQueryScheduler staggers API calls with 4-tier prioritization, preventing the request avalanche that crashed previous versions.
-- **60+ character tick cascade fixed** — 89% reduction in per-tick handler invocations with re-entrancy guards.
-- **Settings save coalescing** — SmartSettingsManager batches rapid save requests into single writes, eliminating the file-lock contention that caused intermittent save failures.
-- **Zero sync-over-async** — every `.Result`, `.Wait()`, and `.GetAwaiter().GetResult()` removed (except Program.cs bootstrap). No more UI thread deadlocks from OAuth callback collisions.
-- **Async safety** — all 57 async void event handlers (WinForms requirement) wrapped in try/catch. Unhandled exceptions in background handlers no longer crash the app silently.
-- **Font rendering** — ClearType for overview, Segoe UI for footer and assets (fix #15).
-- **Asset list crash** — virtual-mode ListView no longer crashes with 500+ items (fix #14).
+**There will be no further updates to the legacy 5.x line.**
 
 ---
 
-## What Changed Under the Hood
+## [1.0.0-alpha.1] - 2026-02-25
 
-### Architecture
+### Cross-Platform — Windows, Linux, macOS
 
-EVEMon.Common was a 200+ file monolith where everything depended on everything.
-Project Phoenix splits it into six assemblies with enforced one-way dependencies:
+EVEMon is no longer Windows-only. NexT runs natively on all three desktop platforms from a single codebase, powered by Avalonia UI and SkiaSharp rendering.
 
-```
-EVEMon (WinForms UI)
-  └→ EVEMon.Common (services, settings, static facades)
-       ├→ EVEMon.Core (interfaces only — zero dependencies)
-       ├→ EVEMon.Data (enums, constants, game data)
-       ├→ EVEMon.Serialization (ESI / Eve / Settings DTOs)
-       ├→ EVEMon.Models (domain models)
-       └→ EVEMon.Infrastructure (EventAggregator, services)
-```
+| Platform | Download |
+|----------|----------|
+| **Windows x64** | Installer (.exe) or portable ZIP |
+| **Linux x64** | Portable ZIP — run with `dotnet "EVEMon NexT.dll"` |
+| **macOS Apple Silicon** | Portable ZIP — run with `dotnet "EVEMon NexT.dll"` |
 
-**Key changes:**
-- **EventAggregator replaces static events** — 67 static events on EveMonClient removed. All event delivery now goes through `AppServices.EventAggregator` with `SubscribeOnUI<T>()` for thread-safe UI updates. Subscriptions return `IDisposable` for deterministic cleanup.
-- **AppServices facade** — static DI container that lazy-initializes 20+ services. Every service is overridable via `Set*()` methods for testing. `Reset()` provides test isolation.
-- **Per-character event scoping** — `SubscribeOnUIForCharacter<T>()` filters events before UI marshaling, eliminating 43+ manual character-match checks scattered across forms.
-- **ICharacterServices abstraction** — characters no longer reach into EveMonClient directly. Production code uses `EveMonClientCharacterServices`; tests use `NullCharacterServices`.
-- **Settings split** — Settings.cs went from 1,457 lines to 332, with extraction into SettingsLoader, SettingsMigration, and SettingsIO partials. JSON is now the source of truth.
-- **CharacterQueryOrchestrator** — replaces CharacterDataQuerying with 4-tier prioritized query scheduling and rate-limit awareness.
-
-### By the Numbers
-
-| Metric | Before (5.1.x) | After (5.2.0) | Change |
-|--------|-----------------|---------------|--------|
-| Tests | 305 | 970 | +665 (+218%) |
-| Test files | ~15 | 51 | +36 |
-| Assemblies | 2 | 7 | +5 |
-| EveMonClient references | 414 | 65 | -349 (-84%) |
-| EveMonClient.Events.cs | 1,639 lines | 108 lines | -93% |
-| Static events | 74 | 6 | -92% |
-| Service interfaces | ~5 | 22 | +17 |
-| Async void try/catch | ~0% | 100% | Complete |
-| UI static event subs | 190 | 0 | All via EventAggregator |
-| Net code change | — | — | +35,651 / -11,716 lines across 879 files |
-
-### Architectural Laws
-
-These 14 rules are enforced by tests and prevent regression to the old monolith.
-Every PR must satisfy all of them.
-
-1. **No Static State** — use AppServices + interfaces, never static mutable fields.
-2. **No God Objects** — no class over 500 lines or referenced by more than 30 files.
-3. **Dependencies Flow Down** — Core→Data→Serialization→Models→Infrastructure→Common→EVEMon. Never reverse.
-4. **New Services Must Be Testable** — constructor injection, interfaces, test doubles.
-5. **Events Through EventAggregator Only** — no static events, no `EveMonClient.X += handler`.
-6. **Lazy by Default** — collections and expensive objects use `Lazy<T>`, constructors must be fast.
-7. **No Sync-Over-Async** — no `.Result`, `.Wait()`, `.GetAwaiter().GetResult()` except bootstrap.
-8. **Right File, Right Assembly** — interfaces in Core, enums in Data, DTOs in Serialization, services in Common.
-9. **EveMonClient Is Frozen** — never add to it. New services go through AppServices.
-10. **All Async Void Must Have Try/Catch** — WinForms event handlers must wrap entire body.
-11. **Event Subscriptions Must Be Disposed** — store the `IDisposable`, dispose on form close.
-12. **Tests Prove Behavior** — no feature without a test, no bug fix without a regression test.
-13. **Serialization DTOs Are the Data Contract** — changes require round-trip tests.
-14. **No Direct EveMonClient Access from UI** — use `AppServices.*` properties.
+All platforms get the same features, the same UI, and the same updates. System tray, notifications, clipboard, and dialogs all use native platform APIs.
 
 ---
 
-## CI/CD & Developer Experience
-- **GitHub Actions pipeline** — automated build + full test suite on every push and PR to main/alpha/beta. Fails if test count drops below 900.
-- **PR template** — every pull request includes an Architectural Laws checklist.
-- **Promotion system** — `promote.ps1` handles version bumps, changelog updates, and branch merges for alpha/beta/stable. Transactional with rollback on failure.
-- **CLAUDE.md** — comprehensive architectural guide with end-to-end feature addition walkthrough, replacing the outdated DEVELOPER.md.
-- **Assembly READMEs** — each of the 6 assemblies has a README explaining purpose, dependencies, and key files.
+### 6 EVE-Faction Dark Themes
+
+EVEMon NexT ships with six color palettes inspired by New Eden's empires. Every pixel — buttons, tabs, scrollbars, data grids, cards, expanders — respects the active theme.
+
+- **Dark Space** (default) — EVE's iconic navy + gold
+- **Caldari Blue** — Cool steel blues
+- **Amarr Gold** — Warm golds and ambers
+- **Minmatar Rust** — Earthy oranges and rust
+- **Gallente Green** — Teals and greens
+- **Midnight** — Deep purples, near-black
+
+Settings -> Appearance -> Theme. Takes effect on restart.
 
 ---
 
-## What Was Removed
-- **67 static events** and **68 dead OnXxx() bridge methods** from EveMonClient.Events.cs (-1,531 lines)
-- **CharacterDataQuerying / CorporationDataQuerying / CentralQueryScheduler** — replaced by CharacterQueryOrchestrator
-- **FeatureFlags.cs** — all flags were permanently true, scaffolding removed
-- **Certificate Browser tab** — hidden (CCP removed certificates from EVE Online)
-- **Legacy test projects** — Tests.EVEMon.Common, Tests.EVEMon, Tests.Helpers replaced by unified EVEMon.Tests
-- **Dead tooling** — MSBuildVersioning DLL, ReSharper code style files, Balsamiq design mockups
-- **DEVELOPER.md** — superseded by CLAUDE.md
-- **16 obsolete methods** across the codebase
+### ESI Scope Selector — You Control Your Data
+
+The legacy EVEMon requested every possible API permission with no way to limit it. NexT gives you granular control over what CCP data EVEMon can access.
+
+**Three presets:**
+- **Full Monitoring** — all features enabled
+- **Standard Monitoring** — skills, wallet, assets, market, industry, contracts (excludes mail, notifications, planetary, kills, corp data)
+- **Skill Planner Only** — minimal: skills, clones, implants
+
+**Custom mode:** Open the Scope Editor to toggle 16 individual feature categories. Skills & Training Queue is mandatory; everything else is optional.
+
+**Dynamic scope management:** When you re-authenticate with fewer scopes than before, NexT automatically:
+- Detects which scopes were revoked
+- Clears in-memory data for those endpoints
+- Deletes disk cache files for revoked data
+- Shows "ESI scope not authorized" in affected tabs instead of stale data
 
 ---
 
-## Bug Fixes (from 5.1.3-alpha)
-- Fix #14: Virtual-mode ListView crash when opening assets with 500+ items
-- Fix #15: Font rendering quality — ClearType for overview, Segoe UI for footer/assets
-- Fix #17: 60+ character tick cascade — 89% handler reduction, re-entrancy guard
-- Fix promote.ps1 detached HEAD bug during merge to alpha/beta
-- Fix settings migration for imported/blank characters
-- Guard UpdateManager against null TopicAddress/PatchAddress
-- Fix promotion pipeline: transactional phases, CRLF-safe regexes, README validation
+### Skill Constellation — Interactive Skill Graph
+
+A GPU-accelerated visualization that renders EVE's entire ~400-skill tree as a star constellation.
+
+- **Skills as stars** — positioned by skill group, connected by prerequisite lines
+- **Nebula clusters** — color-coded skill groups form visual regions
+- **Zoom and pan** — mouse wheel to zoom, click-drag to navigate
+- **Search** — type to highlight matching skills with dropdown
+- **Click to inspect** — detail panel shows level pips, training status, prerequisites with completion checkmarks, rank, group
+- **Group chips** — colored chips at bottom show group statistics, click to highlight entire group
+- **Training animations** — trained skills glow, actively training skills pulse
+- **Toggle labels** — show/hide skill names to reduce clutter
+
+This turns skill planning from reading spreadsheets into exploring a map.
 
 ---
 
-## What's Next
-- Migrate remaining 65 `EveMonClient.*` references through AppServices
-- Migrate ~637 `Settings.*` static references (mostly `Settings.UI.*` in the UI layer)
-- Move forms from `AppServices.*` static access to constructor injection
-- Complete Certificates and Masteries data generators in XmlGenerator
-- Migrate XmlGenerator's `WebRequest.CreateHttp` to `HttpClient`
-- SDE update automation script (download → extract → convert → generate in one step)
+### More New Features
+
+- **Native OS Notifications** — toast notifications through the system notification center (Windows WinRT, Linux libnotify, macOS osascript). Get skill completion alerts even when EVEMon is minimized.
+- **Activity/Notification Center** — bell icon in status bar with scrollable event log. ESI fetches, skill completions, errors — 200-entry history with unread badge.
+- **Character Grouping** — named groups ("PVP Alts", "Industry Toons") to organize the Overview card grid.
+- **Balance Change Indicator** — real-time ISK delta with green/red directional arrows, compact T/B/M/K notation, 15-second auto-clear.
+- **Character Data Cache** — every ESI response cached to local JSON. Near-instant tab loading, limited offline viewing, atomic writes, scope-aware invalidation.
+- **Plan Editor** — multi-tab interface (Plan + Skills + Ships + Items + Blueprints browser), entry detail panel with prerequisites, inline duplicate name prevention.
+- **Per-Character Endpoint Manager** — gear button per character tab to toggle individual ESI endpoints on/off. Disable what you don't need.
+- **Settings Redesign** — single scrollable page with sidebar navigation replacing scattered dialogs.
+- **About Window** — 3-column layout with full 57+ contributor history from EVEMon's 20-year life.
+- **Diagnostic Stream** — TCP JSON-lines on port 5555 for real-time developer monitoring.
 
 ---
 
-## Links
+### Architecture — Project Phoenix
 
-- **Website:** https://evemon.dev
+Project Phoenix (February 13-22, 2026) rebuilt EVEMon's internals in 10 days:
+
+- **6-assembly split** — monolithic EVEMon.Common (875 files) decomposed into Core, Data, Serialization, Models, Infrastructure, Common with enforced dependency boundaries
+- **EventAggregator** — replaced 74 static events with typed pub/sub. No more memory leaks from unsubscribed handlers.
+- **59 ViewModels** — built from zero. Business logic in shared ViewModels, not UI controls.
+- **ESI Scheduler rewrite** — priority-queue background scheduler. Per-character rate limiting, phased cold start. Character #100 no longer waits 500 seconds.
+- **1,511 tests** — up from 23 in the original. 14 architectural laws enforced by automated tests.
+- **SkiaSharp imaging** — all image loading cross-platform via SkiaSharp, replacing deprecated System.Drawing.
+- **File-based instance lock** — cross-platform single-instance detection replacing Windows-only named Semaphore.
+
+---
+
+### What Was Removed
+
+- **WinForms UI** — 6 projects, ~136,000 lines deleted (EVEMon, PieChart, Watchdog, LogitechG15, WindowsApi, Sales)
+- **Outlook Calendar** — Windows-only COM Interop removed. Google Calendar remains.
+- **Certificate Browser** — CCP removed certificates from EVE Online
+- **67 static events** and 68 dead bridge methods from EveMonClient
+
+---
+
+### Links
+
 - **GitHub:** https://github.com/aliacollins/evemon
-- **Forums:** https://forums.eveonline.com/t/evemon-lives-new-maintainer-v5-1-0-released/504429
+- **Issues:** https://github.com/aliacollins/evemon/issues
 
 ---
 
-## Previous Releases
+## Previous Releases (Legacy — Retired)
 
-## [5.1.2] - 2026-02-02
+### [5.1.2] - 2026-02-02
 - First stable release with .NET 8 migration, auto-update, performance improvements
+
+### [5.1.0] - 2026-01-15
+- New maintainer release
+
+### [5.0.1] - 2026-01-04
+- Resurrection from 4-year dormancy, .NET 8 migration
