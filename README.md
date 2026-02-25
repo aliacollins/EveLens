@@ -18,7 +18,7 @@ https://github.com/mgoeppner/evemon
 
 ---
 
-## Current Version: 5.1.3-alpha.5
+## Current Version: 5.1.3-alpha.6
 
 ---
 
