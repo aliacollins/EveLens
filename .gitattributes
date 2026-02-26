@@ -36,6 +36,11 @@
 #*.wwaproj   merge=binary
 
 ###############################################################################
+# Shell scripts must always use LF (Unix) line endings
+###############################################################################
+*.sh text eol=lf
+
+###############################################################################
 # behavior for image files
 #
 # image files are treated as binary by default.
