@@ -108,10 +108,7 @@
                         <Border DockPanel.Dock="Top" Padding="8,6"
                                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                <ToggleButton x:Name="SummaryTab" Content="Summary" IsChecked="True"
-                                              FontSize="10" Padding="8,3" CornerRadius="10"
-                                              Click="OnSidebarTabClick" />
-                                <ToggleButton x:Name="OptimizeTab" Content="Optimize"
+                                <ToggleButton x:Name="PlanTab" Content="Plan" IsChecked="True"
                                               FontSize="10" Padding="8,3" CornerRadius="10"
                                               Click="OnSidebarTabClick" />
                                 <ToggleButton x:Name="AddTab" Content="Add"
@@ -129,16 +126,11 @@
                     <!-- Collapsed sidebar (icon strip) -->
                     <StackPanel x:Name="SidebarCollapsed" IsVisible="False"
                                 Spacing="2" Margin="2,8,2,0">
-                        <Button x:Name="CollapsedSummaryBtn" Content="Σ" FontSize="14"
+                        <Button x:Name="CollapsedPlanBtn" Content="Σ" FontSize="14"
                                 Width="32" Height="32" Padding="0"
                                 CornerRadius="6" HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center"
-                                ToolTip.Tip="Summary" Click="OnCollapsedSidebarClick" Tag="Summary" />
-                        <Button x:Name="CollapsedOptimizeBtn" Content="⚡" FontSize="14"
-                                Width="32" Height="32" Padding="0"
-                                CornerRadius="6" HorizontalContentAlignment="Center"
-                                VerticalContentAlignment="Center"
-                                ToolTip.Tip="Optimize" Click="OnCollapsedSidebarClick" Tag="Optimize" />
+                                ToolTip.Tip="Plan" Click="OnCollapsedSidebarClick" Tag="Plan" />
                         <Button x:Name="CollapsedAddBtn" Content="+" FontSize="14"
                                 Width="32" Height="32" Padding="0"
                                 CornerRadius="6" HorizontalContentAlignment="Center"

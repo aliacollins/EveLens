@@ -5,6 +5,8 @@
 
 using System.Collections.Generic;
 using Avalonia.Media;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Models;
 
 namespace EveLens.Avalonia.ViewModels
 {
@@ -71,6 +73,21 @@ namespace EveLens.Avalonia.ViewModels
         /// Attribute deltas for computed remaps (only attributes that change).
         /// </summary>
         public List<AttributeDelta> Deltas { get; init; } = new();
+
+        /// <summary>
+        /// The dominant primary attribute of skills below this remap point.
+        /// </summary>
+        public EveAttribute DominantPrimary { get; init; }
+
+        /// <summary>
+        /// The dominant secondary attribute of skills below this remap point.
+        /// </summary>
+        public EveAttribute DominantSecondary { get; init; }
+
+        /// <summary>
+        /// The plan entry that holds the RemappingPoint (for applying changes).
+        /// </summary>
+        public PlanEntry? SourceEntry { get; init; }
 
         /// <summary>
         /// The gold accent brush for the remap indicator.

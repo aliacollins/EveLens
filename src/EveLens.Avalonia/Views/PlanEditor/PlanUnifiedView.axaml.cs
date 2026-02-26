@@ -37,9 +37,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private List<PlanEntryDisplayItem>? _currentEntryItems;
         private HashSet<string> _previousEntryKeys = new();
         private HashSet<string> _recentlyMovedKeys = new();
-        private string _activeSidebarTab = "Summary";
+        private string _activeSidebarTab = "Plan";
         private bool _isSidebarExpanded = true;
-        private bool _showFineTune;
+        private bool _showAdvanced;
 
 
 
@@ -274,14 +274,20 @@ namespace EveLens.Avalonia.Views.PlanEditor
                             Deltas = deltas,
                             AvailabilityText = availText,
                             AvailabilityBrush = availBrush,
+                            DominantPrimary = dominantPrimary,
+                            DominantSecondary = dominantSecondary,
+                            SourceEntry = remapEntry,
                         });
                     }
                     else
                     {
                         displayItems.Add(new PlanRemapDivider
                         {
-                            AttributeSummary = "Not optimized \u2014 click Optimize",
+                            AttributeSummary = "Not optimized",
                             IsComputed = false,
+                            DominantPrimary = dominantPrimary,
+                            DominantSecondary = dominantSecondary,
+                            SourceEntry = remapEntry,
                         });
                     }
                 }
@@ -475,12 +481,15 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 BorderThickness = new Thickness(0, 1),
             };
 
+            // Context menu for all remap dividers (computed or not)
+            border.ContextMenu = BuildRemapContextMenu(divider);
+
             if (!divider.IsComputed)
             {
-                // Uncomputed: compact one-liner
+                // Uncomputed: compact one-liner with hint
                 border.Child = new TextBlock
                 {
-                    Text = "\u25C7 Remap point \u2014 click Optimize to calculate",
+                    Text = "\u25C7 Remap point \u2014 right-click to configure",
                     FontSize = 9,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = new SolidColorBrush(Color.Parse("#99E6A817")),
@@ -583,6 +592,119 @@ namespace EveLens.Avalonia.Views.PlanEditor
             ToolTip.SetTip(border, tooltipText);
 
             return border;
+        }
+
+        private void ApplyMatchRemap(PlanRemapDivider divider)
+        {
+            if (divider.SourceEntry?.Remapping == null || _viewModel?.Plan == null) return;
+
+            var planEntry = _viewModel.Plan.GetEntry(divider.SourceEntry.Skill, divider.SourceEntry.Level);
+            if (planEntry?.Remapping == null) return;
+
+            // Standard EVE remap: primary → 27 (base 17 + 10), secondary → 21 (base 17 + 4), rest → 17
+            int baseVal = 17;
+            int priVal = 27;
+            int secVal = 21;
+
+            var vals = new Dictionary<EveAttribute, int>
+            {
+                [EveAttribute.Intelligence] = baseVal,
+                [EveAttribute.Perception] = baseVal,
+                [EveAttribute.Charisma] = baseVal,
+                [EveAttribute.Willpower] = baseVal,
+                [EveAttribute.Memory] = baseVal,
+            };
+            vals[divider.DominantPrimary] = priVal;
+            // Only set secondary if it's different from primary
+            if (divider.DominantSecondary != divider.DominantPrimary)
+                vals[divider.DominantSecondary] = secVal;
+
+            planEntry.Remapping.SetAttributes(
+                vals[EveAttribute.Intelligence],
+                vals[EveAttribute.Perception],
+                vals[EveAttribute.Charisma],
+                vals[EveAttribute.Willpower],
+                vals[EveAttribute.Memory]);
+
+            _viewModel.UpdateDisplayPlan();
+            Refresh();
+            BuildSidebarContent();
+        }
+
+        private ContextMenu BuildRemapContextMenu(PlanRemapDivider divider)
+        {
+            var menu = new ContextMenu();
+
+            string priName = GetAttributeShortName(divider.DominantPrimary);
+            string secName = GetAttributeShortName(divider.DominantSecondary);
+
+            // Auto-optimize
+            var autoItem = new MenuItem { Header = $"\u26A1 Auto-optimize all remap points" };
+            autoItem.Click += (_, _) => EnsureOptimizationRun();
+            menu.Items.Add(autoItem);
+
+            // Match dominant attributes
+            var matchItem = new MenuItem { Header = $"Match {priName}/{secName} ({priName} 27, {secName} 21)" };
+            matchItem.Click += (_, _) => ApplyMatchRemap(divider);
+            menu.Items.Add(matchItem);
+
+            // Set manually (opens dialog)
+            var manualItem = new MenuItem { Header = "Set attributes manually\u2026" };
+            manualItem.Click += async (_, _) =>
+            {
+                try
+                {
+                    await OpenManualRemapDialog(divider);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error opening remap dialog: {ex}");
+                }
+            };
+            menu.Items.Add(manualItem);
+
+            menu.Items.Add(new Separator());
+
+            // Remove remap point
+            var removeItem = new MenuItem { Header = "Remove remap point" };
+            removeItem.Click += (_, _) =>
+            {
+                if (_viewModel?.Plan == null || divider.SourceEntry == null) return;
+                var planEntry = _viewModel.Plan.GetEntry(divider.SourceEntry.Skill, divider.SourceEntry.Level);
+                if (planEntry != null)
+                {
+                    planEntry.Remapping = null!;
+                    _viewModel.UpdateDisplayPlan();
+                    Refresh();
+                    BuildSidebarContent();
+                }
+            };
+            menu.Items.Add(removeItem);
+
+            return menu;
+        }
+
+        private async System.Threading.Tasks.Task OpenManualRemapDialog(PlanRemapDivider divider)
+        {
+            if (divider.SourceEntry?.Remapping == null || _viewModel?.Plan == null) return;
+
+            var planEntry = _viewModel.Plan.GetEntry(divider.SourceEntry.Skill, divider.SourceEntry.Level);
+            if (planEntry?.Remapping == null) return;
+
+            var rp = planEntry.Remapping;
+            var parentWindow = this.FindAncestorOfType<Window>();
+            if (parentWindow == null) return;
+
+            var dialog = new EveLens.Avalonia.Views.Dialogs.RemapAttributeDialog();
+            dialog.Initialize(rp, divider.DominantPrimary, divider.DominantSecondary);
+            await dialog.ShowDialog(parentWindow);
+
+            if (dialog.WasApplied)
+            {
+                _viewModel.UpdateDisplayPlan();
+                Refresh();
+                BuildSidebarContent();
+            }
         }
 
         private Control BuildSectionHeaderRow(PlanSectionHeader header)
@@ -1119,12 +1241,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (sender is Button btn && btn.Tag is string tab)
             {
                 _activeSidebarTab = tab;
-                SummaryTab.IsChecked = tab == "Summary";
-                OptimizeTab.IsChecked = tab == "Optimize";
+                PlanTab.IsChecked = tab == "Plan";
                 AddTab.IsChecked = tab == "Add";
-
-                if (tab == "Optimize")
-                    EnsureOptimizationRun();
 
                 _isSidebarExpanded = true;
                 UpdateSidebarVisibility();
@@ -1142,24 +1260,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnSidebarTabClick(object? sender, RoutedEventArgs e)
         {
-            if (sender == SummaryTab)
-                _activeSidebarTab = "Summary";
-            else if (sender == OptimizeTab)
-                _activeSidebarTab = "Optimize";
+            if (sender == PlanTab)
+                _activeSidebarTab = "Plan";
             else if (sender == AddTab)
                 _activeSidebarTab = "Add";
 
-            SummaryTab.IsChecked = _activeSidebarTab == "Summary";
-            OptimizeTab.IsChecked = _activeSidebarTab == "Optimize";
+            PlanTab.IsChecked = _activeSidebarTab == "Plan";
             AddTab.IsChecked = _activeSidebarTab == "Add";
-
-            // Auto-run optimization when switching to Optimize tab
-            // Always clear stale results so the plan is re-analyzed with current state
-            if (_activeSidebarTab == "Optimize")
-            {
-                _optimizerVm?.ClearResults();
-                EnsureOptimizationRun();
-            }
 
             BuildSidebarContent();
         }
@@ -1170,11 +1277,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             switch (_activeSidebarTab)
             {
-                case "Summary":
-                    BuildSummaryPanel();
-                    break;
-                case "Optimize":
-                    BuildOptimizePanel();
+                case "Plan":
+                    BuildPlanPanel();
                     break;
                 case "Add":
                     BuildAddPanel();
@@ -1182,20 +1286,11 @@ namespace EveLens.Avalonia.Views.PlanEditor
             }
         }
 
-        #region Summary Tab
+        #region Plan Tab
 
-        private void BuildSummaryPanel()
+        private void BuildPlanPanel()
         {
             if (_viewModel == null) return;
-
-            SidebarContent.Children.Add(new TextBlock
-            {
-                Text = "Training time, skill count, and completion date for your current plan.",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 6),
-            });
 
             var character = _viewModel.Character as Character;
             var stats = _viewModel.PlanStats;
@@ -1248,189 +1343,33 @@ namespace EveLens.Avalonia.Views.PlanEditor
             heroCard.Child = heroStack;
             SidebarContent.Children.Add(heroCard);
 
-            // ── Quick stats row: SP · Books · Injectors ──
-            var statsGrid = new Grid
-            {
-                ColumnDefinitions = ColumnDefinitions.Parse("*,*"),
-                RowDefinitions = RowDefinitions.Parse("Auto,Auto"),
-                Margin = new Thickness(0, 0, 0, 4),
-            };
-
-            // SP needed
-            AddStatCell(statsGrid, 0, 0, FormatSP(stats.TotalSkillPoints), "total SP");
-
-            // Skillbooks
+            // ── Cost line: SP · books · ISK ──
             int booksNeeded = stats.NotKnownSkillsCount;
             long booksCost = stats.NotKnownBooksCost;
-            AddStatCell(statsGrid, 0, 1,
-                booksNeeded > 0 ? $"{booksNeeded} books" : "All owned",
-                booksNeeded > 0 ? FormatISK(booksCost) : "");
 
-            // Unique skills
-            AddStatCell(statsGrid, 1, 0, $"{stats.UniqueSkillsCount} unique", "skills");
-
-            // Injector estimate
-            long characterSP = character?.SkillPoints ?? 0;
-            long missingSP = stats.TotalSkillPoints;
-            if (missingSP > 0 && characterSP > 0)
+            var costParts = new List<string>();
+            costParts.Add(FormatSP(stats.TotalSkillPoints) + " SP");
+            if (booksNeeded > 0)
             {
-                int spPerInjector = GetSpPerInjector(characterSP);
-                int injectorCount = (int)Math.Ceiling((double)missingSP / spPerInjector);
-                AddStatCell(statsGrid, 1, 1, $"~{injectorCount} injectors", "to skip");
-            }
-            else
-            {
-                AddStatCell(statsGrid, 1, 1, "", "");
+                costParts.Add($"{booksNeeded} books");
+                costParts.Add(FormatISK(booksCost));
             }
 
-            SidebarContent.Children.Add(statsGrid);
+            SidebarContent.Children.Add(new TextBlock
+            {
+                Text = string.Join(" \u00B7 ", costParts),
+                FontSize = 11,
+                Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                Margin = new Thickness(0, 0, 0, 8),
+            });
 
-            // ── Attributes ──
+            // ── Optimize section ──
+            BuildOptimizeSection(character);
+
+            // ── Remap line ──
             if (character != null)
             {
-                AddThinDivider("Attributes", "Your current base attributes and implant bonuses.");
-
-                var allAttrs = new[]
-                {
-                    EveAttribute.Intelligence, EveAttribute.Perception,
-                    EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
-                };
-
-                foreach (var attr in allAttrs)
-                {
-                    long effective = character[attr].EffectiveValue;
-                    long implantBonus = character[attr].ImplantBonus;
-                    double fraction = Math.Min(1.0, effective / 27.0);
-                    double barMaxWidth = 150;
-
-                    var row = new Grid
-                    {
-                        ColumnDefinitions = ColumnDefinitions.Parse("32,*,Auto"),
-                        Margin = new Thickness(0, 2),
-                    };
-
-                    // Attribute name
-                    var nameTb = new TextBlock
-                    {
-                        Text = GetAttributeShortName(attr),
-                        FontSize = 11,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = GetAttributeBrush(attr),
-                        VerticalAlignment = VerticalAlignment.Center,
-                    };
-                    Grid.SetColumn(nameTb, 0);
-                    row.Children.Add(nameTb);
-
-                    // Visual bar
-                    var barContainer = new Panel
-                    {
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(0, 0, 6, 0),
-                    };
-                    barContainer.Children.Add(new Border
-                    {
-                        Width = barMaxWidth,
-                        Height = 8,
-                        CornerRadius = new CornerRadius(4),
-                        Background = new SolidColorBrush(Color.Parse("#FF252535")),
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                    });
-                    barContainer.Children.Add(new Border
-                    {
-                        Width = Math.Max(2, fraction * barMaxWidth),
-                        Height = 8,
-                        CornerRadius = new CornerRadius(4),
-                        Background = GetAttributeBrush(attr),
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                    });
-                    Grid.SetColumn(barContainer, 1);
-                    row.Children.Add(barContainer);
-
-                    // Value + implant tag
-                    var valPanel = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 4,
-                        VerticalAlignment = VerticalAlignment.Center,
-                    };
-                    valPanel.Children.Add(new TextBlock
-                    {
-                        Text = effective.ToString(),
-                        FontSize = 11,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = new SolidColorBrush(Color.Parse("#FFF0F0F0")),
-                    });
-                    if (implantBonus > 0)
-                    {
-                        valPanel.Children.Add(new TextBlock
-                        {
-                            Text = $"+{implantBonus} impl",
-                            FontSize = 10,
-                            Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-                        });
-                    }
-                    Grid.SetColumn(valPanel, 2);
-                    row.Children.Add(valPanel);
-
-                    SidebarContent.Children.Add(row);
-                }
-
-                // ── Implants (compact pills) ──
-                AddThinDivider("Implants", "Active attribute implants in your current clone.");
-                var implantFlow = new WrapPanel { Margin = new Thickness(0, 0, 0, 2) };
-                int emptySlots = 0;
-
-                foreach (var attr in allAttrs)
-                {
-                    long bonus = character[attr].ImplantBonus;
-                    if (bonus > 0)
-                    {
-                        implantFlow.Children.Add(new Border
-                        {
-                            Background = new SolidColorBrush(Color.Parse("#20FFFFFF")),
-                            CornerRadius = new CornerRadius(8),
-                            Padding = new Thickness(6, 2),
-                            Margin = new Thickness(0, 0, 4, 3),
-                            Child = new TextBlock
-                            {
-                                Text = $"+{bonus} {GetAttributeShortName(attr)}",
-                                FontSize = 10,
-                                FontWeight = FontWeight.SemiBold,
-                                Foreground = GetAttributeBrush(attr),
-                            }
-                        });
-                    }
-                    else
-                    {
-                        emptySlots++;
-                    }
-                }
-
-                if (emptySlots > 0)
-                {
-                    implantFlow.Children.Add(new TextBlock
-                    {
-                        Text = $"{emptySlots} empty",
-                        FontSize = 10,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(2, 0, 0, 0),
-                    });
-                }
-
-                if (implantFlow.Children.Count == 0)
-                {
-                    implantFlow.Children.Add(new TextBlock
-                    {
-                        Text = "No implants",
-                        FontSize = 10,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-                    });
-                }
-                SidebarContent.Children.Add(implantFlow);
-
-                // ── Remap (one line) ──
-                AddThinDivider("Remap", "Neural remap availability and bonus remaps.");
+                AddThinDivider("Remap");
 
                 int bonusRemaps = character.AvailableReMaps;
                 bool canRemapNow = bonusRemaps > 0
@@ -1481,328 +1420,562 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                 SidebarContent.Children.Add(remapLine);
             }
+        }
 
-            // ── Plan attribute spread ──
-            AddThinDivider("Plan spread", "How your plan's skill points are distributed across attributes.");
-            BuildPlanMixBars();
+        private void BuildOptimizeSection(Character? character)
+        {
+            // ── State: Calculating ──
+            if (_optimizerVm?.IsCalculating == true)
+            {
+                SidebarContent.Children.Add(new TextBlock
+                {
+                    Text = "\u26A1 Analyzing\u2026",
+                    FontSize = 11,
+                    Foreground = GoldBrush,
+                    Margin = new Thickness(0, 4, 0, 0),
+                });
+                return;
+            }
 
-            // ── Savings teaser ──
+            // ── State: Has results ──
             if (_optimizerVm?.HasResults == true)
             {
                 var savings = _optimizerVm.TimeSaved;
-                if (savings > TimeSpan.Zero)
+                bool hasSavings = savings > TimeSpan.Zero;
+
+                var attrs = new[]
                 {
-                    var savingsCard = new Border
+                    EveAttribute.Intelligence, EveAttribute.Perception,
+                    EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+                };
+
+                // Compact result line: ⚡ 47d → 38d  ✓ -9d 4h
+                var resultLine = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 6,
+                    Margin = new Thickness(0, 2, 0, 0),
+                };
+
+                resultLine.Children.Add(new TextBlock
+                {
+                    Text = "\u26A1",
+                    FontSize = 12,
+                    Foreground = GoldBrush,
+                    VerticalAlignment = VerticalAlignment.Center,
+                });
+
+                resultLine.Children.Add(new TextBlock
+                {
+                    Text = FormatTimeCompact(_optimizerVm.CurrentDuration),
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
+                    VerticalAlignment = VerticalAlignment.Center,
+                });
+
+                if (hasSavings || _optimizerVm.IsManuallyEdited)
+                {
+                    resultLine.Children.Add(new TextBlock
                     {
-                        Background = new SolidColorBrush(Color.Parse("#1581C784")),
-                        CornerRadius = new CornerRadius(6),
-                        Padding = new Thickness(10, 6),
-                        Margin = new Thickness(0, 6, 0, 0),
-                        Cursor = new Cursor(StandardCursorType.Hand),
-                    };
-                    var savingsStack = new StackPanel { Spacing = 2 };
-                    savingsStack.Children.Add(new TextBlock
-                    {
-                        Text = $"\u26A1 You could save {FormatTime(savings)}",
-                        FontSize = 12,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
+                        Text = "\u2192",
+                        FontSize = 11,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
+                        VerticalAlignment = VerticalAlignment.Center,
                     });
-                    savingsStack.Children.Add(new TextBlock
+
+                    resultLine.Children.Add(new TextBlock
                     {
-                        Text = "Switch to Optimize tab for details \u203A",
+                        Text = FormatTimeCompact(_optimizerVm.OptimalDuration),
+                        FontSize = 12,
+                        FontWeight = FontWeight.Bold,
+                        Foreground = hasSavings
+                            ? new SolidColorBrush(Color.Parse("#FF81C784"))
+                            : new SolidColorBrush(Color.Parse("#FF909090")),
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+
+                    if (hasSavings)
+                    {
+                        resultLine.Children.Add(new TextBlock
+                        {
+                            Text = $"\u2713 -{FormatTimeCompact(savings)}",
+                            FontSize = 11,
+                            FontWeight = FontWeight.SemiBold,
+                            Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
+                            VerticalAlignment = VerticalAlignment.Center,
+                        });
+                    }
+                }
+                else
+                {
+                    resultLine.Children.Add(new TextBlock
+                    {
+                        Text = "\u2713 Already optimal",
+                        FontSize = 11,
+                        Foreground = GoldBrush,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+                }
+
+                SidebarContent.Children.Add(resultLine);
+
+                if (hasSavings || _optimizerVm.IsManuallyEdited)
+                {
+                    // Current attributes line
+                    var currentParts = new List<string>();
+                    foreach (var attr in attrs)
+                        currentParts.Add($"{GetAttributeShortName(attr)} {_optimizerVm.GetCurrent(attr)}");
+
+                    SidebarContent.Children.Add(new TextBlock
+                    {
+                        Text = "Current: " + string.Join("  ", currentParts),
                         FontSize = 10,
                         Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                        Margin = new Thickness(0, 6, 0, 0),
                     });
-                    savingsCard.Child = savingsStack;
-                    savingsCard.PointerPressed += (_, _) =>
+
+                    // Guidance text
+                    SidebarContent.Children.Add(new TextBlock
                     {
-                        _activeSidebarTab = "Optimize";
-                        SummaryTab.IsChecked = false;
-                        OptimizeTab.IsChecked = true;
-                        AddTab.IsChecked = false;
-                        EnsureOptimizationRun();
-                        BuildSidebarContent();
-                    };
-                    SidebarContent.Children.Add(savingsCard);
+                        Text = hasSavings
+                            ? $"To save {FormatTimeCompact(savings)}, remap to:"
+                            : "Change attributes to:",
+                        FontSize = 10,
+                        Foreground = hasSavings
+                            ? new SolidColorBrush(Color.Parse("#FF81C784"))
+                            : new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                        Margin = new Thickness(0, 4, 0, 2),
+                    });
+
+                    // Target attributes — show each with current→optimal for changed ones
+                    foreach (var attr in attrs)
+                    {
+                        int current = _optimizerVm.GetCurrent(attr);
+                        int optimal = _optimizerVm.GetOptimal(attr);
+                        int delta = optimal - current;
+                        bool changed = delta != 0;
+
+                        var row = new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 4,
+                            Margin = new Thickness(4, 1, 0, 0),
+                        };
+
+                        row.Children.Add(new TextBlock
+                        {
+                            Text = GetAttributeShortName(attr),
+                            FontSize = 11,
+                            FontWeight = FontWeight.SemiBold,
+                            Foreground = GetAttributeBrush(attr),
+                            Width = 30,
+                        });
+
+                        if (changed)
+                        {
+                            row.Children.Add(new TextBlock
+                            {
+                                Text = current.ToString(),
+                                FontSize = 11,
+                                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                                VerticalAlignment = VerticalAlignment.Center,
+                            });
+                            row.Children.Add(new TextBlock
+                            {
+                                Text = "\u2192",
+                                FontSize = 10,
+                                Foreground = new SolidColorBrush(Color.Parse("#FF505050")),
+                                VerticalAlignment = VerticalAlignment.Center,
+                            });
+                            row.Children.Add(new TextBlock
+                            {
+                                Text = optimal.ToString(),
+                                FontSize = 11,
+                                FontWeight = FontWeight.Bold,
+                                Foreground = new SolidColorBrush(Color.Parse("#FFF0F0F0")),
+                                VerticalAlignment = VerticalAlignment.Center,
+                            });
+
+                            string sign = delta > 0 ? "+" : "";
+                            row.Children.Add(new TextBlock
+                            {
+                                Text = $"({sign}{delta})",
+                                FontSize = 10,
+                                Foreground = delta > 0
+                                    ? new SolidColorBrush(Color.Parse("#FF81C784"))
+                                    : new SolidColorBrush(Color.Parse("#FFCF6679")),
+                                VerticalAlignment = VerticalAlignment.Center,
+                            });
+                        }
+                        else
+                        {
+                            row.Children.Add(new TextBlock
+                            {
+                                Text = optimal.ToString(),
+                                FontSize = 11,
+                                Foreground = new SolidColorBrush(Color.Parse("#FF505050")),
+                                VerticalAlignment = VerticalAlignment.Center,
+                            });
+                        }
+
+                        SidebarContent.Children.Add(row);
+                    }
+
+                    // Top improved skills (up to 3)
+                    if (_optimizerVm.SkillImpacts.Count > 0)
+                    {
+                        var topSkills = _optimizerVm.SkillImpacts
+                            .Where(s => s.TimeSaved > TimeSpan.Zero)
+                            .Take(3)
+                            .ToList();
+
+                        if (topSkills.Count > 0)
+                        {
+                            SidebarContent.Children.Add(new TextBlock
+                            {
+                                Text = "Top improved:",
+                                FontSize = 10,
+                                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                                Margin = new Thickness(0, 4, 0, 2),
+                            });
+
+                            foreach (var skill in topSkills)
+                            {
+                                SidebarContent.Children.Add(new TextBlock
+                                {
+                                    Text = $"\u00B7 {skill.SkillName} {RomanNumeral(skill.Level)} \u2014 {FormatTimeCompact(skill.TimeSaved)} faster",
+                                    FontSize = 10,
+                                    Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                                    TextTrimming = TextTrimming.CharacterEllipsis,
+                                    Margin = new Thickness(4, 1, 0, 0),
+                                });
+                            }
+                        }
+                    }
                 }
+
+                // Re-analyze button
+                var rerunBtn = new Button
+                {
+                    Content = "\u21BB Re-analyze",
+                    FontSize = 10,
+                    Padding = new Thickness(8, 3),
+                    CornerRadius = new CornerRadius(12),
+                    Margin = new Thickness(0, 6, 0, 0),
+                };
+                rerunBtn.Click += OnRerunOptimization;
+                SidebarContent.Children.Add(rerunBtn);
+
+                // ── Advanced: manual attribute adjustment ──
+                var advToggle = new Button
+                {
+                    Content = _showAdvanced
+                        ? "Hide manual adjustment \u25B4"
+                        : "Adjust manually \u25BE",
+                    FontSize = 10,
+                    Padding = new Thickness(8, 3),
+                    CornerRadius = new CornerRadius(12),
+                    Background = Brushes.Transparent,
+                    Foreground = new SolidColorBrush(Color.Parse("#FF808080")),
+                    Margin = new Thickness(0, 4, 0, 0),
+                };
+                advToggle.Click += (_, _) =>
+                {
+                    _showAdvanced = !_showAdvanced;
+                    BuildSidebarContent();
+                };
+                SidebarContent.Children.Add(advToggle);
+
+                if (_showAdvanced)
+                    BuildAdvancedAttributeSection();
+
+                return;
+            }
+
+            // ── State: Error ──
+            if (_optimizerVm != null && !string.IsNullOrEmpty(_optimizerVm.ErrorMessage))
+            {
+                SidebarContent.Children.Add(new TextBlock
+                {
+                    Text = _optimizerVm.ErrorMessage,
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 4, 0, 4),
+                });
+
+                var retryBtn = new Button
+                {
+                    Content = "Try Again",
+                    FontSize = 10,
+                    Padding = new Thickness(8, 3),
+                    CornerRadius = new CornerRadius(12),
+                };
+                retryBtn.Click += OnRerunOptimization;
+                SidebarContent.Children.Add(retryBtn);
+                return;
+            }
+
+            // ── State: Not yet run ──
+            var optimizeBtn = new Button
+            {
+                Content = "\u26A1 Optimize Plan",
+                FontSize = 11,
+                Padding = new Thickness(10, 5),
+                CornerRadius = new CornerRadius(12),
+                Margin = new Thickness(0, 2, 0, 0),
+            };
+            optimizeBtn.Click += (_, _) => EnsureOptimizationRun();
+            SidebarContent.Children.Add(optimizeBtn);
+        }
+
+        private void BuildAdvancedAttributeSection()
+        {
+            if (_optimizerVm == null) return;
+
+            var attrs = new[]
+            {
+                EveAttribute.Intelligence, EveAttribute.Perception,
+                EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+            };
+
+            AddThinDivider("Manual adjustment");
+
+            // Live training time display
+            var durationLine = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Margin = new Thickness(0, 0, 0, 4),
+            };
+
+            if (_optimizerVm.IsManuallyEdited)
+            {
+                var manualTime = _optimizerVm.ManualDuration;
+                var currentTime = _optimizerVm.CurrentDuration;
+                var diff = currentTime - manualTime;
+
+                durationLine.Children.Add(new TextBlock
+                {
+                    Text = FormatTimeCompact(manualTime),
+                    FontSize = 13,
+                    FontWeight = FontWeight.Bold,
+                    Foreground = diff > TimeSpan.Zero
+                        ? new SolidColorBrush(Color.Parse("#FF81C784"))
+                        : diff < TimeSpan.Zero
+                            ? new SolidColorBrush(Color.Parse("#FFCF6679"))
+                            : new SolidColorBrush(Color.Parse("#FFF0F0F0")),
+                });
+
+                if (diff > TimeSpan.Zero)
+                {
+                    durationLine.Children.Add(new TextBlock
+                    {
+                        Text = $"(-{FormatTimeCompact(diff)})",
+                        FontSize = 11,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
+                        VerticalAlignment = VerticalAlignment.Bottom,
+                        Margin = new Thickness(0, 0, 0, 1),
+                    });
+                }
+                else if (diff < TimeSpan.Zero)
+                {
+                    durationLine.Children.Add(new TextBlock
+                    {
+                        Text = $"(+{FormatTimeCompact(diff.Negate())})",
+                        FontSize = 11,
+                        Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
+                        VerticalAlignment = VerticalAlignment.Bottom,
+                        Margin = new Thickness(0, 0, 0, 1),
+                    });
+                }
+
+                // vs current label
+                durationLine.Children.Add(new TextBlock
+                {
+                    Text = $"vs {FormatTimeCompact(currentTime)}",
+                    FontSize = 10,
+                    Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Margin = new Thickness(0, 0, 0, 1),
+                });
             }
             else
             {
-                // Optimizer hasn't run yet — show hint
-                var hintTb = new TextBlock
+                durationLine.Children.Add(new TextBlock
                 {
-                    Text = "\u26A1 Click Optimize to see potential savings",
+                    Text = "Drag to see time impact",
                     FontSize = 10,
                     Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-                    Margin = new Thickness(0, 6, 0, 0),
-                };
-                SidebarContent.Children.Add(hintTb);
+                });
             }
 
-            // ── Clone Training Times ──
-            BuildCloneComparisonSection();
+            SidebarContent.Children.Add(durationLine);
 
-            // ── Owned Skillbooks ──
-            BuildOwnedSkillbooksSection();
-        }
-
-        private void BuildCloneComparisonSection()
-        {
-            try
+            // Unassigned points warning
+            int unassigned = _optimizerVm.UnassignedPoints;
+            if (unassigned > 0)
             {
-                var character = _viewModel?.Character as Character;
-                var plan = _viewModel?.DisplayPlan;
-                if (character == null || plan == null) return;
-
-                AddThinDivider("Clone Training Times", "Compare plan time across your jump clones.");
-
-                // Collect all clone times
-                var cloneEntries = new List<(string Name, string Bonus, TimeSpan Time, bool IsActive)>();
-                bool isFirst = true;
-
-                foreach (var implantSet in character.ImplantSets)
+                SidebarContent.Children.Add(new TextBlock
                 {
-                    try
-                    {
-                        var scratchpad = character.After(implantSet);
-                        var time = plan.GetTotalTime(scratchpad, true);
-                        string bonusText = GetImplantBonusText(implantSet);
-                        cloneEntries.Add((implantSet.Name, bonusText, time, isFirst));
-                        isFirst = false;
-                    }
-                    catch { /* Skip sets that fail computation */ }
-                }
+                    Text = $"\u26A0 {unassigned} point{(unassigned != 1 ? "s" : "")} unassigned",
+                    FontSize = 10,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
+                    Margin = new Thickness(0, 0, 0, 4),
+                });
+            }
 
-                // No Implants baseline
-                try
+            // Attribute rows: [−] NAME val [bar] [+]
+            foreach (var attr in attrs)
+            {
+                int remappable = _optimizerVm.GetRemappable(attr);
+                int basePoints = 17; // EveConstants.CharacterBaseAttributePoints
+                int totalBase = basePoints + remappable;
+                int implantBonus = _optimizerVm.GetImplantBonus(attr);
+                int effective = totalBase + implantBonus;
+                int optimalVal = _optimizerVm.GetOptimal(attr);
+                bool isOptimal = totalBase == optimalVal;
+
+                var row = new Grid
                 {
-                    var noneSet = character.ImplantSets.None;
-                    var noneScratchpad = character.After(noneSet);
-                    var noneTime = plan.GetTotalTime(noneScratchpad, true);
-                    cloneEntries.Add(("No Implants", "", noneTime, false));
-                }
-                catch { }
+                    ColumnDefinitions = ColumnDefinitions.Parse("Auto,30,Auto,*,Auto"),
+                    Margin = new Thickness(0, 2),
+                };
 
-                if (cloneEntries.Count == 0) return;
-
-                // Find fastest time for delta calculations and bar scaling
-                var fastestTime = cloneEntries.Min(e => e.Time);
-                var slowestTime = cloneEntries.Max(e => e.Time);
-                double timeRange = (slowestTime - fastestTime).TotalSeconds;
-
-                foreach (var (name, bonus, time, active) in cloneEntries)
+                // [-] button
+                var decBtn = new Button
                 {
-                    bool isFastest = time == fastestTime;
-                    var delta = time - fastestTime;
-
-                    // Row container
-                    var card = new Border
-                    {
-                        Background = isFastest
-                            ? new SolidColorBrush(Color.Parse("#1081C784"))
-                            : Brushes.Transparent,
-                        CornerRadius = new CornerRadius(4),
-                        Padding = new Thickness(8, 5),
-                        Margin = new Thickness(0, 1),
-                    };
-                    var cardStack = new StackPanel { Spacing = 3 };
-
-                    // Line 1: clone name (full width, trimmed if long)
-                    var namePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-                    if (active)
-                    {
-                        namePanel.Children.Add(new TextBlock
-                        {
-                            Text = "\u25CF",
-                            FontSize = 8,
-                            Foreground = GoldBrush,
-                            VerticalAlignment = VerticalAlignment.Center,
-                        });
-                    }
-
-                    string displayName = name;
-                    if (!string.IsNullOrEmpty(bonus))
-                        displayName += $" {bonus}";
-
-                    namePanel.Children.Add(new TextBlock
-                    {
-                        Text = displayName,
-                        FontSize = 10,
-                        FontWeight = active ? FontWeight.SemiBold : FontWeight.Regular,
-                        Foreground = active
-                            ? new SolidColorBrush(Color.Parse("#FFF0F0F0"))
-                            : new SolidColorBrush(Color.Parse("#FFB0B0B0")),
-                        TextTrimming = TextTrimming.CharacterEllipsis,
-                    });
-                    ToolTip.SetTip(namePanel, displayName);
-                    cardStack.Children.Add(namePanel);
-
-                    // Line 2: time + delta badge
-                    var timeRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-                    timeRow.Children.Add(new TextBlock
-                    {
-                        Text = FormatTime(time),
-                        FontSize = 12,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = isFastest
-                            ? new SolidColorBrush(Color.Parse("#FF81C784"))
-                            : new SolidColorBrush(Color.Parse("#FFD0D0D0")),
-                    });
-
-                    if (isFastest && cloneEntries.Count > 1)
-                    {
-                        timeRow.Children.Add(new Border
-                        {
-                            Background = new SolidColorBrush(Color.Parse("#2081C784")),
-                            CornerRadius = new CornerRadius(4),
-                            Padding = new Thickness(5, 1),
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Child = new TextBlock
-                            {
-                                Text = "fastest",
-                                FontSize = 8,
-                                Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                            },
-                        });
-                    }
-                    else if (delta > TimeSpan.Zero)
-                    {
-                        timeRow.Children.Add(new Border
-                        {
-                            Background = new SolidColorBrush(Color.Parse("#18CF6679")),
-                            CornerRadius = new CornerRadius(4),
-                            Padding = new Thickness(5, 1),
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Child = new TextBlock
-                            {
-                                Text = $"+{FormatTimeCompact(delta)} slower",
-                                FontSize = 8,
-                                Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
-                            },
-                        });
-                    }
-                    cardStack.Children.Add(timeRow);
-
-                    // Line 3: comparison bar
-                    double barMaxWidth = 220;
-                    // Bar represents how close to fastest (fastest = full, slowest = shorter)
-                    double fraction = timeRange > 0
-                        ? 1.0 - (delta.TotalSeconds / timeRange)
-                        : 1.0;
-                    fraction = Math.Max(0.15, Math.Min(1.0, fraction));
-
-                    var barBg = new Border
-                    {
-                        Height = 3,
-                        CornerRadius = new CornerRadius(2),
-                        Background = new SolidColorBrush(Color.Parse("#FF252535")),
-                    };
-                    var barFill = new Border
-                    {
-                        Width = fraction * barMaxWidth,
-                        Height = 3,
-                        CornerRadius = new CornerRadius(2),
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        Background = isFastest
-                            ? new SolidColorBrush(Color.Parse("#FF81C784"))
-                            : new SolidColorBrush(Color.Parse("#FF505068")),
-                    };
-                    var barContainer = new Panel();
-                    barContainer.Children.Add(barBg);
-                    barContainer.Children.Add(barFill);
-                    cardStack.Children.Add(barContainer);
-
-                    card.Child = cardStack;
-                    SidebarContent.Children.Add(card);
-                }
-
-                // Edit Sets button
-                var editBtn = new Button
-                {
-                    Content = "Edit Sets\u2026",
-                    FontSize = 9,
-                    Padding = new Thickness(8, 3),
+                    Content = "\u2212",
+                    FontSize = 10,
+                    Width = 20,
+                    Height = 20,
+                    Padding = new Thickness(0),
                     CornerRadius = new CornerRadius(10),
-                    Margin = new Thickness(0, 4, 0, 0),
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    IsEnabled = _optimizerVm.CanDecrement(attr),
                 };
-                editBtn.Click += async (_, _) =>
+                var capturedAttr = attr;
+                decBtn.Click += (_, _) =>
                 {
-                    try
-                    {
-                        var editor = new EveLens.Avalonia.Views.Dialogs.ImplantSetEditorWindow();
-                        editor.Initialize(character);
-                        var parentWindow = this.FindAncestorOfType<Window>();
-                        if (parentWindow != null)
-                            await editor.ShowDialog(parentWindow);
-                        BuildSidebarContent();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error opening implant editor: {ex}");
-                    }
+                    _optimizerVm?.AdjustAttribute(capturedAttr, -1);
+                    BuildSidebarContent();
                 };
-                SidebarContent.Children.Add(editBtn);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error building clone comparison: {ex}");
-            }
-        }
+                Grid.SetColumn(decBtn, 0);
+                row.Children.Add(decBtn);
 
-        private static string GetImplantBonusText(ImplantSet set)
-        {
-            long maxBonus = 0;
-            foreach (var implant in set)
-            {
-                if (implant.Bonus > maxBonus)
-                    maxBonus = implant.Bonus;
-            }
-            return maxBonus > 0 ? $"(+{maxBonus})" : "";
-        }
-
-        private void BuildOwnedSkillbooksSection()
-        {
-            try
-            {
-                var character = _viewModel?.Character as Character;
-                if (character == null) return;
-
-                var ownedBooks = character.Skills
-                    .Where(s => s.IsOwned && !s.IsKnown)
-                    .OrderBy(s => s.Name)
-                    .ToList();
-
-                if (ownedBooks.Count == 0) return;
-
-                AddThinDivider($"Owned Skillbooks ({ownedBooks.Count})", "Skillbooks in your assets that match planned skills.");
-
-                foreach (var skill in ownedBooks.Take(20))
+                // Attribute name + value
+                var label = new TextBlock
                 {
-                    SidebarContent.Children.Add(new TextBlock
-                    {
-                        Text = skill.Name,
-                        FontSize = 10,
-                        Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
-                        Margin = new Thickness(4, 1, 0, 0),
-                    });
-                }
+                    Text = $"{GetAttributeShortName(attr)} {effective}",
+                    FontSize = 11,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = isOptimal
+                        ? GetAttributeBrush(attr)
+                        : new SolidColorBrush(Color.Parse("#FFF0F0F0")),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                };
+                if (implantBonus > 0)
+                    ToolTip.SetTip(label, $"Base {totalBase} + {implantBonus} implant = {effective}");
+                Grid.SetColumn(label, 1);
+                row.Children.Add(label);
 
-                if (ownedBooks.Count > 20)
+                // Spacer
+                Grid.SetColumn(new Border { Width = 4 }, 2);
+                row.Children.Add(new Border { Width = 4 });
+                Grid.SetColumn(row.Children[^1], 2);
+
+                // Colored bar
+                double maxBarWidth = 140;
+                double barFraction = remappable / 10.0;
+
+                var barContainer = new Panel
                 {
-                    SidebarContent.Children.Add(new TextBlock
-                    {
-                        Text = $"... and {ownedBooks.Count - 20} more",
-                        FontSize = 10,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
-                        Margin = new Thickness(4, 2, 0, 0),
-                    });
-                }
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Margin = new Thickness(0, 0, 4, 0),
+                };
+                barContainer.Children.Add(new Border
+                {
+                    Width = maxBarWidth,
+                    Height = 8,
+                    CornerRadius = new CornerRadius(4),
+                    Background = new SolidColorBrush(Color.Parse("#FF252535")),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                });
+                barContainer.Children.Add(new Border
+                {
+                    Width = Math.Max(0, barFraction * maxBarWidth),
+                    Height = 8,
+                    CornerRadius = new CornerRadius(4),
+                    Background = GetAttributeBrush(attr),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                });
+                Grid.SetColumn(barContainer, 3);
+                row.Children.Add(barContainer);
+
+                // [+] button
+                var incBtn = new Button
+                {
+                    Content = "+",
+                    FontSize = 10,
+                    Width = 20,
+                    Height = 20,
+                    Padding = new Thickness(0),
+                    CornerRadius = new CornerRadius(10),
+                    HorizontalContentAlignment = HorizontalAlignment.Center,
+                    VerticalContentAlignment = VerticalAlignment.Center,
+                    IsEnabled = _optimizerVm.CanIncrement(attr),
+                };
+                incBtn.Click += (_, _) =>
+                {
+                    _optimizerVm?.AdjustAttribute(capturedAttr, +1);
+                    BuildSidebarContent();
+                };
+                Grid.SetColumn(incBtn, 4);
+                row.Children.Add(incBtn);
+
+                SidebarContent.Children.Add(row);
             }
-            catch (Exception ex)
+
+            // Reset buttons
+            var resetRow = new StackPanel
             {
-                Debug.WriteLine($"Error building skillbooks section: {ex}");
-            }
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Margin = new Thickness(0, 6, 0, 0),
+            };
+
+            var resetOptBtn = new Button
+            {
+                Content = "Reset to optimal",
+                FontSize = 9,
+                Padding = new Thickness(6, 2),
+                CornerRadius = new CornerRadius(10),
+            };
+            resetOptBtn.Click += (_, _) =>
+            {
+                _optimizerVm?.ResetToOptimal();
+                BuildSidebarContent();
+            };
+            resetRow.Children.Add(resetOptBtn);
+
+            var resetCurBtn = new Button
+            {
+                Content = "Reset to current",
+                FontSize = 9,
+                Padding = new Thickness(6, 2),
+                CornerRadius = new CornerRadius(10),
+            };
+            resetCurBtn.Click += (_, _) =>
+            {
+                _optimizerVm?.ResetToCurrent();
+                BuildSidebarContent();
+            };
+            resetRow.Children.Add(resetCurBtn);
+
+            SidebarContent.Children.Add(resetRow);
         }
 
         private void AddThinDivider(string label, string? description = null)
@@ -1841,938 +2014,11 @@ namespace EveLens.Avalonia.Views.PlanEditor
             }
         }
 
-        private static void AddStatCell(Grid grid, int row, int col, string value, string label)
-        {
-            var cell = new StackPanel
-            {
-                Margin = new Thickness(0, 2),
-            };
-            if (!string.IsNullOrEmpty(value))
-            {
-                cell.Children.Add(new TextBlock
-                {
-                    Text = value,
-                    FontSize = 11,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = new SolidColorBrush(Color.Parse("#FFD0D0D0")),
-                });
-            }
-            if (!string.IsNullOrEmpty(label))
-            {
-                cell.Children.Add(new TextBlock
-                {
-                    Text = label,
-                    FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
-                });
-            }
-            Grid.SetRow(cell, row);
-            Grid.SetColumn(cell, col);
-            grid.Children.Add(cell);
-        }
-
-
-
-        #endregion
-
-        #region Optimize Tab
-
-        private void BuildOptimizePanel()
-        {
-            if (_viewModel == null) return;
-
-            SidebarContent.Children.Add(new TextBlock
-            {
-                Text = "Find the best attribute remap to minimize your training time.",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 6),
-            });
-
-            // ── State 1: Calculating ──
-            if (_optimizerVm?.IsCalculating == true)
-            {
-                SidebarContent.Children.Add(new TextBlock
-                {
-                    Text = "\u26A1 Analyzing your plan\u2026",
-                    FontSize = 13,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = GoldBrush,
-                    Margin = new Thickness(0, 16, 0, 8),
-                });
-                SidebarContent.Children.Add(new TextBlock
-                {
-                    Text = "Testing attribute combinations\nto find the fastest training order.",
-                    FontSize = 11,
-                    Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                    TextWrapping = TextWrapping.Wrap,
-                });
-                return;
-            }
-
-            // ── State 2: Has results ──
-            if (_optimizerVm?.HasResults == true)
-            {
-                var savings = _optimizerVm.TimeSaved;
-                bool hasSavings = savings > TimeSpan.Zero;
-                var character = _viewModel.Character as Character;
-
-                // ── Current → Optimized ──
-                SidebarContent.Children.Add(new TextBlock
-                {
-                    Text = FormatTime(_optimizerVm.CurrentDuration),
-                    FontSize = 20,
-                    FontWeight = FontWeight.Bold,
-                    Foreground = new SolidColorBrush(Color.Parse("#FFF0F0F0")),
-                    Margin = new Thickness(0, 2, 0, 0),
-                });
-
-                if (hasSavings || _optimizerVm.IsManuallyEdited)
-                {
-                    var resultRow = new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 6,
-                        Margin = new Thickness(0, 2, 0, 8),
-                    };
-
-                    if (hasSavings)
-                    {
-                        resultRow.Children.Add(new TextBlock
-                        {
-                            Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
-                            FontSize = 16,
-                            FontWeight = FontWeight.Bold,
-                            Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                        });
-                        resultRow.Children.Add(new TextBlock
-                        {
-                            Text = $"({FormatTime(savings)} faster)",
-                            FontSize = 12,
-                            Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                            VerticalAlignment = VerticalAlignment.Bottom,
-                            Margin = new Thickness(0, 0, 0, 1),
-                        });
-                    }
-                    else if (_optimizerVm.OptimalDuration > _optimizerVm.CurrentDuration)
-                    {
-                        var penalty = _optimizerVm.OptimalDuration - _optimizerVm.CurrentDuration;
-                        resultRow.Children.Add(new TextBlock
-                        {
-                            Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
-                            FontSize = 16,
-                            FontWeight = FontWeight.Bold,
-                            Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
-                        });
-                        resultRow.Children.Add(new TextBlock
-                        {
-                            Text = $"({FormatTime(penalty)} slower)",
-                            FontSize = 12,
-                            Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
-                            VerticalAlignment = VerticalAlignment.Bottom,
-                            Margin = new Thickness(0, 0, 0, 1),
-                        });
-                    }
-                    else
-                    {
-                        resultRow.Children.Add(new TextBlock
-                        {
-                            Text = $"\u2192 {FormatTime(_optimizerVm.OptimalDuration)}",
-                            FontSize = 16,
-                            FontWeight = FontWeight.Bold,
-                            Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                        });
-                        resultRow.Children.Add(new TextBlock
-                        {
-                            Text = "(no change)",
-                            FontSize = 12,
-                            Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                            VerticalAlignment = VerticalAlignment.Bottom,
-                            Margin = new Thickness(0, 0, 0, 1),
-                        });
-                    }
-                    SidebarContent.Children.Add(resultRow);
-
-                    // ── What to change ──
-                    AddThinDivider("Change your attributes to", "Optimal base attributes for this plan.");
-                    BuildAttributeComparisonGrid();
-
-                    // Remap status
-                    if (character != null)
-                    {
-                        int bonusRemaps = character.AvailableReMaps;
-                        bool canRemapNow = bonusRemaps > 0
-                            || character.LastReMapTimed == DateTime.MinValue
-                            || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
-
-                        var remapStatus = new StackPanel
-                        {
-                            Orientation = Orientation.Horizontal,
-                            Spacing = 6,
-                            Margin = new Thickness(0, 4, 0, 0),
-                        };
-
-                        if (canRemapNow)
-                        {
-                            remapStatus.Children.Add(new TextBlock
-                            {
-                                Text = "\u2713 Remap available",
-                                FontSize = 10,
-                                Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                            });
-                        }
-                        else
-                        {
-                            int daysUntil = (int)(character.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
-                            remapStatus.Children.Add(new TextBlock
-                            {
-                                Text = $"\u23F0 Next remap in {daysUntil} days",
-                                FontSize = 10,
-                                Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
-                            });
-                        }
-
-                        if (bonusRemaps > 0)
-                        {
-                            remapStatus.Children.Add(new TextBlock
-                            {
-                                Text = $"\u00B7 {bonusRemaps} bonus",
-                                FontSize = 10,
-                                Foreground = GoldBrush,
-                            });
-                        }
-                        SidebarContent.Children.Add(remapStatus);
-                    }
-
-                    // ── Implant recommendations ──
-                    BuildImplantRecommendations();
-
-                    // ── Most improved skills ──
-                    if (_optimizerVm.SkillImpacts.Count > 0)
-                    {
-                        AddThinDivider("Most improved skills", "Skills that benefit the most from this remap.");
-
-                        var topSkills = _optimizerVm.SkillImpacts
-                            .Where(s => s.TimeSaved > TimeSpan.Zero)
-                            .Take(5)
-                            .ToList();
-
-                        foreach (var skill in topSkills)
-                        {
-                            var row = new Grid
-                            {
-                                ColumnDefinitions = ColumnDefinitions.Parse("*,Auto"),
-                                Margin = new Thickness(0, 2),
-                            };
-
-                            row.Children.Add(new TextBlock
-                            {
-                                Text = $"{skill.SkillName} {RomanNumeral(skill.Level)}",
-                                FontSize = 11,
-                                Foreground = new SolidColorBrush(Color.Parse("#FFD0D0D0")),
-                                TextTrimming = TextTrimming.CharacterEllipsis,
-                            });
-
-                            var fasterTb = new TextBlock
-                            {
-                                Text = $"{FormatTimeCompact(skill.TimeSaved)} faster",
-                                FontSize = 10,
-                                FontWeight = FontWeight.SemiBold,
-                                Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
-                                Margin = new Thickness(6, 0, 0, 0),
-                            };
-                            Grid.SetColumn(fasterTb, 1);
-                            row.Children.Add(fasterTb);
-
-                            SidebarContent.Children.Add(row);
-                        }
-                    }
-                }
-                else
-                {
-                    SidebarContent.Children.Add(new TextBlock
-                    {
-                        Text = "\u2713 Your attributes are already optimal for this plan.",
-                        FontSize = 11,
-                        Foreground = GoldBrush,
-                        TextWrapping = TextWrapping.Wrap,
-                        Margin = new Thickness(0, 4, 0, 6),
-                    });
-                }
-
-                // ── Re-analyze ──
-                var rerunBtn = new Button
-                {
-                    Content = "\u21BA Re-analyze",
-                    FontSize = 10,
-                    Padding = new Thickness(6, 3),
-                    CornerRadius = new CornerRadius(10),
-                    Margin = new Thickness(0, 8, 0, 0),
-                };
-                rerunBtn.Click += OnRerunOptimization;
-                SidebarContent.Children.Add(rerunBtn);
-
-                return;
-            }
-
-            // ── State 3: Error ──
-            if (_optimizerVm != null && !string.IsNullOrEmpty(_optimizerVm.ErrorMessage))
-            {
-                SidebarContent.Children.Add(new TextBlock
-                {
-                    Text = $"Optimization failed:\n{_optimizerVm.ErrorMessage}",
-                    FontSize = 11,
-                    Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 8),
-                });
-
-                var retryBtn = new Button
-                {
-                    Content = "Try Again",
-                    FontSize = 11,
-                    Padding = new Thickness(8, 3),
-                    CornerRadius = new CornerRadius(10),
-                };
-                retryBtn.Click += OnRerunOptimization;
-                SidebarContent.Children.Add(retryBtn);
-                return;
-            }
-
-            // ── State 4: Not yet run ──
-            SidebarContent.Children.Add(new TextBlock
-            {
-                Text = "Preparing optimization\u2026",
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                Margin = new Thickness(0, 8),
-            });
-        }
-
-        private static void AddIconTimeRow(Grid grid, int row, string icon, string label,
-            string value, IBrush valueBrush, bool bold = false)
-        {
-            var iconTb = new TextBlock
-            {
-                Text = icon,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 4, 0),
-            };
-            Grid.SetColumn(iconTb, 0);
-            Grid.SetRow(iconTb, row);
-            grid.Children.Add(iconTb);
-
-            var labelTb = new TextBlock
-            {
-                Text = label,
-                FontSize = 11,
-                Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-            Grid.SetColumn(labelTb, 1);
-            Grid.SetRow(labelTb, row);
-            grid.Children.Add(labelTb);
-
-            var valueTb = new TextBlock
-            {
-                Text = value,
-                FontSize = 11,
-                FontWeight = bold ? FontWeight.Bold : FontWeight.SemiBold,
-                Foreground = valueBrush,
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Right,
-            };
-            Grid.SetColumn(valueTb, 2);
-            Grid.SetRow(valueTb, row);
-            grid.Children.Add(valueTb);
-        }
-
-        private void BuildPlanMixBars()
-        {
-            if (_viewModel?.DisplayPlan == null) return;
-
-            var entries = _viewModel.DisplayPlan.ToArray();
-            if (entries.Length == 0) return;
-
-            // Group skills by (primary, secondary) attribute pair, weighted by SP
-            var groups = new Dictionary<(EveAttribute pri, EveAttribute sec), long>();
-            long totalSp = 0;
-
-            foreach (var entry in entries)
-            {
-                var key = (entry.Skill.PrimaryAttribute, entry.Skill.SecondaryAttribute);
-                groups.TryGetValue(key, out long sp);
-                long entrySp = entry.SkillPointsRequired > 0 ? entry.SkillPointsRequired : 1;
-                groups[key] = sp + entrySp;
-                totalSp += entrySp;
-            }
-
-            if (totalSp <= 0) return;
-
-            // Sort by SP descending
-            var sorted = groups.OrderByDescending(kv => kv.Value).ToList();
-
-            // Show top groups (combine small ones into "Other")
-            double barMaxWidth = 240;
-
-            foreach (var (pair, sp) in sorted)
-            {
-                double pct = (double)sp / totalSp * 100;
-                if (pct < 3) break; // Skip tiny groups
-
-                string label = $"{GetAttributeShortName(pair.pri)}/{GetAttributeShortName(pair.sec)}";
-                IBrush barColor = GetAttributeBrush(pair.pri);
-
-                var row = new Grid
-                {
-                    ColumnDefinitions = ColumnDefinitions.Parse("50,*,Auto"),
-                    Margin = new Thickness(0, 2),
-                };
-
-                var labelTb = new TextBlock
-                {
-                    Text = label,
-                    FontSize = 10,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = barColor,
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                Grid.SetColumn(labelTb, 0);
-                row.Children.Add(labelTb);
-
-                var barContainer = new Panel
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(0, 0, 6, 0),
-                };
-                barContainer.Children.Add(new Border
-                {
-                    Width = barMaxWidth - 80,
-                    Height = 8,
-                    CornerRadius = new CornerRadius(4),
-                    Background = new SolidColorBrush(Color.Parse("#FF252535")),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                });
-                barContainer.Children.Add(new Border
-                {
-                    Width = Math.Max(2, (pct / 100) * (barMaxWidth - 80)),
-                    Height = 8,
-                    CornerRadius = new CornerRadius(4),
-                    Background = barColor,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Opacity = 0.7,
-                });
-                Grid.SetColumn(barContainer, 1);
-                row.Children.Add(barContainer);
-
-                var pctTb = new TextBlock
-                {
-                    Text = $"{pct:F0}%",
-                    FontSize = 10,
-                    Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                Grid.SetColumn(pctTb, 2);
-                row.Children.Add(pctTb);
-
-                SidebarContent.Children.Add(row);
-            }
-
-            // Mix description
-            if (sorted.Count > 0)
-            {
-                double dominantPct = (double)sorted[0].Value / totalSp * 100;
-                string mixDesc;
-                if (dominantPct > 85)
-                    mixDesc = $"Almost entirely {GetAttributeShortName(sorted[0].Key.pri)}/{GetAttributeShortName(sorted[0].Key.sec)}. Specialize.";
-                else if (dominantPct > 70)
-                    mixDesc = $"Leans {GetAttributeShortName(sorted[0].Key.pri)}/{GetAttributeShortName(sorted[0].Key.sec)}. Specializing saves most.";
-                else if (dominantPct > 50)
-                    mixDesc = "Mixed plan. Balanced remap recommended.";
-                else
-                    mixDesc = "Evenly split. Balance is clearly best.";
-
-                SidebarContent.Children.Add(new TextBlock
-                {
-                    Text = mixDesc,
-                    FontSize = 10,
-                    FontStyle = FontStyle.Italic,
-                    Foreground = new SolidColorBrush(Color.Parse("#FF808080")),
-                    Margin = new Thickness(0, 3, 0, 0),
-                    TextWrapping = TextWrapping.Wrap,
-                });
-            }
-        }
-
         private static string FormatTimeCompact(TimeSpan time)
         {
             if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h";
             if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
             return $"{(int)time.TotalMinutes}m";
-        }
-
-        private void BuildAttributeComparisonGrid()
-        {
-            if (_optimizerVm == null) return;
-
-            var attrs = new[]
-            {
-                EveAttribute.Intelligence, EveAttribute.Perception,
-                EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
-            };
-
-            // Container with subtle background
-            var container = new Border
-            {
-                Background = new SolidColorBrush(Color.Parse("#10FFFFFF")),
-                CornerRadius = new CornerRadius(6),
-                Padding = new Thickness(10, 8),
-                Margin = new Thickness(0, 2, 0, 0),
-            };
-            var stack = new StackPanel { Spacing = 6 };
-
-            // Column headers
-            var headerRow = new Grid
-            {
-                ColumnDefinitions = ColumnDefinitions.Parse("40,28,20,28,*"),
-                Margin = new Thickness(0, 0, 0, 2),
-            };
-            var inGameHeader = new TextBlock
-            {
-                Text = "In-game",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-                HorizontalAlignment = HorizontalAlignment.Right,
-            };
-            Grid.SetColumn(inGameHeader, 1);
-            headerRow.Children.Add(inGameHeader);
-            var changeToHeader = new TextBlock
-            {
-                Text = "Set to",
-                FontSize = 10,
-                Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-            };
-            Grid.SetColumn(changeToHeader, 3);
-            headerRow.Children.Add(changeToHeader);
-            stack.Children.Add(headerRow);
-
-            foreach (var attr in attrs)
-            {
-                int current = _optimizerVm.GetCurrent(attr);
-                int optimal = _optimizerVm.GetOptimal(attr);
-                int delta = optimal - current;
-                bool changed = delta != 0;
-
-                var row = new Grid
-                {
-                    ColumnDefinitions = ColumnDefinitions.Parse("40,28,20,28,*"),
-                };
-
-                // Attribute name — colored, prominent
-                row.Children.Add(new TextBlock
-                {
-                    Text = GetAttributeShortName(attr),
-                    FontSize = 13,
-                    FontWeight = FontWeight.Bold,
-                    Foreground = GetAttributeBrush(attr),
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-
-                // Current value
-                var currentTb = new TextBlock
-                {
-                    Text = current.ToString(),
-                    FontSize = 13,
-                    Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Right,
-                };
-                Grid.SetColumn(currentTb, 1);
-                row.Children.Add(currentTb);
-
-                // Arrow
-                var arrowTb = new TextBlock
-                {
-                    Text = "\u2192",
-                    FontSize = 12,
-                    Foreground = changed
-                        ? new SolidColorBrush(Color.Parse("#FF808080"))
-                        : new SolidColorBrush(Color.Parse("#FF404040")),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                };
-                Grid.SetColumn(arrowTb, 2);
-                row.Children.Add(arrowTb);
-
-                // Target value — big and bold if changed
-                var targetTb = new TextBlock
-                {
-                    Text = optimal.ToString(),
-                    FontSize = 13,
-                    FontWeight = changed ? FontWeight.Bold : FontWeight.Regular,
-                    Foreground = changed
-                        ? new SolidColorBrush(Color.Parse("#FFF0F0F0"))
-                        : new SolidColorBrush(Color.Parse("#FF505050")),
-                    VerticalAlignment = VerticalAlignment.Center,
-                };
-                Grid.SetColumn(targetTb, 3);
-                row.Children.Add(targetTb);
-
-                // Delta badge
-                if (changed)
-                {
-                    string sign = delta > 0 ? "+" : "";
-                    var deltaBadge = new Border
-                    {
-                        Background = delta > 0
-                            ? new SolidColorBrush(Color.Parse("#2081C784"))
-                            : new SolidColorBrush(Color.Parse("#20CF6679")),
-                        CornerRadius = new CornerRadius(6),
-                        Padding = new Thickness(5, 1),
-                        Margin = new Thickness(4, 0, 0, 0),
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Child = new TextBlock
-                        {
-                            Text = $"{sign}{delta}",
-                            FontSize = 12,
-                            FontWeight = FontWeight.SemiBold,
-                            Foreground = delta > 0
-                                ? new SolidColorBrush(Color.Parse("#FF81C784"))
-                                : new SolidColorBrush(Color.Parse("#FFCF6679")),
-                        }
-                    };
-                    Grid.SetColumn(deltaBadge, 4);
-                    row.Children.Add(deltaBadge);
-                }
-
-                stack.Children.Add(row);
-            }
-
-            container.Child = stack;
-            SidebarContent.Children.Add(container);
-
-            // Manual adjustment toggle for power users
-            var fineTuneBtn = new ToggleButton
-            {
-                Content = _showFineTune
-                    ? "Hide manual adjustment \u25B4"
-                    : "Adjust attributes manually \u25BE",
-                FontSize = 10,
-                Padding = new Thickness(8, 3),
-                CornerRadius = new CornerRadius(8),
-                Margin = new Thickness(0, 6, 0, 0),
-            };
-            ToolTip.SetTip(fineTuneBtn, "Override the optimizer\u2019s recommendation with your own attribute distribution");
-            fineTuneBtn.Click += (_, _) =>
-            {
-                _showFineTune = fineTuneBtn.IsChecked == true;
-                BuildSidebarContent();
-            };
-            fineTuneBtn.IsChecked = _showFineTune;
-            SidebarContent.Children.Add(fineTuneBtn);
-
-            if (_showFineTune)
-            {
-                BuildInteractiveAttributeRows();
-
-                int unassigned = _optimizerVm.UnassignedPoints;
-                if (unassigned > 0)
-                {
-                    SidebarContent.Children.Add(new TextBlock
-                    {
-                        Text = $"\u26A0 {unassigned} point{(unassigned != 1 ? "s" : "")} to use",
-                        FontSize = 11,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
-                        Margin = new Thickness(0, 4, 0, 0),
-                    });
-                }
-            }
-        }
-
-        private void BuildImplantRecommendations()
-        {
-            if (_optimizerVm == null || _viewModel?.DisplayPlan == null) return;
-
-            var allAttrs = new[]
-            {
-                EveAttribute.Intelligence, EveAttribute.Perception,
-                EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
-            };
-
-            // Calculate per-attribute SP weight from the plan
-            var entries = _viewModel.DisplayPlan.ToArray();
-            var attrSpWeight = new Dictionary<EveAttribute, long>();
-            foreach (var attr in allAttrs) attrSpWeight[attr] = 0;
-
-            foreach (var entry in entries)
-            {
-                long sp = entry.SkillPointsRequired > 0 ? entry.SkillPointsRequired : 1;
-                var pri = entry.Skill.PrimaryAttribute;
-                var sec = entry.Skill.SecondaryAttribute;
-                attrSpWeight[pri] += sp;       // primary contributes full weight
-                attrSpWeight[sec] += sp / 2;   // secondary contributes half
-            }
-
-            // Determine plan's primary and secondary dominant attributes
-            var ranked = attrSpWeight.OrderByDescending(kv => kv.Value).ToList();
-            var planPrimary = ranked.Count > 0 ? ranked[0].Key : (EveAttribute?)null;
-            var planSecondary = ranked.Count > 1 && ranked[1].Value > 0 ? ranked[1].Key : (EveAttribute?)null;
-
-            // Find missing implants sorted by plan relevance
-            var recommendations = new List<(EveAttribute attr, long weight, int currentBonus)>();
-            foreach (var attr in allAttrs)
-            {
-                int bonus = _optimizerVm.GetImplantBonus(attr);
-                long weight = attrSpWeight[attr];
-                if (bonus < 5 && weight > 0) // missing or below +5
-                {
-                    recommendations.Add((attr, weight, bonus));
-                }
-            }
-
-            if (recommendations.Count == 0) return; // all slots filled with +5
-
-            recommendations.Sort((a, b) => b.weight.CompareTo(a.weight));
-
-            AddThinDivider("Consider these implants",
-                "Prioritize your plan\u2019s primary and secondary attributes \u2014 those 2 matter most.");
-
-            long maxWeight = recommendations.Max(r => r.weight);
-
-            foreach (var (attr, weight, currentBonus) in recommendations)
-            {
-                double relevance = maxWeight > 0 ? (double)weight / maxWeight : 0;
-                if (relevance < 0.05) continue; // skip truly irrelevant attributes
-
-                // Determine role in this plan
-                string role;
-                IBrush roleBrush;
-                string roleBg;
-                if (attr == planPrimary)
-                {
-                    role = "Primary";
-                    roleBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
-                    roleBg = "#2081C784";
-                }
-                else if (attr == planSecondary)
-                {
-                    role = "Secondary";
-                    roleBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
-                    roleBg = "#20FFD54F";
-                }
-                else
-                {
-                    role = "Minor";
-                    roleBrush = new SolidColorBrush(Color.Parse("#FF606060"));
-                    roleBg = "#10FFFFFF";
-                }
-
-                // Card row
-                var card = new Border
-                {
-                    Background = new SolidColorBrush(Color.Parse("#08FFFFFF")),
-                    CornerRadius = new CornerRadius(5),
-                    Padding = new Thickness(8, 6),
-                    Margin = new Thickness(0, 2),
-                };
-                var cardStack = new StackPanel { Spacing = 3 };
-
-                // Line 1: attribute name + role badge
-                var topRow = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("*,Auto") };
-
-                var namePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
-                namePanel.Children.Add(new TextBlock
-                {
-                    Text = $"+5 {GetAttributeFullName(attr)}",
-                    FontSize = 11,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = GetAttributeBrush(attr),
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
-                if (currentBonus > 0)
-                {
-                    namePanel.Children.Add(new TextBlock
-                    {
-                        Text = $"(+{currentBonus} now)",
-                        FontSize = 9,
-                        Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
-                        VerticalAlignment = VerticalAlignment.Center,
-                    });
-                }
-                topRow.Children.Add(namePanel);
-
-                var roleBadge = new Border
-                {
-                    Background = new SolidColorBrush(Color.Parse(roleBg)),
-                    CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(6, 1),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Child = new TextBlock
-                    {
-                        Text = role,
-                        FontSize = 9,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = roleBrush,
-                    },
-                };
-                Grid.SetColumn(roleBadge, 1);
-                topRow.Children.Add(roleBadge);
-                cardStack.Children.Add(topRow);
-
-                // Line 2: impact bar
-                double barMaxWidth = 200;
-                var barBg = new Border
-                {
-                    Height = 3,
-                    CornerRadius = new CornerRadius(2),
-                    Background = new SolidColorBrush(Color.Parse("#FF252535")),
-                };
-                var barFill = new Border
-                {
-                    Width = Math.Max(4, relevance * barMaxWidth),
-                    Height = 3,
-                    CornerRadius = new CornerRadius(2),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    Background = GetAttributeBrush(attr),
-                };
-                var barContainer = new Panel();
-                barContainer.Children.Add(barBg);
-                barContainer.Children.Add(barFill);
-                cardStack.Children.Add(barContainer);
-
-                card.Child = cardStack;
-                SidebarContent.Children.Add(card);
-            }
-        }
-
-        private void BuildInteractiveAttributeRows()
-        {
-            if (_optimizerVm == null) return;
-
-            var attrs = new[]
-            {
-                EveAttribute.Intelligence, EveAttribute.Perception,
-                EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
-            };
-
-            foreach (var attr in attrs)
-            {
-                int currentBase = _optimizerVm.GetCurrent(attr);
-                int optimalVal = _optimizerVm.GetOptimal(attr);
-                int remappable = _optimizerVm.GetRemappable(attr);
-                int delta = optimalVal - currentBase;
-
-                // Line 1: "INT  19 → 24" with delta coloring
-                var infoPanel = new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = 4,
-                    Margin = new Thickness(0, 4, 0, 0),
-                };
-
-                infoPanel.Children.Add(new TextBlock
-                {
-                    Text = GetAttributeShortName(attr),
-                    FontSize = 11,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = GetAttributeBrush(attr),
-                    Width = 30,
-                });
-
-                infoPanel.Children.Add(new TextBlock
-                {
-                    Text = $"{currentBase} \u2192 {optimalVal}",
-                    FontSize = 11,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = delta > 0
-                        ? new SolidColorBrush(Color.Parse("#FF81C784"))
-                        : delta < 0
-                            ? new SolidColorBrush(Color.Parse("#FFCF6679"))
-                            : new SolidColorBrush(Color.Parse("#FF808080")),
-                });
-
-                SidebarContent.Children.Add(infoPanel);
-
-                // Line 2: [−] [colored bar] [+]
-                var barPanel = new Grid
-                {
-                    ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto"),
-                    Margin = new Thickness(0, 1, 0, 2),
-                };
-
-                var decBtn = new Button
-                {
-                    Content = "\u2212",
-                    FontSize = 11,
-                    Width = 20,
-                    Height = 20,
-                    Padding = new Thickness(0),
-                    CornerRadius = new CornerRadius(10),
-                    HorizontalContentAlignment = HorizontalAlignment.Center,
-                    VerticalContentAlignment = VerticalAlignment.Center,
-                    IsEnabled = _optimizerVm.CanDecrement(attr),
-                };
-                var capturedAttr = attr;
-                decBtn.Click += (_, _) =>
-                {
-                    _optimizerVm?.AdjustAttribute(capturedAttr, -1);
-                    BuildSidebarContent();
-                };
-                Grid.SetColumn(decBtn, 0);
-                barPanel.Children.Add(decBtn);
-
-                double maxBarWidth = 180;
-                double barFraction = remappable / 10.0;
-
-                var barContainer = new Panel
-                {
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(4, 0),
-                };
-                barContainer.Children.Add(new Border
-                {
-                    Width = maxBarWidth,
-                    Height = 8,
-                    CornerRadius = new CornerRadius(4),
-                    Background = new SolidColorBrush(Color.Parse("#FF252535")),
-                });
-                barContainer.Children.Add(new Border
-                {
-                    Width = Math.Max(0, barFraction * maxBarWidth),
-                    Height = 8,
-                    CornerRadius = new CornerRadius(4),
-                    Background = GetAttributeBrush(attr),
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                });
-                Grid.SetColumn(barContainer, 1);
-                barPanel.Children.Add(barContainer);
-
-                var incBtn = new Button
-                {
-                    Content = "+",
-                    FontSize = 11,
-                    Width = 20,
-                    Height = 20,
-                    Padding = new Thickness(0),
-                    CornerRadius = new CornerRadius(10),
-                    HorizontalContentAlignment = HorizontalAlignment.Center,
-                    VerticalContentAlignment = VerticalAlignment.Center,
-                    IsEnabled = _optimizerVm.CanIncrement(attr),
-                };
-                incBtn.Click += (_, _) =>
-                {
-                    _optimizerVm?.AdjustAttribute(capturedAttr, +1);
-                    BuildSidebarContent();
-                };
-                Grid.SetColumn(incBtn, 2);
-                barPanel.Children.Add(incBtn);
-
-                SidebarContent.Children.Add(barPanel);
-            }
         }
 
         private void OnRerunOptimization(object? sender, RoutedEventArgs e)
@@ -2796,9 +2042,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
             }
             BuildSidebarContent();
         }
-
-
-
 
         #endregion
 
@@ -2981,7 +2224,11 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    if (_activeSidebarTab is "Optimize" or "Summary")
+                    // Refresh skill list so remap dividers update from "not computed" to computed
+                    if (e.PropertyName is nameof(PlanOptimizerViewModel.HasResults))
+                        Refresh();
+
+                    if (_activeSidebarTab is "Plan")
                         BuildSidebarContent();
                 });
             }
