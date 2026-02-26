@@ -290,9 +290,13 @@ namespace EveLens.Common.Models
                 // We may either have to add or remove entries. First, we assume we have to add ones
                 if (level > plannedLevel)
                 {
-                    List<StaticSkillLevel> skillsToAdd = new List<StaticSkillLevel> { new StaticSkillLevel(skill, level) };
+                    // Add all intermediate levels (e.g. planning to 5 from 1 adds 2, 3, 4, 5)
+                    List<StaticSkillLevel> skillsToAdd = new List<StaticSkillLevel>();
+                    for (int i = plannedLevel + 1; i <= level; i++)
+                    {
+                        skillsToAdd.Add(new StaticSkillLevel(skill, i));
+                    }
 
-                    // None added ? Then return
                     IPlanOperation operation = TryAddSet(skillsToAdd, noteForNewEntries);
                     operation.PerformAddition(priority);
                 }

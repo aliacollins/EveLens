@@ -4,13 +4,20 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using EveLens.Common;
+using EveLens.Common.Data;
+using EveLens.Common.Enumerations;
 using EveLens.Common.Helpers;
+using EveLens.Common.Interfaces;
 using EveLens.Common.Models;
+using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
 using EveLens.Common.ViewModels;
 
@@ -135,53 +142,225 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 _unifiedView.RefreshSkillList("");
         }
 
-        private async void OnExport(object? sender, RoutedEventArgs e)
+        private void OnExportMenu(object? sender, RoutedEventArgs e)
         {
-            try
+            if (sender is not Button btn) return;
+
+            var menu = new ContextMenu();
+
+            var copyItem = new MenuItem { Header = "Copy to Clipboard" };
+            copyItem.Click += (_, _) =>
             {
                 if (_viewModel?.Plan == null) return;
-
-                var topLevel = TopLevel.GetTopLevel(this);
-                if (topLevel == null) return;
-
-                var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                var settings = new PlanExportSettings
                 {
-                    Title = "Export Plan",
-                    SuggestedFileName = _viewModel.Plan.Name,
-                    FileTypeChoices = new[]
-                    {
-                        new FilePickerFileType("Text Files") { Patterns = new[] { "*.txt" } },
-                        new FilePickerFileType("Plan Files") { Patterns = new[] { "*.emp" } },
-                    }
-                });
+                    EntryNumber = true,
+                    EntryTrainingTimes = true,
+                    FooterCount = true,
+                    FooterTotalTime = true,
+                };
+                string text = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
+                AppServices.ClipboardService?.SetText(text);
+            };
+            menu.Items.Add(copyItem);
 
-                if (result == null) return;
-
-                string path = result.Path.LocalPath;
-                string content;
-
-                if (path.EndsWith(".emp", StringComparison.OrdinalIgnoreCase))
-                {
-                    content = PlanIOHelper.ExportAsXML(_viewModel.Plan);
-                }
-                else
-                {
-                    var settings = new PlanExportSettings
-                    {
-                        EntryNumber = true,
-                        EntryTrainingTimes = true,
-                        FooterCount = true,
-                        FooterTotalTime = true,
-                    };
-                    content = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
-                }
-
-                await System.IO.File.WriteAllTextAsync(path, content);
-            }
-            catch (Exception ex)
+            var saveItem = new MenuItem { Header = "Save to File..." };
+            saveItem.Click += async (_, _) =>
             {
-                System.Diagnostics.Debug.WriteLine($"Export failed: {ex.Message}");
+                try
+                {
+                    if (_viewModel?.Plan == null) return;
+
+                    var topLevel = TopLevel.GetTopLevel(this);
+                    if (topLevel == null) return;
+
+                    var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+                    {
+                        Title = "Export Plan",
+                        SuggestedFileName = _viewModel.Plan.Name,
+                        FileTypeChoices = new[]
+                        {
+                            new FilePickerFileType("Text Files") { Patterns = new[] { "*.txt" } },
+                            new FilePickerFileType("Plan Files") { Patterns = new[] { "*.emp" } },
+                        }
+                    });
+
+                    if (result == null) return;
+
+                    string path = result.Path.LocalPath;
+                    string content;
+
+                    if (path.EndsWith(".emp", StringComparison.OrdinalIgnoreCase))
+                    {
+                        content = PlanIOHelper.ExportAsXML(_viewModel.Plan);
+                    }
+                    else
+                    {
+                        var settings = new PlanExportSettings
+                        {
+                            EntryNumber = true,
+                            EntryTrainingTimes = true,
+                            FooterCount = true,
+                            FooterTotalTime = true,
+                        };
+                        content = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
+                    }
+
+                    await System.IO.File.WriteAllTextAsync(path, content);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Export failed: {ex.Message}");
+                }
+            };
+            menu.Items.Add(saveItem);
+
+            btn.ContextMenu = menu;
+            menu.Open(btn);
+        }
+
+        private void OnImportFitMenu(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+
+            var menu = new ContextMenu();
+
+            var clipItem = new MenuItem { Header = "From Clipboard (EFT/XML/DNA)" };
+            clipItem.Click += async (_, _) =>
+            {
+                try
+                {
+                    string? clipText = AppServices.ClipboardService?.GetText();
+                    if (string.IsNullOrWhiteSpace(clipText))
+                        return;
+                    await ImportFitFromText(clipText);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Import from clipboard failed: {ex.Message}");
+                }
+            };
+            menu.Items.Add(clipItem);
+
+            var fileItem = new MenuItem { Header = "From File..." };
+            fileItem.Click += async (_, _) =>
+            {
+                try
+                {
+                    var topLevel = TopLevel.GetTopLevel(this);
+                    if (topLevel == null) return;
+
+                    var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+                    {
+                        Title = "Import Fitting",
+                        AllowMultiple = false,
+                        FileTypeFilter = new[]
+                        {
+                            new FilePickerFileType("Fitting Files") { Patterns = new[] { "*.txt", "*.xml", "*.clf", "*.fit" } },
+                            new FilePickerFileType("All Files") { Patterns = new[] { "*" } },
+                        }
+                    });
+
+                    if (files.Count == 0) return;
+
+                    await using var stream = await files[0].OpenReadAsync();
+                    using var reader = new System.IO.StreamReader(stream);
+                    string fitText = await reader.ReadToEndAsync();
+                    await ImportFitFromText(fitText);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Import from file failed: {ex.Message}");
+                }
+            };
+            menu.Items.Add(fileItem);
+
+            btn.ContextMenu = menu;
+            menu.Open(btn);
+        }
+
+        private async System.Threading.Tasks.Task ImportFitFromText(string fitText)
+        {
+            if (_viewModel?.Plan == null || string.IsNullOrWhiteSpace(fitText))
+                return;
+
+            if (!LoadoutHelper.IsLoadout(fitText, out LoadoutFormat format))
+            {
+                System.Diagnostics.Debug.WriteLine("Text does not contain a valid fitting");
+                return;
             }
+
+            // Parse the fitting
+            ILoadoutInfo loadout = format switch
+            {
+                LoadoutFormat.EFT => LoadoutHelper.DeserializeEftFormat(fitText),
+                LoadoutFormat.XML => LoadoutHelper.DeserializeXmlFormat(fitText),
+                LoadoutFormat.DNA => LoadoutHelper.DeserializeDnaFormat(fitText),
+                LoadoutFormat.CLF => LoadoutHelper.DeserializeClfFormat(fitText),
+                _ => new LoadoutInfo()
+            };
+
+            if (loadout.Ship == null || loadout.Loadouts.Count == 0)
+                return;
+
+            // Collect all required skills from ship + modules
+            var requiredSkills = new Dictionary<StaticSkill, long>();
+
+            // Ship prerequisites
+            foreach (var prereq in loadout.Ship.Prerequisites)
+            {
+                if (requiredSkills.TryGetValue(prereq.Skill, out long existing))
+                    requiredSkills[prereq.Skill] = Math.Max(existing, prereq.Level);
+                else
+                    requiredSkills[prereq.Skill] = prereq.Level;
+            }
+
+            // Module/item prerequisites
+            foreach (var fit in loadout.Loadouts)
+            {
+                foreach (var item in fit.Items)
+                {
+                    foreach (var prereq in item.Prerequisites)
+                    {
+                        if (requiredSkills.TryGetValue(prereq.Skill, out long existing))
+                            requiredSkills[prereq.Skill] = Math.Max(existing, prereq.Level);
+                        else
+                            requiredSkills[prereq.Skill] = prereq.Level;
+                    }
+                }
+            }
+
+            // Add all required skills to the plan
+            var skillsToAdd = requiredSkills
+                .Select(kv => new StaticSkillLevel(kv.Key, kv.Value))
+                .ToList();
+
+            if (skillsToAdd.Count == 0) return;
+
+            string fitName = loadout.Loadouts.Count > 0
+                ? loadout.Loadouts[0].Name
+                : loadout.Ship.Name;
+
+            var op = _viewModel.Plan.TryAddSet(skillsToAdd, $"Fit: {fitName}");
+            op.PerformAddition(PlanEntry.DefaultPriority);
+
+            _viewModel.UpdateDisplayPlan();
+            _unifiedView?.SetViewModel(_viewModel);
+            UpdateStatusBar();
+        }
+
+        private void OnClearPlan(object? sender, RoutedEventArgs e)
+        {
+            if (_viewModel?.Plan == null || _viewModel.Plan.Count == 0) return;
+
+            // Remove all entries via TryRemoveSet (handles cleanup properly)
+            var allEntries = _viewModel.Plan.ToArray();
+            var op = _viewModel.Plan.TryRemoveSet(allEntries);
+            op.Perform();
+
+            _viewModel.UpdateDisplayPlan();
+            _unifiedView?.SetViewModel(_viewModel);
+            UpdateStatusBar();
         }
 
         internal void UpdateStatusBar()

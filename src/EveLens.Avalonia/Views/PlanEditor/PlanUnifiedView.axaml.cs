@@ -413,17 +413,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         item.IsRecentlyMoved = true;
                 }
                 _recentlyMovedKeys = new();
-
-                var itemsRef = displayItems;
-                global::Avalonia.Threading.DispatcherTimer.RunOnce(() =>
-                {
-                    if (itemsRef != null)
-                    {
-                        foreach (var item in itemsRef.OfType<PlanEntryDisplayItem>())
-                            item.IsRecentlyMoved = false;
-                        RebuildItemsControlFromDisplayItems(itemsRef);
-                    }
-                }, TimeSpan.FromSeconds(1.5));
             }
 
             // Highlight newly-added skills
@@ -435,20 +424,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     string key = $"{item.Entry.Skill.ID}_{item.Entry.Level}";
                     if (!_previousEntryKeys.Contains(key))
                         item.IsNewlyAdded = true;
-                }
-
-                if (entryItems.Any(i => i.IsNewlyAdded))
-                {
-                    var itemsRef = displayItems;
-                    global::Avalonia.Threading.DispatcherTimer.RunOnce(() =>
-                    {
-                        if (itemsRef != null)
-                        {
-                            foreach (var item in itemsRef.OfType<PlanEntryDisplayItem>())
-                                item.IsNewlyAdded = false;
-                            RebuildItemsControlFromDisplayItems(itemsRef);
-                        }
-                    }, TimeSpan.FromSeconds(2));
                 }
             }
             _previousEntryKeys = newKeys;
@@ -681,11 +656,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             bool isOmega = item.Entry.OmegaRequired;
 
+            var normalBg = item.RowBackground;
+            var hoverBg = new SolidColorBrush(Color.Parse("#FF252540"));
+
             var border = new Border
             {
                 Padding = new Thickness(0, 3),
-                Background = item.RowBackground,
+                Background = normalBg,
+                Cursor = new Cursor(StandardCursorType.Hand),
             };
+
+            border.PointerEntered += (_, _) => border.Background = hoverBg;
+            border.PointerExited += (_, _) => border.Background = normalBg;
 
             // Context menu on the skill row
             border.ContextMenu = BuildSkillContextMenu(item);
@@ -750,24 +732,47 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 nameStack.Children.Add(bookBadge);
             }
 
-            // Omega indicator
+            // Omega indicator — subtle if character is already Omega
+            bool isCharOmega = _viewModel?.Character is Character c
+                && c.EffectiveCharacterStatus == AccountStatus.Omega;
+
             if (isOmega)
             {
-                nameStack.Children.Add(new Border
+                if (isCharOmega)
                 {
-                    Background = new SolidColorBrush(Color.Parse("#20FFD54F")),
-                    CornerRadius = new CornerRadius(4),
-                    Padding = new Thickness(3, 0),
-                    Margin = new Thickness(0, 0, 4, 0),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Child = new TextBlock
+                    // Already Omega — subtle gray badge, no alarm color
+                    var omegaBadge = new TextBlock
                     {
                         Text = "\u03A9",
-                        FontSize = 10,
-                        FontWeight = FontWeight.Bold,
-                        Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
-                    }
-                });
+                        FontSize = 9,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 0, 4, 0),
+                    };
+                    ToolTip.SetTip(omegaBadge, "Omega skill \u2014 your account is Omega");
+                    nameStack.Children.Add(omegaBadge);
+                }
+                else
+                {
+                    // Alpha account — highlight that Omega is needed
+                    var omegaBadge = new Border
+                    {
+                        Background = new SolidColorBrush(Color.Parse("#20FFD54F")),
+                        CornerRadius = new CornerRadius(4),
+                        Padding = new Thickness(3, 0),
+                        Margin = new Thickness(0, 0, 4, 0),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Child = new TextBlock
+                        {
+                            Text = "\u03A9",
+                            FontSize = 10,
+                            FontWeight = FontWeight.Bold,
+                            Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
+                        }
+                    };
+                    ToolTip.SetTip(omegaBadge, "Requires Omega clone");
+                    nameStack.Children.Add(omegaBadge);
+                }
             }
 
             nameStack.Children.Add(new TextBlock
@@ -775,7 +780,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 Text = item.SkillName,
                 FontSize = 11,
                 FontWeight = FontWeight.SemiBold,
-                Foreground = isOmega
+                Foreground = isOmega && !isCharOmega
                     ? new SolidColorBrush(Color.Parse("#FFFFD54F"))
                     : new SolidColorBrush(Color.Parse("#FFF0F0F0")),
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -948,10 +953,48 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var menu = new ContextMenu();
 
             var planToMenu = new MenuItem { Header = "Plan to Level" };
+            int currentLevel = (int)item.Entry.Level;
             for (int lvl = 1; lvl <= 5; lvl++)
             {
-                var mi = new MenuItem { Header = $"Level {RomanNumeral(lvl)}", Tag = lvl.ToString() };
-                mi.Click += OnPlanToLevel;
+                int targetLevel = lvl;
+                var mi = new MenuItem
+                {
+                    Header = $"Level {RomanNumeral(lvl)}",
+                    IsEnabled = lvl != currentLevel,
+                };
+                mi.Click += (_, _) =>
+                {
+                    if (_viewModel?.Plan == null) return;
+                    var plan = _viewModel.Plan;
+                    int plannedLevel = plan.GetPlannedLevel(item.Entry.Skill);
+
+                    if (targetLevel >= plannedLevel)
+                    {
+                        // Adding higher levels — PlanTo handles prerequisites
+                        plan.PlanTo(item.Entry.Skill, targetLevel);
+                    }
+                    else
+                    {
+                        // Lowering — collect entries above target and cascade remove
+                        var entriesToRemove = new List<PlanEntry>();
+                        for (int i = plannedLevel; i > targetLevel; i--)
+                        {
+                            var entry = plan.GetEntry(item.Entry.Skill, i);
+                            if (entry != null)
+                                entriesToRemove.Add(entry);
+                        }
+                        if (entriesToRemove.Count > 0)
+                        {
+                            var op = plan.TryRemoveSet(entriesToRemove);
+                            op.Perform();
+                        }
+                    }
+
+                    _viewModel.UpdateDisplayPlan();
+                    Refresh();
+                    BuildSidebarContent();
+                    UpdateParentStatusBar();
+                };
                 planToMenu.Items.Add(mi);
             }
             menu.Items.Add(planToMenu);
@@ -982,17 +1025,39 @@ namespace EveLens.Avalonia.Views.PlanEditor
             menu.Items.Add(new Separator());
 
             bool hasRemap = item.Entry.Remapping != null;
+            // Count existing remap points in the plan and check against available remaps
+            int existingRemapCount = _viewModel?.Plan?.Count(e => e.Remapping != null) ?? 0;
+            int availableRemaps = 0;
+            bool canRemapTimed = false;
+            if (_viewModel?.Character is Character charForRemap)
+            {
+                availableRemaps = charForRemap.AvailableReMaps;
+                canRemapTimed = charForRemap.LastReMapTimed == DateTime.MinValue
+                    || DateTime.UtcNow >= charForRemap.LastReMapTimed.AddDays(365);
+            }
+            int totalRemapsAllowed = availableRemaps + (canRemapTimed ? 1 : 0);
+            bool canInsertRemap = hasRemap || existingRemapCount < totalRemapsAllowed;
+
             var remapItem = new MenuItem
             {
-                Header = hasRemap ? "Remove Remap Point" : "Insert Remap Point"
+                Header = hasRemap ? "Remove Remap Point" : "Insert Remap Point",
+                IsEnabled = canInsertRemap,
             };
+            if (!canInsertRemap)
+                ToolTip.SetTip(remapItem, $"No remaps available ({existingRemapCount} used of {totalRemapsAllowed})");
             remapItem.Click += (_, _) =>
             {
+                if (_viewModel?.Plan == null) return;
+                // Set on the ORIGINAL plan entry, not the display copy
+                var planEntry = _viewModel.Plan.GetEntry(item.Entry.Skill, item.Entry.Level);
+                if (planEntry == null) return;
+
                 if (hasRemap)
-                    item.Entry.Remapping = null!;
+                    planEntry.Remapping = null!;
                 else
-                    item.Entry.Remapping = new RemappingPoint();
-                _viewModel?.UpdateDisplayPlan();
+                    planEntry.Remapping = new RemappingPoint();
+
+                _viewModel.UpdateDisplayPlan();
                 Refresh();
                 BuildSidebarContent();
             };
@@ -1089,8 +1154,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             AddTab.IsChecked = _activeSidebarTab == "Add";
 
             // Auto-run optimization when switching to Optimize tab
+            // Always clear stale results so the plan is re-analyzed with current state
             if (_activeSidebarTab == "Optimize")
             {
+                _optimizerVm?.ClearResults();
                 EnsureOptimizationRun();
             }
 
@@ -2966,42 +3033,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
         #endregion
 
         #region Context Menu Actions
-
-        private void OnPlanToLevel(object? sender, RoutedEventArgs e)
-        {
-            if (sender is not MenuItem menuItem) return;
-            if (menuItem.Tag is not string tagStr || !int.TryParse(tagStr, out int level)) return;
-
-            // Find the context menu's associated item
-            var contextMenu = menuItem.Parent as MenuItem;
-            var parentMenu = contextMenu?.Parent as ContextMenu;
-            var row = parentMenu?.PlacementTarget as Control;
-            var item = FindDisplayItemFromControl(row);
-            if (item == null || _viewModel?.Plan == null) return;
-
-            _viewModel.Plan.PlanTo(item.Entry.Skill, level);
-            _viewModel.UpdateDisplayPlan();
-            Refresh();
-            BuildSidebarContent();
-            UpdateParentStatusBar();
-        }
-
-        private PlanEntryDisplayItem? FindDisplayItemFromControl(Control? control)
-        {
-            // Walk up to find a Border with a ContextMenu whose items lead to a PlanEntryDisplayItem
-            // In our current design, the context menu is on the border, and we pass the item via DataContext
-            // Actually, in BuildSkillRow we set context menu on border. The border's child grid has column 0
-            // with name panel. Let's find from _currentEntryItems based on the border's position.
-            if (control == null || _currentDisplayItems == null) return null;
-
-            // The control is the border that hosts the context menu
-            int index = PlanItemsControl.ItemsSource?.Cast<Control>().ToList().IndexOf(control) ?? -1;
-            if (index >= 0 && index < _currentDisplayItems.Count)
-            {
-                return _currentDisplayItems[index] as PlanEntryDisplayItem;
-            }
-            return null;
-        }
 
         private void OnMoveToTopItem(PlanEntryDisplayItem item)
         {

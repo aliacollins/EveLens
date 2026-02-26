@@ -69,8 +69,14 @@
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
-                <Button DockPanel.Dock="Right" Content="Export" FontSize="11"
-                        Padding="10,4" CornerRadius="12" Click="OnExport" />
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                    <Button Content="Clear Plan" FontSize="11"
+                            Padding="10,4" CornerRadius="12" Click="OnClearPlan" />
+                    <Button Content="Import Fit ▾" FontSize="11"
+                            Padding="10,4" CornerRadius="12" Click="OnImportFitMenu" />
+                    <Button Content="Export ▾" FontSize="11"
+                            Padding="10,4" CornerRadius="12" Click="OnExportMenu" />
+                </StackPanel>
                 <TextBlock x:Name="StatusText" FontSize="11"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            VerticalAlignment="Center" />
