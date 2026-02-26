@@ -91,7 +91,19 @@ chmod +x "$APP_BUNDLE/Contents/MacOS/EveLens"
 echo "Creating distributable zip..."
 rm -f "$OUTPUT"
 cd "$REPO_ROOT/publish"
-zip -ry "$(basename "$OUTPUT")" "EveLens.app/" >/dev/null
+if command -v zip &>/dev/null; then
+    zip -ry "$(basename "$OUTPUT")" "EveLens.app/" >/dev/null
+else
+    # Fallback: use Python zipfile when zip is not installed (common in minimal WSL)
+    python3 -c "
+import zipfile, os
+with zipfile.ZipFile('$(basename "$OUTPUT")', 'w', zipfile.ZIP_DEFLATED) as zf:
+    for root, dirs, files in os.walk('EveLens.app'):
+        for f in files:
+            fp = os.path.join(root, f)
+            zf.write(fp)
+"
+fi
 cd "$REPO_ROOT"
 
 # Cleanup
