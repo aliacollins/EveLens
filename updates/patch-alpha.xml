@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-26</date>
+      <version>1.0.0.3</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.3
+
+Merge Plan Editor sidebar: combine Summary + Optimize into unified Plan tab with inline optimization, remap context menu, and manual attribute dialog]]></message>
+    </release>
+    <release>
+      <date>2026-02-26</date>
       <version>1.0.0.2</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
