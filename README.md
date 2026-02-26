@@ -5,7 +5,7 @@
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
 [![Cross-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-brightgreen.svg)]()
-[![ALPHA](https://img.shields.io/badge/channel-ALPHA-red.svg)]()
+[![ALPHA](https://img.shields.io/badge/branch-ALPHA-red.svg)]()
 
 ---
 
@@ -121,7 +121,7 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 |---------|----------|----------|
 | Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
 | Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evelens/releases/tag/beta) |
-| **Alpha** (you are here) | Experimental features | [Alpha Release](https://github.com/aliacollins/evelens/releases/tag/alpha) |
+| **Alpha** | Experimental features(you are here) | [Alpha Release](https://github.com/aliacollins/evelens/releases/tag/alpha) |
 
 ---
 
