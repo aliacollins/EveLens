@@ -19,17 +19,28 @@ EveLens is a character monitoring and skill planning tool for EVE Online. It run
 
 ## Downloads
 
-| Platform | Download | Requirements |
-|----------|----------|-------------|
-| **Windows (Installer)** | [EveLens-install.exe](https://github.com/aliacollins/evelens/releases/tag/alpha) | Installs .NET 8 automatically |
-| **Windows (Portable)** | [ZIP](https://github.com/aliacollins/evelens/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux x64** | [ZIP](https://github.com/aliacollins/evelens/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS Apple Silicon** | [ZIP](https://github.com/aliacollins/evelens/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+All downloads: [Alpha Release](https://github.com/aliacollins/evelens/releases/tag/alpha)
 
-**Linux/macOS:** Extract the ZIP, then run:
+| Platform | Format | Requirements |
+|----------|--------|-------------|
+| **Windows (Installer)** | `.exe` installer | Installs .NET 8 automatically |
+| **Windows (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux (AppImage)** | `.AppImage` | None — just download and run |
+| **Linux (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS (App)** | `.app.zip` | None — extract, drag to Applications |
+| **macOS (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+
+### Quick Start
+
+**Windows:** Run the installer.
+
+**Linux:**
 ```bash
-dotnet "EveLens.dll"
+chmod +x EveLens-*.AppImage
+./EveLens-*.AppImage
 ```
+
+**macOS:** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
 
 ---
 
@@ -74,6 +85,7 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 ## Alpha Changelog (Cumulative)
 
 - Cross-platform: Windows, Linux, macOS from single codebase
+- **Native installers:** Linux AppImage and macOS .app bundle — no .NET install required
 - 6 EVE-faction dark themes with runtime switching
 - ESI scope selector with dynamic revocation handling
 - Skill constellation GPU-accelerated visualization
@@ -95,6 +107,7 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 ## Features Being Tested
 
 - Cross-platform stability on Linux and macOS
+- Linux AppImage and macOS .app bundle packaging
 - Theme switching across all views
 - ESI scope revocation and cache invalidation
 - Skill constellation performance with large skill sets
