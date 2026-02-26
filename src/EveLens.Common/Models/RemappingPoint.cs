@@ -69,6 +69,20 @@ namespace EveLens.Common.Models
         public long this[EveAttribute attrib] => m_attributes[(int)attrib];
 
         /// <summary>
+        /// Sets the base attributes directly and marks the point as up to date.
+        /// </summary>
+        internal void SetAttributes(int intelligence, int perception, int charisma, int willpower, int memory)
+        {
+            m_attributes[(int)EveAttribute.Intelligence] = intelligence;
+            m_attributes[(int)EveAttribute.Perception] = perception;
+            m_attributes[(int)EveAttribute.Charisma] = charisma;
+            m_attributes[(int)EveAttribute.Willpower] = willpower;
+            m_attributes[(int)EveAttribute.Memory] = memory;
+            Status = RemappingPointStatus.UpToDate;
+            m_description = $"INT {intelligence}  PER {perception}  CHA {charisma}  WIL {willpower}  MEM {memory}";
+        }
+
+        /// <summary>
         /// Gets a short string representation of the point ("i5 p7 c8 w9 m5").
         /// </summary>
         /// <returns></returns>

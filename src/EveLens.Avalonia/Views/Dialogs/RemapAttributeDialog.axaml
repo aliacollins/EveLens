@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EveLens.Avalonia.Views.Dialogs.RemapAttributeDialog"
+        Title="Set Remap Attributes"
+        Width="340" Height="360"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        CanResize="False">
+
+    <DockPanel Margin="16">
+        <!-- Title -->
+        <TextBlock DockPanel.Dock="Top" Text="Neural Remap"
+                   FontSize="15" FontWeight="Bold"
+                   Foreground="{StaticResource EveAccentPrimaryBrush}"
+                   Margin="0,0,0,4" />
+        <TextBlock DockPanel.Dock="Top" x:Name="SubtitleText"
+                   FontSize="11"
+                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                   Margin="0,0,0,12" />
+
+        <!-- Buttons at bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button x:Name="MatchBtn" FontSize="11" Padding="10,5"
+                    CornerRadius="12" Click="OnMatchClick" />
+            <Button Content="Cancel" FontSize="11" Padding="10,5"
+                    CornerRadius="12" Click="OnCancelClick" />
+            <Button x:Name="ApplyBtn" Content="Apply" FontSize="11" Padding="10,5"
+                    CornerRadius="12" Click="OnApplyClick" />
+        </StackPanel>
+
+        <!-- Remaining points -->
+        <TextBlock DockPanel.Dock="Bottom" x:Name="RemainingText"
+                   FontSize="11" Margin="0,8,0,0" />
+
+        <!-- Attribute rows -->
+        <StackPanel x:Name="AttrPanel" Spacing="8" Margin="0,4,0,0" />
+    </DockPanel>
+</Window>
