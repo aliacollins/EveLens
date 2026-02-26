@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -582,7 +583,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             try
             {
                 string path = AppServices.ApplicationPaths.DataDirectory;
-                Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    Process.Start(new ProcessStartInfo("open", path) { UseShellExecute = false });
+                else
+                    Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
             }
             catch
             {

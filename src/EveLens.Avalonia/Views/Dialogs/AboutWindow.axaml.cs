@@ -11,6 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using EveLens.Common;
 using EveLens.Common.Services;
 
 namespace EveLens.Avalonia.Views.Dialogs
@@ -437,7 +438,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             try
             {
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+                Util.OpenURL(new Uri(url));
             }
             catch
             {

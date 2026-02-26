@@ -9,6 +9,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using EveLens.Common;
 using EveLens.Common.CustomEventArgs;
 
 namespace EveLens.Avalonia.Views.Dialogs
@@ -119,10 +120,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 if (_args?.InstallerUrl != null)
                 {
-                    Process.Start(new ProcessStartInfo(_args.InstallerUrl.ToString())
-                    {
-                        UseShellExecute = true
-                    });
+                    Util.OpenURL(_args.InstallerUrl);
                 }
             }
             catch (Exception ex)

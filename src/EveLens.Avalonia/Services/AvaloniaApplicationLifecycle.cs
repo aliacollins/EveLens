@@ -40,7 +40,7 @@ namespace EveLens.Avalonia.Services
                 Process.Start(new ProcessStartInfo(exePath)
                 {
                     Arguments = "--restart-delay",
-                    UseShellExecute = true
+                    UseShellExecute = false
                 });
             }
 

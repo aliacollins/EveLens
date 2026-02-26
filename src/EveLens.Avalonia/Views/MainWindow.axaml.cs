@@ -25,6 +25,7 @@ using EveLens.Avalonia.ViewModels;
 using EveLens.Avalonia.Views.CharacterMonitor;
 using EveLens.Avalonia.Views.Dialogs;
 using EveLens.Avalonia.Views.PlanEditor;
+using EveLens.Common;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
@@ -1643,7 +1644,7 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                Process.Start(new ProcessStartInfo("https://evelens.dev") { UseShellExecute = true });
+                Util.OpenURL(new Uri("https://evelens.dev"));
             }
             catch (Exception ex)
             {
@@ -1655,7 +1656,7 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                Process.Start(new ProcessStartInfo("https://github.com/aliacollins/evelens/issues") { UseShellExecute = true });
+                Util.OpenURL(new Uri("https://github.com/aliacollins/evelens/issues"));
             }
             catch (Exception ex)
             {
