@@ -39,6 +39,11 @@ if ($LASTEXITCODE -ne 0) { Write-Host "macOS build failed!" -ForegroundColor Red
 Write-Host "All portable builds completed." -ForegroundColor Green
 
 # Build native installers (self-contained)
+# Note: WSL commands emit to stderr (tool banners, warnings) which PowerShell
+# treats as errors when ErrorActionPreference=Stop. Temporarily relax this.
+$savedEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+
 Write-Host "Building Linux AppImage (self-contained)..." -ForegroundColor Yellow
 $appImageResult = wsl bash ./scripts/build-appimage.sh $Version 2>&1
 $hasAppImage = Test-Path "publish\EveLens-$Version-linux-x64.AppImage"
@@ -54,6 +59,8 @@ if (-not $hasMacApp) {
     Write-Host "Warning: macOS app bundle build failed. Continuing without it." -ForegroundColor Yellow
     Write-Host $macAppResult -ForegroundColor Gray
 }
+
+$ErrorActionPreference = $savedEAP
 
 Write-Host "All platforms built successfully." -ForegroundColor Green
 
