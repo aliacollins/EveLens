@@ -1,0 +1,85 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using EveLens.Common.Extensions;
+using System.Runtime.Serialization;
+using EveLens.Common.Enumerations.CCPAPI;
+using EveLens.Common.Serialization.Eve;
+using EveLens.Common.Service;
+
+namespace EveLens.Common.Serialization.Esi
+{
+    [DataContract]
+    public sealed class EsiNotificationsListItem
+    {
+        private CCPAPIContactType senderType;
+        private DateTime sentDate;
+
+        public EsiNotificationsListItem()
+        {
+            senderType = CCPAPIContactType.Other;
+            sentDate = DateTime.MinValue;
+        }
+
+        [DataMember(Name = "notification_id")]
+        public long NotificationID { get; set; }
+
+        [DataMember(Name = "type")]
+        public string? Type { get; set; }
+
+        [DataMember(Name = "sender_id")]
+        public int SenderID { get; set; }
+
+        [DataMember(Name = "is_read", IsRequired = false)]
+        public bool Read { get; set; }
+
+        [DataMember(Name = "text", EmitDefaultValue = false, IsRequired = false)]
+        public string? NotificationText { get; set; }
+
+        [DataMember(Name = "sender_type")]
+        private string SenderTypeJson
+        {
+            get
+            {
+                return senderType.ToString().ToLower();
+            }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                    Enum.TryParse(value, true, out senderType);
+            }
+        }
+
+        [IgnoreDataMember]
+        public CCPAPIContactType SenderType
+        {
+            get
+            {
+                return senderType;
+            }
+        }
+        
+        [DataMember(Name = "timestamp")]
+        private string SentDateJson
+        {
+            get { return sentDate.DateTimeToTimeString(); }
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                    sentDate = value.TimeStringToDateTime();
+            }
+        }
+        
+        [IgnoreDataMember]
+        public DateTime SentDate
+        {
+            get
+            {
+                return sentDate;
+            }
+        }
+    }
+}

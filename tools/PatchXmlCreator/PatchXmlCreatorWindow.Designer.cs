@@ -1,4 +1,4 @@
-namespace EVEMon.PatchXmlCreator
+namespace EveLens.PatchXmlCreator
 {
     partial class PatchXmlCreatorWindow
     {
@@ -30,10 +30,10 @@ namespace EVEMon.PatchXmlCreator
         {
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnCreate = new System.Windows.Forms.Button();
-            this.lblEVEMonReleaseDate = new System.Windows.Forms.Label();
+            this.lblEveLensReleaseDate = new System.Windows.Forms.Label();
             this.lblVersion = new System.Windows.Forms.Label();
             this.dtpRelease = new System.Windows.Forms.DateTimePicker();
-            this.lblEVEMonVersion = new System.Windows.Forms.Label();
+            this.lblEveLensVersion = new System.Windows.Forms.Label();
             this.gbRelease = new System.Windows.Forms.GroupBox();
             this.btnInstallerClear = new System.Windows.Forms.Button();
             this.btnLoadReleaseInfo = new System.Windows.Forms.Button();
@@ -49,7 +49,7 @@ namespace EVEMon.PatchXmlCreator
             this.lblExpVersion = new System.Windows.Forms.Label();
             this.tbExpVersion = new System.Windows.Forms.TextBox();
             this.btnDatafilesClear = new System.Windows.Forms.Button();
-            this.datafileControl = new EVEMon.PatchXmlCreator.DatafileControl();
+            this.datafileControl = new EveLens.PatchXmlCreator.DatafileControl();
             this.btnLoadDatafileInfo = new System.Windows.Forms.Button();
             this.lblRevision = new System.Windows.Forms.Label();
             this.tbExpRevision = new System.Windows.Forms.TextBox();
@@ -93,15 +93,15 @@ namespace EVEMon.PatchXmlCreator
             this.btnCreate.UseVisualStyleBackColor = true;
             this.btnCreate.Click += new System.EventHandler(this.btnCreate_Click);
             // 
-            // lblEVEMonReleaseDate
+            // lblEveLensReleaseDate
             // 
-            this.lblEVEMonReleaseDate.AutoSize = true;
-            this.lblEVEMonReleaseDate.Location = new System.Drawing.Point(5, 20);
-            this.lblEVEMonReleaseDate.Name = "lblEVEMonReleaseDate";
-            this.lblEVEMonReleaseDate.Size = new System.Drawing.Size(78, 13);
-            this.lblEVEMonReleaseDate.TabIndex = 2;
-            this.lblEVEMonReleaseDate.Text = "Release Date :";
-            this.lblEVEMonReleaseDate.Click += new System.EventHandler(this.OnClick);
+            this.lblEveLensReleaseDate.AutoSize = true;
+            this.lblEveLensReleaseDate.Location = new System.Drawing.Point(5, 20);
+            this.lblEveLensReleaseDate.Name = "lblEveLensReleaseDate";
+            this.lblEveLensReleaseDate.Size = new System.Drawing.Size(78, 13);
+            this.lblEveLensReleaseDate.TabIndex = 2;
+            this.lblEveLensReleaseDate.Text = "Release Date :";
+            this.lblEveLensReleaseDate.Click += new System.EventHandler(this.OnClick);
             // 
             // lblVersion
             // 
@@ -125,18 +125,18 @@ namespace EVEMon.PatchXmlCreator
             this.dtpRelease.Value = new System.DateTime(2010, 1, 1, 0, 0, 0, 0);
             this.dtpRelease.MouseCaptureChanged += new System.EventHandler(this.OnClick);
             // 
-            // lblEVEMonVersion
+            // lblEveLensVersion
             // 
-            this.lblEVEMonVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblEVEMonVersion.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.lblEVEMonVersion.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.lblEVEMonVersion.Cursor = System.Windows.Forms.Cursors.Default;
-            this.lblEVEMonVersion.Location = new System.Drawing.Point(313, 16);
-            this.lblEVEMonVersion.Name = "lblEVEMonVersion";
-            this.lblEVEMonVersion.Size = new System.Drawing.Size(76, 21);
-            this.lblEVEMonVersion.TabIndex = 5;
-            this.lblEVEMonVersion.Text = "1.0.0.0";
-            this.lblEVEMonVersion.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblEveLensVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblEveLensVersion.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.lblEveLensVersion.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.lblEveLensVersion.Cursor = System.Windows.Forms.Cursors.Default;
+            this.lblEveLensVersion.Location = new System.Drawing.Point(313, 16);
+            this.lblEveLensVersion.Name = "lblEveLensVersion";
+            this.lblEveLensVersion.Size = new System.Drawing.Size(76, 21);
+            this.lblEveLensVersion.TabIndex = 5;
+            this.lblEveLensVersion.Text = "1.0.0.0";
+            this.lblEveLensVersion.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // gbRelease
             // 
@@ -148,8 +148,8 @@ namespace EVEMon.PatchXmlCreator
             this.gbRelease.Controls.Add(this.lblInstallerUrl);
             this.gbRelease.Controls.Add(this.rtbTopicUrl);
             this.gbRelease.Controls.Add(this.lblForumUrl);
-            this.gbRelease.Controls.Add(this.lblEVEMonReleaseDate);
-            this.gbRelease.Controls.Add(this.lblEVEMonVersion);
+            this.gbRelease.Controls.Add(this.lblEveLensReleaseDate);
+            this.gbRelease.Controls.Add(this.lblEveLensVersion);
             this.gbRelease.Controls.Add(this.lblVersion);
             this.gbRelease.Controls.Add(this.dtpRelease);
             this.gbRelease.Controls.Add(this.lblMD5Sum);
@@ -499,9 +499,9 @@ namespace EVEMon.PatchXmlCreator
         private System.Windows.Forms.Button btPaste;
         private System.Windows.Forms.Button btnLoadReleaseInfo;
         private System.Windows.Forms.Button btnLoadDatafileInfo;
-        private System.Windows.Forms.Label lblEVEMonReleaseDate;
+        private System.Windows.Forms.Label lblEveLensReleaseDate;
         private System.Windows.Forms.Label lblVersion;
-        private System.Windows.Forms.Label lblEVEMonVersion;
+        private System.Windows.Forms.Label lblEveLensVersion;
         private System.Windows.Forms.Label lblForumUrl;
         private System.Windows.Forms.Label lblInstallerUrl;
         private System.Windows.Forms.Label lblMessage;

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
-using EVEMon.XmlGenerator.Interfaces;
+using EveLens.XmlGenerator.Interfaces;
 
-namespace EVEMon.XmlGenerator.Collections
+namespace EveLens.XmlGenerator.Collections
 {
     /// <summary>
     /// A collection of indexed items.

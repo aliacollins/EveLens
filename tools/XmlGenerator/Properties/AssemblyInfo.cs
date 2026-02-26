@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EVEMon Development Team")]
-[assembly: AssemblyProduct("EVEMonXmlGenerator")]
+[assembly: AssemblyProduct("EveLensXmlGenerator")]
 [assembly: AssemblyCopyright("Copyright © 2009-2016, EVEMon Development Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

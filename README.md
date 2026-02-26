@@ -1,4 +1,4 @@
-# EVEMon NexT
+# EveLens
 
 **Character Intelligence for EVE Online**
 
@@ -9,11 +9,11 @@
 
 ---
 
-## What Is EVEMon NexT?
+## What Is EveLens?
 
-EVEMon NexT is the next generation of EVEMon — the character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
+EveLens is the next generation of EVEMon — the character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
 
-This is a complete rebuild. The legacy WinForms application (EVEMon 5.x) has been retired. This repository is now EVEMon NexT only.
+This is a complete rebuild. The legacy WinForms application (EVEMon 5.x) has been retired. This repository is now EveLens only.
 
 **Current Version: 1.0.0-alpha.1**
 
@@ -23,14 +23,14 @@ This is a complete rebuild. The legacy WinForms application (EVEMon 5.x) has bee
 
 | Platform | Download | Requirements |
 |----------|----------|-------------|
-| **Windows (Installer)** | [EVEMon-install.exe](https://github.com/aliacollins/evemon/releases/tag/alpha) | Installs .NET 8 automatically |
-| **Windows (Portable)** | [ZIP](https://github.com/aliacollins/evemon/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux x64** | [ZIP](https://github.com/aliacollins/evemon/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS Apple Silicon** | [ZIP](https://github.com/aliacollins/evemon/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Windows (Installer)** | [EveLens-install.exe](https://github.com/aliacollins/evelens/releases/tag/alpha) | Installs .NET 8 automatically |
+| **Windows (Portable)** | [ZIP](https://github.com/aliacollins/evelens/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux x64** | [ZIP](https://github.com/aliacollins/evelens/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS Apple Silicon** | [ZIP](https://github.com/aliacollins/evelens/releases/tag/alpha) | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
 **Linux/macOS:** Extract the ZIP, then run:
 ```bash
-dotnet "EVEMon NexT.dll"
+dotnet "EveLens.dll"
 ```
 
 ---
@@ -38,7 +38,7 @@ dotnet "EVEMon NexT.dll"
 ## Features
 
 ### Cross-Platform
-EVEMon NexT runs natively on Windows, Linux, and macOS from a single codebase. System tray, notifications, clipboard, and dialogs all use native platform APIs. Same features, same UI, same updates on every platform.
+EveLens runs natively on Windows, Linux, and macOS from a single codebase. System tray, notifications, clipboard, and dialogs all use native platform APIs. Same features, same UI, same updates on every platform.
 
 ### 6 Dark Themes
 Six color palettes inspired by New Eden's empires. Every control respects the active theme.
@@ -51,7 +51,7 @@ Six color palettes inspired by New Eden's empires. Every control respects the ac
 - **Midnight** — deep purples
 
 ### ESI Scope Control
-You choose what data EVEMon can access. Three presets (Full, Standard, Skill Planner Only) or custom selection from 16 feature categories. When you re-authenticate with fewer scopes, NexT automatically detects revoked permissions, clears stale data, and deletes disk caches for those endpoints.
+You choose what data EveLens can access. Three presets (Full, Standard, Skill Planner Only) or custom selection from 16 feature categories. When you re-authenticate with fewer scopes, EveLens automatically detects revoked permissions, clears stale data, and deletes disk caches for those endpoints.
 
 ### Skill Constellation
 GPU-accelerated interactive visualization of EVE's ~400-skill tree rendered as a star constellation. Skills as stars, prerequisites as connecting lines, skill groups as colored nebula clusters. Zoom, pan, search, click-to-inspect. Trained skills glow, training skills pulse.
@@ -108,15 +108,15 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evemon/releases/latest) |
-| Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evemon/releases/tag/beta) |
-| **Alpha** (you are here) | Experimental features | [Alpha Release](https://github.com/aliacollins/evemon/releases/tag/alpha) |
+| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| Beta | Pre-release testing | [Beta Release](https://github.com/aliacollins/evelens/releases/tag/beta) |
+| **Alpha** (you are here) | Experimental features | [Alpha Release](https://github.com/aliacollins/evelens/releases/tag/alpha) |
 
 ---
 
 ## Report Issues
 
-Found a bug? Please report it: [GitHub Issues](https://github.com/aliacollins/evemon/issues)
+Found a bug? Please report it: [GitHub Issues](https://github.com/aliacollins/evelens/issues)
 
 ---
 
@@ -128,16 +128,15 @@ Found a bug? Please report it: [GitHub Issues](https://github.com/aliacollins/ev
 
 ## Credits
 
-EVEMon was originally created by the **EVEMonDevTeam** (Jimi Charalampidis and 57+ contributors, 2006-2015) and maintained by **Peter Han** (2015-2021). Their work over 20 years built the foundation that EVEMon NexT stands on.
+EVEMon was originally created by the **EVEMon Dev Team** (Jimi Charalampidis and 57+ contributors, 2006-2015) and maintained by **Peter Han** (2015-2021). Their work over 20 years built the foundation that EveLens stands on.
 
-- [Original EVEMonDevTeam](https://github.com/evemondevteam/)
+- [Original EVEMon Dev Team](https://github.com/evemondevteam/)
 - [Peter Han's fork](https://github.com/peterhaneve/evemon)
-- [Community fork (mgoeppner)](https://github.com/mgoeppner/evemon)
 
-I don't accept donations. If you want to support EVEMon, please donate to Peter Han or the original EVEMonDevTeam.
+I don't accept donations. If you want to support EveLens, please donate to Peter Han or the original EVEMon Dev Team.
 
 ---
 
 ## License
 
-GPL v2 — See [LICENSE](src/EVEMon.Common/Resources/License/gpl.txt)
+GPL v2 — See [LICENSE](src/EveLens.Common/Resources/License/gpl.txt)

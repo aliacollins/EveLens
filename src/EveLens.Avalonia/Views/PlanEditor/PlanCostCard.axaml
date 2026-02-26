@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EveLens.Avalonia.Views.PlanEditor.PlanCostCard">
+    <Border Background="{StaticResource EveBackgroundMediumBrush}"
+            CornerRadius="6" Padding="12,10" Margin="4">
+        <StackPanel Spacing="6">
+            <TextBlock Text="Cost" FontSize="10"
+                       Foreground="{StaticResource EveTextDisabledBrush}" />
+            <TextBlock x:Name="BooksCostText" FontSize="14" FontWeight="Bold"
+                       Foreground="{StaticResource EveSuccessGreenBrush}" />
+            <TextBlock x:Name="NotKnownCostText" FontSize="11"
+                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </StackPanel>
+    </Border>
+</UserControl>

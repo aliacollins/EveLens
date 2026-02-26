@@ -1,7 +1,7 @@
 {
-  "name": "evemon-report-webhook",
+  "name": "evelens-report-webhook",
   "version": "1.0.0",
-  "description": "Webhook that receives EVEMon error/diagnostic reports and creates GitHub issues",
+  "description": "Webhook that receives EveLens error/diagnostic reports and creates GitHub issues",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

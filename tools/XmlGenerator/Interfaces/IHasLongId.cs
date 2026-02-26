@@ -1,4 +1,4 @@
-﻿namespace EVEMon.XmlGenerator.Interfaces
+﻿namespace EveLens.XmlGenerator.Interfaces
 {
     /// <summary>
     /// Implementors have an ID attribute

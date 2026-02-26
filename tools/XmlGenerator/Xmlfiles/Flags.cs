@@ -1,12 +1,12 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using EVEMon.Common.Collections;
-using EVEMon.XmlGenerator.Providers;
-using EVEMon.XmlGenerator.Utils;
-using EVEMon.XmlGenerator.Xmlfiles.Serialization;
+using EveLens.Common.Collections;
+using EveLens.XmlGenerator.Providers;
+using EveLens.XmlGenerator.Utils;
+using EveLens.XmlGenerator.Xmlfiles.Serialization;
 
-namespace EVEMon.XmlGenerator.Xmlfiles
+namespace EveLens.XmlGenerator.Xmlfiles
 {
     public static class Flags
     {

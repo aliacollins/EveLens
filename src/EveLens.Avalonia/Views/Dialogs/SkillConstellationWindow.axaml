@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:EveLens.Avalonia.Controls"
+        x:Class="EveLens.Avalonia.Views.Dialogs.SkillConstellationWindow"
+        Title="Skill Constellation"
+        Width="1200" Height="800"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        Background="#06080D">
+
+    <Panel>
+        <!-- Constellation canvas (fills entire window) -->
+        <controls:ConstellationCanvas x:Name="Canvas" />
+
+        <!-- HUD: Top left — title + character info + search -->
+        <StackPanel Margin="24,20" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="8">
+            <StackPanel Spacing="4">
+                <TextBlock x:Name="TitleText" Text="SKILL CONSTELLATION"
+                           FontSize="15" FontWeight="SemiBold"
+                           Foreground="#E8A817" LetterSpacing="2" />
+                <TextBlock x:Name="CharInfoText" Text=""
+                           FontSize="11" Foreground="#484F58" />
+            </StackPanel>
+
+            <!-- Search bar -->
+            <Border Background="#200D1117" BorderBrush="#30FFFFFF" BorderThickness="1"
+                    CornerRadius="14" Padding="0" Width="260">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="&#x1F50D;"
+                               FontSize="12" VerticalAlignment="Center" Margin="10,0,6,0"
+                               Foreground="#484F58" />
+                    <Button x:Name="ClearSearchBtn" DockPanel.Dock="Right" Classes="ghost"
+                            Content="&#x2715;" FontSize="10" Padding="8,4" IsVisible="False"
+                            Foreground="#484F58" />
+                    <TextBox x:Name="SearchBox" Watermark="Search skills..."
+                             FontSize="11" Background="Transparent" BorderThickness="0"
+                             Foreground="#C9D1D9" Padding="2,6" />
+                </DockPanel>
+            </Border>
+
+            <!-- Search results dropdown -->
+            <Border x:Name="SearchResultsPanel" IsVisible="False"
+                    Background="#F00D1117" BorderBrush="#30FFFFFF" BorderThickness="1"
+                    CornerRadius="6" Padding="4" Width="260" MaxHeight="200">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="SearchResultsList" Spacing="1" />
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
+
+        <!-- HUD: Top right — legend -->
+        <StackPanel Margin="24,24" VerticalAlignment="Top" HorizontalAlignment="Right"
+                    Orientation="Horizontal" Spacing="16">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Border Width="8" Height="8" CornerRadius="4" Background="#E8A44A" />
+                <TextBlock Text="Trained" FontSize="10" Foreground="#484F58" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Border Width="6" Height="6" CornerRadius="3"
+                        Background="Transparent" BorderBrush="#30FFFFFF" BorderThickness="1" />
+                <TextBlock Text="Untrained" FontSize="10" Foreground="#484F58" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <Border Width="8" Height="8" CornerRadius="4" Background="#E8A44A"
+                        BoxShadow="0 0 8 0 #E8A44A" />
+                <TextBlock Text="Training" FontSize="10" Foreground="#484F58" />
+            </StackPanel>
+            <Button x:Name="ToggleLabelsBtn" Classes="ghost"
+                    Content="Show All Labels" FontSize="10" Padding="4,2" />
+        </StackPanel>
+
+        <!-- HUD: Bottom center — group chips -->
+        <ItemsControl x:Name="GroupChips"
+                      VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                      Margin="0,0,0,20">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="6" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+        </ItemsControl>
+
+        <!-- HUD: Bottom right — controls hint -->
+        <TextBlock Text="Scroll to zoom  ·  Drag to pan  ·  Click stars to inspect"
+                   FontSize="9" Foreground="#2D333B"
+                   VerticalAlignment="Bottom" HorizontalAlignment="Right"
+                   Margin="0,0,24,60" />
+
+        <!-- Detail panel (right side, shown when a node is selected) -->
+        <Border x:Name="DetailPanel" IsVisible="False"
+                VerticalAlignment="Top" HorizontalAlignment="Right"
+                Margin="0,80,24,0" Width="280"
+                Background="#E80D1117" BorderThickness="1" CornerRadius="8"
+                Padding="16">
+            <StackPanel Spacing="12">
+                <!-- Header -->
+                <DockPanel>
+                    <Button x:Name="CloseDetailBtn" DockPanel.Dock="Right" Classes="ghost"
+                            Content="×" FontSize="14" Padding="4,0" VerticalAlignment="Top" />
+                    <StackPanel Spacing="4">
+                        <TextBlock x:Name="DetailName" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="#F0F6FC" />
+                        <TextBlock x:Name="DetailGroup" FontSize="10" />
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Level bar -->
+                <StackPanel Spacing="5">
+                    <TextBlock Text="LEVEL" FontSize="10" Foreground="#484F58"
+                               LetterSpacing="1" />
+                    <StackPanel x:Name="LevelPips" Orientation="Horizontal" Spacing="3" />
+                    <TextBlock x:Name="LevelStatus" FontSize="11" Foreground="#8B949E" />
+                </StackPanel>
+
+                <!-- Prerequisites -->
+                <StackPanel x:Name="PrereqSection" Spacing="5">
+                    <TextBlock Text="PREREQUISITES" FontSize="10" Foreground="#484F58"
+                               LetterSpacing="1" />
+                    <StackPanel x:Name="PrereqList" Spacing="2" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Panel>
+</Window>

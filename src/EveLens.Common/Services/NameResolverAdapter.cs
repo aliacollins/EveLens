@@ -1,0 +1,29 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System.Collections.Generic;
+using EveLens.Common.Service;
+using EveLens.Core.Interfaces;
+
+namespace EveLens.Common.Services
+{
+    public sealed class NameResolverAdapter : INameResolver
+    {
+        public string GetName(long id, bool bypassCache = false)
+        {
+            return EveIDToName.GetIDToName(id, bypassCache);
+        }
+
+        public IEnumerable<string> GetNames(IEnumerable<long> ids)
+        {
+            return EveIDToName.GetIDsToNames(ids);
+        }
+
+        public string GetRefTypeName(int refTypeId)
+        {
+            return EveRefType.GetRefTypeIDToName(refTypeId);
+        }
+    }
+}

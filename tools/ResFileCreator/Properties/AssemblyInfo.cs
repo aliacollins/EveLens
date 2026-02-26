@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ResFileCreator")]
-[assembly: AssemblyDescription("EVEMon Resource File Creator")]
+[assembly: AssemblyDescription("EveLens Resource File Creator")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EVEMon Development Team")]
-[assembly: AssemblyProduct("EVEMonResFileCreator")]
+[assembly: AssemblyProduct("EveLensResFileCreator")]
 [assembly: AssemblyCopyright("Copyright © 2013-2016, EVEMon Development Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

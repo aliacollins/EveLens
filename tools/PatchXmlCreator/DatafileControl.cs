@@ -1,8 +1,8 @@
 using System;
 using System.Windows.Forms;
-using EVEMon.Common.Factories;
+using EveLens.Common.Factories;
 
-namespace EVEMon.PatchXmlCreator
+namespace EveLens.PatchXmlCreator
 {
     internal partial class DatafileControl : UserControl
     {

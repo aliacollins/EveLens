@@ -1,0 +1,152 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using EveLens.Common.Data;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Extensions;
+using EveLens.Common.Serialization.Eve;
+using EveLens.Core;
+
+
+namespace EveLens.Common.Models
+{
+    public sealed class WalletTransaction
+    {
+        private readonly CCPCharacter m_character;
+        private readonly long m_stationID;
+        private readonly long m_clientID;
+        private string m_clientName;
+
+
+        #region Constructor
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WalletTransaction" /> class.
+        /// </summary>
+        /// <param name="src">The source wallet transaction.</param>
+        /// <param name="m_character">The owning character.</param>
+        /// <exception cref="System.ArgumentNullException">src</exception>
+        internal WalletTransaction(SerializableWalletTransactionsListItem src,
+            CCPCharacter character)
+        {
+            src.ThrowIfNull(nameof(src));
+
+            ID = src.ID;
+            JournalID = src.JournalTransactionID;
+            Date = src.TransactionDate;
+            ItemName = src.TypeName;
+            Quantity = src.Quantity;
+            Price = src.Price;
+            m_clientID = src.ClientID;
+            m_clientName = ServiceLocator.NameResolver.GetName(m_clientID);
+            TransactionType = src.TransactionType == "buy" ? TransactionType.Buy : TransactionType.Sell;
+            TransactionFor = src.TransactionFor == "personal" ? IssuedFor.Character : IssuedFor.Corporation;
+            m_stationID = src.StationID;
+            m_character = character;
+            UpdateStation();
+
+            Credit = GetCredit();
+        }
+
+        #endregion
+
+
+        #region Properties
+
+        /// <summary>
+        /// Gets the ID.
+        /// </summary>
+        public long ID { get; }
+
+        /// <summary>
+        /// Gets the journal ID.
+        /// </summary>
+        public long JournalID { get; }
+
+        /// <summary>
+        /// Gets the date.
+        /// </summary>
+        public DateTime Date { get; }
+
+        /// <summary>
+        /// Gets the name of the item.
+        /// </summary>
+        /// <value>
+        /// The name of the item.
+        /// </value>
+        public string ItemName { get; }
+
+        /// <summary>
+        /// Gets the quantity.
+        /// </summary>
+        public long Quantity { get; }
+
+        /// <summary>
+        /// Gets the price.
+        /// </summary>
+        public decimal Price { get; }
+
+        /// <summary>
+        /// Gets the name of the client.
+        /// </summary>
+        /// <value>
+        /// The name of the client.
+        /// </value>
+        public string ClientName => m_clientName.IsEmptyOrUnknown() ?
+            (m_clientName = ServiceLocator.NameResolver.GetName(m_clientID)) : m_clientName;
+
+        /// <summary>
+        /// Gets the station.
+        /// </summary>
+        public Station Station { get; private set; }
+
+        /// <summary>
+        /// Gets the type of the transaction.
+        /// </summary>
+        /// <value>
+        /// The type of the transaction.
+        /// </value>
+        public TransactionType TransactionType { get; }
+
+        /// <summary>
+        /// Gets the transaction for.
+        /// </summary>
+        public IssuedFor TransactionFor { get; }
+
+        /// <summary>
+        /// Gets the credit.
+        /// </summary>
+        public decimal Credit { get; }
+
+        #endregion
+
+
+        #region Helper Methods
+
+        private decimal GetCredit()
+        {
+
+            decimal credit = Quantity * Price;
+            return TransactionType == TransactionType.Buy ? -credit : credit;
+        }
+
+        #endregion
+
+
+        #region Public Methods
+
+        /// <summary>
+        /// Updates the station.
+        /// </summary>
+        public void UpdateStation()
+        {
+            Station = ServiceLocator.StationResolver.GetStation(m_stationID, m_character?.CharacterID ?? 0) as Station;
+        }
+
+        #endregion
+
+    }
+}

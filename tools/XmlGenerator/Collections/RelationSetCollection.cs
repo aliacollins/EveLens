@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using EVEMon.Common.Extensions;
-using EVEMon.XmlGenerator.Interfaces;
+using EveLens.Common.Extensions;
+using EveLens.XmlGenerator.Interfaces;
 
-namespace EVEMon.XmlGenerator.Collections
+namespace EveLens.XmlGenerator.Collections
 {
     public sealed class RelationSetCollection<T> : IEnumerable<T>
         where T : class, IRelation

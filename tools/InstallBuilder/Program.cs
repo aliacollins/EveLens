@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using ICSharpCode.SharpZipLib.Zip;
 
-namespace EVEMon.InstallBuilder
+namespace EveLens.InstallBuilder
 {
     internal static class Program
     {
@@ -157,7 +157,7 @@ namespace EVEMon.InstallBuilder
             {
                 if (string.IsNullOrWhiteSpace(s_sourceFilesDir))
                 {
-                    s_sourceFilesDir = Path.GetFullPath(Path.Combine(SolutionDirectory, @"src\EVEMon\", OutputPath));
+                    s_sourceFilesDir = Path.GetFullPath(Path.Combine(SolutionDirectory, @"src\EveLens\", OutputPath));
                 }
                 return s_sourceFilesDir;
             }
@@ -274,7 +274,7 @@ namespace EVEMon.InstallBuilder
         {
             try
             {
-                s_fileVersionInfo = FileVersionInfo.GetVersionInfo(Path.Combine(SourceFilesDirectory, "EVEMon.exe"));
+                s_fileVersionInfo = FileVersionInfo.GetVersionInfo(Path.Combine(SourceFilesDirectory, "EveLens.exe"));
             }
             catch (Exception)
             {
@@ -297,9 +297,9 @@ namespace EVEMon.InstallBuilder
             DeleteFiles(directory);
 
             string filename = s_isSnapshot
-                ? string.Format(CultureInfo.InvariantCulture, "EVEMon_{0}_{1:yyyy-MM-dd}.zip",
+                ? string.Format(CultureInfo.InvariantCulture, "EveLens_{0}_{1:yyyy-MM-dd}.zip",
                     s_fileVersionInfo.ProductPrivatePart, DateTime.Now)
-                : string.Format(CultureInfo.InvariantCulture, "EVEMon-binaries-{0}.zip", s_fileVersionInfo.ProductVersion);
+                : string.Format(CultureInfo.InvariantCulture, "EveLens-binaries-{0}.zip", s_fileVersionInfo.ProductVersion);
 
             string zipFileName = Path.Combine(directory, filename);
 
@@ -320,7 +320,7 @@ namespace EVEMon.InstallBuilder
 
                     foreach (string file in filenames.Where(file => !file.Contains("vshost") && !file.Contains(".config")))
                     {
-                        string entryName = string.Format(CultureInfo.InvariantCulture, "EVEMon\\{0}",
+                        string entryName = string.Format(CultureInfo.InvariantCulture, "EveLens\\{0}",
                             file.Remove(0, SourceFilesDirectory.Length));
                         Console.WriteLine("Zipping {0}", entryName);
                         ZipEntry entry = new ZipEntry(entryName) { DateTime = DateTime.Now };
@@ -364,8 +364,8 @@ namespace EVEMon.InstallBuilder
             int exitCode;
             try
             {
-                string nsisScript = Path.Combine(ProjectDirectory, OutputPath, "EVEMonInstallerScript.nsi");
-                string resourcesDir = Path.Combine(SolutionDirectory, @"src\\EVEMon.Common\Resources");
+                string nsisScript = Path.Combine(ProjectDirectory, OutputPath, "EveLensInstallerScript.nsi");
+                string resourcesDir = Path.Combine(SolutionDirectory, @"src\\EveLens.Common\Resources");
                 string appCopyright = ((AssemblyCopyrightAttribute)Attribute.GetCustomAttribute(
                     typeof(Program).Assembly, typeof(AssemblyCopyrightAttribute))).Copyright;
                 string productName = string.Format(CultureInfo.InvariantCulture, "/DPRODUCTNAME=\"{0}\"", Application.ProductName);

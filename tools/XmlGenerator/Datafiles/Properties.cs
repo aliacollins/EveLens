@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
-using EVEMon.Common.Collections;
-using EVEMon.Common.Constants;
-using EVEMon.Common.Serialization.Datafiles;
-using EVEMon.XmlGenerator.Interfaces;
-using EVEMon.XmlGenerator.Providers;
-using EVEMon.XmlGenerator.StaticData;
-using EVEMon.XmlGenerator.Utils;
+using EveLens.Common.Collections;
+using EveLens.Common.Constants;
+using EveLens.Common.Serialization.Datafiles;
+using EveLens.XmlGenerator.Interfaces;
+using EveLens.XmlGenerator.Providers;
+using EveLens.XmlGenerator.StaticData;
+using EveLens.XmlGenerator.Utils;
 
-namespace EVEMon.XmlGenerator.Datafiles
+namespace EveLens.XmlGenerator.Datafiles
 {
     internal static class Properties
     {
@@ -72,7 +72,7 @@ namespace EVEMon.XmlGenerator.Datafiles
         /// </summary>
         private static void ConfigureNullCategoryProperties()
         {
-            // Create EVEMon custom units
+            // Create EveLens custom units
             int newUnitID = Database.EveUnitsTable.Last().ID;
             s_injectedUnits = new List<EveUnits>();
 
@@ -94,7 +94,7 @@ namespace EVEMon.XmlGenerator.Datafiles
             };
             s_injectedUnits.Add(perHourUnit);
 
-            // Create EVEMon custom properties
+            // Create EveLens custom properties
             int newPropID = Database.DgmAttributeTypesTable.Last().ID;
             PackagedVolumePropertyID = ++newPropID;
             UnitsToRefinePropertyID = ++newPropID;

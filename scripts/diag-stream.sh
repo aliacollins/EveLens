@@ -1,5 +1,5 @@
 #!/bin/bash
-# Connect to EVEMon's TCP JSON diagnostic stream (port 5555)
+# Connect to EveLens's TCP JSON diagnostic stream (port 5555)
 # The .NET app runs on Windows; from WSL use the Windows host IP.
 #
 # Usage:
@@ -9,7 +9,7 @@
 #   ./scripts/diag-stream.sh warn         # warnings/errors only
 #   ./scripts/diag-stream.sh evt          # EventAggregator events
 
-PORT="${EVEMON_DIAG_PORT:-5555}"
+PORT="${EVELENS_DIAG_PORT:-5555}"
 
 # Resolve Windows host IP from WSL (gateway is more reliable than resolv.conf)
 WINHOST=$(ip route show default 2>/dev/null | awk '{print $3}' | head -1)
@@ -22,7 +22,7 @@ fi
 
 FILTER="${1:-all}"
 
-echo "Connecting to EVEMon diagnostic stream at $WINHOST:$PORT ..."
+echo "Connecting to EveLens diagnostic stream at $WINHOST:$PORT ..."
 echo "Filter: $FILTER (Ctrl+C to stop)"
 echo "---"
 

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>EveLens.Common</RootNamespace>
+    <AssemblyName>EveLens.Infrastructure</AssemblyName>
+    <DefineConstants>$(DefineConstants);NO_THREAD_SAFETY</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.9.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EveLens.Core\EveLens.Core.csproj" />
+    <ProjectReference Include="..\EveLens.Data\EveLens.Data.csproj" />
+    <ProjectReference Include="..\EveLens.Serialization\EveLens.Serialization.csproj" />
+    <ProjectReference Include="..\EveLens.Models\EveLens.Models.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+</Project>

@@ -5,7 +5,7 @@
     <version>4.0.19.4983</version>
     <md5>918ea2a2cbeb51ace24989206a8716fa</md5>
     <url>https://forums.eveonline.com/t/evemon-4-0-19-beta-under-new-ownership-conversion-for-esi/75953</url>
-    <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.19/EVEMon-install-4.0.19.exe</autopatchurl>
+    <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.19/EveLens-install-4.0.19.exe</autopatchurl>
     <autopatchargs>/S /AUTORUN /SKIPDOTNET</autopatchargs>
     <additionalargs>/D=%EVEMON_EXECUTABLE_PATH%</additionalargs>
     <message><![CDATA[# Release v4.0.19
@@ -28,7 +28,7 @@
       <version>4.0.19.4983</version>
       <md5>918ea2a2cbeb51ace24989206a8716fa</md5>
       <url>https://forums.eveonline.com/t/evemon-4-0-19-beta-under-new-ownership-conversion-for-esi/75953</url>
-      <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.19/EVEMon-install-4.0.19.exe</autopatchurl>
+      <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.19/EveLens-install-4.0.19.exe</autopatchurl>
       <autopatchargs>/S /AUTORUN /SKIPDOTNET</autopatchargs>
       <additionalargs>/D=%EVEMON_EXECUTABLE_PATH%</additionalargs>
       <message><![CDATA[# Release v4.0.19
@@ -53,7 +53,7 @@
       <md5>3a807bb1d48460c57e10ef7fddcaf619</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) blueprints data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-certificates-en-US.xml.gzip</name>
@@ -61,7 +61,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>540000f7c111354769a54fa31e57d411</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) certificates data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-geography-en-US.xml.gzip</name>
@@ -69,7 +69,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>3077e700023d84a267b744a6ee44acc7</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) geography data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-items-en-US.xml.gzip</name>
@@ -77,7 +77,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>0abab62dde07fbf0bc8eafe0811c9d18</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) items data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-masteries-en-US.xml.gzip</name>
@@ -85,7 +85,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>3668b50996fc40a0c0853fec427b5712</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) masteries data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-properties-en-US.xml.gzip</name>
@@ -93,7 +93,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>93b8499c86acdad46607c697f221970a</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) properties data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-reprocessing-en-US.xml.gzip</name>
@@ -101,7 +101,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>46b56972972a308d90c153770ce46000</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) reprocessing data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-skills-en-US.xml.gzip</name>
@@ -109,7 +109,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>84843e1f2e8946cb8f7f7588d2c72562</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Invasion/1850297</url>
       <message><![CDATA[Invasion 1.12 (1850297) skills data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
   </datafiles>
 </evemon>

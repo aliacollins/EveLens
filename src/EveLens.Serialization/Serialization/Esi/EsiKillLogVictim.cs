@@ -1,0 +1,43 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using EveLens.Common.Serialization.Eve;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+
+namespace EveLens.Common.Serialization.Esi
+{
+    [DataContract]
+    public class EsiKillLogVictim : EsiCharacterBase
+    {
+        public EsiKillLogVictim()
+        {
+            Position = EsiPosition.ORIGIN;
+        }
+
+        [DataMember(Name = "damage_taken")]
+        public int DamageTaken { get; set; }
+
+        [DataMember(Name = "items", EmitDefaultValue = false, IsRequired = false)]
+        public List<EsiKillLogItemListItem>? Items { get; set; }
+
+        [DataMember(Name = "position", IsRequired = false)]
+        public EsiPosition Position { get; set; }
+
+        public SerializableKillLogVictim ToXMLItem()
+        {
+            // This object has more data, which is handled by EsiAPIKillMail
+            return new SerializableKillLogVictim()
+            {
+                AllianceID = AllianceID,
+                CorporationID = CorporationID,
+                DamageTaken = DamageTaken,
+                FactionID = FactionID,
+                ID = ID,
+                ShipTypeID = ShipTypeID
+            };
+        }
+    }
+}

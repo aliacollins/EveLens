@@ -5,7 +5,7 @@
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>EVEMon.YamlToSqlite</RootNamespace>
+    <RootNamespace>EveLens.YamlToSqlite</RootNamespace>
     <AssemblyName>YamlToSqlite</AssemblyName>
   </PropertyGroup>
 

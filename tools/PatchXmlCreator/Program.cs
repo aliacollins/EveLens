@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace EVEMon.PatchXmlCreator
+namespace EveLens.PatchXmlCreator
 {
     internal static class Program
     {

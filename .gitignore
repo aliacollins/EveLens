@@ -237,5 +237,7 @@ publish/
 *-Setup.exe
 .claude
 
-# Internal documentation (not for public release yet)
+# Internal documentation and markdown files
 docs/
+*.md
+!README.md

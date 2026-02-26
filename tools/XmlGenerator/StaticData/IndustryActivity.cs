@@ -1,7 +1,7 @@
-﻿using EVEMon.XmlGenerator.Interfaces;
+﻿using EveLens.XmlGenerator.Interfaces;
 using System.Xml.Serialization;
 
-namespace EVEMon.XmlGenerator.StaticData
+namespace EveLens.XmlGenerator.StaticData
 {
     public sealed class IndustryActivity : IRelation
 	{

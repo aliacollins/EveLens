@@ -1,0 +1,24 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using EveLens.Common.Serialization.Eve;
+using System.Runtime.Serialization;
+
+namespace EveLens.Common.Serialization.Esi
+{
+    /// <summary>
+    /// Represents the balance of a wallet in a corporation; individual wallet balances are
+    /// returned as doubles.
+    /// </summary>
+    [DataContract]
+    public sealed class EsiAccountBalanceListItem
+    {
+        [DataMember(Name = "division")]
+        public int AccountID { get; set; }
+
+        [DataMember(Name = "balance")]
+        public decimal Balance { get; set; }
+    }
+}

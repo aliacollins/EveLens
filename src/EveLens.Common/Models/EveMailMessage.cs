@@ -1,0 +1,247 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using EveLens.Common.Constants;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Enumerations.CCPAPI;
+using EveLens.Common.Extensions;
+using EveLens.Common.Interfaces;
+using EveLens.Common.Serialization.Eve;
+using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Services;
+using EveLens.Core;
+using EveLens.Common.Net;
+using CommonEvents = EveLens.Common.Events;
+
+namespace EveLens.Common.Models
+{
+    public sealed class EveMailMessage : IEveMessage
+    {
+        // Returned if the message somehow has no sender, since returning an empty list throws
+        private static readonly string[] NO_SENDER = { "" };
+
+        private readonly SerializableMailMessagesListItem m_source;
+        private readonly CCPCharacter m_ccpCharacter;
+
+        private ResponseParams m_bodyResponse;
+        private bool m_queryPending;
+        private string m_senderName;
+        private IEnumerable<string> m_toMailingLists;
+        private IEnumerable<string> m_toCharacters;
+        private string m_toCorpOrAlliance;
+
+
+        #region Constructor
+
+        /// <summary>
+        /// Constructor from the API.
+        /// </summary>
+        /// <param name="ccpCharacter"></param>
+        /// <param name="src"></param>
+        internal EveMailMessage(CCPCharacter ccpCharacter, SerializableMailMessagesListItem src)
+        {
+            if (ccpCharacter == null)
+                throw new ArgumentNullException("ccpCharacter");
+
+            m_ccpCharacter = ccpCharacter;
+            m_source = src;
+            m_bodyResponse = null;
+
+            long senderID = src.SenderID;
+            State = (senderID != ccpCharacter.CharacterID) ? EveMailState.Inbox :
+                EveMailState.SentItem;
+            MessageID = src.MessageID;
+            SentDate = src.SentDate;
+            Title = src.Title.HtmlDecode();
+
+            // Was it sent from a mailing list?
+            if (src.ToListID.Contains(senderID))
+                m_senderName = ccpCharacter.EVEMailingLists.FirstOrDefault(x => x.ID ==
+                    senderID)?.Name ?? EveLensConstants.UnknownText;
+            else if (senderID == 0L)
+                m_senderName = EveLensConstants.UnknownText;
+            else
+                m_senderName = ServiceLocator.NameResolver.GetName(senderID);
+            m_toCharacters = GetIDsToNames(src.ToCharacterIDs);
+            m_toMailingLists = GetMailingListIDsToNames(src.ToListID);
+            m_toCorpOrAlliance = ServiceLocator.NameResolver.GetName(src.ToCorpOrAllianceID);
+
+            EVEMailBody = new EveMailBody(0L, new EsiAPIMailBody() { Body = "" });
+        }
+
+        #endregion
+
+
+        #region Properties
+
+        /// <summary>
+        /// Gets or sets the EVE mail state.
+        /// </summary>
+        /// <value>The state.</value>
+        public EveMailState State { get; }
+
+        /// <summary>
+        /// Gets or sets the EVE mail message ID.
+        /// </summary>
+        /// <value>The message ID.</value>
+        public long MessageID { get; }
+
+        /// <summary>
+        /// Gets or sets the EVE mail sender name.
+        /// </summary>
+        /// <value>The sender.</value>
+        public string SenderName => m_senderName.IsEmptyOrUnknown() ? (m_senderName =
+            ServiceLocator.NameResolver.GetName(m_source.SenderID)) : m_senderName;
+
+        /// <summary>
+        /// Gets or sets the sent date of the EVE mail.
+        /// </summary>
+        /// <value>The sent date.</value>
+        public DateTime SentDate { get; }
+
+        /// <summary>
+        /// Gets or sets the EVE mail title.
+        /// </summary>
+        /// <value>The title.</value>
+        public string Title { get; }
+
+        /// <summary>
+        /// Gets or sets the EVE mail recipient (corp/alliance).
+        /// 
+        /// If it did not parse in the first place, m_toCorpOrAlliance != EveLensConstants.UnknownText,
+        /// so this parse cannot fail
+        /// </summary>
+        public string ToCorpOrAlliance => m_toCorpOrAlliance.IsEmptyOrUnknown() ?
+            (m_toCorpOrAlliance = ServiceLocator.NameResolver.GetName(m_source.ToCorpOrAllianceID)) :
+            m_toCorpOrAlliance;
+
+        /// <summary>
+        /// Gets or sets the EVE mail recipient(s) (characters).
+        /// </summary>
+        public IEnumerable<string> ToCharacters => m_toCharacters.Contains(EveLensConstants.UnknownText)
+            ? m_toCharacters = GetIDsToNames(m_source.ToCharacterIDs) : m_toCharacters;
+
+        /// <summary>
+        /// Gets or sets the EVE mail recipient (mailing lists).
+        /// </summary>
+        public IEnumerable<string> ToMailingLists => m_toMailingLists.Contains(EveLensConstants.UnknownText)
+            ? m_toMailingLists = GetMailingListIDsToNames(m_source.ToListID) : m_toMailingLists;
+
+        /// <summary>
+        /// Gets the recipient.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<string> Recipient => !string.IsNullOrEmpty(ToCharacters.FirstOrDefault())
+            ? ToCharacters : (!string.IsNullOrEmpty(ToCorpOrAlliance) ? new List<string>
+            {
+                ToCorpOrAlliance
+            } : (!string.IsNullOrEmpty(ToMailingLists.FirstOrDefault()) ? ToMailingLists :
+            Enumerable.Empty<string>()));
+
+        /// <summary>
+        /// Gets or sets the EVE mail body.
+        /// </summary>
+        /// <value>The EVE mail body.</value>
+        public EveMailBody EVEMailBody { get; private set; }
+
+        /// <summary>
+        /// Gets the EVE mail body text.
+        /// </summary>
+        /// <value>The text.</value>
+        public string Text => EVEMailBody.BodyText.Normalize();
+
+        #endregion
+
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Gets the names of the IDs.
+        /// </summary>
+        /// <param name="src">A list of IDs.</param>
+        /// <returns>A list of names</returns>
+        private IEnumerable<string> GetIDsToNames(ICollection<long> src)
+        {
+            // If there are no IDs to query return an empty list
+            if (!src.Any())
+                return NO_SENDER;
+            
+            return ServiceLocator.NameResolver.GetNames(src).Select(x => x ?? EveLensConstants.UnknownText);
+        }
+
+        /// <summary>
+        /// Gets the mailing list IDs to names.
+        /// </summary>
+        /// <param name="mailingListIDs">The mailing list IDs.</param>
+        /// <returns></returns>
+        private IEnumerable<string> GetMailingListIDsToNames(ICollection<long> mailingListIDs)
+        {
+            // If there are no IDs to query return a list with an empty entry
+            if (!mailingListIDs.Any())
+                return NO_SENDER;
+
+            List<string> listOfNames = mailingListIDs.Select(listID => m_ccpCharacter.
+                EVEMailingLists.FirstOrDefault(x => x.ID == listID)).Select(mailingList =>
+                mailingList?.Name ?? EveLensConstants.UnknownText).ToList();
+            // In case the list returned from the API is empty, add an "Unknown" entry
+            if (!listOfNames.Any())
+                listOfNames.Add(EveLensConstants.UnknownText);
+            return listOfNames;
+        }
+
+        #endregion
+
+
+        #region Querying
+
+        /// <summary>
+        /// Gets the EVE mail body.
+        /// </summary>
+        public void GetMailBody()
+        {
+            // Exit if we are already trying to download the mail message body text
+            if (!m_queryPending && !EsiErrors.IsErrorCountExceeded)
+            {
+                var apiKey = m_ccpCharacter.Identity.FindAPIKeyWithAccess(
+                    ESIAPICharacterMethods.MailBodies);
+                m_queryPending = true;
+                if (apiKey != null)
+                    AppServices.APIProviders.CurrentProvider.QueryEsi<EsiAPIMailBody>(
+                        ESIAPICharacterMethods.MailBodies, OnEVEMailBodyDownloaded,
+                        new ESIParams(m_bodyResponse, apiKey.AccessToken)
+                        {
+                            ParamOne = m_ccpCharacter.CharacterID,
+                            ParamTwo = MessageID
+                        }, MessageID);
+            }
+        }
+
+        /// <summary>
+        /// Processes the queried EVE mail message mail body.
+        /// </summary>
+        /// <param name="result">The result.</param>
+        private void OnEVEMailBodyDownloaded(EsiResult<EsiAPIMailBody> result, object forMessage)
+        {
+            long messageID = (forMessage as long?) ?? 0L;
+            m_queryPending = false;
+            m_bodyResponse = result.Response;
+            // Notify if an error occured
+            if (m_ccpCharacter.ShouldNotifyError(result, ESIAPICharacterMethods.MailBodies))
+                AppServices.Notifications.NotifyEVEMailBodiesError(m_ccpCharacter, result);
+            if (result.HasData && !result.HasError && messageID != 0L && !string.IsNullOrEmpty(
+                result.Result.Body))
+            {
+                EVEMailBody = new EveMailBody(messageID, result.Result);
+                ServiceLocator.TraceService.Trace(m_ccpCharacter.Name);
+                ServiceLocator.EventAggregator.Publish(new CommonEvents.CharacterEVEMailBodyDownloadedEvent(m_ccpCharacter));
+            }
+        }
+
+        #endregion
+    }
+}

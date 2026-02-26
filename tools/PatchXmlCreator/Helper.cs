@@ -3,10 +3,10 @@ using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using EVEMon.Common.Constants;
-using EVEMon.Common.Controls;
+using EveLens.Common.Constants;
+using EveLens.Common.Controls;
 
-namespace EVEMon.PatchXmlCreator
+namespace EveLens.PatchXmlCreator
 {
     internal static class Helper
     {
@@ -29,12 +29,12 @@ namespace EVEMon.PatchXmlCreator
         internal static string Caption => "Patch Xml File Creator";
 
         /// <summary>
-        /// Gets EVEMon execute filename.
+        /// Gets EveLens execute filename.
         /// </summary>
         /// <value>
-        /// The EVEMon execute filename.
+        /// The EveLens execute filename.
         /// </value>
-        internal static string EVEMonExecFilename => "EVEMon.exe";
+        internal static string EveLensExecFilename => "EveLens.exe";
 
         /// <summary>
         /// Gets the solution directory.
@@ -96,7 +96,7 @@ namespace EVEMon.PatchXmlCreator
             {
                 if (string.IsNullOrWhiteSpace(s_sourceFilesDir))
                 {
-                    s_sourceFilesDir = Path.GetFullPath(Path.Combine(GetSolutionDirectory, @"src\EVEMon\", GetOutputPath));
+                    s_sourceFilesDir = Path.GetFullPath(Path.Combine(GetSolutionDirectory, @"src\EveLens\", GetOutputPath));
                 }
                 return s_sourceFilesDir;
             }
@@ -112,7 +112,7 @@ namespace EVEMon.PatchXmlCreator
             {
                 if (string.IsNullOrWhiteSpace(s_dataFilesDir))
                 {
-                    s_dataFilesDir = Path.GetFullPath(Path.Combine(GetSolutionDirectory, @"src\EVEMon.Common\Resources"));
+                    s_dataFilesDir = Path.GetFullPath(Path.Combine(GetSolutionDirectory, @"src\EveLens.Common\Resources"));
                 }
                 return s_dataFilesDir;
             }
@@ -138,7 +138,7 @@ namespace EVEMon.PatchXmlCreator
         /// Gets the patch file path.
         /// </summary>
         /// <returns></returns>
-        internal static string GetPatchFilePath => Path.Combine(GetPatchDirectory, EveMonConstants.PatchXmlFilename);
+        internal static string GetPatchFilePath => Path.Combine(GetPatchDirectory, EveLensConstants.PatchXmlFilename);
 
         /// <summary>
         /// Gets or sets a value indicating whether an application exit is requested.
@@ -152,12 +152,12 @@ namespace EVEMon.PatchXmlCreator
         internal static void EnsurePrerequisites()
         {
             string text;
-            string eveMonExecFilePath = Path.Combine(GetSourceFilesDirectory, EVEMonExecFilename);
+            string eveLensExecFilePath = Path.Combine(GetSourceFilesDirectory, EveLensExecFilename);
 
-            // Ensure that a release version of EVEMon has been created
-            if (!File.Exists(eveMonExecFilePath))
+            // Ensure that a release version of EveLens has been created
+            if (!File.Exists(eveLensExecFilePath))
             {
-                text = $"An EVEMon release version has to be created first{Environment.NewLine}before you can use {Caption}.";
+                text = $"An EveLens release version has to be created first{Environment.NewLine}before you can use {Caption}.";
 
                 ShowMessage(text);
                 return;
@@ -167,7 +167,7 @@ namespace EVEMon.PatchXmlCreator
             if (PatchXmlCreatorWindow.GetInstallerPath().Exists)
                 return;
 
-            text = $"An EVEMon installer file has to be created first{Environment.NewLine}before you can use {Caption}.";
+            text = $"An EveLens installer file has to be created first{Environment.NewLine}before you can use {Caption}.";
 
             ShowMessage(text);
         }

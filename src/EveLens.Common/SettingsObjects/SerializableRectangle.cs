@@ -1,0 +1,54 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using System.Drawing;
+using System.Xml.Serialization;
+
+namespace EveLens.Common.SettingsObjects
+{
+    /// <summary>
+    /// Represents a serializable version of a rectangle
+    /// </summary>
+    public sealed class SerializableRectangle
+    {
+        [XmlAttribute("left")]
+        public int Left { get; set; }
+
+        [XmlAttribute("top")]
+        public int Top { get; set; }
+
+        [XmlAttribute("width")]
+        public int Width { get; set; }
+
+        [XmlAttribute("height")]
+        public int Height { get; set; }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="EveLens.Common.SettingsObjects.SerializableRectangle"/> to <see cref="System.Drawing.Rectangle"/>.
+        /// </summary>
+        /// <param name="rect">The rect.</param>
+        /// <returns>The result of the conversion.</returns>
+        /// <remarks>Do not make the conversion operators implicit, there is a bug with XML serialization</remarks>
+        public static explicit operator Rectangle(SerializableRectangle rect)
+        {
+            if (rect == null)
+                throw new ArgumentNullException("rect");
+
+            return new Rectangle(rect.Left, rect.Top, rect.Width, rect.Height);
+        }
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="System.Drawing.Rectangle"/> to <see cref="EveLens.Common.SettingsObjects.SerializableRectangle"/>.
+        /// </summary>
+        /// <param name="rect">The rect.</param>
+        /// <returns>The result of the conversion.</returns>
+        /// <remarks>Do not make the conversion operators implicit, there is a bug with XML serialization</remarks>
+        public static explicit operator SerializableRectangle(Rectangle rect)
+        {
+            return new SerializableRectangle { Left = rect.Left, Top = rect.Top, Width = rect.Width, Height = rect.Height };
+        }
+    }
+}

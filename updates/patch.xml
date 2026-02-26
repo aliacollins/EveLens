@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Stable Update Channel
-  This file is checked by EVEMon stable builds for updates.
+  This file is checked by EveLens stable builds for updates.
   Update this file when releasing new stable versions.
 -->
-<evemon>
+<evelens>
   <releases>
     <release>
       <date>2026-02-02</date>
       <version>5.1.2.0</version>
-      <url>https://github.com/aliacollins/evemon/releases/tag/v5.1.2</url>
-      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/v5.1.2/EVEMon-install-5.1.2.exe</autopatchurl>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v5.1.2</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v5.1.2/EveLens-install-5.1.2.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EVEMon 5.1.2 - Major Update Available
+      <message><![CDATA[EveLens 5.1.2 - Major Update Available
 
 MAJOR FEATURES:
 • .NET 8 Migration - Modern framework with improved performance
@@ -41,10 +41,10 @@ This is a recommended update for all users.]]></message>
     <release>
       <date>2026-01-05</date>
       <version>5.1.1.0</version>
-      <url>https://github.com/aliacollins/evemon/releases/tag/v5.1.1</url>
-      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/v5.1.1/EVEMon-5.1.1-win-x64.zip</autopatchurl>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v5.1.1</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v5.1.1/EveLens-5.1.1-win-x64.zip</autopatchurl>
       <autopatchargs></autopatchargs>
-      <message><![CDATA[EVEMon v5.1.1 - Important Update
+      <message><![CDATA[EveLens v5.1.1 - Important Update
 
 FIXES:
 - Settings now save correctly between restarts
@@ -55,4 +55,4 @@ This update fixes critical bugs. Please update.]]></message>
   </releases>
   <datafiles>
   </datafiles>
-</evemon>
+</evelens>

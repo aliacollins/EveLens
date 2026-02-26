@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace EVEMon.YamlToSqlite;
+namespace EveLens.YamlToSqlite;
 
 /// <summary>
 /// Converts EVE Online SDE YAML files directly to SQLite database.
@@ -25,7 +25,7 @@ class Program
     {
         DefaultRequestHeaders =
         {
-            { "User-Agent", "EVEMon-SDE-Generator/1.0 (github.com/aliacollins/evemon; contact: eve:Alia Collins)" }
+            { "User-Agent", "EveLens-SDE-Generator/1.0 (github.com/aliacollins/evelens; contact: eve:Alia Collins)" }
         }
     };
 
@@ -33,7 +33,7 @@ class Program
     {
         Console.WriteLine("===========================================");
         Console.WriteLine(" EVE SDE YAML to SQLite Converter");
-        Console.WriteLine(" For EVEMon - .NET 8 Version");
+        Console.WriteLine(" For EveLens - .NET 8 Version");
         Console.WriteLine("===========================================");
         Console.WriteLine();
 

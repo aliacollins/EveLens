@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    EVEMon Promotion System - Standardized workflow for pushing code through branches.
+    EveLens Promotion System - Standardized workflow for pushing code through branches.
 
 .DESCRIPTION
     This script handles all branch promotions with automatic versioning,
@@ -186,7 +186,7 @@ function Update-Changelog {
         $content = @"
 # Changelog
 
-All notable changes to EVEMon will be documented in this file.
+All notable changes to EveLens will be documented in this file.
 
 ## [Unreleased]
 
@@ -243,7 +243,7 @@ function Update-PatchXml {
     $assemblyVersion = Get-AssemblyVersion $Version $Channel
 
     $tagName = if ($Channel -eq "stable") { "v$Version" } else { $Channel }
-    $installerName = "EVEMon-install-$($Version -replace '-.*','').exe"
+    $installerName = "EveLens-install-$($Version -replace '-.*','').exe"
 
     $maxReleases = 10
 
@@ -256,11 +256,11 @@ function Update-PatchXml {
 
         $dateEl = $xml.CreateElement("date"); $dateEl.InnerText = $date
         $versionEl = $xml.CreateElement("version"); $versionEl.InnerText = $assemblyVersion
-        $urlEl = $xml.CreateElement("url"); $urlEl.InnerText = "https://github.com/aliacollins/evemon/releases/tag/$tagName"
-        $patchUrlEl = $xml.CreateElement("autopatchurl"); $patchUrlEl.InnerText = "https://github.com/aliacollins/evemon/releases/download/$tagName/$installerName"
+        $urlEl = $xml.CreateElement("url"); $urlEl.InnerText = "https://github.com/aliacollins/evelens/releases/tag/$tagName"
+        $patchUrlEl = $xml.CreateElement("autopatchurl"); $patchUrlEl.InnerText = "https://github.com/aliacollins/evelens/releases/download/$tagName/$installerName"
         $patchArgsEl = $xml.CreateElement("autopatchargs"); $patchArgsEl.InnerText = "/SILENT"
         $messageEl = $xml.CreateElement("message")
-        $cdata = $xml.CreateCDataSection("EVEMon $Version`n`n$Message")
+        $cdata = $xml.CreateCDataSection("EveLens $Version`n`n$Message")
         $messageEl.AppendChild($cdata) | Out-Null
 
         $newRelease.AppendChild($dateEl) | Out-Null
@@ -293,24 +293,24 @@ function Update-PatchXml {
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   $($Channel.ToUpper()) Update Channel
-  This file is checked by EVEMon $($Channel.ToUpper()) builds for updates.
+  This file is checked by EveLens $($Channel.ToUpper()) builds for updates.
 -->
-<evemon>
+<evelens>
   <releases>
     <release>
       <date>$date</date>
       <version>$assemblyVersion</version>
-      <url>https://github.com/aliacollins/evemon/releases/tag/$tagName</url>
-      <autopatchurl>https://github.com/aliacollins/evemon/releases/download/$tagName/$installerName</autopatchurl>
+      <url>https://github.com/aliacollins/evelens/releases/tag/$tagName</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/$tagName/$installerName</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EVEMon $Version
+      <message><![CDATA[EveLens $Version
 
 $Message]]></message>
     </release>
   </releases>
   <datafiles>
   </datafiles>
-</evemon>
+</evelens>
 "@
 
         if (-not $DryRun) {
@@ -352,11 +352,11 @@ function Update-ReadmeVersion {
 
     # Update installer download link based on channel
     $installerUrl = switch ($Channel) {
-        "alpha"  { "https://github.com/aliacollins/evemon/releases/tag/alpha" }
-        "beta"   { "https://github.com/aliacollins/evemon/releases/tag/beta" }
-        "stable" { "https://github.com/aliacollins/evemon/releases/latest" }
+        "alpha"  { "https://github.com/aliacollins/evelens/releases/tag/alpha" }
+        "beta"   { "https://github.com/aliacollins/evelens/releases/tag/beta" }
+        "stable" { "https://github.com/aliacollins/evelens/releases/latest" }
     }
-    $content = $content -replace '\[EVEMon Installer\]\(https://github\.com/aliacollins/evemon/releases/[^)]+\)', "[EVEMon Installer]($installerUrl)"
+    $content = $content -replace '\[EveLens Installer\]\(https://github\.com/aliacollins/evelens/releases/[^)]+\)', "[EveLens Installer]($installerUrl)"
 
     # Update "you are here" marker in Update Channels table
     # First, remove existing marker and bold from all channel names
@@ -387,7 +387,7 @@ function Update-ReadmeVersion {
 function Test-Build {
     Write-Step "Verifying build..."
 
-    $result = & dotnet build (Join-Path $RepoRoot "EVEMon.sln") -c Debug --nologo -v q 2>&1
+    $result = & dotnet build (Join-Path $RepoRoot "EveLens.sln") -c Debug --nologo -v q 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Build failed!"
         Write-Host $result
@@ -495,7 +495,7 @@ function Test-GitHubRelease {
     )
 
     try {
-        $releaseJson = gh release view $Tag --json name,tagName --repo aliacollins/evemon 2>$null
+        $releaseJson = gh release view $Tag --json name,tagName --repo aliacollins/evelens 2>$null
         if (-not $releaseJson) {
             Write-Warning "GitHub release '$Tag' not found"
             return $false
@@ -524,7 +524,7 @@ function Invoke-Promote {
 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor White
-    Write-Host "  EVEMon Promotion System" -ForegroundColor White
+    Write-Host "  EveLens Promotion System" -ForegroundColor White
     Write-Host "============================================" -ForegroundColor White
     Write-Host ""
     Write-Host "  Current Branch:  $currentBranch" -ForegroundColor Gray

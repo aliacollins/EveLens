@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using EVEMon.Common.Extensions;
-using EVEMon.XmlGenerator.StaticData;
+using EveLens.Common.Extensions;
+using EveLens.XmlGenerator.StaticData;
 
-namespace EVEMon.XmlGenerator.Extensions
+namespace EveLens.XmlGenerator.Extensions
 {
     /// <summary>
     /// Series of extension methods to cleanup and format strings for use in the data files.

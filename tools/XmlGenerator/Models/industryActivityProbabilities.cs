@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EVEMon.XmlGenerator.Models
+namespace EveLens.XmlGenerator.Models
 {
 	public partial class industryActivityProbabilities
 	{

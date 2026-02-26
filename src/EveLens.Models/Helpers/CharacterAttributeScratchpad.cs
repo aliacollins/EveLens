@@ -1,0 +1,148 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using EveLens.Common.Constants;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Extensions;
+using EveLens.Common.Interfaces;
+
+namespace EveLens.Common.Helpers
+{
+    /// <summary>
+    /// Represents an attribute for a character scratchpad
+    /// </summary>
+    public sealed class CharacterAttributeScratchpad : ICharacterAttribute
+    {
+        private readonly EveAttribute m_attrib;
+
+        private long m_base;
+        private long m_implantBonus;
+        private long m_boosterBonus;
+
+        /// <summary>
+        /// Constructor from a character attribute.
+        /// </summary>
+        /// <param name="attrib"></param>
+        internal CharacterAttributeScratchpad(EveAttribute attrib)
+        {
+            m_attrib = attrib;
+        }
+
+        /// <summary>
+        /// Resets the attribute with the given source
+        /// </summary>
+        /// <param name="baseAttribute"></param>
+        /// <param name="implantBonus"></param>
+        /// <param name="boosterBonus"></param>
+        internal void Reset(long baseAttribute, long implantBonus, long boosterBonus = 0)
+        {
+            m_base = baseAttribute;
+            m_implantBonus = implantBonus;
+            m_boosterBonus = boosterBonus;
+            UpdateEffectiveAttribute();
+        }
+
+        /// <summary>
+        /// Resets the attribute with the given source
+        /// </summary>
+        /// <param name="src"></param>
+        internal void Reset(ICharacterAttribute src)
+        {
+            m_base = src.Base;
+            m_implantBonus = src.ImplantBonus;
+            m_boosterBonus = src.BoosterBonus;
+            UpdateEffectiveAttribute();
+        }
+
+        /// <summary>
+        /// Updates the effective attribute
+        /// </summary>
+        internal void UpdateEffectiveAttribute()
+        {
+            EffectiveValue = m_base + m_implantBonus + m_boosterBonus;
+        }
+
+        /// <summary>
+        /// Gets or sets the base attribute.
+        /// </summary>
+        public long Base
+        {
+            get { return m_base; }
+            set
+            {
+                m_base = value;
+                UpdateEffectiveAttribute();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the bonus granted by the implant
+        /// </summary>
+        public long ImplantBonus
+        {
+            get { return m_implantBonus; }
+            set
+            {
+                m_implantBonus = value;
+                UpdateEffectiveAttribute();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the bonus from cerebral accelerators (boosters).
+        /// </summary>
+        public long BoosterBonus
+        {
+            get { return m_boosterBonus; }
+            set
+            {
+                m_boosterBonus = value;
+                UpdateEffectiveAttribute();
+            }
+        }
+
+        /// <summary>
+        /// Gets the effective attribute value.
+        /// </summary>
+        public long EffectiveValue { get; private set; }
+
+        /// <summary>
+        /// Gets a string representation with the provided format. The following parameters are accepted :
+        /// <list type="bullet">
+        /// <item>%n for name (lower case)</item>
+        /// <item>%N for name (CamelCase)</item>
+        /// <item>%B for attribute base value</item>
+        /// <item>%b for base bonus</item>
+        /// <item>%i for implant bonus</item>
+        /// <item>%o for booster bonus</item>
+        /// <item>%r for remapping points</item>
+        /// <item>%e for effective value</item>
+        /// </list>
+        /// </summary>
+        /// <returns>The formatted string.</returns>
+        /// <exception cref="System.ArgumentNullException">format</exception>
+        public string ToString(string format)
+        {
+            format.ThrowIfNull(nameof(format));
+
+            format = format.Replace("%n", m_attrib.ToString().ToLower(CultureConstants.DefaultCulture));
+            format = format.Replace("%N", m_attrib.ToString());
+            format = format.Replace("%B", EveConstants.CharacterBaseAttributePoints.ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%b", m_base.ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%i", ImplantBonus.ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%o", BoosterBonus.ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%r", (m_base - EveConstants.CharacterBaseAttributePoints).ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%e", EffectiveValue.ToString("0", CultureConstants.DefaultCulture));
+            return format;
+        }
+
+        /// <summary>
+        /// Gets a string representation with the following format : "<c>Intelligence : 15</c>"
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => $"{m_attrib} : {EffectiveValue}";
+    }
+}

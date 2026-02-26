@@ -1,0 +1,597 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EveLens.Avalonia.Views.Dialogs.SettingsWindow"
+        Title="EveLens Settings"
+        Width="700" Height="580"
+        MinWidth="560" MinHeight="480"
+        UseLayoutRounding="True"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <!-- Sidebar button base: 3px left border reserved for active indicator -->
+        <Style Selector="Button.sidebar-btn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="3,0,0,0" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="13,8,16,8" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{DynamicResource EveTextSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.06" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.06" />
+                    <BrushTransition Property="Foreground" Duration="0:0:0.06" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.sidebar-btn:pointerover">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundMediumBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource EveTextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.sidebar-btn:pressed">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundLightBrush}" />
+            <Setter Property="RenderTransform" Value="none" />
+        </Style>
+        <Style Selector="Button.sidebar-btn:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <!-- Active sidebar item: gold left border, gold text, medium background -->
+        <Style Selector="Button.sidebar-btn.active">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundMediumBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource EveAccentPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource EveAccentPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-btn.active:pointerover">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundMediumBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource EveAccentPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-btn.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource EveAccentPrimaryBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-btn.active:pressed">
+            <Setter Property="Background" Value="{DynamicResource EveBackgroundMediumBrush}" />
+        </Style>
+        <Style Selector="Button.sidebar-btn.active:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </Window.Styles>
+
+    <DockPanel>
+        <!-- Bottom: Save / Cancel buttons -->
+        <Border DockPanel.Dock="Bottom"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource EveBackgroundMediumBrush}"
+                Padding="16,10">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <Button x:Name="CancelButton" Content="Cancel"
+                        CornerRadius="12" Padding="16,6" FontSize="11" />
+                <Button x:Name="SaveButton" Content="Save"
+                        CornerRadius="12" Padding="16,6" FontSize="11" />
+            </StackPanel>
+        </Border>
+
+        <!-- Search bar at top -->
+        <Border DockPanel.Dock="Top"
+                Margin="16,12,16,8"
+                Background="{DynamicResource EveBackgroundDarkestBrush}"
+                CornerRadius="14"
+                Padding="12,6">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <TextBlock Text="&#x1F50D;" VerticalAlignment="Center" Margin="0,0,8,0"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" FontSize="12" />
+                <TextBox x:Name="SearchBox" Grid.Column="1"
+                         Watermark="Search settings..."
+                         BorderThickness="0" Background="Transparent"
+                         FontSize="11" />
+                <Button x:Name="SearchClearButton" Grid.Column="2"
+                        Content="&#x2715;" FontSize="10"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="4,2" VerticalAlignment="Center"
+                        IsVisible="False" Cursor="Hand" />
+            </Grid>
+        </Border>
+
+        <!-- Main area: sidebar + content -->
+        <Grid ColumnDefinitions="180,*">
+            <!-- Sidebar -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource EveBackgroundDarkestBrush}"
+                    BorderBrush="{DynamicResource EveBorderBrush}"
+                    BorderThickness="0,0,1,0">
+                <StackPanel x:Name="SidebarPanel" Spacing="0" Margin="0,4,0,0">
+                    <Button x:Name="NavAppearance" Classes="sidebar-btn">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="Appearance" FontSize="11" />
+                            <TextBlock Text="Theme, colors, compatibility"
+                                       FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavWindow" Classes="sidebar-btn">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="Window" FontSize="11" />
+                            <TextBlock Text="Tray icon, close behavior"
+                                       FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavNotifications" Classes="sidebar-btn">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="Notifications" FontSize="11" />
+                            <TextBlock Text="Alerts, email, calendar"
+                                       FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavData" Classes="sidebar-btn">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="Data" FontSize="11" />
+                            <TextBlock Text="Updates, market prices"
+                                       FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavNetwork" Classes="sidebar-btn">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="Network" FontSize="11" />
+                            <TextBlock Text="Proxy, SSO credentials"
+                                       FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NavEsi" Classes="sidebar-btn">
+                        <StackPanel Spacing="1">
+                            <TextBlock Text="ESI" FontSize="11" />
+                            <TextBlock Text="API scopes, permissions"
+                                       FontSize="9" Foreground="{DynamicResource EveTextDisabledBrush}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <!-- Content area: one panel per section, shown/hidden -->
+            <ScrollViewer x:Name="ContentScroller" Grid.Column="1"
+                          VerticalScrollBarVisibility="Auto">
+                <Grid Margin="20">
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- APPEARANCE                              -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <StackPanel x:Name="AppearancePanel" Spacing="14">
+                        <TextBlock Text="Appearance" FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                        <TextBlock Text="Customize the look and feel of EveLens."
+                                   FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                   Margin="0,-8,0,0" />
+
+                        <!-- Theme -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Theme" FontSize="11" />
+                                <TextBlock Text="Choose the visual theme for the application."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="ThemeCombo" Grid.Column="1" Width="200" FontSize="11"
+                                      VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel x:Name="ThemeRestartPanel" Orientation="Horizontal" Spacing="8"
+                                    IsVisible="False">
+                            <TextBlock Text="Restart required to apply"
+                                       FontSize="10" Foreground="{DynamicResource EveWarningYellowBrush}"
+                                       VerticalAlignment="Center" />
+                            <Button x:Name="RestartNowButton" Content="Restart Now"
+                                    CornerRadius="12" Padding="10,4" FontSize="10" />
+                        </StackPanel>
+
+                        <!-- Safe for Work -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Safe for Work" FontSize="11" />
+                                <TextBlock Text="Hide character portraits and identifying colors."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="SafeForWorkToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Compatibility -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Compatibility" FontSize="11" />
+                                <TextBlock Text="Wine mode for Linux environments."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="CompatibilityCombo" Grid.Column="1" Width="140" FontSize="11"
+                                      VerticalAlignment="Center">
+                                <ComboBoxItem Content="Default" />
+                                <ComboBoxItem Content="Wine" />
+                            </ComboBox>
+                        </Grid>
+
+                        <!-- Open Data Directory -->
+                        <Button x:Name="OpenDataDirButton" Content="Open Data Directory"
+                                CornerRadius="12" Padding="10,4" FontSize="11"
+                                HorizontalAlignment="Left" Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- WINDOW BEHAVIOR                         -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <StackPanel x:Name="WindowPanel" Spacing="14" IsVisible="False">
+                        <TextBlock Text="Window Behavior" FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                        <TextBlock Text="Configure how the main window and system tray behave."
+                                   FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                   Margin="0,-8,0,0" />
+
+                        <!-- Minimize to Tray -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Minimize to Tray" FontSize="11" />
+                                <TextBlock Text="When enabled, closing the window minimizes EveLens to the system tray instead of exiting. Click the tray icon to restore."
+                                           TextWrapping="Wrap" FontSize="10"
+                                           Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="MinimizeToTrayToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- NOTIFICATIONS                           -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <StackPanel x:Name="NotificationsPanel" Spacing="14" IsVisible="False">
+                        <TextBlock Text="Notifications" FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                        <TextBlock Text="Configure alerts and notifications for skill training and events."
+                                   FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                   Margin="0,-8,0,0" />
+
+                        <!-- OS Notifications -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="OS Notifications" FontSize="11" />
+                                <TextBlock Text="Show Windows toast notifications for skill completions and alerts."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="OsNotificationsToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Play Sound -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Play Sound" FontSize="11" />
+                                <TextBlock Text="Play a sound when skill training completes."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="PlaySoundToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Separator />
+
+                        <!-- Email Alerts -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Email Alerts" FontSize="11" FontWeight="SemiBold" />
+                                <TextBlock Text="Send an email when skill training completes."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="SendMailToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel x:Name="EmailOptionsPanel" Spacing="10" Margin="12,0,0,0"
+                                    IsVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Provider" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <ComboBox x:Name="EmailProviderCombo" Width="140" FontSize="11">
+                                    <ComboBoxItem Content="Gmail" />
+                                    <ComboBoxItem Content="Outlook" />
+                                    <ComboBoxItem Content="Yahoo" />
+                                    <ComboBoxItem Content="Custom" />
+                                    <ComboBoxItem Content="Default" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="SMTP Server" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <TextBox x:Name="SmtpServerTextBox" Width="200" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Port" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <NumericUpDown x:Name="EmailPortNumber" Minimum="1" Maximum="65535" Value="25"
+                                               Width="100" FontSize="11" />
+                            </StackPanel>
+
+                            <!-- SSL/TLS -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel>
+                                    <TextBlock Text="SSL/TLS" FontSize="11" />
+                                    <TextBlock Text="Require encrypted connection."
+                                               FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="RequiresSslToggle" Grid.Column="1"
+                                              VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Authentication -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel>
+                                    <TextBlock Text="Authentication" FontSize="11" />
+                                    <TextBlock Text="Server requires username and password."
+                                               FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="EmailAuthToggle" Grid.Column="1"
+                                              VerticalAlignment="Center" />
+                            </Grid>
+
+                            <StackPanel x:Name="EmailAuthPanel" Spacing="6" Margin="12,0,0,0"
+                                        IsVisible="False">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Username" VerticalAlignment="Center" FontSize="11" Width="80" />
+                                    <TextBox x:Name="EmailAuthUserTextBox" Width="200" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Password" VerticalAlignment="Center" FontSize="11" Width="80" />
+                                    <TextBox x:Name="EmailAuthPasswordTextBox" Width="200" FontSize="11"
+                                             PasswordChar="&#x25CF;" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="From" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <TextBox x:Name="EmailFromTextBox" Width="200" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="To" VerticalAlignment="Center" FontSize="11" Width="100" />
+                                <TextBox x:Name="EmailToTextBox" Width="200" FontSize="11" />
+                            </StackPanel>
+
+                            <!-- Short Format -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel>
+                                    <TextBlock Text="Short Format" FontSize="11" />
+                                    <TextBlock Text="Use a compact email format."
+                                               FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                                </StackPanel>
+                                <ToggleSwitch x:Name="EmailShortFormatToggle" Grid.Column="1"
+                                              VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+
+                        <Separator />
+
+                        <!-- External Calendar -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="External Calendar" FontSize="11" FontWeight="SemiBold" />
+                                <TextBlock Text="Sync skill training schedules to an external calendar."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="CalendarEnabledToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel x:Name="CalendarOptionsPanel" Spacing="8" Margin="12,0,0,0"
+                                    IsVisible="False">
+                            <StackPanel Spacing="4">
+                                <RadioButton x:Name="GoogleCalendarRadio" Content="Google Calendar"
+                                             GroupName="CalendarProvider" FontSize="11" />
+                                <RadioButton x:Name="OutlookCalendarRadio" Content="Microsoft Outlook"
+                                             GroupName="CalendarProvider" FontSize="11" />
+                            </StackPanel>
+
+                            <!-- Google Calendar options -->
+                            <StackPanel x:Name="GoogleCalendarPanel" Spacing="6">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Calendar Name" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                    <TextBox x:Name="GoogleCalNameTextBox" Width="200" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Reminder" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                    <ComboBox x:Name="GoogleReminderCombo" Width="120" FontSize="11">
+                                        <ComboBoxItem Content="Email" />
+                                        <ComboBoxItem Content="Pop-up" />
+                                        <ComboBoxItem Content="SMS" />
+                                    </ComboBox>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Outlook options -->
+                            <StackPanel x:Name="OutlookCalendarPanel" Spacing="6">
+                                <CheckBox x:Name="OutlookDefaultCalCheckBox" Content="Use default calendar"
+                                          FontSize="11" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="Calendar Path" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                    <TextBox x:Name="OutlookCalPathTextBox" Width="200" FontSize="11" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <CheckBox x:Name="CalendarRemindingCheckBox" Content="Enable reminders" FontSize="11" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Interval (min)" VerticalAlignment="Center" FontSize="11" Width="110" />
+                                <NumericUpDown x:Name="CalendarRemindingInterval" Minimum="1" Maximum="120"
+                                               Value="10" Width="80" FontSize="11" />
+                            </StackPanel>
+
+                            <CheckBox x:Name="CalendarAltRemindingCheckBox" Content="Use alternate reminding times"
+                                      FontSize="11" />
+                            <Grid ColumnDefinitions="Auto,Auto,Auto,8,Auto,Auto,Auto" Margin="0,2,0,0">
+                                <TextBlock Text="Early" VerticalAlignment="Center" FontSize="11" Width="50" />
+                                <TimePicker x:Name="CalendarEarlyTimePicker" Grid.Column="1"
+                                            ClockIdentifier="24HourClock" />
+                                <TextBlock Grid.Column="2" Width="8" />
+                                <TextBlock Text="Late" Grid.Column="4" VerticalAlignment="Center" FontSize="11" />
+                                <TimePicker x:Name="CalendarLateTimePicker" Grid.Column="5"
+                                            ClockIdentifier="24HourClock" Margin="8,0,0,0" />
+                            </Grid>
+
+                            <CheckBox x:Name="CalendarLastQueuedOnlyCheckBox" Content="Export last queued skill only"
+                                      FontSize="11" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- DATA & UPDATES                          -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <StackPanel x:Name="DataPanel" Spacing="14" IsVisible="False">
+                        <TextBlock Text="Data &amp; Updates" FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                        <TextBlock Text="Manage automatic updates and market data providers."
+                                   FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                   Margin="0,-8,0,0" />
+
+                        <!-- Check for Updates -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Check for Updates" FontSize="11" />
+                                <TextBlock Text="Automatically check for new EveLens versions on startup."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="CheckForUpdatesToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Check Time -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Clock Sync" FontSize="11" />
+                                <TextBlock Text="Verify system clock is synchronized on startup."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="CheckTimeToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Separator />
+
+                        <!-- Market Price Provider -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Market Price Provider" FontSize="11" />
+                                <TextBlock Text="Source for market price lookups."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="MarketPriceProviderCombo" Grid.Column="1"
+                                      Width="200" FontSize="11" VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- NETWORK                                 -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <StackPanel x:Name="NetworkPanel" Spacing="14" IsVisible="False">
+                        <TextBlock Text="Network" FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                        <TextBlock Text="Configure proxy and SSO credentials."
+                                   FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                   Margin="0,-8,0,0" />
+
+                        <!-- HTTP Proxy -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="HTTP Proxy" FontSize="11" FontWeight="SemiBold" />
+                                <TextBlock Text="Route traffic through a custom proxy server."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="UseProxyToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel x:Name="ProxyPanel" Spacing="6" Margin="12,0,0,0"
+                                    IsVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Host" VerticalAlignment="Center" FontSize="11" Width="40" />
+                                <TextBox x:Name="ProxyHostTextBox" Width="220" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Port" VerticalAlignment="Center" FontSize="11" Width="40" />
+                                <TextBox x:Name="ProxyPortTextBox" Width="80" FontSize="11" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Separator />
+
+                        <!-- SSO Credentials -->
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="SSO Credentials" FontSize="11" FontWeight="SemiBold" />
+                            <TextBlock Text="Override built-in EveLens SSO client credentials."
+                                       FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                <TextBlock Text="Client ID" VerticalAlignment="Center" FontSize="11" Width="90" />
+                                <TextBox x:Name="SsoClientIdTextBox" Width="280" FontSize="11" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Client Secret" VerticalAlignment="Center" FontSize="11" Width="90" />
+                                <TextBox x:Name="SsoClientSecretTextBox" Width="280" FontSize="11"
+                                         PasswordChar="*" />
+                            </StackPanel>
+                            <Button x:Name="UseDefaultCredentialsButton" Content="Use Default"
+                                    CornerRadius="12" Padding="10,4" FontSize="11"
+                                    HorizontalAlignment="Left"
+                                    ToolTip.Tip="Clear custom credentials and use the built-in EveLens defaults" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- ═══════════════════════════════════════ -->
+                    <!-- ESI SCOPES                              -->
+                    <!-- ═══════════════════════════════════════ -->
+                    <StackPanel x:Name="EsiPanel" Spacing="14" IsVisible="False">
+                        <TextBlock Text="ESI Scopes" FontSize="15" FontWeight="Bold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}" />
+                        <TextBlock Text="Controls which API scopes EveLens requests when authenticating."
+                                   FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}"
+                                   Margin="0,-8,0,0" />
+
+                        <!-- Preset -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Scope Preset" FontSize="11" />
+                                <TextBlock Text="Choose a predefined set of API permissions."
+                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="EsiPresetCombo" Grid.Column="1"
+                                      Width="240" FontSize="11" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <TextBlock x:Name="EsiPresetDescription" Text=""
+                                   TextWrapping="Wrap" FontSize="10"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" />
+
+                        <Button x:Name="CustomizeScopesButton" Content="Customize Scopes..."
+                                CornerRadius="12" Padding="10,4" FontSize="11"
+                                HorizontalAlignment="Left" />
+
+                        <TextBlock Text="Changes take effect the next time you authenticate a character."
+                                   TextWrapping="Wrap" FontSize="10"
+                                   Foreground="{DynamicResource EveTextDisabledBrush}" />
+
+                        <Separator />
+
+                        <TextBlock Text="Character Scopes" FontSize="11" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,0,0,4" />
+
+                        <StackPanel x:Name="CharacterScopePanel" Spacing="0" />
+
+                        <TextBlock x:Name="NoCharactersLabel" Text="No characters authenticated yet."
+                                   FontSize="10" IsVisible="False"
+                                   Foreground="{DynamicResource EveTextDisabledBrush}" />
+
+                        <TextBlock Text="Characters not matching the selected preset can be re-authenticated to update their scopes."
+                                   TextWrapping="Wrap" FontSize="10" Margin="0,4,0,0"
+                                   Foreground="{DynamicResource EveTextDisabledBrush}" />
+                    </StackPanel>
+
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>

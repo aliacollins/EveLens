@@ -2,12 +2,12 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
-using EVEMon.XmlGenerator.Datafiles;
-using EVEMon.XmlGenerator.Providers;
-using EVEMon.XmlGenerator.Utils;
-using EVEMon.XmlGenerator.Xmlfiles;
+using EveLens.XmlGenerator.Datafiles;
+using EveLens.XmlGenerator.Providers;
+using EveLens.XmlGenerator.Utils;
+using EveLens.XmlGenerator.Xmlfiles;
 
-namespace EVEMon.XmlGenerator
+namespace EveLens.XmlGenerator
 {
     internal static class Program
     {

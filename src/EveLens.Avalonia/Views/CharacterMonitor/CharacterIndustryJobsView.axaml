@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterIndustryJobsView">
+
+    <Panel>
+        <!-- Enable prompt shown when endpoint is not yet activated -->
+        <Border x:Name="EnablePrompt" IsVisible="False"
+                Background="{StaticResource EveBackgroundDarkBrush}"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <TextBlock Text="Industry Job Tracking is not enabled for this character."
+                           FontSize="12"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Enable this to start fetching data from EVE Online."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center" />
+                <Button Content="Enable Industry Job Tracking"
+                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        HorizontalAlignment="Center"
+                        Click="OnEnableEndpoint" />
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
+            <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+            </StackPanel>
+        </Border>
+
+        <DockPanel x:Name="DataContent">
+        <!-- Filter bar -->
+        <Border DockPanel.Dock="Top" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <DockPanel>
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBox x:Name="FilterBox"
+                         Text="{Binding TextFilter, Mode=TwoWay}"
+                         Watermark="Search industry jobs..."
+                         MinWidth="200" />
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,4"
+                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
+            <TextBlock>
+                <TextBlock.Text>
+                    <MultiBinding StringFormat="Items: {0}">
+                        <Binding Path="TotalItemCount" />
+                    </MultiBinding>
+                </TextBlock.Text>
+            </TextBlock>
+        </Border>
+
+        <!-- Data grid -->
+        <DataGrid x:Name="ItemsGrid"
+                  ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Copy Blueprint Name" />
+                    <MenuItem Header="Copy Output" />
+                    <Separator />
+                    <MenuItem Header="Export to CSV..." />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="120" />
+                <DataGridTextColumn Header="State" Binding="{Binding State}" Width="80" />
+                <DataGridTextColumn Header="Blueprint" Binding="{Binding InstalledItem.Name}" Width="200" />
+                <DataGridTextColumn Header="Output" Binding="{Binding OutputItem.Name}" Width="200" />
+                <DataGridTextColumn Header="Location" Binding="{Binding Installation}" Width="180" />
+                <DataGridTextColumn Header="Runs" Binding="{Binding Runs}" Width="60" />
+                <DataGridTextColumn Header="Cost" Binding="{Binding Cost, StringFormat=\{0:N2\} ISK}" Width="120" />
+                <DataGridTextColumn Header="Install Date" Binding="{Binding InstalledTime, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="End Date" Binding="{Binding EndDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+            </DataGrid.Columns>
+        </DataGrid>
+        </DockPanel>
+    </Panel>
+</UserControl>

@@ -1,0 +1,213 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterKillLogView">
+
+    <Panel>
+        <!-- Enable prompt shown when endpoint is not yet activated -->
+        <Border x:Name="EnablePrompt" IsVisible="False"
+                Background="{StaticResource EveBackgroundDarkBrush}"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <TextBlock Text="Kill Log is not enabled for this character."
+                           FontSize="12"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Enable this to start fetching data from EVE Online."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center" />
+                <Button Content="Enable Kill Log"
+                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        HorizontalAlignment="Center"
+                        Click="OnEnableEndpoint" />
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
+            <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+            </StackPanel>
+        </Border>
+
+        <DockPanel x:Name="DataContent">
+            <!-- Top bar: filter + group selector -->
+            <Border DockPanel.Dock="Top" Padding="10,7"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                <DockPanel>
+                    <!-- Right side: group selector + collapse/expand -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Group by:" FontSize="11" VerticalAlignment="Center"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}" />
+                        <ComboBox x:Name="GroupByCombo" FontSize="11" Padding="8,3"
+                                  MinWidth="120" SelectedIndex="0"
+                                  SelectionChanged="OnGroupByChanged">
+                            <ComboBoxItem Content="Kills / Losses" />
+                            <ComboBoxItem Content="Date" />
+                            <ComboBoxItem Content="Ship Type" />
+                            <ComboBoxItem Content="Corporation" />
+                        </ComboBox>
+                        <Button Content="Collapse All" FontSize="11" Padding="10,4"
+                                CornerRadius="12" Click="OnCollapseAll" />
+                        <Button Content="Expand All" FontSize="11" Padding="10,4"
+                                CornerRadius="12" Click="OnExpandAll" />
+                    </StackPanel>
+
+                    <!-- Left side: search with clear -->
+                    <Border CornerRadius="14"
+                            Background="{StaticResource EveBackgroundDarkestBrush}"
+                            BorderBrush="{StaticResource EveBorderBrush}"
+                            BorderThickness="1" Padding="0"
+                            MinWidth="240" MaxWidth="320">
+                        <DockPanel>
+                            <Button x:Name="ClearFilterBtn" DockPanel.Dock="Right"
+                                    Content="&#x2715;" FontSize="10"
+                                    Background="Transparent" BorderThickness="0"
+                                    Padding="8,4" CornerRadius="0,14,14,0"
+                                    Click="OnClearFilter"
+                                    IsVisible="False" />
+                            <TextBox x:Name="FilterBox"
+                                     Watermark="Search kill log..."
+                                     FontSize="11" Padding="10,5"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     TextChanged="OnFilterChanged" />
+                        </DockPanel>
+                    </Border>
+                </DockPanel>
+            </Border>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Padding="10,5"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+                <TextBlock x:Name="StatusText" Text="Kill Log: 0" FontSize="11"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+            </Border>
+
+            <!-- Empty state + scrollable content overlap in Grid -->
+            <Grid>
+                <shared:EmptyState x:Name="EmptyState"
+                                   Title="No Kill Log Entries"
+                                   Subtitle="Kill and loss data will appear here once available from the ESI API."
+                                   IsVisible="False" />
+
+                <!-- Grouped kill log list -->
+                <ScrollViewer x:Name="MainScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="KillGroupsList" Margin="0"
+                                  HorizontalAlignment="Stretch">
+                        <ItemsControl.Styles>
+                            <Style Selector="ItemsControl > ContentPresenter">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            </Style>
+                        </ItemsControl.Styles>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <Border Classes="group-header" HorizontalAlignment="Stretch"
+                                            PointerPressed="OnGroupHeaderClicked">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
+                                            <TextBlock Grid.Column="0" Text="{Binding Chevron}"
+                                                       FontSize="11" Width="16"
+                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                       FontSize="11" FontWeight="SemiBold"
+                                                       Foreground="{Binding Name, Converter={x:Static converters:KillGroupColorConverter.Instance}}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="2" Text="{Binding ItemCountText}"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" Margin="8,0" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Items in group -->
+                                    <ItemsControl ItemsSource="{Binding Items}"
+                                                  HorizontalAlignment="Stretch"
+                                                  IsVisible="{Binding IsExpanded}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Classes="item-row" Padding="0,0,10,0"
+                                                        Background="{StaticResource EveBackgroundDarkBrush}"
+                                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                                        BorderThickness="0,0,0,0.5"
+                                                        HorizontalAlignment="Stretch">
+                                                    <DockPanel>
+                                                    <!-- Left accent border -->
+                                                    <Border DockPanel.Dock="Left" Width="3"
+                                                            Background="{Binding IsLoss, Converter={x:Static converters:KillGroupColorConverter.Instance}}"
+                                                            VerticalAlignment="Stretch" />
+
+                                                    <!-- Ship image -->
+                                                    <Border DockPanel.Dock="Left" Width="48" Height="48"
+                                                            Margin="8,4"
+                                                            CornerRadius="4"
+                                                            ClipToBounds="True"
+                                                            Background="{StaticResource EveBackgroundMediumBrush}">
+                                                        <Image x:Name="ShipImage"
+                                                               Width="48" Height="48"
+                                                               Source="{Binding ShipImage}"
+                                                               Stretch="UniformToFill" />
+                                                    </Border>
+
+                                                    <!-- Right side: time + attackers -->
+                                                    <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center"
+                                                                Margin="8,0,0,0" MinWidth="100">
+                                                        <TextBlock Text="{Binding TimeText}"
+                                                                   FontSize="10"
+                                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                                   HorizontalAlignment="Right" />
+                                                        <TextBlock Text="{Binding AttackersText}"
+                                                                   FontSize="10"
+                                                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                                                   HorizontalAlignment="Right" />
+                                                    </StackPanel>
+
+                                                    <!-- Center: victim/ship info -->
+                                                    <StackPanel VerticalAlignment="Center" Margin="8,4">
+                                                        <DockPanel>
+                                                            <TextBlock Text="{Binding PrimaryName}"
+                                                                       FontSize="11"
+                                                                       Foreground="{Binding PrimaryNameBrush}"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </DockPanel>
+                                                        <DockPanel>
+                                                            <TextBlock Text="{Binding SecondaryInfo}"
+                                                                       FontSize="11"
+                                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </DockPanel>
+                                                    </StackPanel>
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </DockPanel>
+    </Panel>
+</UserControl>

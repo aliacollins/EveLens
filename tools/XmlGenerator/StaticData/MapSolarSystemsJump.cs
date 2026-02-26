@@ -1,6 +1,6 @@
 ﻿using System.Xml.Serialization;
 
-namespace EVEMon.XmlGenerator.StaticData
+namespace EveLens.XmlGenerator.StaticData
 {
     public sealed class MapSolarSystemsJump
     {

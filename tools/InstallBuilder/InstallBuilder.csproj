@@ -9,8 +9,8 @@
     <ProjectGuid>{5CE8E302-3577-41BC-A35F-C88AC625F7A7}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>EVEMon.InstallBuilder</RootNamespace>
-    <AssemblyName>EVEMonInstallBuilder</AssemblyName>
+    <RootNamespace>EveLens.InstallBuilder</RootNamespace>
+    <AssemblyName>EveLensInstallBuilder</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
@@ -69,7 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="EVEMonInstallerScript.nsi">
+    <None Include="EveLensInstallerScript.nsi">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="NETFrameworkCheck.nsh">

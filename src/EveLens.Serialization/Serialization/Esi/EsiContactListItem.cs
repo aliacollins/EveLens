@@ -1,0 +1,73 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using EveLens.Common.Enumerations;
+using EveLens.Common.Serialization.Eve;
+using System.Runtime.Serialization;
+
+namespace EveLens.Common.Serialization.Esi {
+    [DataContract]
+    public sealed class EsiContactListItem
+    {
+        [DataMember(Name = "contact_id")]
+        public long ContactID { get; set; }
+        
+        [DataMember(Name = "is_watched")]
+        public bool InWatchlist { get; set; }
+
+        [DataMember(Name = "is_blocked")]
+        public bool IsBlocked { get; set; }
+
+        [DataMember(Name = "standing")]
+        public float Standing { get; set; }
+
+        // One of: character, corporation, alliance, faction
+        [DataMember(Name = "contact_type")]
+        private string ContactTypeJson
+        {
+            get
+            {
+                switch (Group)
+                {
+                case ContactGroup.Corporate:
+                    return "corporation";
+                case ContactGroup.Agent:
+                    return "faction";
+                case ContactGroup.Alliance:
+                    return "alliance";
+                default:
+                    return "character";
+                }
+            }
+            set
+            {
+                switch (value)
+                {
+                case "corporation":
+                    Group = ContactGroup.Corporate;
+                    break;
+                case "faction":
+                    Group = ContactGroup.Agent;
+                    break;
+                case "alliance":
+                    Group = ContactGroup.Alliance;
+                    break;
+                case "character":
+                    Group = ContactGroup.Personal;
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        
+        // Custom label of the contact
+        [DataMember(Name = "label_id")]
+        public long LabelID { get; set; }
+
+        [IgnoreDataMember]
+        public ContactGroup Group { get; set; }
+    }
+}

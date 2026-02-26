@@ -1,7 +1,7 @@
 ﻿using System.Xml.Serialization;
-using EVEMon.XmlGenerator.Interfaces;
+using EveLens.XmlGenerator.Interfaces;
 
-namespace EVEMon.XmlGenerator.StaticData
+namespace EveLens.XmlGenerator.StaticData
 {
     public sealed class DgmTypeEffects : IRelation
     {

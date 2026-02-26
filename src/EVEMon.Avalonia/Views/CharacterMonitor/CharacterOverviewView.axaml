@@ -1,8 +1,0 @@
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="EVEMon.Avalonia.Views.CharacterMonitor.CharacterOverviewView">
-
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <StackPanel x:Name="OverviewPanel" Margin="16,12" Spacing="8" />
-    </ScrollViewer>
-</UserControl>

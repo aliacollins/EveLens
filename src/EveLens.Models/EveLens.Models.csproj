@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>EveLens.Common</RootNamespace>
+    <AssemblyName>EveLens.Models</AssemblyName>
+    <DefineConstants>$(DefineConstants);NO_THREAD_SAFETY</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="15.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EveLens.Core\EveLens.Core.csproj" />
+    <ProjectReference Include="..\EveLens.Data\EveLens.Data.csproj" />
+    <ProjectReference Include="..\EveLens.Serialization\EveLens.Serialization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+</Project>

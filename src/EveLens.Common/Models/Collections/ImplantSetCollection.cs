@@ -1,0 +1,272 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System.Collections.Generic;
+using System.Linq;
+using EveLens.Common.Collections;
+using EveLens.Common.Serialization.Eve;
+using EveLens.Common.Serialization.Settings;
+using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Data;
+using EveLens.Common.Services;
+using EveLens.Core;
+using CoreEvents = EveLens.Core.Events;
+using CommonEvents = EveLens.Common.Events;
+using System.Globalization;
+
+namespace EveLens.Common.Models.Collections
+{
+    /// <summary>
+    /// Represents a collection of implants sets.
+    /// </summary>
+    public sealed class ImplantSetCollection : ReadonlyVirtualCollection<ImplantSet>
+    {
+        private readonly Character m_character;
+        private readonly List<ImplantSet> m_cloneSets;
+        private readonly List<ImplantSet> m_customSets;
+        private ImplantSet m_current;
+
+        /// <summary>
+        /// Internal constructor
+        /// </summary>
+        /// <param name="character"></param>
+        internal ImplantSetCollection(Character character)
+        {
+            m_character = character;
+            m_customSets = new List<ImplantSet>();
+            m_cloneSets = new List<ImplantSet>();
+            ActiveClone = new ImplantSet(character, "Active Clone");
+            None = new ImplantSet(character, "None");
+            m_current = ActiveClone;
+        }
+
+        /// <summary>
+        /// Gets the implant set by its index.
+        /// First items are <see cref="ActiveClone"/> then the jump clones then the custom sets.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public ImplantSet this[int index] => Enumerate().ElementAt(index);
+
+        /// <summary>
+        /// Gets the none implant.
+        /// </summary>
+        public ImplantSet None { get; }
+
+        /// <summary>
+        /// Gets the implants retrieved from the API.
+        /// </summary>
+        public ImplantSet ActiveClone { get; }
+
+        /// <summary>
+        /// Gets or sets the current implant set.
+        /// </summary>
+        public ImplantSet Current
+        {
+            get { return m_current; }
+            set
+            {
+                if (m_current == value)
+                    return;
+
+                m_current = value;
+                AppServices.TraceService?.Trace(m_character?.Name);
+                AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_character.CharacterID, m_character.Name));
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_character));
+            }
+        }
+
+        /// <summary>
+        /// Adds a new implant set.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public ImplantSet Add(string name)
+        {
+            ImplantSet set = new ImplantSet(m_character, name);
+            m_customSets.Add(set);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_character.CharacterID, m_character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_character));
+            return set;
+        }
+
+        /// <summary>
+        /// Removes the given set.
+        /// </summary>
+        /// <param name="set"></param>
+        public void Remove(ImplantSet set)
+        {
+            m_customSets.Remove(set);
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CoreEvents.CharacterUpdatedEvent(m_character.CharacterID, m_character.Name));
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterUpdatedEvent(m_character));
+        }
+
+        /// <summary>
+        /// Core method on which everything else relies.
+        /// </summary>
+        /// <returns></returns>
+        protected override IEnumerable<ImplantSet> Enumerate()
+        {
+            yield return ActiveClone;
+
+            foreach (ImplantSet set in m_cloneSets)
+            {
+                yield return set;
+            }
+
+            foreach (ImplantSet set in m_customSets)
+            {
+                yield return set;
+            }
+        }
+
+        /// <summary>
+        /// Imports data from an ESI deserialization object.
+        /// </summary>
+        public void Import(EsiAPIClones serial)
+        {
+            if (serial == null)
+                return;
+
+            m_cloneSets.Clear();
+            // Jump clones
+            foreach (var clone in serial.JumpClones)
+            {
+                int cloneID = clone.JumpCloneID;
+                var set = new ImplantSet(m_character, GetCloneName(clone.Name, clone.
+                    LocationID));
+                // Jump clone implants
+                var jcImplants = new LinkedList<SerializableNewImplant>();
+                foreach (int implant in clone.Implants)
+                    jcImplants.AddLast(new SerializableNewImplant()
+                    {
+                        ID = implant,
+                        Name = StaticItems.GetItemName(implant)
+                    });
+                set.Import(jcImplants);
+                m_cloneSets.Add(set);
+            }
+
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(m_character));
+        }
+
+        /// <summary>
+        /// Imports data from a deserialization object.
+        /// </summary>
+        public void Import(SerializableImplantSetCollection serial)
+        {
+            if (serial == null)
+                return;
+
+            ActiveClone.Import(serial.ActiveClone);
+
+            m_cloneSets.Clear();
+            foreach (SerializableSettingsImplantSet serialSet in serial.JumpClones)
+            {
+                ImplantSet set = new ImplantSet(m_character, serialSet.Name);
+                set.Import(serialSet);
+                m_cloneSets.Add(set);
+            }
+
+            m_customSets.Clear();
+            foreach (SerializableSettingsImplantSet serialSet in serial.CustomSets)
+            {
+                ImplantSet set = new ImplantSet(m_character, serialSet.Name);
+                set.Import(serialSet);
+                m_customSets.Add(set);
+            }
+
+            // Imports selection
+            m_current = this[serial.SelectedIndex];
+
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(m_character));
+        }
+
+        /// <summary>
+        /// Imports data from an API serialization object provided by CCP.
+        /// </summary>
+        /// <param name="serial"></param>
+        internal void Import(SerializableAPICharacterSheet serial)
+        {
+            if (serial == null)
+                return;
+
+            // Import the active clone implants
+            ActiveClone.Import(serial.Implants);
+
+            m_cloneSets.Clear();
+            foreach (SerializableCharacterJumpClone jumpClone in serial.JumpClones)
+            {
+                var cloneImplants = serial.JumpCloneImplants.Where(x => x.JumpCloneID ==
+                    jumpClone.JumpCloneID).Select(cloneImplant => new SerializableNewImplant
+                    {
+                        ID = cloneImplant.TypeID,
+                        Name = cloneImplant.TypeName
+                    });
+                ImplantSet set = new ImplantSet(m_character, GetCloneName(jumpClone.CloneName,
+                    jumpClone.LocationID));
+                set.Import(cloneImplants);
+                m_cloneSets.Add(set);
+            }
+
+            AppServices.TraceService?.Trace(m_character?.Name);
+            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterImplantSetCollectionChangedEvent(m_character));
+        }
+
+        /// <summary>
+        /// Creates a clone name if it is blank.
+        /// </summary>
+        /// <param name="name">The current clone name</param>
+        /// <param name="locationID">The clone location</param>
+        /// <returns>A name for this clone, using a default if none is given</returns>
+        private string GetCloneName(string name, long locationID)
+        {
+            // Try to pick a sane name if it is null
+            if (string.IsNullOrEmpty(name))
+            {
+                var location = ServiceLocator.StationResolver.GetStation(locationID, m_character?.CharacterID ?? 0) as Station;
+                if (location == null)
+                {
+                    name = "Clone at location #" + locationID.ToString(CultureInfo.
+                        InvariantCulture);
+                }
+                else if (!string.IsNullOrEmpty(location.Name))
+                {
+                    name = "Clone in " + location.Name;
+                }
+                else if (location.SolarSystem != null)
+                {
+                    // Station found but name is empty - use solar system name as fallback
+                    name = "Clone in " + location.SolarSystem.Name;
+                }
+                else
+                {
+                    // No station name and no solar system - use location ID
+                    name = "Clone at location #" + locationID.ToString(CultureInfo.
+                        InvariantCulture);
+                }
+            }
+            return name;
+        }
+
+        /// <summary>
+        /// Exports this collection to a serialization object.
+        /// </summary>
+        public SerializableImplantSetCollection Export()
+        {
+            SerializableImplantSetCollection serial = new SerializableImplantSetCollection {
+                ActiveClone = ActiveClone.Export()
+            };
+            serial.JumpClones.AddRange(m_cloneSets.Select(x => x.Export()));
+            serial.CustomSets.AddRange(m_customSets.Select(x => x.Export()));
+            serial.SelectedIndex = Enumerate().IndexOf(m_current);
+            return serial;
+        }
+    }
+}

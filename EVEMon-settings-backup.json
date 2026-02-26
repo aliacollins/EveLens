@@ -14851,7 +14851,7 @@
     }
   ],
   "Updates": {
-    "CheckEVEMonVersion": true,
+    "CheckEveLensVersion": true,
     "CheckTimeOnStartup": true,
     "MostRecentDeniedUpgrade": "5.1.3.6",
     "MostRecentDeniedMajorUpgrade": "5.1.3.6",

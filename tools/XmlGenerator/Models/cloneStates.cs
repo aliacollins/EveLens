@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace EVEMon.XmlGenerator.Models
+namespace EveLens.XmlGenerator.Models
 {
     [JsonObject(MemberSerialization.OptIn)]
     internal sealed class cloneStates

@@ -21,7 +21,7 @@ Write-Host "Creating stable release v$Version..." -ForegroundColor Cyan
 # Build all platforms
 Push-Location $RepoRoot
 
-$AvaloniaProject = "src\EVEMon.Avalonia\EVEMon.Avalonia.csproj"
+$AvaloniaProject = "src\EveLens.Avalonia\EveLens.Avalonia.csproj"
 
 Write-Host "Building Windows x64..." -ForegroundColor Yellow
 dotnet publish $AvaloniaProject -c Release -r win-x64 --self-contained false -o "publish\win-x64"
@@ -38,9 +38,9 @@ if ($LASTEXITCODE -ne 0) { Write-Host "macOS build failed!" -ForegroundColor Red
 Write-Host "All platforms built successfully." -ForegroundColor Green
 
 # Create zips for each platform
-$winZip = "publish\EVEMon-$Version-win-x64.zip"
-$linuxZip = "publish\EVEMon-$Version-linux-x64.zip"
-$macZip = "publish\EVEMon-$Version-osx-arm64.zip"
+$winZip = "publish\EveLens-$Version-win-x64.zip"
+$linuxZip = "publish\EveLens-$Version-linux-x64.zip"
+$macZip = "publish\EveLens-$Version-osx-arm64.zip"
 
 foreach ($zip in @($winZip, $linuxZip, $macZip)) {
     if (Test-Path $zip) { Remove-Item $zip }
@@ -54,7 +54,7 @@ Compress-Archive -Path "publish\osx-arm64\*" -DestinationPath $macZip
 Write-Host "Building installer..." -ForegroundColor Cyan
 & "$ScriptDir\build-installer.ps1" -Version $Version -SkipBuild
 
-$installerPath = "publish\EVEMon-install-$Version.exe"
+$installerPath = "publish\EveLens-install-$Version.exe"
 $hasInstaller = Test-Path $installerPath
 
 if (-not $hasInstaller) {
@@ -93,16 +93,16 @@ if (-not $recentChanges) {
 # Generate release notes file
 $releaseNotesPath = "$RepoRoot\publish\release-notes-stable.md"
 $releaseNotes = @"
-## EVEMon v$Version
+## EveLens v$Version
 
 ### Downloads
 
 | Platform | File | Requirements |
 |----------|------|-------------|
-| **Windows (Installer)** | ``EVEMon-install-$Version.exe`` | Installs .NET 8 automatically |
-| **Windows (Portable)** | ``EVEMon-$Version-win-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux x64** | ``EVEMon-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS Apple Silicon** | ``EVEMon-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Windows (Installer)** | ``EveLens-install-$Version.exe`` | Installs .NET 8 automatically |
+| **Windows (Portable)** | ``EveLens-$Version-win-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux x64** | ``EveLens-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS Apple Silicon** | ``EveLens-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
 ### Installation
 
@@ -111,10 +111,10 @@ $releaseNotes = @"
 **Linux/macOS:**
 1. Install [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 2. Extract the ZIP
-3. Run: ``dotnet "EVEMon NexT.dll"``
+3. Run: ``dotnet "EveLens.dll"``
 
 ### First Time Setup
-1. Run EVEMon
+1. Run EveLens
 2. Add your character via **File -> Add Character**
 3. Authorize with EVE Online SSO
 
@@ -124,9 +124,9 @@ $releaseNotes = @"
 $recentChanges
 
 ---
-See [README](https://github.com/aliacollins/evemon#readme) for full documentation.
+See [README](https://github.com/aliacollins/evelens#readme) for full documentation.
 
-**Report Issues:** https://github.com/aliacollins/evemon/issues
+**Report Issues:** https://github.com/aliacollins/evelens/issues
 
 **Maintainer:** Alia Collins (EVE Online) | [CapsuleerKit](https://www.capsuleerkit.com/)
 "@
@@ -135,17 +135,17 @@ Set-Content -Path $releaseNotesPath -Value $releaseNotes
 
 # Delete existing release if re-running (ignore errors)
 $ErrorActionPreference = "SilentlyContinue"
-gh release delete "v$Version" --yes --repo aliacollins/evemon 2>&1 | Out-Null
+gh release delete "v$Version" --yes --repo aliacollins/evelens 2>&1 | Out-Null
 $ErrorActionPreference = "Stop"
 
 # Upload all files
 $uploadFiles = @($winZip, $linuxZip, $macZip)
 if ($hasInstaller) { $uploadFiles += $installerPath }
 
-gh release create "v$Version" @uploadFiles --title "EVEMon v$Version" --notes-file $releaseNotesPath --repo aliacollins/evemon
+gh release create "v$Version" @uploadFiles --title "EveLens v$Version" --notes-file $releaseNotesPath --repo aliacollins/evelens
 
 Pop-Location
 
 Write-Host ""
 Write-Host "Stable release v$Version created!" -ForegroundColor Green
-Write-Host "URL: https://github.com/aliacollins/evemon/releases/tag/v$Version" -ForegroundColor Yellow
+Write-Host "URL: https://github.com/aliacollins/evelens/releases/tag/v$Version" -ForegroundColor Yellow

@@ -1,0 +1,38 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+
+namespace EveLens.Common.Interfaces
+{
+    public interface ICharacterAttribute
+    {
+        long Base { get; }
+        long ImplantBonus { get; }
+
+        /// <summary>
+        /// Gets the bonus from cerebral accelerators (boosters).
+        /// </summary>
+        long BoosterBonus { get; }
+
+        long EffectiveValue { get; }
+
+        /// <summary>
+        /// Gets a string representation with the provided format. The following parameters are accepted :
+        /// <list type="bullet">
+        /// <item>%n for name (lower case)</item>
+        /// <item>%N for name (CamelCase)</item>
+        /// <item>%B for attribute base value</item>
+        /// <item>%b for base bonus</item>
+        /// <item>%i for implant bonus</item>
+        /// <item>%o for booster bonus</item>
+        /// <item>%r for remapping points</item>
+        /// <item>%e for effective value</item>
+        /// </list>
+        /// </summary>
+        /// <returns>The formatted string.</returns>
+        string ToString(string format);
+    }
+}

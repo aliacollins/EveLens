@@ -1,0 +1,148 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Enumerations.CCPAPI;
+using EveLens.Common.Interfaces;
+using EveLens.Common.QueryMonitor;
+using EveLens.Common.Serialization.Eve;
+using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Services;
+using EveLens.Core.Events;
+using CommonEvents = EveLens.Common.Events;
+
+namespace EveLens.Common.Models
+{
+    /// <summary>
+    /// Represents the status of a server
+    /// </summary>
+    public sealed class EveServer
+    {
+        private int m_users;
+        private ServerStatus m_status;
+        private readonly QueryMonitor<EsiAPIServerStatus> m_serverStatusMonitor;
+        private DateTime m_serverDateTime = DateTime.UtcNow;
+        private readonly IDisposable m_secondTickSubscription;
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        internal EveServer()
+        {
+            m_status = ServerStatus.Online;
+
+            m_serverStatusMonitor = new QueryMonitor<EsiAPIServerStatus>(ESIAPIGenericMethods.ServerStatus,
+                 OnServerStatusMonitorUpdated) { Enabled = true };
+
+            // SecondTick - server time needs to track every second
+            m_secondTickSubscription = AppServices.EventAggregator?.Subscribe<SecondTickEvent>(
+                e => EveLensClient_TimerTick(null, EventArgs.Empty));
+        }
+
+        /// <summary>
+        /// Gets the server's name.
+        /// </summary>
+        private static string Name => AppServices.APIProviders.CurrentProvider.Url.Host !=
+            APIProvider.TestProvider.Url.Host ? "Tranquility" : "Singularity";
+
+        /// <summary>
+        /// Gets the server status message.
+        /// </summary>
+        public string StatusText
+        {
+            get
+            {
+                switch (m_status)
+                {
+                    case ServerStatus.Online:
+                        return $"{Name} Server Online ({m_users:N0} Pilots)";
+                    case ServerStatus.Offline:
+                        return $"{Name} Server Offline";
+                    case ServerStatus.CheckDisabled:
+                        return $"{Name} Server Status Check Disabled";
+                    default:
+                        return $"{Name} Server Status Unknown";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the server date time.
+        /// </summary>
+        public DateTime ServerDateTime => m_serverDateTime;
+
+        /// <summary>
+        /// Gets whether the server is currently online.
+        /// </summary>
+        public bool IsOnline => m_status == ServerStatus.Online;
+
+        /// <summary>
+        /// Gets the current server status.
+        /// </summary>
+        public ServerStatus Status => m_status;
+
+        /// <summary>
+        /// Forces an update of the server status.
+        /// </summary>
+        public void ForceUpdate()
+        {
+            ((IQueryMonitorEx)m_serverStatusMonitor).ForceUpdate();
+        }
+
+        /// <summary>
+        /// Occurs when CCP returns new data.
+        /// </summary>
+        /// <param name="result"></param>
+        private void OnServerStatusMonitorUpdated(EsiResult<EsiAPIServerStatus> result)
+        {
+            ServerStatus lastStatus = m_status;
+            DateTime? serverTime = result.CurrentTime;
+            // Update the server date and time (in case of ESI server failure, use local UTC
+            // time)
+            m_serverDateTime = (serverTime != null && serverTime != DateTime.MinValue) ?
+                (DateTime)serverTime : DateTime.UtcNow;
+            if (result.HasError)
+            {
+                m_status = ServerStatus.Unknown;
+                AppServices.Notifications.NotifyServerStatusError(result);
+                AppServices.TraceService?.Trace("ServerStatusUpdated");
+                AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
+                AppServices.EventAggregator?.Publish(CommonEvents.ServerStatusUpdatedEvent.Instance);
+            }
+            else
+            {
+                // Invalidate ESI error notifications
+                AppServices.Notifications.InvalidateAPIError();
+                if (result.HasData)
+                {
+                    // Update status and users
+                    m_users = result.Result.Players;
+                    m_status = (m_users < 1 || result.Result.VIP) ? ServerStatus.Offline :
+                        ServerStatus.Online;
+                    // Notify subscribers about update
+                    AppServices.TraceService?.Trace("ServerStatusUpdated");
+                    AppServices.EventAggregator?.Publish(ServerStatusUpdatedEvent.Instance);
+                    AppServices.EventAggregator?.Publish(CommonEvents.ServerStatusUpdatedEvent.Instance);
+                }
+                // Send a notification if the server went up/down
+                if (lastStatus != m_status)
+                    AppServices.Notifications.NotifyServerStatusChanged(Name, m_status);
+                else
+                    AppServices.Notifications.InvalidateServerStatusChange();
+            }
+        }
+
+        /// <summary>
+        /// Handles the TimerTick event of the EveLensClient control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="System.EventArgs"/> instance containing the event data.</param>
+        private void EveLensClient_TimerTick(object sender, EventArgs e)
+        {
+            m_serverDateTime = m_serverDateTime.AddSeconds(1);
+        }
+    }
+}

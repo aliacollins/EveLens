@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>EveLens.Avalonia</RootNamespace>
+    <AssemblyName>EveLens</AssemblyName>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationIcon>Properties\EveLens.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- Avalonia NuGet Packages -->
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.2.3" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.3" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+  </ItemGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <ProjectReference Include="..\EveLens.Common\EveLens.Common.csproj" />
+  </ItemGroup>
+
+  <!-- Shared AssemblyInfo -->
+  <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+  </ItemGroup>
+
+  <!-- Application icon as Avalonia resource -->
+  <ItemGroup>
+    <AvaloniaResource Include="Properties\EveLens.ico" />
+  </ItemGroup>
+
+  <!-- Copy ESI credentials file to output if it exists -->
+  <ItemGroup>
+    <None Include="..\..\esi-credentials.json" Condition="Exists('..\..\esi-credentials.json')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

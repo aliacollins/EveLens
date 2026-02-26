@@ -7,8 +7,8 @@
     <ProjectGuid>{E6907BAD-CDF4-4B3C-AF2E-E854D2E2D959}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>EVEMon.PatchXmlCreator</RootNamespace>
-    <AssemblyName>EVEMonPatchXmlCreator</AssemblyName>
+    <RootNamespace>EveLens.PatchXmlCreator</RootNamespace>
+    <AssemblyName>EveLensPatchXmlCreator</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -84,9 +84,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EVEMon.Common\EVEMon.Common.csproj">
+    <ProjectReference Include="..\..\src\EveLens.Common\EveLens.Common.csproj">
       <Project>{C0665275-3E0B-4117-81B0-751206ED03CD}</Project>
-      <Name>EVEMon.Common</Name>
+      <Name>EveLens.Common</Name>
       <Private>True</Private>
       <Properties>SkipValidatePackageReferences=true</Properties>
     </ProjectReference>

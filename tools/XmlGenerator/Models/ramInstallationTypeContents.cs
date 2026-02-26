@@ -1,4 +1,4 @@
-namespace EVEMon.XmlGenerator.Models
+namespace EveLens.XmlGenerator.Models
 {
     using System;
     using System.Collections.Generic;

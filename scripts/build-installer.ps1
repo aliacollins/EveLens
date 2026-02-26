@@ -1,4 +1,4 @@
-# build-installer.ps1 - Build EVEMon and create installer
+# build-installer.ps1 - Build EveLens and create installer
 # Usage: .\scripts\build-installer.ps1
 # Or with explicit version: .\scripts\build-installer.ps1 -Version 5.2.0
 
@@ -33,15 +33,15 @@ try {
         $InstallerVersion = $Version
     }
 
-    Write-Host "Building EVEMon Installer v$Version" -ForegroundColor Cyan
+    Write-Host "Building EveLens Installer v$Version" -ForegroundColor Cyan
     Write-Host "======================================" -ForegroundColor Cyan
 
-    # Step 1: Build EVEMon Avalonia
+    # Step 1: Build EveLens Avalonia
     if (-not $SkipBuild) {
         Write-Host ""
-        Write-Host "Step 1: Building EVEMon..." -ForegroundColor Yellow
+        Write-Host "Step 1: Building EveLens..." -ForegroundColor Yellow
 
-        dotnet publish "src\EVEMon.Avalonia\EVEMon.Avalonia.csproj" -c Release -r win-x64 --self-contained false -o "publish\win-x64"
+        dotnet publish "src\EveLens.Avalonia\EveLens.Avalonia.csproj" -c Release -r win-x64 --self-contained false -o "publish\win-x64"
 
         if ($LASTEXITCODE -ne 0) {
             Write-Host "Build failed!" -ForegroundColor Red
@@ -89,7 +89,7 @@ try {
     Write-Host ""
     Write-Host "Step 3: Compiling installer..." -ForegroundColor Yellow
 
-    $IssFile = Join-Path $ProjectRoot "installer\EVEMon.iss"
+    $IssFile = Join-Path $ProjectRoot "installer\EveLens.iss"
 
     & $IsccPath "/DMyAppVersion=$InstallerVersion" $IssFile
 
@@ -102,7 +102,7 @@ try {
     Write-Host ""
     Write-Host "Step 4: Verifying output..." -ForegroundColor Yellow
 
-    $InstallerFile = Join-Path $ProjectRoot "publish\EVEMon-install-$InstallerVersion.exe"
+    $InstallerFile = Join-Path $ProjectRoot "publish\EveLens-install-$InstallerVersion.exe"
 
     if (Test-Path $InstallerFile) {
         $FileInfo = Get-Item $InstallerFile

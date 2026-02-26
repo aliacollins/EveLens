@@ -19,18 +19,18 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
-      run: dotnet restore EVEMon.sln
+      run: dotnet restore EveLens.sln
 
     - name: Build
-      run: dotnet build EVEMon.sln -c Debug --no-restore
+      run: dotnet build EveLens.sln -c Debug --no-restore
 
     - name: Run tests
-      run: dotnet test tests/EVEMon.Tests/EVEMon.Tests.csproj --no-build -c Debug --verbosity minimal
+      run: dotnet test tests/EveLens.Tests/EveLens.Tests.csproj --no-build -c Debug --verbosity minimal
 
     - name: Verify test count
       shell: pwsh
       run: |
-        $output = dotnet test tests/EVEMon.Tests/EVEMon.Tests.csproj --no-build -c Debug --verbosity minimal 2>&1
+        $output = dotnet test tests/EveLens.Tests/EveLens.Tests.csproj --no-build -c Debug --verbosity minimal 2>&1
         $match = $output | Select-String "Passed:\s+(\d+)"
         if ($match) {
           $passed = [int]$match.Matches[0].Groups[1].Value

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace EVEMon.ResFileCreator
+namespace EveLens.ResFileCreator
 {
     internal static class Program
     {
@@ -47,7 +47,7 @@ namespace EVEMon.ResFileCreator
         {
             Directory.SetCurrentDirectory(GetSolutionDirectory());
 
-            string assemblyInfoFileContent = File.ReadAllText(Path.GetFullPath(@"src\EVEMon\Properties\AssemblyInfo.cs"));
+            string assemblyInfoFileContent = File.ReadAllText(Path.GetFullPath(@"src\EveLens\Properties\AssemblyInfo.cs"));
             s_dictionary["AssemblyTitle"] = GetValueOf(assemblyInfoFileContent, "AssemblyTitle");
 
             assemblyInfoFileContent = File.ReadAllText(Path.GetFullPath(@"SharedAssemblyInfo.cs"));
@@ -82,7 +82,7 @@ namespace EVEMon.ResFileCreator
         private static bool GenerateRcFile()
         {
             s_resScriptfile = Path.GetFullPath(string.Format(CultureInfo.InvariantCulture,
-                "src\\EVEMon\\{0}.rc", s_dictionary["AssemblyTitle"]));
+                "src\\EveLens\\{0}.rc", s_dictionary["AssemblyTitle"]));
 
             StringBuilder sb = new StringBuilder();
 
@@ -155,7 +155,7 @@ namespace EVEMon.ResFileCreator
         /// <param name="sb">The sb.</param>
         private static void AddManifest(StringBuilder sb)
         {
-            const string ManifestFile = @"src\EVEMon\\app.manifest";
+            const string ManifestFile = @"src\EveLens\\app.manifest";
 
             if (!File.Exists(ManifestFile))
                 return;
@@ -171,24 +171,24 @@ namespace EVEMon.ResFileCreator
         /// <param name="sb">The sb.</param>
         private static void AddIcons(StringBuilder sb)
         {
-            const string IconsDir = @"src\EVEMon.Common\Resources\Icons";
+            const string IconsDir = @"src\EveLens.Common\Resources\Icons";
             List<string> iconFilesPath = new List<string>();
 
             if (Directory.Exists(IconsDir))
-                iconFilesPath = Directory.GetFiles(IconsDir, "EVEMon.ico", SearchOption.AllDirectories).ToList();
+                iconFilesPath = Directory.GetFiles(IconsDir, "EveLens.ico", SearchOption.AllDirectories).ToList();
 
             if (!iconFilesPath.Any())
                 return;
 
             int count = 1;
-            string iconEVEMon = iconFilesPath.FirstOrDefault(file => file.Contains("EVEMon.ico"));
+            string iconEveLens = iconFilesPath.FirstOrDefault(file => file.Contains("EveLens.ico"));
 
             sb.AppendLine("// Icon");
-            if (iconEVEMon != null)
+            if (iconEveLens != null)
             {
-                sb.AppendLine($"{count} ICON \"{iconEVEMon}\"");
+                sb.AppendLine($"{count} ICON \"{iconEveLens}\"");
                 count++;
-                iconFilesPath.Remove(iconEVEMon);
+                iconFilesPath.Remove(iconEveLens);
             }
 
             foreach (string iconFilePath in iconFilesPath)

@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EveLens.Avalonia.Views.PlanEditor.PlanGoalCard">
+    <Border Background="{StaticResource EveBackgroundMediumBrush}"
+            CornerRadius="6" Padding="12,10" Margin="4">
+        <StackPanel Spacing="6">
+            <TextBlock Text="Goal" FontSize="10"
+                       Foreground="{StaticResource EveTextDisabledBrush}" />
+            <TextBlock x:Name="PlanNameText" FontSize="12" FontWeight="SemiBold"
+                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                       TextTrimming="CharacterEllipsis" />
+            <!-- Progress bar -->
+            <Grid ColumnDefinitions="*,Auto">
+                <ProgressBar x:Name="ProgressBar" Grid.Column="0"
+                             Minimum="0" Maximum="100" Height="6"
+                             Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <TextBlock x:Name="ProgressText" Grid.Column="1"
+                           FontSize="10" Margin="8,0,0,0"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+            </Grid>
+            <TextBlock x:Name="SkillCountText" FontSize="11"
+                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </StackPanel>
+    </Border>
+</UserControl>

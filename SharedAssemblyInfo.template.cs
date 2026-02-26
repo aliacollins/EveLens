@@ -6,16 +6,16 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyDescription("EVEMon Offline Character Utility for ESI, repository URL: https://github.com/peterhaneve/evemon")]
+[assembly: AssemblyDescription("EveLens Character Utility for ESI, repository URL: https://github.com/peterhaneve/evemon")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EVEMon Development Team")]
-[assembly: AssemblyProduct("EVEMon")]
+[assembly: AssemblyProduct("EveLens")]
 [assembly: AssemblyCopyright("Copyright © 2006-$UTCYEAR$, EVEMon Development Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Friend assembly for unit testing
-[assembly: InternalsVisibleTo("Tests.EVEMon.Common")]
+[assembly: InternalsVisibleTo("Tests.EveLens.Common")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 

@@ -2,12 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using EVEMon.Common.Collections;
-using EVEMon.Common.Serialization.Datafiles;
-using EVEMon.XmlGenerator.Providers;
-using EVEMon.XmlGenerator.Utils;
+using EveLens.Common.Collections;
+using EveLens.Common.Serialization.Datafiles;
+using EveLens.XmlGenerator.Providers;
+using EveLens.XmlGenerator.Utils;
 
-namespace EVEMon.XmlGenerator.Datafiles
+namespace EveLens.XmlGenerator.Datafiles
 {
     internal static class Reprocessing
     {

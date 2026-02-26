@@ -1,4 +1,4 @@
-﻿namespace EVEMon.XmlGenerator.Interfaces
+﻿namespace EveLens.XmlGenerator.Interfaces
 {
     /// <summary>
     /// Implementors support two components, a left hand side and a right hand side that are related.

@@ -1,11 +1,11 @@
-﻿using EVEMon.XmlGenerator.Models;
+﻿using EveLens.XmlGenerator.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 
-namespace EVEMon.XmlGenerator.Providers {
+namespace EveLens.XmlGenerator.Providers {
     // Fetches the max alpha skills from a new location to make it not hard coded!
 	internal static class HoboleaksAlphaSkills
     {

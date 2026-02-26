@@ -1,0 +1,139 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterSkillsView">
+
+    <DockPanel>
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="10,7"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <Button Content="Collapse All" FontSize="11" Padding="10,4"
+                            CornerRadius="12" Click="OnCollapseAll" />
+                    <Button Content="Expand All" FontSize="11" Padding="10,4"
+                            CornerRadius="12" Click="OnExpandAll" />
+                    <ToggleButton x:Name="ShowAllToggle" FontSize="11" Padding="10,4"
+                                  Content="Trained Only" IsChecked="False"
+                                  CornerRadius="12" Click="OnToggleShowAll" />
+                </StackPanel>
+
+                <Border CornerRadius="14"
+                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                        BorderBrush="{StaticResource EveBorderBrush}"
+                        BorderThickness="1" Padding="0"
+                        MinWidth="240" MaxWidth="320">
+                    <DockPanel>
+                        <Button x:Name="ClearFilterBtn" DockPanel.Dock="Right"
+                                Content="&#x2715;" FontSize="10"
+                                Background="Transparent" BorderThickness="0"
+                                Padding="8,4" CornerRadius="0,14,14,0"
+                                Click="OnClearFilter" IsVisible="False" />
+                        <TextBox x:Name="FilterBox" Watermark="Search skills..."
+                                 FontSize="11" Padding="10,5"
+                                 Background="Transparent" BorderThickness="0"
+                                 TextChanged="OnFilterChanged" />
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="10,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="StatusText" Text="Skills: 0" FontSize="11"
+                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </Border>
+
+        <!-- Grouped skill list: manual chevron headers -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="SkillGroupsList" Margin="0" HorizontalAlignment="Stretch">
+                <ItemsControl.Styles>
+                    <Style Selector="ItemsControl > ContentPresenter">
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    </Style>
+                </ItemsControl.Styles>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <!-- Group header: ▸ Name   13 / 14   2.4M SP -->
+                            <Border Classes="group-header" HorizontalAlignment="Stretch"
+                                    PointerPressed="OnGroupHeaderClicked">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" HorizontalAlignment="Stretch">
+                                    <TextBlock Grid.Column="0" Text="{Binding Chevron}"
+                                               FontSize="11" Width="16"
+                                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                               FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" Text="{Binding CountText}"
+                                               FontSize="10"
+                                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                                               VerticalAlignment="Center" Margin="8,0" />
+                                    <TextBlock Grid.Column="3" Text="{Binding SPText}"
+                                               FontSize="10"
+                                               Foreground="{StaticResource EveTextDisabledBrush}"
+                                               VerticalAlignment="Center" Margin="4,0" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Skill rows -->
+                            <ItemsControl ItemsSource="{Binding Skills}"
+                                          HorizontalAlignment="Stretch"
+                                          IsVisible="{Binding IsExpanded}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="item-row" Padding="24,3,8,3"
+                                                Background="{StaticResource EveBackgroundDarkBrush}"
+                                                BorderBrush="{StaticResource EveBorderBrush}"
+                                                BorderThickness="0,0,0,0.5"
+                                                HorizontalAlignment="Stretch">
+                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto"
+                                                  HorizontalAlignment="Stretch">
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}"
+                                                           FontSize="11" Foreground="{Binding NameBrush}"
+                                                           VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                            Spacing="2" VerticalAlignment="Center" Margin="8,0">
+                                                    <Border Width="8" Height="10" CornerRadius="1.5" Background="{Binding Block1}" />
+                                                    <Border Width="8" Height="10" CornerRadius="1.5" Background="{Binding Block2}" />
+                                                    <Border Width="8" Height="10" CornerRadius="1.5" Background="{Binding Block3}" />
+                                                    <Border Width="8" Height="10" CornerRadius="1.5" Background="{Binding Block4}" />
+                                                    <Border Width="8" Height="10" CornerRadius="1.5" Background="{Binding Block5}" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="2" Text="{Binding RankText}"
+                                                           FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                                                           VerticalAlignment="Center" MinWidth="55"
+                                                           TextAlignment="Right" Margin="4,0" />
+                                                <TextBlock Grid.Column="3" Text="{Binding SPText}"
+                                                           FontSize="10" Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                           VerticalAlignment="Center" MinWidth="75"
+                                                           TextAlignment="Right" Margin="4,0,0,0" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

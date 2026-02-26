@@ -1,0 +1,87 @@
+// EveLens — Character Intelligence for EVE Online
+// Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
+// Built with Claude Code (Anthropic)
+// Licensed under GPL v2 — see LICENSE for details
+
+using System;
+using EveLens.Common.Collections;
+using EveLens.Common.Extensions;
+using EveLens.Common.Serialization.Datafiles;
+
+namespace EveLens.Common.Data
+{
+    /// <summary>
+    /// Represents a region of the EVE universe.
+    /// </summary>
+    public sealed class Region : ReadonlyCollection<Constellation>, IComparable<Region>
+    {
+        # region Constructor
+
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="src"></param>
+        internal Region(SerializableRegion src)
+            : base(src.Constellations.Count)
+        {
+            ID = src.ID;
+            Name = src.Name;
+
+            foreach (SerializableConstellation srcConstellation in src.Constellations)
+            {
+                Items.Add(new Constellation(this, srcConstellation));
+            }
+        }
+
+        internal Region()
+        {
+            ID = 0;
+            Name = "unknown";
+        }
+        #endregion
+
+
+        # region Public Properties
+
+        /// <summary>
+        /// Gets this object's id.
+        /// </summary>
+        public long ID { get; }
+
+        /// <summary>
+        /// Gets this object's name.
+        /// </summary>
+        public string Name { get; }
+
+        #endregion
+
+
+        #region Public Methods
+
+        /// <summary>
+        /// Compare two regions by their names.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException">other</exception>
+        public int CompareTo(Region other)
+        {
+            other.ThrowIfNull(nameof(other));
+
+            return string.Compare(Name, other.Name, StringComparison.CurrentCulture);
+        }
+
+        #endregion
+
+
+        #region Overridden Methods
+
+        /// <summary>
+        /// Gets the name of this object.
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString() => Name;
+
+        #endregion
+    }
+}

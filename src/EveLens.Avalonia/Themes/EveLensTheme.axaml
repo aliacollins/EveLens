@@ -1,0 +1,563 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         EveLens Theme — Control Style Overrides
+         Colors/brushes are defined in Palettes/*.axaml (loaded first)
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- TextBlock -->
+    <Style Selector="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- ── Button: 2D raised look ──
+         Raised: lighter top border, darker bottom = depth illusion
+         Hover: brighter background + gold border highlight
+         Pressed: darken + invert border + translateY(1px) = physical push
+         Transitions on background/border/foreground for smooth feel -->
+    <Style Selector="Button">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="#FF3A4A70" />
+        <Setter Property="BorderThickness" Value="1,1,1,2" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.12" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.06" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button:pointerover">
+        <Setter Property="Background" Value="#FF1A4A78" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentDimmedBrush}" />
+    </Style>
+    <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button:pressed">
+        <Setter Property="Background" Value="#FF0A2848" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="1,2,1,1" />
+        <Setter Property="RenderTransform" Value="translateY(1px)" />
+    </Style>
+    <Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
+    <!-- Accent button (primary action — gold) -->
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="Foreground" Value="#FF1A1A2E" />
+        <Setter Property="BorderBrush" Value="#FFCB9515" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="Button.accent:pointerover">
+        <Setter Property="Background" Value="#FFFFC107" />
+        <Setter Property="BorderBrush" Value="#FFE6A817" />
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#FF1A1A2E" />
+    </Style>
+    <Style Selector="Button.accent:pressed">
+        <Setter Property="Background" Value="#FFCB9515" />
+    </Style>
+    <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Ghost button (transparent — toolbar actions, clear buttons) -->
+    <Style Selector="Button.ghost">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextSecondaryBrush}" />
+    </Style>
+    <Style Selector="Button.ghost:pointerover">
+        <Setter Property="Background" Value="#20FFFFFF" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.ghost:pressed">
+        <Setter Property="Background" Value="#30FFFFFF" />
+        <Setter Property="RenderTransform" Value="none" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.ghost:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Danger button (destructive — delete, reset) -->
+    <Style Selector="Button.danger">
+        <Setter Property="Foreground" Value="{StaticResource EveErrorRedBrush}" />
+        <Setter Property="BorderBrush" Value="#FF5A2A3A" />
+    </Style>
+    <Style Selector="Button.danger:pointerover">
+        <Setter Property="Background" Value="#FF3A1525" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveErrorRedBrush}" />
+    </Style>
+    <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.danger:pressed">
+        <Setter Property="Background" Value="#FF2A0A18" />
+    </Style>
+    <Style Selector="Button.danger:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- ── TextBox: border transition on focus ── -->
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkestBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="SelectionBrush" Value="{StaticResource EveAccentDimmedBrush}" />
+        <Setter Property="CornerRadius" Value="3" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="1,1,1,2" />
+    </Style>
+
+    <!-- ── TabControl / TabItem ── -->
+    <Style Selector="TabControl">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+    </Style>
+    <Style Selector="TabItem">
+        <Setter Property="Foreground" Value="{StaticResource EveTextSecondaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Foreground" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="TabItem:selected">
+        <Setter Property="Foreground" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+    <Style Selector="TabItem:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- Expander: full-width header stretch fix -->
+    <Style Selector="Expander">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Expander /template/ ToggleButton">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Expander /template/ ToggleButton /template/ ContentPresenter">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <!-- DataGrid -->
+    <Style Selector="DataGrid">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="RowBackground" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="VerticalGridLinesBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+    <Style Selector="DataGridColumnHeader">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveAccentSecondaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+    <Style Selector="DataGridCell">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+    </Style>
+
+    <!-- ListBox -->
+    <Style Selector="ListBox">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+    <Style Selector="ListBoxItem">
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+    <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+    </Style>
+
+    <!-- ── ComboBox: interactive dropdown ── -->
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkestBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="ComboBox:pointerover">
+        <Setter Property="BorderBrush" Value="#FF3A4A70" />
+    </Style>
+    <Style Selector="ComboBox:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+
+    <!-- ── ToggleButton: pill-shaped with transitions ── -->
+    <Style Selector="ToggleButton">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.12" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ToggleButton:pointerover">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentDimmedBrush}" />
+    </Style>
+
+    <!-- ── CheckBox / RadioButton: cursor ── -->
+    <Style Selector="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- ── ToggleSwitch: gold accent when on, compact (no On/Off labels) ── -->
+    <Style Selector="ToggleSwitch">
+        <Style.Resources>
+            <!-- On state: gold track -->
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#FFD4A017" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#FFFFC107" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#FFCB9515" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#FFD4A017" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#FFFFC107" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFCB9515" />
+            <!-- On state: white knob -->
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFFFFF" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFFFFFFF" />
+            <!-- Off state: dark track, gray knob -->
+            <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#FF2A3050" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#FF343D60" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOffPressed" Color="#FF222840" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#FF3A4A70" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOffPointerOver" Color="#FF4A5A80" />
+            <SolidColorBrush x:Key="ToggleSwitchStrokeOffPressed" Color="#FF3A4A70" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOff" Color="#FF8899B0" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPointerOver" Color="#FFA0B0C8" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPressed" Color="#FF8899B0" />
+        </Style.Resources>
+        <Setter Property="OnContent" Value="{x:Null}" />
+        <Setter Property="OffContent" Value="{x:Null}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <!-- ── Card: reusable elevated surface (Border only — supports BoxShadow) ── -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BoxShadow" Value="0 1 4 0 #30000000" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.card:pointerover">
+        <Setter Property="BoxShadow" Value="0 4 12 0 #40000000" />
+        <Setter Property="BorderBrush" Value="#FF3A4A70" />
+        <Setter Property="RenderTransform" Value="translateY(-1px)" />
+    </Style>
+
+    <!-- ── Elevated panel: subtle shadow for dialogs/popups ── -->
+    <Style Selector="Border.elevated">
+        <Setter Property="BoxShadow" Value="0 2 8 0 #50000000" />
+    </Style>
+
+    <!-- ── NumericUpDown ── -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkestBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="CornerRadius" Value="3" />
+    </Style>
+
+    <!-- ToolTip -->
+    <Style Selector="ToolTip">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+    </Style>
+
+    <!-- Window background -->
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+    </Style>
+
+    <!-- ScrollViewer -->
+    <Style Selector="ScrollViewer">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Modern thin scrollbar -->
+    <Style Selector="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="8" />
+        <Setter Property="MinWidth" Value="8" />
+    </Style>
+    <Style Selector="ScrollBar:horizontal">
+        <Setter Property="Height" Value="8" />
+        <Setter Property="MinHeight" Value="8" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb">
+        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="MinWidth" Value="6" />
+        <Setter Property="MinHeight" Value="6" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveAccentSecondaryBrush}" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb:pressed">
+        <Setter Property="Background" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+    <Style Selector="ScrollBar /template/ RepeatButton">
+        <Setter Property="IsVisible" Value="False" />
+    </Style>
+
+    <!-- Separator -->
+    <Style Selector="Separator">
+        <Setter Property="Background" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="Margin" Value="4,2" />
+    </Style>
+
+    <!-- ContextMenu -->
+    <Style Selector="ContextMenu">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundDarkBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveBorderBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+    <Style Selector="MenuItem">
+        <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+    </Style>
+    <Style Selector="MenuItem:pressed /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+
+    <!-- ── Group header: collapsible section header ── -->
+    <Style Selector="Border.group-header">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Background" Value="{StaticResource EveBackgroundMediumBrush}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.group-header:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+
+    <!-- ── Item row: hover, selected, alternating ── -->
+    <Style Selector="Border.item-row">
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.1" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.item-row:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveHoverBrush}" />
+    </Style>
+    <Style Selector="Border.item-row.selected">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="17,3,8,3" />
+    </Style>
+    <Style Selector="Border.item-row.selected:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+    </Style>
+    <Style Selector="Border.item-row-alt">
+        <Setter Property="Background" Value="{StaticResource EveAlternateRowBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+    </Style>
+    <Style Selector="Border.item-row-alt:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveHoverBrush}" />
+    </Style>
+    <Style Selector="Border.item-row-alt.selected">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="3,0,0,0" />
+        <Setter Property="Padding" Value="17,3,8,3" />
+    </Style>
+    <Style Selector="Border.item-row-alt.selected:pointerover">
+        <Setter Property="Background" Value="{StaticResource EveSelectedBrush}" />
+    </Style>
+
+    <!-- DataGrid alternating rows + row hover -->
+    <Style Selector="DataGridRow:nth-child(even) /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveAlternateRowBrush}" />
+    </Style>
+    <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveHoverBrush}" />
+    </Style>
+
+    <!-- ToggleButton checked: gold foreground + bottom indicator for active tabs -->
+    <Style Selector="ToggleButton:checked">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="10,4,10,2" />
+    </Style>
+    <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Character Portrait Strip Styles
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <!-- char-slot: transparent button for portrait strip slots -->
+    <Style Selector="Button.char-slot">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Opacity" Value="0.7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="4,4" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.char-slot:pointerover">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.char-slot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.char-slot:pressed">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RenderTransform" Value="none" />
+    </Style>
+    <Style Selector="Button.char-slot:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.char-slot.selected">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <!-- strip-arrow: scroll arrow buttons flanking the portrait strip -->
+    <Style Selector="Button.strip-arrow">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Margin" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="Opacity" Value="0.5" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.strip-arrow:pointerover">
+        <Setter Property="Opacity" Value="1" />
+        <Setter Property="Background" Value="#18FFFFFF" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.strip-arrow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.strip-arrow:pressed">
+        <Setter Property="Background" Value="#28FFFFFF" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RenderTransform" Value="none" />
+    </Style>
+    <Style Selector="Button.strip-arrow:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- portrait-ring: border around portrait with gold highlight when selected -->
+    <Style Selector="Border.portrait-ring">
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Border.portrait-ring.selected">
+        <Setter Property="BorderBrush" Value="{StaticResource EveAccentPrimaryBrush}" />
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Plan DataGrid Styles (.plan-grid class)
+         ═══════════════════════════════════════════════════════════════ -->
+
+    <Style Selector="DataGrid.plan-grid">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="RowHeight" Value="24" />
+    </Style>
+    <Style Selector="DataGrid.plan-grid DataGridRow">
+        <Setter Property="MinHeight" Value="22" />
+        <Setter Property="FontSize" Value="10" />
+    </Style>
+    <Style Selector="DataGrid.plan-grid DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+        <Setter Property="Fill" Value="{StaticResource EveBackgroundLightBrush}" />
+    </Style>
+    <Style Selector="DataGrid.plan-grid DataGridColumnHeader">
+        <Setter Property="FontSize" Value="9" />
+        <Setter Property="Foreground" Value="{StaticResource EveTextDisabledBrush}" />
+        <Setter Property="Padding" Value="4,3" />
+        <Setter Property="MinHeight" Value="24" />
+    </Style>
+
+</Styles>

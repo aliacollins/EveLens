@@ -1,0 +1,195 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
+             xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterContractsView">
+
+    <UserControl.Resources>
+        <converters:ContractStatusColorConverter x:Key="StatusColorConverter" />
+        <converters:ISKFormatConverter x:Key="ISKConverter" />
+    </UserControl.Resources>
+
+    <Panel>
+        <!-- Enable prompt shown when endpoint is not yet activated -->
+        <Border x:Name="EnablePrompt" IsVisible="False"
+                Background="{StaticResource EveBackgroundDarkBrush}"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                <TextBlock Text="Contract Tracking is not enabled for this character."
+                           FontSize="12"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="Enable this to start fetching data from EVE Online."
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center" />
+                <Button Content="Enable Contract Tracking"
+                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        HorizontalAlignment="Center"
+                        Click="OnEnableEndpoint" />
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
+            <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+            </StackPanel>
+        </Border>
+
+        <DockPanel x:Name="DataContent">
+            <!-- Toolbar -->
+            <Border DockPanel.Dock="Top" Padding="10,7"
+                    Background="{StaticResource EveBackgroundMediumBrush}">
+                <DockPanel>
+                    <!-- Right-side controls -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                                VerticalAlignment="Center">
+                        <ToggleButton x:Name="HideInactiveToggle"
+                                      Content="Hide Inactive"
+                                      FontSize="11" Padding="10,4" CornerRadius="12"
+                                      IsChecked="False"
+                                      Click="OnHideInactiveChanged" />
+                        <ComboBox x:Name="IssuedForCombo"
+                                  FontSize="11" MinWidth="110" Padding="8,4"
+                                  SelectedIndex="0"
+                                  SelectionChanged="OnIssuedForChanged">
+                            <ComboBoxItem Content="All" />
+                            <ComboBoxItem Content="Character" />
+                            <ComboBoxItem Content="Corporation" />
+                        </ComboBox>
+                        <ComboBox x:Name="GroupingCombo"
+                                  FontSize="11" MinWidth="130" Padding="8,4"
+                                  SelectedIndex="0"
+                                  SelectionChanged="OnGroupingChanged">
+                            <ComboBoxItem Content="No Grouping" />
+                            <ComboBoxItem Content="Status" />
+                            <ComboBoxItem Content="Contract Type" />
+                            <ComboBoxItem Content="Issue Date" />
+                            <ComboBoxItem Content="Start Location" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Search bar (fills remaining space) -->
+                    <Border CornerRadius="14" Padding="10,0"
+                            Background="{StaticResource EveBackgroundDarkBrush}"
+                            Margin="0,0,10,0">
+                        <DockPanel>
+                            <Button x:Name="ClearFilterButton"
+                                    DockPanel.Dock="Right"
+                                    Content="&#x2715;"
+                                    FontSize="10" Padding="4,2" CornerRadius="10"
+                                    Background="Transparent"
+                                    IsVisible="False"
+                                    Click="OnClearFilter"
+                                    VerticalAlignment="Center" />
+                            <TextBox x:Name="FilterBox"
+                                     Watermark="Search contracts..."
+                                     FontSize="11"
+                                     Background="Transparent" BorderThickness="0"
+                                     TextChanged="OnFilterTextChanged"
+                                     VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+                </DockPanel>
+            </Border>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Padding="10,5"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    BorderThickness="0,1,0,0"
+                    BorderBrush="{StaticResource EveBackgroundDarkBrush}">
+                <TextBlock x:Name="StatusBarText"
+                           FontSize="11"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+            </Border>
+
+            <Grid>
+                <!-- Empty state -->
+                <shared:EmptyState x:Name="EmptyState"
+                                   IsVisible="False"
+                                   Title="No Contracts"
+                                   Subtitle="No contracts match the current filters. Try adjusting your search or filter settings." />
+
+                <!-- Data grid -->
+                <DataGrid x:Name="ItemsGrid"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserReorderColumns="True"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0"
+                      Background="{StaticResource EveBackgroundDarkBrush}"
+                      FontSize="11">
+                <DataGrid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Copy Contract Info" />
+                        <MenuItem Header="Copy Issuer" />
+                        <Separator />
+                        <MenuItem Header="Export to CSV..." />
+                    </ContextMenu>
+                </DataGrid.ContextMenu>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Contract" Width="200">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="ContractText" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Type" Width="100">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="ContractType" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn Header="Status" Width="110">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding State}"
+                                           Foreground="{Binding State, Converter={StaticResource StatusColorConverter}}"
+                                           FontWeight="{Binding NeedsAttention, Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
+                                           VerticalAlignment="Center" Margin="4,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Issuer" Width="120">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="Issuer" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Assignee" Width="120">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="Assignee" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn Header="Price" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Price, Converter={StaticResource ISKConverter}}"
+                                           Foreground="{StaticResource EveSuccessGreenBrush}"
+                                           VerticalAlignment="Center" Margin="4,0" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Issued" Width="100">
+                        <DataGridTextColumn.Binding>
+                            <Binding Path="Issued" StringFormat="{}{0:yyyy-MM-dd}" />
+                        </DataGridTextColumn.Binding>
+                    </DataGridTextColumn>
+                    <DataGridTemplateColumn Header="Expires" Width="110">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Expiration, StringFormat=\{0:yyyy-MM-dd\}}"
+                                           VerticalAlignment="Center" Margin="4,0"
+                                           x:Name="ExpirationText" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </DockPanel>
+    </Panel>
+</UserControl>

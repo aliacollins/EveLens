@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
 
-Write-Host "Building EVEMon Alpha Release..." -ForegroundColor Cyan
+Write-Host "Building EveLens Alpha Release..." -ForegroundColor Cyan
 
 # Read version from SharedAssemblyInfo.cs
 $SharedAssemblyInfo = Get-Content "$RepoRoot\SharedAssemblyInfo.cs" -Raw
@@ -22,7 +22,7 @@ if ($SharedAssemblyInfo -match 'AssemblyInformationalVersion\("([^"]+)"\)') {
 # Build all platforms
 Push-Location $RepoRoot
 
-$AvaloniaProject = "src\EVEMon.Avalonia\EVEMon.Avalonia.csproj"
+$AvaloniaProject = "src\EveLens.Avalonia\EveLens.Avalonia.csproj"
 
 Write-Host "Building Windows x64..." -ForegroundColor Yellow
 dotnet publish $AvaloniaProject -c Release -r win-x64 --self-contained false -o "publish\win-x64"
@@ -39,9 +39,9 @@ if ($LASTEXITCODE -ne 0) { Write-Host "macOS build failed!" -ForegroundColor Red
 Write-Host "All platforms built successfully." -ForegroundColor Green
 
 # Create zips for each platform
-$winZip = "publish\EVEMon-$Version-win-x64.zip"
-$linuxZip = "publish\EVEMon-$Version-linux-x64.zip"
-$macZip = "publish\EVEMon-$Version-osx-arm64.zip"
+$winZip = "publish\EveLens-$Version-win-x64.zip"
+$linuxZip = "publish\EveLens-$Version-linux-x64.zip"
+$macZip = "publish\EveLens-$Version-osx-arm64.zip"
 
 foreach ($zip in @($winZip, $linuxZip, $macZip)) {
     if (Test-Path $zip) { Remove-Item $zip }
@@ -55,7 +55,7 @@ Compress-Archive -Path "publish\osx-arm64\*" -DestinationPath $macZip
 Write-Host "Building installer..." -ForegroundColor Cyan
 & "$ScriptDir\build-installer.ps1" -Version $InstallerVersion -SkipBuild
 
-$installerPath = "publish\EVEMon-install-$InstallerVersion.exe"
+$installerPath = "publish\EveLens-install-$InstallerVersion.exe"
 $hasInstaller = Test-Path $installerPath
 
 if (-not $hasInstaller) {
@@ -66,7 +66,7 @@ Write-Host "Uploading to alpha release..." -ForegroundColor Cyan
 
 # Delete existing alpha release (ignore error if doesn't exist)
 $ErrorActionPreference = "SilentlyContinue"
-gh release delete alpha --yes --repo aliacollins/evemon 2>&1 | Out-Null
+gh release delete alpha --yes --repo aliacollins/evelens 2>&1 | Out-Null
 
 # Move the alpha tag to current HEAD
 Write-Host "Updating alpha tag to current commit..." -ForegroundColor Gray
@@ -109,7 +109,7 @@ if (-not $featuresSection) {
 # Generate release notes file
 $releaseNotesPath = "$RepoRoot\publish\release-notes-alpha.md"
 $releaseNotes = @"
-## EVEMon Alpha Build - $Version
+## EveLens Alpha Build - $Version
 
 > **WARNING:** This is an **ALPHA** build. Expect bugs, crashes, and breaking changes.
 >
@@ -121,12 +121,12 @@ $releaseNotes = @"
 
 | Platform | File | Requirements |
 |----------|------|-------------|
-| **Windows (Installer)** | ``EVEMon-install-$InstallerVersion.exe`` | Installs .NET 8 automatically |
-| **Windows (Portable)** | ``EVEMon-$Version-win-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux x64** | ``EVEMon-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS Apple Silicon** | ``EVEMon-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Windows (Installer)** | ``EveLens-install-$InstallerVersion.exe`` | Installs .NET 8 automatically |
+| **Windows (Portable)** | ``EveLens-$Version-win-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux x64** | ``EveLens-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS Apple Silicon** | ``EveLens-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
-**Linux/macOS:** Extract and run ``dotnet "EVEMon NexT.dll"``
+**Linux/macOS:** Extract and run ``dotnet "EveLens.dll"``
 
 ---
 
@@ -142,11 +142,11 @@ $featuresSection
 
 ### Want Stable Instead?
 
-Download stable releases from: [GitHub Releases](https://github.com/aliacollins/evemon/releases)
+Download stable releases from: [GitHub Releases](https://github.com/aliacollins/evelens/releases)
 
 ---
 
-**Report Issues:** https://github.com/aliacollins/evemon/issues
+**Report Issues:** https://github.com/aliacollins/evelens/issues
 
 **Maintainer:** Alia Collins (EVE Online) | [CapsuleerKit](https://www.capsuleerkit.com/)
 "@
@@ -157,9 +157,9 @@ Set-Content -Path $releaseNotesPath -Value $releaseNotes
 $uploadFiles = @($winZip, $linuxZip, $macZip)
 if ($hasInstaller) { $uploadFiles += $installerPath }
 
-gh release create alpha @uploadFiles --prerelease --title "EVEMon Alpha ($Version)" --notes-file $releaseNotesPath --repo aliacollins/evemon
+gh release create alpha @uploadFiles --prerelease --title "EveLens Alpha ($Version)" --notes-file $releaseNotesPath --repo aliacollins/evelens
 
 Pop-Location
 
 Write-Host "Alpha release created!" -ForegroundColor Green
-Write-Host "URL: https://github.com/aliacollins/evemon/releases/tag/alpha" -ForegroundColor Yellow
+Write-Host "URL: https://github.com/aliacollins/evelens/releases/tag/alpha" -ForegroundColor Yellow

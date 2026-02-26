@@ -5,7 +5,7 @@
     <version>4.0.19.4983</version>
     <md5>918ea2a2cbeb51ace24989206a8716fa</md5>
     <url>https://forums.eveonline.com/t/evemon-4-0-19-beta-under-new-ownership-conversion-for-esi/75953</url>
-    <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.19/EVEMon-install-4.0.19.exe</autopatchurl>
+    <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.19/EveLens-install-4.0.19.exe</autopatchurl>
     <autopatchargs>/S /AUTORUN /SKIPDOTNET</autopatchargs>
     <additionalargs>/D=%EVEMON_EXECUTABLE_PATH%</additionalargs>
     <message><![CDATA[# Release v4.0.19
@@ -28,7 +28,7 @@
       <version>4.0.20.4986</version>
       <md5>76f89e810a199ff0a90aef82571ebfaf</md5>
       <url>https://forums.eveonline.com/t/evemon-4-0-20-beta-under-new-ownership-conversion-for-esi/75953</url>
-      <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.20/EVEMon-install-4.0.20.exe</autopatchurl>
+      <autopatchurl>https://github.com/peterhaneve/evemon/releases/download/4.0.20/EveLens-install-4.0.20.exe</autopatchurl>
       <autopatchargs>/S /AUTORUN /SKIPDOTNET</autopatchargs>
       <additionalargs>/D=%EVEMON_EXECUTABLE_PATH%</additionalargs>
       <message><![CDATA[# Release v4.0.20
@@ -53,7 +53,7 @@
       <md5>df91ac86ac9954dfaff13ab77681a1cc</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) blueprints data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-certificates-en-US.xml.gzip</name>
@@ -61,7 +61,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>540000f7c111354769a54fa31e57d411</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) certificates data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-geography-en-US.xml.gzip</name>
@@ -69,7 +69,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>3077e700023d84a267b744a6ee44acc7</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) geography data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-items-en-US.xml.gzip</name>
@@ -77,7 +77,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>4c9cb667e22421fad8ca08777be7fd8a</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) items data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-masteries-en-US.xml.gzip</name>
@@ -85,7 +85,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>3668b50996fc40a0c0853fec427b5712</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) masteries data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-properties-en-US.xml.gzip</name>
@@ -93,7 +93,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>1f6ae9f613fd26b08d5ec206d0958d79</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) properties data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-reprocessing-en-US.xml.gzip</name>
@@ -101,7 +101,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>adb83f4fc55f61a58548dcb924a91cfe</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) reprocessing data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
     <datafile>
       <name>eve-skills-en-US.xml.gzip</name>
@@ -109,7 +109,7 @@ NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
       <md5>727a781211b138cf331afed346692962</md5>
       <url>https://peterhaneve.github.io/evemon-datafiles/Reign/1885884</url>
       <message><![CDATA[Reign 1.0 (1885884) skills data file by the EVEMon Development Team
-NOT COMPATIBLE with EVEMon prior to version 2.2.0]]></message>
+NOT COMPATIBLE with EveLens prior to version 2.2.0]]></message>
     </datafile>
   </datafiles>
 </evemon>

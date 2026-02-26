@@ -1,0 +1,152 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:EveLens.Avalonia.Views.PlanEditor"
+             x:Class="EveLens.Avalonia.Views.PlanEditor.PlanUnifiedView">
+    <DockPanel>
+        <!-- Compact stats header -->
+        <Border DockPanel.Dock="Top" Padding="10,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="10"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="SkillCountText" FontSize="10"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="TrainingTimeText" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="FinishDateText" FontSize="10"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="InjectorText" FontSize="10"
+                               Foreground="{StaticResource EveSuccessGreenBrush}" />
+                    <TextBlock Text="|" FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}" />
+                    <TextBlock x:Name="TotalSpText" FontSize="10"
+                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <ToggleButton x:Name="SidebarToggle" Content="☰" IsChecked="True"
+                                  FontSize="10" Padding="6,2" CornerRadius="8"
+                                  Click="OnSidebarToggle" ToolTip.Tip="Toggle sidebar" />
+                    <Button Content="+ Add Skills" FontSize="9" Padding="6,2"
+                            CornerRadius="8" Click="OnAddSkills" />
+                    <Button Content="Copy Skill Plan" FontSize="9" Padding="6,2"
+                            CornerRadius="8" Click="OnCopyClick" />
+                    <Button Content="Group by Attr" FontSize="9" Padding="6,2"
+                            CornerRadius="8" Click="OnGroupByAttribute"
+                            ToolTip.Tip="Reorder plan by primary attribute for optimal remapping" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Main content: skill list + gap + left-sticking sidebar -->
+        <Grid ColumnDefinitions="*,8,Auto">
+            <!-- Column 0: Skill list area -->
+            <DockPanel Grid.Column="0">
+                <!-- Timeline bar at top (6px, proportional segments) -->
+                <Border DockPanel.Dock="Top" Height="6"
+                        Background="{StaticResource EveBackgroundDarkestBrush}">
+                    <StackPanel x:Name="TimelineBar" Orientation="Horizontal" />
+                </Border>
+
+                <!-- Column headers -->
+                <Border DockPanel.Dock="Top" Padding="0,4,10,4"
+                        Background="{StaticResource EveBackgroundMediumBrush}"
+                        BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="*,100,45,75,75,65,60">
+                        <TextBlock Grid.Column="0" Text="SKILL" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   VerticalAlignment="Center" Padding="12,2" />
+                        <TextBlock Grid.Column="1" Text="TIME" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Padding="0,2,8,2" />
+                        <TextBlock Grid.Column="2" Text="R" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Padding="2" ToolTip.Tip="Rank" />
+                        <TextBlock Grid.Column="3" Text="PRI" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Padding="2" ToolTip.Tip="Primary Attribute" />
+                        <TextBlock Grid.Column="4" Text="SEC" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Padding="2" ToolTip.Tip="Secondary Attribute" />
+                        <TextBlock Grid.Column="5" Text="SP/HR" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Padding="0,2,8,2" />
+                        <TextBlock Grid.Column="6" Text="LEVEL" FontSize="9" FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Padding="2" />
+                    </Grid>
+                </Border>
+
+                <!-- Scrollable segmented skill list -->
+                <ScrollViewer x:Name="SkillListScroller"
+                              Background="{StaticResource EveBackgroundDarkBrush}">
+                    <ItemsControl x:Name="PlanItemsControl" Margin="0,0,10,0">
+                        <!-- Items built in code-behind using programmatic templates -->
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+
+            <!-- Column 1: Gap (space between list and sidebar) -->
+
+            <!-- Column 2: Left-sticking sidebar -->
+            <Border x:Name="SidebarBorder" Grid.Column="2" Width="280"
+                    HorizontalAlignment="Left"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1,0,0,0">
+                <Panel>
+                    <!-- Expanded sidebar -->
+                    <DockPanel x:Name="SidebarExpanded">
+                        <!-- Sidebar tab header -->
+                        <Border DockPanel.Dock="Top" Padding="8,6"
+                                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <ToggleButton x:Name="SummaryTab" Content="Summary" IsChecked="True"
+                                              FontSize="10" Padding="8,3" CornerRadius="10"
+                                              Click="OnSidebarTabClick" />
+                                <ToggleButton x:Name="OptimizeTab" Content="Optimize"
+                                              FontSize="10" Padding="8,3" CornerRadius="10"
+                                              Click="OnSidebarTabClick" />
+                                <ToggleButton x:Name="AddTab" Content="Add"
+                                              FontSize="10" Padding="8,3" CornerRadius="10"
+                                              Click="OnSidebarTabClick" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Sidebar content (swapped programmatically) -->
+                        <ScrollViewer>
+                            <StackPanel x:Name="SidebarContent" Margin="10,8" Spacing="10" />
+                        </ScrollViewer>
+                    </DockPanel>
+
+                    <!-- Collapsed sidebar (icon strip) -->
+                    <StackPanel x:Name="SidebarCollapsed" IsVisible="False"
+                                Spacing="2" Margin="2,8,2,0">
+                        <Button x:Name="CollapsedSummaryBtn" Content="Σ" FontSize="14"
+                                Width="32" Height="32" Padding="0"
+                                CornerRadius="6" HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                ToolTip.Tip="Summary" Click="OnCollapsedSidebarClick" Tag="Summary" />
+                        <Button x:Name="CollapsedOptimizeBtn" Content="⚡" FontSize="14"
+                                Width="32" Height="32" Padding="0"
+                                CornerRadius="6" HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                ToolTip.Tip="Optimize" Click="OnCollapsedSidebarClick" Tag="Optimize" />
+                        <Button x:Name="CollapsedAddBtn" Content="+" FontSize="14"
+                                Width="32" Height="32" Padding="0"
+                                CornerRadius="6" HorizontalContentAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                ToolTip.Tip="Add Skills" Click="OnCollapsedSidebarClick" Tag="Add" />
+                    </StackPanel>
+                </Panel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

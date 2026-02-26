@@ -1,4 +1,4 @@
-# EVEMon Release Scripts
+# EveLens Release Scripts
 
 ## Workflow
 
@@ -16,10 +16,10 @@
 ```powershell
 .\scripts\build-installer.ps1
 ```
-- Builds EVEMon and creates installer
+- Builds EveLens and creates installer
 - Reads version from SharedAssemblyInfo.cs
 - Requires [Inno Setup 6](https://jrsoftware.org/isdl.php) installed
-- Output: `publish\EVEMon-install-{version}.exe`
+- Output: `publish\EveLens-install-{version}.exe`
 
 Options:
 - `-Version 5.2.0` - Override version
@@ -31,7 +31,7 @@ Options:
 ```
 - Builds and uploads to rolling "beta" release
 - Creates both ZIP and installer (if Inno Setup installed)
-- Testers always get latest from: https://github.com/aliacollins/evemon/releases/tag/beta
+- Testers always get latest from: https://github.com/aliacollins/evelens/releases/tag/beta
 - Overwrites previous beta each time
 
 ### Create Stable Release (when ready)
@@ -46,7 +46,7 @@ Options:
 
 ## Installer Features
 
-The installer (`EVEMon-install-{version}.exe`) includes:
+The installer (`EveLens-install-{version}.exe`) includes:
 - Install location selection
 - Desktop and Start Menu shortcuts
 - Automatic .NET 8 Desktop Runtime download/install

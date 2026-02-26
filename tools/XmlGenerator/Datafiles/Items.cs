@@ -1,12 +1,12 @@
-﻿using EVEMon.Common.Collections;
-using EVEMon.Common.Constants;
-using EVEMon.Common.Enumerations;
-using EVEMon.Common.Serialization.Datafiles;
-using EVEMon.XmlGenerator.Extensions;
-using EVEMon.XmlGenerator.Interfaces;
-using EVEMon.XmlGenerator.Providers;
-using EVEMon.XmlGenerator.StaticData;
-using EVEMon.XmlGenerator.Utils;
+﻿using EveLens.Common.Collections;
+using EveLens.Common.Constants;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Serialization.Datafiles;
+using EveLens.XmlGenerator.Extensions;
+using EveLens.XmlGenerator.Interfaces;
+using EveLens.XmlGenerator.Providers;
+using EveLens.XmlGenerator.StaticData;
+using EveLens.XmlGenerator.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,7 +14,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace EVEMon.XmlGenerator.Datafiles
+namespace EveLens.XmlGenerator.Datafiles
 {
     internal static class Items
 	{

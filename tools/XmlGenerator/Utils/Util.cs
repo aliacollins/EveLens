@@ -5,9 +5,9 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
-using EVEMon.Common.Data;
+using EveLens.Common.Data;
 
-namespace EVEMon.XmlGenerator.Utils
+namespace EveLens.XmlGenerator.Utils
 {
     public static class Util
     {
@@ -21,14 +21,14 @@ namespace EVEMon.XmlGenerator.Utils
 
 
         /// <summary>
-        /// Serializes a XML file to EVEMon.Common\Resources.
+        /// Serializes a XML file to EveLens.Common\Resources.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="datafile">The datafile.</param>
         /// <param name="filename">The filename.</param>
         internal static void SerializeXml<T>(T datafile, string filename)
         {
-            string path = Path.Combine(GetSolutionDirectory(), @"src\EVEMon.Common\Resources", filename);
+            string path = Path.Combine(GetSolutionDirectory(), @"src\EveLens.Common\Resources", filename);
 
             FileStream stream = Common.Util.GetFileStream(path, FileMode.Create, FileAccess.Write);
 
@@ -43,18 +43,18 @@ namespace EVEMon.XmlGenerator.Utils
             Console.WriteLine(@"Updated : {0}", filename);
             Console.WriteLine(@"-----------------------------------------------");
 
-            // As long as EVEMon.Common is not rebuilt, files are not updated in output directories
-            Copy(path, Path.Combine(GetSolutionDirectory(), @"src\EVEMon.Common\", GetOutputPath(), "Resources", filename));
+            // As long as EveLens.Common is not rebuilt, files are not updated in output directories
+            Copy(path, Path.Combine(GetSolutionDirectory(), @"src\EveLens.Common\", GetOutputPath(), "Resources", filename));
 
             // Update the file in the settings directory
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            Copy(path, Path.Combine(appData, "EVEMon", filename));
+            Copy(path, Path.Combine(appData, "EveLens", filename));
 
             Console.WriteLine();
         }
 
         /// <summary>
-        /// Serializes a XML file to EVEMon.Common\Serialization.
+        /// Serializes a XML file to EveLens.Common\Serialization.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="serial">The serial.</param>
@@ -62,7 +62,7 @@ namespace EVEMon.XmlGenerator.Utils
         /// <param name="filename">The filename.</param>
         internal static void SerializeXmlTo<T>(T serial, string xmlRootName, string filename)
         {
-            string path = Path.Combine(GetSolutionDirectory(), @"src\EVEMon.Common\Serialization", filename);
+            string path = Path.Combine(GetSolutionDirectory(), @"src\EveLens.Common\Serialization", filename);
             using (FileStream stream = Common.Util.GetFileStream(path, FileMode.Create, FileAccess.Write))
             {
                 XmlSerializer serializer = new XmlSerializer(typeof(T), new XmlRootAttribute(xmlRootName));
@@ -85,7 +85,7 @@ namespace EVEMon.XmlGenerator.Utils
 
             Console.WriteLine();
 
-            string resourcesPath = Path.Combine(GetSolutionDirectory(), @"src\EVEMon.Common\Resources");
+            string resourcesPath = Path.Combine(GetSolutionDirectory(), @"src\EveLens.Common\Resources");
             string md5SumsFileFullPath = Path.Combine(resourcesPath, filename);
 
             using (StreamWriter md5SumsFile = File.CreateText(md5SumsFileFullPath))

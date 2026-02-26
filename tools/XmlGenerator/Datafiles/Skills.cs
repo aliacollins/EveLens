@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using EVEMon.Common.Collections;
-using EVEMon.Common.Constants;
-using EVEMon.Common.Enumerations;
-using EVEMon.Common.Serialization.Datafiles;
-using EVEMon.XmlGenerator.Interfaces;
-using EVEMon.XmlGenerator.Providers;
-using EVEMon.XmlGenerator.StaticData;
-using EVEMon.XmlGenerator.Utils;
+using EveLens.Common.Collections;
+using EveLens.Common.Constants;
+using EveLens.Common.Enumerations;
+using EveLens.Common.Serialization.Datafiles;
+using EveLens.XmlGenerator.Interfaces;
+using EveLens.XmlGenerator.Providers;
+using EveLens.XmlGenerator.StaticData;
+using EveLens.XmlGenerator.Utils;
 
-namespace EVEMon.XmlGenerator.Datafiles
+namespace EveLens.XmlGenerator.Datafiles
 {
     internal static class Skills
     {

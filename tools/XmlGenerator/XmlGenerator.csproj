@@ -6,13 +6,13 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <RootNamespace>EVEMon.XmlGenerator</RootNamespace>
-    <AssemblyName>EVEMonXmlGenerator</AssemblyName>
+    <RootNamespace>EveLens.XmlGenerator</RootNamespace>
+    <AssemblyName>EveLensXmlGenerator</AssemblyName>
   </PropertyGroup>
 
   <!-- Project References -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EVEMon.Common\EVEMon.Common.csproj" />
+    <ProjectReference Include="..\..\src\EveLens.Common\EveLens.Common.csproj" />
   </ItemGroup>
 
   <!-- NuGet Packages -->

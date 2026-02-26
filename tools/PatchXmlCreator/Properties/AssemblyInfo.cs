@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("PatchXMLCreator")]
-[assembly: AssemblyDescription("EVEMon Patch Xml Creator")]
+[assembly: AssemblyDescription("EveLens Patch Xml Creator")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("EVEMon Development Team")]
-[assembly: AssemblyProduct("EVEMonPatchXMLCreator")]
+[assembly: AssemblyProduct("EveLensPatchXMLCreator")]
 [assembly: AssemblyCopyright("Copyright © 2010-2016, EVEMon Development Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

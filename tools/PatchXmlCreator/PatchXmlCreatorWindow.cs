@@ -9,29 +9,29 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
-using EVEMon.Common;
-using EVEMon.Common.Collections;
-using EVEMon.Common.Constants;
-using EVEMon.Common.Controls;
-using EVEMon.Common.Data;
-using EVEMon.Common.Factories;
-using EVEMon.Common.Helpers;
-using EVEMon.Common.Serialization.PatchXml;
+using EveLens.Common;
+using EveLens.Common.Collections;
+using EveLens.Common.Constants;
+using EveLens.Common.Controls;
+using EveLens.Common.Data;
+using EveLens.Common.Factories;
+using EveLens.Common.Helpers;
+using EveLens.Common.Serialization.PatchXml;
 using System.Net;
 
-namespace EVEMon.PatchXmlCreator
+namespace EveLens.PatchXmlCreator
 {
-    internal partial class PatchXmlCreatorWindow : EVEMonForm
+    internal partial class PatchXmlCreatorWindow : EveLensForm
     {
         #region Fields
 
-        private const string CompatibilityMessage = "\nNOT COMPATIBLE with EVEMon prior to version 2.2.0";
-        private const string InstallerFilename = "EVEMon-install-{0}.exe";
+        private const string CompatibilityMessage = "\nNOT COMPATIBLE with EveLens prior to version 2.2.0";
+        private const string InstallerFilename = "EveLens-install-{0}.exe";
         private const string DateTimeFormat = "dd MMMM yyyy";
         private const string DatafilesMessageFormat = "{0} {1} ({2}) {3} data file by the EVEMon Development Team";
         private const string DatafileHeader = "eve-";
         private const string InstallerArgs = "/S /AUTORUN /SKIPDOTNET";
-        private const string AdditionalArgs = "/D=%EVEMON_EXECUTABLE_PATH%";
+        private const string AdditionalArgs = "/D=%EVELENS_EXECUTABLE_PATH%";
 
         private static readonly Dictionary<Control, string> s_listOfInitMessages = new Dictionary<Control, string>();
         private static readonly List<Datafile> s_datafiles = new List<Datafile>();
@@ -57,10 +57,10 @@ namespace EVEMon.PatchXmlCreator
         {
             InitializeComponent();
 
-            lblEVEMonReleaseDate.Font = FontFactory.GetFont("Tahoma");
+            lblEveLensReleaseDate.Font = FontFactory.GetFont("Tahoma");
             lblVersion.Font = FontFactory.GetFont("Tahoma");
             dtpRelease.Font = FontFactory.GetFont("Tahoma");
-            lblEVEMonVersion.Font = FontFactory.GetFont("Tahoma");
+            lblEveLensVersion.Font = FontFactory.GetFont("Tahoma");
             gbRelease.Font = FontFactory.GetFont("Tahoma", 8.25F, FontStyle.Bold);
             lblMD5Sum.Font = FontFactory.GetFont("Tahoma");
             btnInstallerClear.Font = FontFactory.GetFont("Tahoma");
@@ -140,7 +140,7 @@ namespace EVEMon.PatchXmlCreator
         #region Methods
 
         /// <summary>
-        /// Get EVEMon's assembly version.
+        /// Get EveLens's assembly version.
         /// </summary>
         /// <returns></returns>
         private static FileVersionInfo GetAssemblyVersion()
@@ -148,7 +148,7 @@ namespace EVEMon.PatchXmlCreator
             if (s_fileVersionInfo != null)
                 return s_fileVersionInfo;
 
-            string path = Path.Combine(Helper.GetSourceFilesDirectory, Helper.EVEMonExecFilename);
+            string path = Path.Combine(Helper.GetSourceFilesDirectory, Helper.EveLensExecFilename);
             return s_fileVersionInfo = FileVersionInfo.GetVersionInfo(path);
         }
 
@@ -167,7 +167,7 @@ namespace EVEMon.PatchXmlCreator
 
             // Assign info
             var version = GetAssemblyVersion();
-            lblEVEMonVersion.Text = version.FileVersion;
+            lblEveLensVersion.Text = version.FileVersion;
             dtpRelease.Value = installerFileInfo.LastWriteTime;
             lblMD5Sum.Text = Util.CreateMD5From(installerFileInfo.FullName);
             rtbReleaseUrl.Text = NetworkConstants.GitHubDownloadsBase + string.Format(
@@ -541,7 +541,7 @@ namespace EVEMon.PatchXmlCreator
             if (GetAssemblyVersion().FileMajorPart == 2)
             {
                 serialRelease.Date = dtpRelease.Value.ToString(DateTimeFormat, s_enUsCulture);
-                serialRelease.Version = lblEVEMonVersion.Text;
+                serialRelease.Version = lblEveLensVersion.Text;
                 serialRelease.TopicAddress = rtbTopicUrl.Text;
                 serialRelease.PatchAddress = string.Concat(rtbReleaseUrl.Text,
                     string.Format(CultureConstants.InvariantCulture, InstallerFilename, GetAssemblyVersion().ProductVersion));
@@ -591,7 +591,7 @@ namespace EVEMon.PatchXmlCreator
             var serialRelease = new SerializableRelease
             {
                 Date = dtpRelease.Value.ToString(DateTimeFormat, s_enUsCulture),
-                Version = lblEVEMonVersion.Text,
+                Version = lblEveLensVersion.Text,
                 TopicAddress = rtbTopicUrl.Text,
                 PatchAddress = string.Concat(rtbReleaseUrl.Text,
                     string.Format(CultureConstants.InvariantCulture, InstallerFilename, GetAssemblyVersion().ProductVersion)),
@@ -699,7 +699,7 @@ namespace EVEMon.PatchXmlCreator
             if (DateTime.TryParse(latestRelease.Date, out date))
                 dtpRelease.Value = date;
             
-            lblEVEMonVersion.Text = latestRelease.Version;
+            lblEveLensVersion.Text = latestRelease.Version;
             rtbTopicUrl.Text = latestRelease.TopicAddress;
             rtbReleaseUrl.Text = new Uri(new Uri(latestRelease.PatchAddress), ".").AbsoluteUri;
             lblMD5Sum.Text = latestRelease.MD5Sum;

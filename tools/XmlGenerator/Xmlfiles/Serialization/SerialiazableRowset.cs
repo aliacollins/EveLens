@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 
-namespace EVEMon.XmlGenerator.Xmlfiles.Serialization
+namespace EveLens.XmlGenerator.Xmlfiles.Serialization
 {
     public class SerialiazableRowset<T>
     {

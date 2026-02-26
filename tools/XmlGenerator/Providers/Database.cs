@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Linq;
-using EVEMon.Common.Constants;
-using EVEMon.XmlGenerator.Collections;
-using EVEMon.XmlGenerator.Extensions;
-using EVEMon.XmlGenerator.Models;
-using EVEMon.XmlGenerator.StaticData;
-using EVEMon.XmlGenerator.Utils;
+using EveLens.Common.Constants;
+using EveLens.XmlGenerator.Collections;
+using EveLens.XmlGenerator.Extensions;
+using EveLens.XmlGenerator.Models;
+using EveLens.XmlGenerator.StaticData;
+using EveLens.XmlGenerator.Utils;
 using Microsoft.Data.Sqlite;
 
-namespace EVEMon.XmlGenerator.Providers
+namespace EveLens.XmlGenerator.Providers
 {
     public static class Database
     {
@@ -351,7 +351,7 @@ namespace EVEMon.XmlGenerator.Providers
         /// </summary>
         internal static void CreateTables()
         {
-            s_totalTablesCount = Util.GetCountOfTypesInNamespace("EVEMon.XmlGenerator.StaticData");
+            s_totalTablesCount = Util.GetCountOfTypesInNamespace("EveLens.XmlGenerator.StaticData");
 
             SqliteConnection connection = CreateConnection();
 
