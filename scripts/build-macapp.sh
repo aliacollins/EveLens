@@ -14,20 +14,31 @@ OUTPUT="$REPO_ROOT/publish/EveLens-${VERSION}-osx-arm64.app.zip"
 echo "=== Building EveLens macOS App Bundle v${VERSION} ==="
 
 # Find dotnet: prefer native, fall back to Windows-side
+USE_WIN_DOTNET=false
 if command -v dotnet &>/dev/null; then
     DOTNET="dotnet"
 elif [ -x "/mnt/c/Program Files/dotnet/dotnet.exe" ]; then
     DOTNET="/mnt/c/Program Files/dotnet/dotnet.exe"
+    USE_WIN_DOTNET=true
 else
     echo "Error: dotnet not found. Install .NET 8 SDK or ensure Windows dotnet is accessible." >&2
     exit 1
 fi
 
+# Convert WSL path to Windows path when using Windows dotnet
+winpath() {
+    if [ "$USE_WIN_DOTNET" = true ]; then
+        wslpath -w "$1"
+    else
+        echo "$1"
+    fi
+}
+
 # Step 1: Publish self-contained for osx-arm64
 echo "Publishing self-contained osx-arm64 build..."
-"$DOTNET" publish "$REPO_ROOT/src/EveLens.Avalonia/EveLens.Avalonia.csproj" \
+"$DOTNET" publish "$(winpath "$REPO_ROOT/src/EveLens.Avalonia/EveLens.Avalonia.csproj")" \
     -c Release -r osx-arm64 --self-contained true \
-    -o "$REPO_ROOT/publish/osx-arm64-sc"
+    -o "$(winpath "$REPO_ROOT/publish/osx-arm64-sc")"
 
 # Step 2: Create .app bundle structure
 echo "Creating .app bundle..."
