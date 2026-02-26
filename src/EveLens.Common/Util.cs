@@ -52,12 +52,35 @@ namespace EveLens.Common
 
             try
             {
-                // .NET Core/.NET 5+ requires UseShellExecute = true to open URLs
-                Process.Start(new ProcessStartInfo
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                    System.Runtime.InteropServices.OSPlatform.Linux))
                 {
-                    FileName = url.AbsoluteUri,
-                    UseShellExecute = true
-                });
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "xdg-open",
+                        Arguments = url.AbsoluteUri,
+                        UseShellExecute = false
+                    });
+                }
+                else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                    System.Runtime.InteropServices.OSPlatform.OSX))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "open",
+                        Arguments = url.AbsoluteUri,
+                        UseShellExecute = false
+                    });
+                }
+                else
+                {
+                    // Windows: UseShellExecute = true opens URLs via the default browser
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = url.AbsoluteUri,
+                        UseShellExecute = true
+                    });
+                }
             }
             catch (Exception ex)
             {

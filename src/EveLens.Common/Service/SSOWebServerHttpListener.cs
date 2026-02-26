@@ -68,12 +68,17 @@ namespace EveLens.Common.Service
             listener.Prefixes.Add(prefix);
             // Where would the exception go otherwise?
             listener.IgnoreWriteExceptions = true;
-            // Set up the desired timeouts
-            listener.TimeoutManager.IdleConnection = TIMEOUT_IDLE;
-            listener.TimeoutManager.DrainEntityBody = TIMEOUT_WRITE;
-            listener.TimeoutManager.EntityBody = TIMEOUT_READ;
-            listener.TimeoutManager.HeaderWait = TIMEOUT_READ;
-            listener.TimeoutManager.RequestQueue = TIMEOUT_WRITE;
+            // Set up the desired timeouts (Windows only — TimeoutManager throws
+            // PlatformNotSupportedException on Linux/macOS)
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                listener.TimeoutManager.IdleConnection = TIMEOUT_IDLE;
+                listener.TimeoutManager.DrainEntityBody = TIMEOUT_WRITE;
+                listener.TimeoutManager.EntityBody = TIMEOUT_READ;
+                listener.TimeoutManager.HeaderWait = TIMEOUT_READ;
+                listener.TimeoutManager.RequestQueue = TIMEOUT_WRITE;
+            }
             InitResponses();
         }
 
