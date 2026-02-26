@@ -39,6 +39,7 @@
 # Shell scripts must always use LF (Unix) line endings
 ###############################################################################
 *.sh text eol=lf
+*.desktop text eol=lf
 
 ###############################################################################
 # behavior for image files
