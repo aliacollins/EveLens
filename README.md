@@ -11,9 +11,7 @@
 
 ## What Is EveLens?
 
-EveLens is the next generation of EVEMon — the character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
-
-This is a complete rebuild. The legacy WinForms application (EVEMon 5.x) has been retired. This repository is now EveLens only.
+EveLens is a character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
 
 **Current Version: 1.0.0-alpha.1**
 
