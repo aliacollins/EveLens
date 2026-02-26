@@ -28,7 +28,8 @@ namespace EveLens.Avalonia
         {
             // Set taskbar identity so Windows groups the window as "EveLens"
             // instead of using the executable name "EveLens.Avalonia.exe"
-            SetCurrentProcessExplicitAppUserModelID("EveLens");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                SetCurrentProcessExplicitAppUserModelID("EveLens");
 
             // When restarting (theme change, data update), the old instance needs time
             // to fully exit and release its named semaphore before we check it.
