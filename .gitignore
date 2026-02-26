@@ -229,13 +229,18 @@ tools/*.sqlite.bz2
 
 # Screenshots
 *.png
+!installer/icons/*.png
 .claude-backup-*
 
 # Release artifacts (uploaded to GitHub Releases, not repo)
 publish/
 *.zip
 *-Setup.exe
+*.AppImage
 .claude
+
+# Cached build tools (appimagetool, etc.)
+scripts/.tools/
 
 # Internal documentation and markdown files
 docs/

@@ -1,0 +1,11 @@
+#!/bin/bash
+# AppRun - Entry point for EveLens AppImage
+# Sets up the environment and launches the application
+
+HERE="$(dirname "$(readlink -f "$0")")"
+
+export PATH="$HERE/usr/bin:$PATH"
+export LD_LIBRARY_PATH="$HERE/usr/lib:$HERE/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export DOTNET_ROOT="$HERE/usr/bin"
+
+exec "$HERE/usr/bin/EveLens" "$@"

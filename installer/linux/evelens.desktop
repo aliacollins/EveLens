@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=EveLens
+Comment=Character Intelligence for EVE Online
+Exec=EveLens
+Icon=evelens
+Categories=Game;Utility;
+Terminal=false
+StartupWMClass=EveLens

@@ -35,6 +35,25 @@ Write-Host "Building macOS ARM64..." -ForegroundColor Yellow
 dotnet publish $AvaloniaProject -c Release -r osx-arm64 --self-contained false -o "publish\osx-arm64"
 if ($LASTEXITCODE -ne 0) { Write-Host "macOS build failed!" -ForegroundColor Red; Pop-Location; exit 1 }
 
+Write-Host "All portable builds completed." -ForegroundColor Green
+
+# Build native installers (self-contained)
+Write-Host "Building Linux AppImage (self-contained)..." -ForegroundColor Yellow
+$appImageResult = wsl bash ./scripts/build-appimage.sh $Version 2>&1
+$hasAppImage = Test-Path "publish\EveLens-$Version-linux-x64.AppImage"
+if (-not $hasAppImage) {
+    Write-Host "Warning: AppImage build failed. Continuing without it." -ForegroundColor Yellow
+    Write-Host $appImageResult -ForegroundColor Gray
+}
+
+Write-Host "Building macOS App Bundle (self-contained)..." -ForegroundColor Yellow
+$macAppResult = wsl bash ./scripts/build-macapp.sh $Version 2>&1
+$hasMacApp = Test-Path "publish\EveLens-$Version-osx-arm64.app.zip"
+if (-not $hasMacApp) {
+    Write-Host "Warning: macOS app bundle build failed. Continuing without it." -ForegroundColor Yellow
+    Write-Host $macAppResult -ForegroundColor Gray
+}
+
 Write-Host "All platforms built successfully." -ForegroundColor Green
 
 # Create zips for each platform
@@ -101,14 +120,20 @@ $releaseNotes = @"
 |----------|------|-------------|
 | **Windows (Installer)** | ``EveLens-install-$Version.exe`` | Installs .NET 8 automatically |
 | **Windows (Portable)** | ``EveLens-$Version-win-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux x64** | ``EveLens-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS Apple Silicon** | ``EveLens-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux (AppImage)** | ``EveLens-$Version-linux-x64.AppImage`` | Just download and run |
+| **Linux (Portable)** | ``EveLens-$Version-linux-x64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS (App)** | ``EveLens-$Version-osx-arm64.app.zip`` | Extract, drag to Applications |
+| **macOS (Portable)** | ``EveLens-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
 ### Installation
 
 **Windows:** Run the installer or extract the portable ZIP.
 
-**Linux/macOS:**
+**Linux (AppImage):** ``chmod +x EveLens-*.AppImage && ./EveLens-*.AppImage``
+
+**macOS (App):** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
+
+**Portable builds (Linux/macOS):**
 1. Install [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 2. Extract the ZIP
 3. Run: ``dotnet "EveLens.dll"``
@@ -141,6 +166,10 @@ $ErrorActionPreference = "Stop"
 # Upload all files
 $uploadFiles = @($winZip, $linuxZip, $macZip)
 if ($hasInstaller) { $uploadFiles += $installerPath }
+$appImagePath = "publish\EveLens-$Version-linux-x64.AppImage"
+if (Test-Path $appImagePath) { $uploadFiles += $appImagePath }
+$macAppPath = "publish\EveLens-$Version-osx-arm64.app.zip"
+if (Test-Path $macAppPath) { $uploadFiles += $macAppPath }
 
 gh release create "v$Version" @uploadFiles --title "EveLens v$Version" --notes-file $releaseNotesPath --repo aliacollins/evelens
 
