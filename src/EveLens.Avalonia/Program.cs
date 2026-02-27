@@ -60,6 +60,7 @@ namespace EveLens.Avalonia
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
+                .With(new X11PlatformOptions { WmClass = "EveLens" })
                 .LogToTrace();
 
         private static void ShowAlreadyRunningDialog()
