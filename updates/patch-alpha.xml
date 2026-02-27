@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.6</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.6
+
+Fix Linux settings persistence: resolve data directory per XDG Base Directory Specification]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
