@@ -198,8 +198,19 @@ namespace EveLens.Avalonia
                         }
                         else
                         {
-                            // Trigger explicit shutdown after the window closes
+                            // Save settings NOW, before the window closes.
+                            // On Linux/X11 the process can exit before Post() runs,
+                            // so ShutdownRequested never fires and settings are lost.
                             IsExiting = true;
+                            try
+                            {
+                                Settings.SaveSynchronousForShutdown();
+                                EveIDToName.SaveImmediateAsync().GetAwaiter().GetResult();
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Pre-close save failed: {ex.Message}");
+                            }
                             Dispatcher.UIThread.Post(() => desktop.Shutdown());
                         }
                     };
