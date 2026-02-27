@@ -331,13 +331,23 @@ namespace EveLens.Common
             try
             {
                 SerializableSettings settings = Export();
-                SettingsFileManager.SaveFromSerializableSettingsAsync(settings)
-                    .GetAwaiter().GetResult();
-                AppServices.TraceService?.Trace("Shutdown save complete");
+
+                // Write directly and synchronously — no async, no sync context capture.
+                // This avoids deadlocks on Linux/X11 where the Avalonia dispatcher
+                // synchronization context blocks .GetAwaiter().GetResult().
+                string json = System.Text.Json.JsonSerializer.Serialize(
+                    settings, SettingsFileManager.DirectJsonOptions);
+                SettingsFileManager.EnsureDirectoriesExist();
+                File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
+                AppServices.TraceService?.Trace(
+                    $"Shutdown save complete: {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
             }
             catch (Exception ex)
             {
-                AppServices.TraceService?.Trace($"Shutdown save error: {ex.Message}");
+                var inner = ex;
+                while (inner.InnerException != null) inner = inner.InnerException;
+                AppServices.TraceService?.Trace(
+                    $"Shutdown save error: {inner.GetType().Name}: {inner.Message}");
             }
         }
 

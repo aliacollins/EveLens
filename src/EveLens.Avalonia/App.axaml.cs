@@ -204,8 +204,9 @@ namespace EveLens.Avalonia
                             IsExiting = true;
                             try
                             {
+                                // Fully synchronous — no async, no .GetAwaiter().GetResult()
+                                // which deadlocks on Linux due to Avalonia sync context.
                                 Settings.SaveSynchronousForShutdown();
-                                EveIDToName.SaveImmediateAsync().GetAwaiter().GetResult();
                             }
                             catch (Exception ex)
                             {
