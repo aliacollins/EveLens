@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.19</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.19
+
+Log full inner exception for JSON serialization failure diagnosis on Linux]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.18</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Ensure rcodesign is on PATH in build-macapp.sh for ad-hoc codesigning]]></messag
       <message><![CDATA[EveLens 1.0.0-alpha.10
 
 Fix app hanging on close (Linux): fully synchronous shutdown save, no async deadlock]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.9</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.9
-
-Fix Linux settings loss: save in Closing handler before window closes instead of relying on ShutdownRequested]]></message>
     </release>
   </releases>
   <datafiles>
