@@ -87,7 +87,25 @@ fi
 # Ensure main binary is executable
 chmod +x "$APP_BUNDLE/Contents/MacOS/EveLens"
 
-# Step 4: Create distributable zip
+# Step 4: Ad-hoc codesign to prevent "app is damaged" on macOS
+# Without this, Gatekeeper quarantine blocks the app entirely on Sonoma+.
+# Ad-hoc signing (no Apple Developer ID) allows "right-click → Open" to work
+# and avoids the scary "damaged" error.
+if command -v codesign &>/dev/null; then
+    # Native macOS: use codesign
+    echo "Ad-hoc signing with codesign..."
+    codesign --force --deep --sign - "$APP_BUNDLE"
+elif command -v rcodesign &>/dev/null; then
+    # Linux/WSL: use rcodesign (cargo install apple-codesign)
+    echo "Ad-hoc signing with rcodesign..."
+    rcodesign sign "$APP_BUNDLE"
+else
+    echo "Warning: No codesign tool available. App may show 'damaged' on macOS." >&2
+    echo "  Install rcodesign: cargo install apple-codesign" >&2
+    echo "  Users will need to run: xattr -cr EveLens.app" >&2
+fi
+
+# Step 5: Create distributable zip
 echo "Creating distributable zip..."
 rm -f "$OUTPUT"
 cd "$REPO_ROOT/publish"
@@ -95,13 +113,20 @@ if command -v zip &>/dev/null; then
     zip -ry "$(basename "$OUTPUT")" "EveLens.app/" >/dev/null
 else
     # Fallback: use Python zipfile when zip is not installed (common in minimal WSL)
+    # Must preserve Unix permissions (especially +x on main binary) or macOS
+    # will show "app is damaged" when trying to launch.
     python3 -c "
-import zipfile, os
-with zipfile.ZipFile('$(basename "$OUTPUT")', 'w', zipfile.ZIP_DEFLATED) as zf:
+import zipfile, os, stat
+with zipfile.ZipFile('$(basename \"$OUTPUT\")', 'w', zipfile.ZIP_DEFLATED) as zf:
     for root, dirs, files in os.walk('EveLens.app'):
         for f in files:
             fp = os.path.join(root, f)
-            zf.write(fp)
+            info = zipfile.ZipInfo(fp)
+            st = os.stat(fp)
+            # Preserve Unix permissions in the zip external attributes
+            info.external_attr = (st.st_mode & 0xFFFF) << 16
+            with open(fp, 'rb') as fh:
+                zf.writestr(info, fh.read())
 "
 fi
 cd "$REPO_ROOT"
@@ -113,4 +138,4 @@ rm -rf "$REPO_ROOT/publish/osx-arm64-sc"
 echo "=== macOS app bundle created: $OUTPUT ==="
 echo "Size: $(du -h "$OUTPUT" | cut -f1)"
 echo ""
-echo "Note: This app is unsigned. Users must right-click → Open on first launch."
+echo "Note: This app is unsigned. Users must run: xattr -cr EveLens.app"

@@ -318,6 +318,30 @@ namespace EveLens.Common
         }
 
         /// <summary>
+        /// Saves settings synchronously for shutdown. Calls Export() on the current
+        /// (UI) thread and writes to disk synchronously. This avoids the deadlock
+        /// caused by SmartSettingsManager.PerformSaveAsync posting to the UI thread
+        /// while the shutdown handler blocks it with .Wait().
+        /// </summary>
+        public static void SaveSynchronousForShutdown()
+        {
+            if (IsRestoring)
+                return;
+
+            try
+            {
+                SerializableSettings settings = Export();
+                SettingsFileManager.SaveFromSerializableSettingsAsync(settings)
+                    .GetAwaiter().GetResult();
+                AppServices.TraceService?.Trace("Shutdown save complete");
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"Shutdown save error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Shuts down settings services, disposing the SmartSettingsManager if active.
         /// Called during application shutdown.
         /// </summary>
