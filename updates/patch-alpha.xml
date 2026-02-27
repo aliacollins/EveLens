@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.11</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.11
+
+Ensure rcodesign is on PATH in build-macapp.sh for ad-hoc codesigning]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.10</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Merge Plan Editor sidebar: combine Summary + Optimize into unified Plan tab with
       <message><![CDATA[EveLens 1.0.0-alpha.2
 
 Native Linux AppImage and macOS .app bundle packaging]]></message>
-    </release>
-    <release>
-      <date>2026-02-25</date>
-      <version>5.1.3.6</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-5.1.3.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 5.1.3-alpha.6
-
-Cross-platform: remove WinForms, Avalonia-only on net8.0 with Linux and macOS support]]></message>
     </release>
   </releases>
   <datafiles>
