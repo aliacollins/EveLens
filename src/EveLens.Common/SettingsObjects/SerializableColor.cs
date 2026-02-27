@@ -4,7 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using EveLens.Common.Extensions;
 
@@ -57,34 +57,18 @@ namespace EveLens.Common.SettingsObjects
         public byte B { get; set; }
 
 
-        #region Explicit conversion operators with System.Drawing.Color
+        #region Color conversion helpers
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="EveLens.Common.SettingsObjects.SerializableColor" /> to <see cref="System.Drawing.Color" />.
+        /// Converts to a (A, R, G, B) tuple. Platform-safe replacement for System.Drawing.Color operators.
         /// </summary>
-        /// <param name="src">The SRC.</param>
-        /// <returns>
-        /// The result of the conversion.
-        /// </returns>
-        /// <exception cref="System.ArgumentNullException">src</exception>
-        /// <remarks>
-        /// Do not make the conversion operators implicit, there is a bug with XML serialization
-        /// </remarks>
-        public static explicit operator Color(SerializableColor src)
-        {
-            src.ThrowIfNull(nameof(src));
-
-            return Color.FromArgb(src.A, src.R, src.G, src.B);
-        }
+        public (byte A, byte R, byte G, byte B) ToArgb() => (A, R, G, B);
 
         /// <summary>
-        /// Performs an explicit conversion from <see cref="System.Drawing.Color"/> to <see cref="EveLens.Common.SettingsObjects.SerializableColor"/>.
+        /// Creates from ARGB components. Platform-safe replacement for System.Drawing.Color operators.
         /// </summary>
-        /// <param name="src">The SRC.</param>
-        /// <returns>The result of the conversion.</returns>
-        /// <remarks>Do not make the conversion operators implicit, there is a bug with XML serialization</remarks>
-        public static explicit operator SerializableColor(Color src)
-            => new SerializableColor { A = src.A, R = src.R, G = src.G, B = src.B };
+        public static SerializableColor FromArgb(byte a, byte r, byte g, byte b)
+            => new SerializableColor { A = a, R = r, G = g, B = b };
 
         #endregion
     }
