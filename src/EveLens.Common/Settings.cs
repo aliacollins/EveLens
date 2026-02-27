@@ -291,7 +291,13 @@ namespace EveLens.Common
                 }
                 catch (Exception ex)
                 {
-                    AppServices.TraceService?.Trace($"Settings.Save direct write failed: {ex.Message}");
+                    var inner = ex;
+                    while (inner.InnerException != null) inner = inner.InnerException;
+                    string trace = inner.StackTrace ?? "";
+                    int nl = trace.IndexOf('\n');
+                    string firstLine = nl > 0 ? trace.Substring(0, nl).Trim() : trace.Trim();
+                    AppServices.TraceService?.Trace(
+                        $"Settings.Save FAILED: {inner.GetType().FullName}: {inner.Message} at {firstLine}");
                 }
             }
 
