@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+# Ensure cargo/rcodesign are on PATH (installed via rustup)
+[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 VERSION="${1:-1.0.0-alpha.1}"
