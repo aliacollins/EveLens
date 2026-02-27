@@ -156,9 +156,15 @@ namespace EveLens.Avalonia
             {
                 try
                 {
-                    Task.Run(() => Task.WhenAll(
-                        Settings.SaveImmediateAsync(),
-                        EveIDToName.SaveImmediateAsync())).Wait();
+                    // We're on the UI thread here. SmartSettingsManager.PerformSaveAsync
+                    // uses _dispatcher.Post(Export) which needs the UI thread to be free.
+                    // Calling .Wait() would deadlock on Linux/macOS.
+                    //
+                    // Instead: Export synchronously (we're on the UI thread), then write
+                    // to disk synchronously. This guarantees the save completes before
+                    // the process exits.
+                    Settings.SaveSynchronousForShutdown();
+                    EveIDToName.SaveImmediateAsync().GetAwaiter().GetResult();
                 }
                 catch (Exception ex)
                 {

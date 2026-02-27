@@ -155,7 +155,7 @@ $releaseNotes = @"
 | **macOS (Portable)** | ``EveLens-$Version-osx-arm64.zip`` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
 **Linux AppImage:** ``chmod +x EveLens-*.AppImage && ./EveLens-*.AppImage``
-**macOS App:** Extract zip, drag to Applications, right-click → Open (unsigned app)
+**macOS App:** Extract zip, drag to Applications, right-click → Open on first launch. If you see "app is damaged," run ``xattr -cr EveLens.app`` in Terminal first
 **Portable builds:** Require [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0), run ``dotnet "EveLens.dll"``
 
 ---

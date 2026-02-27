@@ -407,11 +407,13 @@ namespace EveLens.Common
             {
                 string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EveLens");
 
-                // If settings.xml exists in the app's directory, we use this one
+                // If settings.xml or settings.json exists in the app's directory, use it (portable mode)
                 EveLensDataDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
                 // Else, we use %APPDATA%\EveLens
-                if (!File.Exists(SettingsFileNameFullPath))
+                bool hasPortableXml = File.Exists(SettingsFileNameFullPath);
+                bool hasPortableJson = File.Exists(Path.Combine(EveLensDataDir, "settings.json"));
+                if (!hasPortableXml && !hasPortableJson)
                     EveLensDataDir = appDataPath;
 
                 // Create the directory if it does not exist already
