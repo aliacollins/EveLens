@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.10</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.10
+
+Fix app hanging on close (Linux): fully synchronous shutdown save, no async deadlock]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.9</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Native Linux AppImage and macOS .app bundle packaging]]></message>
       <message><![CDATA[EveLens 5.1.3-alpha.6
 
 Cross-platform: remove WinForms, Avalonia-only on net8.0 with Linux and macOS support]]></message>
-    </release>
-    <release>
-      <date>2026-02-09</date>
-      <version>5.1.3.5</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-5.1.3.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 5.1.3-alpha.5
-
-Fix release-stable.ps1: RepoRoot, Push-Location, graceful fallback, real release notes, idempotent tags]]></message>
     </release>
   </releases>
   <datafiles>
