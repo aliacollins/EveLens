@@ -205,15 +205,26 @@ namespace EveLens.Common.Services
         /// </summary>
         private async Task PerformSaveAsync()
         {
-            // Step 1: Marshal Export() to the UI thread to get a snapshot of current settings.
-            // Uses Post (non-blocking) + TaskCompletionSource to avoid blocking the thread pool
-            // thread with Send(), which can deadlock if the UI thread is waiting on thread pool work.
-            var tcs = new TaskCompletionSource<SerializableSettings>(TaskCreationOptions.RunContinuationsAsynchronously);
+            // Step 1: Marshal Export() + JSON serialize to the UI thread.
+            // Export() accesses collections that are only safe on the UI thread.
+            // We also serialize to JSON on the UI thread so the snapshot is consistent.
+            // Then the file write happens on the thread pool.
+            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
             _dispatcher.Post(() =>
             {
                 try
                 {
-                    tcs.SetResult(_exportFunc());
+                    var settings = _exportFunc();
+                    if (settings == null)
+                    {
+                        tcs.SetResult(null!);
+                        return;
+                    }
+                    string json = System.Text.Json.JsonSerializer.Serialize(
+                        settings, Helpers.SettingsFileManager.DirectJsonOptions);
+                    AppServices.TraceService?.Trace(
+                        $"SmartSettingsManager: Exported {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+                    tcs.SetResult(json);
                 }
                 catch (Exception ex)
                 {
@@ -221,18 +232,21 @@ namespace EveLens.Common.Services
                 }
             });
 
-            SerializableSettings settings = await tcs.Task.ConfigureAwait(false);
+            string? jsonContent = await tcs.Task.ConfigureAwait(false);
 
-            if (settings == null)
+            if (string.IsNullOrEmpty(jsonContent))
                 return;
 
-            // Step 2: Write to disk via SettingsFileManager (runs on background thread)
+            // Step 2: Write to disk on thread pool thread (no sync context, no deadlock)
             await _writeLock.WaitAsync().ConfigureAwait(false);
             try
             {
-                await SettingsFileManager.SaveFromSerializableSettingsAsync(settings).ConfigureAwait(false);
+                Helpers.SettingsFileManager.EnsureDirectoriesExist();
+                await System.IO.File.WriteAllTextAsync(
+                    Helpers.SettingsFileManager.SettingsJsonFilePath, jsonContent).ConfigureAwait(false);
                 Interlocked.Increment(ref _actualWriteCount);
                 _eventAggregator.Publish(new SettingsSavedEvent());
+                AppServices.TraceService?.Trace("SmartSettingsManager: Save complete");
             }
             finally
             {
