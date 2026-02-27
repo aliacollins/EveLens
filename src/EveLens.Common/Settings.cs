@@ -252,8 +252,14 @@ namespace EveLens.Common
         private static async Task UpdateOnOneSecondTickAsync()
         {
             // Is a save requested and is the last save older than 10s ?
-            if (s_savePending && DateTime.UtcNow > s_nextSaveTime)
-                await SaveImmediateAsync();
+            if (s_savePending)
+            {
+                if (DateTime.UtcNow > s_nextSaveTime)
+                {
+                    AppServices.TraceService?.Trace("Periodic save triggered (savePending=true, timer elapsed)");
+                    await SaveImmediateAsync();
+                }
+            }
         }
 
         /// <summary>
@@ -270,11 +276,12 @@ namespace EveLens.Common
 
             if (s_smartSettingsManager != null)
             {
-                // SmartSettingsManager owns the full pipeline: Export→Serialize→Write
                 s_smartSettingsManager.Save();
                 return;
             }
 
+            if (!s_savePending)
+                AppServices.TraceService?.Trace("Save requested — will flush within 30s");
             s_savePending = true;
         }
 
