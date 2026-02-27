@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.14</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.14
+
+Add save pipeline traces for Linux persistence diagnosis]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.13</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Fix Linux settings persistence: resolve data directory per XDG Base Directory Sp
       <message><![CDATA[EveLens 1.0.0-alpha.5
 
 Fix Linux taskbar icon not showing by setting X11 WmClass]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.4</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.4
-
-Fix cross-platform bugs: Linux settings loss on shutdown, portable mode after JSON migration, macOS app damaged error]]></message>
     </release>
   </releases>
   <datafiles>
