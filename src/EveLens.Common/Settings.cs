@@ -302,17 +302,31 @@ namespace EveLens.Common
 
             try
             {
-                // Export settings on UI thread (required for collection access)
+                // Export on the calling thread (UI thread — required for collection access)
                 SerializableSettings settings = Export();
                 AppServices.TraceService?.Trace("Export done");
 
-                // JSON-only save — SerializableSettings serialized directly
-                await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
+                // Serialize to JSON on the calling thread
+                string json = System.Text.Json.JsonSerializer.Serialize(
+                    settings, SettingsFileManager.DirectJsonOptions);
+                AppServices.TraceService?.Trace(
+                    $"Serialized {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+
+                // Write to disk on a thread pool thread to avoid blocking UI,
+                // and to avoid sync context deadlocks on Linux.
+                await Task.Run(() =>
+                {
+                    SettingsFileManager.EnsureDirectoriesExist();
+                    File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
+                }).ConfigureAwait(false);
+
                 AppServices.TraceService?.Trace("JSON save complete");
             }
             catch (Exception exception)
             {
-                AppServices.TraceService?.Trace($"Error: {exception.Message}");
+                var inner = exception;
+                while (inner.InnerException != null) inner = inner.InnerException;
+                AppServices.TraceService?.Trace($"Error: {inner.GetType().Name}: {inner.Message}");
                 ExceptionHandler.LogException(exception, true);
             }
         }
