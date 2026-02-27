@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.12</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.12
+
+Fix macOS .app.zip: proper bundle structure with ad-hoc codesigning]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.11</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Fix cross-platform bugs: Linux settings loss on shutdown, portable mode after JS
       <message><![CDATA[EveLens 1.0.0-alpha.3
 
 Merge Plan Editor sidebar: combine Summary + Optimize into unified Plan tab with inline optimization, remap context menu, and manual attribute dialog]]></message>
-    </release>
-    <release>
-      <date>2026-02-26</date>
-      <version>1.0.0.2</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.2
-
-Native Linux AppImage and macOS .app bundle packaging]]></message>
     </release>
   </releases>
   <datafiles>
