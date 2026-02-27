@@ -641,15 +641,44 @@ namespace EveLens.Common.Helpers
             {
                 EnsureDirectoriesExist();
 
-                string json = JsonSerializer.Serialize(settings, DirectJsonOptions);
-                await WriteFileAtomicAsync(SettingsJsonFilePath, json);
+                string json;
+                try
+                {
+                    json = JsonSerializer.Serialize(settings, DirectJsonOptions);
+                    AppServices.TraceService?.Trace(
+                        $"SaveFromSerializableSettingsAsync: Serialized {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+                }
+                catch (Exception serEx)
+                {
+                    var inner = serEx;
+                    while (inner.InnerException != null) inner = inner.InnerException;
+                    AppServices.TraceService?.Trace(
+                        $"SaveFromSerializableSettingsAsync: JSON serialization failed: {inner.GetType().Name}: {inner.Message}");
+                    throw;
+                }
+
+                try
+                {
+                    await WriteFileAtomicAsync(SettingsJsonFilePath, json);
+                }
+                catch (Exception ioEx)
+                {
+                    // WriteFileAtomicAsync with File.Replace can fail on some Linux filesystems.
+                    // Fall back to direct write.
+                    AppServices.TraceService?.Trace(
+                        $"SaveFromSerializableSettingsAsync: Atomic write failed ({ioEx.Message}), falling back to direct write");
+                    await File.WriteAllTextAsync(SettingsJsonFilePath, json).ConfigureAwait(false);
+                }
 
                 AppServices.TraceService?.Trace(
-                    $"SaveFromSerializableSettingsAsync: Saved {settings.Characters.Count} characters ({json.Length} bytes)");
+                    $"SaveFromSerializableSettingsAsync: Saved to {SettingsJsonFilePath}");
             }
             catch (Exception ex)
             {
-                AppServices.TraceService?.Trace($"SaveFromSerializableSettingsAsync: Error: {ex.Message}");
+                var inner = ex;
+                while (inner.InnerException != null) inner = inner.InnerException;
+                AppServices.TraceService?.Trace(
+                    $"SaveFromSerializableSettingsAsync: Error: {inner.GetType().Name}: {inner.Message}");
                 throw;
             }
         }
