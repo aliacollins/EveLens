@@ -37,6 +37,7 @@
   <!-- Application icon as Avalonia resource -->
   <ItemGroup>
     <AvaloniaResource Include="Properties\EveLens.ico" />
+    <AvaloniaResource Include="Properties\EveLens.png" />
   </ItemGroup>
 
   <!-- Copy ESI credentials file to output if it exists -->

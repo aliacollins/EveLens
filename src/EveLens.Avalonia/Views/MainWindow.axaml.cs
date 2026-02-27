@@ -62,6 +62,18 @@ namespace EveLens.Avalonia.Views
         {
             InitializeComponent();
 
+            // On Linux/macOS, use PNG icon instead of .ico for better WM compatibility
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                    System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                try
+                {
+                    var uri = new Uri("avares://EveLens/Properties/EveLens.png");
+                    Icon = new WindowIcon(global::Avalonia.Platform.AssetLoader.Open(uri));
+                }
+                catch { /* Fall back to .ico from AXAML */ }
+            }
+
             if (AppServices.IsDebugBuild)
                 Title += " [DEBUG]";
 
