@@ -3,7 +3,6 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
-using System.Drawing;
 using System.Xml.Serialization;
 
 namespace EveLens.Common.SettingsObjects
@@ -15,12 +14,14 @@ namespace EveLens.Common.SettingsObjects
         /// </summary>
         public SchedulerUISettings()
         {
-            TextColor = (SerializableColor)Color.White;
-            BlockingColor = (SerializableColor)Color.Red;
-            SimpleEventGradientStart = (SerializableColor)Color.Blue;
-            SimpleEventGradientEnd = (SerializableColor)Color.LightBlue;
-            RecurringEventGradientStart = (SerializableColor)Color.Green;
-            RecurringEventGradientEnd = (SerializableColor)Color.LightGreen;
+            // Use raw ARGB values instead of System.Drawing.Color which is
+            // not supported on Linux/macOS (.NET 6+).
+            TextColor = new SerializableColor { A = 255, R = 255, G = 255, B = 255 }; // White
+            BlockingColor = new SerializableColor { A = 255, R = 255, G = 0, B = 0 }; // Red
+            SimpleEventGradientStart = new SerializableColor { A = 255, R = 0, G = 0, B = 255 }; // Blue
+            SimpleEventGradientEnd = new SerializableColor { A = 255, R = 173, G = 216, B = 230 }; // LightBlue
+            RecurringEventGradientStart = new SerializableColor { A = 255, R = 0, G = 128, B = 0 }; // Green
+            RecurringEventGradientEnd = new SerializableColor { A = 255, R = 144, G = 238, B = 144 }; // LightGreen
         }
 
         /// <summary>
