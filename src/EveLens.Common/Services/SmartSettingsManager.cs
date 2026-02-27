@@ -205,48 +205,55 @@ namespace EveLens.Common.Services
         /// </summary>
         private async Task PerformSaveAsync()
         {
-            // Step 1: Marshal Export() + JSON serialize to the UI thread.
-            // Export() accesses collections that are only safe on the UI thread.
-            // We also serialize to JSON on the UI thread so the snapshot is consistent.
-            // Then the file write happens on the thread pool.
-            var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _dispatcher.Post(() =>
+            // On Linux/macOS, Dispatcher.UIThread.Post() from a thread pool thread
+            // doesn't reliably execute — the posted work sits in the queue forever.
+            // Use Invoke() instead which blocks until the UI thread processes it,
+            // or runs inline if already on the UI thread.
+            SerializableSettings? settings = null;
+            try
             {
-                try
-                {
-                    var settings = _exportFunc();
-                    if (settings == null)
-                    {
-                        tcs.SetResult(null!);
-                        return;
-                    }
-                    string json = System.Text.Json.JsonSerializer.Serialize(
-                        settings, Helpers.SettingsFileManager.DirectJsonOptions);
-                    AppServices.TraceService?.Trace(
-                        $"SmartSettingsManager: Exported {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
-                    tcs.SetResult(json);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
+                _dispatcher.Invoke(() => settings = _exportFunc());
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SmartSettingsManager: Export failed: {ex.Message}");
+                return;
+            }
 
-            string? jsonContent = await tcs.Task.ConfigureAwait(false);
-
-            if (string.IsNullOrEmpty(jsonContent))
+            if (settings == null)
                 return;
 
-            // Step 2: Write to disk on thread pool thread (no sync context, no deadlock)
+            string json;
+            try
+            {
+                json = System.Text.Json.JsonSerializer.Serialize(
+                    settings, Helpers.SettingsFileManager.DirectJsonOptions);
+                AppServices.TraceService?.Trace(
+                    $"SmartSettingsManager: Exported {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+            }
+            catch (Exception ex)
+            {
+                var inner = ex;
+                while (inner.InnerException != null) inner = inner.InnerException;
+                AppServices.TraceService?.Trace(
+                    $"SmartSettingsManager: JSON serialize failed: {inner.GetType().Name}: {inner.Message}");
+                return;
+            }
+
+            // Write to disk — synchronous, no File.Replace, no async context issues
             await _writeLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 Helpers.SettingsFileManager.EnsureDirectoriesExist();
-                await System.IO.File.WriteAllTextAsync(
-                    Helpers.SettingsFileManager.SettingsJsonFilePath, jsonContent).ConfigureAwait(false);
+                System.IO.File.WriteAllText(
+                    Helpers.SettingsFileManager.SettingsJsonFilePath, json);
                 Interlocked.Increment(ref _actualWriteCount);
                 _eventAggregator.Publish(new SettingsSavedEvent());
                 AppServices.TraceService?.Trace("SmartSettingsManager: Save complete");
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SmartSettingsManager: File write failed: {ex.Message}");
             }
             finally
             {

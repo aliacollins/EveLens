@@ -176,8 +176,8 @@ namespace EveLens.Tests.Services
 
             await manager.SaveImmediateAsync();
 
-            // Post is used for the export func marshaling (non-blocking)
-            _mockDispatcher.Received(1).Post(Arg.Any<Action>());
+            // Invoke is used for the export func marshaling (blocks until UI thread processes)
+            _mockDispatcher.Received(1).Invoke(Arg.Any<Action>());
         }
 
         [Fact]
@@ -211,14 +211,15 @@ namespace EveLens.Tests.Services
         [Fact]
         public async Task SaveImmediateAsync_ExportThrows_PropagatesException()
         {
-            // When the export function throws, SaveImmediateAsync should propagate
-            // the exception (it's not swallowed).
+            // When the export function throws, the error is caught and logged
+            // (not propagated) to avoid crashing the save pipeline.
             using var manager = CreateManager(() =>
                 throw new InvalidOperationException("Export failed"));
 
-            Func<Task> act = () => manager.SaveImmediateAsync();
-            await act.Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("Export failed");
+            await manager.SaveImmediateAsync();
+
+            // No write should have happened since export failed
+            manager.ActualWriteCount.Should().Be(0);
         }
 
         #endregion

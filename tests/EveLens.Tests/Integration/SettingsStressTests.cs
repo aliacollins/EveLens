@@ -396,13 +396,13 @@ namespace EveLens.Tests.Integration
         public async Task Coalescing_DispatcherPostCalled_ForExportOnUIThread()
         {
             var settings = BuildSettingsWith(100);
-            _postCallCount = 0;
+            _invokeCallCount = 0;
 
             using var manager = CreateManager(() => settings);
             await manager.SaveImmediateAsync();
 
-            // Post should be called exactly once per save (to marshal Export to UI thread)
-            _postCallCount.Should().Be(1,
+            // Invoke should be called exactly once per save (to marshal Export to UI thread)
+            _invokeCallCount.Should().Be(1,
                 "Export() is dispatched once per actual write, not per Save() call");
         }
 
