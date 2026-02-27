@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.21</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.21
+
+Purge ALL System.Drawing from settings types — fixes serialization crash on Linux/macOS]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.20</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Make periodic and shutdown saves robust on Linux: synchronous JSON serialize, Ta
       <message><![CDATA[EveLens 1.0.0-alpha.12
 
 Fix macOS .app.zip: proper bundle structure with ad-hoc codesigning]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.11</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.11
-
-Ensure rcodesign is on PATH in build-macapp.sh for ad-hoc codesigning]]></message>
     </release>
   </releases>
   <datafiles>
