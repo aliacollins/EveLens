@@ -202,6 +202,7 @@ namespace EveLens.Avalonia
                             // On Linux/X11 the process can exit before Post() runs,
                             // so ShutdownRequested never fires and settings are lost.
                             IsExiting = true;
+                            AppServices.TraceService?.Trace("Window Closing — saving settings before exit");
                             try
                             {
                                 // Fully synchronous — no async, no .GetAwaiter().GetResult()
