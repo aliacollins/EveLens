@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-27</date>
+      <version>1.0.0.20</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.20
+
+Fix settings crash on Linux/macOS: System.Drawing.Common not supported, use raw ARGB values]]></message>
+    </release>
+    <release>
+      <date>2026-02-27</date>
       <version>1.0.0.19</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Fix macOS .app.zip: proper bundle structure with ad-hoc codesigning]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.11
 
 Ensure rcodesign is on PATH in build-macapp.sh for ad-hoc codesigning]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.10</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.10
-
-Fix app hanging on close (Linux): fully synchronous shutdown save, no async deadlock]]></message>
     </release>
   </releases>
   <datafiles>
