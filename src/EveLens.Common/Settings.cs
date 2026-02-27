@@ -274,14 +274,33 @@ namespace EveLens.Common
             if (IsRestoring)
                 return;
 
+            // Always write directly as a failsafe — SmartSettingsManager's timer + dispatcher
+            // chain is unreliable on Linux/macOS. Throttle to once per 10 seconds.
+            if (DateTime.UtcNow > s_nextSaveTime)
+            {
+                s_nextSaveTime = DateTime.UtcNow.AddSeconds(10);
+                try
+                {
+                    SerializableSettings settings = Export();
+                    string json = System.Text.Json.JsonSerializer.Serialize(
+                        settings, SettingsFileManager.DirectJsonOptions);
+                    SettingsFileManager.EnsureDirectoriesExist();
+                    File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
+                    AppServices.TraceService?.Trace(
+                        $"Settings.Save: Written {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+                }
+                catch (Exception ex)
+                {
+                    AppServices.TraceService?.Trace($"Settings.Save direct write failed: {ex.Message}");
+                }
+            }
+
             if (s_smartSettingsManager != null)
             {
                 s_smartSettingsManager.Save();
                 return;
             }
 
-            if (!s_savePending)
-                AppServices.TraceService?.Trace("Save requested — will flush within 30s");
             s_savePending = true;
         }
 
