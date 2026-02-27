@@ -176,8 +176,8 @@ namespace EveLens.Tests.Services
 
             await manager.SaveImmediateAsync();
 
-            // Invoke is used for the export func marshaling (blocks until UI thread processes)
-            _mockDispatcher.Received(1).Invoke(Arg.Any<Action>());
+            // Export is called directly (no dispatcher marshaling for cross-platform reliability)
+            manager.ActualWriteCount.Should().Be(1);
         }
 
         [Fact]

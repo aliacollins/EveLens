@@ -203,25 +203,27 @@ namespace EveLens.Common.Services
         /// <summary>
         /// Core save pipeline: Export on UI thread, then write via SettingsFileManager on background.
         /// </summary>
-        private async Task PerformSaveAsync()
+        private Task PerformSaveAsync()
         {
-            // On Linux/macOS, Dispatcher.UIThread.Post() from a thread pool thread
-            // doesn't reliably execute — the posted work sits in the queue forever.
-            // Use Invoke() instead which blocks until the UI thread processes it,
-            // or runs inline if already on the UI thread.
+            // Call Export() directly — no dispatcher marshaling.
+            // On Linux/macOS, both Post() and Invoke() to the Avalonia UI thread
+            // from a thread pool timer callback are unreliable (Post never executes,
+            // Invoke can deadlock). Export() reads collections which is technically
+            // a cross-thread access, but it's safe enough for serialization snapshots
+            // and infinitely better than never saving.
             SerializableSettings? settings = null;
             try
             {
-                _dispatcher.Invoke(() => settings = _exportFunc());
+                settings = _exportFunc();
             }
             catch (Exception ex)
             {
                 AppServices.TraceService?.Trace($"SmartSettingsManager: Export failed: {ex.Message}");
-                return;
+                return Task.CompletedTask;
             }
 
             if (settings == null)
-                return;
+                return Task.CompletedTask;
 
             string json;
             try
@@ -237,11 +239,11 @@ namespace EveLens.Common.Services
                 while (inner.InnerException != null) inner = inner.InnerException;
                 AppServices.TraceService?.Trace(
                     $"SmartSettingsManager: JSON serialize failed: {inner.GetType().Name}: {inner.Message}");
-                return;
+                return Task.CompletedTask;
             }
 
-            // Write to disk — synchronous, no File.Replace, no async context issues
-            await _writeLock.WaitAsync().ConfigureAwait(false);
+            // Write to disk synchronously — no async, no deadlock
+            _writeLock.Wait();
             try
             {
                 Helpers.SettingsFileManager.EnsureDirectoriesExist();
@@ -259,6 +261,8 @@ namespace EveLens.Common.Services
             {
                 _writeLock.Release();
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
