@@ -405,12 +405,12 @@ namespace EveLens.Common
             // Assign or create the EveLens data directory
             if (!Directory.Exists(EveLensDataDir))
             {
-                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EveLens");
+                string appDataPath = ResolveDataDirectory();
 
                 // If settings.xml or settings.json exists in the app's directory, use it (portable mode)
                 EveLensDataDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-                // Else, we use %APPDATA%\EveLens
+                // Else, we use the resolved data directory
                 bool hasPortableXml = File.Exists(SettingsFileNameFullPath);
                 bool hasPortableJson = File.Exists(Path.Combine(EveLensDataDir, "settings.json"));
                 if (!hasPortableXml && !hasPortableJson)
@@ -443,12 +443,54 @@ namespace EveLens.Common
         }
 
         /// <summary>
+        /// Resolves the data directory for EveLens settings and cache.
+        /// On Windows: %APPDATA%\EveLens
+        /// On Linux: $XDG_CONFIG_HOME/EveLens (defaults to ~/.config/EveLens)
+        /// On macOS: ~/Library/Application Support/EveLens
+        /// Guarantees an absolute path even if environment variables are missing.
+        /// </summary>
+        private static string ResolveDataDirectory()
+        {
+            // Try the standard .NET SpecialFolder first
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+            // On Linux, SpecialFolder.ApplicationData can return empty if HOME/XDG_CONFIG_HOME
+            // aren't set (AppImage, snap, containerized, etc.). Fall back through XDG spec.
+            if (string.IsNullOrEmpty(appData) || !Path.IsPathRooted(appData))
+            {
+                // Try XDG_CONFIG_HOME explicitly
+                string? xdgConfig = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+                if (!string.IsNullOrEmpty(xdgConfig) && Path.IsPathRooted(xdgConfig))
+                    return Path.Combine(xdgConfig, "EveLens");
+
+                // Fall back to ~/.config (XDG default)
+                string? home = Environment.GetEnvironmentVariable("HOME")
+                    ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (!string.IsNullOrEmpty(home) && Path.IsPathRooted(home))
+                    return Path.Combine(home, ".config", "EveLens");
+
+                // Last resort: use the app's own directory (portable-like)
+                return Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory.TrimEnd(
+                        Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                    "data");
+            }
+
+            return Path.Combine(appData, "EveLens");
+        }
+
+        /// <summary>
         /// Migrates settings from the old %APPDATA%\EVEMon directory to the new %APPDATA%\EveLens directory.
         /// This is a one-time migration that runs on first launch after rebranding.
         /// </summary>
         private static void MigrateFromOldDataDir()
         {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+            // Skip migration if we can't resolve a proper path
+            if (string.IsNullOrEmpty(appData) || !Path.IsPathRooted(appData))
+                return;
+
             string newPath = Path.Combine(appData, "EveLens");
             string oldPath = Path.Combine(appData, "EVEMon");
 
