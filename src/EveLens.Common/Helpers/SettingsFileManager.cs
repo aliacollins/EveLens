@@ -714,7 +714,10 @@ namespace EveLens.Common.Helpers
             }
             catch (Exception ex)
             {
-                AppServices.TraceService?.Trace($"Error exporting backup: {ex.Message}");
+                var inner = ex;
+                while (inner.InnerException != null) inner = inner.InnerException;
+                AppServices.TraceService?.Trace(
+                    $"Error exporting backup: {inner.GetType().FullName}: {inner.Message} at {inner.StackTrace?.Split('\n').FirstOrDefault()?.Trim()}");
                 throw;
             }
         }
