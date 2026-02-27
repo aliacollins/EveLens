@@ -118,15 +118,18 @@ else
     # Fallback: use Python zipfile when zip is not installed (common in minimal WSL)
     # Must preserve Unix permissions (especially +x on main binary) or macOS
     # will show "app is damaged" when trying to launch.
+    # Fallback: use Python zipfile when zip is not installed (common in minimal WSL)
+    # Must preserve Unix permissions (especially +x on main binary) or macOS
+    # will show "app is damaged" when trying to launch.
+    ZIPNAME="$(basename "$OUTPUT")"
     python3 -c "
 import zipfile, os, stat
-with zipfile.ZipFile('$(basename \"$OUTPUT\")', 'w', zipfile.ZIP_DEFLATED) as zf:
+with zipfile.ZipFile('$ZIPNAME', 'w', zipfile.ZIP_DEFLATED) as zf:
     for root, dirs, files in os.walk('EveLens.app'):
         for f in files:
             fp = os.path.join(root, f)
             info = zipfile.ZipInfo(fp)
             st = os.stat(fp)
-            # Preserve Unix permissions in the zip external attributes
             info.external_attr = (st.st_mode & 0xFFFF) << 16
             with open(fp, 'rb') as fh:
                 zf.writestr(info, fh.read())
