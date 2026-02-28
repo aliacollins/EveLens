@@ -115,6 +115,31 @@ namespace EveLens.Common
                 () => Export());
             AppServices.TraceService?.Trace("SmartSettingsManager initialized");
 
+            // Ensure settings.json exists — on fresh installs, no migration runs
+            // and no Save() is called until the user changes something.
+            // Write it now so settings persist from the very first launch.
+            if (!SettingsFileManager.JsonSettingsExist())
+            {
+                try
+                {
+                    SerializableSettings snapshot = Export();
+                    string json = System.Text.Json.JsonSerializer.Serialize(
+                        snapshot, SettingsFileManager.DirectJsonOptions);
+                    SettingsFileManager.EnsureDirectoriesExist();
+                    File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
+                    UsingJsonFormat = true;
+                    AppServices.TraceService?.Trace(
+                        $"Initial settings.json created ({json.Length} bytes)");
+                }
+                catch (Exception ex)
+                {
+                    var inner = ex;
+                    while (inner.InnerException != null) inner = inner.InnerException;
+                    AppServices.TraceService?.Trace(
+                        $"Failed to create initial settings.json: {inner.GetType().Name}: {inner.Message}");
+                }
+            }
+
             AppServices.TraceService?.Trace($"done - UsingJsonFormat={UsingJsonFormat}");
         }
 
