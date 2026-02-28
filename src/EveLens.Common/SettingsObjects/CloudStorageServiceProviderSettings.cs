@@ -14,16 +14,33 @@ namespace EveLens.Common.SettingsObjects
 
     public sealed class CloudStorageServiceProviderSettings
     {
-        private static readonly Dictionary<string, CloudStorageServiceProvider> s_cloudStorageServiceProviders = new Dictionary<string, CloudStorageServiceProvider>();
+        private static Dictionary<string, CloudStorageServiceProvider>? s_cloudStorageServiceProviders;
+
+        private static Dictionary<string, CloudStorageServiceProvider> Providers
+        {
+            get
+            {
+                if (s_cloudStorageServiceProviders == null)
+                {
+                    s_cloudStorageServiceProviders = new Dictionary<string, CloudStorageServiceProvider>();
+                    try
+                    {
+                        foreach (CloudStorageServiceProvider provider in CloudStorageServiceProvider.Providers)
+                            s_cloudStorageServiceProviders[provider.Name] = provider;
+                    }
+                    catch
+                    {
+                        // System.Drawing.Common not available on Linux/macOS — providers use it for logos.
+                        // Cloud storage is not active in the Avalonia UI, so this is safe to skip.
+                    }
+                }
+                return s_cloudStorageServiceProviders;
+            }
+        }
 
         public CloudStorageServiceProviderSettings()
         {
-            foreach (CloudStorageServiceProvider provider in CloudStorageServiceProvider.Providers)
-            {
-                s_cloudStorageServiceProviders[provider.Name] = provider;
-            }
-
-            ProviderName = s_cloudStorageServiceProviders.FirstOrDefault().Key ?? string.Empty;
+            ProviderName = string.Empty;
         }
 
         /// <summary>
@@ -46,12 +63,15 @@ namespace EveLens.Common.SettingsObjects
         {
             get
             {
-                if (s_cloudStorageServiceProviders.ContainsKey(ProviderName))
-                    return s_cloudStorageServiceProviders[ProviderName];
+                var providers = Providers;
+                if (providers.Count == 0)
+                    return null!;
 
-                ProviderName = s_cloudStorageServiceProviders.FirstOrDefault().Key ?? string.Empty;
+                if (providers.ContainsKey(ProviderName))
+                    return providers[ProviderName];
 
-                return s_cloudStorageServiceProviders.FirstOrDefault().Value;
+                ProviderName = providers.FirstOrDefault().Key ?? string.Empty;
+                return providers.FirstOrDefault().Value;
             }
         }
     }
