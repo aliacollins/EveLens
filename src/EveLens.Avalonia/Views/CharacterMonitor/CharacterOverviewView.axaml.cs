@@ -20,6 +20,7 @@ using EveLens.Avalonia.Converters;
 using EveLens.Common;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Events;
+using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
 using EveLens.Common.Services;
@@ -34,6 +35,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private IDisposable? _fetchCompletedSub;
         private IDisposable? _secondTickSub;
         private IDisposable? _collectionChangedSub;
+        private IDisposable? _privacyModeSub;
 
         // Track previous ISK/SP values per character for flash-on-change
         private readonly Dictionary<long, decimal> _prevBalances = new();
@@ -64,6 +66,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _collectionChangedSub ??= AppServices.EventAggregator?.Subscribe<MonitoredCharacterCollectionChangedEvent>(
                 _ => Dispatcher.UIThread.Post(OnCollectionChanged));
 
+            _privacyModeSub ??= AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
+                _ => Dispatcher.UIThread.Post(LoadData));
+
             LoadData();
         }
 
@@ -75,6 +80,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _secondTickSub = null;
             _collectionChangedSub?.Dispose();
             _collectionChangedSub = null;
+            _privacyModeSub?.Dispose();
+            _privacyModeSub = null;
 
             base.OnDetachedFromVisualTree(e);
         }
@@ -336,7 +343,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             infoPanel.Children.Add(new TextBlock
             {
-                Text = character.Name,
+                Text = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name,
                 FontSize = 13, FontWeight = FontWeight.Bold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -344,7 +351,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             var iskText = new TextBlock
             {
-                Text = $"{character.Balance:N2} ISK",
+                Text = PrivacyHelper.IsBalanceHidden ? $"{PrivacyHelper.Mask} ISK" : $"{character.Balance:N2} ISK",
                 FontSize = 11,
                 Foreground = FindBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
                 Tag = "IskText",
@@ -362,7 +369,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             var spText = new TextBlock
             {
-                Text = $"{character.SkillPoints:N0} SP",
+                Text = PrivacyHelper.IsSkillPointsHidden ? $"{PrivacyHelper.Mask} SP" : $"{character.SkillPoints:N0} SP",
                 FontSize = 11,
                 Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
                 Tag = "SpText",
@@ -548,11 +555,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var iskBlock = FindTaggedDescendant<TextBlock>(card, "IskText");
                 if (iskBlock != null)
                 {
-                    string newIsk = $"{character.Balance:N2} ISK";
+                    string newIsk = PrivacyHelper.IsBalanceHidden
+                        ? $"{PrivacyHelper.Mask} ISK"
+                        : $"{character.Balance:N2} ISK";
                     if (iskBlock.Text != newIsk)
                     {
                         iskBlock.Text = newIsk;
-                        FlashTextBlock(iskBlock);
+                        if (!PrivacyHelper.IsBalanceHidden) FlashTextBlock(iskBlock);
                     }
                     _prevBalances[character.CharacterID] = character.Balance;
                 }
@@ -561,11 +570,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var spBlock = FindTaggedDescendant<TextBlock>(card, "SpText");
                 if (spBlock != null)
                 {
-                    string newSp = $"{character.SkillPoints:N0} SP";
+                    string newSp = PrivacyHelper.IsSkillPointsHidden
+                        ? $"{PrivacyHelper.Mask} SP"
+                        : $"{character.SkillPoints:N0} SP";
                     if (spBlock.Text != newSp)
                     {
                         spBlock.Text = newSp;
-                        FlashTextBlock(spBlock);
+                        if (!PrivacyHelper.IsSkillPointsHidden) FlashTextBlock(spBlock);
                     }
                     _prevSkillPoints[character.CharacterID] = character.SkillPoints;
                 }
@@ -718,6 +729,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private static void UpdateTrainingText(TextBlock textBlock, Character character)
         {
+            if (PrivacyHelper.IsTrainingHidden)
+            {
+                textBlock.Text = $"Training: {PrivacyHelper.Mask}";
+                textBlock.Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow;
+                return;
+            }
+
             if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
             {
                 var skill = ccp.CurrentlyTrainingSkill;

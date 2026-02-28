@@ -65,6 +65,66 @@
                            Text="" FontSize="11" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
 
+                <!-- Privacy mode flyout -->
+                <Button x:Name="PrivacyBtn" DockPanel.Dock="Right"
+                        ToolTip.Tip="Privacy mode — hide sensitive values for screenshots"
+                        Padding="6,3" CornerRadius="12"
+                        Background="Transparent" BorderThickness="0"
+                        VerticalAlignment="Center" Cursor="Hand">
+                    <Button.Flyout>
+                        <Flyout Placement="TopEdgeAlignedRight">
+                            <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                    BorderBrush="{StaticResource EveBorderBrush}"
+                                    BorderThickness="1" CornerRadius="6"
+                                    Padding="0" MinWidth="220">
+                                <StackPanel>
+                                    <!-- Header -->
+                                    <Border Padding="12,8"
+                                            BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                                        <TextBlock Text="Privacy Mode" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                                    </Border>
+                                    <!-- Category checkboxes -->
+                                    <StackPanel Margin="12,6,12,4" Spacing="4">
+                                        <CheckBox x:Name="PrivacyNameCb" Content="Character Name" FontSize="11"
+                                                  Foreground="{StaticResource EveTextPrimaryBrush}" />
+                                        <CheckBox x:Name="PrivacyCorpCb" Content="Corp / Alliance" FontSize="11"
+                                                  Foreground="{StaticResource EveTextPrimaryBrush}" />
+                                        <CheckBox x:Name="PrivacyBalanceCb" Content="ISK Balance" FontSize="11"
+                                                  Foreground="{StaticResource EveTextPrimaryBrush}" />
+                                        <CheckBox x:Name="PrivacySkillPointsCb" Content="Skill Points" FontSize="11"
+                                                  Foreground="{StaticResource EveTextPrimaryBrush}" />
+                                        <CheckBox x:Name="PrivacyTrainingCb" Content="Training Queue" FontSize="11"
+                                                  Foreground="{StaticResource EveTextPrimaryBrush}" />
+                                        <CheckBox x:Name="PrivacyRemapsCb" Content="Remaps" FontSize="11"
+                                                  Foreground="{StaticResource EveTextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <!-- Toggle All button -->
+                                    <Border Padding="12,4,12,8"
+                                            BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+                                        <Button x:Name="PrivacyToggleAllBtn" Content="Toggle All"
+                                                FontSize="10" Padding="10,4" CornerRadius="12"
+                                                HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center"
+                                                Background="Transparent"
+                                                Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                Margin="0,4,0,0" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                    <Panel>
+                        <PathIcon x:Name="EyeOpenIcon" Width="14" Height="14"
+                                  Foreground="{StaticResource EveTextSecondaryBrush}"
+                                  Data="M12 4.5C7.305 4.5 3.308 7.305 1.5 12c1.808 4.695 5.805 7.5 10.5 7.5s8.692-2.805 10.5-7.5c-1.808-4.695-5.805-7.5-10.5-7.5zM12 17a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z" />
+                        <PathIcon x:Name="EyeSlashIcon" Width="14" Height="14"
+                                  Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                  Data="M3.53 2.47a.75.75 0 00-1.06 1.06l18 18a.75.75 0 001.06-1.06l-3.18-3.18C19.87 15.77 21.38 14.04 22.5 12c-1.808-4.695-5.805-7.5-10.5-7.5-1.77 0-3.42.41-4.89 1.13L3.53 2.47zM12 9a3 3 0 012.76 4.18l-3.94-3.94A2.99 2.99 0 0112 9zm-7.4.44C5.84 8.04 7.37 6.94 9.08 6.3l-1.6-1.6C5.7 5.78 4.13 7.27 3 9.15c-.32.54-.62 1.12-.88 1.72.04.1.08.19.13.28.92 1.87 2.32 3.47 4.01 4.64l-1.5-1.5c-.96-.9-1.7-1.97-2.16-3.15a12.5 12.5 0 010-.7zM12 17c-1.1 0-2.14-.26-3.07-.72l-1.51-1.51A5 5 0 0017 12c0-.54-.09-1.06-.25-1.55l2.16 2.16c-.35.66-.78 1.28-1.27 1.84-.5.57-1.06 1.07-1.67 1.5A8.14 8.14 0 0112 17z"
+                                  IsVisible="False" />
+                    </Panel>
+                </Button>
+
                 <!-- Notification bell with flyout -->
                 <Button x:Name="NotificationBellBtn" DockPanel.Dock="Right"
                         Background="Transparent" BorderThickness="0"

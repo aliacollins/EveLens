@@ -12,8 +12,11 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EveLens.Avalonia.Converters;
+using EveLens.Common.Events;
+using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
+using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 
 namespace EveLens.Avalonia.Views.CharacterMonitor
@@ -28,6 +31,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private static readonly string[] OverrideLabels = { "Auto-detect", "Alpha override", "Omega override" };
 
         private ObservableCharacter? _observable;
+        private IDisposable? _privacySub;
 
         public CharacterMonitorHeader()
         {
@@ -70,6 +74,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
                     RefreshDisplay(oc);
                     oc.PropertyChanged += OnObservableChanged;
+
+                    _privacySub?.Dispose();
+                    _privacySub = AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
+                        _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                        {
+                            if (_observable != null) RefreshDisplay(_observable);
+                        }));
                 }
             }
             catch (Exception ex)
@@ -95,11 +106,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     : "In space";
 
                 // Alliance (always shown — em dash when none to prevent layout shift)
-                bool hasAlliance = !string.IsNullOrEmpty(oc.AllianceName)
-                                   && !oc.AllianceName.Equals("(None)", StringComparison.OrdinalIgnoreCase);
-                AllianceText.Text = hasAlliance
-                    ? $"Alliance: {oc.AllianceName}"
-                    : "Alliance: \u2014";
+                if (PrivacyHelper.IsCorpAllianceHidden)
+                {
+                    AllianceText.Text = $"Alliance: {PrivacyHelper.Mask}";
+                }
+                else
+                {
+                    bool hasAlliance = !string.IsNullOrEmpty(oc.AllianceName)
+                                       && !oc.AllianceName.Equals("(None)", StringComparison.OrdinalIgnoreCase);
+                    AllianceText.Text = hasAlliance
+                        ? $"Alliance: {oc.AllianceName}"
+                        : "Alliance: \u2014";
+                }
 
                 // Balance change flash
                 if (oc.BalanceDirection != 0 && BalanceChangeIndicator != null)
@@ -124,13 +142,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 OverrideModeLabel.Text = overrideIndex >= 0 && overrideIndex < OverrideLabels.Length
                     ? OverrideLabels[overrideIndex] : OverrideLabels[0];
 
-                // Inline stats
-                var inv = CultureInfo.InvariantCulture;
-                StatsLine.Text = string.Join("  \u00b7  ",
-                    $"Skills: {oc.KnownSkillCount.ToString("N0", inv)}",
-                    $"SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints)}",
-                    $"Free SP: {ObservableCharacter.FormatLargeNumber(oc.FreeSkillPoints)}",
-                    $"Remaps: {oc.AvailableRemaps}");
+                // Inline stats — per-category privacy
+                {
+                    var inv = CultureInfo.InvariantCulture;
+                    string skills = PrivacyHelper.IsSkillPointsHidden
+                        ? $"Skills: {PrivacyHelper.Mask}" : $"Skills: {oc.KnownSkillCount.ToString("N0", inv)}";
+                    string sp = PrivacyHelper.IsSkillPointsHidden
+                        ? $"SP: {PrivacyHelper.Mask}" : $"SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints)}";
+                    string freeSp = PrivacyHelper.IsSkillPointsHidden
+                        ? $"Free SP: {PrivacyHelper.Mask}" : $"Free SP: {ObservableCharacter.FormatLargeNumber(oc.FreeSkillPoints)}";
+                    string remaps = PrivacyHelper.IsRemapsHidden
+                        ? $"Remaps: {PrivacyHelper.Mask}" : $"Remaps: {oc.AvailableRemaps}";
+                    StatsLine.Text = string.Join("  \u00b7  ", skills, sp, freeSp, remaps);
+                }
             }
             catch
             {
@@ -155,6 +179,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
+            _privacySub?.Dispose();
+            _privacySub = null;
             if (_observable != null)
             {
                 _observable.PropertyChanged -= OnObservableChanged;

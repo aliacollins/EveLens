@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using EveLens.Common.Constants;
 using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Events;
+using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Core.Events;
@@ -30,6 +31,7 @@ namespace EveLens.Common.ViewModels
     {
         private readonly Character _character;
         private readonly IDisposable? _subscription;
+        private readonly IDisposable? _privacySub;
         private bool _disposed;
         private DateTime _balanceChangeExpiry;
 
@@ -65,6 +67,9 @@ namespace EveLens.Common.ViewModels
                     AppServices.Dispatcher?.Post(Refresh);
             });
 
+            _privacySub = AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
+                _ => AppServices.Dispatcher?.Post(Refresh));
+
             // Initial read
             Refresh();
         }
@@ -83,6 +88,12 @@ namespace EveLens.Common.ViewModels
                     if (dispatcher != null) dispatcher.Post(Refresh);
                     else Refresh();
                 }
+            });
+
+            _privacySub = aggregator.Subscribe<PrivacyModeChangedEvent>(_ =>
+            {
+                if (dispatcher != null) dispatcher.Post(Refresh);
+                else Refresh();
             });
 
             Refresh();
@@ -118,19 +129,28 @@ namespace EveLens.Common.ViewModels
         /// <summary>Balance change direction: -1=down, 0=unchanged, 1=up.</summary>
         public int BalanceDirection { get => _balanceDirection; private set => SetProperty(ref _balanceDirection, value); }
 
-        /// <summary>Formatted balance change text: "▲ +1,234.56" or "▼ -5,678.90" or "".</summary>
-        public string BalanceChangeText { get => _balanceChangeText; private set => SetProperty(ref _balanceChangeText, value); }
+        /// <summary>Formatted balance change text: "▲ +1,234.56" or "▼ -5,678.90" or "". Hidden when balance is private.</summary>
+        public string BalanceChangeText
+        {
+            get => PrivacyHelper.IsBalanceHidden ? string.Empty : _balanceChangeText;
+            private set => SetProperty(ref _balanceChangeText, value);
+        }
 
         // ═══════════════════════════════════════════════════════
         // Derived display strings (computed, not cached)
         // ═══════════════════════════════════════════════════════
 
-        public string BalanceText => $"{FormatISK(Balance)} ISK";
+        public string BalanceText => PrivacyHelper.IsBalanceHidden
+            ? $"{PrivacyHelper.Mask} ISK" : $"{FormatISK(Balance)} ISK";
         public string SecurityStatusText => $"Security Status: {SecurityStatus.ToString("N2", CultureInfo.InvariantCulture)}";
-        public string SkillPointsText => $"Total SP: {FormatLargeNumber(SkillPoints)}";
-        public string FreeSkillPointsText => $"Free SP: {FormatLargeNumber(FreeSkillPoints)}";
-        public string KnownSkillCountText => $"Known Skills: {KnownSkillCount.ToString("N0", CultureInfo.InvariantCulture)}";
-        public string AvailableRemapsText => $"Bonus Remaps: {AvailableRemaps}";
+        public string SkillPointsText => PrivacyHelper.IsSkillPointsHidden
+            ? $"Total SP: {PrivacyHelper.Mask}" : $"Total SP: {FormatLargeNumber(SkillPoints)}";
+        public string FreeSkillPointsText => PrivacyHelper.IsSkillPointsHidden
+            ? $"Free SP: {PrivacyHelper.Mask}" : $"Free SP: {FormatLargeNumber(FreeSkillPoints)}";
+        public string KnownSkillCountText => PrivacyHelper.IsSkillPointsHidden
+            ? $"Known Skills: {PrivacyHelper.Mask}" : $"Known Skills: {KnownSkillCount.ToString("N0", CultureInfo.InvariantCulture)}";
+        public string AvailableRemapsText => PrivacyHelper.IsRemapsHidden
+            ? $"Bonus Remaps: {PrivacyHelper.Mask}" : $"Bonus Remaps: {AvailableRemaps}";
         public string ShipText => !string.IsNullOrEmpty(ShipTypeName) && !string.IsNullOrEmpty(ShipName)
             ? $"Active Ship: {ShipTypeName} [{ShipName}]" : "Active Ship: Unknown";
 
@@ -202,11 +222,11 @@ namespace EveLens.Common.ViewModels
             }
             _previousBalance = newBalance;
 
-            Name = _character.Name;
+            Name = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : _character.Name;
             Balance = newBalance;
             SecurityStatus = _character.SecurityStatus;
-            CorporationName = _character.CorporationName;
-            AllianceName = _character.AllianceName;
+            CorporationName = PrivacyHelper.IsCorpAllianceHidden ? PrivacyHelper.Mask : _character.CorporationName;
+            AllianceName = PrivacyHelper.IsCorpAllianceHidden ? PrivacyHelper.Mask : _character.AllianceName;
             SkillPoints = _character.SkillPoints;
             FreeSkillPoints = _character.FreeSkillPoints;
             KnownSkillCount = _character.KnownSkillCount;
@@ -315,6 +335,7 @@ namespace EveLens.Common.ViewModels
             if (_disposed) return;
             _disposed = true;
             _subscription?.Dispose();
+            _privacySub?.Dispose();
         }
     }
 }

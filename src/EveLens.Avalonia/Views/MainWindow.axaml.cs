@@ -57,6 +57,7 @@ namespace EveLens.Avalonia.Views
         private IDisposable? _updateAvailableSub;
         private IDisposable? _dataUpdateAvailableSub;
         private IDisposable? _notificationSentSub;
+        private IDisposable? _privacyModeSub;
 
         public MainWindow()
         {
@@ -108,6 +109,22 @@ namespace EveLens.Avalonia.Views
             // Native OS toast notifications (cross-platform)
             _notificationSentSub = AppServices.EventAggregator?.Subscribe<NotificationSentEvent>(
                 e => OnNotificationSent(e));
+
+            // Wire privacy mode flyout checkboxes
+            WirePrivacyCheckbox(PrivacyNameCb, PrivacyCategories.Name);
+            WirePrivacyCheckbox(PrivacyCorpCb, PrivacyCategories.CorpAlliance);
+            WirePrivacyCheckbox(PrivacyBalanceCb, PrivacyCategories.Balance);
+            WirePrivacyCheckbox(PrivacySkillPointsCb, PrivacyCategories.SkillPoints);
+            WirePrivacyCheckbox(PrivacyTrainingCb, PrivacyCategories.Training);
+            WirePrivacyCheckbox(PrivacyRemapsCb, PrivacyCategories.Remaps);
+            PrivacyToggleAllBtn.Click += (_, _) =>
+            {
+                AppServices.TogglePrivacyMode();
+                SyncPrivacyCheckboxes();
+                UpdatePrivacyIcon();
+            };
+            _privacyModeSub = AppServices.EventAggregator?.Subscribe<Common.Events.PrivacyModeChangedEvent>(
+                _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
 
             // Enable update checking
             Common.UpdateManager.Enabled = Common.Settings.Updates.CheckEveLensVersion;
@@ -184,7 +201,7 @@ namespace EveLens.Avalonia.Views
             // First name below portrait
             var nameText = new TextBlock
             {
-                Text = character.Name.Split(' ')[0],
+                Text = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name.Split(' ')[0],
                 FontSize = 9,
                 MaxWidth = 50,
                 TextAlignment = TextAlignment.Center,
@@ -426,11 +443,16 @@ namespace EveLens.Avalonia.Views
 
         private static string BuildCharacterTooltip(Character character)
         {
-            var parts = new List<string> { character.Name };
-            parts.Add($"ISK: {character.Balance:N2}");
-            parts.Add($"SP: {character.SkillPoints:N0}");
+            var parts = new List<string>();
+            parts.Add(PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name);
+            parts.Add(PrivacyHelper.IsBalanceHidden ? $"ISK: {PrivacyHelper.Mask}" : $"ISK: {character.Balance:N2}");
+            parts.Add(PrivacyHelper.IsSkillPointsHidden ? $"SP: {PrivacyHelper.Mask}" : $"SP: {character.SkillPoints:N0}");
 
-            if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
+            if (PrivacyHelper.IsTrainingHidden)
+            {
+                parts.Add($"Training: {PrivacyHelper.Mask}");
+            }
+            else if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
             {
                 var skill = ccp.CurrentlyTrainingSkill;
                 var remaining = skill.RemainingTime;
@@ -1840,6 +1862,34 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        private void WirePrivacyCheckbox(CheckBox cb, PrivacyCategories category)
+        {
+            cb.IsCheckedChanged += (_, _) =>
+            {
+                bool wantChecked = cb.IsChecked == true;
+                bool isSet = AppServices.IsPrivate(category);
+                if (wantChecked != isSet)
+                    AppServices.TogglePrivacyCategory(category);
+                UpdatePrivacyIcon();
+            };
+        }
+
+        private void SyncPrivacyCheckboxes()
+        {
+            PrivacyNameCb.IsChecked = AppServices.IsPrivate(PrivacyCategories.Name);
+            PrivacyCorpCb.IsChecked = AppServices.IsPrivate(PrivacyCategories.CorpAlliance);
+            PrivacyBalanceCb.IsChecked = AppServices.IsPrivate(PrivacyCategories.Balance);
+            PrivacySkillPointsCb.IsChecked = AppServices.IsPrivate(PrivacyCategories.SkillPoints);
+            PrivacyTrainingCb.IsChecked = AppServices.IsPrivate(PrivacyCategories.Training);
+            PrivacyRemapsCb.IsChecked = AppServices.IsPrivate(PrivacyCategories.Remaps);
+        }
+
+        private void UpdatePrivacyIcon()
+        {
+            EyeOpenIcon.IsVisible = !AppServices.PrivacyModeEnabled;
+            EyeSlashIcon.IsVisible = AppServices.PrivacyModeEnabled;
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             _notificationVm?.Save();
@@ -1850,6 +1900,7 @@ namespace EveLens.Avalonia.Views
             _updateAvailableSub?.Dispose();
             _dataUpdateAvailableSub?.Dispose();
             _notificationSentSub?.Dispose();
+            _privacyModeSub?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
             _observableCharacters.Clear();
             _cachedViews.Clear();

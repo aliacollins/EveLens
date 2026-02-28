@@ -5,6 +5,7 @@
 
 using System;
 using EveLens.Common.Collections.Global;
+using EveLens.Common.Enumerations;
 using EveLens.Common.Interfaces;
 using EveLens.Common.Logging;
 using EveLens.Common.Models;
@@ -66,6 +67,7 @@ namespace EveLens.Common.Services
         private static Lazy<ActivityLogService> s_activityLog = new(() =>
             new ActivityLogService(ApplicationPaths.DataDirectory));
         private static Lazy<ICharacterDataCache> s_characterDataCache = new(() => new CharacterDataCacheService());
+        private static PrivacyCategories s_privacyMask;
 
         /// <summary>
         /// Gets the notification collection.
@@ -149,6 +151,41 @@ namespace EveLens.Common.Services
         /// Gets the character data cache for persisting live ESI data to disk.
         /// </summary>
         public static ICharacterDataCache CharacterDataCache => s_characterDataCache.Value;
+
+        /// <summary>
+        /// Gets the current privacy mask (which categories are hidden).
+        /// </summary>
+        public static PrivacyCategories PrivacyMask => s_privacyMask;
+
+        /// <summary>
+        /// Gets whether any privacy category is active (for icon state, backward compat).
+        /// </summary>
+        public static bool PrivacyModeEnabled => s_privacyMask != PrivacyCategories.None;
+
+        /// <summary>
+        /// Returns true if the given category is currently hidden.
+        /// </summary>
+        public static bool IsPrivate(PrivacyCategories category) => (s_privacyMask & category) != 0;
+
+        /// <summary>
+        /// XORs a single category on/off and publishes <see cref="Events.PrivacyModeChangedEvent"/>.
+        /// </summary>
+        public static void TogglePrivacyCategory(PrivacyCategories category)
+        {
+            s_privacyMask ^= category;
+            EventAggregator?.Publish(new Events.PrivacyModeChangedEvent(PrivacyModeEnabled));
+        }
+
+        /// <summary>
+        /// All-or-none toggle: if any category is set, clears all; otherwise sets all.
+        /// </summary>
+        public static void TogglePrivacyMode()
+        {
+            s_privacyMask = s_privacyMask != PrivacyCategories.None
+                ? PrivacyCategories.None
+                : PrivacyCategories.All;
+            EventAggregator?.Publish(new Events.PrivacyModeChangedEvent(PrivacyModeEnabled));
+        }
 
         /// <summary>
         /// Gets whether the application is closed.
@@ -462,6 +499,7 @@ namespace EveLens.Common.Services
             s_activityLog = new Lazy<ActivityLogService>(() =>
                 new ActivityLogService(ApplicationPaths.DataDirectory));
             s_characterDataCache = new Lazy<ICharacterDataCache>(() => new CharacterDataCacheService());
+            s_privacyMask = PrivacyCategories.None;
         }
 
         /// <summary>

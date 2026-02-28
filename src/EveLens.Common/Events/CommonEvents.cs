@@ -126,6 +126,12 @@ namespace EveLens.Common.Events
         private ServerStatusUpdatedEvent() { }
     }
 
+    public sealed class PrivacyModeChangedEvent
+    {
+        public bool IsEnabled { get; }
+        public PrivacyModeChangedEvent(bool isEnabled) => IsEnabled = isEnabled;
+    }
+
     // =========================================================================
     // B. Character-scoped events (carry Character model, no extra payload)
     // =========================================================================
