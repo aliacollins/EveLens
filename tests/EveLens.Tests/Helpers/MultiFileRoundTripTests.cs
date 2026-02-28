@@ -308,11 +308,17 @@ namespace EveLens.Tests.Helpers
             // characters/index.json
             File.Exists(SettingsFileManager.CharacterIndexFilePath).Should().BeTrue();
 
-            // characters/{id}.json for each character
+            // characters/{id}/ directory with component files for each character
             foreach (var character in settings.Characters)
             {
-                string charPath = SettingsFileManager.GetCharacterFilePath(character.ID);
-                File.Exists(charPath).Should().BeTrue($"character file for {character.ID} should exist");
+                string charDir = SettingsFileManager.GetCharacterDirectory(character.ID);
+                Directory.Exists(charDir).Should().BeTrue($"character directory for {character.ID} should exist");
+
+                string identityPath = SettingsFileManager.GetCharacterComponentPath(character.ID, "identity.json");
+                File.Exists(identityPath).Should().BeTrue($"identity.json for {character.ID} should exist");
+
+                string skillsPath = SettingsFileManager.GetCharacterComponentPath(character.ID, "skills.json");
+                File.Exists(skillsPath).Should().BeTrue($"skills.json for {character.ID} should exist");
             }
         }
 
@@ -324,14 +330,14 @@ namespace EveLens.Tests.Helpers
             SettingsFileManager.SaveMultiFileSync(settings3);
 
             long thirdCharId = settings3.Characters[2].ID;
-            File.Exists(SettingsFileManager.GetCharacterFilePath(thirdCharId)).Should().BeTrue();
+            Directory.Exists(SettingsFileManager.GetCharacterDirectory(thirdCharId)).Should().BeTrue();
 
             // Now save with only 2 characters — the third should be removed
             var settings2 = BuildRealisticSettings(2);
             SettingsFileManager.SaveMultiFileSync(settings2);
 
-            File.Exists(SettingsFileManager.GetCharacterFilePath(thirdCharId)).Should().BeFalse(
-                "orphaned character file should be removed");
+            Directory.Exists(SettingsFileManager.GetCharacterDirectory(thirdCharId)).Should().BeFalse(
+                "orphaned character directory should be removed");
         }
 
         [Fact]
@@ -433,6 +439,135 @@ namespace EveLens.Tests.Helpers
             loaded!.Characters.Should().BeEmpty();
             loaded.ESIKeys.Should().BeEmpty();
             loaded.Plans.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task LegacyFlatFile_AutoMigratesToComponentFolder()
+        {
+            var original = BuildRealisticSettings(1);
+            SettingsFileManager.SaveMultiFileSync(original);
+
+            long charId = original.Characters[0].ID;
+
+            // Simulate legacy: delete the component directory and create a flat file instead
+            string charDir = SettingsFileManager.GetCharacterDirectory(charId);
+            if (Directory.Exists(charDir))
+                Directory.Delete(charDir, recursive: true);
+
+            // Create a flat file like alpha 26
+            var (_, _, _, characters) = SettingsFileManager.DecomposeSettings(original);
+            string legacyPath = SettingsFileManager.GetLegacyCharacterFilePath(charId);
+            string json = System.Text.Json.JsonSerializer.Serialize(characters[0], SettingsFileManager.DirectJsonOptions);
+            File.WriteAllText(legacyPath, json);
+
+            // Load should auto-migrate
+            var loaded = await SettingsFileManager.LoadCharacterAsync(charId);
+
+            loaded.Should().NotBeNull();
+            loaded!.Name.Should().Be("Test Pilot 1");
+            loaded.Skills.Should().HaveCount(10);
+
+            // Component folder should now exist
+            Directory.Exists(charDir).Should().BeTrue("flat file should be migrated to component folder");
+
+            // Legacy flat file should be removed
+            File.Exists(legacyPath).Should().BeFalse("legacy flat file should be deleted after migration");
+        }
+
+        [Fact]
+        public void EmptyComponents_SkipsFiles()
+        {
+            var settings = BuildRealisticSettings(1);
+            var (_, _, _, characters) = SettingsFileManager.DecomposeSettings(settings);
+            var charData = characters[0];
+
+            // Clear optional data
+            charData.Plans.Clear();
+            charData.ImplantSets.Clear();
+            charData.Balance = 0;
+            charData.MarketOrders.Clear();
+            charData.Contracts.Clear();
+            charData.IndustryJobs.Clear();
+            charData.WalletJournal.Clear();
+            charData.WalletTransactions.Clear();
+            charData.Assets.Clear();
+            charData.UISettings = null;
+
+            SettingsFileManager.SaveCharacterComponentsSync(charData);
+
+            long id = charData.CharacterId;
+
+            // identity.json and skills.json should exist
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "identity.json")).Should().BeTrue();
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "skills.json")).Should().BeTrue();
+
+            // Empty components should NOT exist
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "plans.json")).Should().BeFalse("empty plans should skip file");
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "implants.json")).Should().BeFalse("empty implants should skip file");
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "wallet.json")).Should().BeFalse("empty wallet should skip file");
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "assets.json")).Should().BeFalse("empty assets should skip file");
+            File.Exists(SettingsFileManager.GetCharacterComponentPath(id, "settings.json")).Should().BeFalse("null settings should skip file");
+        }
+
+        [Fact]
+        public async Task AllComponents_FullRoundTrip()
+        {
+            var original = BuildRealisticSettings(1);
+            var (_, _, _, characters) = SettingsFileManager.DecomposeSettings(original);
+            var charData = characters[0];
+
+            // Ensure wallet data is populated
+            charData.Balance = 5000000m;
+
+            // Save as components
+            await SettingsFileManager.SaveCharacterComponentsAsync(charData);
+
+            // Load from components
+            var loaded = await SettingsFileManager.LoadCharacterFromComponentsAsync(charData.CharacterId);
+
+            loaded.Should().NotBeNull();
+            loaded!.CharacterId.Should().Be(charData.CharacterId);
+            loaded.Guid.Should().Be(charData.Guid);
+            loaded.Name.Should().Be(charData.Name);
+            loaded.Race.Should().Be(charData.Race);
+            loaded.CorporationName.Should().Be(charData.CorporationName);
+            loaded.Intelligence.Should().Be(charData.Intelligence);
+            loaded.Skills.Should().HaveCount(charData.Skills.Count);
+            loaded.SkillQueue.Should().HaveCount(charData.SkillQueue.Count);
+            loaded.Plans.Should().HaveCount(charData.Plans.Count);
+            loaded.EmploymentHistory.Should().HaveCount(charData.EmploymentHistory.Count);
+            loaded.Balance.Should().Be(5000000m);
+        }
+
+        [Fact]
+        public void GetCharacterDirectory_ReturnsExpectedFormat()
+        {
+            var path = SettingsFileManager.GetCharacterDirectory(12345);
+
+            path.Should().EndWith(Path.Combine("characters", "12345"));
+        }
+
+        [Fact]
+        public void GetSavedCharacterIds_MixedFormats_ReturnsAll()
+        {
+            SettingsFileManager.EnsureDirectoriesExist();
+
+            // Create a component folder
+            long compId = 11111;
+            SettingsFileManager.EnsureCharacterDirectoryExists(compId);
+            string identityPath = SettingsFileManager.GetCharacterComponentPath(compId, "identity.json");
+            File.WriteAllText(identityPath, "{}");
+
+            // Create a legacy flat file
+            long legacyId = 22222;
+            string legacyPath = SettingsFileManager.GetLegacyCharacterFilePath(legacyId);
+            File.WriteAllText(legacyPath, "{}");
+
+            var ids = SettingsFileManager.GetSavedCharacterIds().ToList();
+
+            ids.Should().Contain(compId);
+            ids.Should().Contain(legacyId);
+            ids.Should().HaveCount(2);
         }
 
         [Fact]
