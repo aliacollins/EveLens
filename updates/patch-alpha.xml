@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-28</date>
+      <version>1.0.0.24</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.24
+
+Fix settings crash: defer CloudStorageServiceProvider loading that triggered System.Drawing on Linux/macOS]]></message>
+    </release>
+    <release>
+      <date>2026-02-28</date>
       <version>1.0.0.23</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Fix SmartSettingsManager: Dispatcher.Invoke instead of Post fixes Linux/macOS se
       <message><![CDATA[EveLens 1.0.0-alpha.15
 
 Fix settings never saving on Linux/macOS: SmartSettingsManager was deadlocking on non-Windows dispatchers]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.14</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.14
-
-Add save pipeline traces for Linux persistence diagnosis]]></message>
     </release>
   </releases>
   <datafiles>
