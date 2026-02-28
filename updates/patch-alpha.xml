@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-02-28</date>
+      <version>1.0.0.26</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.26
+
+Re-enable per-character atomic file storage]]></message>
+    </release>
+    <release>
+      <date>2026-02-28</date>
       <version>1.0.0.25</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Nuclear option: Settings.Save writes directly to disk, bypassing entire async pi
       <message><![CDATA[EveLens 1.0.0-alpha.17
 
 Bypass Avalonia dispatcher entirely for settings save — fixes Linux/macOS persistence for real]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.16</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.16
-
-Fix SmartSettingsManager: Dispatcher.Invoke instead of Post fixes Linux/macOS settings persistence]]></message>
     </release>
   </releases>
   <datafiles>
