@@ -152,7 +152,7 @@ namespace EveLens.Common.Helpers
         /// Checks if JSON settings exist (new direct format or legacy multi-file format).
         /// </summary>
         public static bool JsonSettingsExist()
-            => File.Exists(SettingsJsonFilePath) || File.Exists(ConfigFilePath);
+            => File.Exists(SettingsJsonFilePath) || File.Exists(ConfigFilePath) || File.Exists(ConfigFilePath + ".bak");
 
         /// <summary>
         /// Checks if legacy XML settings exist.
@@ -178,15 +178,20 @@ namespace EveLens.Common.Helpers
             writeLock?.Wait();
             try
             {
-                // Delete settings.json (new direct format)
+                // Delete settings.json (legacy single-file format)
                 if (File.Exists(SettingsJsonFilePath))
                     File.Delete(SettingsJsonFilePath);
 
-                // Delete config.json (legacy format)
+                // Delete settings.json.migrated (auto-migration artifact)
+                string migratedPath = SettingsJsonFilePath + ".migrated";
+                if (File.Exists(migratedPath))
+                    File.Delete(migratedPath);
+
+                // Delete config.json (multi-file format)
                 if (File.Exists(ConfigFilePath))
                     File.Delete(ConfigFilePath);
 
-                // Delete credentials.json (legacy format)
+                // Delete credentials.json
                 if (File.Exists(CredentialsFilePath))
                     File.Delete(CredentialsFilePath);
 
@@ -639,39 +644,9 @@ namespace EveLens.Common.Helpers
 
             try
             {
-                EnsureDirectoriesExist();
-
-                string json;
-                try
-                {
-                    json = JsonSerializer.Serialize(settings, DirectJsonOptions);
-                    AppServices.TraceService?.Trace(
-                        $"SaveFromSerializableSettingsAsync: Serialized {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
-                }
-                catch (Exception serEx)
-                {
-                    var inner = serEx;
-                    while (inner.InnerException != null) inner = inner.InnerException;
-                    AppServices.TraceService?.Trace(
-                        $"SaveFromSerializableSettingsAsync: JSON serialization failed: {inner.GetType().Name}: {inner.Message}");
-                    throw;
-                }
-
-                try
-                {
-                    await WriteFileAtomicAsync(SettingsJsonFilePath, json);
-                }
-                catch (Exception ioEx)
-                {
-                    // WriteFileAtomicAsync with File.Replace can fail on some Linux filesystems.
-                    // Fall back to direct write.
-                    AppServices.TraceService?.Trace(
-                        $"SaveFromSerializableSettingsAsync: Atomic write failed ({ioEx.Message}), falling back to direct write");
-                    await File.WriteAllTextAsync(SettingsJsonFilePath, json).ConfigureAwait(false);
-                }
-
+                await SaveMultiFileAsync(settings);
                 AppServices.TraceService?.Trace(
-                    $"SaveFromSerializableSettingsAsync: Saved to {SettingsJsonFilePath}");
+                    $"SaveFromSerializableSettingsAsync: Saved {settings.Characters.Count} chars, {settings.Plans.Count} plans (multi-file)");
             }
             catch (Exception ex)
             {
@@ -680,6 +655,149 @@ namespace EveLens.Common.Helpers
                 AppServices.TraceService?.Trace(
                     $"SaveFromSerializableSettingsAsync: Error: {inner.GetType().Name}: {inner.Message}");
                 throw;
+            }
+        }
+
+        #endregion
+
+        #region Multi-File Write
+
+        /// <summary>
+        /// Writes a file synchronously using atomic temp-file + rename pattern.
+        /// Synchronous companion to WriteFileAtomicAsync for hot paths.
+        /// </summary>
+        private static void WriteFileSyncAtomic(string filePath, string content)
+        {
+            string directory = Path.GetDirectoryName(filePath) ?? Path.GetTempPath();
+            string tempPath = Path.Combine(directory, $".{Path.GetFileName(filePath)}.tmp");
+
+            try
+            {
+                File.WriteAllText(tempPath, content);
+
+                if (File.Exists(filePath))
+                {
+                    string backupPath = filePath + ".bak";
+                    File.Replace(tempPath, filePath, backupPath);
+                }
+                else
+                {
+                    File.Move(tempPath, filePath);
+                }
+            }
+            catch (IOException)
+            {
+                // File.Replace can fail on some filesystems; fall back to direct write
+                try { File.WriteAllText(filePath, content); }
+                catch { throw; }
+            }
+            finally
+            {
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); }
+                    catch { /* Ignore cleanup errors */ }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Saves settings as multiple atomic files. Synchronous — suitable for
+        /// Settings.Save(), SmartSettingsManager, and shutdown paths.
+        /// </summary>
+        public static void SaveMultiFileSync(SerializableSettings settings)
+        {
+            if (settings == null)
+                return;
+
+            var (config, credentials, index, characters) = DecomposeSettings(settings);
+
+            EnsureDirectoriesExist();
+
+            // Write config.json
+            string configJson = JsonSerializer.Serialize(config, s_jsonOptions);
+            WriteFileSyncAtomic(ConfigFilePath, configJson);
+
+            // Write credentials.json
+            string credsJson = JsonSerializer.Serialize(credentials, s_jsonOptions);
+            WriteFileSyncAtomic(CredentialsFilePath, credsJson);
+
+            // Write each character file
+            foreach (var charData in characters)
+            {
+                string charPath = GetCharacterFilePath(charData.CharacterId);
+                string charJson = JsonSerializer.Serialize(charData, s_jsonOptions);
+                WriteFileSyncAtomic(charPath, charJson);
+            }
+
+            // Write index.json last — all character files are consistent before the index points to them
+            string indexJson = JsonSerializer.Serialize(index, s_jsonOptions);
+            WriteFileSyncAtomic(CharacterIndexFilePath, indexJson);
+
+            // Remove orphaned character files
+            var activeIds = new HashSet<long>(characters.Select(c => c.CharacterId));
+            RemoveOrphanedCharacterFiles(activeIds);
+
+            AppServices.TraceService?.Trace(
+                $"SaveMultiFileSync: {characters.Count} chars, config={configJson.Length}b, creds={credsJson.Length}b");
+        }
+
+        /// <summary>
+        /// Saves settings as multiple atomic files, async variant.
+        /// Used by migration and import paths.
+        /// </summary>
+        public static async Task SaveMultiFileAsync(SerializableSettings settings)
+        {
+            if (settings == null)
+                return;
+
+            var (config, credentials, index, characters) = DecomposeSettings(settings);
+
+            EnsureDirectoriesExist();
+
+            await SaveConfigAsync(config);
+            await SaveCredentialsAsync(credentials);
+
+            foreach (var charData in characters)
+                await SaveCharacterAsync(charData);
+
+            await SaveCharacterIndexAsync(index);
+
+            // Remove orphaned character files
+            var activeIds = new HashSet<long>(characters.Select(c => c.CharacterId));
+            RemoveOrphanedCharacterFiles(activeIds);
+
+            AppServices.TraceService?.Trace(
+                $"SaveMultiFileAsync: {characters.Count} chars written");
+        }
+
+        /// <summary>
+        /// Removes character JSON files that no longer correspond to any active character.
+        /// </summary>
+        private static void RemoveOrphanedCharacterFiles(HashSet<long> activeIds)
+        {
+            try
+            {
+                foreach (long savedId in GetSavedCharacterIds())
+                {
+                    if (!activeIds.Contains(savedId))
+                    {
+                        string orphanPath = GetCharacterFilePath(savedId);
+                        if (File.Exists(orphanPath))
+                        {
+                            File.Delete(orphanPath);
+                            AppServices.TraceService?.Trace($"Removed orphaned character file: {savedId}.json");
+                        }
+                        // Also clean up .bak
+                        string bakPath = orphanPath + ".bak";
+                        if (File.Exists(bakPath))
+                            File.Delete(bakPath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"Error cleaning orphaned character files: {ex.Message}");
             }
         }
 
@@ -854,79 +972,61 @@ namespace EveLens.Common.Helpers
         #region Load from JSON to SerializableSettings
 
         /// <summary>
-        /// Loads settings from JSON. Tries the new direct format (settings.json) first,
-        /// then falls back to the legacy multi-file format (config.json + credentials.json + characters/).
+        /// Loads settings from JSON. Priority order:
+        /// 1. Multi-file format (config.json + credentials.json + characters/) — primary
+        /// 2. Legacy single-file (settings.json) — auto-migrates to multi-file, renames to .migrated
+        /// 3. Legacy single-file backup (settings.json.bak) — same recovery
         /// </summary>
         /// <returns>SerializableSettings populated from JSON files, or null if loading fails.</returns>
         public static async Task<SerializableSettings?> LoadToSerializableSettingsAsync()
         {
             AppServices.TraceService?.Trace("begin - loading from JSON format");
 
-            // Priority 1: New direct format (settings.json = SerializableSettings)
+            // Priority 1: Multi-file format (config.json or config.json.bak exists)
+            if (File.Exists(ConfigFilePath) || File.Exists(ConfigFilePath + ".bak"))
+            {
+                var result = await LoadFromMultiFileFormatAsync();
+                if (result != null)
+                    return result;
+            }
+
+            // Priority 2: Legacy single-file format (settings.json) — auto-migrate
             if (File.Exists(SettingsJsonFilePath))
             {
-                try
+                var settings = await TryLoadSettingsJsonAsync(SettingsJsonFilePath);
+                if (settings != null)
                 {
-                    string json = await File.ReadAllTextAsync(SettingsJsonFilePath);
-                    var settings = JsonSerializer.Deserialize<SerializableSettings>(json, DirectJsonOptions);
-
-                    if (settings != null)
-                    {
-                        AppServices.TraceService?.Trace(
-                            $"done - loaded {settings.Characters.Count} characters from settings.json (direct format)");
-                        return settings;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    AppServices.TraceService?.Trace($"Failed to load settings.json: {ex.Message}");
+                    AppServices.TraceService?.Trace(
+                        $"Loaded {settings.Characters.Count} characters from settings.json — auto-migrating to multi-file");
+                    await AutoMigrateFromSettingsJson(settings);
+                    return settings;
                 }
 
-                // Try backup
+                // Try backup of settings.json
                 string backupPath = SettingsJsonFilePath + ".bak";
                 if (File.Exists(backupPath))
                 {
-                    try
-                    {
-                        string backupJson = await File.ReadAllTextAsync(backupPath);
-                        var settings = JsonSerializer.Deserialize<SerializableSettings>(backupJson, DirectJsonOptions);
-                        if (settings != null)
-                        {
-                            AppServices.TraceService?.Trace("Recovered settings from settings.json.bak");
-                            return settings;
-                        }
-                    }
-                    catch
-                    {
-                        // Backup also corrupt
-                    }
-                }
-            }
-
-            // Priority 1b: settings.json.bak when primary doesn't exist
-            string settingsBackupPath = SettingsJsonFilePath + ".bak";
-            if (!File.Exists(SettingsJsonFilePath) && File.Exists(settingsBackupPath))
-            {
-                try
-                {
-                    string backupJson = await File.ReadAllTextAsync(settingsBackupPath);
-                    var settings = JsonSerializer.Deserialize<SerializableSettings>(backupJson, DirectJsonOptions);
+                    settings = await TryLoadSettingsJsonAsync(backupPath);
                     if (settings != null)
                     {
-                        AppServices.TraceService?.Trace("Recovered settings from settings.json.bak (primary missing)");
+                        AppServices.TraceService?.Trace("Recovered from settings.json.bak — auto-migrating");
+                        await AutoMigrateFromSettingsJson(settings);
                         return settings;
                     }
                 }
-                catch
-                {
-                    // Backup also corrupt
-                }
             }
 
-            // Priority 2: Legacy multi-file format (config.json + credentials.json + characters/)
-            if (File.Exists(ConfigFilePath))
+            // Priority 2b: settings.json.bak when primary doesn't exist
+            string settingsBackupPath = SettingsJsonFilePath + ".bak";
+            if (!File.Exists(SettingsJsonFilePath) && File.Exists(settingsBackupPath))
             {
-                return await LoadFromLegacyJsonFormatAsync();
+                var settings = await TryLoadSettingsJsonAsync(settingsBackupPath);
+                if (settings != null)
+                {
+                    AppServices.TraceService?.Trace("Recovered from settings.json.bak (primary missing) — auto-migrating");
+                    await AutoMigrateFromSettingsJson(settings);
+                    return settings;
+                }
             }
 
             AppServices.TraceService?.Trace("No JSON settings found");
@@ -934,12 +1034,62 @@ namespace EveLens.Common.Helpers
         }
 
         /// <summary>
-        /// Loads settings from the legacy multi-file JSON format (config.json, credentials.json, characters/).
-        /// This is kept for backward compatibility with users who migrated before the direct format was introduced.
+        /// Attempts to load SerializableSettings from a single settings.json file.
         /// </summary>
-        private static async Task<SerializableSettings?> LoadFromLegacyJsonFormatAsync()
+        private static async Task<SerializableSettings?> TryLoadSettingsJsonAsync(string path)
         {
-            AppServices.TraceService?.Trace("Loading from legacy multi-file JSON format");
+            try
+            {
+                string json = await File.ReadAllTextAsync(path);
+                return JsonSerializer.Deserialize<SerializableSettings>(json, DirectJsonOptions);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Auto-migrates from single settings.json to multi-file format.
+        /// Writes multi-file, then renames settings.json → settings.json.migrated.
+        /// </summary>
+        private static async Task AutoMigrateFromSettingsJson(SerializableSettings settings)
+        {
+            try
+            {
+                await SaveMultiFileAsync(settings);
+
+                // Rename old settings.json → settings.json.migrated
+                string migratedPath = SettingsJsonFilePath + ".migrated";
+                if (File.Exists(SettingsJsonFilePath))
+                {
+                    if (File.Exists(migratedPath))
+                        File.Delete(migratedPath);
+                    File.Move(SettingsJsonFilePath, migratedPath);
+                    AppServices.TraceService?.Trace("Auto-migrated: settings.json → settings.json.migrated");
+                }
+
+                // Also clean up .bak from the old format
+                string bakPath = SettingsJsonFilePath + ".bak";
+                if (File.Exists(bakPath))
+                {
+                    try { File.Delete(bakPath); }
+                    catch { /* best effort */ }
+                }
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"Auto-migration from settings.json failed (non-critical): {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Loads settings from the multi-file JSON format (config.json, credentials.json, characters/).
+        /// This is the primary format for EveLens.
+        /// </summary>
+        private static async Task<SerializableSettings?> LoadFromMultiFileFormatAsync()
+        {
+            AppServices.TraceService?.Trace("Loading from multi-file JSON format");
 
             try
             {
@@ -962,9 +1112,12 @@ namespace EveLens.Common.Helpers
                 {
                     ForkId = config.ForkId ?? "aliacollins",
                     ForkVersion = config.ForkVersion ?? string.Empty,
-                    Revision = Settings.Revision,
+                    Revision = config.Revision > 0 ? config.Revision : Settings.Revision,
                     SSOClientID = config.SSOClientID ?? string.Empty,
                     SSOClientSecret = config.SSOClientSecret ?? string.Empty,
+                    Compatibility = Enum.TryParse<CompatibilityMode>(config.Compatibility, out var compat)
+                        ? compat : CompatibilityMode.Default,
+                    EsiScopePreset = config.EsiScopePreset ?? "FullMonitoring",
                     UI = config.UI ?? new UISettings(),
                     G15 = config.G15 ?? new G15Settings(),
                     Proxy = config.Proxy ?? new ProxySettings(),
@@ -979,6 +1132,19 @@ namespace EveLens.Common.Helpers
                     Scheduler = config.Scheduler ?? new SchedulerSettings()
                 };
 
+                // Restore ESI custom scopes
+                foreach (var scope in config.EsiCustomScopes ?? new List<string>())
+                    settings.EsiCustomScopes.Add(scope);
+
+                // Restore character groups
+                foreach (var group in config.CharacterGroups ?? new List<JsonCharacterGroupSettings>())
+                {
+                    var cgs = new CharacterGroupSettings { Name = group.Name ?? string.Empty };
+                    foreach (var guid in group.CharacterGuids)
+                        cgs.CharacterGuids.Add(guid);
+                    settings.CharacterGroups.Add(cgs);
+                }
+
                 // Convert ESI keys
                 foreach (var esiKey in credentials?.EsiKeys ?? new List<JsonEsiKey>())
                 {
@@ -988,6 +1154,10 @@ namespace EveLens.Common.Helpers
                         RefreshToken = esiKey.RefreshToken ?? string.Empty,
                         Monitored = esiKey.Monitored,
                     };
+
+#pragma warning disable CS0618 // AccessMask is obsolete — preserve for backward compat
+                    serialKey.AccessMask = esiKey.AccessMask;
+#pragma warning restore CS0618
 
                     // Migrate: use AuthorizedScopes if present, else derive from legacy AccessMask
                     if (esiKey.AuthorizedScopes != null && esiKey.AuthorizedScopes.Count > 0)
@@ -1056,12 +1226,12 @@ namespace EveLens.Common.Helpers
                     }
                 }
 
-                AppServices.TraceService?.Trace($"done - loaded {settings.Characters.Count} characters from legacy JSON format");
+                AppServices.TraceService?.Trace($"done - loaded {settings.Characters.Count} characters from multi-file JSON format");
                 return settings;
             }
             catch (Exception ex)
             {
-                AppServices.TraceService?.Trace($"Error loading from legacy JSON: {ex.Message}");
+                AppServices.TraceService?.Trace($"Error loading from multi-file JSON: {ex.Message}");
                 return null;
             }
         }
@@ -1104,8 +1274,8 @@ namespace EveLens.Common.Helpers
                 character = ccpCharacter;
             }
 
-            // Common properties
-            character.Guid = Guid.NewGuid(); // Generate new Guid for internal tracking
+            // Common properties — use stored Guid if present, generate new one otherwise
+            character.Guid = json.Guid != Guid.Empty ? json.Guid : Guid.NewGuid();
             character.ID = json.CharacterId;
             character.Name = json.Name ?? string.Empty;
             character.Birthday = json.Birthday;
@@ -1319,6 +1489,352 @@ namespace EveLens.Common.Helpers
         }
 
         #endregion
+
+        #region Decompose Settings (Reverse Converters)
+
+        /// <summary>
+        /// Decomposes a SerializableSettings into the multi-file JSON format.
+        /// This is the inverse of LoadFromLegacyJsonFormatAsync.
+        /// </summary>
+        public static (JsonConfig Config, JsonCredentials Credentials, JsonCharacterIndex Index, List<JsonCharacterData> Characters)
+            DecomposeSettings(SerializableSettings settings)
+        {
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
+
+            // Build config
+            var config = new JsonConfig
+            {
+                Version = 1,
+                ForkId = settings.ForkId ?? "aliacollins",
+                ForkVersion = settings.ForkVersion,
+                LastSaved = DateTime.UtcNow,
+                Revision = settings.Revision,
+                Compatibility = settings.Compatibility.ToString(),
+                EsiScopePreset = settings.EsiScopePreset,
+                EsiCustomScopes = settings.EsiCustomScopes.ToList(),
+                CharacterGroups = settings.CharacterGroups.Select(g => new JsonCharacterGroupSettings
+                {
+                    Name = g.Name,
+                    CharacterGuids = g.CharacterGuids.ToList()
+                }).ToList(),
+                SSOClientID = settings.SSOClientID,
+                SSOClientSecret = settings.SSOClientSecret,
+                UI = settings.UI,
+                G15 = settings.G15,
+                Proxy = settings.Proxy,
+                Updates = settings.Updates,
+                Calendar = settings.Calendar,
+                Exportation = settings.Exportation,
+                MarketPricer = settings.MarketPricer,
+                Notifications = settings.Notifications,
+                LoadoutsProvider = settings.LoadoutsProvider,
+                PortableEveInstallations = settings.PortableEveInstallations,
+                CloudStorageServiceProvider = settings.CloudStorageServiceProvider,
+                Scheduler = settings.Scheduler
+            };
+
+            // Build credentials
+            var credentials = new JsonCredentials
+            {
+                Version = 1,
+                LastSaved = DateTime.UtcNow
+            };
+
+            foreach (var esiKey in settings.ESIKeys)
+            {
+                var jsonKey = new JsonEsiKey
+                {
+                    CharacterId = esiKey.ID,
+                    RefreshToken = esiKey.RefreshToken,
+                    Monitored = esiKey.Monitored,
+                    AuthorizedScopes = esiKey.AuthorizedScopes != null
+                        ? new List<string>(esiKey.AuthorizedScopes)
+                        : new List<string>()
+                };
+
+#pragma warning disable CS0618 // AccessMask is obsolete — preserved for backward compat round-trip
+                jsonKey.AccessMask = esiKey.AccessMask;
+#pragma warning restore CS0618
+
+                credentials.EsiKeys.Add(jsonKey);
+            }
+
+            // Build character index and per-character data
+            var index = new JsonCharacterIndex
+            {
+                Version = 1,
+                LastSaved = DateTime.UtcNow
+            };
+
+            // Build a lookup: character Guid → MonitoredCharacterSettings
+            var monitoredLookup = new Dictionary<Guid, MonitoredCharacterSettings>();
+            foreach (var mc in settings.MonitoredCharacters)
+                monitoredLookup[mc.CharacterGuid] = mc;
+
+            // Build a lookup: character Guid → list of plans
+            var plansLookup = new Dictionary<Guid, List<SerializablePlan>>();
+            foreach (var plan in settings.Plans)
+            {
+                if (!plansLookup.TryGetValue(plan.Owner, out var list))
+                {
+                    list = new List<SerializablePlan>();
+                    plansLookup[plan.Owner] = list;
+                }
+                list.Add(plan);
+            }
+
+            var characterDataList = new List<JsonCharacterData>();
+
+            foreach (var character in settings.Characters)
+            {
+                bool isUri = character is SerializableUriCharacter;
+                var charData = DecomposeCharacter(character, isUri);
+
+                // Attach plans owned by this character
+                if (plansLookup.TryGetValue(character.Guid, out var plans))
+                {
+                    foreach (var plan in plans)
+                        charData.Plans.Add(DecomposePlan(plan));
+                }
+
+                // Attach UISettings from monitored character settings
+                if (monitoredLookup.TryGetValue(character.Guid, out var monitored))
+                    charData.UISettings = monitored.Settings;
+
+                characterDataList.Add(charData);
+
+                // Add index entry
+                index.Characters.Add(new JsonCharacterIndexEntry
+                {
+                    CharacterId = character.ID,
+                    Name = character.Name,
+                    CorporationName = character.CorporationName,
+                    AllianceName = character.AllianceName,
+                    IsUriCharacter = isUri,
+                    LastUpdated = DateTime.UtcNow
+                });
+            }
+
+            // Set monitored character IDs
+            foreach (var mc in settings.MonitoredCharacters)
+            {
+                // Find the character ID for this Guid
+                var matchingChar = settings.Characters.FirstOrDefault(c => c.Guid == mc.CharacterGuid);
+                if (matchingChar != null)
+                    index.MonitoredCharacterIds.Add(matchingChar.ID);
+            }
+
+            return (config, credentials, index, characterDataList);
+        }
+
+        /// <summary>
+        /// Decomposes a SerializableSettingsCharacter to JsonCharacterData.
+        /// Inverse of ConvertToSerializableCharacter.
+        /// </summary>
+        private static JsonCharacterData DecomposeCharacter(SerializableSettingsCharacter character, bool isUri)
+        {
+            var data = new JsonCharacterData
+            {
+                Version = 1,
+                CharacterId = character.ID,
+                Guid = character.Guid,
+                LastSaved = DateTime.UtcNow,
+                Name = character.Name,
+                Birthday = character.Birthday,
+                Race = character.Race,
+                Bloodline = character.BloodLine,
+                Ancestry = character.Ancestry,
+                Gender = character.Gender,
+                CorporationId = character.CorporationID,
+                CorporationName = character.CorporationName,
+                AllianceId = character.AllianceID,
+                AllianceName = character.AllianceName,
+                FactionId = character.FactionID,
+                FactionName = character.FactionName,
+                Balance = character.Balance,
+                HomeStationId = character.HomeStationID,
+                FreeSkillPoints = character.FreeSkillPoints,
+                CloneState = character.CloneState ?? "Auto",
+                Label = character.Label,
+                ShipName = character.ShipName,
+                ShipTypeName = character.ShipTypeName,
+                SecurityStatus = character.SecurityStatus,
+                FreeRespecs = character.FreeRespecs,
+                CloneJumpDate = character.CloneJumpDate,
+                LastRespecDate = character.LastRespecDate,
+                LastTimedRespec = character.LastTimedRespec,
+                RemoteStationDate = character.RemoteStationDate,
+                JumpActivationDate = character.JumpActivationDate,
+                JumpFatigueDate = character.JumpFatigueDate,
+                JumpLastUpdateDate = character.JumpLastUpdateDate,
+                Intelligence = (int)(character.Attributes?.Intelligence ?? 0),
+                Memory = (int)(character.Attributes?.Memory ?? 0),
+                Charisma = (int)(character.Attributes?.Charisma ?? 0),
+                Perception = (int)(character.Attributes?.Perception ?? 0),
+                Willpower = (int)(character.Attributes?.Willpower ?? 0)
+            };
+
+            // URI character source address
+            if (isUri && character is SerializableUriCharacter uriChar)
+                data.UriAddress = uriChar.Address;
+
+            // Skills
+            foreach (var skill in character.Skills)
+            {
+                data.Skills.Add(new JsonSkill
+                {
+                    TypeId = skill.ID,
+                    Name = skill.Name,
+                    Level = (int)skill.Level,
+                    ActiveLevel = (int)skill.ActiveLevel,
+                    Skillpoints = skill.Skillpoints,
+                    IsKnown = skill.IsKnown,
+                    OwnsBook = skill.OwnsBook
+                });
+            }
+
+            // Employment history
+            foreach (var record in character.EmploymentHistory)
+            {
+                data.EmploymentHistory.Add(new JsonEmploymentRecord
+                {
+                    CorporationId = record.CorporationID,
+                    CorporationName = record.CorporationName,
+                    StartDate = record.StartDate
+                });
+            }
+
+            // Skill queue (CCP characters only)
+            if (character is SerializableCCPCharacter ccpChar)
+            {
+                foreach (var entry in ccpChar.SkillQueue)
+                {
+                    data.SkillQueue.Add(new JsonSkillQueueEntry
+                    {
+                        TypeId = entry.ID,
+                        Level = entry.Level,
+                        StartTime = entry.StartTime,
+                        EndTime = entry.EndTime,
+                        StartSP = entry.StartSP,
+                        EndSP = entry.EndSP
+                    });
+                }
+            }
+
+            // Implant sets
+            if (character.ImplantSets != null)
+            {
+                if (character.ImplantSets.ActiveClone != null)
+                    data.ImplantSets.Add(DecomposeImplantSet(character.ImplantSets.ActiveClone, "active"));
+
+                foreach (var jumpClone in character.ImplantSets.JumpClones)
+                    data.ImplantSets.Add(DecomposeImplantSet(jumpClone, "jump"));
+
+                foreach (var customSet in character.ImplantSets.CustomSets)
+                    data.ImplantSets.Add(DecomposeImplantSet(customSet, "custom"));
+            }
+
+            return data;
+        }
+
+        /// <summary>
+        /// Decomposes a SerializableSettingsImplantSet to JsonImplantSet.
+        /// Inverse of ConvertToSerializableImplantSet.
+        /// </summary>
+        private static JsonImplantSet DecomposeImplantSet(SerializableSettingsImplantSet set, string type)
+        {
+            var json = new JsonImplantSet
+            {
+                Name = set.Name,
+                Type = type
+            };
+
+            void AddImplant(int slot, string value)
+            {
+                if (string.IsNullOrEmpty(value) || value == "None")
+                    return;
+                var implant = new JsonImplant { Slot = slot };
+                if (int.TryParse(value, out int typeId))
+                    implant.TypeId = typeId;
+                else
+                    implant.Name = value;
+                json.Implants.Add(implant);
+            }
+
+            AddImplant(1, set.Intelligence);
+            AddImplant(2, set.Memory);
+            AddImplant(3, set.Willpower);
+            AddImplant(4, set.Perception);
+            AddImplant(5, set.Charisma);
+            AddImplant(6, set.Slot6);
+            AddImplant(7, set.Slot7);
+            AddImplant(8, set.Slot8);
+            AddImplant(9, set.Slot9);
+            AddImplant(10, set.Slot10);
+
+            return json;
+        }
+
+        /// <summary>
+        /// Decomposes a SerializablePlan to JsonPlan.
+        /// Inverse of ConvertToSerializablePlan.
+        /// </summary>
+        private static JsonPlan DecomposePlan(SerializablePlan plan)
+        {
+            var json = new JsonPlan
+            {
+                Name = plan.Name,
+                Description = plan.Description,
+                SortCriteria = plan.SortingPreferences?.Criteria.ToString() ?? "None",
+                SortOrder = plan.SortingPreferences?.Order.ToString() ?? "None",
+                GroupByPriority = plan.SortingPreferences?.GroupByPriority ?? false
+            };
+
+            foreach (var entry in plan.Entries)
+            {
+                var jsonEntry = new JsonPlanEntry
+                {
+                    SkillId = entry.ID,
+                    SkillName = entry.SkillName,
+                    Level = (int)entry.Level,
+                    Type = entry.Type.ToString(),
+                    Priority = entry.Priority,
+                    Notes = entry.Notes,
+                    PlanGroups = entry.PlanGroups.ToList()
+                };
+
+                if (entry.Remapping != null)
+                {
+                    jsonEntry.Remapping = new JsonRemappingPoint
+                    {
+                        Status = entry.Remapping.Status.ToString(),
+                        Perception = entry.Remapping.Perception,
+                        Intelligence = entry.Remapping.Intelligence,
+                        Memory = entry.Remapping.Memory,
+                        Willpower = entry.Remapping.Willpower,
+                        Charisma = entry.Remapping.Charisma,
+                        Description = entry.Remapping.Description
+                    };
+                }
+
+                json.Entries.Add(jsonEntry);
+            }
+
+            foreach (var invalid in plan.InvalidEntries)
+            {
+                json.InvalidEntries.Add(new JsonInvalidPlanEntry
+                {
+                    SkillName = invalid.SkillName,
+                    PlannedLevel = invalid.PlannedLevel,
+                    Acknowledged = invalid.Acknowledged
+                });
+            }
+
+            return json;
+        }
+
+        #endregion
     }
 
     #region JSON Data Classes
@@ -1348,6 +1864,13 @@ namespace EveLens.Common.Helpers
         public string? ForkVersion { get; set; }
         public DateTime LastSaved { get; set; } = DateTime.UtcNow;
 
+        // Metadata for round-trip preservation
+        public int Revision { get; set; }
+        public string? Compatibility { get; set; }
+        public string? EsiScopePreset { get; set; }
+        public List<string>? EsiCustomScopes { get; set; }
+        public List<JsonCharacterGroupSettings>? CharacterGroups { get; set; }
+
         // SSO credentials (custom overrides persisted from user settings)
         public string? SSOClientID { get; set; }
         public string? SSOClientSecret { get; set; }
@@ -1365,6 +1888,15 @@ namespace EveLens.Common.Helpers
         public PortableEveInstallationsSettings? PortableEveInstallations { get; set; }
         public CloudStorageServiceProviderSettings? CloudStorageServiceProvider { get; set; }
         public SchedulerSettings? Scheduler { get; set; }
+    }
+
+    /// <summary>
+    /// Character group settings for config.json.
+    /// </summary>
+    public class JsonCharacterGroupSettings
+    {
+        public string? Name { get; set; }
+        public List<Guid> CharacterGuids { get; set; } = new List<Guid>();
     }
 
     /// <summary>
@@ -1430,6 +1962,7 @@ namespace EveLens.Common.Helpers
     {
         public int Version { get; set; } = 1;
         public long CharacterId { get; set; }
+        public Guid Guid { get; set; }
         public DateTime LastSaved { get; set; } = DateTime.UtcNow;
 
         // Character identity

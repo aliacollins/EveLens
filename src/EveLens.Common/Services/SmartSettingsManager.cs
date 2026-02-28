@@ -225,33 +225,17 @@ namespace EveLens.Common.Services
             if (settings == null)
                 return Task.CompletedTask;
 
-            string json;
-            try
-            {
-                json = System.Text.Json.JsonSerializer.Serialize(
-                    settings, Helpers.SettingsFileManager.DirectJsonOptions);
-                AppServices.TraceService?.Trace(
-                    $"SmartSettingsManager: Exported {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
-            }
-            catch (Exception ex)
-            {
-                var inner = ex;
-                while (inner.InnerException != null) inner = inner.InnerException;
-                AppServices.TraceService?.Trace(
-                    $"SmartSettingsManager: JSON serialize failed: {inner.GetType().Name}: {inner.Message}");
-                return Task.CompletedTask;
-            }
+            AppServices.TraceService?.Trace(
+                $"SmartSettingsManager: Exported {settings.Characters.Count} chars, {settings.Plans.Count} plans");
 
-            // Write to disk synchronously — no async, no deadlock
+            // Write multi-file to disk synchronously — no async, no deadlock
             _writeLock.Wait();
             try
             {
-                Helpers.SettingsFileManager.EnsureDirectoriesExist();
-                System.IO.File.WriteAllText(
-                    Helpers.SettingsFileManager.SettingsJsonFilePath, json);
+                Helpers.SettingsFileManager.SaveMultiFileSync(settings);
                 Interlocked.Increment(ref _actualWriteCount);
                 _eventAggregator.Publish(new SettingsSavedEvent());
-                AppServices.TraceService?.Trace("SmartSettingsManager: Save complete");
+                AppServices.TraceService?.Trace("SmartSettingsManager: Save complete (multi-file)");
             }
             catch (Exception ex)
             {

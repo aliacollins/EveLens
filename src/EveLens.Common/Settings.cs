@@ -282,12 +282,9 @@ namespace EveLens.Common
                 try
                 {
                     SerializableSettings settings = Export();
-                    string json = System.Text.Json.JsonSerializer.Serialize(
-                        settings, SettingsFileManager.DirectJsonOptions);
-                    SettingsFileManager.EnsureDirectoriesExist();
-                    File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
+                    SettingsFileManager.SaveMultiFileSync(settings);
                     AppServices.TraceService?.Trace(
-                        $"Settings.Save: Written {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+                        $"Settings.Save: Written {settings.Characters.Count} chars, {settings.Plans.Count} plans (multi-file)");
                 }
                 catch (Exception ex)
                 {
@@ -338,21 +335,13 @@ namespace EveLens.Common
                 SerializableSettings settings = Export();
                 AppServices.TraceService?.Trace("Export done");
 
-                // Serialize to JSON on the calling thread
-                string json = System.Text.Json.JsonSerializer.Serialize(
-                    settings, SettingsFileManager.DirectJsonOptions);
-                AppServices.TraceService?.Trace(
-                    $"Serialized {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
-
-                // Write to disk on a thread pool thread to avoid blocking UI,
+                // Write multi-file on a thread pool thread to avoid blocking UI,
                 // and to avoid sync context deadlocks on Linux.
-                await Task.Run(() =>
-                {
-                    SettingsFileManager.EnsureDirectoriesExist();
-                    File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
-                }).ConfigureAwait(false);
+                await Task.Run(() => SettingsFileManager.SaveMultiFileSync(settings))
+                    .ConfigureAwait(false);
 
-                AppServices.TraceService?.Trace("JSON save complete");
+                AppServices.TraceService?.Trace(
+                    $"Multi-file save complete: {settings.Characters.Count} chars, {settings.Plans.Count} plans");
             }
             catch (Exception exception)
             {
@@ -381,12 +370,9 @@ namespace EveLens.Common
                 // Write directly and synchronously — no async, no sync context capture.
                 // This avoids deadlocks on Linux/X11 where the Avalonia dispatcher
                 // synchronization context blocks .GetAwaiter().GetResult().
-                string json = System.Text.Json.JsonSerializer.Serialize(
-                    settings, SettingsFileManager.DirectJsonOptions);
-                SettingsFileManager.EnsureDirectoriesExist();
-                File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, json);
+                SettingsFileManager.SaveMultiFileSync(settings);
                 AppServices.TraceService?.Trace(
-                    $"Shutdown save complete: {settings.Characters.Count} chars, {settings.Plans.Count} plans ({json.Length} bytes)");
+                    $"Shutdown save complete: {settings.Characters.Count} chars, {settings.Plans.Count} plans (multi-file)");
             }
             catch (Exception ex)
             {

@@ -267,8 +267,8 @@ namespace EveLens.Tests.Integration
             // Act — save through SettingsFileManager (the file I/O layer)
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // Assert — verify settings.json exists (single-file format)
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            // Assert — verify config.json exists (multi-file format)
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
 
             // Verify round-trip
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
@@ -388,8 +388,8 @@ namespace EveLens.Tests.Integration
             manager.ActualWriteCount.Should().Be(1,
                 "100 coalesced saves + 1 immediate = only 1 actual write");
 
-            // Verify settings.json was written
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            // Verify config.json was written (multi-file format)
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
         }
 
         [Fact]
@@ -462,8 +462,8 @@ namespace EveLens.Tests.Integration
             // Dispose simulates graceful shutdown — should flush
             manager.Dispose();
 
-            // After dispose, settings.json should be on disk
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue(
+            // After dispose, config.json should be on disk (multi-file format)
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue(
                 "Dispose should flush settings to disk");
         }
 
@@ -635,8 +635,8 @@ namespace EveLens.Tests.Integration
             settings2.SSOClientID = "updated-sso-id";
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings2);
 
-            // Simulate crash: corrupt settings.json mid-write
-            File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, "\0\0\0CORRUPT");
+            // Simulate crash: corrupt config.json mid-write
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "\0\0\0CORRUPT");
 
             // "Restart" — load should recover from .bak
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
@@ -654,8 +654,8 @@ namespace EveLens.Tests.Integration
             var settings2 = BuildSettingsWith(5);
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings2);
 
-            // Corrupt settings.json
-            File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, "BROKEN");
+            // Corrupt config.json
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "BROKEN");
 
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
             loaded.Should().NotBeNull();
@@ -672,8 +672,8 @@ namespace EveLens.Tests.Integration
             // Save again so .bak exists
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // Corrupt settings.json
-            File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, "CORRUPT!!!");
+            // Corrupt config.json
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "CORRUPT!!!");
 
             // Should recover from .bak
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
@@ -695,8 +695,8 @@ namespace EveLens.Tests.Integration
             // Save again to create .bak
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // Corrupt settings.json
-            File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, "{{{{");
+            // Corrupt config.json
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "{{{{");
 
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
             loaded.Should().NotBeNull();
@@ -715,11 +715,11 @@ namespace EveLens.Tests.Integration
             // Save again to create .bak file
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // Delete primary file
-            File.Delete(SettingsFileManager.SettingsJsonFilePath);
+            // Delete primary config.json
+            File.Delete(SettingsFileManager.ConfigFilePath);
 
-            // Recovery from .bak — settings.json is gone so load checks .bak
-            // Note: the atomic write creates .bak, which LoadToSerializableSettingsAsync checks
+            // Recovery from .bak — config.json is gone so load checks .bak
+            // Note: the atomic write creates .bak, which LoadConfigAsync checks
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
             loaded.Should().NotBeNull();
             loaded!.Characters.Should().HaveCount(50);
@@ -781,7 +781,7 @@ namespace EveLens.Tests.Integration
             manager.Dispose();
 
             exportCalls.Should().BeGreaterThan(0);
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
         }
 
         [Fact]
@@ -822,7 +822,7 @@ namespace EveLens.Tests.Integration
             await Task.WhenAll(tasks);
 
             manager.ActualWriteCount.Should().Be(5);
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
         }
 
         [Fact]
@@ -833,13 +833,13 @@ namespace EveLens.Tests.Integration
 
             // Save first
             await manager.SaveImmediateAsync();
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
 
             // Clear with write lock — should not race with saves
             SettingsFileManager.ClearAllJsonFiles(manager.WriteLock);
 
             // After clear, files should be gone
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeFalse();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeFalse();
 
             // WriteLock should be released
             manager.WriteLock.CurrentCount.Should().Be(1);
@@ -888,12 +888,12 @@ namespace EveLens.Tests.Integration
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
             sw.Stop();
 
-            // Single settings.json file
+            // Multi-file format (config.json + characters/*.json)
             // Should complete in under 30 seconds even on slow disks
             sw.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(30),
                 "saving 100 characters should not take longer than 30 seconds");
 
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
         }
 
         [Fact]
@@ -920,8 +920,8 @@ namespace EveLens.Tests.Integration
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // Corrupt the primary settings.json
-            File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, "CORRUPT");
+            // Corrupt the primary config.json
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "CORRUPT");
 
             var sw = Stopwatch.StartNew();
 
@@ -1031,16 +1031,16 @@ namespace EveLens.Tests.Integration
             settings.SSOClientID = "lifecycle-sso-id";
             settings.SSOClientSecret = "lifecycle-sso-secret";
 
-            // === Step 2: First save (creates settings.json, no .bak yet) ===
+            // === Step 2: First save (creates multi-file format, no .bak yet) ===
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
 
             // === Step 3: Second save (creates .bak via File.Replace) ===
             settings.Characters[0].Name = "Updated Pilot 1";
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // === Step 4: Simulate crash — corrupt settings.json ===
-            File.WriteAllText(SettingsFileManager.SettingsJsonFilePath, "CRASH!");
+            // === Step 4: Simulate crash — corrupt config.json ===
+            File.WriteAllText(SettingsFileManager.ConfigFilePath, "CRASH!");
 
             // === Step 5: "Restart" — load with recovery from .bak ===
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
@@ -1074,8 +1074,8 @@ namespace EveLens.Tests.Integration
             // === Phase 2: User closes EveLens — Dispose flushes ===
             manager.Dispose();
 
-            // Settings file should now exist
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            // Config file should now exist (multi-file format)
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
 
             // === Phase 3: "Restart" — load everything back ===
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
@@ -1125,7 +1125,7 @@ namespace EveLens.Tests.Integration
             var empty = new SerializableSettings();
             await SettingsFileManager.SaveFromSerializableSettingsAsync(empty);
 
-            File.Exists(SettingsFileManager.SettingsJsonFilePath).Should().BeTrue();
+            File.Exists(SettingsFileManager.ConfigFilePath).Should().BeTrue();
             var loaded = await SettingsFileManager.LoadToSerializableSettingsAsync();
             loaded.Should().NotBeNull();
             loaded!.Characters.Should().BeEmpty();
@@ -1138,9 +1138,9 @@ namespace EveLens.Tests.Integration
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
             await SettingsFileManager.SaveFromSerializableSettingsAsync(settings);
 
-            // .bak file should exist for settings.json
-            File.Exists(SettingsFileManager.SettingsJsonFilePath + ".bak").Should().BeTrue(
-                "settings.json.bak should exist after second save");
+            // .bak file should exist for config.json (created by atomic write)
+            File.Exists(SettingsFileManager.ConfigFilePath + ".bak").Should().BeTrue(
+                "config.json.bak should exist after second save");
         }
 
         #endregion
