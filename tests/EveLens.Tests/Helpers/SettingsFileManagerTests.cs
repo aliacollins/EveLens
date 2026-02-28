@@ -340,11 +340,27 @@ namespace EveLens.Tests.Helpers
         }
 
         [Fact]
-        public void DeleteCharacter_RemovesFile()
+        public void DeleteCharacter_RemovesDirectory()
         {
             SettingsFileManager.EnsureDirectoriesExist();
 
-            string filePath = SettingsFileManager.GetCharacterFilePath(11111);
+            // Create a component folder
+            SettingsFileManager.EnsureCharacterDirectoryExists(11111);
+            string identityPath = SettingsFileManager.GetCharacterComponentPath(11111, "identity.json");
+            File.WriteAllText(identityPath, "{}");
+            Directory.Exists(SettingsFileManager.GetCharacterDirectory(11111)).Should().BeTrue();
+
+            SettingsFileManager.DeleteCharacter(11111);
+
+            Directory.Exists(SettingsFileManager.GetCharacterDirectory(11111)).Should().BeFalse();
+        }
+
+        [Fact]
+        public void DeleteCharacter_RemovesLegacyFlatFile()
+        {
+            SettingsFileManager.EnsureDirectoriesExist();
+
+            string filePath = SettingsFileManager.GetLegacyCharacterFilePath(11111);
             File.WriteAllText(filePath, "{}");
             File.Exists(filePath).Should().BeTrue();
 
@@ -363,9 +379,17 @@ namespace EveLens.Tests.Helpers
         }
 
         [Fact]
-        public void GetCharacterFilePath_ReturnsExpectedFormat()
+        public void GetCharacterDirectory_ReturnsExpectedFormat()
         {
-            var path = SettingsFileManager.GetCharacterFilePath(12345);
+            var path = SettingsFileManager.GetCharacterDirectory(12345);
+
+            path.Should().EndWith(Path.Combine("characters", "12345"));
+        }
+
+        [Fact]
+        public void GetLegacyCharacterFilePath_ReturnsExpectedFormat()
+        {
+            var path = SettingsFileManager.GetLegacyCharacterFilePath(12345);
 
             path.Should().EndWith("12345.json");
             path.Should().Contain("characters");
@@ -460,16 +484,32 @@ namespace EveLens.Tests.Helpers
         }
 
         [Fact]
-        public void GetSavedCharacterIds_WithCharacterFiles_ReturnsIds()
+        public void GetSavedCharacterIds_WithCharacterDirectories_ReturnsIds()
         {
             SettingsFileManager.EnsureDirectoriesExist();
 
-            File.WriteAllText(SettingsFileManager.GetCharacterFilePath(111), "{}");
-            File.WriteAllText(SettingsFileManager.GetCharacterFilePath(222), "{}");
+            // Create component directories
+            SettingsFileManager.EnsureCharacterDirectoryExists(111);
+            File.WriteAllText(SettingsFileManager.GetCharacterComponentPath(111, "identity.json"), "{}");
+            SettingsFileManager.EnsureCharacterDirectoryExists(222);
+            File.WriteAllText(SettingsFileManager.GetCharacterComponentPath(222, "identity.json"), "{}");
 
             var ids = SettingsFileManager.GetSavedCharacterIds();
             ids.Should().Contain(111);
             ids.Should().Contain(222);
+        }
+
+        [Fact]
+        public void GetSavedCharacterIds_WithLegacyFiles_ReturnsIds()
+        {
+            SettingsFileManager.EnsureDirectoriesExist();
+
+            File.WriteAllText(SettingsFileManager.GetLegacyCharacterFilePath(333), "{}");
+            File.WriteAllText(SettingsFileManager.GetLegacyCharacterFilePath(444), "{}");
+
+            var ids = SettingsFileManager.GetSavedCharacterIds();
+            ids.Should().Contain(333);
+            ids.Should().Contain(444);
         }
 
         [Fact]
@@ -479,10 +519,11 @@ namespace EveLens.Tests.Helpers
 
             // The index.json file should not be returned as a character ID
             File.WriteAllText(SettingsFileManager.CharacterIndexFilePath, "{}");
-            File.WriteAllText(SettingsFileManager.GetCharacterFilePath(333), "{}");
+            SettingsFileManager.EnsureCharacterDirectoryExists(555);
+            File.WriteAllText(SettingsFileManager.GetCharacterComponentPath(555, "identity.json"), "{}");
 
             var ids = SettingsFileManager.GetSavedCharacterIds();
-            ids.Should().Contain(333);
+            ids.Should().Contain(555);
             ids.Should().NotContain(0); // "index" cannot be parsed to a long
         }
 
@@ -670,21 +711,21 @@ namespace EveLens.Tests.Helpers
         {
             SettingsFileManager.EnsureDirectoriesExist();
 
-            // Arrange — save twice so .bak exists
+            // Arrange — save twice so .bak exists for identity.json
             var char1 = new JsonCharacterData { CharacterId = 100, Name = "Original" };
             await SettingsFileManager.SaveCharacterAsync(char1);
 
             var char1Updated = new JsonCharacterData { CharacterId = 100, Name = "Updated" };
             await SettingsFileManager.SaveCharacterAsync(char1Updated);
 
-            // Corrupt primary
-            string charPath = SettingsFileManager.GetCharacterFilePath(100);
-            File.WriteAllText(charPath, "not json");
+            // Corrupt identity.json primary (the required component)
+            string identityPath = SettingsFileManager.GetCharacterComponentPath(100, "identity.json");
+            File.WriteAllText(identityPath, "not json");
 
             // Act
             var loaded = await SettingsFileManager.LoadCharacterAsync(100);
 
-            // Assert
+            // Assert — should recover from identity.json.bak
             loaded.Should().NotBeNull();
             loaded!.Name.Should().Be("Original");
         }
