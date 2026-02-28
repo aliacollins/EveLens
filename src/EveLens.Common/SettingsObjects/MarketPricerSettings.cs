@@ -5,6 +5,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EveLens.Common.MarketPricer;
 using EveLens.Common.Services;
@@ -58,6 +59,7 @@ namespace EveLens.Common.SettingsObjects
         /// The pricer.
         /// </value>
         [XmlIgnore]
+        [JsonIgnore]
         public ItemPricer Pricer
         {
             get

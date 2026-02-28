@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EveLens.Common.Loadouts;
 
@@ -44,6 +45,7 @@ namespace EveLens.Common.SettingsObjects
         /// The provider.
         /// </value>
         [XmlIgnore]
+        [JsonIgnore]
         public LoadoutsProvider Provider
         {
             get
