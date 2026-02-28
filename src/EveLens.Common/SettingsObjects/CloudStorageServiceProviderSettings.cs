@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EveLens.Common.CloudStorageServices;
 
@@ -59,6 +60,7 @@ namespace EveLens.Common.SettingsObjects
         /// The provider.
         /// </value>
         [XmlIgnore]
+        [JsonIgnore]
         public CloudStorageServiceProvider Provider
         {
             get
