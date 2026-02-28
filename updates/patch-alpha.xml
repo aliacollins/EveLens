@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-02-28</date>
+      <version>1.0.0.22</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.22
+
+Create settings.json on first launch — fixes fresh install persistence on all platforms]]></message>
+    </release>
+    <release>
       <date>2026-02-27</date>
       <version>1.0.0.21</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -94,16 +104,6 @@ Add save pipeline traces for Linux persistence diagnosis]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.13
 
 Make periodic and shutdown saves robust on Linux: synchronous JSON serialize, Task.Run file write]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.12</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.12
-
-Fix macOS .app.zip: proper bundle structure with ad-hoc codesigning]]></message>
     </release>
   </releases>
   <datafiles>
