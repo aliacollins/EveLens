@@ -1421,12 +1421,16 @@ namespace EveLens.Common.Collections.Global
         internal void NotifyCharacterPlanetaryPinCompleted(Character character,
             IEnumerable<PlanetaryPin> pinsCompleted)
         {
+            // PI idle is a persistent state, not a one-time event.
+            // Update the notification collection (for internal tracking) but don't
+            // publish to the activity log — the PI tab exists for checking idle colonies.
             var notification = new PlanetaryPinsNotificationEventArgs(character, pinsCompleted)
             {
-                Behaviour = NotificationBehaviour.Merge,
+                Behaviour = NotificationBehaviour.Overwrite,
                 Priority = NotificationPriority.Information
             };
-            Notify(notification);
+            InvalidateCore(notification.InvalidationKey);
+            Items.Add(notification);
         }
 
 

@@ -63,11 +63,12 @@ namespace EveLens.Common.Scheduling
             _esiClient = esiClient ?? throw new ArgumentNullException(nameof(esiClient));
             _logger = logger;
 
-            // Compose resilience pipeline: alive check → circuit breaker → retry → fetch
+            // Compose resilience pipeline: alive check → circuit breaker → fetch
+            // No retry — with 60+ characters, retry amplifies ESI error budget burn.
+            // The scheduler's 2-minute re-enqueue handles recovery naturally.
             _pipeline = new ResiliencePipeline(
                 _alivePolicy,
-                _circuitBreaker,
-                new RetryPolicy(maxRetries: 2));
+                _circuitBreaker);
 
             _dispatchLoop = Task.Run(() => RunAsync(_cts.Token));
         }
