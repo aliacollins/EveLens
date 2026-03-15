@@ -18,8 +18,11 @@ using EveLens.Avalonia.Views;
 using EveLens.Common;
 using EveLens.Common.Collections.Global;
 using EveLens.Common.Helpers;
+using EveLens.Common.Models;
 using EveLens.Common.Service;
 using EveLens.Common.Services;
+using System.Linq;
+using System.Text;
 
 namespace EveLens.Avalonia
 {
@@ -29,6 +32,7 @@ namespace EveLens.Avalonia
         private TrayIcon? _trayIcon;
         private NativeMenu? _trayMenu;
         private IDisposable? _traySettingsSub;
+        private IDisposable? _trayUpdateSub;
         /// <summary>
         /// Set to true before calling Shutdown() so the Closing handler
         /// skips minimize-to-tray logic and lets the window close.
@@ -280,15 +284,66 @@ namespace EveLens.Avalonia
             };
 
             _trayIcon.Clicked += (_, _) => ShowMainWindow(desktop);
+
+            // Update tooltip with training summary every 5 seconds
+            _trayUpdateSub = AppServices.EventAggregator?.Subscribe<EveLens.Core.Events.FiveSecondTickEvent>(_ =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    try
+                    {
+                        if (_trayIcon != null)
+                            _trayIcon.ToolTipText = BuildTrayTooltip();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Tray tooltip update failed: {ex.Message}");
+                    }
+                });
+            });
         }
 
         private void DestroyTrayIcon()
         {
             _traySettingsSub?.Dispose();
             _traySettingsSub = null;
+            _trayUpdateSub?.Dispose();
+            _trayUpdateSub = null;
             _trayIcon?.Dispose();
             _trayIcon = null;
             _trayMenu = null;
+        }
+
+        private static string BuildTrayTooltip()
+        {
+            var characters = AppServices.Characters;
+            if (characters == null || !characters.Any())
+                return AppServices.ProductNameWithVersion;
+
+            var trainingChars = characters
+                .OfType<CCPCharacter>()
+                .Where(c => c.IsTraining && c.CurrentlyTrainingSkill != null)
+                .ToList();
+
+            if (trainingChars.Count == 0)
+            {
+                int total = characters.Count();
+                return $"EveLens — {total} character{(total != 1 ? "s" : "")}, none training";
+            }
+
+            // Find the character finishing next
+            var next = trainingChars
+                .OrderBy(c => c.CurrentlyTrainingSkill!.EndTime)
+                .First();
+            var skill = next.CurrentlyTrainingSkill!;
+            string timeStr = TimeFormatHelper.FormatRemaining(skill.RemainingTime);
+
+            if (trainingChars.Count == 1)
+                return $"EveLens — {next.Name}: {skill.SkillName} {skill.Level} ({timeStr})";
+
+            // Truncate name if needed to fit ~128 char tooltip limit
+            string name = next.Name.Length > 16 ? next.Name[..16] + "..." : next.Name;
+            return $"EveLens — {trainingChars.Count} training | Next: {name} — {skill.SkillName} {skill.Level} ({timeStr})";
         }
 
         private static WindowIcon? LoadTrayIcon()

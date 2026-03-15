@@ -327,7 +327,8 @@ $Message]]></message>
 function Update-ReadmeVersion {
     param(
         [string]$Version,
-        [string]$Channel
+        [string]$Channel,
+        [string]$TestCount = ""
     )
 
     $file = Join-Path $RepoRoot "README.md"
@@ -344,8 +345,16 @@ function Update-ReadmeVersion {
     # Update the alpha/beta/STABLE badge if present
     $content = $content -replace '\[!\[(ALPHA|BETA|STABLE)\]\([^\)]+\)\]\(\)', "[![$badgeText](https://img.shields.io/badge/branch-$badgeText-$badgeColor.svg)]()"
 
-    # Update "Current Version:" line (e.g., "## Current Version: 5.1.2-beta.1")
-    $content = $content -replace '(## Current Version:) [^\r\n]+', "`$1 $Version"
+    # Update "Current Version:" line (bold text format: **Current Version: X.Y.Z**)
+    $content = $content -replace '\*\*Current Version: [^\*]+\*\*', "**Current Version: $Version**"
+
+    # Update Quick Start AppImage filename version
+    $content = $content -replace 'EveLens-[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+\.[0-9]+)?-linux-x64\.AppImage', "EveLens-$Version-linux-x64.AppImage"
+
+    # Update test count if provided (matches "N,NNN tests passing" or "N tests passing")
+    if ($TestCount) {
+        $content = $content -replace '[0-9,]+ tests passing', "$TestCount tests passing"
+    }
 
     # Update version in "Current experimental features" section
     $content = $content -replace 'experimental features \(v[^\)]+\)', "experimental features (v$Version)"

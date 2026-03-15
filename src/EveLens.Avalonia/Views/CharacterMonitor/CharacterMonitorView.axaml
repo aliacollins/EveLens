@@ -9,6 +9,21 @@
 
         <!-- Tab area with gear button overlay -->
         <Panel>
+            <!-- Loading overlay — shown briefly until ESI identity links up -->
+            <Border x:Name="LoadingOverlay" IsVisible="False" ZIndex="10"
+                    Background="{StaticResource EveBackgroundDarkBrush}"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                    <TextBlock x:Name="LoadingTitle" Text="Warming up the pod..."
+                               FontSize="13" FontWeight="SemiBold"
+                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock x:Name="LoadingSubtext" Text="Connecting to ESI"
+                               FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
             <!-- Sub-tabs with compact headers -->
             <TabControl x:Name="SubTabs" TabStripPlacement="Top" Padding="0" FontSize="11">
 
@@ -18,6 +33,9 @@
                 </TabItem>
                 <TabItem Header="Queue" FontSize="11">
                     <local:CharacterSkillQueueView />
+                </TabItem>
+                <TabItem x:Name="TabClones" Header="Clones" FontSize="11">
+                    <local:CharacterClonesView />
                 </TabItem>
                 <TabItem x:Name="TabEmployment" Header="Employment" FontSize="11">
                     <local:CharacterEmploymentHistoryView />

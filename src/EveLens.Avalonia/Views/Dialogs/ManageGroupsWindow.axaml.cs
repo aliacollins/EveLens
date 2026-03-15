@@ -77,57 +77,217 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void BuildCharacterCheckboxes(CharacterGroupSettings group)
         {
             CharacterPanel.Children.Clear();
-            var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
+            var allChars = AppServices.Characters.Where(c => c.Monitored).ToList();
 
-            foreach (var character in characters)
+            // Group members in order — clean rows with ▲ ▼ and ✕
+            var membersInOrder = new List<Character>();
+            foreach (var guid in group.CharacterGuids)
             {
-                bool isInGroup = group.CharacterGuids.Contains(character.Guid);
-                var cb = new CheckBox
+                var ch = allChars.FirstOrDefault(c => c.Guid == guid);
+                if (ch != null) membersInOrder.Add(ch);
+            }
+
+            for (int i = 0; i < membersInOrder.Count; i++)
+            {
+                var character = membersInOrder[i];
+
+                var row = new Border
                 {
-                    Content = character.Name,
-                    IsChecked = isInGroup,
+                    Background = GetBrush("EveBackgroundMediumBrush"),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(8, 4),
+                    Margin = new Thickness(0, 1),
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+
+                var grid = new Grid
+                {
+                    ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,Auto,Auto"),
+                    HorizontalAlignment = HorizontalAlignment.Stretch
+                };
+
+                var nameLabel = new TextBlock
+                {
+                    Text = character.Name,
                     FontSize = 11,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = GetBrush("EveAccentPrimaryBrush"),
+                    TextTrimming = global::Avalonia.Media.TextTrimming.CharacterEllipsis
+                };
+                Grid.SetColumn(nameLabel, 0);
+                grid.Children.Add(nameLabel);
+
+                var upBtn = new Button
+                {
+                    Content = "\u25B2",
+                    FontSize = 10,
+                    Padding = new Thickness(8, 2),
+                    CornerRadius = new CornerRadius(4),
+                    Margin = new Thickness(4, 0, 0, 0),
+                    MinWidth = 28,
+                    IsEnabled = i > 0,
                     Tag = character.Guid
                 };
+                upBtn.Click += (s, _) => MoveCharacterInGroup(group, (Guid)((Button)s!).Tag!, -1);
+                Grid.SetColumn(upBtn, 1);
+                grid.Children.Add(upBtn);
 
-                cb.IsCheckedChanged += (s, _) =>
+                var downBtn = new Button
                 {
-                    try
-                    {
-                        if (s is not CheckBox checkbox) return;
-                        bool isChecked = checkbox.IsChecked == true;
-                        var charGuid = (Guid)checkbox.Tag!;
-
-                        if (isChecked)
-                        {
-                            // Remove from any other group first
-                            foreach (var g in Settings.CharacterGroups)
-                                g.CharacterGuids.Remove(charGuid);
-
-                            group.CharacterGuids.Add(charGuid);
-                        }
-                        else
-                        {
-                            group.CharacterGuids.Remove(charGuid);
-                        }
-
-                        Settings.Save();
-
-                        // Refresh the group list to update counts
-                        int selectedIdx = GroupListBox.SelectedIndex;
-                        _suppressSelection = true;
-                        RefreshGroupList();
-                        GroupListBox.SelectedIndex = selectedIdx;
-                        _suppressSelection = false;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"Error updating character group: {ex}");
-                    }
+                    Content = "\u25BC",
+                    FontSize = 10,
+                    Padding = new Thickness(8, 2),
+                    CornerRadius = new CornerRadius(4),
+                    Margin = new Thickness(2, 0, 0, 0),
+                    MinWidth = 28,
+                    IsEnabled = i < membersInOrder.Count - 1,
+                    Tag = character.Guid
                 };
+                downBtn.Click += (s, _) => MoveCharacterInGroup(group, (Guid)((Button)s!).Tag!, +1);
+                Grid.SetColumn(downBtn, 2);
+                grid.Children.Add(downBtn);
 
-                CharacterPanel.Children.Add(cb);
+                var removeBtn = new Button
+                {
+                    Content = "\u2715",
+                    FontSize = 10,
+                    Padding = new Thickness(6, 2),
+                    CornerRadius = new CornerRadius(4),
+                    Margin = new Thickness(6, 0, 0, 0),
+                    MinWidth = 28,
+                    Foreground = GetBrush("EveErrorRedBrush"),
+                    Tag = character.Guid
+                };
+                removeBtn.Click += (s, _) => RemoveCharacterFromGroup(group, (Guid)((Button)s!).Tag!);
+                Grid.SetColumn(removeBtn, 3);
+                grid.Children.Add(removeBtn);
+
+                row.Child = grid;
+                CharacterPanel.Children.Add(row);
             }
+
+            // "Add character" section — characters not in this group
+            var available = allChars.Where(c => !group.CharacterGuids.Contains(c.Guid)).ToList();
+            if (available.Count > 0)
+            {
+                CharacterPanel.Children.Add(new Separator { Margin = new Thickness(0, 8) });
+                CharacterPanel.Children.Add(new TextBlock
+                {
+                    Text = "Add to group",
+                    FontSize = 10,
+                    Foreground = GetBrush("EveTextDisabledBrush"),
+                    Margin = new Thickness(0, 0, 0, 4)
+                });
+
+                foreach (var character in available)
+                {
+                    var addBtn = new Button
+                    {
+                        FontSize = 10,
+                        Padding = new Thickness(8, 3),
+                        CornerRadius = new CornerRadius(10),
+                        Margin = new Thickness(0, 1),
+                        Tag = character.Guid,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        HorizontalContentAlignment = HorizontalAlignment.Left
+                    };
+
+                    var btnContent = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal, Spacing = 6 };
+                    btnContent.Children.Add(new TextBlock { Text = "+", FontSize = 11, Foreground = GetBrush("EveSuccessGreenBrush") });
+                    btnContent.Children.Add(new TextBlock { Text = character.Name, FontSize = 11 });
+                    addBtn.Content = btnContent;
+
+                    addBtn.Click += (s, _) => AddCharacterToGroup(group, (Guid)((Button)s!).Tag!);
+                    CharacterPanel.Children.Add(addBtn);
+                }
+            }
+        }
+
+        private void MoveCharacterInGroup(CharacterGroupSettings group, Guid charGuid, int direction)
+        {
+            try
+            {
+                int index = -1;
+                for (int i = 0; i < group.CharacterGuids.Count; i++)
+                {
+                    if (group.CharacterGuids[i] == charGuid) { index = i; break; }
+                }
+                if (index < 0) return;
+
+                int newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= group.CharacterGuids.Count) return;
+
+                // Swap
+                group.CharacterGuids[index] = group.CharacterGuids[newIndex];
+                group.CharacterGuids[newIndex] = charGuid;
+
+                Settings.Save();
+                NotifyGroupsChanged();
+                BuildCharacterCheckboxes(group);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error moving character in group: {ex}");
+            }
+        }
+
+        private void AddCharacterToGroup(CharacterGroupSettings group, Guid charGuid)
+        {
+            try
+            {
+                // Remove from any other group first
+                foreach (var g in Settings.CharacterGroups)
+                    g.CharacterGuids.Remove(charGuid);
+
+                group.CharacterGuids.Add(charGuid);
+                Settings.Save();
+                NotifyGroupsChanged();
+
+                int selectedIdx = GroupListBox.SelectedIndex;
+                _suppressSelection = true;
+                RefreshGroupList();
+                GroupListBox.SelectedIndex = selectedIdx;
+                _suppressSelection = false;
+                BuildCharacterCheckboxes(group);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error adding character to group: {ex}");
+            }
+        }
+
+        private void RemoveCharacterFromGroup(CharacterGroupSettings group, Guid charGuid)
+        {
+            try
+            {
+                group.CharacterGuids.Remove(charGuid);
+                Settings.Save();
+                NotifyGroupsChanged();
+
+                int selectedIdx = GroupListBox.SelectedIndex;
+                _suppressSelection = true;
+                RefreshGroupList();
+                GroupListBox.SelectedIndex = selectedIdx;
+                _suppressSelection = false;
+                BuildCharacterCheckboxes(group);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error removing character from group: {ex}");
+            }
+        }
+
+        private static void NotifyGroupsChanged()
+        {
+            AppServices.EventAggregator?.Publish(
+                EveLens.Common.Events.SettingsChangedEvent.Instance);
+        }
+
+        private global::Avalonia.Media.IBrush? GetBrush(string key)
+        {
+            if (this.TryFindResource(key, this.ActualThemeVariant, out var resource) && resource is global::Avalonia.Media.IBrush brush)
+                return brush;
+            return null;
         }
 
         private async void OnAddGroupClick(object? sender, RoutedEventArgs e)
@@ -192,6 +352,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void OnCloseClick(object? sender, RoutedEventArgs e)
         {
+            // Notify UI to refresh overview with new group order
+            AppServices.EventAggregator?.Publish(EveLens.Common.Events.SettingsChangedEvent.Instance);
             Close();
         }
 

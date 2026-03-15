@@ -36,6 +36,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private IDisposable? _secondTickSub;
         private IDisposable? _collectionChangedSub;
         private IDisposable? _privacyModeSub;
+        private IDisposable? _settingsChangedSub;
 
         // Track previous ISK/SP values per character for flash-on-change
         private readonly Dictionary<long, decimal> _prevBalances = new();
@@ -72,6 +73,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _privacyModeSub ??= AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
                 _ => Dispatcher.UIThread.Post(LoadData));
 
+            _settingsChangedSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(
+                _ => Dispatcher.UIThread.Post(LoadData));
+
             LoadData();
         }
 
@@ -89,6 +93,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _collectionChangedSub = null;
             _privacyModeSub?.Dispose();
             _privacyModeSub = null;
+            _settingsChangedSub?.Dispose();
+            _settingsChangedSub = null;
 
             base.OnDetachedFromVisualTree(e);
         }
@@ -133,9 +139,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
                     foreach (var group in groups)
                     {
-                        var groupChars = characters
-                            .Where(c => group.CharacterGuids.Contains(c.Guid))
-                            .ToList();
+                        // Iterate CharacterGuids in order to respect user-defined ordering
+                        var groupChars = new List<Character>();
+                        foreach (var guid in group.CharacterGuids)
+                        {
+                            var ch = characters.FirstOrDefault(c => c.Guid == guid);
+                            if (ch != null) groupChars.Add(ch);
+                        }
 
                         if (groupChars.Count == 0) continue;
 

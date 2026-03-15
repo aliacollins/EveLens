@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterClonesView">
+
+    <Grid>
+        <!-- Scope not authorized prompt -->
+        <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
+            <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
+                           Text="Clone data requires the esi-clones scope.&#x0a;Re-authenticate from File &gt; Manage Characters to enable this feature." />
+            </StackPanel>
+        </Border>
+
+        <DockPanel x:Name="DataContent">
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="10,7"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <Button Content="Collapse All" FontSize="11" Padding="10,4"
+                            CornerRadius="12" Click="OnCollapseAll" />
+                    <Button Content="Expand All" FontSize="11" Padding="10,4"
+                            CornerRadius="12" Click="OnExpandAll" />
+                </StackPanel>
+                <TextBlock Text="Jump Clones" FontSize="12" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="10,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="StatusText" Text="Clone Jump: Ready | 0 jump clones"
+                       FontSize="11"
+                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </Border>
+
+        <!-- Content -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ClonePanel" Spacing="1" />
+        </ScrollViewer>
+        </DockPanel>
+    </Grid>
+</UserControl>
