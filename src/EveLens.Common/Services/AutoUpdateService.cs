@@ -79,6 +79,8 @@ namespace EveLens.Common.Services
 
         /// <summary>
         /// Windows: launch the installer and exit. The installer handles file replacement.
+        /// Uses Process.Kill() instead of Environment.Exit() because the update dialog
+        /// is a modal window that can block graceful shutdown.
         /// </summary>
         private static void ApplyWindows(string installerPath, string? installArgs)
         {
@@ -90,7 +92,11 @@ namespace EveLens.Common.Services
             };
 
             Process.Start(psi);
-            Environment.Exit(0);
+
+            // Hard kill — Environment.Exit(0) doesn't work reliably from inside
+            // a modal dialog. The installer needs the process dead before it can
+            // replace files.
+            Process.GetCurrentProcess().Kill();
         }
 
         /// <summary>
