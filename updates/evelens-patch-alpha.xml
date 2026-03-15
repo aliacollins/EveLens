@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-15</date>
+      <version>1.0.0.34</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.34
+
+Fix clipboard deadlock on Linux/macOS, async clipboard API]]></message>
+    </release>
+    <release>
+      <date>2026-03-15</date>
       <version>1.0.0.33</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Re-enable per-character atomic file storage]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.25
 
 Add JsonIgnore to all settings provider properties — final System.Drawing fix for Linux/macOS]]></message>
-    </release>
-    <release>
-      <date>2026-02-28</date>
-      <version>1.0.0.24</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.24
-
-Fix settings crash: defer CloudStorageServiceProvider loading that triggered System.Drawing on Linux/macOS]]></message>
     </release>
   </releases>
   <datafiles>
