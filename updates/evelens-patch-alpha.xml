@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-16</date>
+      <version>1.0.0.40</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.40
+
+Fix auto-update: hard kill process so Inno installer can proceed]]></message>
+    </release>
+    <release>
+      <date>2026-03-16</date>
       <version>1.0.0.39</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Update feed separation, Linux desktop integration, About cleanup]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.31
 
 Issue #17 complete: tray tooltip, clone tracking, tab loading overlay, character reorder in groups]]></message>
-    </release>
-    <release>
-      <date>2026-03-15</date>
-      <version>1.0.0.30</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.30
-
-Projection Overlay Engine: 43% memory reduction, virtualized rendering, collapse persistence]]></message>
     </release>
   </releases>
   <datafiles>
