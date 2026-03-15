@@ -21,37 +21,58 @@ namespace EveLens.Avalonia.Services
     /// </summary>
     internal sealed class AvaloniaClipboardService : IClipboardService
     {
+        // --- Async methods (preferred, safe on all platforms) ---
+
+        public async Task SetTextAsync(string text)
+        {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => SetTextAsync(text));
+                return;
+            }
+
+            var clipboard = GetClipboard();
+            if (clipboard != null)
+                await clipboard.SetTextAsync(text);
+        }
+
+        public async Task<string?> GetTextAsync()
+        {
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() => GetTextAsync());
+            }
+
+            var clipboard = GetClipboard();
+            return clipboard != null ? await clipboard.GetTextAsync() : null;
+        }
+
+        // --- Sync methods (Windows-only safe, kept for backward compatibility) ---
+
         public void SetText(string text)
         {
-            RunOnUIThread(async () =>
+            if (Dispatcher.UIThread.CheckAccess())
             {
-                var clipboard = GetClipboard();
-                if (clipboard != null)
-                    await clipboard.SetTextAsync(text);
-                return true;
-            });
+                // On UI thread: fire-and-forget to avoid deadlock on Linux/macOS
+                _ = SetTextAsync(text);
+                return;
+            }
+
+            Dispatcher.UIThread.InvokeAsync(() => SetTextAsync(text)).Wait();
         }
 
         public string? GetText()
         {
-            return RunOnUIThread(async () =>
-            {
-                var clipboard = GetClipboard();
-                return clipboard != null ? await clipboard.GetTextAsync() : null;
-            });
-        }
-
-        private static T RunOnUIThread<T>(Func<Task<T>> asyncFunc)
-        {
             if (Dispatcher.UIThread.CheckAccess())
             {
-                return asyncFunc().GetAwaiter().GetResult();
+                // On UI thread: cannot safely block — return null, callers should use GetTextAsync
+                return null;
             }
 
-            T result = default!;
+            string? result = null;
             Dispatcher.UIThread.InvokeAsync(async () =>
             {
-                result = await asyncFunc();
+                result = await GetTextAsync();
             }).Wait();
             return result;
         }
