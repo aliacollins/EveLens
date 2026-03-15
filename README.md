@@ -13,7 +13,7 @@
 
 EveLens is a character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
 
-**Current Version: 1.0.0-alpha.38**
+**Current Version: 1.0.0-alpha.39**
 
 ---
 
@@ -36,8 +36,8 @@ All downloads: [Alpha Release](https://github.com/aliacollins/evelens/releases/t
 
 **Linux:**
 ```bash
-chmod +x EveLens-1.0.0-alpha.38-linux-x64.AppImage
-./EveLens-1.0.0-alpha.38-linux-x64.AppImage
+chmod +x EveLens-1.0.0-alpha.39-linux-x64.AppImage
+./EveLens-1.0.0-alpha.39-linux-x64.AppImage
 ```
 
 **macOS:** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
