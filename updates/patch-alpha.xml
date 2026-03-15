@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-03-15</date>
+      <version>1.0.0.29</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.29
+
+Issue #17 fixes: memory leaks, race condition, DateTime crash protection]]></message>
+    </release>
+    <release>
       <date>2026-03-01</date>
       <version>1.0.0.28</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -94,16 +104,6 @@ Purge ALL System.Drawing from settings types — fixes serialization crash on Li
       <message><![CDATA[EveLens 1.0.0-alpha.20
 
 Fix settings crash on Linux/macOS: System.Drawing.Common not supported, use raw ARGB values]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.19</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.19
-
-Log full inner exception for JSON serialization failure diagnosis on Linux]]></message>
     </release>
   </releases>
   <datafiles>
