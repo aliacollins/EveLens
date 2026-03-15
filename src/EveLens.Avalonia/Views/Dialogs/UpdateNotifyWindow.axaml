@@ -52,14 +52,14 @@
                     Foreground="{StaticResource EveAccentPrimaryBrush}" />
         </StackPanel>
 
-        <!-- Release notes -->
-        <StackPanel Spacing="4">
-            <TextBlock Text="Release Notes" FontSize="12" FontWeight="SemiBold"
-                       Foreground="{StaticResource EveAccentPrimaryBrush}" />
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel x:Name="ReleaseNotesPanel" Spacing="0" />
-            </ScrollViewer>
-        </StackPanel>
+        <!-- Release notes label -->
+        <TextBlock DockPanel.Dock="Top" Text="Release Notes" FontSize="12" FontWeight="SemiBold"
+                   Foreground="{StaticResource EveAccentPrimaryBrush}" Margin="0,0,0,4" />
+
+        <!-- Release notes (fills remaining space, scrolls) -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ReleaseNotesPanel" Spacing="0" />
+        </ScrollViewer>
 
     </DockPanel>
 </Window>

@@ -1850,10 +1850,15 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        private bool _updateDialogOpen;
+
         private async void OnUpdateAvailable(UpdateAvailableEvent e)
         {
             try
             {
+                if (_updateDialogOpen) return;
+                _updateDialogOpen = true;
+
                 var dialog = new UpdateNotifyWindow();
                 dialog.Initialize(e.Args);
                 await dialog.ShowDialog(this);
@@ -1861,6 +1866,10 @@ namespace EveLens.Avalonia.Views
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error showing update notification: {ex}");
+            }
+            finally
+            {
+                _updateDialogOpen = false;
             }
         }
 
