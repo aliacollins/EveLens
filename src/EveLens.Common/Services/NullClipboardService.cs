@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.Threading.Tasks;
 using EveLens.Core.Interfaces;
 
 namespace EveLens.Common.Services
@@ -16,7 +17,8 @@ namespace EveLens.Common.Services
         private string? _text;
 
         public void SetText(string text) => _text = text;
-
         public string? GetText() => _text;
+        public Task SetTextAsync(string text) { _text = text; return Task.CompletedTask; }
+        public Task<string?> GetTextAsync() => Task.FromResult(_text);
     }
 }

@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -149,18 +150,26 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var menu = new ContextMenu();
 
             var copyItem = new MenuItem { Header = "Copy to Clipboard" };
-            copyItem.Click += (_, _) =>
+            copyItem.Click += async (_, _) =>
             {
-                if (_viewModel?.Plan == null) return;
-                var settings = new PlanExportSettings
+                try
                 {
-                    EntryNumber = true,
-                    EntryTrainingTimes = true,
-                    FooterCount = true,
-                    FooterTotalTime = true,
-                };
-                string text = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
-                AppServices.ClipboardService?.SetText(text);
+                    if (_viewModel?.Plan == null) return;
+                    var settings = new PlanExportSettings
+                    {
+                        EntryNumber = true,
+                        EntryTrainingTimes = true,
+                        FooterCount = true,
+                        FooterTotalTime = true,
+                    };
+                    string text = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
+                    if (AppServices.ClipboardService != null)
+                        await AppServices.ClipboardService.SetTextAsync(text);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Copy to clipboard failed: {ex.Message}");
+                }
             };
             menu.Items.Add(copyItem);
 
@@ -230,7 +239,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 try
                 {
-                    string? clipText = AppServices.ClipboardService?.GetText();
+                    string? clipText = await (AppServices.ClipboardService?.GetTextAsync() ?? Task.FromResult<string?>(null));
                     if (string.IsNullOrWhiteSpace(clipText))
                         return;
                     await ImportFitFromText(clipText);
