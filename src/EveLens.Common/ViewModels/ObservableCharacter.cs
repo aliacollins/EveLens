@@ -241,10 +241,7 @@ namespace EveLens.Common.ViewModels
             {
                 IsTraining = true;
                 var skill = ccp.CurrentlyTrainingSkill;
-                var rem = skill.RemainingTime;
-                string timeStr = rem.TotalDays >= 1 ? $"{(int)rem.TotalDays}d {rem.Hours}h"
-                    : rem.TotalHours >= 1 ? $"{(int)rem.TotalHours}h {rem.Minutes}m"
-                    : $"{rem.Minutes}m {rem.Seconds}s";
+                string timeStr = TimeFormatHelper.FormatRemaining(skill.RemainingTime);
                 TrainingSkillText = $"{skill.SkillName} {skill.Level} ({timeStr})";
             }
             else

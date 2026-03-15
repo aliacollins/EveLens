@@ -13,7 +13,7 @@
 
 EveLens is a character monitoring and skill planning tool for EVE Online. It runs on **Windows, Linux, and macOS** with a modern dark UI built on Avalonia.
 
-**Current Version: 1.0.0-alpha.2**
+**Current Version: 1.0.0-alpha.30**
 
 ---
 
@@ -36,8 +36,8 @@ All downloads: [Alpha Release](https://github.com/aliacollins/evelens/releases/t
 
 **Linux:**
 ```bash
-chmod +x EveLens-1.0.0-alpha.2-linux-x64.AppImage
-./EveLens-1.0.0-alpha.2-linux-x64.AppImage
+chmod +x EveLens-1.0.0-alpha.30-linux-x64.AppImage
+./EveLens-1.0.0-alpha.30-linux-x64.AppImage
 ```
 
 **macOS:** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
@@ -100,7 +100,7 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 - WinForms removed — Avalonia-only, net8.0 target
 - ImageService migrated from System.Drawing to SkiaSharp
 - Outlook calendar integration removed (Google Calendar remains)
-- 1,511 tests passing, 14 architectural laws enforced
+- 1,672 tests passing, 14 architectural laws enforced
 
 ---
 
