@@ -157,9 +157,11 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             {
                 if (groupsList != null)
                 {
-                    groupsList.ItemsSource = groupedItems
+                    var groups = groupedItems
                         .Select(g => new JournalGroupDisplay(g))
                         .ToList();
+                    CollapseStateHelper.InitializeGroups(_characterId, "WalletJournal", groups);
+                    groupsList.ItemsSource = groups;
                 }
                 if (scrollViewer != null) scrollViewer.IsVisible = true;
                 if (emptyState != null) emptyState.IsVisible = false;
@@ -261,6 +263,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (border.DataContext is JournalGroupDisplay group)
             {
                 group.IsExpanded = !group.IsExpanded;
+                SaveCollapseState();
             }
         }
 
@@ -269,6 +272,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var groupsList = this.FindControl<ItemsControl>("JournalGroupsList");
             if (groupsList?.ItemsSource is not IEnumerable<JournalGroupDisplay> groups) return;
             foreach (var g in groups) g.IsExpanded = false;
+            SaveCollapseState();
         }
 
         private void OnExpandAll(object? sender, RoutedEventArgs e)
@@ -276,13 +280,21 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var groupsList = this.FindControl<ItemsControl>("JournalGroupsList");
             if (groupsList?.ItemsSource is not IEnumerable<JournalGroupDisplay> groups) return;
             foreach (var g in groups) g.IsExpanded = true;
+            SaveCollapseState();
+        }
+
+        private void SaveCollapseState()
+        {
+            var groupsList = this.FindControl<ItemsControl>("JournalGroupsList");
+            if (_characterId != 0 && groupsList?.ItemsSource is IEnumerable<JournalGroupDisplay> groups)
+                CollapseStateHelper.SaveGroups(_characterId, "WalletJournal", groups);
         }
     }
 
     /// <summary>
     /// Display model for a journal group — compact chevron header with INPC for expand/collapse.
     /// </summary>
-    internal sealed class JournalGroupDisplay : INotifyPropertyChanged
+    internal sealed class JournalGroupDisplay : INotifyPropertyChanged, ICollapsibleGroup
     {
         private bool _isExpanded = true;
 

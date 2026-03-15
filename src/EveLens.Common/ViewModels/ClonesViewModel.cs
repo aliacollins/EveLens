@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EveLens.Common.Constants;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Helpers;
 using EveLens.Common.Models;
@@ -56,11 +57,14 @@ namespace EveLens.Common.ViewModels
                 HomeStationName = "Unknown";
             }
 
-            // Clone jump timer (24h cooldown)
+            // Clone jump timer — Infomorph Synchronizing reduces cooldown by 1h per level
+            // Base: 24h, Level V: 19h
+            int syncLevel = character.LastConfirmedSkillLevel(DBConstants.InfomorphSynchronizingSkillID);
+            int cooldownHours = 24 - syncLevel;
             var lastJump = character.JumpCloneLastJumpDate;
             if (lastJump > DateTime.MinValue)
             {
-                var cooldownEnd = lastJump.AddHours(24);
+                var cooldownEnd = lastJump.AddHours(cooldownHours);
                 var remaining = cooldownEnd - DateTime.UtcNow;
                 CloneJumpAvailable = remaining <= TimeSpan.Zero;
                 CloneJumpStatusText = CloneJumpAvailable
@@ -94,6 +98,7 @@ namespace EveLens.Common.ViewModels
                 if (isFirst) { isFirst = false; continue; }
                 jumpClones.Add(BuildCloneEntry(set, false));
             }
+            jumpClones.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
             JumpClones = jumpClones;
             JumpCloneCount = jumpClones.Count;
 

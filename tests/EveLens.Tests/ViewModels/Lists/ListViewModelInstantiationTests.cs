@@ -215,7 +215,8 @@ namespace EveLens.Tests.ViewModels.Lists
             new WalletJournalListViewModel(agg).SortAscending.Should().BeTrue();
             new WalletTransactionsListViewModel(agg).SortAscending.Should().BeTrue();
             new MailMessagesListViewModel(agg).SortAscending.Should().BeTrue();
-            new NotificationsListViewModel(agg).SortAscending.Should().BeTrue();
+            // Notifications defaults to descending (newest first)
+            new NotificationsListViewModel(agg).SortAscending.Should().BeFalse();
             new KillLogListViewModel(agg).SortAscending.Should().BeTrue();
             new PlanetaryListViewModel(agg).SortAscending.Should().BeTrue();
             new ResearchPointsListViewModel(agg).SortAscending.Should().BeTrue();
@@ -350,7 +351,10 @@ namespace EveLens.Tests.ViewModels.Lists
                     if (e.PropertyName == "SortAscending") raised = true;
                 };
 
-                vm.GetType().GetProperty("SortAscending")!.SetValue(vm, false);
+                // Toggle from current value to ensure change fires
+                var prop = vm.GetType().GetProperty("SortAscending")!;
+                bool current = (bool)prop.GetValue(vm)!;
+                prop.SetValue(vm, !current);
 
                 raised.Should().BeTrue(
                     $"{vm.GetType().Name} should raise PropertyChanged for SortAscending");

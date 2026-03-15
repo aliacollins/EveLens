@@ -138,6 +138,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     groups.Add(new MailGroupEntry(group.Key, entries));
             }
 
+            CollapseStateHelper.InitializeGroups(_characterId, "MailMessages", groups);
             MailGroupsList.ItemsSource = groups;
             StatusText.Text = $"Mail: {_viewModel.TotalItemCount} message{(_viewModel.TotalItemCount == 1 ? "" : "s")}";
         }
@@ -230,19 +231,30 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
         {
             if (sender is Border { DataContext: MailGroupEntry group })
+            {
                 group.IsExpanded = !group.IsExpanded;
+                SaveCollapseState();
+            }
         }
 
         private void OnCollapseAll(object? sender, RoutedEventArgs e)
         {
             if (MailGroupsList.ItemsSource is IEnumerable<MailGroupEntry> groups)
                 foreach (var g in groups) g.IsExpanded = false;
+            SaveCollapseState();
         }
 
         private void OnExpandAll(object? sender, RoutedEventArgs e)
         {
             if (MailGroupsList.ItemsSource is IEnumerable<MailGroupEntry> groups)
                 foreach (var g in groups) g.IsExpanded = true;
+            SaveCollapseState();
+        }
+
+        private void SaveCollapseState()
+        {
+            if (_characterId != 0 && MailGroupsList.ItemsSource is IEnumerable<MailGroupEntry> groups)
+                CollapseStateHelper.SaveGroups(_characterId, "MailMessages", groups);
         }
     }
 }

@@ -201,20 +201,6 @@
                                           VerticalAlignment="Center" />
                         </Grid>
 
-                        <!-- Compatibility -->
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel>
-                                <TextBlock Text="Compatibility" FontSize="11" />
-                                <TextBlock Text="Wine mode for Linux environments."
-                                           FontSize="10" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-                            </StackPanel>
-                            <ComboBox x:Name="CompatibilityCombo" Grid.Column="1" Width="140" FontSize="11"
-                                      VerticalAlignment="Center">
-                                <ComboBoxItem Content="Default" />
-                                <ComboBoxItem Content="Wine" />
-                            </ComboBox>
-                        </Grid>
-
                         <!-- Open Data Directory -->
                         <Button x:Name="OpenDataDirButton" Content="Open Data Directory"
                                 CornerRadius="12" Padding="10,4" FontSize="11"
@@ -241,6 +227,19 @@
                             </StackPanel>
                             <ToggleSwitch x:Name="MinimizeToTrayToggle" Grid.Column="1"
                                           VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Tray Tooltip Display -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock Text="Tray Tooltip Display" FontSize="11" />
+                                <TextBlock Text="Choose what information shows when hovering the system tray icon."
+                                           TextWrapping="Wrap" FontSize="10"
+                                           Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="TrayTooltipDisplayCombo" Grid.Column="1"
+                                      FontSize="11" MinWidth="160" Padding="8,4"
+                                      VerticalAlignment="Center" />
                         </Grid>
                     </StackPanel>
 

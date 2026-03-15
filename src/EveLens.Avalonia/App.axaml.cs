@@ -21,6 +21,7 @@ using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
 using EveLens.Common.Services;
+using EveLens.Common.SettingsObjects;
 using System.Linq;
 using System.Text;
 
@@ -342,19 +343,26 @@ namespace EveLens.Avalonia
                 return $"EveLens — {total} character{(total != 1 ? "s" : "")}, none training";
             }
 
-            // Find the character finishing next
+            var display = Settings.UI.SystemTrayTooltip.Display;
+
+            string countText = $"{trainingChars.Count} training";
+
             var next = trainingChars
                 .OrderBy(c => c.CurrentlyTrainingSkill!.EndTime)
                 .First();
             var skill = next.CurrentlyTrainingSkill!;
             string timeStr = TimeFormatHelper.FormatRemaining(skill.RemainingTime);
-
-            if (trainingChars.Count == 1)
-                return $"EveLens — {next.Name}: {skill.SkillName} {skill.Level} ({timeStr})";
-
-            // Truncate name if needed to fit ~128 char tooltip limit
             string name = next.Name.Length > 16 ? next.Name[..16] + "..." : next.Name;
-            return $"EveLens — {trainingChars.Count} training | Next: {name} — {skill.SkillName} {skill.Level} ({timeStr})";
+            string nextText = $"{name} — {skill.SkillName} {skill.Level} ({timeStr})";
+
+            return display switch
+            {
+                TrayTooltipDisplay.TrainingCountOnly => $"EveLens — {countText}",
+                TrayTooltipDisplay.NextFinisherOnly => $"EveLens — {nextText}",
+                _ => trainingChars.Count == 1
+                    ? $"EveLens — {next.Name}: {skill.SkillName} {skill.Level} ({timeStr})"
+                    : $"EveLens — {countText} | Next: {nextText}",
+            };
         }
 
         private static WindowIcon? LoadTrayIcon()

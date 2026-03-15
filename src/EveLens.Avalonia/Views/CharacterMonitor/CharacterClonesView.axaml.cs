@@ -99,16 +99,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             ClonePanel.Children.Clear();
 
+            // Load persisted expand state
+            var expandState = CollapseStateHelper.LoadExpandState(_characterId, "Clones");
+            bool hasSaved = CollapseStateHelper.HasSavedState(_characterId, "Clones");
+
             // Active Clone section
             if (_viewModel.ActiveClone != null)
-                ClonePanel.Children.Add(BuildCloneSection(_viewModel.ActiveClone, _viewModel.HomeStationName));
+            {
+                bool expanded = !hasSaved || expandState.Contains(_viewModel.ActiveClone.Name);
+                ClonePanel.Children.Add(BuildCloneSection(_viewModel.ActiveClone, _viewModel.HomeStationName, expanded));
+            }
 
             // Jump Clones
             foreach (var clone in _viewModel.JumpClones)
-                ClonePanel.Children.Add(BuildCloneSection(clone, null));
+            {
+                bool expanded = !hasSaved || expandState.Contains(clone.Name);
+                ClonePanel.Children.Add(BuildCloneSection(clone, null, expanded));
+            }
         }
 
-        private Control BuildCloneSection(CloneDisplayEntry clone, string? homeStation)
+        private Control BuildCloneSection(CloneDisplayEntry clone, string? homeStation, bool initiallyExpanded = true)
         {
             var headerGrid = new Grid
             {
@@ -245,6 +255,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             expander.Children.Add(headerBorder);
             expander.Children.Add(contentPanel);
 
+            // Apply initial state
+            contentPanel.IsVisible = initiallyExpanded;
+            chevron.Text = initiallyExpanded ? "\u25BC" : "\u25B6";
+
             // Click to toggle
             headerBorder.Tag = contentPanel;
             headerBorder.PointerPressed += (s, e) =>
@@ -255,6 +269,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     // Update chevron
                     if (b.Child is Grid g && g.Children[0] is TextBlock tb)
                         tb.Text = content.IsVisible ? "\u25BC" : "\u25B6";
+                    SaveCollapseState();
                 }
             };
 
@@ -336,6 +351,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         tb.Text = "\u25B6";
                 }
             }
+            SaveCollapseState();
         }
 
         private void OnExpandAll(object? sender, RoutedEventArgs e)
@@ -351,6 +367,35 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         tb.Text = "\u25BC";
                 }
             }
+            SaveCollapseState();
+        }
+
+        private void SaveCollapseState()
+        {
+            if (_characterId == 0 || _viewModel == null) return;
+            var expanded = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+
+            if (_viewModel.ActiveClone != null)
+            {
+                // Check if first child's content panel is visible
+                if (ClonePanel.Children.Count > 0 && ClonePanel.Children[0] is Border b
+                    && b.Child is StackPanel sp && sp.Children.Count >= 2
+                    && sp.Children[1] is StackPanel content && content.IsVisible)
+                    expanded.Add(_viewModel.ActiveClone.Name);
+            }
+
+            int offset = _viewModel.ActiveClone != null ? 1 : 0;
+            for (int i = 0; i < _viewModel.JumpClones.Count; i++)
+            {
+                int childIdx = i + offset;
+                if (childIdx < ClonePanel.Children.Count
+                    && ClonePanel.Children[childIdx] is Border jb
+                    && jb.Child is StackPanel jsp && jsp.Children.Count >= 2
+                    && jsp.Children[1] is StackPanel jcontent && jcontent.IsVisible)
+                    expanded.Add(_viewModel.JumpClones[i].Name);
+            }
+
+            CollapseStateHelper.SaveExpandState(_characterId, "Clones", expanded);
         }
 
         private static async void LoadImplantIconAsync(Image target, int typeId)

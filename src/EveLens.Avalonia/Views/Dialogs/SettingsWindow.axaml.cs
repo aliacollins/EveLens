@@ -20,6 +20,7 @@ using EveLens.Common.Enumerations.UISettings;
 using EveLens.Common.MarketPricer;
 using EveLens.Common.Serialization.Settings;
 using EveLens.Common.Services;
+using EveLens.Common.SettingsObjects;
 
 namespace EveLens.Avalonia.Views.Dialogs
 {
@@ -104,7 +105,6 @@ namespace EveLens.Avalonia.Views.Dialogs
             // --- Appearance ---
             PopulateThemeCombo();
             SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
-            CompatibilityCombo.SelectedIndex = (int)_settings.Compatibility;
 
             // --- Window Behavior ---
             LoadTraySettings();
@@ -144,6 +144,14 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void LoadTraySettings()
         {
             MinimizeToTrayToggle.IsChecked = _settings.UI.MinimizeToTray;
+
+            TrayTooltipDisplayCombo.ItemsSource = new[]
+            {
+                "Training Count + Next Finisher",
+                "Training Count Only",
+                "Next Finisher Only"
+            };
+            TrayTooltipDisplayCombo.SelectedIndex = (int)_settings.UI.SystemTrayTooltip.Display;
         }
 
         private void LoadEmailSettings()
@@ -729,7 +737,6 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             // Appearance
             _settings.UI.SafeForWork = SafeForWorkToggle.IsChecked == true;
-            _settings.Compatibility = (CompatibilityMode)Math.Max(0, CompatibilityCombo.SelectedIndex);
 
             int selectedThemeIndex = Math.Max(0, ThemeCombo.SelectedIndex);
             if (selectedThemeIndex < ThemeManager.AvailableThemes.Count)
@@ -741,6 +748,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // Window Behavior — single MinimizeToTray toggle
             _settings.UI.MinimizeToTray = MinimizeToTrayToggle.IsChecked == true;
+            if (TrayTooltipDisplayCombo.SelectedIndex >= 0)
+                _settings.UI.SystemTrayTooltip.Display = (TrayTooltipDisplay)TrayTooltipDisplayCombo.SelectedIndex;
 
             // Notifications
             _settings.Notifications.ShowOSNotifications = OsNotificationsToggle.IsChecked == true;

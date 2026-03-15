@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using EveLens.Common.Scheduling.Resilience;
 using EveLens.Core.Enumerations;
 using EveLens.Core.Events;
 using EveLens.Core.Interfaces;
@@ -37,6 +38,11 @@ namespace EveLens.Common.Scheduling
         private readonly CancellationTokenSource _cts = new();
         private readonly SemaphoreSlim _wakeSignal = new(0, 1);
 
+        // Resilience pipeline — middleware chain applied to every fetch
+        private readonly CharacterAlivePolicy _alivePolicy = new();
+        private readonly CircuitBreakerPolicy _circuitBreaker = new();
+        private readonly ResiliencePipeline _pipeline;
+
         private long _visibleCharacterId;
         private int _activeFetches;
         private int _characterIndex;
@@ -56,6 +62,12 @@ namespace EveLens.Common.Scheduling
             _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
             _esiClient = esiClient ?? throw new ArgumentNullException(nameof(esiClient));
             _logger = logger;
+
+            // Compose resilience pipeline: alive check → circuit breaker → retry → fetch
+            _pipeline = new ResiliencePipeline(
+                _alivePolicy,
+                _circuitBreaker,
+                new RetryPolicy(maxRetries: 2));
 
             _dispatchLoop = Task.Run(() => RunAsync(_cts.Token));
         }
@@ -226,9 +238,12 @@ namespace EveLens.Common.Scheduling
             Interlocked.Increment(ref _activeFetches);
             try
             {
-                // Execute the typed HTTP call + callback via the orchestrator's closure.
-                // The closure does: find ESI key → QueryEsiAsync<T> → callback on UI → return metadata
-                var outcome = await job.ExecuteAsync(job.ETag).ConfigureAwait(false);
+                // Execute through resilience pipeline:
+                // CharacterAlivePolicy → CircuitBreakerPolicy → RetryPolicy → raw fetch
+                // Transient errors (500+, timeouts) are retried silently.
+                // The scheduler only sees final outcomes after retry exhaustion.
+                var outcome = await _pipeline.ExecuteAsync(
+                    job.CharacterId, () => job.ExecuteAsync(job.ETag)).ConfigureAwait(false);
 
                 // Update job state from the response
                 if (outcome.ETag != null)
@@ -239,7 +254,7 @@ namespace EveLens.Common.Scheduling
                     _tokenTracker.Update(job.CharacterId, job.RateGroup,
                         outcome.RateLimitRemaining, null);
 
-                // Handle response by status code
+                // Handle final outcome — only reached after pipeline retries are exhausted
                 switch (outcome.StatusCode)
                 {
                     case 200:
@@ -250,24 +265,17 @@ namespace EveLens.Common.Scheduling
 
                     case 304: // Not Modified — 1 token cost, no data change
                         job.ConsecutiveNotModified++;
-                        // After 5 consecutive 304s, clear ETag to force a full GET.
-                        // ESI ETags can go stale (data changed server-side but ETag
-                        // wasn't invalidated). This ensures we eventually get fresh data
-                        // for all endpoints: skills, contracts, contacts, notifications, etc.
                         if (job.ConsecutiveNotModified >= 5)
                         {
                             job.ETag = null;
                             job.ConsecutiveNotModified = 0;
                         }
-                        // ESI 304 responses return stale Expires headers, causing
-                        // CachedUntil to be ~5s from now. Use previous cache duration
-                        // as a floor to avoid re-fetching every 5 seconds.
                         var nextDue304 = outcome.CachedUntil;
                         var minWait = DateTime.UtcNow.AddSeconds(30);
                         if (nextDue304 < minWait && job.CachedUntil > DateTime.UtcNow)
-                            nextDue304 = job.CachedUntil; // Re-use previous cache expiry
+                            nextDue304 = job.CachedUntil;
                         else if (nextDue304 < minWait)
-                            nextDue304 = minWait; // Absolute minimum 30s between fetches
+                            nextDue304 = minWait;
                         job.CachedUntil = nextDue304;
                         Enqueue(job, nextDue304 + FetchPolicy.GetJitter(job.Priority));
                         break;
@@ -276,8 +284,7 @@ namespace EveLens.Common.Scheduling
                     case 403: // Auth failed — suspend all jobs for this character
                         if (_authStates.TryGetValue(job.CharacterId, out var authState))
                             authState.MarkFailed();
-                        BumpGeneration(job.CharacterId); // Invalidate all queued jobs
-                        // Do NOT re-enqueue — wait for OnCharacterReAuthenticated
+                        BumpGeneration(job.CharacterId);
                         break;
 
                     case 429: // Rate limited — respect Retry-After
@@ -285,22 +292,11 @@ namespace EveLens.Common.Scheduling
                         Enqueue(job, DateTime.UtcNow.AddSeconds(retryAfter));
                         break;
 
-                    case >= 500: // Server error — 0 token cost per CCP
+                    case 0: // Circuit open or character dead — short backoff, probe again soon
                         Enqueue(job, DateTime.UtcNow.AddMinutes(2));
                         break;
 
-                    case -1: // Token refresh in-flight — retry quickly once SSO completes
-                        Enqueue(job, DateTime.UtcNow.AddSeconds(3));
-                        break;
-
-                    case 0: // Skipped (no ESI key, errors exceeded, endpoint disabled, etc.)
-                        // Use a long backoff to prevent disabled endpoints from flooding the queue.
-                        // 7 chars × 19 disabled endpoints = 133 jobs; at 1-minute re-enqueue they
-                        // starve real fetches. 30-minute backoff keeps them dormant.
-                        Enqueue(job, DateTime.UtcNow.AddMinutes(30));
-                        break;
-
-                    default:
+                    default: // Persistent failure after all retries exhausted
                         Enqueue(job, DateTime.UtcNow.AddMinutes(5));
                         break;
                 }
@@ -361,6 +357,9 @@ namespace EveLens.Common.Scheduling
             if (!_authStates.ContainsKey(charId))
                 _authStates[charId] = new CharacterAuthState();
 
+            // Mark character alive in resilience pipeline
+            _alivePolicy.Register(charId);
+
             bool isVisible = charId == Interlocked.Read(ref _visibleCharacterId);
             int charIndex = _characterIndex++;
 
@@ -386,6 +385,8 @@ namespace EveLens.Common.Scheduling
             BumpGeneration(charId);
             _authStates.Remove(charId);
             _tokenTracker.RemoveCharacter(charId);
+            _alivePolicy.Unregister(charId);
+            _circuitBreaker.RemoveCharacter(charId);
 
             if (_jobsByCharacter.TryGetValue(charId, out var jobs))
             {
@@ -463,6 +464,7 @@ namespace EveLens.Common.Scheduling
         {
             if (_authStates.TryGetValue(charId, out var auth))
                 auth.MarkHealthy();
+            _circuitBreaker.ResetCharacter(charId);
 
             // Re-enqueue all jobs for this character
             if (_jobsByCharacter.TryGetValue(charId, out var jobs))

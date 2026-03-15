@@ -12,6 +12,19 @@ using EveLens.Common.Services;
 namespace EveLens.Common.ViewModels
 {
     /// <summary>
+    /// Contract for flat group display objects that support expand/collapse persistence.
+    /// Implemented by group display classes in Avalonia views (Notifications, Journal, Mail, Clones).
+    /// </summary>
+    public interface ICollapsibleGroup
+    {
+        /// <summary>Group key used for persistence (must be stable across refreshes).</summary>
+        string Name { get; }
+
+        /// <summary>Whether the group is currently expanded.</summary>
+        bool IsExpanded { get; set; }
+    }
+
+    /// <summary>
     /// Reads and writes per-character, per-view expand/collapse state
     /// from <see cref="Settings.UI"/> collapse states dictionary.
     /// </summary>
@@ -67,6 +80,35 @@ namespace EveLens.Common.ViewModels
 
             if (keysToRemove.Count > 0)
                 AppServices.EventAggregator?.Publish(SettingsChangedEvent.Instance);
+        }
+
+        // --- Flat group helpers (Notifications, Journal, Mail, Clones) ---
+
+        /// <summary>
+        /// Initializes <see cref="ICollapsibleGroup.IsExpanded"/> on each group from persisted state.
+        /// First visit (no saved state): all groups default to expanded.
+        /// Subsequent visits: only groups in the saved set are expanded.
+        /// </summary>
+        public static void InitializeGroups(long characterId, string viewName, IEnumerable<ICollapsibleGroup> groups)
+        {
+            var state = LoadExpandState(characterId, viewName);
+            bool hasSaved = HasSavedState(characterId, viewName);
+            foreach (var group in groups)
+                group.IsExpanded = !hasSaved || state.Contains(group.Name);
+        }
+
+        /// <summary>
+        /// Saves the current expand state of all groups to settings.
+        /// </summary>
+        public static void SaveGroups(long characterId, string viewName, IEnumerable<ICollapsibleGroup> groups)
+        {
+            var expanded = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var group in groups)
+            {
+                if (group.IsExpanded)
+                    expanded.Add(group.Name);
+            }
+            SaveExpandState(characterId, viewName, expanded);
         }
 
         private static string FormatKey(long characterId, string viewName)
