@@ -177,7 +177,7 @@ namespace EveLens.Common
 
             // Determine update channel based on version type
             // Alpha/Beta users check their specific channel first, then fall back to stable
-            string baseUpdatePath = NetworkConstants.EveLensUpdates; // /updates/patch.xml
+            string baseUpdatePath = NetworkConstants.EveLensUpdates; // /updates/evelens-patch.xml
             string channelSuffix = AppServices.IsAlphaVersion ? "-alpha"
                                  : AppServices.IsBetaVersion ? "-beta"
                                  : "";
