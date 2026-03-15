@@ -11,6 +11,7 @@ using EveLens.Common.Serialization.Settings;
 using EveLens.Common.Serialization.Esi;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Enumerations.CCPAPI;
+using EveLens.Common.Extensions;
 using EveLens.Common.Services;
 
 namespace EveLens.Common.Models.Collections
@@ -90,7 +91,7 @@ namespace EveLens.Common.Models.Collections
             var newOrders = new List<MarketOrder>(Items.Count);
             foreach (var srcOrder in src)
             {
-                var limit = srcOrder.Issued.AddDays(srcOrder.Duration + MarketOrder.
+                var limit = srcOrder.Issued.SafeAddDays(srcOrder.Duration + MarketOrder.
                     MaxExpirationDays);
                 var orderFor = AdjustIssuer(issuedFor, srcOrder);
                 if (limit >= now && orderFor != IssuedFor.None && !Items.Any(x => x.TryImport(

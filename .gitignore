@@ -5,6 +5,9 @@
 *.zip
 releases/
 
+# Git lock (security)
+.gitlock
+
 # User-specific files
 *.suo
 *.user

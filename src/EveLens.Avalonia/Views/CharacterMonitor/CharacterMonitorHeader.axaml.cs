@@ -62,7 +62,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                             image, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                         if (converted is Bitmap bitmap)
+                        {
+                            (PortraitImage.Source as IDisposable)?.Dispose();
                             PortraitImage.Source = bitmap;
+                        }
                     }
 
                     // Race/Bloodline (static — set once)

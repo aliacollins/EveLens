@@ -158,6 +158,14 @@ namespace EveLens.Common.Models
         [XmlIgnore]
         public bool HasError { get; internal set; }
 
+        /// <summary>
+        /// True when an SSO token refresh is in-flight and AccessToken may be empty.
+        /// Query executors should skip (and retry shortly) rather than send requests
+        /// with an empty bearer token.
+        /// </summary>
+        [XmlIgnore]
+        public bool IsTokenRefreshing => m_queryPending;
+
 #if false
         /// <summary>
         /// Gets the account expiration date and time. RIP Account status API.

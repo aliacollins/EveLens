@@ -15,6 +15,21 @@ namespace EveLens.Common.Extensions
     {
 
         /// <summary>
+        /// Safely adds days to a DateTime, clamping to DateTime.MaxValue/MinValue instead of throwing.
+        /// </summary>
+        public static DateTime SafeAddDays(this DateTime dt, double days)
+        {
+            try
+            {
+                return dt.AddDays(days);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return days > 0 ? DateTime.MaxValue : DateTime.MinValue;
+            }
+        }
+
+        /// <summary>
         /// Converts a Windows timestamp to <see cref="System.DateTime"/>.
         /// </summary>
         /// <param name="timestamp">The timestamp.</param>

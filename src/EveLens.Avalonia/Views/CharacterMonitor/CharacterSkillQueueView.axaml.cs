@@ -42,6 +42,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _queueUpdatedSub?.Dispose();
             _queueUpdatedSub = null;
+            _viewModel?.Dispose();
+            _viewModel = null;
         }
 
         protected override void OnDataContextChanged(EventArgs e)

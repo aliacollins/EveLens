@@ -289,6 +289,10 @@ namespace EveLens.Common.Scheduling
                         Enqueue(job, DateTime.UtcNow.AddMinutes(2));
                         break;
 
+                    case -1: // Token refresh in-flight — retry quickly once SSO completes
+                        Enqueue(job, DateTime.UtcNow.AddSeconds(3));
+                        break;
+
                     case 0: // Skipped (no ESI key, errors exceeded, endpoint disabled, etc.)
                         // Use a long backoff to prevent disabled endpoints from flooding the queue.
                         // 7 chars × 19 disabled endpoints = 133 jobs; at 1-minute re-enqueue they

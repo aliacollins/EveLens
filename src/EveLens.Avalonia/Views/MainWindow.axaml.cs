@@ -432,7 +432,10 @@ namespace EveLens.Avalonia.Views
                     var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                         drawingImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                     if (converted is Bitmap bitmap)
+                    {
+                        (portraitImage.Source as IDisposable)?.Dispose();
                         portraitImage.Source = bitmap;
+                    }
                 }
             }
             catch
