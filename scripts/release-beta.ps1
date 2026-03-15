@@ -128,6 +128,8 @@ $releaseNotes = @"
 >
 > Please report any issues you find!
 
+> **Coming from EVEMon or an older fork?** We recommend a fresh install rather than importing old settings. EveLens is a complete rewrite and a clean start will give you the smoothest experience.
+
 ---
 
 ### Downloads

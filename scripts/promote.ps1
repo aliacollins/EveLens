@@ -233,9 +233,9 @@ function Update-PatchXml {
     )
 
     $fileName = switch ($Channel) {
-        "stable" { "patch.xml" }
-        "beta" { "patch-beta.xml" }
-        "alpha" { "patch-alpha.xml" }
+        "stable" { "evelens-patch.xml" }
+        "beta" { "evelens-patch-beta.xml" }
+        "alpha" { "evelens-patch-alpha.xml" }
     }
 
     $file = Join-Path (Join-Path $RepoRoot "updates") $fileName

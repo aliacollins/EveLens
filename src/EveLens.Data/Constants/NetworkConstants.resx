@@ -126,7 +126,7 @@
     <comment>120</comment>
   </data>
   <data name="EveLensUpdates" xml:space="preserve">
-    <value>/updates/patch.xml</value>
+    <value>/updates/evelens-patch.xml</value>
   </data>
   <data name="CCPPortraits" xml:space="preserve">
     <value>/characters/{0:D}/portrait?tenant=tranquility&amp;size={1:D}</value>

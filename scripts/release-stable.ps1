@@ -121,6 +121,8 @@ $releaseNotesPath = "$RepoRoot\publish\release-notes-stable.md"
 $releaseNotes = @"
 ## EveLens v$Version
 
+> **Coming from EVEMon or an older fork?** We recommend a fresh install rather than importing old settings. EveLens is a complete rewrite and a clean start will give you the smoothest experience.
+
 ### Downloads
 
 | Platform | File | Requirements |

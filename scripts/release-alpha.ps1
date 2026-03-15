@@ -141,6 +141,8 @@ $releaseNotes = @"
 >
 > **Backup your settings before using**
 
+> **Coming from EVEMon or an older fork?** We recommend a fresh install rather than importing old settings. EveLens is a complete rewrite and a clean start will give you the smoothest experience. Your ESI tokens will need to be re-authenticated anyway — just add your characters fresh and you're good to go.
+
 ---
 
 ### Downloads

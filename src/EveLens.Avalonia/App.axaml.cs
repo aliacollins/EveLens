@@ -152,6 +152,17 @@ namespace EveLens.Avalonia
             desktop.MainWindow = new MainWindow();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - MainWindow created", printMethod: false);
 
+            // Phase 10.5: Linux desktop integration (icon + .desktop file)
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                    System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                try { RegisterLinuxDesktopEntry(); }
+                catch (Exception ex)
+                {
+                    AppServices.TraceService?.Trace($"Linux desktop integration failed: {ex.Message}", printMethod: false);
+                }
+            }
+
             // Phase 11: Set up system tray icon
             SetupTrayIcon(desktop);
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - tray icon configured", printMethod: false);
@@ -401,6 +412,70 @@ namespace EveLens.Avalonia
             }
 
             return "DarkSpace";
+        }
+
+        /// <summary>
+        /// Registers EveLens with the Linux desktop environment on first launch.
+        /// Copies the .desktop file and icon to ~/.local/share so the desktop
+        /// shows the correct EveLens icon instead of a generic gear.
+        /// </summary>
+        private static void RegisterLinuxDesktopEntry()
+        {
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string desktopDir = Path.Combine(home, ".local", "share", "applications");
+            string iconDir = Path.Combine(home, ".local", "share", "icons", "hicolor", "256x256", "apps");
+            string desktopFile = Path.Combine(desktopDir, "evelens.desktop");
+            string iconFile = Path.Combine(iconDir, "evelens.png");
+
+            // Skip if already registered
+            if (File.Exists(desktopFile) && File.Exists(iconFile))
+                return;
+
+            // Find the icon from the app's base directory
+            string? appDir = AppContext.BaseDirectory;
+            string? iconSource = null;
+
+            // AppImage: icon is in usr/share/icons relative to the AppDir
+            string appImageIcon = Path.Combine(appDir, "..", "usr", "share", "icons",
+                "hicolor", "256x256", "apps", "evelens.png");
+            if (File.Exists(appImageIcon))
+                iconSource = Path.GetFullPath(appImageIcon);
+
+            // Portable: icon might be alongside the binary
+            if (iconSource == null)
+            {
+                string localIcon = Path.Combine(appDir, "evelens.png");
+                if (File.Exists(localIcon))
+                    iconSource = localIcon;
+            }
+
+            if (iconSource == null)
+            {
+                AppServices.TraceService?.Trace("Linux desktop: no icon found, skipping registration", printMethod: false);
+                return;
+            }
+
+            // Copy icon
+            Directory.CreateDirectory(iconDir);
+            File.Copy(iconSource, iconFile, true);
+
+            // Write .desktop file pointing to the actual executable
+            string execPath = Environment.ProcessPath ?? Path.Combine(appDir, "EveLens");
+            Directory.CreateDirectory(desktopDir);
+            File.WriteAllText(desktopFile,
+                $"""
+                [Desktop Entry]
+                Type=Application
+                Name=EveLens
+                Comment=Character Intelligence for EVE Online
+                Exec={execPath}
+                Icon=evelens
+                Categories=Game;Utility;
+                Terminal=false
+                StartupWMClass=EveLens
+                """);
+
+            AppServices.TraceService?.Trace("Linux desktop: registered .desktop and icon", printMethod: false);
         }
     }
 }

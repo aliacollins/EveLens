@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  STABLE Update Channel (EveLens 1.x+)
+  Old 5.x clients check patch.xml (frozen). New EveLens clients check this file.
+-->
+<evelens>
+  <releases>
+  </releases>
+</evelens>

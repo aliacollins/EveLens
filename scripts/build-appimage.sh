@@ -57,10 +57,16 @@ chmod +x "$APPDIR/AppRun"
 # Copy desktop file
 cp "$REPO_ROOT/installer/linux/evelens.desktop" "$APPDIR/evelens.desktop"
 
-# Copy icons
+# Copy icons — multiple sizes for proper desktop integration
 cp "$REPO_ROOT/installer/icons/evelens-256.png" "$APPDIR/evelens.png"
-cp "$REPO_ROOT/installer/icons/evelens-256.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/evelens.png"
 cp "$REPO_ROOT/installer/icons/evelens-256.png" "$APPDIR/.DirIcon"
+for SIZE in 16 32 48 64 128 256; do
+    ICON_FILE="$REPO_ROOT/installer/icons/evelens-${SIZE}.png"
+    if [ -f "$ICON_FILE" ]; then
+        mkdir -p "$APPDIR/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps"
+        cp "$ICON_FILE" "$APPDIR/usr/share/icons/hicolor/${SIZE}x${SIZE}/apps/evelens.png"
+    fi
+done
 
 # Ensure main binary is executable
 chmod +x "$APPDIR/usr/bin/EveLens"

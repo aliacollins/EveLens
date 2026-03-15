@@ -1029,7 +1029,7 @@ namespace EveLens.Common.Constants {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to /updates/patch.xml.
+        ///   Looks up a localized string similar to /updates/evelens-patch.xml.
         /// </summary>
         public static string EveLensUpdates {
             get {

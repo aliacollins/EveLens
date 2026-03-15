@@ -176,8 +176,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             AddSectionHeader(stack, "SUPPORT THE PROJECT", 16);
             stack.Children.Add(new TextBlock
             {
-                Text = "I don't accept donations. Please donate to Peter Han or the original "
-                     + "EVEMon Dev Team who built this tool.",
+                Text = "I don't accept donations. If you want to support the legacy, "
+                     + "please donate to Peter Han who maintained EVEMon for years.",
                 FontSize = 11, Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
                 LineHeight = 18,
             });
@@ -197,50 +197,29 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             stack.Children.Add(new TextBlock
             {
-                Text = "Every person who contributed to EVEMon across its history.",
+                Text = "EveLens is forked from peterhaneve/evemon (v4.0.20).",
                 FontSize = 11, Foreground = _textDisabledBrush, TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 12),
             });
-
-            // Original Creator
-            AddSectionHeader(stack, "ORIGINAL CREATOR");
-            stack.Children.Add(BuildChipWrap(new[] { "Six Anari" }, _accentBrush));
-            AddSpacer(stack, 8);
 
             // Active Developer
             AddSectionHeader(stack, "ACTIVE DEVELOPER");
             stack.Children.Add(BuildChipWrap(new[] { "Alia Collins" }, _accentBrush));
             AddSpacer(stack, 8);
 
-            // Developers (Retired)
-            AddSectionHeader(stack, "DEVELOPERS (RETIRED)");
+            // Original EVEMon (Peter Han's fork)
+            AddSectionHeader(stack, "ORIGINAL EVEMON (PETERHANEVE/EVEMON)");
             stack.Children.Add(BuildChipWrap(new[]
             {
-                "Peter Han", "Blitz Bandis", "Jimi", "Araan Sunn",
-                "Six Anari", "Anders Chydenius", "Brad Stone",
+                "Peter Han", "Jimi", "Six Anari", "Araan Sunn",
+                "Blitz Bandis", "Anders Chydenius", "Brad Stone",
                 "Eewec Ourbyni", "Richard Slater", "Vehlin",
                 "Collin Grady", "DCShadow", "DonQuiche", "Grauw",
                 "Jalon Mevek", "Labogh", "romanl", "Safrax",
-                "Stevil Knevil", "TheBelgarion"
-            }, _textPrimaryBrush));
-            AddSpacer(stack, 8);
-
-            // Consultants
-            AddSectionHeader(stack, "CONSULTANTS");
-            stack.Children.Add(BuildChipWrap(new[]
-            {
+                "Stevil Knevil", "TheBelgarion",
                 "Desmont McCallock", "Tonto Aansen", "Saeka Tansen",
                 "MrCue", "Candle"
-            }, _textPrimaryBrush));
-            AddSpacer(stack, 8);
-
-            // Community
-            AddSectionHeader(stack, "COMMUNITY");
-            stack.Children.Add(BuildChipWrap(new[]
-            {
-                "Adrienne Adler", "Torgo",
-                "alebrophy", "DiagonalyStraight", "Lukas Friedrichsen"
             }, _textPrimaryBrush));
             AddSpacer(stack, 8);
 
@@ -368,9 +347,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             var attrStack = new StackPanel { Spacing = 2, Margin = new Thickness(0, 0, 0, 16) };
             var attributions = new[]
             {
-                ("Originally created by ", "EVEMon Dev Team", " (2006)"),
-                ("Maintained by ", "Jimi, Peter Han", " and community contributors"),
-                ("EveLens by ", "Alia Collins", " (2026)"),
+                ("Originally created by ", "Jimi (Six Anari)", " (2006)"),
+                ("Maintained by ", "Peter Han", " (peterhaneve/evemon, 2015-2021)"),
+                ("EveLens by ", "Alia Collins", " (2025-2026)"),
             };
             foreach (var (prefix, highlight, suffix) in attributions)
             {
