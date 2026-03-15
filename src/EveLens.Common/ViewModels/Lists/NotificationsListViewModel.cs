@@ -22,12 +22,16 @@ namespace EveLens.Common.ViewModels.Lists
         public NotificationsListViewModel(IEventAggregator eventAggregator, IDispatcher? dispatcher = null)
             : base(eventAggregator, dispatcher)
         {
+            SortColumn = EveNotificationColumn.SentDate;
+            SortAscending = false;
             SubscribeForCharacter<CharacterEVENotificationsUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
         }
 
         public NotificationsListViewModel() : base()
         {
+            SortColumn = EveNotificationColumn.SentDate;
+            SortAscending = false;
             SubscribeForCharacter<CharacterEVENotificationsUpdatedEvent>(e => Refresh());
             Subscribe<SettingsChangedEvent>(e => Refresh());
         }

@@ -5,18 +5,22 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using EveLens.Common;
 using EveLens.Common.CustomEventArgs;
+using EveLens.Common.Services;
 
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class UpdateNotifyWindow : Window
     {
         private UpdateAvailableEventArgs? _args;
+        private CancellationTokenSource? _downloadCts;
 
         public UpdateNotifyWindow()
         {
@@ -32,6 +36,11 @@ namespace EveLens.Avalonia.Views.Dialogs
             _args = args;
             CurrentVersionText.Text = $"v{args.CurrentVersion}";
             NewVersionText.Text = $"v{args.NewestVersion}";
+
+            // Show "Download & Install" for auto-installable, "View Release" otherwise
+            if (!args.CanAutoInstall)
+                DownloadBtn.Content = "View Release";
+
             BuildReleaseNotes(args);
         }
 
@@ -45,7 +54,6 @@ namespace EveLens.Avalonia.Views.Dialogs
                 {
                     var release = args.ReleaseHistory[i];
 
-                    // Version header
                     var versionHeader = new TextBlock
                     {
                         Text = $"v{release.Version}",
@@ -56,7 +64,6 @@ namespace EveLens.Avalonia.Views.Dialogs
                     };
                     ReleaseNotesPanel.Children.Add(versionHeader);
 
-                    // Date
                     if (!string.IsNullOrWhiteSpace(release.Date))
                     {
                         var dateText = new TextBlock
@@ -69,7 +76,6 @@ namespace EveLens.Avalonia.Views.Dialogs
                         ReleaseNotesPanel.Children.Add(dateText);
                     }
 
-                    // Message body
                     if (!string.IsNullOrWhiteSpace(release.Message))
                     {
                         var messageText = new TextBlock
@@ -84,7 +90,6 @@ namespace EveLens.Avalonia.Views.Dialogs
                         ReleaseNotesPanel.Children.Add(messageText);
                     }
 
-                    // Separator between entries (not after last)
                     if (i < args.ReleaseHistory.Count - 1)
                     {
                         var separator = new Border
@@ -99,7 +104,6 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
             else
             {
-                // Fallback: single message (backward compat)
                 var fallbackText = new TextBlock
                 {
                     Text = string.IsNullOrWhiteSpace(args.UpdateMessage)
@@ -114,21 +118,62 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
-        private void OnDownloadClick(object? sender, RoutedEventArgs e)
+        private async void OnDownloadClick(object? sender, RoutedEventArgs e)
         {
             try
             {
-                if (_args?.InstallerUrl != null)
+                if (_args == null) return;
+
+                // If can't auto-install, fall back to opening browser
+                if (!_args.CanAutoInstall)
                 {
-                    Util.OpenURL(_args.InstallerUrl);
+                    if (_args.InstallerUrl != null)
+                        Util.OpenURL(_args.InstallerUrl);
+                    Close();
+                    return;
                 }
+
+                // Switch to download mode
+                ButtonPanel.IsVisible = false;
+                ProgressPanel.IsVisible = true;
+                ProgressText.Text = "Downloading update...";
+
+                _downloadCts = new CancellationTokenSource();
+
+                var progress = new Progress<double>(p =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        DownloadProgress.Value = p * 100;
+                        int pct = (int)(p * 100);
+                        ProgressText.Text = pct < 100
+                            ? $"Downloading... {pct}%"
+                            : "Download complete. Applying update...";
+                    });
+                });
+
+                string downloadedFile = await AutoUpdateService.DownloadAsync(
+                    _args.InstallerUrl, progress, _downloadCts.Token);
+
+                // Apply and restart
+                ProgressText.Text = "Applying update...";
+                AutoUpdateService.ApplyAndRestart(downloadedFile, _args.AutoInstallArguments);
+            }
+            catch (OperationCanceledException)
+            {
+                // Download cancelled — restore buttons
+                ButtonPanel.IsVisible = true;
+                ProgressPanel.IsVisible = false;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error opening installer URL: {ex}");
-            }
+                Debug.WriteLine($"Auto-update failed: {ex}");
+                ProgressText.Text = $"Update failed: {ex.Message}";
+                ProgressText.Foreground = (IBrush?)Application.Current?.FindResource("EveErrorRedBrush");
 
-            Close();
+                // Restore buttons after a delay so user can try again or dismiss
+                ButtonPanel.IsVisible = true;
+            }
         }
 
         private void OnSkipClick(object? sender, RoutedEventArgs e)
@@ -147,6 +192,13 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
 
             Close();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _downloadCts?.Cancel();
+            _downloadCts?.Dispose();
+            base.OnClosed(e);
         }
     }
 }

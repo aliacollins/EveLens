@@ -29,8 +29,18 @@
         <Border DockPanel.Dock="Top" Height="1"
                 Background="{StaticResource EveBorderBrush}" Margin="0,0,0,12" />
 
+        <!-- Progress bar (hidden until download starts) -->
+        <StackPanel x:Name="ProgressPanel" DockPanel.Dock="Bottom" Spacing="4"
+                    Margin="0,8,0,0" IsVisible="False">
+            <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="100" Value="0"
+                         Height="6" CornerRadius="3"
+                         Foreground="{StaticResource EveAccentPrimaryBrush}" />
+            <TextBlock x:Name="ProgressText" Text="Downloading..."
+                       FontSize="10" Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </StackPanel>
+
         <!-- Buttons -->
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+        <StackPanel x:Name="ButtonPanel" DockPanel.Dock="Bottom" Orientation="Horizontal"
                     HorizontalAlignment="Right" Spacing="6" Margin="0,12,0,0">
             <Button x:Name="SkipBtn" Content="Skip This Version"
                     FontSize="11" Padding="10,4" CornerRadius="12"

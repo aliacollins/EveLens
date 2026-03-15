@@ -5,6 +5,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using EveLens.Common.ViewModels;
 
 namespace EveLens.Avalonia.ViewModels
 {
@@ -12,7 +13,7 @@ namespace EveLens.Avalonia.ViewModels
     /// Avalonia display wrapper for a group of mail display entries.
     /// Contains zero business logic per Law 16.
     /// </summary>
-    public sealed class MailGroupEntry : INotifyPropertyChanged
+    public sealed class MailGroupEntry : INotifyPropertyChanged, ICollapsibleGroup
     {
         private bool _isExpanded = true;
 

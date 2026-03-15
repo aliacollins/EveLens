@@ -55,6 +55,9 @@ namespace EveLens.Common.Collections.Global
         {
             notification.ThrowIfNull(nameof(notification));
 
+            // Capture existing description before replacement to detect unchanged state
+            string? previousDescription = null;
+
             switch (notification.Behaviour)
             {
             case NotificationBehaviour.Cohabitate:
@@ -62,27 +65,39 @@ namespace EveLens.Common.Collections.Global
                 break;
 
             case NotificationBehaviour.Overwrite:
-                // Replace the previous notifications with the same invalidation key
+                // Capture what we're about to replace
+                previousDescription = Items
+                    .FirstOrDefault(x => x.InvalidationKey == notification.InvalidationKey)
+                    ?.Description;
                 InvalidateCore(notification.InvalidationKey);
                 Items.Add(notification);
                 break;
 
             case NotificationBehaviour.Merge:
-                // Merge the notifications with the same key
                 long key = notification.InvalidationKey;
-                foreach (NotificationEventArgs other in Items.Where(x => x.InvalidationKey == key))
+
+                // Capture what we're about to replace (post-merge description)
+                var existing = Items.Where(x => x.InvalidationKey == key).ToList();
+                if (existing.Count > 0)
+                    previousDescription = existing[0].Description;
+
+                foreach (NotificationEventArgs other in existing)
                 {
                     notification.Append(other);
                 }
 
-                // Replace the previous notifications with the same invalidation key
                 InvalidateCore(key);
                 Items.Add(notification);
                 break;
             }
 
             AppServices.TraceService?.Trace(notification.ToString());
-            AppServices.EventAggregator?.Publish(new CommonEvents.NotificationSentEvent(notification));
+
+            // Only publish to activity log if the notification content actually changed.
+            // Prevents state-based notifications (PI idle, market orders) from spamming
+            // the activity log on every fetch cycle when nothing has changed.
+            if (previousDescription == null || previousDescription != notification.Description)
+                AppServices.EventAggregator?.Publish(new CommonEvents.NotificationSentEvent(notification));
         }
 
         /// <summary>

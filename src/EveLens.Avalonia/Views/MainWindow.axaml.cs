@@ -102,7 +102,7 @@ namespace EveLens.Avalonia.Views
             // Wire notification center
             _notificationVm = new NotificationCenterViewModel();
             MarkReadBtn.Click += (_, _) => { _notificationVm.MarkAllRead(); RefreshNotificationUI(); };
-            ClearAllBtn.Click += (_, _) => { _notificationVm.ClearAll(); RefreshNotificationUI(); };
+            ClearAllBtn.Click += (_, _) => { _notificationVm.ClearAll(); RefreshNotificationUI(); NotificationBellBtn.Flyout?.Hide(); };
             _notificationVm.PropertyChanged += (_, _) =>
                 Dispatcher.UIThread.Post(RefreshNotificationUI);
             RefreshNotificationUI();
@@ -126,6 +126,9 @@ namespace EveLens.Avalonia.Views
             };
             _privacyModeSub = AppServices.EventAggregator?.Subscribe<Common.Events.PrivacyModeChangedEvent>(
                 _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
+
+            // Clean up backup files from previous auto-update
+            AutoUpdateService.CleanupPreviousUpdate();
 
             // Enable update checking
             Common.UpdateManager.Enabled = Common.Settings.Updates.CheckEveLensVersion;
