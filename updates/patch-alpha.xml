@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-15</date>
+      <version>1.0.0.30</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.30
+
+Projection Overlay Engine: 43% memory reduction, virtualized rendering, collapse persistence]]></message>
+    </release>
+    <release>
+      <date>2026-03-15</date>
       <version>1.0.0.29</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Create settings.json on first launch — fixes fresh install persistence on all 
       <message><![CDATA[EveLens 1.0.0-alpha.21
 
 Purge ALL System.Drawing from settings types — fixes serialization crash on Linux/macOS]]></message>
-    </release>
-    <release>
-      <date>2026-02-27</date>
-      <version>1.0.0.20</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.20
-
-Fix settings crash on Linux/macOS: System.Drawing.Common not supported, use raw ARGB values]]></message>
     </release>
   </releases>
   <datafiles>
