@@ -23,7 +23,7 @@
                 </ItemsControl.Styles>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical" />
+                        <VirtualizingStackPanel />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>

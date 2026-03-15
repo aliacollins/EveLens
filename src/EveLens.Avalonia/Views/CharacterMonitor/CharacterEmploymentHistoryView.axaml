@@ -54,7 +54,7 @@
                 <ItemsControl x:Name="TimelineItems" Grid.Row="0">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="0" />
+                            <VirtualizingStackPanel Orientation="Horizontal" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -108,7 +108,7 @@
                 <ItemsControl x:Name="DateLabels" Grid.Row="2">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="0" />
+                            <VirtualizingStackPanel Orientation="Horizontal" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>

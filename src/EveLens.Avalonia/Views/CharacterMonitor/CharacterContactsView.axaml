@@ -25,7 +25,7 @@
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
                 <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
-                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File &#x2192; Manage Characters to enable this feature." />
             </StackPanel>
         </Border>
 
@@ -80,9 +80,9 @@
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
             </Border>
 
-            <!-- Grouped contacts (same Expander pattern as Standings) -->
+            <!-- Virtualized flat tree with VirtualizingStackPanel -->
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                <ItemsControl x:Name="ContactGroupsList" Margin="0" HorizontalAlignment="Stretch">
+                <ItemsControl x:Name="ContactItemsControl" HorizontalAlignment="Stretch">
                     <ItemsControl.Styles>
                         <Style Selector="ItemsControl > ContentPresenter">
                             <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -90,71 +90,9 @@
                     </ItemsControl.Styles>
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical" />
+                            <VirtualizingStackPanel Orientation="Vertical" />
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <Border Classes="group-header" HorizontalAlignment="Stretch"
-                                        PointerPressed="OnGroupHeaderClicked">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
-                                        <TextBlock Grid.Column="0" Text="{Binding Chevron}"
-                                                   FontSize="11" Width="16"
-                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                   FontSize="11" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="{Binding CountText}"
-                                                   FontSize="10"
-                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                   VerticalAlignment="Center" Margin="8,0" />
-                                    </Grid>
-                                </Border>
-
-                                <ItemsControl ItemsSource="{Binding Contacts}"
-                                              HorizontalAlignment="Stretch"
-                                              IsVisible="{Binding IsExpanded}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Classes="item-row" Padding="20,4,10,4"
-                                                    Background="{StaticResource EveBackgroundDarkBrush}"
-                                                    BorderBrush="{StaticResource EveBorderBrush}"
-                                                    BorderThickness="0,0,0,0.5"
-                                                    HorizontalAlignment="Stretch">
-                                                <Grid ColumnDefinitions="*,Auto,Auto"
-                                                      HorizontalAlignment="Stretch">
-                                                    <TextBlock Grid.Column="0" Text="{Binding Name}"
-                                                               FontSize="11"
-                                                               Foreground="{Binding NameBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding StandingText}"
-                                                               FontSize="11" Foreground="{Binding StandingBrush}"
-                                                               VerticalAlignment="Center"
-                                                               MinWidth="50" TextAlignment="Right"
-                                                               Margin="8,0" />
-                                                    <TextBlock Grid.Column="2" Text="{Binding WatchlistText}"
-                                                               FontSize="11"
-                                                               Foreground="{StaticResource EveWarningYellowBrush}"
-                                                               VerticalAlignment="Center"
-                                                               MinWidth="20" TextAlignment="Center" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
         </DockPanel>

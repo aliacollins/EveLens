@@ -46,6 +46,7 @@ namespace EveLens.Avalonia.Views
         private readonly Dictionary<long, CharacterMonitorView> _cachedViews = new();
         private CharacterOverviewView? _overviewView;
         private Character? _selectedCharacter;
+        private int _charSwitchCount;
         private Button? _selectedSlotButton;
         private bool _isPanning;
         private Point _panStart;
@@ -302,6 +303,15 @@ namespace EveLens.Avalonia.Views
                 }
 
                 MainContent.Content = monitorView;
+
+                // Hint GC to collect after switching through several characters.
+                // On high-memory machines, .NET GC won't collect unless nudged.
+                _charSwitchCount++;
+                if (_charSwitchCount >= 6)
+                {
+                    _charSwitchCount = 0;
+                    GC.Collect(2, GCCollectionMode.Optimized, false, true);
+                }
             }
 
             // Update plan menu state
