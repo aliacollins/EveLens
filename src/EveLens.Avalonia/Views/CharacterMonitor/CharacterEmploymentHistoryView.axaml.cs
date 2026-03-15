@@ -56,6 +56,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
+            _viewModel?.Dispose();
+            _viewModel = null;
             TimelineScroller.PointerPressed -= OnScrollerPointerPressed;
             TimelineScroller.PointerMoved -= OnScrollerPointerMoved;
             TimelineScroller.PointerReleased -= OnScrollerPointerReleased;
@@ -141,7 +143,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                             corpImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                         if (converted is Bitmap bitmap)
+                        {
+                            (img.Source as IDisposable)?.Dispose();
                             img.Source = bitmap;
+                        }
                     }
                 }
             }

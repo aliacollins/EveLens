@@ -714,6 +714,10 @@ namespace EveLens.Common.Services
                 if (esiKey == null || EsiErrors.IsErrorCountExceeded)
                     return new FetchOutcome { StatusCode = 0 };
 
+                // Token refresh in-flight — skip this cycle, scheduler retries in ~3s
+                if (string.IsNullOrEmpty(esiKey.AccessToken) && esiKey.IsTokenRefreshing)
+                    return new FetchOutcome { StatusCode = -1 };
+
                 // Set monitor to Updating for UI throbber
                 AppServices.Dispatcher?.Post(() => monitor?.SetExternalStatus(true));
 
@@ -788,6 +792,10 @@ namespace EveLens.Common.Services
                 var esiKey = target.Identity.FindAPIKeyWithAccess(method);
                 if (esiKey == null || EsiErrors.IsErrorCountExceeded)
                     return new FetchOutcome { StatusCode = 0 };
+
+                // Token refresh in-flight — skip this cycle, scheduler retries in ~3s
+                if (string.IsNullOrEmpty(esiKey.AccessToken) && esiKey.IsTokenRefreshing)
+                    return new FetchOutcome { StatusCode = -1 };
 
                 // Set monitor to Updating for UI throbber
                 AppServices.Dispatcher?.Post(() => monitor?.SetExternalStatus(true));
@@ -1524,7 +1532,8 @@ namespace EveLens.Common.Services
             // This is only invoked where the character has already been checked against null
             ESIKey esiKey = target.Identity.FindAPIKeyWithAccess(ESIAPICharacterMethods.
                 Attributes);
-            if (esiKey != null && !EsiErrors.IsErrorCountExceeded)
+            if (esiKey != null && !EsiErrors.IsErrorCountExceeded &&
+                !(string.IsNullOrEmpty(esiKey.AccessToken) && esiKey.IsTokenRefreshing))
             {
                 var result = await AppServices.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPIAttributes>(
                     ESIAPICharacterMethods.Attributes,
@@ -1580,7 +1589,8 @@ namespace EveLens.Common.Services
             {
                 var esiKey = target.Identity.FindAPIKeyWithAccess(ESIAPICharacterMethods.
                     MarketOrders);
-                if (esiKey != null && !EsiErrors.IsErrorCountExceeded)
+                if (esiKey != null && !EsiErrors.IsErrorCountExceeded &&
+                    !(string.IsNullOrEmpty(esiKey.AccessToken) && esiKey.IsTokenRefreshing))
                 {
                     var historyResult = await AppServices.APIProviders.CurrentProvider.QueryEsiAsync<EsiAPIMarketOrders>(
                         ESIAPICharacterMethods.MarketOrdersHistory,

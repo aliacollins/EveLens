@@ -49,6 +49,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+            _viewModel?.Dispose();
+            _viewModel = null;
         }
 
         private void LoadData()

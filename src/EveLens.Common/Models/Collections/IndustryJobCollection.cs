@@ -6,6 +6,7 @@
 using EveLens.Common.Collections;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Enumerations.CCPAPI;
+using EveLens.Common.Extensions;
 using EveLens.Common.Interfaces;
 using EveLens.Common.Serialization.Esi;
 using EveLens.Common.Serialization.Settings;
@@ -89,7 +90,7 @@ namespace EveLens.Common.Models.Collections
             // Import the jobs from the API
             foreach (EsiJobListItem job in src)
             {
-                DateTime limit = job.EndDate.AddDays(IndustryJob.MaxEndedDays);
+                DateTime limit = job.EndDate.SafeAddDays(IndustryJob.MaxEndedDays);
                 // For jobs which are not yet ended, or are active and not ready (active is
                 // defined as having an empty completion date)
                 if (limit >= now || (job.CompletedDate == DateTime.MinValue && job.Status !=

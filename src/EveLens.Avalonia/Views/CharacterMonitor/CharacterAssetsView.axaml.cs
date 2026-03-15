@@ -61,6 +61,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+            _viewModel?.Dispose();
+            _viewModel = null;
         }
 
         private void LoadData()
@@ -116,12 +118,35 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void BuildTree()
         {
             if (_viewModel == null) return;
-            AssetTree.Children.Clear();
+            CleanupTree();
 
             if (_viewModel.IsHierarchical)
                 BuildHierarchicalTree();
             else
                 BuildFlatTree();
+        }
+
+        private void CleanupTree()
+        {
+            foreach (var child in AssetTree.Children)
+            {
+                if (child is Border header)
+                    header.PointerPressed -= OnGroupHeaderClicked;
+                if (child is StackPanel panel)
+                    CleanupPanel(panel);
+            }
+            AssetTree.Children.Clear();
+        }
+
+        private void CleanupPanel(StackPanel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                if (child is Border header)
+                    header.PointerPressed -= OnGroupHeaderClicked;
+                if (child is StackPanel nested)
+                    CleanupPanel(nested);
+            }
         }
 
         private void BuildHierarchicalTree()

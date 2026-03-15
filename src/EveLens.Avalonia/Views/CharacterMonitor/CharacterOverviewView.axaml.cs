@@ -41,6 +41,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private readonly Dictionary<long, decimal> _prevBalances = new();
         private readonly Dictionary<long, long> _prevSkillPoints = new();
 
+        // Track animation timers so we can stop them on detach/rebuild
+        private readonly List<DispatcherTimer> _animationTimers = new();
+
         // Toggle for fetching dot pulse (alternates each second tick)
         private bool _fetchingDotBright;
 
@@ -74,6 +77,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
+            foreach (var t in _animationTimers)
+                t.Stop();
+            _animationTimers.Clear();
+
             _fetchCompletedSub?.Dispose();
             _fetchCompletedSub = null;
             _secondTickSub?.Dispose();
@@ -100,6 +107,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             try
             {
+                foreach (var t in _animationTimers)
+                    t.Stop();
+                _animationTimers.Clear();
+
                 OverviewPanel.Children.Clear();
                 _prevBalances.Clear();
                 _prevSkillPoints.Clear();
@@ -471,8 +482,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     timer.Tick += (_, _) =>
                     {
                         timer.Stop();
+                        _animationTimers.Remove(timer);
                         btn.Opacity = 1;
                     };
+                    _animationTimers.Add(timer);
                     timer.Start();
                 }
                 else
@@ -685,8 +698,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     timer.Tick += (_, _) =>
                     {
                         timer.Stop();
+                        _animationTimers.Remove(timer);
                         capturedWrap.Children.Remove(capturedCard);
                     };
+                    _animationTimers.Add(timer);
                     timer.Start();
 
                     if (card.DataContext is Character removed)
@@ -839,7 +854,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                             var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                                 drawingImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                             if (converted is Bitmap bitmap)
+                            {
+                                (img.Source as IDisposable)?.Dispose();
                                 img.Source = bitmap;
+                            }
                         }
                     }
                     catch { /* portrait load failure is non-fatal */ }
@@ -869,7 +887,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                             var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                                 drawingImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                             if (converted is Bitmap bitmap)
+                            {
+                                (img.Source as IDisposable)?.Dispose();
                                 img.Source = bitmap;
+                            }
                         }
                     }
                     catch { /* portrait load failure is non-fatal */ }

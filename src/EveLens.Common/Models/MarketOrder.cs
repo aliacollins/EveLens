@@ -160,7 +160,7 @@ namespace EveLens.Common.Models
         /// <summary>
         /// Gets the estimated expiration time.
         /// </summary>
-        public DateTime Expiration => Issued.AddDays(Duration);
+        public DateTime Expiration => Issued.SafeAddDays(Duration);
 
         /// <summary>
         /// Gets the last state change.

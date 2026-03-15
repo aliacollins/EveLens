@@ -474,7 +474,19 @@ namespace EveLens.Common.Models
             }
 
             var industryJobs = await cache.LoadAsync<Serialization.Esi.EsiAPIIndustryJobs>(id, "industry_jobs");
-            if (industryJobs != null) CharacterIndustryJobs.Import(industryJobs, Enumerations.IssuedFor.Character);
+            if (industryJobs != null)
+            {
+                try
+                {
+                    CharacterIndustryJobs.Import(industryJobs, Enumerations.IssuedFor.Character);
+                }
+                catch (Exception ex)
+                {
+                    AppServices.TraceService?.Trace(
+                        $"RestoreFromCacheAsync: {Name} — industry jobs import failed: {ex.Message}",
+                        printMethod: false);
+                }
+            }
 
             var fwStats = await cache.LoadAsync<Serialization.Esi.EsiAPIFactionalWarfareStats>(id, "factional_warfare");
             if (fwStats != null)

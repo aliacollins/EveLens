@@ -28,6 +28,7 @@ namespace EveLens.Avalonia
         private SettingsSaveSubscriber? _settingsSaveSubscriber;
         private TrayIcon? _trayIcon;
         private NativeMenu? _trayMenu;
+        private IDisposable? _traySettingsSub;
         /// <summary>
         /// Set to true before calling Shutdown() so the Closing handler
         /// skips minimize-to-tray logic and lets the window close.
@@ -223,7 +224,7 @@ namespace EveLens.Avalonia
                     CreateTrayIcon(desktop);
 
                 // When settings change, create or destroy tray icon dynamically
-                AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(_ =>
+                _traySettingsSub = AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(_ =>
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -283,6 +284,8 @@ namespace EveLens.Avalonia
 
         private void DestroyTrayIcon()
         {
+            _traySettingsSub?.Dispose();
+            _traySettingsSub = null;
             _trayIcon?.Dispose();
             _trayIcon = null;
             _trayMenu = null;

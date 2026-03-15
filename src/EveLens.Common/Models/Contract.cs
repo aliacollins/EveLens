@@ -316,7 +316,7 @@ namespace EveLens.Common.Models
         /// Gets true if contract completion is ovedue.
         /// </summary>
         public bool Overdue => Status == CCPContractStatus.Overdue || (Status ==
-            CCPContractStatus.InProgress && Accepted.AddDays(DaysToComplete) < DateTime.UtcNow);
+            CCPContractStatus.InProgress && Accepted.SafeAddDays(DaysToComplete) < DateTime.UtcNow);
 
         /// <summary>
         /// Gets true if contract naturally expired because of its duration.

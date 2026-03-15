@@ -314,7 +314,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                         drawingImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
                     if (converted is Bitmap bitmap)
+                    {
+                        (ShipImage.Source as IDisposable)?.Dispose();
                         ShipImage.Source = bitmap;
+                    }
                 }
             }
             catch

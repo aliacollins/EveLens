@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using EveLens.Common.Collections;
 using EveLens.Common.Enumerations.CCPAPI;
+using EveLens.Common.Extensions;
 using EveLens.Common.Serialization.Esi;
 using EveLens.Common.Serialization.Settings;
 
@@ -70,7 +71,7 @@ namespace EveLens.Common.Models.Collections
                     m_character.CharacterID)
                 {
                     // Exclude contracts which expired or were completed too long ago
-                    var limit = contract.DateExpired.AddDays(Contract.MaxEndedDays);
+                    var limit = contract.DateExpired.SafeAddDays(Contract.MaxEndedDays);
                     if ((limit >= now || status == CCPContractStatus.Outstanding.ToString()) &&
                             !Items.Any(x => x.TryImport(contract, endedContracts)))
                         // Exclude contracts which matched an existing contract
