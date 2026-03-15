@@ -5,13 +5,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.LogicalTree;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using EveLens.Common.Enumerations.CCPAPI;
@@ -24,11 +24,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterContactsView : UserControl
     {
+        private static readonly IBrush PositiveBrush = new SolidColorBrush(Color.Parse("#FF64B5F6"));
+        private static readonly IBrush NegativeBrush = new SolidColorBrush(Color.Parse("#FFCF6679"));
+        private static readonly IBrush NeutralBrush = new SolidColorBrush(Color.Parse("#FF707070"));
+
         private ContactsListViewModel? _viewModel;
+        private FlattenedTreeSource<object>? _treeSource;
+        private bool _isRebuilding;
+        private long _characterId;
 
         public CharacterContactsView()
         {
             InitializeComponent();
+            ContactItemsControl.ItemTemplate = CreateNodeTemplate();
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -46,6 +54,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
+
+            if (_treeSource != null)
+            {
+                _treeSource.Changed -= OnTreeChanged;
+                _treeSource = null;
+            }
+
             _viewModel?.Dispose();
             _viewModel = null;
         }
@@ -86,200 +101,262 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (scopePrompt != null) scopePrompt.IsVisible = false;
             if (content != null) content.IsVisible = true;
 
+            _characterId = character.CharacterID;
             _viewModel ??= new ContactsListViewModel();
             _viewModel.Character = character;
             _viewModel.Refresh();
-            RebuildDisplay();
+
+            bool firstLoad = _treeSource == null;
+            if (_treeSource == null)
+            {
+                _treeSource = new FlattenedTreeSource<object>();
+                _treeSource.Changed += OnTreeChanged;
+            }
+
+            // Load persisted expand state (contacts default to all expanded)
+            var expandState = CollapseStateHelper.LoadExpandState(_characterId, "Contacts");
+            _treeSource.SetExpandState(expandState);
+
+            _isRebuilding = true;
+            PopulateTree();
+            if (!CollapseStateHelper.HasSavedState(_characterId, "Contacts")) _treeSource.ExpandAll();
+            _isRebuilding = false;
+            UpdateItemsSource();
+            UpdateStatus();
         }
 
-        private void RebuildDisplay()
+        private void PopulateTree()
         {
-            if (_viewModel == null) return;
+            if (_viewModel == null || _treeSource == null) return;
 
             var grouped = _viewModel.GroupedItems;
-            var displayGroups = new List<ContactGroupDisplay>();
+            var groups = new List<GroupData<object>>();
 
             foreach (var g in grouped)
             {
                 string name = string.IsNullOrEmpty(g.Key) ? "All Contacts" : g.Key;
-                var contacts = g.Items.Select(c => new ContactDisplay(c)).ToList();
-                if (contacts.Count > 0)
-                    displayGroups.Add(new ContactGroupDisplay(name, contacts));
-            }
-
-            ContactGroupsList.ItemsSource = displayGroups;
-            StatusText.Text = $"Contacts: {_viewModel.TotalItemCount}";
-        }
-
-        private void OnGroupByChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            int idx = GroupByCombo.SelectedIndex;
-            if (idx < 0) return;
-            _viewModel.Grouping = (ContactGrouping)idx;
-            RebuildDisplay();
-        }
-
-        private void OnFilterChanged(object? sender, TextChangedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            _viewModel.TextFilter = FilterBox.Text?.Trim() ?? string.Empty;
-            ClearFilterBtn.IsVisible = !string.IsNullOrEmpty(_viewModel.TextFilter);
-            RebuildDisplay();
-        }
-
-        private void OnClearFilter(object? sender, RoutedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            FilterBox.Text = string.Empty;
-            _viewModel.TextFilter = string.Empty;
-            ClearFilterBtn.IsVisible = false;
-            RebuildDisplay();
-        }
-
-        private void OnCollapseAll(object? sender, RoutedEventArgs e)
-        {
-            if (ContactGroupsList.ItemsSource is IEnumerable<ContactGroupDisplay> groups)
-            {
-                foreach (var g in groups)
-                    g.IsExpanded = false;
-                ContactGroupsList.ItemsSource = null;
-                ContactGroupsList.ItemsSource = groups;
-            }
-        }
-
-        private void OnExpandAll(object? sender, RoutedEventArgs e)
-        {
-            if (ContactGroupsList.ItemsSource is IEnumerable<ContactGroupDisplay> groups)
-            {
-                foreach (var g in groups)
-                    g.IsExpanded = true;
-                ContactGroupsList.ItemsSource = null;
-                ContactGroupsList.ItemsSource = groups;
-            }
-        }
-
-        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
-        {
-            if (sender is Border border && border.DataContext is ContactGroupDisplay group)
-                group.IsExpanded = !group.IsExpanded;
-        }
-
-        private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
-        {
-            var parentView = this.FindAncestorOfType<CharacterMonitorView>();
-            var oc = parentView?.DataContext as ObservableCharacter;
-            oc?.EnableEndpoint(ESIAPICharacterMethods.ContactList);
-            LoadData();
-        }
-    }
-
-    internal sealed class ContactGroupDisplay : INotifyPropertyChanged
-    {
-        private bool _isExpanded = true;
-
-        public string Name { get; }
-        public string CountText { get; }
-        public List<ContactDisplay> Contacts { get; }
-
-        public bool IsExpanded
-        {
-            get => _isExpanded;
-            set
-            {
-                if (_isExpanded == value) return;
-                _isExpanded = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
-            }
-        }
-
-        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        public ContactGroupDisplay(string name, List<ContactDisplay> contacts)
-        {
-            Name = name;
-            Contacts = contacts;
-            CountText = $"{contacts.Count}";
-        }
-    }
-
-    internal sealed class ContactDisplay
-    {
-        private static readonly IBrush PositiveBrush = new SolidColorBrush(Color.Parse("#FF64B5F6"));
-        private static readonly IBrush NegativeBrush = new SolidColorBrush(Color.Parse("#FFCF6679"));
-        private static readonly IBrush NeutralBrush = new SolidColorBrush(Color.Parse("#FF707070"));
-
-        private readonly Contact _contact;
-
-        public ContactDisplay(Contact contact) { _contact = contact; }
-
-        public string Name => _contact.Name;
-        public string StandingText => _contact.Standing.ToString("+0.00;-0.00;0.00");
-        public string WatchlistText => _contact.IsInWatchlist ? "\u2605" : string.Empty;
-
-        public IBrush StandingBrush
-        {
-            get
-            {
-                if (_contact.Standing > 0) return PositiveBrush;
-                if (_contact.Standing < 0) return NegativeBrush;
-                return NeutralBrush;
-            }
-        }
-
-        public IBrush NameBrush
-        {
-            get
-            {
-                // Linear interpolation from standing -10 to +10 with softer color anchors
-                double standing = _contact.Standing;
-
-                // Clamp to -10/+10 range
-                if (standing <= -10)
-                    return new SolidColorBrush(Color.Parse("#FFAD3030")); // Muted dark red
-                if (standing >= 10)
-                    return new SolidColorBrush(Color.Parse("#FF2196F3")); // Brighter medium blue
-
-                // Map standing to color gradient
-                if (standing < -5)
+                if (g.Items.Count > 0)
                 {
-                    // -10 to -5: muted dark red to softer pink-red
-                    double t = (standing + 10) / 5.0; // 0 at -10, 1 at -5
-                    return InterpolateColor(
-                        Color.Parse("#FFAD3030"),  // -10: muted dark red
-                        Color.Parse("#FFCF6679"),  // -5: EVE error red (softer)
-                        t);
+                    groups.Add(new GroupData<object>(
+                        name,
+                        new ContactGroupInfo(name, g.Items.Count),
+                        g.Items.Cast<object>().ToList()));
                 }
-                else if (standing < 0)
-                {
-                    // -5 to 0: softer pink-red to neutral gray
-                    double t = (standing + 5) / 5.0; // 0 at -5, 1 at 0
-                    return InterpolateColor(
-                        Color.Parse("#FFCF6679"),  // -5: EVE error red
-                        Color.Parse("#FF8B949E"),  // 0: neutral light gray
-                        t);
-                }
-                else if (standing <= 5)
-                {
-                    // 0 to +5: neutral gray to EVE standing blue
-                    double t = standing / 5.0; // 0 at 0, 1 at +5
-                    return InterpolateColor(
-                        Color.Parse("#FF8B949E"),  // 0: neutral light gray
-                        Color.Parse("#FF64B5F6"),  // +5: EVE standing blue
-                        t);
-                }
-                else
-                {
-                    // +5 to +10: EVE standing blue to brighter medium blue
-                    double t = (standing - 5) / 5.0; // 0 at +5, 1 at +10
-                    return InterpolateColor(
-                        Color.Parse("#FF64B5F6"),  // +5: EVE standing blue
-                        Color.Parse("#FF2196F3"),  // +10: brighter medium blue
-                        t);
-                }
+            }
+
+            _treeSource.SetData(groups);
+        }
+
+        private void OnTreeChanged()
+        {
+            if (!_isRebuilding && _characterId != 0 && _treeSource != null)
+                CollapseStateHelper.SaveExpandState(_characterId, "Contacts", _treeSource.GetExpandState());
+
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                UpdateItemsSource();
+                UpdateStatus();
+            });
+        }
+
+        private void UpdateItemsSource()
+        {
+            if (ContactItemsControl.ItemsSource != _treeSource)
+                ContactItemsControl.ItemsSource = _treeSource;
+        }
+
+        private void UpdateStatus()
+        {
+            StatusText.Text = $"Contacts: {_viewModel?.TotalItemCount ?? 0}";
+        }
+
+        #region Template Builder
+
+        private FuncDataTemplate<FlatTreeNode<object>> CreateNodeTemplate()
+        {
+            return new FuncDataTemplate<FlatTreeNode<object>>((node, _) =>
+            {
+                if (node == null)
+                    return new Border();
+                if (node.IsGroup)
+                    return BuildGroupHeader(node);
+                return BuildContactRow(node);
+            });
+        }
+
+        private Control BuildGroupHeader(FlatTreeNode<object> node)
+        {
+            var groupInfo = node.Data as ContactGroupInfo;
+            string groupName = groupInfo?.Name ?? node.GroupKey;
+            string countText = groupInfo?.CountText ?? "";
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto"),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var chevronTb = new TextBlock
+            {
+                Text = node.Chevron,
+                FontSize = 11,
+                Width = 16,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            chevronTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(chevronTb, 0);
+            grid.Children.Add(chevronTb);
+
+            var nameTb = new TextBlock
+            {
+                Text = groupName,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            nameTb.Foreground = FindBrush("EveAccentPrimaryBrush");
+            Grid.SetColumn(nameTb, 1);
+            grid.Children.Add(nameTb);
+
+            var countTb = new TextBlock
+            {
+                Text = countText,
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0)
+            };
+            countTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(countTb, 2);
+            grid.Children.Add(countTb);
+
+            var border = new Border
+            {
+                Classes = { "group-header" },
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Child = grid
+            };
+
+            border.PointerPressed += OnGroupHeaderClicked;
+
+            return border;
+        }
+
+        private Control BuildContactRow(FlatTreeNode<object> node)
+        {
+            var contact = node.Data as Contact;
+            if (contact == null)
+                return new Border();
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,Auto"),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            // Contact name with standing-based color
+            var nameTb = new TextBlock
+            {
+                Text = contact.Name,
+                FontSize = 11,
+                Foreground = GetNameBrush(contact.Standing),
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            Grid.SetColumn(nameTb, 0);
+            grid.Children.Add(nameTb);
+
+            // Standing value
+            var standingTb = new TextBlock
+            {
+                Text = contact.Standing.ToString("+0.00;-0.00;0.00"),
+                FontSize = 11,
+                Foreground = GetStandingBrush(contact.Standing),
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 50,
+                TextAlignment = TextAlignment.Right,
+                Margin = new Thickness(8, 0)
+            };
+            Grid.SetColumn(standingTb, 1);
+            grid.Children.Add(standingTb);
+
+            // Watchlist star
+            var watchlistTb = new TextBlock
+            {
+                Text = contact.IsInWatchlist ? "\u2605" : string.Empty,
+                FontSize = 11,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 20,
+                TextAlignment = TextAlignment.Center
+            };
+            watchlistTb.Foreground = FindBrush("EveWarningYellowBrush");
+            Grid.SetColumn(watchlistTb, 2);
+            grid.Children.Add(watchlistTb);
+
+            return new Border
+            {
+                Classes = { "item-row" },
+                Padding = new Thickness(20, 4, 10, 4),
+                Background = FindBrush("EveBackgroundDarkBrush"),
+                BorderBrush = FindBrush("EveBorderBrush"),
+                BorderThickness = new Thickness(0, 0, 0, 0.5),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Child = grid
+            };
+        }
+
+        private IBrush? FindBrush(string key)
+        {
+            if (this.TryFindResource(key, this.ActualThemeVariant, out var resource) && resource is IBrush brush)
+                return brush;
+            return null;
+        }
+
+        private static IBrush GetStandingBrush(double standing)
+        {
+            if (standing > 0) return PositiveBrush;
+            if (standing < 0) return NegativeBrush;
+            return NeutralBrush;
+        }
+
+        private static IBrush GetNameBrush(double standing)
+        {
+            if (standing <= -10)
+                return new SolidColorBrush(Color.Parse("#FFAD3030"));
+            if (standing >= 10)
+                return new SolidColorBrush(Color.Parse("#FF2196F3"));
+
+            if (standing < -5)
+            {
+                double t = (standing + 10) / 5.0;
+                return InterpolateColor(
+                    Color.Parse("#FFAD3030"),
+                    Color.Parse("#FFCF6679"),
+                    t);
+            }
+            else if (standing < 0)
+            {
+                double t = (standing + 5) / 5.0;
+                return InterpolateColor(
+                    Color.Parse("#FFCF6679"),
+                    Color.Parse("#FF8B949E"),
+                    t);
+            }
+            else if (standing <= 5)
+            {
+                double t = standing / 5.0;
+                return InterpolateColor(
+                    Color.Parse("#FF8B949E"),
+                    Color.Parse("#FF64B5F6"),
+                    t);
+            }
+            else
+            {
+                double t = (standing - 5) / 5.0;
+                return InterpolateColor(
+                    Color.Parse("#FF64B5F6"),
+                    Color.Parse("#FF2196F3"),
+                    t);
             }
         }
 
@@ -289,6 +366,78 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             byte g = (byte)(c1.G + (c2.G - c1.G) * t);
             byte b = (byte)(c1.B + (c2.B - c1.B) * t);
             return new SolidColorBrush(Color.FromRgb(r, g, b));
+        }
+
+        #endregion
+
+        #region Toolbar Handlers
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (_treeSource == null || sender is not Control control) return;
+            if (control.DataContext is FlatTreeNode<object> node && node.IsGroup)
+            {
+                int index = _treeSource.IndexOfGroup(node.GroupKey);
+                if (index >= 0) _treeSource.ToggleExpand(index);
+            }
+        }
+
+        private void OnCollapseAll(object? sender, RoutedEventArgs e) => _treeSource?.CollapseAll();
+
+        private void OnExpandAll(object? sender, RoutedEventArgs e) => _treeSource?.ExpandAll();
+
+        private void OnGroupByChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_viewModel == null) return;
+            int idx = GroupByCombo.SelectedIndex;
+            if (idx < 0) return;
+            _viewModel.Grouping = (ContactGrouping)idx;
+            PopulateTree();
+            UpdateItemsSource();
+            UpdateStatus();
+        }
+
+        private void OnFilterChanged(object? sender, TextChangedEventArgs e)
+        {
+            if (_viewModel == null) return;
+            _viewModel.TextFilter = FilterBox.Text?.Trim() ?? string.Empty;
+            ClearFilterBtn.IsVisible = !string.IsNullOrEmpty(_viewModel.TextFilter);
+            PopulateTree();
+            UpdateItemsSource();
+            UpdateStatus();
+        }
+
+        private void OnClearFilter(object? sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+            FilterBox.Text = string.Empty;
+            _viewModel.TextFilter = string.Empty;
+            ClearFilterBtn.IsVisible = false;
+            PopulateTree();
+            UpdateItemsSource();
+            UpdateStatus();
+        }
+
+        private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
+        {
+            var parentView = this.FindAncestorOfType<CharacterMonitorView>();
+            var oc = parentView?.DataContext as ObservableCharacter;
+            oc?.EnableEndpoint(ESIAPICharacterMethods.ContactList);
+            LoadData();
+        }
+
+        #endregion
+    }
+
+    internal sealed class ContactGroupInfo
+    {
+        public string Name { get; }
+        public string CountText { get; }
+
+        public ContactGroupInfo(string name, int count)
+        {
+            Name = name;
+            CountText = $"{count}";
         }
     }
 }

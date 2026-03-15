@@ -4,31 +4,38 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
-using EveLens.Common.Models;
-using EveLens.Common.ViewModels;
 using EveLens.Common.Events;
+using EveLens.Common.Models;
 using EveLens.Common.Services;
+using EveLens.Common.ViewModels;
 
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterSkillsView : UserControl
     {
+        private static readonly IBrush FilledBlock = new SolidColorBrush(Color.Parse("#FFE6A817"));
+        private static readonly IBrush EmptyBlock = new SolidColorBrush(Color.Parse("#FF2A2A4A"));
+        private static readonly IBrush TrainingBlock = new SolidColorBrush(Color.Parse("#FF81C784"));
+        private static readonly IBrush TrainedNameColor = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
+        private static readonly IBrush UntrainedNameColor = new SolidColorBrush(Color.Parse("#FF505060"));
+        private static readonly IBrush TrainingNameColor = new SolidColorBrush(Color.Parse("#FF81C784"));
+
         private IDisposable? _dataUpdatedSub;
         private long _characterId;
-        private SkillBrowserViewModel? _viewModel;
+        private SkillOverlayViewModel? _viewModel;
 
         public CharacterSkillsView()
         {
             InitializeComponent();
+            SkillItemsControl.ItemTemplate = CreateNodeTemplate();
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -49,8 +56,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
-            _viewModel?.Dispose();
-            _viewModel = null;
+
+            if (_viewModel != null)
+            {
+                _viewModel.TreeSource.Changed -= OnTreeChanged;
+                _viewModel.Dispose();
+                _viewModel = null;
+            }
         }
 
         private void LoadData()
@@ -68,17 +80,20 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (character == null) return;
 
             _characterId = character.CharacterID;
-            _viewModel ??= new SkillBrowserViewModel();
+
+            if (_viewModel == null)
+            {
+                _viewModel = new SkillOverlayViewModel();
+                _viewModel.TreeSource.Changed += OnTreeChanged;
+            }
+
             if (_viewModel.Character != character)
                 _viewModel.Character = character;
             else
                 _viewModel.ForceRefresh();
 
-            SkillGroupsList.ItemsSource = _viewModel.VisibleGroups
-                .Select(g => new SkillGroupDisplay(g))
-                .ToList();
-
-            StatusText.Text = $"Trained: {_viewModel.TotalTrained} of {_viewModel.TotalSkills} skills  |  Total SP: {_viewModel.TotalSP:N0}";
+            UpdateItemsSource();
+            UpdateStatus();
         }
 
         private void OnDataUpdated(CharacterUpdatedEvent evt)
@@ -87,89 +102,238 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
 
-        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        private void OnTreeChanged()
         {
-            if (sender is not Border border) return;
-            if (border.DataContext is SkillGroupDisplay group)
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
             {
-                group.IsExpanded = !group.IsExpanded;
-            }
+                UpdateItemsSource();
+                UpdateStatus();
+            });
         }
 
-        private void OnToggleShowAll(object? sender, RoutedEventArgs e)
+        private void UpdateItemsSource()
         {
-            if (_viewModel == null) return;
-            _viewModel.ShowAll = ShowAllToggle.IsChecked == true;
-            ShowAllToggle.Content = _viewModel.ShowAll ? "All Skills" : "Trained Only";
-            LoadData();
+            // Assign once — FlattenedTreeSource fires INotifyCollectionChanged
+            // for granular Add/Remove on expand/collapse, Reset on full rebuild.
+            if (SkillItemsControl.ItemsSource != _viewModel?.TreeSource)
+                SkillItemsControl.ItemsSource = _viewModel?.TreeSource;
         }
 
-        private void OnFilterChanged(object? sender, TextChangedEventArgs e)
+        private void UpdateStatus()
         {
-            if (_viewModel == null) return;
-            _viewModel.Filter = FilterBox.Text?.Trim() ?? string.Empty;
-            ClearFilterBtn.IsVisible = !string.IsNullOrEmpty(_viewModel.Filter);
-            LoadData();
+            StatusText.Text = _viewModel?.StatusText ?? "";
         }
 
-        private void OnClearFilter(object? sender, RoutedEventArgs e)
+        #region Template Builder
+
+        private FuncDataTemplate<FlatTreeNode<object>> CreateNodeTemplate()
         {
-            if (_viewModel == null) return;
-            FilterBox.Text = string.Empty;
-            _viewModel.Filter = string.Empty;
-            ClearFilterBtn.IsVisible = false;
-            LoadData();
-        }
-
-        private void OnCollapseAll(object? sender, RoutedEventArgs e)
-        {
-            if (SkillGroupsList.ItemsSource is not IEnumerable<SkillGroupDisplay> groups) return;
-            foreach (var g in groups) g.IsExpanded = false;
-        }
-
-        private void OnExpandAll(object? sender, RoutedEventArgs e)
-        {
-            if (SkillGroupsList.ItemsSource is not IEnumerable<SkillGroupDisplay> groups) return;
-            foreach (var g in groups) g.IsExpanded = true;
-        }
-    }
-
-    /// <summary>
-    /// Display model for a skill group — compact chevron header with INPC for expand/collapse.
-    /// </summary>
-    internal sealed class SkillGroupDisplay : INotifyPropertyChanged
-    {
-        private bool _isExpanded;
-
-        public string Name { get; }
-        public string CountText { get; }
-        public string SPText { get; }
-        public List<SkillDisplay> Skills { get; }
-
-        public bool IsExpanded
-        {
-            get => _isExpanded;
-            set
+            return new FuncDataTemplate<FlatTreeNode<object>>((node, _) =>
             {
-                if (_isExpanded == value) return;
-                _isExpanded = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Chevron)));
-            }
+                if (node == null)
+                    return new Border();
+                if (node.IsGroup)
+                    return BuildGroupHeader(node);
+                return BuildSkillRow(node);
+            });
         }
 
-        /// <summary>▸ collapsed, ▾ expanded — same as plan editor sidebar.</summary>
-        public string Chevron => _isExpanded ? "\u25BE" : "\u25B8";
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        public SkillGroupDisplay(SkillBrowserGroupEntry group)
+        private Control BuildGroupHeader(FlatTreeNode<object> node)
         {
-            Name = group.Name;
-            CountText = $"{group.TrainedCount} / {group.TotalCount}";
-            SPText = FormatSP(group.TrainedSP);
-            _isExpanded = group.IsExpanded;
-            Skills = group.VisibleSkills.Select(s => new SkillDisplay(s)).ToList();
+            var groupTemplate = node.Data as SkillGroupTemplate;
+            var groupName = groupTemplate?.Name ?? node.GroupKey;
+
+            // Compute group stats from the overlay
+            string countText = "";
+            string spText = "";
+            if (groupTemplate != null && _viewModel != null)
+            {
+                int trained = 0;
+                long sp = 0;
+                foreach (var skill in groupTemplate.Skills)
+                {
+                    var state = _viewModel.GetSkillState(skill.SkillId);
+                    if (state.IsKnown)
+                    {
+                        trained++;
+                        sp += state.SkillPoints;
+                    }
+                }
+                countText = $"{trained} / {groupTemplate.Skills.Count}";
+                spText = FormatSP(sp);
+            }
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto"),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            var chevronTb = new TextBlock
+            {
+                Text = node.Chevron,
+                FontSize = 11,
+                Width = 16,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            chevronTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(chevronTb, 0);
+            grid.Children.Add(chevronTb);
+
+            var nameTb = new TextBlock
+            {
+                Text = groupName,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            nameTb.Foreground = FindBrush("EveAccentPrimaryBrush");
+            Grid.SetColumn(nameTb, 1);
+            grid.Children.Add(nameTb);
+
+            var countTb = new TextBlock
+            {
+                Text = countText,
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0)
+            };
+            countTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(countTb, 2);
+            grid.Children.Add(countTb);
+
+            var spTb = new TextBlock
+            {
+                Text = spText,
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0)
+            };
+            spTb.Foreground = FindBrush("EveTextDisabledBrush");
+            Grid.SetColumn(spTb, 3);
+            grid.Children.Add(spTb);
+
+            var border = new Border
+            {
+                Classes = { "group-header" },
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Child = grid
+            };
+
+            border.PointerPressed += OnGroupHeaderClicked;
+
+            return border;
+        }
+
+        private Control BuildSkillRow(FlatTreeNode<object> node)
+        {
+            var skillTemplate = node.Data as SkillEntryTemplate;
+            if (skillTemplate == null)
+                return new Border();
+
+            var state = _viewModel?.GetSkillState(skillTemplate.SkillId) ?? default;
+
+            // Name brush
+            IBrush nameBrush = state.IsTraining ? TrainingNameColor
+                : state.IsKnown ? TrainedNameColor : UntrainedNameColor;
+
+            // SP text
+            string spText = state.IsKnown ? $"{state.SkillPoints:N0} SP" : "";
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,Auto,Auto"),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+
+            // Skill name
+            var nameTb = new TextBlock
+            {
+                Text = skillTemplate.Name,
+                FontSize = 11,
+                Foreground = nameBrush,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            Grid.SetColumn(nameTb, 0);
+            grid.Children.Add(nameTb);
+
+            // Level blocks (5 blocks)
+            var blocksPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 2,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0)
+            };
+            for (int lvl = 1; lvl <= 5; lvl++)
+            {
+                blocksPanel.Children.Add(new Border
+                {
+                    Width = 8,
+                    Height = 10,
+                    CornerRadius = new CornerRadius(1.5),
+                    Background = BlockColor(lvl, state)
+                });
+            }
+            Grid.SetColumn(blocksPanel, 1);
+            grid.Children.Add(blocksPanel);
+
+            // Rank text
+            var rankTb = new TextBlock
+            {
+                Text = skillTemplate.RankText,
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 55,
+                TextAlignment = TextAlignment.Right,
+                Margin = new Thickness(4, 0)
+            };
+            rankTb.Foreground = FindBrush("EveTextDisabledBrush");
+            Grid.SetColumn(rankTb, 2);
+            grid.Children.Add(rankTb);
+
+            // SP text
+            var spTb = new TextBlock
+            {
+                Text = spText,
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                MinWidth = 75,
+                TextAlignment = TextAlignment.Right,
+                Margin = new Thickness(4, 0, 0, 0)
+            };
+            spTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(spTb, 3);
+            grid.Children.Add(spTb);
+
+            var border = new Border
+            {
+                Classes = { "item-row" },
+                Padding = new Thickness(24, 3, 8, 3),
+                Background = FindBrush("EveBackgroundDarkBrush"),
+                BorderBrush = FindBrush("EveBorderBrush"),
+                BorderThickness = new Thickness(0, 0, 0, 0.5),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Child = grid
+            };
+
+            return border;
+        }
+
+        private IBrush? FindBrush(string key)
+        {
+            if (this.TryFindResource(key, this.ActualThemeVariant, out var resource) && resource is IBrush brush)
+                return brush;
+            return null;
+        }
+
+        private static IBrush BlockColor(int lvl, SkillState state)
+        {
+            if (lvl <= state.Level) return FilledBlock;
+            if (state.IsTraining && lvl == state.Level + 1) return TrainingBlock;
+            return EmptyBlock;
         }
 
         private static string FormatSP(long sp)
@@ -179,49 +343,50 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (sp > 0) return $"{sp:N0} SP";
             return "";
         }
-    }
 
-    /// <summary>
-    /// Display model for a single skill row.
-    /// </summary>
-    internal sealed class SkillDisplay
-    {
-        private static readonly IBrush FilledBlock = new SolidColorBrush(Color.Parse("#FFE6A817"));
-        private static readonly IBrush EmptyBlock = new SolidColorBrush(Color.Parse("#FF2A2A4A"));
-        private static readonly IBrush TrainingBlock = new SolidColorBrush(Color.Parse("#FF81C784"));
-        private static readonly IBrush TrainedColor = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
-        private static readonly IBrush UntrainedColor = new SolidColorBrush(Color.Parse("#FF505060"));
-        private static readonly IBrush TrainingColor = new SolidColorBrush(Color.Parse("#FF81C784"));
+        #endregion
 
-        public string Name { get; }
-        public string RankText { get; }
-        public string SPText { get; }
-        public IBrush NameBrush { get; }
-        public IBrush Block1 { get; }
-        public IBrush Block2 { get; }
-        public IBrush Block3 { get; }
-        public IBrush Block4 { get; }
-        public IBrush Block5 { get; }
+        #region Toolbar Handlers
 
-        public SkillDisplay(SkillBrowserSkillEntry skill)
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
         {
-            Name = skill.Name;
-            RankText = skill.RankText;
-            SPText = skill.SPText;
-            NameBrush = skill.IsTraining ? TrainingColor
-                : skill.IsKnown ? TrainedColor : UntrainedColor;
-            Block1 = BlockColor(1, skill);
-            Block2 = BlockColor(2, skill);
-            Block3 = BlockColor(3, skill);
-            Block4 = BlockColor(4, skill);
-            Block5 = BlockColor(5, skill);
+            if (_viewModel == null || sender is not Control control) return;
+            if (control.DataContext is FlatTreeNode<object> node && node.IsGroup)
+            {
+                int index = _viewModel.TreeSource.IndexOfGroup(node.GroupKey);
+                if (index >= 0) _viewModel.TreeSource.ToggleExpand(index);
+            }
         }
 
-        private static IBrush BlockColor(int lvl, SkillBrowserSkillEntry s)
+        private void OnCollapseAll(object? sender, RoutedEventArgs e) => _viewModel?.CollapseAll();
+
+        private void OnExpandAll(object? sender, RoutedEventArgs e) => _viewModel?.ExpandAll();
+
+        private void OnToggleShowAll(object? sender, RoutedEventArgs e)
         {
-            if (lvl <= s.Level) return FilledBlock;
-            if (s.IsTraining && lvl == s.Level + 1) return TrainingBlock;
-            return EmptyBlock;
+            if (_viewModel == null) return;
+            _viewModel.ShowAll = ShowAllToggle.IsChecked == true;
+            ShowAllToggle.Content = _viewModel.ShowAll ? "All Skills" : "Trained Only";
+            UpdateStatus();
         }
+
+        private void OnFilterChanged(object? sender, TextChangedEventArgs e)
+        {
+            if (_viewModel == null) return;
+            _viewModel.Filter = FilterBox.Text?.Trim() ?? string.Empty;
+            ClearFilterBtn.IsVisible = !string.IsNullOrEmpty(_viewModel.Filter);
+            UpdateStatus();
+        }
+
+        private void OnClearFilter(object? sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+            FilterBox.Text = string.Empty;
+            _viewModel.Filter = string.Empty;
+            ClearFilterBtn.IsVisible = false;
+            UpdateStatus();
+        }
+
+        #endregion
     }
 }

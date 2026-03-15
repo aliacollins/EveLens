@@ -374,6 +374,8 @@ namespace EveLens.Tests.Architecture
                 "PlanCostCardViewModel",
                 "PlanSkillListViewModel",
                 "PlanEntryDetailViewModel",
+                // SkillBrowserViewModel replaced by SkillOverlayViewModel in CharacterSkillsView
+                "SkillBrowserViewModel",
             };
 
             var vmTypes = GetAllViewModelTypes().ToList();

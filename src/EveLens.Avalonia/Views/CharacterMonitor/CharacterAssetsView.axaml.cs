@@ -5,10 +5,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -27,20 +27,12 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private IDisposable? _dataUpdatedSub;
         private long _characterId;
         private AssetBrowserViewModel? _viewModel;
-
-        // Brushes
-        private static readonly IBrush AccentBrush = new SolidColorBrush(Color.Parse("#FFE6A817"));
-        private static readonly IBrush TextSecBrush = new SolidColorBrush(Color.Parse("#FFAAAAAA"));
-        private static readonly IBrush TextDimBrush = new SolidColorBrush(Color.Parse("#FF707070"));
-        private static readonly IBrush TextPrimBrush = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
-        private static readonly IBrush GreenBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
-        private static readonly IBrush MediumBg = new SolidColorBrush(Color.Parse("#FF16213E"));
-        private static readonly IBrush DarkBg = new SolidColorBrush(Color.Parse("#FF1A1A2E"));
-        private static readonly IBrush BorderBr = new SolidColorBrush(Color.Parse("#FF2A2A4A"));
+        private FlattenedTreeSource<object>? _treeSource;
 
         public CharacterAssetsView()
         {
             InitializeComponent();
+            AssetItemsControl.ItemTemplate = CreateNodeTemplate();
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -61,6 +53,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+
+            if (_treeSource != null)
+            {
+                _treeSource.Changed -= OnTreeChanged;
+                _treeSource = null;
+            }
+
             _viewModel?.Dispose();
             _viewModel = null;
         }
@@ -110,269 +109,300 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             DataContent.IsVisible = hasData;
             if (!hasData) return;
 
-            BuildTree();
+            if (_treeSource == null)
+            {
+                _treeSource = new FlattenedTreeSource<object>();
+                _treeSource.Changed += OnTreeChanged;
+            }
 
-            StatusText.Text = $"Items: {_viewModel.TotalItems:N0} in {_viewModel.GroupCount} {(_viewModel.IsHierarchical ? "regions" : "groups")}  |  Est. Value: {_viewModel.TotalValue:N0} ISK";
+            // Load persisted expand state (assets default to collapsed)
+            var expandState = CollapseStateHelper.LoadExpandState(_characterId, "Assets");
+            _treeSource.SetExpandState(expandState);
+
+            _isRebuilding = true;
+            PopulateTree();
+            _isRebuilding = false;
+            UpdateItemsSource();
+            UpdateStatus();
         }
 
-        private void BuildTree()
+        private void PopulateTree()
         {
-            if (_viewModel == null) return;
-            CleanupTree();
+            if (_viewModel == null || _treeSource == null) return;
 
             if (_viewModel.IsHierarchical)
-                BuildHierarchicalTree();
-            else
-                BuildFlatTree();
-        }
-
-        private void CleanupTree()
-        {
-            foreach (var child in AssetTree.Children)
             {
-                if (child is Border header)
-                    header.PointerPressed -= OnGroupHeaderClicked;
-                if (child is StackPanel panel)
-                    CleanupPanel(panel);
-            }
-            AssetTree.Children.Clear();
-        }
-
-        private void CleanupPanel(StackPanel panel)
-        {
-            foreach (var child in panel.Children)
-            {
-                if (child is Border header)
-                    header.PointerPressed -= OnGroupHeaderClicked;
-                if (child is StackPanel nested)
-                    CleanupPanel(nested);
-            }
-        }
-
-        private void BuildHierarchicalTree()
-        {
-            foreach (var region in _viewModel!.HierarchicalGroups)
-            {
-                // Region header (level 0)
-                AssetTree.Children.Add(BuildChevronHeader(region, 0, region.SummaryText));
-
-                // Systems panel (visible when region expanded)
-                var systemsPanel = new StackPanel { Spacing = 0 };
-                systemsPanel.Bind(IsVisibleProperty, new global::Avalonia.Data.Binding("IsExpanded") { Source = region });
-
-                foreach (var system in region.Systems)
+                var groups = new List<GroupData<object>>();
+                foreach (var region in _viewModel.HierarchicalGroups)
                 {
-                    // System header (level 1, indented)
-                    systemsPanel.Children.Add(BuildChevronHeader(system, 1, ""));
-
-                    // Stations panel
-                    var stationsPanel = new StackPanel { Spacing = 0 };
-                    stationsPanel.Bind(IsVisibleProperty, new global::Avalonia.Data.Binding("IsExpanded") { Source = system });
-
-                    foreach (var station in system.Stations)
+                    var systemSubgroups = new List<GroupData<object>>();
+                    foreach (var system in region.Systems)
                     {
-                        // Station header (level 2, indented more)
-                        stationsPanel.Children.Add(BuildChevronHeader(station, 2, station.SummaryText));
-
-                        // Items panel
-                        var itemsPanel = new StackPanel { Spacing = 0 };
-                        itemsPanel.Bind(IsVisibleProperty, new global::Avalonia.Data.Binding("IsExpanded") { Source = station });
-
-                        foreach (var item in station.Items)
-                            itemsPanel.Children.Add(BuildItemRow(item, 3));
-
-                        stationsPanel.Children.Add(itemsPanel);
+                        var stationSubgroups = new List<GroupData<object>>();
+                        foreach (var station in system.Stations)
+                        {
+                            stationSubgroups.Add(new GroupData<object>(
+                                $"{region.Name}/{system.Name}/{station.Name}",
+                                station,
+                                station.Items.Cast<object>().ToList()));
+                        }
+                        systemSubgroups.Add(new GroupData<object>(
+                            $"{region.Name}/{system.Name}",
+                            system,
+                            new List<object>(),
+                            stationSubgroups));
                     }
-
-                    systemsPanel.Children.Add(stationsPanel);
+                    groups.Add(new GroupData<object>(
+                        region.Name,
+                        region,
+                        new List<object>(),
+                        systemSubgroups));
                 }
-
-                AssetTree.Children.Add(systemsPanel);
+                _treeSource.SetData(groups);
             }
-        }
-
-        private void BuildFlatTree()
-        {
-            foreach (var group in _viewModel!.Groups)
+            else
             {
-                AssetTree.Children.Add(BuildChevronHeader(group, 0, group.SummaryText));
-
-                var itemsPanel = new StackPanel { Spacing = 0 };
-                itemsPanel.Bind(IsVisibleProperty, new global::Avalonia.Data.Binding("IsExpanded") { Source = group });
-
-                foreach (var item in group.Items)
-                    itemsPanel.Children.Add(BuildItemRow(item, 1));
-
-                AssetTree.Children.Add(itemsPanel);
+                var groups = _viewModel.Groups.Select(g =>
+                    new GroupData<object>(g.Name, g, g.Items.Cast<object>().ToList()))
+                    .ToList();
+                _treeSource.SetData(groups);
             }
         }
 
-        /// <summary>Builds a chevron group header at the given indent level.</summary>
-        private Border BuildChevronHeader(INotifyPropertyChanged groupModel, int indent, string summary)
+        private bool _isRebuilding;
+
+        private void OnTreeChanged()
         {
-            int leftPad = 8 + indent * 16;
+            // Save expand state immediately (synchronous) before any potential detach
+            if (!_isRebuilding && _characterId != 0 && _treeSource != null)
+                CollapseStateHelper.SaveExpandState(_characterId, "Assets", _treeSource.GetExpandState());
+
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                UpdateItemsSource();
+                UpdateStatus();
+            });
+        }
+
+        private void UpdateItemsSource()
+        {
+            if (AssetItemsControl.ItemsSource != _treeSource)
+                AssetItemsControl.ItemsSource = _treeSource;
+        }
+
+        private void UpdateStatus()
+        {
+            if (_viewModel != null)
+                StatusText.Text = $"Items: {_viewModel.TotalItems:N0} in {_viewModel.GroupCount} {(_viewModel.IsHierarchical ? "regions" : "groups")}  |  Est. Value: {_viewModel.TotalValue:N0} ISK";
+        }
+
+        #region Template Builder
+
+        private FuncDataTemplate<FlatTreeNode<object>> CreateNodeTemplate()
+        {
+            return new FuncDataTemplate<FlatTreeNode<object>>((node, _) =>
+            {
+                if (node == null)
+                    return new Border();
+                if (node.IsGroup)
+                    return BuildGroupHeader(node);
+                return BuildItemRow(node);
+            });
+        }
+
+        private Control BuildGroupHeader(FlatTreeNode<object> node)
+        {
+            int leftPad = 8 + node.Depth * 16;
+
+            string groupName = "";
+            string countText = "";
+            string summaryText = "";
+
+            switch (node.Data)
+            {
+                case AssetRegionGroup region:
+                    groupName = region.Name;
+                    countText = region.CountText;
+                    summaryText = region.SummaryText;
+                    break;
+                case AssetSystemGroup system:
+                    groupName = system.Name;
+                    countText = system.CountText;
+                    summaryText = "";
+                    break;
+                case AssetStationGroup station:
+                    groupName = station.Name;
+                    countText = station.CountText;
+                    summaryText = station.SummaryText;
+                    break;
+                case AssetBrowserGroupEntry group:
+                    groupName = group.Name;
+                    countText = group.CountText;
+                    summaryText = group.SummaryText;
+                    break;
+            }
+
             var grid = new Grid
             {
                 ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto"),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
-            var chevron = new TextBlock
+            var chevronTb = new TextBlock
             {
-                FontSize = 11, Width = 16,
-                Foreground = TextSecBrush,
+                Text = node.Chevron,
+                FontSize = 11,
+                Width = 16,
                 VerticalAlignment = VerticalAlignment.Center
             };
-            chevron.Bind(TextBlock.TextProperty, new global::Avalonia.Data.Binding("Chevron") { Source = groupModel });
-            grid.Children.Add(chevron);
+            chevronTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(chevronTb, 0);
+            grid.Children.Add(chevronTb);
 
-            var name = new TextBlock
+            var nameTb = new TextBlock
             {
-                FontSize = 11, FontWeight = FontWeight.SemiBold,
-                Foreground = AccentBrush,
+                Text = groupName,
+                FontSize = 11,
+                FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                [Grid.ColumnProperty] = 1
+                TextTrimming = TextTrimming.CharacterEllipsis
             };
-            name.Bind(TextBlock.TextProperty, new global::Avalonia.Data.Binding("Name") { Source = groupModel });
-            grid.Children.Add(name);
+            nameTb.Foreground = FindBrush("EveAccentPrimaryBrush");
+            Grid.SetColumn(nameTb, 1);
+            grid.Children.Add(nameTb);
 
-            var count = new TextBlock
+            var countTb = new TextBlock
             {
-                FontSize = 10, Foreground = TextSecBrush,
+                Text = countText,
+                FontSize = 10,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0),
-                [Grid.ColumnProperty] = 2
+                Margin = new Thickness(8, 0)
             };
-            count.Bind(TextBlock.TextProperty, new global::Avalonia.Data.Binding("CountText") { Source = groupModel });
-            grid.Children.Add(count);
+            countTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(countTb, 2);
+            grid.Children.Add(countTb);
 
-            if (!string.IsNullOrEmpty(summary))
+            if (!string.IsNullOrEmpty(summaryText))
             {
-                var val = new TextBlock
+                var valTb = new TextBlock
                 {
-                    FontSize = 10, Foreground = TextDimBrush,
+                    Text = summaryText,
+                    FontSize = 10,
                     VerticalAlignment = VerticalAlignment.Center,
-                    Margin = new Thickness(4, 0),
-                    [Grid.ColumnProperty] = 3
+                    Margin = new Thickness(4, 0)
                 };
-                val.Bind(TextBlock.TextProperty, new global::Avalonia.Data.Binding("SummaryText") { Source = groupModel });
-                grid.Children.Add(val);
+                valTb.Foreground = FindBrush("EveTextDisabledBrush");
+                Grid.SetColumn(valTb, 3);
+                grid.Children.Add(valTb);
             }
 
-            var header = new Border
+            var border = new Border
             {
                 Classes = { "group-header" },
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Padding = new Thickness(leftPad, 6, 8, 6),
                 Child = grid
             };
-            header.DataContext = groupModel;
-            header.PointerPressed += OnGroupHeaderClicked;
 
-            return header;
+            border.PointerPressed += OnGroupHeaderClicked;
+
+            return border;
         }
 
-        /// <summary>Builds an item row at the given indent level.</summary>
-        private static Border BuildItemRow(AssetBrowserItemEntry item, int indent)
+        private Control BuildItemRow(FlatTreeNode<object> node)
         {
-            int leftPad = 8 + indent * 16;
+            var item = node.Data as AssetBrowserItemEntry;
+            if (item == null)
+                return new Border();
+
+            int leftPad = 8 + node.Depth * 16;
+
             var grid = new Grid
             {
                 ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,Auto"),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
 
-            grid.Children.Add(new TextBlock
+            var nameTb = new TextBlock
             {
                 Text = item.ItemName,
-                FontSize = 11, Foreground = TextPrimBrush,
+                FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
-            });
+            };
+            nameTb.Foreground = FindBrush("EveTextPrimaryBrush");
+            Grid.SetColumn(nameTb, 0);
+            grid.Children.Add(nameTb);
 
-            grid.Children.Add(new TextBlock
+            var qtyTb = new TextBlock
             {
                 Text = item.QuantityText,
-                FontSize = 10, Foreground = TextSecBrush,
+                FontSize = 10,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0),
-                MinWidth = 50, TextAlignment = TextAlignment.Right,
-                [Grid.ColumnProperty] = 1
-            });
+                MinWidth = 50,
+                TextAlignment = TextAlignment.Right
+            };
+            qtyTb.Foreground = FindBrush("EveTextSecondaryBrush");
+            Grid.SetColumn(qtyTb, 1);
+            grid.Children.Add(qtyTb);
 
-            grid.Children.Add(new TextBlock
+            var valTb = new TextBlock
             {
                 Text = item.ValueText,
-                FontSize = 10, Foreground = GreenBrush,
+                FontSize = 10,
                 VerticalAlignment = VerticalAlignment.Center,
-                MinWidth = 80, TextAlignment = TextAlignment.Right,
-                [Grid.ColumnProperty] = 2
-            });
+                MinWidth = 80,
+                TextAlignment = TextAlignment.Right
+            };
+            valTb.Foreground = FindBrush("EveSuccessGreenBrush");
+            Grid.SetColumn(valTb, 2);
+            grid.Children.Add(valTb);
 
             return new Border
             {
                 Classes = { "item-row" },
                 Padding = new Thickness(leftPad, 3, 8, 3),
-                Background = DarkBg,
-                BorderBrush = BorderBr,
+                Background = FindBrush("EveBackgroundDarkBrush"),
+                BorderBrush = FindBrush("EveBorderBrush"),
                 BorderThickness = new Thickness(0, 0, 0, 0.5),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 Child = grid
             };
         }
 
-        private static void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        private IBrush? FindBrush(string key)
         {
-            if (sender is not Border border) return;
-            switch (border.DataContext)
+            if (this.TryFindResource(key, this.ActualThemeVariant, out var resource) && resource is IBrush brush)
+                return brush;
+            return null;
+        }
+
+        #endregion
+
+        #region Toolbar Handlers
+
+        private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
+        {
+            if (_treeSource == null || sender is not Control control) return;
+            if (control.DataContext is FlatTreeNode<object> node && node.IsGroup)
             {
-                case AssetRegionGroup r: r.IsExpanded = !r.IsExpanded; break;
-                case AssetSystemGroup s: s.IsExpanded = !s.IsExpanded; break;
-                case AssetStationGroup st: st.IsExpanded = !st.IsExpanded; break;
-                case AssetBrowserGroupEntry g: g.IsExpanded = !g.IsExpanded; break;
+                int index = _treeSource.IndexOfGroup(node.GroupKey);
+                if (index >= 0) _treeSource.ToggleExpand(index);
             }
         }
 
-        private void OnCollapseAll(object? sender, RoutedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            if (_viewModel.IsHierarchical)
-            {
-                foreach (var r in _viewModel.HierarchicalGroups)
-                {
-                    r.IsExpanded = false;
-                    foreach (var s in r.Systems) { s.IsExpanded = false; foreach (var st in s.Stations) st.IsExpanded = false; }
-                }
-            }
-            else
-            {
-                foreach (var g in _viewModel.Groups) g.IsExpanded = false;
-            }
-        }
+        private void OnCollapseAll(object? sender, RoutedEventArgs e) => _treeSource?.CollapseAll();
 
-        private void OnExpandAll(object? sender, RoutedEventArgs e)
-        {
-            if (_viewModel == null) return;
-            if (_viewModel.IsHierarchical)
-            {
-                foreach (var r in _viewModel.HierarchicalGroups)
-                {
-                    r.IsExpanded = true;
-                    foreach (var s in r.Systems) { s.IsExpanded = true; foreach (var st in s.Stations) st.IsExpanded = true; }
-                }
-            }
-            else
-            {
-                foreach (var g in _viewModel.Groups) g.IsExpanded = true;
-            }
-        }
+        private void OnExpandAll(object? sender, RoutedEventArgs e) => _treeSource?.ExpandAll();
 
         private void OnGroupByChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (_viewModel == null) return;
             _viewModel.GroupMode = GroupByCombo.SelectedIndex;
-            LoadData();
+            PopulateTree();
+            UpdateItemsSource();
+            UpdateStatus();
         }
 
         private void OnFilterChanged(object? sender, TextChangedEventArgs e)
@@ -380,7 +410,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (_viewModel == null) return;
             _viewModel.Filter = FilterBox.Text?.Trim() ?? string.Empty;
             ClearFilterBtn.IsVisible = !string.IsNullOrEmpty(_viewModel.Filter);
-            LoadData();
+            PopulateTree();
+            UpdateItemsSource();
+            UpdateStatus();
         }
 
         private void OnClearFilter(object? sender, RoutedEventArgs e)
@@ -389,7 +421,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             FilterBox.Text = string.Empty;
             _viewModel.Filter = string.Empty;
             ClearFilterBtn.IsVisible = false;
-            LoadData();
+            PopulateTree();
+            UpdateItemsSource();
+            UpdateStatus();
         }
 
         private void OnEnableEndpoint(object? sender, RoutedEventArgs e)
@@ -405,5 +439,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (evt.Character?.CharacterID == _characterId)
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
+
+        #endregion
     }
 }

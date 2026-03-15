@@ -89,7 +89,11 @@
                 <ScrollViewer x:Name="SkillListScroller"
                               Background="{StaticResource EveBackgroundDarkBrush}">
                     <ItemsControl x:Name="PlanItemsControl" Margin="0,0,10,0">
-                        <!-- Items built in code-behind using programmatic templates -->
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
                     </ItemsControl>
                 </ScrollViewer>
             </DockPanel>

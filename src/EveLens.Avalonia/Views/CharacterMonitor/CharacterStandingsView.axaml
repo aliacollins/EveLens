@@ -1,13 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
-             xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterStandingsView">
-
-    <UserControl.Resources>
-        <converters:StandingColorConverter x:Key="StandingColorConverter" />
-        <converters:StandingWidthConverter x:Key="StandingWidthConverter" />
-    </UserControl.Resources>
 
     <Panel>
         <!-- Enable prompt shown when endpoint is not yet activated -->
@@ -36,7 +30,7 @@
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
                 <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
-                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File &#x2192; Manage Characters to enable this feature." />
             </StackPanel>
         </Border>
 
@@ -102,9 +96,9 @@
                                    Title="No standings found"
                                    Subtitle="This character has no standings, or none match the current filter" />
 
-                <!-- Grouped standings list -->
+                <!-- Virtualized flat tree with VirtualizingStackPanel -->
                 <ScrollViewer x:Name="MainScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl x:Name="StandingGroupsList" Margin="0"
+                    <ItemsControl x:Name="StandingItemsControl" Margin="0"
                                   HorizontalAlignment="Stretch">
                         <ItemsControl.Styles>
                             <Style Selector="ItemsControl > ContentPresenter">
@@ -113,142 +107,9 @@
                         </ItemsControl.Styles>
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Vertical" />
+                                <VirtualizingStackPanel Orientation="Vertical" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <Border Classes="group-header" HorizontalAlignment="Stretch"
-                                            PointerPressed="OnGroupHeaderClicked">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
-                                            <TextBlock Grid.Column="0" Text="{Binding Chevron}"
-                                                       FontSize="11" Width="16"
-                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                       FontSize="11" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                       VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis" />
-                                            <TextBlock Grid.Column="2" Text="{Binding CountText}"
-                                                       FontSize="10"
-                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                       VerticalAlignment="Center" Margin="8,0" />
-                                        </Grid>
-                                    </Border>
-
-                                    <!-- Items in group -->
-                                    <ItemsControl ItemsSource="{Binding Items}"
-                                                  HorizontalAlignment="Stretch"
-                                                  IsVisible="{Binding IsExpanded}">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <StackPanel Orientation="Vertical" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Classes="item-row" Padding="20,4,10,4"
-                                                        Background="{StaticResource EveBackgroundDarkBrush}"
-                                                        BorderBrush="{StaticResource EveBorderBrush}"
-                                                        BorderThickness="0,0,0,0.5"
-                                                        HorizontalAlignment="Stretch">
-                                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto"
-                                                          HorizontalAlignment="Stretch"
-                                                          MinHeight="32">
-                                                        <!-- Portrait -->
-                                                        <Border Grid.Column="0" Width="32" Height="32"
-                                                                CornerRadius="16"
-                                                                Background="{StaticResource EveBackgroundMediumBrush}"
-                                                                Margin="0,0,10,0"
-                                                                VerticalAlignment="Center"
-                                                                ClipToBounds="True">
-                                                            <Panel>
-                                                                <TextBlock Text="{Binding Initial}"
-                                                                           FontSize="14" FontWeight="SemiBold"
-                                                                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                                           HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center"
-                                                                           IsVisible="{Binding !HasPortrait}" />
-                                                                <Image Source="{Binding Portrait}" Width="32" Height="32"
-                                                                       Stretch="UniformToFill"
-                                                                       IsVisible="{Binding HasPortrait}" />
-                                                            </Panel>
-                                                        </Border>
-
-                                                        <!-- Entity name -->
-                                                        <TextBlock Grid.Column="1"
-                                                                   Text="{Binding EntityName}"
-                                                                   FontSize="11"
-                                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis" />
-
-                                                        <!-- Standing bar: 120px total, center origin -->
-                                                        <Border Grid.Column="2" Width="120" Height="10"
-                                                                CornerRadius="3"
-                                                                Background="{StaticResource EveBackgroundDarkestBrush}"
-                                                                VerticalAlignment="Center"
-                                                                Margin="8,0">
-                                                            <Panel>
-                                                                <!-- Center line -->
-                                                                <Border Width="1" Height="10"
-                                                                        Background="{StaticResource EveTextDisabledBrush}"
-                                                                        HorizontalAlignment="Center" />
-                                                                <!-- Negative bar (left of center) -->
-                                                                <Border Width="{Binding StandingNumeric, Converter={StaticResource StandingWidthConverter}}"
-                                                                        Height="8" CornerRadius="2"
-                                                                        Background="{StaticResource EveStandingNegativeBrush}"
-                                                                        HorizontalAlignment="Center"
-                                                                        Margin="-60,0,0,0"
-                                                                        IsVisible="{Binding IsNegative}" />
-                                                                <!-- Positive bar (right of center) -->
-                                                                <Border Width="{Binding StandingNumeric, Converter={StaticResource StandingWidthConverter}}"
-                                                                        Height="8" CornerRadius="2"
-                                                                        Background="{StaticResource EveStandingPositiveBrush}"
-                                                                        HorizontalAlignment="Center"
-                                                                        Margin="60,0,0,0"
-                                                                        IsVisible="{Binding IsPositive}" />
-                                                            </Panel>
-                                                        </Border>
-
-                                                        <!-- Standing value -->
-                                                        <TextBlock Grid.Column="3"
-                                                                   Text="{Binding StandingText}"
-                                                                   FontSize="11"
-                                                                   Foreground="{Binding StandingBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   MinWidth="40"
-                                                                   TextAlignment="Right"
-                                                                   Margin="4,0" />
-
-                                                        <!-- Effective standing -->
-                                                        <TextBlock Grid.Column="4"
-                                                                   Text="{Binding EffectiveText}"
-                                                                   FontSize="10"
-                                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   MinWidth="50"
-                                                                   TextAlignment="Right"
-                                                                   Margin="4,0" />
-
-                                                        <!-- Status label -->
-                                                        <TextBlock Grid.Column="5"
-                                                                   Text="{Binding StatusText}"
-                                                                   FontSize="10"
-                                                                   Foreground="{Binding StatusBrush}"
-                                                                   VerticalAlignment="Center"
-                                                                   Margin="8,0,0,0"
-                                                                   MinWidth="60" />
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>

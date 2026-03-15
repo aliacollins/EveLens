@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using EveLens.Common.Enumerations.UISettings;
@@ -306,6 +307,15 @@ namespace EveLens.Common.SettingsObjects
         /// </value>
         [XmlElement("splitters")]
         public ModifiedSerializableDictionary<string, int> Splitters { get; set; }
+
+        /// <summary>
+        /// Persisted collapse/expand state per character per view.
+        /// Key format: "{characterId}_{viewName}" (e.g., "12345_Skills").
+        /// Value: list of expanded group keys for that character+view.
+        /// JSON-only (not XML-serializable).
+        /// </summary>
+        [XmlIgnore]
+        public Dictionary<string, List<string>> CollapseStates { get; set; } = new();
 
         /// <summary>
         /// Gets or sets the confirmed tips.
