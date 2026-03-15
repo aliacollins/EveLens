@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-16</date>
+      <version>1.0.0.36</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.36
+
+Feedback round 2: ESI resilience pipeline, collapse persistence, auto-update, notification fixes]]></message>
+    </release>
+    <release>
+      <date>2026-03-16</date>
       <version>1.0.0.35</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Per-category privacy mode with flyout checkboxes]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.27
 
 Per-component character folder storage]]></message>
-    </release>
-    <release>
-      <date>2026-02-28</date>
-      <version>1.0.0.26</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.26
-
-Re-enable per-character atomic file storage]]></message>
     </release>
   </releases>
   <datafiles>
