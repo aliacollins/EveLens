@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-03-16</date>
+      <version>1.0.0.35</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.35
+
+Feedback round 2: ESI resilience pipeline, collapse persistence, auto-update, notification fixes]]></message>
+    </release>
+    <release>
       <date>2026-03-15</date>
       <version>1.0.0.34</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -94,16 +104,6 @@ Per-component character folder storage]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.26
 
 Re-enable per-character atomic file storage]]></message>
-    </release>
-    <release>
-      <date>2026-02-28</date>
-      <version>1.0.0.25</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.25
-
-Add JsonIgnore to all settings provider properties — final System.Drawing fix for Linux/macOS]]></message>
     </release>
   </releases>
   <datafiles>
