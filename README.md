@@ -118,6 +118,22 @@ EveLens 1.0.0 is a complete rewrite. Here's what changed from the original EVEMo
 
 ---
 
+## Alpha Changelog (Cumulative)
+
+See "What's New in 1.0.0" above for the full feature list.
+
+---
+
+## Features Being Tested
+
+- Cross-platform stability on Linux and macOS
+- 100+ character ESI scheduling and resilience
+- Auto-update on all platforms
+- Group collapse/expand on overview
+- Window position/size persistence
+
+---
+
 ## Update Channels
 
 | Channel | Use Case | Download |
