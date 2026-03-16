@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-16</date>
+      <version>1.0.0.42</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.42
+
+Beta launch prep: scrollbar fix, window position save, tray toggle, group collapse/reorder, README rewrite]]></message>
+    </release>
+    <release>
+      <date>2026-03-16</date>
       <version>1.0.0.41</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -92,16 +102,6 @@ Fix clipboard deadlock on Linux/macOS, async clipboard API]]></message>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EveLens 1.0.0-alpha.33
-
-Update feed separation, Linux desktop integration, About cleanup]]></message>
-    </release>
-    <release>
-      <date>2026-03-15</date>
-      <version>1.0.0.32</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.32
 
 Update feed separation, Linux desktop integration, About cleanup]]></message>
     </release>

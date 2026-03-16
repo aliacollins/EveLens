@@ -30,9 +30,9 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision (0 for stable, 1+ for beta)
 //
-[assembly: AssemblyVersion("1.0.0.41")]
-[assembly: AssemblyFileVersion("1.0.0.41")]
-[assembly: AssemblyInformationalVersion("1.0.0-alpha.41")]
+[assembly: AssemblyVersion("1.0.0.42")]
+[assembly: AssemblyFileVersion("1.0.0.42")]
+[assembly: AssemblyInformationalVersion("1.0.0-alpha.42")]
 
 // Neutral Language
 [assembly: NeutralResourcesLanguage("en-US")]
