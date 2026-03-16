@@ -2,10 +2,19 @@
 <!--
   BETA Update Channel
   This file is checked by EveLens BETA builds for updates.
-  Populated by promote.ps1 on beta release.
 -->
 <evelens>
   <releases>
+    <release>
+      <date>2026-03-16</date>
+      <version>1.0.0.1</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-beta.1
+
+EveLens enters beta: complete EVEMon rewrite, cross-platform, 100+ character support, 6 themes, smarter ESI handling]]></message>
+    </release>
   </releases>
   <datafiles>
   </datafiles>
