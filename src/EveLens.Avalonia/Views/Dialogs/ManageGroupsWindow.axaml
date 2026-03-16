@@ -23,16 +23,23 @@
                            Foreground="{StaticResource EveAccentPrimaryBrush}"
                            Margin="0,0,0,6" />
 
-                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6"
-                            Margin="0,6,0,0">
-                    <Button x:Name="AddGroupBtn" Content="Add Group" FontSize="10"
-                            Padding="8,3" CornerRadius="12" Click="OnAddGroupClick" />
-                    <Button x:Name="RenameGroupBtn" Content="Rename" FontSize="10"
-                            Padding="8,3" CornerRadius="12" Click="OnRenameGroupClick" />
-                    <Button x:Name="DeleteGroupBtn" Content="Delete" FontSize="10"
-                            Padding="8,3" CornerRadius="12"
-                            Foreground="{StaticResource EveErrorRedBrush}"
-                            Click="OnDeleteGroupClick" />
+                <StackPanel DockPanel.Dock="Bottom" Spacing="4" Margin="0,6,0,0">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="AddGroupBtn" Content="Add Group" FontSize="10"
+                                Padding="8,3" CornerRadius="12" Click="OnAddGroupClick" />
+                        <Button x:Name="RenameGroupBtn" Content="Rename" FontSize="10"
+                                Padding="8,3" CornerRadius="12" Click="OnRenameGroupClick" />
+                        <Button x:Name="DeleteGroupBtn" Content="Delete" FontSize="10"
+                                Padding="8,3" CornerRadius="12"
+                                Foreground="{StaticResource EveErrorRedBrush}"
+                                Click="OnDeleteGroupClick" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="MoveGroupUpBtn" Content="Move Up" FontSize="10"
+                                Padding="8,3" CornerRadius="12" Click="OnMoveGroupUpClick" />
+                        <Button x:Name="MoveGroupDownBtn" Content="Move Down" FontSize="10"
+                                Padding="8,3" CornerRadius="12" Click="OnMoveGroupDownClick" />
+                    </StackPanel>
                 </StackPanel>
 
                 <ListBox x:Name="GroupListBox"

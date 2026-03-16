@@ -2,19 +2,10 @@
 <!--
   BETA Update Channel
   This file is checked by EveLens BETA builds for updates.
+  Populated by promote.ps1 on beta release.
 -->
 <evelens>
   <releases>
-    <release>
-      <date>2026-02-09</date>
-      <version>5.1.3.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-5.1.3.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 5.1.3-beta.1
-
-Promotion pipeline overhaul: transactional phases, README validation, auto-release, CHANGELOG fallback, CRLF-safe regexes]]></message>
-    </release>
   </releases>
   <datafiles>
   </datafiles>

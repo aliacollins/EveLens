@@ -350,6 +350,32 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        private void OnMoveGroupUpClick(object? sender, RoutedEventArgs e)
+        {
+            int index = GroupListBox.SelectedIndex;
+            if (index <= 0) return;
+
+            var groups = Settings.CharacterGroups;
+            (groups[index - 1], groups[index]) = (groups[index], groups[index - 1]);
+            _suppressSelection = true;
+            RefreshGroupList();
+            GroupListBox.SelectedIndex = index - 1;
+            _suppressSelection = false;
+        }
+
+        private void OnMoveGroupDownClick(object? sender, RoutedEventArgs e)
+        {
+            int index = GroupListBox.SelectedIndex;
+            var groups = Settings.CharacterGroups;
+            if (index < 0 || index >= groups.Count - 1) return;
+
+            (groups[index], groups[index + 1]) = (groups[index + 1], groups[index]);
+            _suppressSelection = true;
+            RefreshGroupList();
+            GroupListBox.SelectedIndex = index + 1;
+            _suppressSelection = false;
+        }
+
         private void OnCloseClick(object? sender, RoutedEventArgs e)
         {
             // Notify UI to refresh overview with new group order
