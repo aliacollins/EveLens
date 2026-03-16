@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-16</date>
+      <version>1.0.0.44</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.44
+
+Fix promote.ps1 cross-branch merge strategy for alpha-to-beta promotions]]></message>
+    </release>
+    <release>
+      <date>2026-03-16</date>
       <version>1.0.0.43</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Feedback round 2: ESI resilience pipeline, collapse persistence, auto-update, no
       <message><![CDATA[EveLens 1.0.0-alpha.35
 
 Feedback round 2: ESI resilience pipeline, collapse persistence, auto-update, notification fixes]]></message>
-    </release>
-    <release>
-      <date>2026-03-15</date>
-      <version>1.0.0.34</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.34
-
-Fix clipboard deadlock on Linux/macOS, async clipboard API]]></message>
     </release>
   </releases>
   <datafiles>
