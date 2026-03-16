@@ -17,7 +17,7 @@ EveLens is a complete, ground-up rewrite of EVEMon — the character planner EVE
 
 This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,741 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
-**Current Version: 1.0.0-alpha.44**
+**Current Version: 1.0.0-beta.1**
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -42,8 +42,8 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 **Linux:**
 ```bash
-chmod +x EveLens-1.0.0-alpha.44-linux-x64.AppImage
-./EveLens-1.0.0-alpha.44-linux-x64.AppImage
+chmod +x EveLens-1.0.0-beta.1-linux-x64.AppImage
+./EveLens-1.0.0-beta.1-linux-x64.AppImage
 ```
 
 **macOS:** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
@@ -139,7 +139,7 @@ See "What's New in 1.0.0" above for the full feature list.
 | Channel | Use Case | Download |
 |---------|----------|----------|
 | Stable | Recommended for daily use (March 20th) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
-| **Beta** | Pre-release testing (you are here) | [Beta Release](https://github.com/aliacollins/evelens/releases/tag/beta) |
+| **Beta** | Pre-release testing(you are here) | [Beta Release](https://github.com/aliacollins/evelens/releases/tag/beta) |
 | Alpha | Bleeding edge, experimental features | [Alpha Release](https://github.com/aliacollins/evelens/releases/tag/alpha) |
 
 ---

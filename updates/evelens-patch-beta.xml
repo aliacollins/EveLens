@@ -1,10 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   BETA Update Channel
   This file is checked by EveLens BETA builds for updates.
 -->
 <evelens>
   <releases>
+    <release>
+      <date>2026-03-16</date>
+      <version>1.0.0.1</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-beta.1
+
+Window position save/restore, promote.ps1 cross-branch merge fix]]></message>
+    </release>
     <release>
       <date>2026-03-16</date>
       <version>1.0.0.1</version>
