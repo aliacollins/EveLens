@@ -27,6 +27,20 @@ namespace EveLens.Common.Notifications
         public IAPIResult Result { get; private set; }
 
         /// <summary>
+        /// Gets a user-friendly label describing the error category.
+        /// </summary>
+        public string CategoryLabel => Result?.ErrorCode switch
+        {
+            -1 => "Token refresh",
+            0 => "Connection error",
+            401 or 403 => "Auth expired",
+            404 => "Not found",
+            429 => "Rate limited",
+            >= 500 and < 600 => "ESI server error",
+            _ => "ESI error"
+        };
+
+        /// <summary>
         /// Gets true if the notification has details.
         /// </summary>
         public override bool HasDetails => true;

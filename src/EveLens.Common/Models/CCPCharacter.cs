@@ -62,6 +62,7 @@ namespace EveLens.Common.Models
         internal ICharacterServices Services => m_services;
 
         private Enum m_errorNotifiedMethod = CCPAPIMethodsEnum.None;
+        private readonly Dictionary<int, int> m_consecutiveFailures = new();
         private bool m_isFwEnlisted;
 
         private string m_allianceName;
@@ -727,19 +728,43 @@ namespace EveLens.Common.Models
 
         /// <summary>
         /// Checks whether we should notify an error.
+        /// Transient errors (5xx, timeouts, rate limits) are suppressed until they persist
+        /// for 3 consecutive poll cycles, preventing activity log noise from ESI hiccups.
+        /// Auth failures (401/403) and not-found (404) are shown immediately since they
+        /// require user action.
         /// </summary>
-        /// <param name="result"></param>
-        /// <param name="method"></param>
-        /// <returns></returns>
         internal bool ShouldNotifyError(IAPIResult result, Enum method)
         {
+            int methodKey = method.GetHashCode();
+
             if (result.HasError)
             {
+                // Auth failures and not-found always surface immediately — user must act
+                if (result.ErrorCode == 401 || result.ErrorCode == 403 || result.ErrorCode == 404)
+                {
+                    m_consecutiveFailures.Remove(methodKey);
+                    if (!m_errorNotifiedMethod.Equals(CCPAPIMethodsEnum.None))
+                        return false;
+                    m_errorNotifiedMethod = method;
+                    return true;
+                }
+
+                // Transient errors: only notify after 3 consecutive failures
+                int count = m_consecutiveFailures.GetValueOrDefault(methodKey, 0) + 1;
+                m_consecutiveFailures[methodKey] = count;
+
+                if (count < 3)
+                    return false;
+
                 if (!m_errorNotifiedMethod.Equals(CCPAPIMethodsEnum.None))
                     return false;
                 m_errorNotifiedMethod = method;
                 return true;
             }
+
+            // Success: reset consecutive failure counter for this method
+            m_consecutiveFailures.Remove(methodKey);
+
             // Removes the previous error notification
             if (!m_errorNotifiedMethod.Equals(method))
                 return false;

@@ -91,6 +91,14 @@ namespace EveLens.Common.Collections.Global
                 break;
             }
 
+            // Enrich API error notifications with category context so users can tell
+            // auth failures from ESI hiccups from rate limiting at a glance
+            if (notification is APIErrorNotificationEventArgs apiError
+                && !string.IsNullOrEmpty(notification.Description))
+            {
+                notification.Description = $"{apiError.CategoryLabel}: {notification.Description}";
+            }
+
             AppServices.TraceService?.Trace(notification.ToString());
 
             // Only publish to activity log if the notification content actually changed.
