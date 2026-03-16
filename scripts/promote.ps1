@@ -460,11 +460,22 @@ function Invoke-GitMerge {
         # explicit refs/heads/ to avoid ambiguity with tags of the same name
         git checkout -B $TargetBranch "refs/heads/$TargetBranch"
         if ($LASTEXITCODE -ne 0) { throw "git checkout $TargetBranch failed (exit code $LASTEXITCODE)" }
+
+        # First try a normal merge
         git merge $SourceBranch --no-ff -m "Merge $SourceBranch into $TargetBranch"
         if ($LASTEXITCODE -ne 0) {
-            # Abort the failed merge to restore clean state
+            # Merge conflicted — abort and retry with -X theirs strategy.
+            # Cross-branch promotes (alpha→beta, beta→stable) always conflict on
+            # version files (SharedAssemblyInfo, README badges, patch XMLs) because
+            # both branches bump them independently. Using -X theirs takes the source
+            # branch content, then Phase 3 applies the correct target version on top.
             git merge --abort 2>$null
-            throw "Merge conflict: $SourceBranch into $TargetBranch failed. Merge aborted."
+            Write-Warning "Normal merge conflicted. Retrying with source-wins strategy..."
+            git merge $SourceBranch --no-ff -X theirs -m "Merge $SourceBranch into $TargetBranch"
+            if ($LASTEXITCODE -ne 0) {
+                git merge --abort 2>$null
+                throw "Merge conflict: $SourceBranch into $TargetBranch failed even with -X theirs. Manual resolution required."
+            }
         }
     }
     Write-Success "Merged $SourceBranch -> $TargetBranch"

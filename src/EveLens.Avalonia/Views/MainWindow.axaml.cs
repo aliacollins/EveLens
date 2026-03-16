@@ -43,6 +43,9 @@ namespace EveLens.Avalonia.Views
     public partial class MainWindow : Window
     {
         private const string WindowLocationKey = "MainWindow";
+        private PixelPoint _lastPosition;
+        private double _lastWidth;
+        private double _lastHeight;
 
         private readonly MainWindowViewModel _viewModel;
         private readonly List<ObservableCharacter> _observableCharacters = new();
@@ -1923,35 +1926,36 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                if (Settings.UI.WindowLocations.TryGetValue(WindowLocationKey, out var loc)
-                    && loc.Width > 100 && loc.Height > 100)
-                {
-                    Position = new PixelPoint(loc.Left, loc.Top);
-                    Width = loc.Width;
-                    Height = loc.Height;
-                    WindowStartupLocation = WindowStartupLocation.Manual;
-                }
+                if (!Settings.UI.WindowLocations.TryGetValue(WindowLocationKey, out var loc)
+                    || loc.Width < 100 || loc.Height < 100)
+                    return;
+
+                WindowStartupLocation = WindowStartupLocation.Manual;
+                Position = new PixelPoint(loc.Left, loc.Top);
+                Width = loc.Width;
+                Height = loc.Height;
             }
             catch
             {
-                // If settings are corrupt, just use defaults
+                // If settings are corrupt, use defaults
             }
         }
 
-        private void SaveWindowLocation()
+        internal void SaveWindowLocationNow()
         {
             try
             {
-                if (WindowState == WindowState.Normal)
+                // Use last tracked values — Avalonia may zero Position during close
+                if (_lastWidth < 100 || _lastHeight < 100)
+                    return;
+
+                Settings.UI.WindowLocations[WindowLocationKey] = new WindowLocationSettings
                 {
-                    Settings.UI.WindowLocations[WindowLocationKey] = new WindowLocationSettings
-                    {
-                        Left = Position.X,
-                        Top = Position.Y,
-                        Width = (int)Width,
-                        Height = (int)Height
-                    };
-                }
+                    Left = _lastPosition.X,
+                    Top = _lastPosition.Y,
+                    Width = (int)_lastWidth,
+                    Height = (int)_lastHeight
+                };
             }
             catch
             {
@@ -1959,9 +1963,39 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+
+            // Seed with current values — PositionChanged may not fire for the initial position
+            if (WindowState == WindowState.Normal)
+            {
+                _lastPosition = Position;
+                _lastWidth = Width;
+                _lastHeight = Height;
+            }
+
+            // Track position/size in real-time — Avalonia may zero Position during close
+            PositionChanged += (_, args) =>
+            {
+                if (WindowState == WindowState.Normal)
+                    _lastPosition = args.Point;
+            };
+            SizeChanged += (_, args) =>
+            {
+                if (WindowState == WindowState.Normal)
+                {
+                    if (args.NewSize.Width > 0)
+                        _lastWidth = args.NewSize.Width;
+                    if (args.NewSize.Height > 0)
+                        _lastHeight = args.NewSize.Height;
+                }
+            };
+        }
+
         protected override void OnClosed(EventArgs e)
         {
-            SaveWindowLocation();
+            SaveWindowLocationNow();
             _notificationVm?.Save();
             _notificationVm?.Dispose();
             _tickSubscription?.Dispose();

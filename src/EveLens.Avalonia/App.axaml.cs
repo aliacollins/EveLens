@@ -208,6 +208,11 @@ namespace EveLens.Avalonia
                         if (IsExiting)
                             return;
 
+                        // Save window position/size before anything else —
+                        // must happen before Settings.SaveSynchronousForShutdown()
+                        if (desktop.MainWindow is MainWindow mw)
+                            mw.SaveWindowLocationNow();
+
                         if (Settings.UI.MinimizeToTray)
                         {
                             e.Cancel = true;
