@@ -15,6 +15,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using EveLens.Avalonia.Converters;
 using EveLens.Common;
@@ -25,6 +26,7 @@ using EveLens.Common.Models;
 using EveLens.Common.Service;
 using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
+using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Views.Dialogs;
 using EveLens.Core.Events;
 
@@ -50,6 +52,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         // Only animate the staggered fade-in on first application load
         private bool _initialLoadDone;
+
+        // Track collapsed groups for expand/collapse persistence
+        private const string OverviewCollapseKey = "OverviewGroups";
+        private HashSet<string> _collapsedGroups = new(StringComparer.Ordinal);
 
 
         public CharacterOverviewView()
@@ -118,6 +124,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 _animationTimers.Clear();
 
                 OverviewPanel.Children.Clear();
+
+                // Load persisted collapse state — we store collapsed group names
+                _collapsedGroups = CollapseStateHelper.LoadExpandState(0, OverviewCollapseKey);
                 _prevBalances.Clear();
                 _prevSkillPoints.Clear();
 
@@ -188,7 +197,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private void BuildGroupSection(string groupName, List<Character> characters, ref int cardIndex)
         {
-            var divider = new DockPanel { Margin = new Thickness(0, 4, 0, 2) };
+            bool isCollapsed = _collapsedGroups.Contains(groupName);
+
+            var chevron = new TextBlock
+            {
+                Text = isCollapsed ? "\u25B6" : "\u25BC",  // ▶ or ▼
+                FontSize = 10,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 6, 0),
+                [DockPanel.DockProperty] = Dock.Left
+            };
 
             var label = new TextBlock
             {
@@ -219,12 +238,36 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 VerticalAlignment = VerticalAlignment.Center
             };
 
+            var divider = new DockPanel
+            {
+                Margin = new Thickness(0, 6, 0, 2),
+                MinHeight = 24,
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand)
+            };
+            divider.Children.Add(chevron);
             divider.Children.Add(label);
             divider.Children.Add(count);
             divider.Children.Add(line);
 
+            var wrap = BuildCardWrapPanel(characters, ref cardIndex);
+            wrap.IsVisible = !isCollapsed;
+
+            // Click header to toggle collapse
+            divider.PointerPressed += (_, _) =>
+            {
+                wrap.IsVisible = !wrap.IsVisible;
+                chevron.Text = wrap.IsVisible ? "\u25BC" : "\u25B6";
+
+                if (wrap.IsVisible)
+                    _collapsedGroups.Remove(groupName);
+                else
+                    _collapsedGroups.Add(groupName);
+
+                CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
+            };
+
             OverviewPanel.Children.Add(divider);
-            OverviewPanel.Children.Add(BuildCardWrapPanel(characters, ref cardIndex));
+            OverviewPanel.Children.Add(wrap);
         }
 
         private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex)
@@ -850,7 +893,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             try
             {
-                var images = this.GetVisualDescendants().OfType<Image>()
+                // Use logical tree (not visual) so collapsed group cards are included
+                var images = OverviewPanel.GetLogicalDescendants().OfType<Image>()
                     .Where(img => img.Tag is long).ToList();
 
                 foreach (var img in images)
@@ -883,7 +927,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             try
             {
-                var images = this.GetVisualDescendants().OfType<Image>()
+                // Use logical tree (not visual) so collapsed group cards are included
+                var images = OverviewPanel.GetLogicalDescendants().OfType<Image>()
                     .Where(img => img.Tag is long id && characterIds.Contains(id)).ToList();
 
                 foreach (var img in images)

@@ -327,27 +327,35 @@
         <Setter Property="Background" Value="Transparent" />
     </Style>
 
-    <!-- Modern thin scrollbar -->
+    <!-- Modern thin scrollbar — visible at rest, brighter on hover -->
     <Style Selector="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Width" Value="8" />
-        <Setter Property="MinWidth" Value="8" />
+        <Setter Property="Width" Value="10" />
+        <Setter Property="MinWidth" Value="10" />
     </Style>
     <Style Selector="ScrollBar:horizontal">
-        <Setter Property="Height" Value="8" />
-        <Setter Property="MinHeight" Value="8" />
+        <Setter Property="Height" Value="10" />
+        <Setter Property="MinHeight" Value="10" />
     </Style>
     <Style Selector="ScrollBar /template/ Thumb">
-        <Setter Property="Background" Value="{StaticResource EveAccentDimmedBrush}" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="MinWidth" Value="6" />
-        <Setter Property="MinHeight" Value="6" />
+        <Setter Property="Background" Value="{StaticResource EveAccentSecondaryBrush}" />
+        <Setter Property="Opacity" Value="0.4" />
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="MinWidth" Value="8" />
+        <Setter Property="MinHeight" Value="8" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+            </Transitions>
+        </Setter>
     </Style>
     <Style Selector="ScrollBar /template/ Thumb:pointerover">
         <Setter Property="Background" Value="{StaticResource EveAccentSecondaryBrush}" />
+        <Setter Property="Opacity" Value="0.75" />
     </Style>
     <Style Selector="ScrollBar /template/ Thumb:pressed">
         <Setter Property="Background" Value="{StaticResource EveAccentPrimaryBrush}" />
+        <Setter Property="Opacity" Value="1.0" />
     </Style>
     <Style Selector="ScrollBar /template/ RepeatButton">
         <Setter Property="IsVisible" Value="False" />

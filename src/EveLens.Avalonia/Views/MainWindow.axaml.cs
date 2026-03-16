@@ -36,11 +36,14 @@ using EveLens.Avalonia.Services;
 using EveLens.Common.CustomEventArgs;
 using EveLens.Common.Events;
 using EveLens.Common.Notifications;
+using EveLens.Common.SettingsObjects;
 
 namespace EveLens.Avalonia.Views
 {
     public partial class MainWindow : Window
     {
+        private const string WindowLocationKey = "MainWindow";
+
         private readonly MainWindowViewModel _viewModel;
         private readonly List<ObservableCharacter> _observableCharacters = new();
         private readonly Dictionary<long, CharacterMonitorView> _cachedViews = new();
@@ -63,6 +66,7 @@ namespace EveLens.Avalonia.Views
         public MainWindow()
         {
             InitializeComponent();
+            RestoreWindowLocation();
 
             // On Linux/macOS, use PNG icon instead of .ico for better WM compatibility
             if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
@@ -1915,8 +1919,49 @@ namespace EveLens.Avalonia.Views
             EyeSlashIcon.IsVisible = AppServices.PrivacyModeEnabled;
         }
 
+        private void RestoreWindowLocation()
+        {
+            try
+            {
+                if (Settings.UI.WindowLocations.TryGetValue(WindowLocationKey, out var loc)
+                    && loc.Width > 100 && loc.Height > 100)
+                {
+                    Position = new PixelPoint(loc.Left, loc.Top);
+                    Width = loc.Width;
+                    Height = loc.Height;
+                    WindowStartupLocation = WindowStartupLocation.Manual;
+                }
+            }
+            catch
+            {
+                // If settings are corrupt, just use defaults
+            }
+        }
+
+        private void SaveWindowLocation()
+        {
+            try
+            {
+                if (WindowState == WindowState.Normal)
+                {
+                    Settings.UI.WindowLocations[WindowLocationKey] = new WindowLocationSettings
+                    {
+                        Left = Position.X,
+                        Top = Position.Y,
+                        Width = (int)Width,
+                        Height = (int)Height
+                    };
+                }
+            }
+            catch
+            {
+                // Don't let window save failures prevent shutdown
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
+            SaveWindowLocation();
             _notificationVm?.Save();
             _notificationVm?.Dispose();
             _tickSubscription?.Dispose();

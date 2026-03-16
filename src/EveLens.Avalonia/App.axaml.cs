@@ -246,6 +246,11 @@ namespace EveLens.Avalonia
                     {
                         try
                         {
+                            // Don't touch the tray icon if we're shutting down or restarting
+                            // (e.g., theme change triggers SettingsChangedEvent before restart)
+                            if (IsExiting)
+                                return;
+
                             bool enabled = Settings.UI.MinimizeToTray;
 
                             if (enabled && _trayIcon == null)
@@ -295,7 +300,7 @@ namespace EveLens.Avalonia
                 IsVisible = true
             };
 
-            _trayIcon.Clicked += (_, _) => ShowMainWindow(desktop);
+            _trayIcon.Clicked += (_, _) => ToggleMainWindow(desktop);
 
             // Update tooltip with training summary every 5 seconds
             _trayUpdateSub = AppServices.EventAggregator?.Subscribe<EveLens.Core.Events.FiveSecondTickEvent>(_ =>
@@ -376,6 +381,29 @@ namespace EveLens.Avalonia
             {
                 return null;
             }
+        }
+
+        private static void ToggleMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    var window = desktop.MainWindow;
+                    if (window == null)
+                        return;
+
+                    if (window.IsVisible && window.WindowState != WindowState.Minimized)
+                        window.Hide();
+                    else
+                        ShowMainWindow(desktop);
+                }
+                catch (Exception ex)
+                {
+                    AppServices.TraceService?.Trace(
+                        $"ToggleMainWindow failed: {ex.Message}", printMethod: false);
+                }
+            });
         }
 
         private static void ShowMainWindow(IClassicDesktopStyleApplicationLifetime desktop)
