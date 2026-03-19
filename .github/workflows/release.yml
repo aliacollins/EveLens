@@ -14,30 +14,24 @@ env:
   TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
 
 jobs:
-  # ── Calculate version from git history ──
+  # ── Read version from SharedAssemblyInfo.cs ──
   version:
     runs-on: ubuntu-latest
     outputs:
-      semver: ${{ steps.gitversion.outputs.fullSemVer }}
-      channel: ${{ steps.channel.outputs.channel }}
-      prerelease: ${{ steps.channel.outputs.prerelease }}
+      semver: ${{ steps.version.outputs.semver }}
+      channel: ${{ steps.version.outputs.channel }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v3
-        with:
-          versionSpec: '6.x'
-
-      - name: Calculate version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v3
-
-      - name: Determine channel
-        id: channel
+      - name: Extract version
+        id: version
         run: |
+          # Read version from SharedAssemblyInfo.cs (single source of truth)
+          ver=$(grep 'AssemblyInformationalVersion' SharedAssemblyInfo.cs | sed 's/.*"\(.*\)".*/\1/')
+          echo "semver=$ver" >> $GITHUB_OUTPUT
+
+          # Determine channel from branch name
           branch="${{ github.ref_name }}"
           if [ "$branch" = "main" ]; then
             echo "channel=stable" >> $GITHUB_OUTPUT
@@ -50,10 +44,7 @@ jobs:
             echo "prerelease=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Version summary
-        run: |
-          echo "### Version: ${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_STEP_SUMMARY
-          echo "Channel: ${{ steps.channel.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: $ver (branch: $branch)" >> $GITHUB_STEP_SUMMARY
 
   # ── Run tests ──
   test:
