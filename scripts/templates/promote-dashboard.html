@@ -156,11 +156,19 @@
       <div class="page-title">Prepare for Release</div>
       <div class="page-subtitle" id="prepare-subtitle"></div>
 
+      <!-- Branch callout -->
+      <div style="background:var(--blue-bg);border:1px solid rgba(96,165,250,0.2);border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--blue);display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">&#9432;</span>
+        <span>You are on branch <strong id="callout-branch" style="color:var(--text)"></strong> and promoting to <strong id="callout-target" style="color:var(--gold)"></strong></span>
+      </div>
+
       <div class="info-grid" style="margin-bottom:24px">
-        <div class="info-item"><div class="info-label">From</div><div class="info-value" id="info-source" style="color:var(--green)"></div></div>
-        <div class="info-item"><div class="info-label">To</div><div class="info-value" id="info-target" style="color:var(--gold)"></div></div>
+        <div class="info-item"><div class="info-label">From Branch</div><div class="info-value" id="info-source" style="color:var(--green)"></div></div>
+        <div class="info-item"><div class="info-label">To Branch</div><div class="info-value" id="info-target" style="color:var(--gold)"></div></div>
         <div class="info-item"><div class="info-label">Current Version</div><div class="info-value" id="info-version"></div></div>
+        <div class="info-item"><div class="info-label">Next Version</div><div class="info-value" id="info-next-version" style="color:var(--gold)"></div></div>
         <div class="info-item"><div class="info-label">Channel</div><div class="info-value" id="info-channel" style="text-transform:uppercase;letter-spacing:1px"></div></div>
+        <div class="info-item"><div class="info-label">Last Commit</div><div class="info-value" id="info-commit" style="font-size:11px;color:var(--text2);word-break:break-all"></div></div>
       </div>
 
       <div class="card">
@@ -265,6 +273,17 @@ document.getElementById('info-source').textContent = config.sourceBranch;
 document.getElementById('info-target').textContent = config.targetBranch;
 document.getElementById('info-version').textContent = config.currentVersion;
 document.getElementById('info-channel').textContent = config.channel;
+document.getElementById('info-commit').textContent = config.lastCommit || '-';
+document.getElementById('callout-branch').textContent = config.currentBranch;
+document.getElementById('callout-target').textContent = config.targetBranch;
+
+// Compute next version hint
+const ver = config.currentVersion || '';
+let nextVer = 'Determined by GitVersion';
+if (config.channel === 'alpha') nextVer = ver.includes('-alpha') ? ver.replace(/alpha\.\d+/, 'alpha.next') : ver + '-alpha.1';
+if (config.channel === 'beta') nextVer = ver.replace(/-alpha\.\d+/, '-beta.1').replace(/-beta\.(\d+)/, (m,n) => '-beta.' + (parseInt(n)+1));
+if (config.channel === 'stable') nextVer = ver.replace(/-.*$/, '');
+document.getElementById('info-next-version').textContent = nextVer;
 document.getElementById('pr-link').href = config.prUrl;
 document.getElementById('actions-link').href = config.repoUrl + '/actions';
 
