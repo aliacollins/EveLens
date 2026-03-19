@@ -14,7 +14,7 @@ env:
   TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
 
 jobs:
-  # ── Calculate version automatically ──
+  # ── Calculate version from branch + commit count ──
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -26,33 +26,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v3
-        with:
-          versionSpec: '6.x'
-
       - name: Calculate version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v3
-
-      - name: Set outputs
         id: version
         run: |
-          echo "semver=${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_OUTPUT
-
           branch="${{ github.ref_name }}"
+
+          # Base version from SharedAssemblyInfo.cs (major.minor.patch)
+          base_ver=$(grep 'AssemblyInformationalVersion' SharedAssemblyInfo.cs | sed 's/.*"\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/')
+
+          # Commit count on this branch for the build number
+          count=$(git rev-list --count HEAD)
+
+          # Compute semver based on branch
           if [ "$branch" = "main" ]; then
+            semver="${base_ver}"
             echo "channel=stable" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
           elif [ "$branch" = "beta" ]; then
+            semver="${base_ver}-beta.${count}"
             echo "channel=beta" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
           else
+            semver="${base_ver}-alpha.${count}"
             echo "channel=alpha" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "### Version: ${{ steps.gitversion.outputs.fullSemVer }} (branch: $branch)" >> $GITHUB_STEP_SUMMARY
+          echo "semver=$semver" >> $GITHUB_OUTPUT
+          echo "### Version: $semver (branch: $branch, commits: $count)" >> $GITHUB_STEP_SUMMARY
 
   # ── Run tests ──
   test:
