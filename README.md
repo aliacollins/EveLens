@@ -17,7 +17,7 @@ EveLens is a complete, ground-up rewrite of EVEMon — the character planner EVE
 
 This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,741 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
-**Current Version: 1.0.0-alpha.45**
+**Current Version: 1.0.0-alpha.46**
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -42,8 +42,8 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 **Linux:**
 ```bash
-chmod +x EveLens-1.0.0-alpha.45-linux-x64.AppImage
-./EveLens-1.0.0-alpha.45-linux-x64.AppImage
+chmod +x EveLens-1.0.0-alpha.46-linux-x64.AppImage
+./EveLens-1.0.0-alpha.46-linux-x64.AppImage
 ```
 
 **macOS:** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
