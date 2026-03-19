@@ -2,10 +2,11 @@
 
 **Character Intelligence for EVE Online**
 
+[![Build & Release](https://github.com/aliacollins/evelens/actions/workflows/release.yml/badge.svg)](https://github.com/aliacollins/evelens/actions/workflows/release.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/aliacollins/evelens?include_prereleases&label=latest)](https://github.com/aliacollins/evelens/releases)
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
 [![Cross-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-brightgreen.svg)]()
-[![BETA](https://img.shields.io/badge/branch-BETA-yellow.svg)]()
 
 ---
 
