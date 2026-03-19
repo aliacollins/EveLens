@@ -21,7 +21,6 @@ namespace EveLens.Common.Services
     public sealed class VelopackUpdateService : IDisposable
     {
         private const string GitHubRepoUrl = "https://github.com/aliacollins/evelens";
-        private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(6);
         private static readonly TimeSpan InitialDelay = TimeSpan.FromSeconds(15);
 
         private readonly VelopackUpdateManager _manager;
@@ -40,6 +39,17 @@ namespace EveLens.Common.Services
         /// <summary>The update channel this build belongs to (derived from version).</summary>
         public string Channel => CurrentVersion?.Contains("-alpha") == true ? "alpha"
             : CurrentVersion?.Contains("-beta") == true ? "beta" : "stable";
+
+        /// <summary>
+        /// Check interval based on channel: alpha=1h, beta=3h, stable=6h.
+        /// More frequent for testers, less disruptive for production users.
+        /// </summary>
+        public TimeSpan CheckInterval => Channel switch
+        {
+            "alpha" => TimeSpan.FromHours(1),
+            "beta" => TimeSpan.FromHours(3),
+            _ => TimeSpan.FromHours(6)
+        };
 
         /// <summary>Whether an update has been downloaded and is ready to apply.</summary>
         public bool IsUpdateReady => _pendingUpdate != null;
