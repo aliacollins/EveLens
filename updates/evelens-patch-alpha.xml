@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-19</date>
+      <version>1.0.0.45</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.0-alpha.45
+
+Fix version regression, add branching policy]]></message>
+    </release>
+    <release>
+      <date>2026-03-19</date>
       <version>1.0.0.1</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
@@ -92,16 +102,6 @@ Fix update dialog: prevent duplicate windows, scrollable release notes with prop
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EveLens 1.0.0-alpha.37
-
-Feedback round 2: ESI resilience pipeline, collapse persistence, auto-update, notification fixes]]></message>
-    </release>
-    <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.36</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.36
 
 Feedback round 2: ESI resilience pipeline, collapse persistence, auto-update, notification fixes]]></message>
     </release>
