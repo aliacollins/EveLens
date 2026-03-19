@@ -14,7 +14,7 @@ env:
   TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
 
 jobs:
-  # ── Calculate version from branch + commit count ──
+  # ── Calculate version via GitVersion CLI ──
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -26,34 +26,48 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install GitVersion
+        run: dotnet tool install --global GitVersion.Tool --version '6.*'
+
       - name: Calculate version
         id: version
         run: |
+          # Run GitVersion CLI directly (not the action — action has JSON parsing bugs)
+          semver=$(dotnet-gitversion /showvariable FullSemVer 2>/dev/null || echo "")
+
+          # Fallback if GitVersion fails
+          if [ -z "$semver" ]; then
+            echo "::warning::GitVersion failed, falling back to SharedAssemblyInfo.cs"
+            base_ver=$(grep 'AssemblyInformationalVersion' SharedAssemblyInfo.cs | sed 's/.*"\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/')
+            count=$(git rev-list --count HEAD)
+            branch="${{ github.ref_name }}"
+            case "$branch" in
+              main) semver="${base_ver}" ;;
+              beta) semver="${base_ver}-beta.${count}" ;;
+              *)    semver="${base_ver}-alpha.${count}" ;;
+            esac
+          fi
+
+          echo "semver=$semver" >> $GITHUB_OUTPUT
+
+          # Channel from branch
           branch="${{ github.ref_name }}"
-
-          # Base version from SharedAssemblyInfo.cs (major.minor.patch)
-          base_ver=$(grep 'AssemblyInformationalVersion' SharedAssemblyInfo.cs | sed 's/.*"\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/')
-
-          # Commit count on this branch for the build number
-          count=$(git rev-list --count HEAD)
-
-          # Compute semver based on branch
           if [ "$branch" = "main" ]; then
-            semver="${base_ver}"
             echo "channel=stable" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
           elif [ "$branch" = "beta" ]; then
-            semver="${base_ver}-beta.${count}"
             echo "channel=beta" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
           else
-            semver="${base_ver}-alpha.${count}"
             echo "channel=alpha" >> $GITHUB_OUTPUT
             echo "prerelease=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "semver=$semver" >> $GITHUB_OUTPUT
-          echo "### Version: $semver (branch: $branch, commits: $count)" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: $semver (branch: $branch)" >> $GITHUB_STEP_SUMMARY
 
   # ── Run tests ──
   test:
