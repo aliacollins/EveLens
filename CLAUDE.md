@@ -66,11 +66,12 @@ git push origin feature/my-feature
 ```
 
 **Rules:**
-- **NEVER commit directly to `alpha`, `beta`, or `main`** — the pre-push hook blocks it
+- **NEVER commit directly to `alpha`, `beta`, or `main`** — GitHub branch protection enforces this
 - **NEVER checkout `beta` or `main` for development** — only README updates are acceptable
 - **Branch naming:** `feature/`, `fix/`, or `experimental/` prefix required
 - **Branch from `alpha`** — alpha is always the development baseline
 - **Delete branches after merge** — keep the branch list clean
+- **Pushing to alpha/beta/main triggers GitHub Actions** — builds, tests, and releases automatically
 
 ## Build & Test Commands
 
@@ -131,7 +132,7 @@ nc $WINHOST 5555 | jq -r 'select(.lvl == "WRN") | .msg'        # Warnings only
 
 ## Commit Guidelines
 
-- **NEVER push to protected branches directly** — pre-push hook blocks it
+- **NEVER push to protected branches directly** — GitHub branch protection enforces this
 - **NEVER commit without explicit user approval** — wait for confirmation
 - **No Claude attribution** — do not add "Co-Authored-By: Claude" to commits
 - **Batch related changes** — group into single meaningful commits
