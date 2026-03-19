@@ -14,13 +14,13 @@ env:
   TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
 
 jobs:
-  # ── Calculate version via GitVersion ──
+  # ── Version ──
   version:
     runs-on: ubuntu-latest
     outputs:
-      semver: ${{ steps.version.outputs.semver }}
-      channel: ${{ steps.version.outputs.channel }}
-      prerelease: ${{ steps.version.outputs.prerelease }}
+      semver: ${{ steps.calc.outputs.semver }}
+      channel: ${{ steps.calc.outputs.channel }}
+      prerelease: ${{ steps.calc.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,34 +31,29 @@ jobs:
         with:
           versionSpec: '6.6.x'
 
-      - name: Determine Version
+      - name: Run GitVersion
         id: gitversion
         uses: gittools/actions/gitversion/execute@v4.4.2
         with:
           configFilePath: GitVersion.yml
-          overrideConfig: |
-            next-version=1.0.0
 
       - name: Set outputs
-        id: version
+        id: calc
         run: |
-          echo "semver=${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_OUTPUT
-
+          semver="${{ steps.gitversion.outputs.fullSemVer }}"
           branch="${{ github.ref_name }}"
-          if [ "$branch" = "main" ]; then
-            echo "channel=stable" >> $GITHUB_OUTPUT
-            echo "prerelease=false" >> $GITHUB_OUTPUT
-          elif [ "$branch" = "beta" ]; then
-            echo "channel=beta" >> $GITHUB_OUTPUT
-            echo "prerelease=true" >> $GITHUB_OUTPUT
-          else
-            echo "channel=alpha" >> $GITHUB_OUTPUT
-            echo "prerelease=true" >> $GITHUB_OUTPUT
-          fi
 
-          echo "### Version: ${{ steps.gitversion.outputs.fullSemVer }} (branch: $branch)" >> $GITHUB_STEP_SUMMARY
+          echo "semver=$semver" >> $GITHUB_OUTPUT
 
-  # ── Run tests ──
+          case "$branch" in
+            main)  echo "channel=stable" >> $GITHUB_OUTPUT; echo "prerelease=false" >> $GITHUB_OUTPUT ;;
+            beta)  echo "channel=beta" >> $GITHUB_OUTPUT;   echo "prerelease=true" >> $GITHUB_OUTPUT ;;
+            *)     echo "channel=alpha" >> $GITHUB_OUTPUT;  echo "prerelease=true" >> $GITHUB_OUTPUT ;;
+          esac
+
+          echo "### Version: $semver (branch: $branch)" >> $GITHUB_STEP_SUMMARY
+
+  # ── Tests ──
   test:
     runs-on: windows-latest
     steps:
@@ -66,9 +61,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Run tests
-        run: dotnet test ${{ env.TEST_PROJECT }} --verbosity minimal
+      - run: dotnet test ${{ env.TEST_PROJECT }} --verbosity minimal
 
   # ── Build Windows ──
   build-windows:
@@ -79,19 +72,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Install Velopack CLI
-        run: dotnet tool install -g vpk
-
       - name: Publish
         run: |
           dotnet publish ${{ env.MAIN_PROJECT }} `
             -c Release -r win-x64 --self-contained `
             -o publish/win-x64 `
             -p:Version=${{ needs.version.outputs.semver }}
-
-      - name: Pack with Velopack
+      - name: Pack
         run: |
+          dotnet tool install -g vpk
           vpk pack `
             -u ${{ env.APP_NAME }} `
             -v ${{ needs.version.outputs.semver }} `
@@ -99,7 +88,6 @@ jobs:
             -e EveLens.exe `
             --channel ${{ needs.version.outputs.channel }} `
             -o releases/win
-
       - uses: actions/upload-artifact@v4
         with:
           name: release-win
@@ -114,19 +102,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Install Velopack CLI
-        run: dotnet tool install -g vpk
-
       - name: Publish
         run: |
           dotnet publish ${{ env.MAIN_PROJECT }} \
             -c Release -r linux-x64 --self-contained \
             -o publish/linux-x64 \
             -p:Version=${{ needs.version.outputs.semver }}
-
-      - name: Pack with Velopack
+      - name: Pack
         run: |
+          dotnet tool install -g vpk
           vpk pack \
             -u ${{ env.APP_NAME }} \
             -v ${{ needs.version.outputs.semver }} \
@@ -134,7 +118,6 @@ jobs:
             -e EveLens \
             --channel ${{ needs.version.outputs.channel }} \
             -o releases/linux
-
       - uses: actions/upload-artifact@v4
         with:
           name: release-linux
@@ -149,19 +132,15 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Install Velopack CLI
-        run: dotnet tool install -g vpk
-
-      - name: Publish ARM64
+      - name: Publish
         run: |
           dotnet publish ${{ env.MAIN_PROJECT }} \
             -c Release -r osx-arm64 --self-contained \
             -o publish/osx-arm64 \
             -p:Version=${{ needs.version.outputs.semver }}
-
-      - name: Pack with Velopack
+      - name: Pack
         run: |
+          dotnet tool install -g vpk
           vpk pack \
             -u ${{ env.APP_NAME }} \
             -v ${{ needs.version.outputs.semver }} \
@@ -169,7 +148,6 @@ jobs:
             -e EveLens \
             --channel ${{ needs.version.outputs.channel }} \
             -o releases/osx
-
       - uses: actions/upload-artifact@v4
         with:
           name: release-osx
@@ -182,75 +160,64 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: all-releases/
 
       - name: Build release notes
-        id: notes
         run: |
           version="${{ needs.version.outputs.semver }}"
-          channel="${{ needs.version.outputs.channel }}"
 
-          # Find the previous release tag for comparison
-          prev_tag=$(git tag --list "v*" --sort=-v:refname | head -1 || echo "")
-          echo "Previous tag: ${prev_tag:-none}"
-
-          # ── Section 1: Curated notes from CHANGELOG.md ──
-          changelog=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found{print}' CHANGELOG.md)
-
-          if [ -z "$(echo "$changelog" | tr -d '[:space:]')" ]; then
-            changelog=$(awk '/^## \[[0-9]/{if(found) exit; found=1; next} found{print}' CHANGELOG.md)
+          # Extract [Unreleased] from CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            changelog=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found{print}' CHANGELOG.md)
+            if [ -z "$(echo "$changelog" | tr -d '[:space:]')" ]; then
+              changelog=$(awk '/^## \[[0-9]/{if(found) exit; found=1; next} found{print}' CHANGELOG.md)
+            fi
+          else
+            changelog="See commit history for changes."
           fi
 
-          # ── Section 2: Auto-generated commit list since last tag ──
+          # Previous release tag for comparison
+          prev_tag=$(git tag --list "v1.*" --sort=-v:refname | head -1 || echo "")
+
+          # Commits since last release
           if [ -n "$prev_tag" ]; then
             commits=$(git log "${prev_tag}..HEAD" --oneline --no-merges 2>/dev/null | head -30)
-            comparison_url="https://github.com/aliacollins/evelens/compare/${prev_tag}...v${version}"
+            compare="https://github.com/aliacollins/evelens/compare/${prev_tag}...v${version}"
           else
             commits=$(git log --oneline --no-merges -20 2>/dev/null)
-            comparison_url=""
+            compare=""
           fi
 
-          # ── Assemble release notes ──
-          cat > /tmp/release-notes.md << NOTES_EOF
-          ## What's New
+          # Assemble
+          {
+            echo "## What's New in ${version}"
+            echo ""
+            echo "$changelog"
+            echo ""
+            echo "---"
+            echo ""
+            echo "<details>"
+            echo "<summary>Commits since ${prev_tag:-initial}</summary>"
+            echo ""
+            echo "$commits" | sed 's/^/- /'
+            echo ""
+            echo "</details>"
+            [ -n "$compare" ] && echo "" && echo "**Full Changelog**: ${compare}"
+          } > release-notes.md
 
-          ${changelog}
+          cat release-notes.md
 
-          ---
-
-          <details>
-          <summary>Commits since ${prev_tag:-initial}</summary>
-
-          $(echo "$commits" | sed 's/^/- /')
-
-          </details>
-          NOTES_EOF
-
-          # Add full changelog link if we have a previous tag
-          if [ -n "$comparison_url" ]; then
-            echo "" >> /tmp/release-notes.md
-            echo "**Full Changelog**: ${comparison_url}" >> /tmp/release-notes.md
-          fi
-
-          # Clean up leading whitespace from heredoc
-          sed -i 's/^          //' /tmp/release-notes.md
-
-          echo "Release notes:"
-          cat /tmp/release-notes.md
-
-      - name: Collect release files
+      - name: Collect files
         run: |
           mkdir -p releases
           cp all-releases/release-win/* releases/ 2>/dev/null || true
           cp all-releases/release-linux/* releases/ 2>/dev/null || true
           cp all-releases/release-osx/* releases/ 2>/dev/null || true
-          echo "Release files:"
           ls -la releases/
 
       - name: Create GitHub Release
@@ -258,7 +225,7 @@ jobs:
         with:
           tag_name: v${{ needs.version.outputs.semver }}
           name: ${{ env.APP_NAME }} ${{ needs.version.outputs.semver }}
-          body_path: /tmp/release-notes.md
+          body_path: release-notes.md
           prerelease: ${{ needs.version.outputs.prerelease }}
           files: releases/*
         env:
