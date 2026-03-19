@@ -3,272 +3,396 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EveLens — Promotion Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        eve: { dark: '#0d0d1a', medium: '#1a1a2e', light: '#2a2a3e', gold: '#e6a817', green: '#4ade80', red: '#f87171', yellow: '#fbbf24', gray: '#9ca3af', text: '#e5e5e5' }
-      }
-    }
-  }
-}
-</script>
+<title>EveLens Release Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-  .glow-green { box-shadow: 0 0 24px rgba(74, 222, 128, 0.12); }
-  .glow-red { box-shadow: 0 0 24px rgba(248, 113, 113, 0.12); }
-  .glow-gold { box-shadow: 0 0 24px rgba(230, 168, 23, 0.12); }
-  .spin { animation: spin 1s linear infinite; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-primary: #0b0b1a;
+    --bg-card: rgba(22, 22, 42, 0.7);
+    --bg-card-hover: rgba(30, 30, 55, 0.8);
+    --bg-inset: rgba(12, 12, 28, 0.6);
+    --border: rgba(255, 255, 255, 0.06);
+    --border-active: rgba(255, 255, 255, 0.12);
+    --text-primary: #e8e8ef;
+    --text-secondary: #8b8ba3;
+    --text-tertiary: #5a5a72;
+    --accent: #c9a227;
+    --accent-dim: rgba(201, 162, 39, 0.12);
+    --green: #34d399;
+    --green-dim: rgba(52, 211, 153, 0.1);
+    --green-border: rgba(52, 211, 153, 0.25);
+    --red: #f87171;
+    --red-dim: rgba(248, 113, 113, 0.1);
+    --red-border: rgba(248, 113, 113, 0.25);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251, 191, 36, 0.1);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167, 139, 250, 0.08);
+  }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1120px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border-active); }
+  .card-header {
+    padding: 20px 24px 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-header h2 {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-secondary);
+  }
+  .card-body { padding: 16px 24px 24px; }
+
+  /* Status Banner */
+  .banner { border-radius: 16px; padding: 24px 28px; display: flex; align-items: center; gap: 16px; }
+  .banner-icon { font-size: 32px; flex-shrink: 0; }
+  .banner h3 { font-size: 18px; font-weight: 600; }
+  .banner p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .banner-ready { background: var(--green-dim); border: 1px solid var(--green-border); }
+  .banner-ready h3 { color: var(--green); }
+  .banner-fail { background: var(--red-dim); border: 1px solid var(--red-border); }
+  .banner-fail h3 { color: var(--red); }
+  .banner-idle { background: var(--bg-card); border: 1px solid var(--border); }
+  .banner-idle h3 { color: var(--text-secondary); }
+  .banner-running { background: var(--yellow-dim); border: 1px solid rgba(251,191,36,0.2); }
+  .banner-running h3 { color: var(--yellow); }
+
+  /* Grid */
+  .grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+  .grid-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 900px) { .grid-main { grid-template-columns: 1fr; } .grid-stats { grid-template-columns: repeat(2, 1fr); } }
+
+  /* Stat Cards */
+  .stat { text-align: center; padding: 20px 12px; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat-label { font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
+
+  /* Check Items */
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg-inset);
+    margin-bottom: 8px; transition: all 0.25s ease;
+  }
+  .check-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .check-icon-idle { background: rgba(255,255,255,0.04); color: var(--text-tertiary); }
+  .check-icon-pass { background: var(--green-dim); color: var(--green); }
+  .check-icon-fail { background: var(--red-dim); color: var(--red); }
+  .check-icon-run { background: var(--yellow-dim); color: var(--yellow); }
+  .check-name { font-size: 13px; font-weight: 500; }
+  .check-detail { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+  .check-pass .check-detail { color: rgba(52,211,153,0.7); }
+  .check-fail .check-detail { color: rgba(248,113,113,0.7); }
+  .check-item-pass { border-color: var(--green-border); }
+  .check-item-fail { border-color: var(--red-border); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border); background: var(--bg-card);
+    color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+    text-decoration: none; width: 100%;
+  }
+  .btn:hover { border-color: var(--border-active); color: var(--text-primary); background: var(--bg-card-hover); }
+  .btn-sm { padding: 5px 12px; font-size: 11px; width: auto; }
+  .btn-accent { background: var(--accent-dim); border-color: rgba(201,162,39,0.3); color: var(--accent); }
+  .btn-accent:hover { background: rgba(201,162,39,0.2); color: #d4af37; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #0b0b1a; font-weight: 600; }
+  .btn-primary:hover { background: #d4af37; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Flow */
+  .flow { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px; }
+  .flow-node {
+    padding: 8px 20px; border-radius: 8px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--border); color: var(--text-tertiary);
+  }
+  .flow-node-source { border-color: var(--green-border); color: var(--green); background: var(--green-dim); }
+  .flow-node-target { border-color: rgba(201,162,39,0.3); color: var(--accent); background: var(--accent-dim); }
+  .flow-arrow { color: var(--text-tertiary); font-size: 16px; }
+  .flow-arrow-active { color: var(--accent); }
+
+  /* Changelog */
+  .changelog-box {
+    background: var(--bg-inset); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; min-height: 100px;
+    font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-wrap: break-word;
+  }
+
+  /* Log */
+  .log-box {
+    background: var(--bg-inset); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px; max-height: 180px;
+    overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px;
+  }
+  .log-entry { padding: 2px 0; color: var(--text-tertiary); }
+  .log-time { color: var(--text-tertiary); opacity: 0.5; }
+  .log-pass { color: var(--green); }
+  .log-fail { color: var(--red); }
+
+  /* Sidebar info */
+  .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--text-tertiary); }
+  .info-value { font-family: 'SF Mono', monospace; font-size: 12px; }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp 0.3s ease-out; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  .fade-in { animation: fadeIn 0.3s ease-out; }
-  pre { white-space: pre-wrap; word-wrap: break-word; }
-  .pulse { animation: pulse 2s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+  .spin { display: inline-block; animation: spin 0.8s linear infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  .pulse { animation: pulse 1.5s ease-in-out infinite; }
 </style>
 </head>
-<body class="bg-eve-dark text-eve-text min-h-screen">
+<body>
 <script>const config = __CONFIG__;</script>
 
-<div class="max-w-5xl mx-auto px-6 py-8">
+<div class="container">
 
   <!-- Header -->
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-4">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;">
+    <div style="display:flex; align-items:center; gap:14px;">
       <div>
-        <h1 class="text-2xl font-bold text-eve-gold tracking-tight">EveLens</h1>
-        <p class="text-eve-gray text-xs">Promotion Dashboard</p>
+        <div style="font-size:20px; font-weight:700; letter-spacing:-0.3px;">Release Manager</div>
+        <div style="font-size:12px; color:var(--text-tertiary); margin-top:2px;">EveLens</div>
       </div>
-      <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border"
-            id="channel-badge"></span>
+      <span id="channel-pill" style="padding:4px 14px; border-radius:20px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px;"></span>
     </div>
-    <div class="text-right text-xs text-eve-gray">
-      <div id="version-display"></div>
-      <div id="branch-display"></div>
+    <div style="text-align:right;">
+      <div style="font-size:12px; color:var(--text-secondary);" id="header-version"></div>
+      <div style="font-size:11px; color:var(--text-tertiary);" id="header-branch"></div>
     </div>
   </div>
 
-  <!-- Status Banner -->
-  <div id="status-banner" class="rounded-xl p-4 mb-6 border border-eve-light bg-eve-medium">
-    <div class="text-sm text-eve-gray">Run checks to see promotion readiness</div>
+  <!-- Banner -->
+  <div id="banner" class="banner banner-idle" style="margin-bottom:20px;">
+    <div class="banner-icon">&#9711;</div>
+    <div><h3>Ready to check</h3><p>Click "Run All" to validate this promotion</p></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid-stats">
+    <div class="card stat"><div class="stat-value" id="stat-checks" style="color:var(--text-tertiary);">0/5</div><div class="stat-label">Checks</div></div>
+    <div class="card stat"><div class="stat-value" id="stat-tests" style="color:var(--text-tertiary);">--</div><div class="stat-label">Tests</div></div>
+    <div class="card stat"><div class="stat-value" id="stat-files" style="color:var(--text-tertiary);">--</div><div class="stat-label">Files Changed</div></div>
+    <div class="card stat"><div class="stat-value" id="stat-notes" style="color:var(--text-tertiary);">--</div><div class="stat-label">Release Notes</div></div>
   </div>
 
   <!-- Flow -->
-  <div class="bg-eve-medium rounded-xl p-4 mb-6 border border-eve-light">
-    <div class="flex items-center justify-center gap-3 text-sm" id="flow"></div>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="flow" id="flow"></div>
   </div>
 
   <!-- Main Grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+  <div class="grid-main">
 
-    <!-- Checklist (2 cols) -->
-    <div class="lg:col-span-2 bg-eve-medium rounded-xl p-5 border border-eve-light">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-base font-semibold text-eve-gold">Pre-flight Checklist</h2>
-        <button onclick="runAllChecks()" id="run-all-btn"
-                class="px-4 py-1.5 rounded-full text-xs font-medium bg-eve-gold/10 text-eve-gold border border-eve-gold/30 hover:bg-eve-gold/20 transition-colors">
-          Run All Checks
-        </button>
+    <!-- Left: Checklist + Changelog -->
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <h2>Pre-flight Checks</h2>
+          <button class="btn btn-accent btn-sm" onclick="runAllChecks()" id="run-all-btn">Run All</button>
+        </div>
+        <div class="card-body" id="checklist"></div>
       </div>
-      <div id="checklist" class="space-y-2"></div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <h2>Release Notes</h2>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" onclick="loadChangelog()">Refresh</button>
+            <button class="btn btn-sm" onclick="copyNotes()" id="copy-btn">Copy</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="changelog-box" id="changelog">Loading...</div>
+          <div style="font-size:11px; color:var(--text-tertiary); margin-top:8px;">
+            Paste into the GitHub PR description. Users see this in the update dialog.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Activity</h2></div>
+        <div class="card-body"><div class="log-box" id="log"></div></div>
+      </div>
     </div>
 
-    <!-- Right Panel -->
-    <div class="space-y-5">
-      <!-- Version -->
-      <div class="bg-eve-medium rounded-xl p-4 border border-eve-light">
-        <h2 class="text-base font-semibold text-eve-gold mb-3">Details</h2>
-        <div class="space-y-2 text-sm" id="details"></div>
+    <!-- Right: Details + Actions -->
+    <div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h2>Details</h2></div>
+        <div class="card-body" id="details"></div>
       </div>
 
-      <!-- Actions -->
-      <div class="bg-eve-medium rounded-xl p-4 border border-eve-light">
-        <h2 class="text-base font-semibold text-eve-gold mb-3">Actions</h2>
-        <div class="space-y-2" id="actions"></div>
+      <div class="card" id="actions-card">
+        <div class="card-header"><h2>Actions</h2></div>
+        <div class="card-body" id="actions">
+          <div style="text-align:center; color:var(--text-tertiary); font-size:13px; padding:12px 0;">
+            Run checks first
+          </div>
+        </div>
       </div>
     </div>
   </div>
-
-  <!-- Release Notes -->
-  <div class="bg-eve-medium rounded-xl p-5 mb-6 border border-eve-light">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-base font-semibold text-eve-gold">Release Notes</h2>
-      <div class="flex gap-2">
-        <button onclick="loadChangelog()" class="text-xs bg-eve-light hover:bg-eve-gold/10 text-eve-gray hover:text-eve-gold px-3 py-1 rounded-full transition-colors border border-eve-light">
-          Refresh
-        </button>
-        <button onclick="copyChangelog()" id="copy-btn" class="text-xs bg-eve-gold/10 hover:bg-eve-gold/20 text-eve-gold px-3 py-1 rounded-full transition-colors border border-eve-gold/30">
-          Copy
-        </button>
-      </div>
-    </div>
-    <div id="changelog-box" class="bg-eve-dark rounded-lg p-4 border border-eve-light min-h-[80px]">
-      <pre class="text-sm text-eve-gray leading-relaxed" id="changelog-content">Click "Refresh" to load changelog...</pre>
-    </div>
-    <p class="text-xs text-eve-gray mt-2">This is what users see in the update dialog. Paste into the GitHub PR description.</p>
-  </div>
-
-  <!-- Activity Log -->
-  <div class="bg-eve-medium rounded-xl p-5 border border-eve-light">
-    <h2 class="text-base font-semibold text-eve-gold mb-3">Activity Log</h2>
-    <div id="log" class="space-y-1 text-xs font-mono max-h-48 overflow-y-auto"></div>
-  </div>
-
 </div>
 
 <script>
 const API = `http://localhost:${config.port}/api`;
-let checkResults = {};
+let results = {};
 let changelogText = '';
+let passCount = 0;
+let totalChecks = 5;
 
 // ── Init ──
-document.getElementById('channel-badge').textContent = config.channel;
-document.getElementById('channel-badge').className += config.channel === 'stable'
-  ? ' border-eve-green text-eve-green' : config.channel === 'beta'
-  ? ' border-eve-yellow text-eve-yellow' : ' border-eve-gold text-eve-gold';
-document.getElementById('version-display').textContent = `v${config.currentVersion}`;
-document.getElementById('branch-display').textContent = `${config.currentBranch}`;
+const pill = document.getElementById('channel-pill');
+pill.textContent = config.channel;
+pill.style.cssText += config.channel === 'stable'
+  ? 'border:1px solid var(--green-border); color:var(--green); background:var(--green-dim);'
+  : config.channel === 'beta'
+  ? 'border:1px solid rgba(251,191,36,0.3); color:var(--yellow); background:var(--yellow-dim);'
+  : 'border:1px solid rgba(201,162,39,0.3); color:var(--accent); background:var(--accent-dim);';
+
+document.getElementById('header-version').textContent = `v${config.currentVersion}`;
+document.getElementById('header-branch').textContent = config.currentBranch;
 
 // Flow
 const flowEl = document.getElementById('flow');
-const branches = ['feature/*', 'alpha', 'beta', 'main'];
-const targetIdx = { alpha: 1, beta: 2, stable: 3 }[config.channel];
-branches.forEach((b, i) => {
-  const cls = i === targetIdx ? 'border-eve-gold text-eve-gold bg-eve-gold/10 font-semibold'
-    : i === targetIdx - 1 ? 'border-eve-green text-eve-green bg-eve-green/5'
-    : 'border-eve-light text-eve-gray/50';
-  flowEl.innerHTML += `<div class="px-4 py-2 rounded-lg border ${cls} min-w-[80px] text-center">${b}</div>`;
-  if (i < 3) {
-    const ac = i === targetIdx - 1 ? 'text-eve-gold font-bold' : 'text-eve-light';
-    flowEl.innerHTML += `<span class="${ac}">&rarr;</span>`;
-  }
+const nodes = ['feature/*', 'alpha', 'beta', 'main'];
+const tgtIdx = { alpha: 1, beta: 2, stable: 3 }[config.channel];
+nodes.forEach((n, i) => {
+  const cls = i === tgtIdx ? 'flow-node flow-node-target'
+    : i === tgtIdx - 1 || (config.channel === 'alpha' && i === 0) ? 'flow-node flow-node-source'
+    : 'flow-node';
+  flowEl.innerHTML += `<div class="${cls}">${n}</div>`;
+  if (i < 3) flowEl.innerHTML += `<span class="flow-arrow ${i === tgtIdx-1 ? 'flow-arrow-active' : ''}">&rarr;</span>`;
 });
+
+// Details
+document.getElementById('details').innerHTML = [
+  ['Version', config.currentVersion],
+  ['Channel', config.channel],
+  ['Source', config.sourceBranch],
+  ['Target', config.targetBranch],
+  ['Commit', config.lastCommit?.substring(0, 40) || '-'],
+].map(([l,v]) => `<div class="info-row"><span class="info-label">${l}</span><span class="info-value">${v}</span></div>`).join('');
 
 // ── Checks ──
 const checks = [
-  { id: 'status', name: 'Clean Working Tree', endpoint: '/status', icon: '&#128194;' },
-  { id: 'build', name: 'Build', endpoint: '/build', icon: '&#128295;' },
-  { id: 'tests', name: 'Tests', endpoint: '/tests', icon: '&#9989;' },
-  { id: 'changelog', name: 'Changelog', endpoint: '/changelog', icon: '&#128221;' },
-  { id: 'dangerous', name: 'Dangerous Files', endpoint: '/dangerous', icon: '&#9888;' },
+  { id: 'status', name: 'Clean Working Tree', ep: '/status' },
+  { id: 'build', name: 'Build', ep: '/build' },
+  { id: 'tests', name: 'Tests', ep: '/tests' },
+  { id: 'changelog', name: 'Changelog', ep: '/changelog' },
+  { id: 'dangerous', name: 'Dangerous Files', ep: '/dangerous' },
 ];
 
-const checklistEl = document.getElementById('checklist');
+const cl = document.getElementById('checklist');
 checks.forEach(c => {
-  checklistEl.innerHTML += `
-    <div id="check-${c.id}" class="flex items-center gap-3 p-3 rounded-lg border border-eve-light bg-eve-dark/50 transition-all">
-      <span class="text-lg w-6 text-center" id="icon-${c.id}">${c.icon}</span>
-      <div class="flex-1">
-        <div class="font-medium text-sm text-eve-text">${c.name}</div>
-        <div class="text-xs text-eve-gray mt-0.5" id="detail-${c.id}">Not checked</div>
-      </div>
-      <button onclick="runCheck('${c.id}')" id="btn-${c.id}"
-              class="px-3 py-1 rounded-full text-xs bg-eve-light hover:bg-eve-gold/10 text-eve-gray hover:text-eve-gold border border-eve-light transition-colors">
-        Run
-      </button>
-    </div>`;
+  cl.innerHTML += `<div class="check-item" id="ci-${c.id}">
+    <div class="check-icon check-icon-idle" id="ico-${c.id}">&#8212;</div>
+    <div style="flex:1"><div class="check-name">${c.name}</div><div class="check-detail" id="det-${c.id}">Waiting</div></div>
+    <button class="btn btn-sm" onclick="runOne('${c.id}')" id="btn-${c.id}">Run</button>
+  </div>`;
 });
 
-async function runCheck(id) {
-  const check = checks.find(c => c.id === id);
-  const el = document.getElementById(`check-${id}`);
-  const icon = document.getElementById(`icon-${id}`);
-  const detail = document.getElementById(`detail-${id}`);
+async function runOne(id) {
+  const c = checks.find(x => x.id === id);
+  const item = document.getElementById(`ci-${id}`);
+  const ico = document.getElementById(`ico-${id}`);
+  const det = document.getElementById(`det-${id}`);
   const btn = document.getElementById(`btn-${id}`);
 
-  // Loading state
-  el.className = 'flex items-center gap-3 p-3 rounded-lg border border-eve-yellow/30 bg-eve-yellow/5 transition-all';
-  icon.innerHTML = '<span class="spin inline-block">&#9881;</span>';
-  detail.textContent = 'Running...';
-  btn.disabled = true;
-  btn.textContent = '...';
-  log(`Running ${check.name}...`);
+  item.className = 'check-item'; ico.className = 'check-icon check-icon-run';
+  ico.innerHTML = '<span class="spin">&#9881;</span>';
+  det.textContent = 'Running...'; det.className = 'check-detail';
+  btn.disabled = true; btn.textContent = '...';
+  log(`Running ${c.name}...`);
 
   try {
-    const res = await fetch(API + check.endpoint);
-    const data = await res.json();
-    checkResults[id] = data;
+    const r = await (await fetch(API + c.ep)).json();
+    results[id] = r;
+    const ok = r.pass ?? r.hasEntries ?? true;
 
-    const pass = data.pass ?? data.hasEntries ?? true;
-    el.className = `flex items-center gap-3 p-3 rounded-lg border fade-in transition-all ${
-      pass ? 'border-eve-green/30 bg-eve-green/5' : 'border-eve-red/30 bg-eve-red/5'}`;
-    icon.innerHTML = pass ? '&#10003;' : '&#10007;';
-    icon.className = `text-lg w-6 text-center font-bold ${pass ? 'text-eve-green' : 'text-eve-red'}`;
-    detail.textContent = data.detail || (pass ? 'Passed' : 'Failed');
-    detail.className = `text-xs mt-0.5 ${pass ? 'text-eve-green/80' : 'text-eve-red/80'}`;
-    btn.textContent = 'Re-run';
-    btn.disabled = false;
-    log(`${check.name}: ${pass ? 'PASS' : 'FAIL'} — ${data.detail || ''}`);
+    item.className = `check-item fade-up ${ok ? 'check-item-pass check-pass' : 'check-item-fail check-fail'}`;
+    ico.className = `check-icon ${ok ? 'check-icon-pass' : 'check-icon-fail'}`;
+    ico.innerHTML = ok ? '&#10003;' : '&#10007;';
+    det.textContent = r.detail || (ok ? 'Passed' : 'Failed');
+    log(`${c.name}: ${ok ? 'PASS' : 'FAIL'}${r.detail ? ' - ' + r.detail : ''}`, ok);
 
-    if (id === 'changelog' && data.content) {
-      changelogText = data.content;
-      document.getElementById('changelog-content').textContent = data.content;
-      document.getElementById('changelog-content').className = 'text-sm text-eve-text leading-relaxed';
-    }
-  } catch (err) {
-    el.className = 'flex items-center gap-3 p-3 rounded-lg border border-eve-red/30 bg-eve-red/5 transition-all';
-    icon.innerHTML = '&#10007;';
-    icon.className = 'text-lg w-6 text-center font-bold text-eve-red';
-    detail.textContent = `Error: ${err.message}`;
-    btn.textContent = 'Retry';
-    btn.disabled = false;
-    log(`${check.name}: ERROR — ${err.message}`);
+    if (id === 'changelog' && r.content) { changelogText = r.content; renderChangelog(); }
+    if (id === 'tests' && r.count) document.getElementById('stat-tests').textContent = r.count;
+  } catch (e) {
+    item.className = 'check-item check-item-fail check-fail fade-up';
+    ico.className = 'check-icon check-icon-fail'; ico.innerHTML = '&#10007;';
+    det.textContent = 'Error: ' + e.message;
+    log(`${c.name}: ERROR - ${e.message}`, false);
   }
-
-  updateBanner();
+  btn.disabled = false; btn.textContent = 'Re-run';
+  updateStats();
 }
 
 async function runAllChecks() {
   const btn = document.getElementById('run-all-btn');
-  btn.textContent = 'Running...';
-  btn.disabled = true;
+  btn.disabled = true; btn.textContent = 'Running...';
+  setBanner('running');
 
-  for (const check of checks) {
-    await runCheck(check.id);
-  }
+  for (const c of checks) await runOne(c.id);
 
-  // Also load diff stats
   try {
-    const res = await fetch(API + '/diff');
-    const data = await res.json();
-    document.getElementById('diff-info').textContent = `${data.files} files changed`;
+    const d = await (await fetch(API + '/diff')).json();
+    document.getElementById('stat-files').textContent = d.files;
+    document.getElementById('stat-files').style.color = 'var(--text-primary)';
   } catch {}
 
-  btn.textContent = 'Run All Checks';
-  btn.disabled = false;
+  btn.disabled = false; btn.textContent = 'Run All';
 }
 
-function updateBanner() {
-  const banner = document.getElementById('status-banner');
-  const ran = Object.keys(checkResults).length;
-  if (ran === 0) return;
+function updateStats() {
+  passCount = Object.values(results).filter(r => r.pass ?? r.hasEntries ?? true).length;
+  const total = Object.keys(results).length;
+  const el = document.getElementById('stat-checks');
+  el.textContent = `${passCount}/${totalChecks}`;
+  el.style.color = passCount === totalChecks && total === totalChecks ? 'var(--green)' : total === totalChecks ? 'var(--red)' : 'var(--yellow)';
 
-  const allPass = Object.values(checkResults).every(r => r.pass ?? r.hasEntries ?? true);
-  const failCount = Object.values(checkResults).filter(r => !(r.pass ?? r.hasEntries ?? true)).length;
+  if (total === totalChecks) {
+    setBanner(passCount === totalChecks ? 'ready' : 'fail');
+    updateActions(passCount === totalChecks);
+  }
+}
 
-  if (ran < checks.length) {
-    banner.className = 'rounded-xl p-4 mb-6 border border-eve-yellow/30 bg-eve-yellow/5 glow-gold';
-    banner.innerHTML = `<div class="flex items-center gap-3">
-      <span class="text-2xl pulse">&#9881;</span>
-      <div><div class="font-semibold text-eve-yellow">Checking... (${ran}/${checks.length})</div>
-      <div class="text-xs text-eve-gray">Running pre-flight checks</div></div></div>`;
-  } else if (allPass) {
-    banner.className = 'rounded-xl p-4 mb-6 border border-eve-green/30 bg-eve-green/5 glow-green fade-in';
-    banner.innerHTML = `<div class="flex items-center gap-3">
-      <span class="text-3xl text-eve-green">&#10003;</span>
-      <div><div class="text-lg font-bold text-eve-green">Ready to Promote</div>
-      <div class="text-xs text-eve-gray">All checks passed. Create a PR: <strong>${config.sourceBranch}</strong> &rarr; <strong>${config.targetBranch}</strong></div></div></div>`;
-    updateActions(true);
-  } else {
-    banner.className = 'rounded-xl p-4 mb-6 border border-eve-red/30 bg-eve-red/5 glow-red fade-in';
-    banner.innerHTML = `<div class="flex items-center gap-3">
-      <span class="text-3xl text-eve-red">&#10007;</span>
-      <div><div class="text-lg font-bold text-eve-red">Not Ready</div>
-      <div class="text-xs text-eve-gray">${failCount} check(s) failed</div></div></div>`;
-    updateActions(false);
+function setBanner(state) {
+  const b = document.getElementById('banner');
+  if (state === 'ready') {
+    b.className = 'banner banner-ready fade-up';
+    b.innerHTML = `<div class="banner-icon">&#10003;</div><div><h3>Ready to Promote</h3><p>All checks passed. Create a PR from ${config.sourceBranch} to ${config.targetBranch} on GitHub.</p></div>`;
+  } else if (state === 'fail') {
+    const fc = totalChecks - passCount;
+    b.className = 'banner banner-fail fade-up';
+    b.innerHTML = `<div class="banner-icon">&#10007;</div><div><h3>Not Ready</h3><p>${fc} check(s) failed. Fix issues before promoting.</p></div>`;
+  } else if (state === 'running') {
+    b.className = 'banner banner-running';
+    b.innerHTML = `<div class="banner-icon pulse">&#9881;</div><div><h3>Checking...</h3><p>Running pre-flight checks</p></div>`;
   }
 }
 
@@ -276,80 +400,63 @@ function updateActions(ready) {
   const el = document.getElementById('actions');
   if (ready) {
     el.innerHTML = `
-      <a href="${config.prUrl}" target="_blank"
-         class="block w-full text-center bg-eve-gold text-eve-dark font-semibold rounded-lg px-4 py-2.5 text-sm hover:bg-eve-gold/90 transition-colors">
-        Create PR on GitHub &rarr;
-      </a>
-      <button onclick="pushBranch()"
-              class="block w-full text-center bg-eve-light hover:bg-eve-green/10 text-eve-text border border-eve-light rounded-lg px-4 py-2.5 text-sm transition-colors">
-        Push Branch to Origin
-      </button>
-      <a href="${config.repoUrl}/actions" target="_blank"
-         class="block w-full text-center bg-eve-light hover:bg-eve-gold/10 text-eve-gray border border-eve-light rounded-lg px-4 py-2.5 text-sm transition-colors">
-        View GitHub Actions
-      </a>`;
+      <a href="${config.prUrl}" target="_blank" class="btn btn-primary" style="margin-bottom:8px;">Create PR on GitHub</a>
+      <button onclick="pushBranch()" class="btn" style="margin-bottom:8px;">Push Branch</button>
+      <a href="${config.repoUrl}/actions" target="_blank" class="btn">GitHub Actions</a>`;
   } else {
-    el.innerHTML = `<div class="text-center text-eve-gray text-sm py-3">Fix failing checks to unlock actions</div>`;
+    el.innerHTML = '<div style="text-align:center;color:var(--text-tertiary);font-size:13px;padding:12px 0;">Pass all checks to unlock</div>';
   }
 }
 
 async function pushBranch() {
-  log('Pushing branch to origin...');
+  log('Pushing branch...');
   try {
-    const res = await fetch(API + '/push');
-    const data = await res.json();
-    log(data.pass ? `Pushed: ${data.detail}` : `Push failed: ${data.detail}`);
-  } catch (err) { log(`Push error: ${err.message}`); }
+    const r = await (await fetch(API + '/push')).json();
+    log(r.pass ? 'Pushed to origin' : 'Push failed: ' + r.detail, r.pass);
+  } catch (e) { log('Push error: ' + e.message, false); }
 }
 
-// ── Details ──
-const details = document.getElementById('details');
-details.innerHTML = `
-  <div class="flex justify-between"><span class="text-eve-gray">Version</span><span class="font-mono text-xs">${config.currentVersion}</span></div>
-  <div class="flex justify-between"><span class="text-eve-gray">Channel</span><span class="font-mono text-xs text-eve-gold">${config.channel}</span></div>
-  <div class="flex justify-between"><span class="text-eve-gray">Source</span><span class="font-mono text-xs">${config.sourceBranch}</span></div>
-  <div class="flex justify-between"><span class="text-eve-gray">Target</span><span class="font-mono text-xs">${config.targetBranch}</span></div>
-  <div class="flex justify-between"><span class="text-eve-gray">Diff</span><span class="font-mono text-xs" id="diff-info">—</span></div>`;
-
-// ── Actions (initial) ──
-updateActions(false);
-
-// ── Changelog ──
+// Changelog
 async function loadChangelog() {
   try {
-    const res = await fetch(API + '/changelog');
-    const data = await res.json();
-    changelogText = data.content || '';
-    const el = document.getElementById('changelog-content');
-    if (changelogText) {
-      el.textContent = changelogText;
-      el.className = 'text-sm text-eve-text leading-relaxed';
-    } else {
-      el.innerHTML = '<span class="text-eve-red/70 italic">No entries in [Unreleased]. Add changelog entries before promoting.</span>';
-    }
-  } catch (err) {
-    document.getElementById('changelog-content').textContent = `Error: ${err.message}`;
+    const r = await (await fetch(API + '/changelog')).json();
+    changelogText = r.content || '';
+    renderChangelog();
+    const lines = changelogText.split('\n').filter(l => l.trim()).length;
+    document.getElementById('stat-notes').textContent = lines > 0 ? lines + ' lines' : 'Empty';
+    document.getElementById('stat-notes').style.color = lines > 0 ? 'var(--text-primary)' : 'var(--red)';
+  } catch (e) { document.getElementById('changelog').textContent = 'Error: ' + e.message; }
+}
+
+function renderChangelog() {
+  const el = document.getElementById('changelog');
+  if (changelogText.trim()) {
+    el.textContent = changelogText;
+    el.style.color = 'var(--text-primary)';
+  } else {
+    el.textContent = 'No entries in [Unreleased] section.\nAdd changelog entries before promoting.';
+    el.style.color = 'var(--red)';
   }
 }
 
-function copyChangelog() {
+function copyNotes() {
   navigator.clipboard.writeText(changelogText).then(() => {
-    const btn = document.getElementById('copy-btn');
-    btn.textContent = 'Copied!';
-    btn.className = btn.className.replace('text-eve-gold', 'text-eve-green');
-    setTimeout(() => { btn.textContent = 'Copy'; btn.className = btn.className.replace('text-eve-green', 'text-eve-gold'); }, 2000);
+    const b = document.getElementById('copy-btn');
+    b.textContent = 'Copied'; b.style.color = 'var(--green)';
+    setTimeout(() => { b.textContent = 'Copy'; b.style.color = ''; }, 2000);
   });
 }
 
-// ── Log ──
-function log(msg) {
+// Log
+function log(msg, pass) {
   const el = document.getElementById('log');
-  const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-  el.innerHTML += `<div class="text-eve-gray fade-in"><span class="text-eve-gray/50">[${time}]</span> ${msg}</div>`;
+  const t = new Date().toLocaleTimeString('en-GB', { hour12: false });
+  const cls = pass === true ? 'log-pass' : pass === false ? 'log-fail' : '';
+  el.innerHTML += `<div class="log-entry fade-up"><span class="log-time">${t}</span> <span class="${cls}">${msg}</span></div>`;
   el.scrollTop = el.scrollHeight;
 }
 
-log('Dashboard ready. Click "Run All Checks" to begin.');
+log('Dashboard ready');
 loadChangelog();
 </script>
 </body>
