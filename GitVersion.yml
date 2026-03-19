@@ -3,25 +3,25 @@ mode: ContinuousDeployment
 branches:
   main:
     regex: ^main$
-    tag: ''
+    label: ''
     increment: Patch
 
   alpha:
     regex: ^alpha$
-    tag: alpha
+    label: alpha
     increment: Minor
 
   beta:
     regex: ^beta$
-    tag: beta
+    label: beta
     increment: Patch
 
   feature:
     regex: ^feature[/-]
-    tag: 'alpha.{BranchName}'
+    label: 'alpha.{BranchName}'
     increment: Inherit
 
   fix:
     regex: ^fix[/-]
-    tag: 'alpha.{BranchName}'
+    label: 'alpha.{BranchName}'
     increment: Patch
