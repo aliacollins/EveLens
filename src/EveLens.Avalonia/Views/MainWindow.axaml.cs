@@ -573,22 +573,59 @@ namespace EveLens.Avalonia.Views
         {
             var debugMenu = new MenuItem { Header = "_Debug" };
 
-            // ── Velopack Update Test ──
-            var updateTestItem = new MenuItem { Header = "Check for Updates (Velopack)" };
-            updateTestItem.Click += async (_, _) =>
+            // ── Update Service ──
+            var updateSubMenu = new MenuItem { Header = "Update Service" };
+
+            var forceCheckItem = new MenuItem { Header = "Force Check Now" };
+            forceCheckItem.Click += async (_, _) =>
+            {
+                try
+                {
+                    forceCheckItem.IsEnabled = false;
+                    forceCheckItem.Header = "Checking...";
+                    bool found = await (AppServices.VelopackUpdate?.CheckNowAsync() ?? Task.FromResult(false));
+                    forceCheckItem.Header = "Force Check Now";
+                    forceCheckItem.IsEnabled = true;
+
+                    string msg = found
+                        ? $"Update available: {AppServices.VelopackUpdate?.PendingVersion}"
+                        : "No updates available. You're on the latest version.";
+                    await ShowMessageDialog("Check for Updates", msg);
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            var statusItem = new MenuItem { Header = "Service Status" };
+            statusItem.Click += async (_, _) =>
             {
                 try
                 {
                     var svc = AppServices.VelopackUpdate;
-                    string info = $"Installed: {svc?.IsInstalled}\n"
-                        + $"Version: {svc?.CurrentVersion ?? "dev"}\n"
-                        + $"Channel: {svc?.Channel}\n"
-                        + $"Update ready: {svc?.IsUpdateReady}\n"
-                        + $"Pending: {svc?.PendingVersion ?? "none"}";
-                    await ShowMessageDialog("Velopack Status", info);
+                    bool installed = svc?.IsInstalled ?? false;
+                    string version = svc?.CurrentVersion ?? AppServices.FileVersionInfo.FileVersion ?? "dev";
+                    string channel = svc?.Channel ?? "unknown";
+                    string checkInterval = svc?.CheckInterval.TotalHours.ToString("0.#") + "h";
+
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine($"Version:        {version}");
+                    sb.AppendLine($"Channel:        {channel}");
+                    sb.AppendLine($"Check interval: {checkInterval}");
+                    sb.AppendLine($"Installed:      {(installed ? "Yes" : "No (dev mode)")}");
+                    sb.AppendLine($"Update ready:   {(svc?.IsUpdateReady == true ? "Yes — " + svc.PendingVersion : "No")}");
+                    sb.AppendLine();
+                    if (!installed)
+                    {
+                        sb.AppendLine("Running in development mode.");
+                        sb.AppendLine("Auto-updates activate when installed via the packaged installer.");
+                    }
+
+                    await ShowMessageDialog("Update Service", sb.ToString());
                 }
                 catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
             };
+
+            updateSubMenu.Items.Add(forceCheckItem);
+            updateSubMenu.Items.Add(statusItem);
 
             // ── Notification Events ──
             var notifySubMenu = new MenuItem { Header = "Fire Notification Events" };
@@ -775,7 +812,7 @@ namespace EveLens.Avalonia.Views
             // ── Assemble ──
             debugMenu.Items.Add(diagStreamItem);
             debugMenu.Items.Add(new Separator());
-            debugMenu.Items.Add(updateTestItem);
+            debugMenu.Items.Add(updateSubMenu);
             debugMenu.Items.Add(notifySubMenu);
             debugMenu.Items.Add(charSubMenu);
             debugMenu.Items.Add(new Separator());
@@ -1577,10 +1614,12 @@ namespace EveLens.Avalonia.Views
                 if (hasUpdate)
                 {
                     string pendingVersion = AppServices.VelopackUpdate?.PendingVersion ?? "newer version";
+                    string releaseNotes = AppServices.VelopackUpdate?.PendingReleaseNotes ?? "";
+
                     var updateDialog = new Window
                     {
                         Title = "Update Available",
-                        Width = 400, Height = 200,
+                        Width = 500, Height = releaseNotes.Length > 0 ? 420 : 220,
                         WindowStartupLocation = WindowStartupLocation.CenterOwner,
                     };
 
@@ -1591,7 +1630,6 @@ namespace EveLens.Avalonia.Views
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
                         Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
-                        HorizontalAlignment = HorizontalAlignment.Center
                     };
                     var laterBtn = new Button
                     {
@@ -1599,7 +1637,6 @@ namespace EveLens.Avalonia.Views
                         FontSize = 11,
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
-                        HorizontalAlignment = HorizontalAlignment.Center
                     };
 
                     downloadBtn.Click += async (_, _) =>
@@ -1611,42 +1648,69 @@ namespace EveLens.Avalonia.Views
                             bool downloaded = await (AppServices.VelopackUpdate?.DownloadUpdateAsync() ?? Task.FromResult(false));
                             if (downloaded)
                                 AppServices.VelopackUpdate?.ApplyAndRestart();
+                            else
+                            {
+                                downloadBtn.Content = "Download & Restart";
+                                downloadBtn.IsEnabled = true;
+                            }
                         }
-                        catch (Exception ex) { Debug.WriteLine($"Download error: {ex}"); }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Download error: {ex}");
+                            downloadBtn.Content = "Download & Restart";
+                            downloadBtn.IsEnabled = true;
+                        }
                     };
                     laterBtn.Click += (_, _) => updateDialog.Close();
 
-                    updateDialog.Content = new StackPanel
+                    var content = new DockPanel { Margin = new Thickness(16) };
+
+                    // Bottom: buttons
+                    var buttonPanel = new StackPanel
                     {
-                        Margin = new Thickness(20),
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Spacing = 10,
-                        Children =
-                        {
-                            new TextBlock
-                            {
-                                Text = $"EveLens {pendingVersion} is available",
-                                FontSize = 14,
-                                FontWeight = FontWeight.SemiBold,
-                                Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                                HorizontalAlignment = HorizontalAlignment.Center
-                            },
-                            new TextBlock
-                            {
-                                Text = $"You are running v{currentVersion}",
-                                FontSize = 11,
-                                Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
-                                HorizontalAlignment = HorizontalAlignment.Center
-                            },
-                            new StackPanel
-                            {
-                                Orientation = global::Avalonia.Layout.Orientation.Horizontal,
-                                HorizontalAlignment = HorizontalAlignment.Center,
-                                Spacing = 8,
-                                Children = { downloadBtn, laterBtn }
-                            }
-                        }
+                        Orientation = global::Avalonia.Layout.Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        Spacing = 8,
+                        Margin = new Thickness(0, 10, 0, 0),
+                        Children = { laterBtn, downloadBtn }
                     };
+                    DockPanel.SetDock(buttonPanel, global::Avalonia.Controls.Dock.Bottom);
+                    content.Children.Add(buttonPanel);
+
+                    // Top: header
+                    var header = new StackPanel { Spacing = 4, Margin = new Thickness(0, 0, 0, 10) };
+                    header.Children.Add(new TextBlock
+                    {
+                        Text = $"EveLens {pendingVersion} is available",
+                        FontSize = 14,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                    });
+                    header.Children.Add(new TextBlock
+                    {
+                        Text = $"You are running v{currentVersion}",
+                        FontSize = 11,
+                        Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
+                    });
+                    DockPanel.SetDock(header, global::Avalonia.Controls.Dock.Top);
+                    content.Children.Add(header);
+
+                    // Center: release notes (if available)
+                    if (!string.IsNullOrWhiteSpace(releaseNotes))
+                    {
+                        content.Children.Add(new ScrollViewer
+                        {
+                            Content = new TextBlock
+                            {
+                                Text = releaseNotes,
+                                FontSize = 11,
+                                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                                Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
+                            }
+                        });
+                    }
+
+                    updateDialog.Content = content;
                     await updateDialog.ShowDialog(this);
                 }
                 else

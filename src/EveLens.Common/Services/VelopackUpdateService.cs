@@ -57,6 +57,9 @@ namespace EveLens.Common.Services
         /// <summary>Version string of the pending update, or null.</summary>
         public string? PendingVersion => _pendingUpdate?.TargetFullRelease?.Version?.ToString();
 
+        /// <summary>Release notes (markdown) for the pending update, from the GitHub Release body.</summary>
+        public string? PendingReleaseNotes => _pendingUpdate?.TargetFullRelease?.NotesMarkdown;
+
         public VelopackUpdateService(
             IEventAggregator? eventAggregator = null,
             IDispatcher? dispatcher = null)

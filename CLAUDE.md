@@ -130,6 +130,35 @@ nc $WINHOST 5555 | jq -r 'select(.lvl == "WRN") | .msg'        # Warnings only
 - Registration: `src/EveLens.Common/Services/AppServices.cs:453`
 - Listens on `IPAddress.Any`, port 5555 by default
 
+## Changelog (MANDATORY)
+
+**Every commit that changes behavior MUST update `CHANGELOG.md`.**
+
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Categories:
+
+- **Added** — new features
+- **Changed** — changes in existing functionality
+- **Deprecated** — soon-to-be removed features
+- **Removed** — now removed features
+- **Fixed** — bug fixes
+- **Security** — vulnerability fixes
+
+**Rules:**
+- Write entries in the `[Unreleased]` section as you work
+- On release, the CI pipeline moves `[Unreleased]` entries into the new version section
+- Write for humans, not machines — explain *what changed and why*, not *which files*
+- One entry per user-visible change, not per commit
+- GitHub Actions uses the changelog section as release notes in the update dialog
+
+**Example:**
+```markdown
+## [Unreleased]
+
+### Fixed
+
+- ESI errors no longer spam the activity log during intermittent connectivity (Issue #34)
+```
+
 ## Commit Guidelines
 
 - **NEVER push to protected branches directly** — GitHub branch protection enforces this
