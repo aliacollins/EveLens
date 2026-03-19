@@ -14,7 +14,7 @@ env:
   TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
 
 jobs:
-  # ── Read version from SharedAssemblyInfo.cs ──
+  # ── Calculate version automatically ──
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -23,15 +23,23 @@ jobs:
       prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Extract version
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3
+        with:
+          versionSpec: '6.x'
+
+      - name: Calculate version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3
+
+      - name: Set outputs
         id: version
         run: |
-          # Read version from SharedAssemblyInfo.cs (single source of truth)
-          ver=$(grep 'AssemblyInformationalVersion' SharedAssemblyInfo.cs | sed 's/.*"\(.*\)".*/\1/')
-          echo "semver=$ver" >> $GITHUB_OUTPUT
+          echo "semver=${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_OUTPUT
 
-          # Determine channel from branch name
           branch="${{ github.ref_name }}"
           if [ "$branch" = "main" ]; then
             echo "channel=stable" >> $GITHUB_OUTPUT
@@ -44,7 +52,7 @@ jobs:
             echo "prerelease=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "### Version: $ver (branch: $branch)" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: ${{ steps.gitversion.outputs.fullSemVer }} (branch: $branch)" >> $GITHUB_STEP_SUMMARY
 
   # ── Run tests ──
   test:
