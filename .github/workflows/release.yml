@@ -185,27 +185,42 @@ jobs:
         with:
           path: all-releases/
 
-      - name: Install Velopack CLI
-        run: dotnet tool install -g vpk
-
-      - name: Upload to GitHub Releases
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
         run: |
-          channel="${{ needs.version.outputs.channel }}"
-          version="${{ needs.version.outputs.semver }}"
+          # Extract the [Unreleased] section as release notes
+          # Falls back to the latest versioned section if [Unreleased] is empty
+          notes=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found{print}' CHANGELOG.md)
 
-          # Merge all platform releases into one directory
+          if [ -z "$(echo "$notes" | tr -d '[:space:]')" ]; then
+            # [Unreleased] is empty — use the latest versioned section
+            notes=$(awk '/^## \[[0-9]/{if(found) exit; found=1; next} found{print}' CHANGELOG.md)
+          fi
+
+          # Write to file for the release action
+          echo "$notes" > /tmp/release-notes.md
+          echo "### Version ${{ needs.version.outputs.semver }}" | cat - /tmp/release-notes.md > /tmp/release-notes-final.md
+          mv /tmp/release-notes-final.md /tmp/release-notes.md
+
+          echo "Release notes:"
+          cat /tmp/release-notes.md
+
+      - name: Collect release files
+        run: |
           mkdir -p releases
           cp all-releases/release-win/* releases/ 2>/dev/null || true
           cp all-releases/release-linux/* releases/ 2>/dev/null || true
           cp all-releases/release-osx/* releases/ 2>/dev/null || true
+          echo "Release files:"
+          ls -la releases/
 
-          # Upload via Velopack
-          vpk upload github \
-            --repoUrl "https://github.com/aliacollins/evelens" \
-            --channel "$channel" \
-            --outputDir releases/ \
-            --releaseName "${{ env.APP_NAME }} ${version}" \
-            --tag "v${version}" \
-            --token "$GITHUB_TOKEN"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.version.outputs.semver }}
+          name: ${{ env.APP_NAME }} ${{ needs.version.outputs.semver }}
+          body_path: /tmp/release-notes.md
+          prerelease: ${{ needs.version.outputs.prerelease }}
+          files: releases/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
