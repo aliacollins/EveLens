@@ -80,12 +80,19 @@ function Parse-Version {
 function Get-BranchVersion {
     param([string]$Branch)
 
-    try {
-        $content = git show "refs/heads/${Branch}:SharedAssemblyInfo.cs" 2>$null
-        if ($content -match 'AssemblyInformationalVersion\("([^"]+)"\)') {
-            return $matches[1]
-        }
-    } catch { }
+    # Fetch first to ensure remote refs are up to date
+    git fetch origin "refs/heads/${Branch}:refs/remotes/origin/${Branch}" 2>$null
+
+    # Try remote ref first (authoritative, avoids stale local refs and
+    # ambiguous refname issues when tags share the branch name)
+    foreach ($ref in @("refs/remotes/origin/${Branch}", "refs/heads/${Branch}")) {
+        try {
+            $content = git show "${ref}:SharedAssemblyInfo.cs" 2>$null
+            if ($content -match 'AssemblyInformationalVersion\("([^"]+)"\)') {
+                return $matches[1]
+            }
+        } catch { }
+    }
     return $null
 }
 
@@ -110,6 +117,7 @@ function Get-NextVersion {
             }
         } catch { }
     }
+
 
     switch ($TargetChannel) {
         "alpha" {
