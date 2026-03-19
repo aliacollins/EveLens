@@ -14,7 +14,7 @@ env:
   TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
 
 jobs:
-  # ── Calculate version via GitVersion CLI ──
+  # ── Calculate version via GitVersion ──
   version:
     runs-on: ubuntu-latest
     outputs:
@@ -22,39 +22,26 @@ jobs:
       channel: ${{ steps.version.outputs.channel }}
       prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
       - name: Install GitVersion
-        run: dotnet tool install --global GitVersion.Tool --version '6.*'
+        uses: gittools/actions/gitversion/setup@v4.4.2
+        with:
+          versionSpec: '6.6.x'
 
-      - name: Calculate version
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4.4.2
+        with:
+          configFilePath: GitVersion.yml
+
+      - name: Set outputs
         id: version
         run: |
-          # Run GitVersion CLI directly (not the action — action has JSON parsing bugs)
-          semver=$(dotnet-gitversion /showvariable FullSemVer 2>/dev/null || echo "")
+          echo "semver=${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_OUTPUT
 
-          # Fallback if GitVersion fails
-          if [ -z "$semver" ]; then
-            echo "::warning::GitVersion failed, falling back to SharedAssemblyInfo.cs"
-            base_ver=$(grep 'AssemblyInformationalVersion' SharedAssemblyInfo.cs | sed 's/.*"\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/')
-            count=$(git rev-list --count HEAD)
-            branch="${{ github.ref_name }}"
-            case "$branch" in
-              main) semver="${base_ver}" ;;
-              beta) semver="${base_ver}-beta.${count}" ;;
-              *)    semver="${base_ver}-alpha.${count}" ;;
-            esac
-          fi
-
-          echo "semver=$semver" >> $GITHUB_OUTPUT
-
-          # Channel from branch
           branch="${{ github.ref_name }}"
           if [ "$branch" = "main" ]; then
             echo "channel=stable" >> $GITHUB_OUTPUT
@@ -67,13 +54,13 @@ jobs:
             echo "prerelease=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "### Version: $semver (branch: $branch)" >> $GITHUB_STEP_SUMMARY
+          echo "### Version: ${{ steps.gitversion.outputs.fullSemVer }} (branch: $branch)" >> $GITHUB_STEP_SUMMARY
 
   # ── Run tests ──
   test:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -86,7 +73,7 @@ jobs:
     needs: [version, test]
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -121,7 +108,7 @@ jobs:
     needs: [version, test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -156,7 +143,7 @@ jobs:
     needs: [version, test]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -191,7 +178,7 @@ jobs:
     needs: [version, build-windows, build-linux, build-macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
