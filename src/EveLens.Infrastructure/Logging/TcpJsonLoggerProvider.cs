@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -18,65 +17,102 @@ namespace EveLens.Common.Logging
 {
     /// <summary>
     /// MEL logger provider that streams JSON-lines to connected TCP clients.
-    /// Claude Code connects via <c>nc localhost 5555</c> from WSL to receive structured log entries.
+    /// Connect via <c>nc localhost 5555</c> to receive structured log entries.
     /// </summary>
     /// <remarks>
-    /// Listens on <c>IPAddress.Loopback</c> only (no external exposure).
+    /// Listens on <c>IPAddress.Any</c>.
     /// Port configurable via <c>EVELENS_DIAG_PORT</c> environment variable (default 5555).
     /// Dead clients are cleaned up on write failure.
+    /// In debug builds, listening is deferred until toggled on via the Debug menu.
     /// </remarks>
     public sealed class TcpJsonLoggerProvider : ILoggerProvider
     {
         private readonly ConcurrentBag<TcpClient> _clients = new ConcurrentBag<TcpClient>();
-        private readonly TcpListener? _listener;
-        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private TcpListener? _listener;
+        private CancellationTokenSource? _cts;
         private bool _disposed;
+        private readonly int _port;
+
+        /// <summary>Whether the TCP listener is currently active.</summary>
+        public bool IsListening => _listener != null && !_disposed;
+
+        /// <summary>The port the listener uses (or would use).</summary>
+        public int Port => _port;
+
+        /// <summary>Number of connected clients.</summary>
+        public int ClientCount => _clients.Count;
 
         /// <summary>
-        /// Creates a new TCP JSON logger provider that listens for diagnostic clients.
+        /// Creates a new TCP JSON logger provider.
         /// </summary>
-        public TcpJsonLoggerProvider()
+        /// <param name="autoStart">If true, starts listening immediately. If false, waits for <see cref="Start"/>.</param>
+        public TcpJsonLoggerProvider(bool autoStart = true)
         {
-            int port = 5555;
+            _port = 5555;
             string? envPort = Environment.GetEnvironmentVariable("EVELENS_DIAG_PORT");
             if (!string.IsNullOrEmpty(envPort) && int.TryParse(envPort, out int parsed) && parsed > 0 && parsed <= 65535)
-                port = parsed;
+                _port = parsed;
+
+            if (autoStart)
+                Start();
+        }
+
+        /// <summary>
+        /// Starts the TCP listener. No-op if already listening.
+        /// </summary>
+        /// <returns>True if started successfully, false if port is occupied.</returns>
+        public bool Start()
+        {
+            if (_disposed || _listener != null)
+                return _listener != null;
 
             try
             {
-                _listener = new TcpListener(IPAddress.Any, port);
+                _cts = new CancellationTokenSource();
+                _listener = new TcpListener(IPAddress.Any, _port);
                 _listener.Start();
                 _ = AcceptClientsAsync(_cts.Token);
+                return true;
             }
             catch (SocketException)
             {
-                // Port occupied — continue without TCP streaming (non-fatal)
                 _listener = null;
+                _cts?.Dispose();
+                _cts = null;
                 System.Diagnostics.Trace.WriteLine(
-                    $"TcpJsonLoggerProvider: port {port} occupied, TCP streaming disabled");
+                    $"TcpJsonLoggerProvider: port {_port} occupied, TCP streaming disabled");
+                return false;
             }
         }
 
-        /// <inheritdoc />
-        public ILogger CreateLogger(string categoryName) => new TcpJsonLogger(categoryName, this);
-
-        /// <inheritdoc />
-        public void Dispose()
+        /// <summary>
+        /// Stops the TCP listener and disconnects all clients.
+        /// Can be restarted with <see cref="Start"/>.
+        /// </summary>
+        public void Stop()
         {
-            if (_disposed)
-                return;
-
-            _disposed = true;
-            _cts.Cancel();
-
+            _cts?.Cancel();
             _listener?.Stop();
+            _listener = null;
 
             while (_clients.TryTake(out var client))
             {
                 try { client.Close(); } catch { /* best effort */ }
             }
 
-            _cts.Dispose();
+            _cts?.Dispose();
+            _cts = null;
+        }
+
+        public ILogger CreateLogger(string categoryName) => new TcpJsonLogger(categoryName, this);
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            Stop();
         }
 
         private async Task AcceptClientsAsync(CancellationToken ct)
@@ -108,11 +144,24 @@ namespace EveLens.Common.Logging
         }
 
         /// <summary>
-        /// Writes a JSON-line to all connected TCP clients. Dead clients are removed.
+        /// In-process callback for log lines. The in-app diagnostic viewer subscribes here
+        /// instead of connecting via TCP. Invoked on the logging thread — marshal to UI if needed.
+        /// </summary>
+        public event Action<string>? OnLogLine;
+
+        /// <summary>
+        /// Writes a JSON-line to all connected TCP clients and in-process subscribers.
+        /// Dead clients are removed.
         /// </summary>
         internal void WriteToClients(string jsonLine)
         {
-            if (_disposed || _clients.IsEmpty)
+            if (_disposed)
+                return;
+
+            // Always fire in-process callback (even if no TCP clients)
+            OnLogLine?.Invoke(jsonLine);
+
+            if (_clients.IsEmpty)
                 return;
 
             byte[] data = Encoding.UTF8.GetBytes(jsonLine + "\n");
@@ -141,7 +190,6 @@ namespace EveLens.Common.Logging
             // Clean up dead clients
             if (!deadClients.IsEmpty)
             {
-                // ConcurrentBag doesn't support removal, so rebuild
                 var survivors = new ConcurrentBag<TcpClient>();
                 while (_clients.TryTake(out var c))
                 {
@@ -164,9 +212,6 @@ namespace EveLens.Common.Logging
             }
         }
 
-        /// <summary>
-        /// Logger that formats entries as JSON lines and writes to TCP clients.
-        /// </summary>
         private sealed class TcpJsonLogger : ILogger
         {
             private readonly string _category;

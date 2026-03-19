@@ -747,10 +747,10 @@ namespace EveLens.Common.Services
                 }
                 else
                 {
+                    // Health tracking is now handled by EndpointHealthTracker
+                    // via EsiScheduler — no ShouldNotifyError / onError here.
                     AppServices.Dispatcher?.Post(() =>
                     {
-                        if (result.HasError && onError != null && target.ShouldNotifyError(result, method))
-                            onError(target, result);
                         monitor?.SetExternalStatus(false, DateTime.UtcNow);
                         if (cachedUntil != default)
                             monitor?.SetCachedUntilOverride(cachedUntil);
@@ -826,10 +826,10 @@ namespace EveLens.Common.Services
                 }
                 else
                 {
+                    // Health tracking is now handled by EndpointHealthTracker
+                    // via EsiScheduler — no ShouldNotifyError / onError here.
                     AppServices.Dispatcher?.Post(() =>
                     {
-                        if (result.HasError && onError != null && target.ShouldNotifyError(result, method))
-                            onError(target, result);
                         monitor?.SetExternalStatus(false, DateTime.UtcNow);
                         if (cachedUntil != default)
                             monitor?.SetCachedUntilOverride(cachedUntil);

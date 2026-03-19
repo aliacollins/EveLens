@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EveLens.Common.Scheduling.Resilience;
 using EveLens.Core.Enumerations;
+using EveLens.Infrastructure.Scheduling.Health;
 using EveLens.Core.Events;
 using EveLens.Core.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -43,6 +44,9 @@ namespace EveLens.Common.Scheduling
         private readonly CircuitBreakerPolicy _circuitBreaker = new();
         private readonly ResiliencePipeline _pipeline;
 
+        // Health tracking — state machine per (character, endpoint)
+        private EndpointHealthTracker? _healthTracker;
+
         private long _visibleCharacterId;
         private int _activeFetches;
         private int _characterIndex;
@@ -51,6 +55,9 @@ namespace EveLens.Common.Scheduling
 
         // Persisted state callback — set by SessionCache
         internal Action<IReadOnlyDictionary<(long, long), FetchJob>>? OnPersistState { get; set; }
+
+        /// <summary>Injects the health tracker after construction (avoids circular dependency with AppServices).</summary>
+        internal void SetHealthTracker(EndpointHealthTracker tracker) => _healthTracker = tracker;
 
         public EsiScheduler(
             IDispatcher dispatcher,
@@ -79,6 +86,27 @@ namespace EveLens.Common.Scheduling
         }
 
         public int ActiveFetches => _activeFetches;
+
+        public DateTime? GetNextFetchTime()
+        {
+            lock (_queue)
+            {
+                return _queue.TryPeek(out _, out var dueTime) ? dueTime : null;
+            }
+        }
+
+        public DateTime? GetNextFetchTime(long characterId)
+        {
+            lock (_queue)
+            {
+                if (!_jobsByCharacter.TryGetValue(characterId, out var jobs) || jobs.Count == 0)
+                    return null;
+                var min = DateTime.MaxValue;
+                foreach (var job in jobs)
+                    if (job.CachedUntil < min) min = job.CachedUntil;
+                return min == DateTime.MaxValue ? null : min;
+            }
+        }
 
         #region Public API (UI thread — pushes commands)
 
@@ -255,6 +283,17 @@ namespace EveLens.Common.Scheduling
                     _tokenTracker.Update(job.CharacterId, job.RateGroup,
                         outcome.RateLimitRemaining, null);
 
+                // Record outcome for health state tracking
+                _healthTracker?.Record(job.CharacterId, job.EndpointMethod,
+                    new FetchRecord
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        StatusCode = outcome.StatusCode,
+                        CacheDuration = outcome.CachedUntil > DateTime.UtcNow
+                            ? outcome.CachedUntil - DateTime.UtcNow
+                            : TimeSpan.FromMinutes(2)
+                    });
+
                 // Handle final outcome — only reached after pipeline retries are exhausted
                 switch (outcome.StatusCode)
                 {
@@ -388,6 +427,7 @@ namespace EveLens.Common.Scheduling
             _tokenTracker.RemoveCharacter(charId);
             _alivePolicy.Unregister(charId);
             _circuitBreaker.RemoveCharacter(charId);
+            _healthTracker?.RemoveCharacter(charId);
 
             if (_jobsByCharacter.TryGetValue(charId, out var jobs))
             {
@@ -466,6 +506,7 @@ namespace EveLens.Common.Scheduling
             if (_authStates.TryGetValue(charId, out var auth))
                 auth.MarkHealthy();
             _circuitBreaker.ResetCharacter(charId);
+            _healthTracker?.OnReAuthenticated(charId);
 
             // Re-enqueue all jobs for this character
             if (_jobsByCharacter.TryGetValue(charId, out var jobs))

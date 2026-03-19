@@ -11,6 +11,7 @@ using EveLens.Common.Logging;
 using EveLens.Common.Models;
 using EveLens.Common.Scheduling;
 using EveLens.Core.Interfaces;
+using EveLens.Infrastructure.Scheduling.Health;
 using Microsoft.Extensions.Logging;
 
 // Aliases for new platform-agnostic service interfaces
@@ -67,6 +68,15 @@ namespace EveLens.Common.Services
         private static Lazy<ActivityLogService> s_activityLog = new(() =>
             new ActivityLogService(ApplicationPaths.DataDirectory));
         private static Lazy<ICharacterDataCache> s_characterDataCache = new(() => new CharacterDataCacheService());
+        private static Lazy<EndpointHealthTracker> s_healthTracker = new(() =>
+        {
+            var tracker = new EndpointHealthTracker(EventAggregator, Dispatcher);
+            if (s_esiScheduler.IsValueCreated && s_esiScheduler.Value is EsiScheduler scheduler)
+                scheduler.SetHealthTracker(tracker);
+            return tracker;
+        });
+        private static Lazy<HealthNotificationSubscriber> s_healthNotifySub = new(() =>
+            new HealthNotificationSubscriber(EventAggregator));
         private static PrivacyCategories s_privacyMask;
 
         /// <summary>
@@ -115,6 +125,13 @@ namespace EveLens.Common.Services
         /// Replaces SmartQueryScheduler with cache-expiry-driven scheduling.
         /// </summary>
         public static IEsiScheduler EsiScheduler => s_esiScheduler.Value;
+
+        /// <summary>
+        /// Gets the ESI endpoint health tracker. Tracks per-(character, endpoint) health
+        /// using a state machine with rolling time windows. Replaces event-based error notifications
+        /// for scheduler-driven endpoints.
+        /// </summary>
+        public static EndpointHealthTracker HealthTracker => s_healthTracker.Value;
 
         /// <summary>
         /// Gets the logger factory for creating structured loggers (MEL).
@@ -365,6 +382,7 @@ namespace EveLens.Common.Services
         internal static void SetScreenInfo(IScreenInfo svc) => s_screenInfo = new Lazy<IScreenInfo>(() => svc);
         internal static void SetActivityLog(ActivityLogService svc) => s_activityLog = new Lazy<ActivityLogService>(() => svc);
         internal static void SetCharacterDataCache(ICharacterDataCache svc) => s_characterDataCache = new Lazy<ICharacterDataCache>(() => svc);
+        internal static void SetHealthTracker(EndpointHealthTracker tracker) => s_healthTracker = new Lazy<EndpointHealthTracker>(() => tracker);
 
         /// <summary>
         /// Bootstraps the application: initializes filesystem paths, trace logging,
@@ -396,6 +414,13 @@ namespace EveLens.Common.Services
             // Phase 5: Initialize the tier subscriber to bridge tab selection to query tier activation
             _ = TierSubscriber;
             TraceService?.Trace("AppServices.Bootstrap - TierSubscriber initialized", printMethod: false);
+
+            // Phase 6: Initialize health tracking — state machine replaces event-based error notifications
+            _ = HealthTracker;
+            _ = s_healthNotifySub.Value;
+            if (EsiScheduler is EsiScheduler esiSched)
+                esiSched.SetHealthTracker(HealthTracker);
+            TraceService?.Trace("AppServices.Bootstrap - HealthTracker initialized", printMethod: false);
         }
 
         /// <summary>
@@ -499,12 +524,22 @@ namespace EveLens.Common.Services
             s_activityLog = new Lazy<ActivityLogService>(() =>
                 new ActivityLogService(ApplicationPaths.DataDirectory));
             s_characterDataCache = new Lazy<ICharacterDataCache>(() => new CharacterDataCacheService());
+            s_healthTracker = new Lazy<EndpointHealthTracker>(() =>
+                new EndpointHealthTracker(EventAggregator, Dispatcher));
+            s_healthNotifySub = new Lazy<HealthNotificationSubscriber>(() =>
+                new HealthNotificationSubscriber(EventAggregator));
             s_privacyMask = PrivacyCategories.None;
         }
 
         /// <summary>
         /// Creates the default <see cref="ILoggerFactory"/> with TCP JSON-lines and Trace providers.
         /// </summary>
+        /// <summary>
+        /// The TCP diagnostic stream provider. In debug builds, starts stopped
+        /// and is toggled via the Debug menu. Null in release builds.
+        /// </summary>
+        public static TcpJsonLoggerProvider? DiagnosticStream { get; private set; }
+
         private static ILoggerFactory CreateLoggerFactory()
         {
             var factory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
@@ -512,7 +547,9 @@ namespace EveLens.Common.Services
                 builder.SetMinimumLevel(LogLevel.Debug);
                 builder.AddProvider(new TraceLoggerProvider());
 #if DEBUG
-                builder.AddProvider(new TcpJsonLoggerProvider());
+                // Register provider but don't auto-start — Debug menu controls it
+                DiagnosticStream = new TcpJsonLoggerProvider(autoStart: false);
+                builder.AddProvider(DiagnosticStream);
 #endif
             });
             return factory;

@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EveLens.Avalonia.Views.Dialogs.DiagnosticStreamWindow"
+        Title="Diagnostic Stream"
+        Width="800" Height="500"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource EveBackgroundDarkBrush}">
+
+    <DockPanel Margin="0">
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="8,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="Filter:" FontSize="11" VerticalAlignment="Center"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+                <ComboBox x:Name="FilterCombo" FontSize="11" MinWidth="120"
+                          SelectedIndex="0">
+                    <ComboBoxItem Content="All" />
+                    <ComboBoxItem Content="ESI Requests" />
+                    <ComboBoxItem Content="Events" />
+                    <ComboBoxItem Content="Warnings/Errors" />
+                    <ComboBoxItem Content="Health" />
+                    <ComboBoxItem Content="Scheduler" />
+                </ComboBox>
+                <Button x:Name="ClearBtn" Content="Clear" FontSize="11"
+                        Padding="10,3" CornerRadius="10" />
+                <CheckBox x:Name="AutoScrollCheck" Content="Auto-scroll"
+                          FontSize="11" IsChecked="True"
+                          Foreground="{StaticResource EveTextSecondaryBrush}" />
+                <TextBlock x:Name="LineCountText" Text="0 lines" FontSize="11"
+                           VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{StaticResource EveTextDisabledBrush}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="8,3"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="StatusText" Text="Listening..." FontSize="10"
+                       Foreground="{StaticResource EveTextDisabledBrush}" />
+        </Border>
+
+        <!-- Log output -->
+        <ScrollViewer x:Name="LogScroller" Padding="6">
+            <TextBlock x:Name="LogOutput" FontSize="10.5"
+                       FontFamily="Consolas, Courier New, monospace"
+                       Foreground="{StaticResource EveTextPrimaryBrush}"
+                       TextWrapping="NoWrap" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>

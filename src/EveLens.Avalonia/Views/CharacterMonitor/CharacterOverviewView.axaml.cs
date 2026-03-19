@@ -569,7 +569,6 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             bool anyUpdating = false;
             bool anyNoKey = false;
-            bool hasErrors = false;
 
             try
             {
@@ -580,22 +579,29 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     if (monitor.Status == QueryStatus.NoESIKey)
                         anyNoKey = true;
                 }
-
-                hasErrors = ccp.QueryMonitors.HasErrors;
             }
             catch
             {
                 return (grayBrush, false);
             }
 
-            if (anyUpdating)
-                return (yellowBrush, true);
+            // Health state from the EndpointHealthTracker state machine
+            var summary = AppServices.HealthTracker?.GetCharacterHealth(ccp.CharacterID);
+
+            if (summary?.OverallHealth == Infrastructure.Scheduling.Health.CharacterHealth.Suspended)
+                return (redBrush, false);
 
             if (anyNoKey)
                 return (redBrush, false);
 
-            if (hasErrors)
+            if (summary?.OverallHealth == Infrastructure.Scheduling.Health.CharacterHealth.Failing)
                 return (redBrush, false);
+
+            if (anyUpdating)
+                return (yellowBrush, true);
+
+            if (summary?.OverallHealth == Infrastructure.Scheduling.Health.CharacterHealth.Degraded)
+                return (yellowBrush, false);
 
             if (ccp.HasCompletedFirstUpdate)
                 return (greenBrush, false);

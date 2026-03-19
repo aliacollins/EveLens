@@ -832,12 +832,77 @@ namespace EveLens.Avalonia.Views
             charSubMenu.Items.Add(fireCollectionChanged);
             charSubMenu.Items.Add(fireQueueUpdated);
 
+            // ── Diagnostic Stream ──
+            var diagStreamItem = new MenuItem { Header = "Diagnostic Stream" };
+            diagStreamItem.Click += (_, _) =>
+            {
+                try
+                {
+                    var window = new Dialogs.DiagnosticStreamWindow();
+                    window.Show(this);
+                }
+                catch (Exception ex) { Debug.WriteLine($"Diag stream error: {ex}"); }
+            };
+
+            // ── Utilities ──
+            var utilSubMenu = new MenuItem { Header = "Utilities" };
+
+            var openDataFolder = new MenuItem { Header = "Open Data Folder" };
+            openDataFolder.Click += (_, _) =>
+            {
+                try
+                {
+                    var path = AppServices.ApplicationPaths.DataDirectory;
+                    if (!string.IsNullOrEmpty(path) && System.IO.Directory.Exists(path))
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error opening data folder: {ex}"); }
+            };
+
+            var healthStatus = new MenuItem { Header = "Health Tracker Status" };
+            healthStatus.Click += (_, _) =>
+            {
+                try
+                {
+                    var tracker = AppServices.HealthTracker;
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine("=== Endpoint Health Tracker ===\n");
+                    foreach (var character in _viewModel.Characters)
+                    {
+                        if (character is not CCPCharacter ccp) continue;
+                        var summary = tracker.GetCharacterHealth(ccp.CharacterID);
+                        sb.AppendLine($"{ccp.Name}: {summary.OverallHealth}");
+                        sb.AppendLine($"  Healthy: {summary.HealthyCount}  Degraded: {summary.DegradedCount}  Failing: {summary.FailingCount}");
+                        if (summary.FailingSince.HasValue)
+                            sb.AppendLine($"  Failing since: {summary.FailingSince:HH:mm:ss}");
+                        sb.AppendLine();
+                    }
+                    sb.AppendLine($"Scheduler queue depth: {AppServices.EsiScheduler?.QueueDepth}");
+                    sb.AppendLine($"Active fetches: {AppServices.EsiScheduler?.ActiveFetches}");
+                    var nextFetch = AppServices.EsiScheduler?.GetNextFetchTime();
+                    if (nextFetch.HasValue)
+                        sb.AppendLine($"Next fetch: {nextFetch:HH:mm:ss} ({(nextFetch.Value - DateTime.UtcNow).TotalSeconds:F0}s)");
+
+                    Debug.WriteLine(sb.ToString());
+                    AppServices.TraceService?.Trace(sb.ToString());
+                    // Show in a simple dialog
+                    _ = ShowMessageDialog("Health Tracker Status", sb.ToString());
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+
+            utilSubMenu.Items.Add(openDataFolder);
+            utilSubMenu.Items.Add(healthStatus);
+
             // ── Assemble ──
+            debugMenu.Items.Add(diagStreamItem);
+            debugMenu.Items.Add(new Separator());
             debugMenu.Items.Add(updateSubMenu);
             debugMenu.Items.Add(notifySubMenu);
             debugMenu.Items.Add(charSubMenu);
             debugMenu.Items.Add(new Separator());
             debugMenu.Items.Add(dialogSubMenu);
+            debugMenu.Items.Add(utilSubMenu);
             MainMenu.Items.Add(debugMenu);
         }
 
@@ -877,34 +942,12 @@ namespace EveLens.Avalonia.Views
             try
             {
                 var now = DateTime.UtcNow;
-                DateTime? soonestUpdate = null;
-                string? soonestMethod = null;
-                int fetchingCount = 0;
-                DateTime lastCompleted = DateTime.MinValue;
+                var scheduler = AppServices.EsiScheduler;
+                int fetchingCount = scheduler?.ActiveFetches ?? 0;
 
-                foreach (var character in _viewModel.Characters)
-                {
-                    if (character is not CCPCharacter ccp) continue;
-
-                    foreach (var monitor in ccp.QueryMonitors)
-                    {
-                        // Count actively fetching
-                        if (monitor.Status == QueryStatus.Updating)
-                            fetchingCount++;
-
-                        // Track most recent completion
-                        if (monitor.LastUpdate > lastCompleted && monitor.LastUpdate.Year > 2000)
-                            lastCompleted = monitor.LastUpdate;
-
-                        // Find soonest future update
-                        var next = monitor.NextUpdate;
-                        if (next > now && (soonestUpdate == null || next < soonestUpdate))
-                        {
-                            soonestUpdate = next;
-                            soonestMethod = monitor.Method.ToString();
-                        }
-                    }
-                }
+                // Read next fetch time directly from the scheduler's priority queue.
+                // This is always accurate — no stale QueryMonitor reconstruction.
+                DateTime? nextFetch = scheduler?.GetNextFetchTime();
 
                 // Left indicator: what's happening now
                 if (fetchingCount > 0)
@@ -912,14 +955,20 @@ namespace EveLens.Avalonia.Views
                     NextUpdateText.Text = $"ESI: {fetchingCount} fetching...";
                     NextUpdateText.Foreground = Brushes.LimeGreen;
                 }
-                else if (soonestUpdate.HasValue)
+                else if (nextFetch.HasValue && nextFetch.Value > now)
                 {
-                    var remaining = soonestUpdate.Value - now;
+                    var remaining = nextFetch.Value - now;
                     string timeStr = remaining.TotalMinutes >= 1
                         ? $"{(int)remaining.TotalMinutes}m {remaining.Seconds}s"
                         : $"{remaining.Seconds}s";
-                    NextUpdateText.Text = $"Next: {soonestMethod} in {timeStr}";
+                    NextUpdateText.Text = $"Next refresh in {timeStr}";
                     NextUpdateText.Foreground = Brushes.Gold;
+                }
+                else if (nextFetch.HasValue)
+                {
+                    // Next fetch is overdue (in the past) — scheduler will dispatch soon
+                    NextUpdateText.Text = "ESI: refreshing...";
+                    NextUpdateText.Foreground = Brushes.LimeGreen;
                 }
                 else
                 {
@@ -927,7 +976,18 @@ namespace EveLens.Avalonia.Views
                     NextUpdateText.Foreground = Brushes.Gray;
                 }
 
-                // Right indicator: last refresh time
+                // Right indicator: last refresh time (track from MonitorFetchCompletedEvent)
+                DateTime lastCompleted = DateTime.MinValue;
+                foreach (var character in _viewModel.Characters)
+                {
+                    if (character is not CCPCharacter ccp) continue;
+                    foreach (var monitor in ccp.QueryMonitors)
+                    {
+                        if (monitor.LastUpdate > lastCompleted && monitor.LastUpdate.Year > 2000)
+                            lastCompleted = monitor.LastUpdate;
+                    }
+                }
+
                 if (lastCompleted > DateTime.MinValue)
                 {
                     var ago = now - lastCompleted;
@@ -1818,6 +1878,48 @@ namespace EveLens.Avalonia.Views
 
             await dialog.ShowDialog(this);
             return result;
+        }
+
+        private async Task ShowMessageDialog(string title, string text)
+        {
+            var closeBtn = new Button
+            {
+                Content = "Close",
+                FontSize = 11,
+                Padding = new Thickness(12, 5),
+                CornerRadius = new CornerRadius(12),
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            DockPanel.SetDock(closeBtn, global::Avalonia.Controls.Dock.Bottom);
+
+            var dialog = new Window
+            {
+                Title = title,
+                Width = 480, Height = 340,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = new DockPanel
+                {
+                    Margin = new Thickness(16),
+                    Children =
+                    {
+                        closeBtn,
+                        new ScrollViewer
+                        {
+                            Content = new TextBlock
+                            {
+                                Text = text,
+                                FontSize = 11,
+                                FontFamily = new global::Avalonia.Media.FontFamily("Consolas, Courier New, monospace"),
+                                TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                                Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
+                            }
+                        }
+                    }
+                }
+            };
+
+            closeBtn.Click += (_, _) => dialog.Close();
+            await dialog.ShowDialog(this);
         }
 
         private async void OnClearCacheClick(object? sender, RoutedEventArgs e)

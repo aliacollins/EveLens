@@ -451,6 +451,10 @@ namespace EveLens.Common
         /// </summary>
         private static string ResolveDataDirectory()
         {
+            // Debug builds use a separate folder to prevent cross-contamination
+            // with production data during testing
+            string folderName = IsDebugBuild ? "EveLens Debug" : "EveLens";
+
             // Try the standard .NET SpecialFolder first
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
@@ -461,13 +465,13 @@ namespace EveLens.Common
                 // Try XDG_CONFIG_HOME explicitly
                 string? xdgConfig = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
                 if (!string.IsNullOrEmpty(xdgConfig) && Path.IsPathRooted(xdgConfig))
-                    return Path.Combine(xdgConfig, "EveLens");
+                    return Path.Combine(xdgConfig, folderName);
 
                 // Fall back to ~/.config (XDG default)
                 string? home = Environment.GetEnvironmentVariable("HOME")
                     ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 if (!string.IsNullOrEmpty(home) && Path.IsPathRooted(home))
-                    return Path.Combine(home, ".config", "EveLens");
+                    return Path.Combine(home, ".config", folderName);
 
                 // Last resort: use the app's own directory (portable-like)
                 return Path.Combine(
@@ -476,7 +480,7 @@ namespace EveLens.Common
                     "data");
             }
 
-            return Path.Combine(appData, "EveLens");
+            return Path.Combine(appData, folderName);
         }
 
         /// <summary>

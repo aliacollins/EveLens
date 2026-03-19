@@ -81,6 +81,18 @@ namespace EveLens.Core.Interfaces
         /// Gets the number of HTTP requests currently in flight.
         /// </summary>
         int ActiveFetches { get; }
+
+        /// <summary>
+        /// Gets the soonest scheduled fetch time across all characters,
+        /// read directly from the priority queue. Returns null if queue is empty.
+        /// </summary>
+        DateTime? GetNextFetchTime();
+
+        /// <summary>
+        /// Gets the soonest scheduled fetch time for a specific character.
+        /// Returns null if the character has no pending jobs.
+        /// </summary>
+        DateTime? GetNextFetchTime(long characterId);
     }
 
     /// <summary>
