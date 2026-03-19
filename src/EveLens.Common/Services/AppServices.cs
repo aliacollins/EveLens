@@ -77,6 +77,8 @@ namespace EveLens.Common.Services
         });
         private static Lazy<HealthNotificationSubscriber> s_healthNotifySub = new(() =>
             new HealthNotificationSubscriber(EventAggregator));
+        private static Lazy<VelopackUpdateService> s_velopackUpdate = new(() =>
+            new VelopackUpdateService(EventAggregator, Dispatcher));
         private static PrivacyCategories s_privacyMask;
 
         /// <summary>
@@ -132,6 +134,12 @@ namespace EveLens.Common.Services
         /// for scheduler-driven endpoints.
         /// </summary>
         public static EndpointHealthTracker HealthTracker => s_healthTracker.Value;
+
+        /// <summary>
+        /// Gets the Velopack auto-update service. Handles update checks, downloads,
+        /// and applies via delta updates across all platforms.
+        /// </summary>
+        public static VelopackUpdateService VelopackUpdate => s_velopackUpdate.Value;
 
         /// <summary>
         /// Gets the logger factory for creating structured loggers (MEL).
@@ -421,6 +429,10 @@ namespace EveLens.Common.Services
             if (EsiScheduler is EsiScheduler esiSched)
                 esiSched.SetHealthTracker(HealthTracker);
             TraceService?.Trace("AppServices.Bootstrap - HealthTracker initialized", printMethod: false);
+
+            // Phase 7: Start Velopack auto-update background checks
+            VelopackUpdate.StartBackgroundChecks();
+            TraceService?.Trace($"AppServices.Bootstrap - VelopackUpdate started (installed={VelopackUpdate.IsInstalled}, channel={VelopackUpdate.Channel})", printMethod: false);
         }
 
         /// <summary>

@@ -1,0 +1,42 @@
+mode: Mainline
+assembly-versioning-scheme: MajorMinorPatch
+
+branches:
+  main:
+    regex: ^main$
+    increment: Patch
+    tag: ''
+    is-release-branch: true
+
+  alpha:
+    regex: ^alpha$
+    increment: Minor
+    tag: 'alpha'
+    source-branches: ['main', 'feature', 'fix']
+
+  beta:
+    regex: ^beta$
+    increment: Patch
+    tag: 'beta'
+    source-branches: ['alpha']
+
+  feature:
+    regex: ^feature[/-]
+    increment: Inherit
+    tag: 'feature.{BranchName}'
+    source-branches: ['alpha']
+
+  fix:
+    regex: ^fix[/-]
+    increment: Patch
+    tag: 'fix.{BranchName}'
+    source-branches: ['alpha']
+
+  experimental:
+    regex: ^experimental[/-]
+    increment: Inherit
+    tag: 'experimental.{BranchName}'
+    source-branches: ['alpha']
+
+ignore:
+  sha: []

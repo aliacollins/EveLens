@@ -15,6 +15,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Themes.Fluent;
 using EveLens.Common;
+using Velopack;
 
 namespace EveLens.Avalonia
 {
@@ -26,6 +27,10 @@ namespace EveLens.Avalonia
         [STAThread]
         public static void Main(string[] args)
         {
+            // Velopack startup hook — handles install/uninstall/update lifecycle events.
+            // Must be the FIRST thing in Main() before any other code runs.
+            VelopackApp.Build().Run();
+
             // Set taskbar identity so Windows groups the window as "EveLens"
             // instead of using the executable name "EveLens.Avalonia.exe"
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

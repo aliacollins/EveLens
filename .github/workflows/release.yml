@@ -1,0 +1,210 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [alpha, beta, main]
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  APP_NAME: EveLens
+  MAIN_PROJECT: src/EveLens.Avalonia/EveLens.Avalonia.csproj
+  TEST_PROJECT: tests/EveLens.Tests/EveLens.Tests.csproj
+
+jobs:
+  # ── Calculate version from git history ──
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      semver: ${{ steps.gitversion.outputs.fullSemVer }}
+      channel: ${{ steps.channel.outputs.channel }}
+      prerelease: ${{ steps.channel.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3
+        with:
+          versionSpec: '6.x'
+
+      - name: Calculate version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v3
+
+      - name: Determine channel
+        id: channel
+        run: |
+          branch="${{ github.ref_name }}"
+          if [ "$branch" = "main" ]; then
+            echo "channel=stable" >> $GITHUB_OUTPUT
+            echo "prerelease=false" >> $GITHUB_OUTPUT
+          elif [ "$branch" = "beta" ]; then
+            echo "channel=beta" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "channel=alpha" >> $GITHUB_OUTPUT
+            echo "prerelease=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Version summary
+        run: |
+          echo "### Version: ${{ steps.gitversion.outputs.fullSemVer }}" >> $GITHUB_STEP_SUMMARY
+          echo "Channel: ${{ steps.channel.outputs.channel }}" >> $GITHUB_STEP_SUMMARY
+
+  # ── Run tests ──
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Run tests
+        run: dotnet test ${{ env.TEST_PROJECT }} --verbosity minimal
+
+  # ── Build Windows ──
+  build-windows:
+    needs: [version, test]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Publish
+        run: |
+          dotnet publish ${{ env.MAIN_PROJECT }} `
+            -c Release -r win-x64 --self-contained `
+            -o publish/win-x64 `
+            -p:Version=${{ needs.version.outputs.semver }}
+
+      - name: Pack with Velopack
+        run: |
+          vpk pack `
+            -u ${{ env.APP_NAME }} `
+            -v ${{ needs.version.outputs.semver }} `
+            -p publish/win-x64 `
+            -e EveLens.exe `
+            --channel ${{ needs.version.outputs.channel }} `
+            -o releases/win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-win
+          path: releases/win/
+
+  # ── Build Linux ──
+  build-linux:
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Publish
+        run: |
+          dotnet publish ${{ env.MAIN_PROJECT }} \
+            -c Release -r linux-x64 --self-contained \
+            -o publish/linux-x64 \
+            -p:Version=${{ needs.version.outputs.semver }}
+
+      - name: Pack with Velopack
+        run: |
+          vpk pack \
+            -u ${{ env.APP_NAME }} \
+            -v ${{ needs.version.outputs.semver }} \
+            -p publish/linux-x64 \
+            -e EveLens \
+            --channel ${{ needs.version.outputs.channel }} \
+            -o releases/linux
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-linux
+          path: releases/linux/
+
+  # ── Build macOS ──
+  build-macos:
+    needs: [version, test]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Publish ARM64
+        run: |
+          dotnet publish ${{ env.MAIN_PROJECT }} \
+            -c Release -r osx-arm64 --self-contained \
+            -o publish/osx-arm64 \
+            -p:Version=${{ needs.version.outputs.semver }}
+
+      - name: Pack with Velopack
+        run: |
+          vpk pack \
+            -u ${{ env.APP_NAME }} \
+            -v ${{ needs.version.outputs.semver }} \
+            -p publish/osx-arm64 \
+            -e EveLens \
+            --channel ${{ needs.version.outputs.channel }} \
+            -o releases/osx
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-osx
+          path: releases/osx/
+
+  # ── Publish to GitHub Releases ──
+  publish:
+    needs: [version, build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-releases/
+
+      - name: Install Velopack CLI
+        run: dotnet tool install -g vpk
+
+      - name: Upload to GitHub Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          channel="${{ needs.version.outputs.channel }}"
+          version="${{ needs.version.outputs.semver }}"
+
+          # Merge all platform releases into one directory
+          mkdir -p releases
+          cp all-releases/release-win/* releases/ 2>/dev/null || true
+          cp all-releases/release-linux/* releases/ 2>/dev/null || true
+          cp all-releases/release-osx/* releases/ 2>/dev/null || true
+
+          # Upload via Velopack
+          vpk upload github \
+            --repoUrl "https://github.com/aliacollins/evelens" \
+            --channel "$channel" \
+            --outputDir releases/ \
+            --releaseName "${{ env.APP_NAME }} ${version}" \
+            --tag "v${version}" \
+            --token "$GITHUB_TOKEN"

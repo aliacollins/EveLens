@@ -25,6 +25,7 @@
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+    <PackageReference Include="Velopack" Version="0.0.1298" />
     <PackageReference Include="YamlDotNet" Version="15.1.4" />
   </ItemGroup>
 
