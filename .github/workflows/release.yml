@@ -185,22 +185,56 @@ jobs:
         with:
           path: all-releases/
 
-      - name: Extract release notes from CHANGELOG.md
+      - name: Build release notes
         id: notes
         run: |
-          # Extract the [Unreleased] section as release notes
-          # Falls back to the latest versioned section if [Unreleased] is empty
-          notes=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found{print}' CHANGELOG.md)
+          version="${{ needs.version.outputs.semver }}"
+          channel="${{ needs.version.outputs.channel }}"
 
-          if [ -z "$(echo "$notes" | tr -d '[:space:]')" ]; then
-            # [Unreleased] is empty — use the latest versioned section
-            notes=$(awk '/^## \[[0-9]/{if(found) exit; found=1; next} found{print}' CHANGELOG.md)
+          # Find the previous release tag for comparison
+          prev_tag=$(git tag --list "v*" --sort=-v:refname | head -1 || echo "")
+          echo "Previous tag: ${prev_tag:-none}"
+
+          # ── Section 1: Curated notes from CHANGELOG.md ──
+          changelog=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{if(found) exit} found{print}' CHANGELOG.md)
+
+          if [ -z "$(echo "$changelog" | tr -d '[:space:]')" ]; then
+            changelog=$(awk '/^## \[[0-9]/{if(found) exit; found=1; next} found{print}' CHANGELOG.md)
           fi
 
-          # Write to file for the release action
-          echo "$notes" > /tmp/release-notes.md
-          echo "### Version ${{ needs.version.outputs.semver }}" | cat - /tmp/release-notes.md > /tmp/release-notes-final.md
-          mv /tmp/release-notes-final.md /tmp/release-notes.md
+          # ── Section 2: Auto-generated commit list since last tag ──
+          if [ -n "$prev_tag" ]; then
+            commits=$(git log "${prev_tag}..HEAD" --oneline --no-merges 2>/dev/null | head -30)
+            comparison_url="https://github.com/aliacollins/evelens/compare/${prev_tag}...v${version}"
+          else
+            commits=$(git log --oneline --no-merges -20 2>/dev/null)
+            comparison_url=""
+          fi
+
+          # ── Assemble release notes ──
+          cat > /tmp/release-notes.md << NOTES_EOF
+          ## What's New
+
+          ${changelog}
+
+          ---
+
+          <details>
+          <summary>Commits since ${prev_tag:-initial}</summary>
+
+          $(echo "$commits" | sed 's/^/- /')
+
+          </details>
+          NOTES_EOF
+
+          # Add full changelog link if we have a previous tag
+          if [ -n "$comparison_url" ]; then
+            echo "" >> /tmp/release-notes.md
+            echo "**Full Changelog**: ${comparison_url}" >> /tmp/release-notes.md
+          fi
+
+          # Clean up leading whitespace from heredoc
+          sed -i 's/^          //' /tmp/release-notes.md
 
           echo "Release notes:"
           cat /tmp/release-notes.md
