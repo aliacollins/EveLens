@@ -36,6 +36,8 @@ jobs:
         uses: gittools/actions/gitversion/execute@v4.4.2
         with:
           configFilePath: GitVersion.yml
+          overrideConfig: |
+            next-version=1.0.0
 
       - name: Set outputs
         id: version
@@ -179,6 +181,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
