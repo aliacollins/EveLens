@@ -88,7 +88,10 @@ function Get-BranchVersion {
     foreach ($ref in @("refs/remotes/origin/${Branch}", "refs/heads/${Branch}")) {
         try {
             $content = git show "${ref}:SharedAssemblyInfo.cs" 2>$null
-            if ($content -match 'AssemblyInformationalVersion\("([^"]+)"\)') {
+            # git show returns an array of lines in PowerShell — join before matching
+            # so -match populates $matches capture groups instead of filtering the array
+            $joined = ($content -join "`n")
+            if ($joined -match 'AssemblyInformationalVersion\("([^"]+)"\)') {
                 return $matches[1]
             }
         } catch { }
