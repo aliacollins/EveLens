@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EveLens — Promotion Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        eve: { dark: '#0d0d1a', medium: '#1a1a2e', light: '#2a2a3e', gold: '#e6a817', green: '#4ade80', red: '#f87171', yellow: '#fbbf24', gray: '#9ca3af', text: '#e5e5e5' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+  .glow-green { box-shadow: 0 0 24px rgba(74, 222, 128, 0.12); }
+  .glow-red { box-shadow: 0 0 24px rgba(248, 113, 113, 0.12); }
+  .glow-gold { box-shadow: 0 0 24px rgba(230, 168, 23, 0.12); }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+  pre { white-space: pre-wrap; word-wrap: break-word; }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+</style>
+</head>
+<body class="bg-eve-dark text-eve-text min-h-screen">
+<script>const config = __CONFIG__;</script>
+
+<div class="max-w-5xl mx-auto px-6 py-8">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-eve-gold tracking-tight">EveLens</h1>
+        <p class="text-eve-gray text-xs">Promotion Dashboard</p>
+      </div>
+      <span class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border"
+            id="channel-badge"></span>
+    </div>
+    <div class="text-right text-xs text-eve-gray">
+      <div id="version-display"></div>
+      <div id="branch-display"></div>
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  <div id="status-banner" class="rounded-xl p-4 mb-6 border border-eve-light bg-eve-medium">
+    <div class="text-sm text-eve-gray">Run checks to see promotion readiness</div>
+  </div>
+
+  <!-- Flow -->
+  <div class="bg-eve-medium rounded-xl p-4 mb-6 border border-eve-light">
+    <div class="flex items-center justify-center gap-3 text-sm" id="flow"></div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+
+    <!-- Checklist (2 cols) -->
+    <div class="lg:col-span-2 bg-eve-medium rounded-xl p-5 border border-eve-light">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-eve-gold">Pre-flight Checklist</h2>
+        <button onclick="runAllChecks()" id="run-all-btn"
+                class="px-4 py-1.5 rounded-full text-xs font-medium bg-eve-gold/10 text-eve-gold border border-eve-gold/30 hover:bg-eve-gold/20 transition-colors">
+          Run All Checks
+        </button>
+      </div>
+      <div id="checklist" class="space-y-2"></div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="space-y-5">
+      <!-- Version -->
+      <div class="bg-eve-medium rounded-xl p-4 border border-eve-light">
+        <h2 class="text-base font-semibold text-eve-gold mb-3">Details</h2>
+        <div class="space-y-2 text-sm" id="details"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="bg-eve-medium rounded-xl p-4 border border-eve-light">
+        <h2 class="text-base font-semibold text-eve-gold mb-3">Actions</h2>
+        <div class="space-y-2" id="actions"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Release Notes -->
+  <div class="bg-eve-medium rounded-xl p-5 mb-6 border border-eve-light">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-base font-semibold text-eve-gold">Release Notes</h2>
+      <div class="flex gap-2">
+        <button onclick="loadChangelog()" class="text-xs bg-eve-light hover:bg-eve-gold/10 text-eve-gray hover:text-eve-gold px-3 py-1 rounded-full transition-colors border border-eve-light">
+          Refresh
+        </button>
+        <button onclick="copyChangelog()" id="copy-btn" class="text-xs bg-eve-gold/10 hover:bg-eve-gold/20 text-eve-gold px-3 py-1 rounded-full transition-colors border border-eve-gold/30">
+          Copy
+        </button>
+      </div>
+    </div>
+    <div id="changelog-box" class="bg-eve-dark rounded-lg p-4 border border-eve-light min-h-[80px]">
+      <pre class="text-sm text-eve-gray leading-relaxed" id="changelog-content">Click "Refresh" to load changelog...</pre>
+    </div>
+    <p class="text-xs text-eve-gray mt-2">This is what users see in the update dialog. Paste into the GitHub PR description.</p>
+  </div>
+
+  <!-- Activity Log -->
+  <div class="bg-eve-medium rounded-xl p-5 border border-eve-light">
+    <h2 class="text-base font-semibold text-eve-gold mb-3">Activity Log</h2>
+    <div id="log" class="space-y-1 text-xs font-mono max-h-48 overflow-y-auto"></div>
+  </div>
+
+</div>
+
+<script>
+const API = `http://localhost:${config.port}/api`;
+let checkResults = {};
+let changelogText = '';
+
+// ── Init ──
+document.getElementById('channel-badge').textContent = config.channel;
+document.getElementById('channel-badge').className += config.channel === 'stable'
+  ? ' border-eve-green text-eve-green' : config.channel === 'beta'
+  ? ' border-eve-yellow text-eve-yellow' : ' border-eve-gold text-eve-gold';
+document.getElementById('version-display').textContent = `v${config.currentVersion}`;
+document.getElementById('branch-display').textContent = `${config.currentBranch}`;
+
+// Flow
+const flowEl = document.getElementById('flow');
+const branches = ['feature/*', 'alpha', 'beta', 'main'];
+const targetIdx = { alpha: 1, beta: 2, stable: 3 }[config.channel];
+branches.forEach((b, i) => {
+  const cls = i === targetIdx ? 'border-eve-gold text-eve-gold bg-eve-gold/10 font-semibold'
+    : i === targetIdx - 1 ? 'border-eve-green text-eve-green bg-eve-green/5'
+    : 'border-eve-light text-eve-gray/50';
+  flowEl.innerHTML += `<div class="px-4 py-2 rounded-lg border ${cls} min-w-[80px] text-center">${b}</div>`;
+  if (i < 3) {
+    const ac = i === targetIdx - 1 ? 'text-eve-gold font-bold' : 'text-eve-light';
+    flowEl.innerHTML += `<span class="${ac}">&rarr;</span>`;
+  }
+});
+
+// ── Checks ──
+const checks = [
+  { id: 'status', name: 'Clean Working Tree', endpoint: '/status', icon: '&#128194;' },
+  { id: 'build', name: 'Build', endpoint: '/build', icon: '&#128295;' },
+  { id: 'tests', name: 'Tests', endpoint: '/tests', icon: '&#9989;' },
+  { id: 'changelog', name: 'Changelog', endpoint: '/changelog', icon: '&#128221;' },
+  { id: 'dangerous', name: 'Dangerous Files', endpoint: '/dangerous', icon: '&#9888;' },
+];
+
+const checklistEl = document.getElementById('checklist');
+checks.forEach(c => {
+  checklistEl.innerHTML += `
+    <div id="check-${c.id}" class="flex items-center gap-3 p-3 rounded-lg border border-eve-light bg-eve-dark/50 transition-all">
+      <span class="text-lg w-6 text-center" id="icon-${c.id}">${c.icon}</span>
+      <div class="flex-1">
+        <div class="font-medium text-sm text-eve-text">${c.name}</div>
+        <div class="text-xs text-eve-gray mt-0.5" id="detail-${c.id}">Not checked</div>
+      </div>
+      <button onclick="runCheck('${c.id}')" id="btn-${c.id}"
+              class="px-3 py-1 rounded-full text-xs bg-eve-light hover:bg-eve-gold/10 text-eve-gray hover:text-eve-gold border border-eve-light transition-colors">
+        Run
+      </button>
+    </div>`;
+});
+
+async function runCheck(id) {
+  const check = checks.find(c => c.id === id);
+  const el = document.getElementById(`check-${id}`);
+  const icon = document.getElementById(`icon-${id}`);
+  const detail = document.getElementById(`detail-${id}`);
+  const btn = document.getElementById(`btn-${id}`);
+
+  // Loading state
+  el.className = 'flex items-center gap-3 p-3 rounded-lg border border-eve-yellow/30 bg-eve-yellow/5 transition-all';
+  icon.innerHTML = '<span class="spin inline-block">&#9881;</span>';
+  detail.textContent = 'Running...';
+  btn.disabled = true;
+  btn.textContent = '...';
+  log(`Running ${check.name}...`);
+
+  try {
+    const res = await fetch(API + check.endpoint);
+    const data = await res.json();
+    checkResults[id] = data;
+
+    const pass = data.pass ?? data.hasEntries ?? true;
+    el.className = `flex items-center gap-3 p-3 rounded-lg border fade-in transition-all ${
+      pass ? 'border-eve-green/30 bg-eve-green/5' : 'border-eve-red/30 bg-eve-red/5'}`;
+    icon.innerHTML = pass ? '&#10003;' : '&#10007;';
+    icon.className = `text-lg w-6 text-center font-bold ${pass ? 'text-eve-green' : 'text-eve-red'}`;
+    detail.textContent = data.detail || (pass ? 'Passed' : 'Failed');
+    detail.className = `text-xs mt-0.5 ${pass ? 'text-eve-green/80' : 'text-eve-red/80'}`;
+    btn.textContent = 'Re-run';
+    btn.disabled = false;
+    log(`${check.name}: ${pass ? 'PASS' : 'FAIL'} — ${data.detail || ''}`);
+
+    if (id === 'changelog' && data.content) {
+      changelogText = data.content;
+      document.getElementById('changelog-content').textContent = data.content;
+      document.getElementById('changelog-content').className = 'text-sm text-eve-text leading-relaxed';
+    }
+  } catch (err) {
+    el.className = 'flex items-center gap-3 p-3 rounded-lg border border-eve-red/30 bg-eve-red/5 transition-all';
+    icon.innerHTML = '&#10007;';
+    icon.className = 'text-lg w-6 text-center font-bold text-eve-red';
+    detail.textContent = `Error: ${err.message}`;
+    btn.textContent = 'Retry';
+    btn.disabled = false;
+    log(`${check.name}: ERROR — ${err.message}`);
+  }
+
+  updateBanner();
+}
+
+async function runAllChecks() {
+  const btn = document.getElementById('run-all-btn');
+  btn.textContent = 'Running...';
+  btn.disabled = true;
+
+  for (const check of checks) {
+    await runCheck(check.id);
+  }
+
+  // Also load diff stats
+  try {
+    const res = await fetch(API + '/diff');
+    const data = await res.json();
+    document.getElementById('diff-info').textContent = `${data.files} files changed`;
+  } catch {}
+
+  btn.textContent = 'Run All Checks';
+  btn.disabled = false;
+}
+
+function updateBanner() {
+  const banner = document.getElementById('status-banner');
+  const ran = Object.keys(checkResults).length;
+  if (ran === 0) return;
+
+  const allPass = Object.values(checkResults).every(r => r.pass ?? r.hasEntries ?? true);
+  const failCount = Object.values(checkResults).filter(r => !(r.pass ?? r.hasEntries ?? true)).length;
+
+  if (ran < checks.length) {
+    banner.className = 'rounded-xl p-4 mb-6 border border-eve-yellow/30 bg-eve-yellow/5 glow-gold';
+    banner.innerHTML = `<div class="flex items-center gap-3">
+      <span class="text-2xl pulse">&#9881;</span>
+      <div><div class="font-semibold text-eve-yellow">Checking... (${ran}/${checks.length})</div>
+      <div class="text-xs text-eve-gray">Running pre-flight checks</div></div></div>`;
+  } else if (allPass) {
+    banner.className = 'rounded-xl p-4 mb-6 border border-eve-green/30 bg-eve-green/5 glow-green fade-in';
+    banner.innerHTML = `<div class="flex items-center gap-3">
+      <span class="text-3xl text-eve-green">&#10003;</span>
+      <div><div class="text-lg font-bold text-eve-green">Ready to Promote</div>
+      <div class="text-xs text-eve-gray">All checks passed. Create a PR: <strong>${config.sourceBranch}</strong> &rarr; <strong>${config.targetBranch}</strong></div></div></div>`;
+    updateActions(true);
+  } else {
+    banner.className = 'rounded-xl p-4 mb-6 border border-eve-red/30 bg-eve-red/5 glow-red fade-in';
+    banner.innerHTML = `<div class="flex items-center gap-3">
+      <span class="text-3xl text-eve-red">&#10007;</span>
+      <div><div class="text-lg font-bold text-eve-red">Not Ready</div>
+      <div class="text-xs text-eve-gray">${failCount} check(s) failed</div></div></div>`;
+    updateActions(false);
+  }
+}
+
+function updateActions(ready) {
+  const el = document.getElementById('actions');
+  if (ready) {
+    el.innerHTML = `
+      <a href="${config.prUrl}" target="_blank"
+         class="block w-full text-center bg-eve-gold text-eve-dark font-semibold rounded-lg px-4 py-2.5 text-sm hover:bg-eve-gold/90 transition-colors">
+        Create PR on GitHub &rarr;
+      </a>
+      <button onclick="pushBranch()"
+              class="block w-full text-center bg-eve-light hover:bg-eve-green/10 text-eve-text border border-eve-light rounded-lg px-4 py-2.5 text-sm transition-colors">
+        Push Branch to Origin
+      </button>
+      <a href="${config.repoUrl}/actions" target="_blank"
+         class="block w-full text-center bg-eve-light hover:bg-eve-gold/10 text-eve-gray border border-eve-light rounded-lg px-4 py-2.5 text-sm transition-colors">
+        View GitHub Actions
+      </a>`;
+  } else {
+    el.innerHTML = `<div class="text-center text-eve-gray text-sm py-3">Fix failing checks to unlock actions</div>`;
+  }
+}
+
+async function pushBranch() {
+  log('Pushing branch to origin...');
+  try {
+    const res = await fetch(API + '/push');
+    const data = await res.json();
+    log(data.pass ? `Pushed: ${data.detail}` : `Push failed: ${data.detail}`);
+  } catch (err) { log(`Push error: ${err.message}`); }
+}
+
+// ── Details ──
+const details = document.getElementById('details');
+details.innerHTML = `
+  <div class="flex justify-between"><span class="text-eve-gray">Version</span><span class="font-mono text-xs">${config.currentVersion}</span></div>
+  <div class="flex justify-between"><span class="text-eve-gray">Channel</span><span class="font-mono text-xs text-eve-gold">${config.channel}</span></div>
+  <div class="flex justify-between"><span class="text-eve-gray">Source</span><span class="font-mono text-xs">${config.sourceBranch}</span></div>
+  <div class="flex justify-between"><span class="text-eve-gray">Target</span><span class="font-mono text-xs">${config.targetBranch}</span></div>
+  <div class="flex justify-between"><span class="text-eve-gray">Diff</span><span class="font-mono text-xs" id="diff-info">—</span></div>`;
+
+// ── Actions (initial) ──
+updateActions(false);
+
+// ── Changelog ──
+async function loadChangelog() {
+  try {
+    const res = await fetch(API + '/changelog');
+    const data = await res.json();
+    changelogText = data.content || '';
+    const el = document.getElementById('changelog-content');
+    if (changelogText) {
+      el.textContent = changelogText;
+      el.className = 'text-sm text-eve-text leading-relaxed';
+    } else {
+      el.innerHTML = '<span class="text-eve-red/70 italic">No entries in [Unreleased]. Add changelog entries before promoting.</span>';
+    }
+  } catch (err) {
+    document.getElementById('changelog-content').textContent = `Error: ${err.message}`;
+  }
+}
+
+function copyChangelog() {
+  navigator.clipboard.writeText(changelogText).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.className = btn.className.replace('text-eve-gold', 'text-eve-green');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.className = btn.className.replace('text-eve-green', 'text-eve-gold'); }, 2000);
+  });
+}
+
+// ── Log ──
+function log(msg) {
+  const el = document.getElementById('log');
+  const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+  el.innerHTML += `<div class="text-eve-gray fade-in"><span class="text-eve-gray/50">[${time}]</span> ${msg}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+log('Dashboard ready. Click "Run All Checks" to begin.');
+loadChangelog();
+</script>
+</body>
+</html>
