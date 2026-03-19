@@ -61,8 +61,6 @@ namespace EveLens.Avalonia.Views
         private IDisposable? _collectionChangedSub;
         private IDisposable? _monitoredChangedSub;
         private NotificationCenterViewModel? _notificationVm;
-        private IDisposable? _updateAvailableSub;
-        private IDisposable? _dataUpdateAvailableSub;
         private IDisposable? _notificationSentSub;
         private IDisposable? _privacyModeSub;
 
@@ -135,14 +133,8 @@ namespace EveLens.Avalonia.Views
                 _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
 
             // Clean up backup files from previous auto-update
-            AutoUpdateService.CleanupPreviousUpdate();
-
-            // Enable update checking
-            Common.UpdateManager.Enabled = Common.Settings.Updates.CheckEveLensVersion;
-            _updateAvailableSub = AppServices.EventAggregator?.Subscribe<UpdateAvailableEvent>(
-                e => Dispatcher.UIThread.Post(() => OnUpdateAvailable(e)));
-            _dataUpdateAvailableSub = AppServices.EventAggregator?.Subscribe<DataUpdateAvailableEvent>(
-                e => Dispatcher.UIThread.Post(() => OnDataUpdateAvailable(e)));
+            // Velopack handles auto-updates now — old UpdateManager disabled.
+            // VelopackUpdateService starts background checks in AppServices.Bootstrap().
         }
 
         #region Portrait Strip
@@ -581,136 +573,22 @@ namespace EveLens.Avalonia.Views
         {
             var debugMenu = new MenuItem { Header = "_Debug" };
 
-            // ── Update Dialogs ──
-            var updateSubMenu = new MenuItem { Header = "Update Dialogs" };
-
-            var testAppUpdate = new MenuItem { Header = "App Update Available" };
-            testAppUpdate.Click += async (_, _) =>
+            // ── Velopack Update Test ──
+            var updateTestItem = new MenuItem { Header = "Check for Updates (Velopack)" };
+            updateTestItem.Click += async (_, _) =>
             {
                 try
                 {
-                    var fakeArgs = new UpdateAvailableEventArgs(
-                        new Uri("https://github.com/aliacollins/evelens/releases"),
-                        new Uri("https://github.com/aliacollins/evelens/releases/download/v5.3.0/EveLens-install-5.3.0.exe"),
-                        "- Redesigned plan editor with drag-and-drop reordering\n"
-                        + "- New skill constellation visualizer\n"
-                        + "- Fixed ESI token refresh on 30+ character accounts\n"
-                        + "- Improved attribute optimizer accuracy\n"
-                        + "- Dark theme refinements across all views",
-                        new Version(AppServices.FileVersionInfo.FileVersion ?? "5.2.0.0"),
-                        new Version(5, 3, 0, 0),
-                        "d41d8cd98f00b204e9800998ecf8427e",
-                        canAutoInstall: false,
-                        installArgs: string.Empty);
-
-                    var dialog = new UpdateNotifyWindow();
-                    dialog.Initialize(fakeArgs);
-                    await dialog.ShowDialog(this);
+                    var svc = AppServices.VelopackUpdate;
+                    string info = $"Installed: {svc?.IsInstalled}\n"
+                        + $"Version: {svc?.CurrentVersion ?? "dev"}\n"
+                        + $"Channel: {svc?.Channel}\n"
+                        + $"Update ready: {svc?.IsUpdateReady}\n"
+                        + $"Pending: {svc?.PendingVersion ?? "none"}";
+                    await ShowMessageDialog("Velopack Status", info);
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error showing test update dialog: {ex}");
-                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
             };
-
-            var testMajorUpdate = new MenuItem { Header = "Major Version Update" };
-            testMajorUpdate.Click += async (_, _) =>
-            {
-                try
-                {
-                    var fakeArgs = new UpdateAvailableEventArgs(
-                        new Uri("https://github.com/aliacollins/evelens/releases"),
-                        new Uri("https://github.com/aliacollins/evelens/releases/download/v6.0.0/EveLens-install-6.0.0.exe"),
-                        "EveLens 6.0 — Major Release\n\n"
-                        + "- Full Linux and macOS support\n"
-                        + "- New skill browser with 3D constellation view\n"
-                        + "- Real-time market data streaming\n"
-                        + "- Complete UI overhaul with customizable themes\n\n"
-                        + "This is a major version upgrade. Your settings will be migrated automatically.",
-                        new Version(AppServices.FileVersionInfo.FileVersion ?? "5.2.0.0"),
-                        new Version(6, 0, 0, 0),
-                        "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-                        canAutoInstall: true,
-                        installArgs: "/S /D=%EVELENS_EXECUTABLE_PATH%");
-
-                    var dialog = new UpdateNotifyWindow();
-                    dialog.Initialize(fakeArgs);
-                    await dialog.ShowDialog(this);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error showing test major update dialog: {ex}");
-                }
-            };
-
-            var testDataUpdate = new MenuItem { Header = "Data Files Update" };
-            testDataUpdate.Click += async (_, _) =>
-            {
-                try
-                {
-                    var fakeFiles = new System.Collections.ObjectModel.Collection<Common.Serialization.PatchXml.SerializableDatafile>
-                    {
-                        new() { Name = "eve-skills-en-US.xml.gz", Date = "2026-02-20", Message = "Updated skill tree for Equinox expansion" },
-                        new() { Name = "eve-items-en-US.xml.gz", Date = "2026-02-20", Message = "New module stats" },
-                        new() { Name = "eve-blueprints-en-US.xml.gz", Date = "2026-02-18", Message = "Blueprint material changes" }
-                    };
-                    var fakeArgs = new DataUpdateAvailableEventArgs(fakeFiles);
-
-                    var dialog = new DataUpdateNotifyWindow();
-                    dialog.Initialize(fakeArgs);
-                    await dialog.ShowDialog(this);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error showing test data update dialog: {ex}");
-                }
-            };
-
-            var testUpToDate = new MenuItem { Header = "Up-to-Date Result" };
-            testUpToDate.Click += async (_, _) =>
-            {
-                try
-                {
-                    string currentVersion = AppServices.FileVersionInfo.FileVersion ?? "Unknown";
-                    var dialog = new Window
-                    {
-                        Title = "Check for Updates",
-                        Width = 380, Height = 160,
-                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                        Content = new StackPanel
-                        {
-                            Margin = new Thickness(20),
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Spacing = 8,
-                            Children =
-                            {
-                                new TextBlock
-                                {
-                                    Text = $"Current version: v{currentVersion}",
-                                    FontSize = 12,
-                                    Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
-                                },
-                                new TextBlock
-                                {
-                                    Text = "You are running the latest version.",
-                                    FontSize = 11,
-                                    Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)
-                                }
-                            }
-                        }
-                    };
-                    await dialog.ShowDialog(this);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error showing test up-to-date dialog: {ex}");
-                }
-            };
-
-            updateSubMenu.Items.Add(testAppUpdate);
-            updateSubMenu.Items.Add(testMajorUpdate);
-            updateSubMenu.Items.Add(testDataUpdate);
-            updateSubMenu.Items.Add(testUpToDate);
 
             // ── Notification Events ──
             var notifySubMenu = new MenuItem { Header = "Fire Notification Events" };
@@ -897,7 +775,7 @@ namespace EveLens.Avalonia.Views
             // ── Assemble ──
             debugMenu.Items.Add(diagStreamItem);
             debugMenu.Items.Add(new Separator());
-            debugMenu.Items.Add(updateSubMenu);
+            debugMenu.Items.Add(updateTestItem);
             debugMenu.Items.Add(notifySubMenu);
             debugMenu.Items.Add(charSubMenu);
             debugMenu.Items.Add(new Separator());
@@ -1691,36 +1569,88 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                string currentVersion = AppServices.FileVersionInfo.FileVersion ?? "Unknown";
+                string currentVersion = AppServices.VelopackUpdate?.CurrentVersion
+                    ?? AppServices.FileVersionInfo.FileVersion ?? "Unknown";
 
-                // Listen for an update event triggered by the forced check
-                UpdateAvailableEventArgs? foundUpdate = null;
-                var tcs = new System.Threading.Tasks.TaskCompletionSource<bool>();
-                IDisposable? tempSub = null;
-                tempSub = AppServices.EventAggregator?.Subscribe<UpdateAvailableEvent>(evt =>
+                bool hasUpdate = await (AppServices.VelopackUpdate?.CheckNowAsync() ?? Task.FromResult(false));
+
+                if (hasUpdate)
                 {
-                    foundUpdate = evt.Args;
-                    tcs.TrySetResult(true);
-                });
+                    string pendingVersion = AppServices.VelopackUpdate?.PendingVersion ?? "newer version";
+                    var updateDialog = new Window
+                    {
+                        Title = "Update Available",
+                        Width = 400, Height = 200,
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    };
 
-                // Force an immediate check
-                Common.UpdateManager.CheckNow();
+                    var downloadBtn = new Button
+                    {
+                        Content = "Download & Restart",
+                        FontSize = 11,
+                        Padding = new Thickness(12, 5),
+                        CornerRadius = new CornerRadius(12),
+                        Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
+                    var laterBtn = new Button
+                    {
+                        Content = "Later",
+                        FontSize = 11,
+                        Padding = new Thickness(12, 5),
+                        CornerRadius = new CornerRadius(12),
+                        HorizontalAlignment = HorizontalAlignment.Center
+                    };
 
-                // Wait up to 15 seconds for a response
-                var timeout = Task.Delay(TimeSpan.FromSeconds(15));
-                await Task.WhenAny(tcs.Task, timeout);
-                tempSub?.Dispose();
+                    downloadBtn.Click += async (_, _) =>
+                    {
+                        try
+                        {
+                            downloadBtn.IsEnabled = false;
+                            downloadBtn.Content = "Downloading...";
+                            bool downloaded = await (AppServices.VelopackUpdate?.DownloadUpdateAsync() ?? Task.FromResult(false));
+                            if (downloaded)
+                                AppServices.VelopackUpdate?.ApplyAndRestart();
+                        }
+                        catch (Exception ex) { Debug.WriteLine($"Download error: {ex}"); }
+                    };
+                    laterBtn.Click += (_, _) => updateDialog.Close();
 
-                if (foundUpdate != null)
-                {
-                    // Update found — show the update dialog
-                    var dialog = new UpdateNotifyWindow();
-                    dialog.Initialize(foundUpdate);
-                    await dialog.ShowDialog(this);
+                    updateDialog.Content = new StackPanel
+                    {
+                        Margin = new Thickness(20),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Spacing = 10,
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = $"EveLens {pendingVersion} is available",
+                                FontSize = 14,
+                                FontWeight = FontWeight.SemiBold,
+                                Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            },
+                            new TextBlock
+                            {
+                                Text = $"You are running v{currentVersion}",
+                                FontSize = 11,
+                                Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
+                                HorizontalAlignment = HorizontalAlignment.Center
+                            },
+                            new StackPanel
+                            {
+                                Orientation = global::Avalonia.Layout.Orientation.Horizontal,
+                                HorizontalAlignment = HorizontalAlignment.Center,
+                                Spacing = 8,
+                                Children = { downloadBtn, laterBtn }
+                            }
+                        }
+                    };
+                    await updateDialog.ShowDialog(this);
                 }
                 else
                 {
-                    // No update available
                     var upToDateDialog = new Window
                     {
                         Title = "Check for Updates",
@@ -1959,42 +1889,6 @@ namespace EveLens.Avalonia.Views
             }
         }
 
-        private bool _updateDialogOpen;
-
-        private async void OnUpdateAvailable(UpdateAvailableEvent e)
-        {
-            try
-            {
-                if (_updateDialogOpen) return;
-                _updateDialogOpen = true;
-
-                var dialog = new UpdateNotifyWindow();
-                dialog.Initialize(e.Args);
-                await dialog.ShowDialog(this);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error showing update notification: {ex}");
-            }
-            finally
-            {
-                _updateDialogOpen = false;
-            }
-        }
-
-        private async void OnDataUpdateAvailable(DataUpdateAvailableEvent e)
-        {
-            try
-            {
-                var dialog = new DataUpdateNotifyWindow();
-                dialog.Initialize(e.Args);
-                await dialog.ShowDialog(this);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error showing data update notification: {ex}");
-            }
-        }
 
         private void WirePrivacyCheckbox(CheckBox cb, PrivacyCategories category)
         {
@@ -2103,8 +1997,6 @@ namespace EveLens.Avalonia.Views
             _tickSubscription?.Dispose();
             _collectionChangedSub?.Dispose();
             _monitoredChangedSub?.Dispose();
-            _updateAvailableSub?.Dispose();
-            _dataUpdateAvailableSub?.Dispose();
             _notificationSentSub?.Dispose();
             _privacyModeSub?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
