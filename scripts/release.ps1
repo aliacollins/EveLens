@@ -160,14 +160,72 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Pack failed for win-x64." }
     Write-Host "  Packed win-x64 (signed)." -ForegroundColor Green
 
-    # ── Zip Linux and macOS ──
     if (-not (Test-Path "releases")) { New-Item -ItemType Directory -Path "releases" | Out-Null }
-    foreach ($plat in $OtherPlatforms) {
-        Write-Host "`n=== Zipping $($plat.Rid) ===" -ForegroundColor Cyan
-        if (Test-Path $plat.Zip) { Remove-Item $plat.Zip -Force }
-        Compress-Archive -Path "$($plat.Dir)/*" -DestinationPath $plat.Zip
-        Write-Host "  Zipped $($plat.Rid)." -ForegroundColor Green
+
+    # ── Linux: AppImage via WSL + raw zip ──
+    Write-Host "`n=== Creating Linux AppImage (WSL) ===" -ForegroundColor Cyan
+    $ErrorActionPreference = 'Continue'
+    $linuxZip = $OtherPlatforms[0].Zip
+    if (Test-Path $linuxZip) { Remove-Item $linuxZip -Force }
+    Compress-Archive -Path "$($OtherPlatforms[0].Dir)/*" -DestinationPath $linuxZip
+    Write-Host "  Zipped linux-x64." -ForegroundColor Green
+
+    $appImagePath = "releases/EveLens-${Version}-linux-x86_64.AppImage"
+    if (Test-Path $appImagePath) { Remove-Item $appImagePath -Force }
+    $wslScript = "/mnt/d/evemon-main/scripts/make-appimage.sh"
+    wsl bash $wslScript $Version 2>&1 | ForEach-Object { $_ }
+    $ErrorActionPreference = 'Stop'
+    if (Test-Path $appImagePath) {
+        Write-Host "  AppImage created." -ForegroundColor Green
+    } else {
+        Write-Warning "AppImage creation failed -- zip will be uploaded instead."
     }
+
+    # ── macOS: .app bundle + raw zip ──
+    Write-Host "`n=== Creating macOS .app bundle ===" -ForegroundColor Cyan
+    $macZip = $OtherPlatforms[1].Zip
+    if (Test-Path $macZip) { Remove-Item $macZip -Force }
+    Compress-Archive -Path "$($OtherPlatforms[1].Dir)/*" -DestinationPath $macZip
+    Write-Host "  Zipped osx-arm64." -ForegroundColor Green
+
+    $appBundleDir = "releases/EveLens.app"
+    $appBundleZip = "releases/EveLens-${Version}-osx-arm64.app.zip"
+    if (Test-Path $appBundleDir) { Remove-Item $appBundleDir -Recurse -Force }
+    if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
+
+    New-Item -ItemType Directory -Path "$appBundleDir/Contents/MacOS" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$appBundleDir/Contents/Resources" -Force | Out-Null
+
+    Copy-Item -Path "$($OtherPlatforms[1].Dir)/*" -Destination "$appBundleDir/Contents/MacOS/" -Recurse
+
+    @"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>EveLens</string>
+  <key>CFBundleDisplayName</key>
+  <string>EveLens</string>
+  <key>CFBundleIdentifier</key>
+  <string>dev.evelens.app</string>
+  <key>CFBundleVersion</key>
+  <string>$Version</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$Version</string>
+  <key>CFBundleExecutable</key>
+  <string>EveLens</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+</dict>
+</plist>
+"@ | Set-Content "$appBundleDir/Contents/Info.plist" -Encoding UTF8
+
+    Compress-Archive -Path $appBundleDir -DestinationPath $appBundleZip
+    Remove-Item $appBundleDir -Recurse -Force
+    Write-Host "  macOS .app bundle created." -ForegroundColor Green
 }
 finally {
     # Restore SharedAssemblyInfo.cs
@@ -179,16 +237,38 @@ finally {
 Write-Host "`n=== Artifacts ===" -ForegroundColor Cyan
 $allFiles = @()
 
-# Windows (Velopack)
+# Windows (Velopack, signed)
 Get-ChildItem $WinPlatform.Out | ForEach-Object {
     $sizeMB = [math]::Round($_.Length / 1MB, 1)
     Write-Host "  $($_.Name) ($sizeMB MB) (signed)" -ForegroundColor Green
     $allFiles += $_.FullName
 }
 
-# Linux + macOS (zips)
-foreach ($plat in $OtherPlatforms) {
-    $file = Get-Item $plat.Zip
+# Linux zip
+$file = Get-Item $OtherPlatforms[0].Zip
+$sizeMB = [math]::Round($file.Length / 1MB, 1)
+Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+$allFiles += $file.FullName
+
+# Linux AppImage (if created)
+$appImageFile = "releases/EveLens-${Version}-linux-x86_64.AppImage"
+if (Test-Path $appImageFile) {
+    $file = Get-Item $appImageFile
+    $sizeMB = [math]::Round($file.Length / 1MB, 1)
+    Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+    $allFiles += $file.FullName
+}
+
+# macOS zip
+$file = Get-Item $OtherPlatforms[1].Zip
+$sizeMB = [math]::Round($file.Length / 1MB, 1)
+Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+$allFiles += $file.FullName
+
+# macOS .app bundle
+$appBundleZip = "releases/EveLens-${Version}-osx-arm64.app.zip"
+if (Test-Path $appBundleZip) {
+    $file = Get-Item $appBundleZip
     $sizeMB = [math]::Round($file.Length / 1MB, 1)
     Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
     $allFiles += $file.FullName
