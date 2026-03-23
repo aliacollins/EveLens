@@ -10,46 +10,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Velopack auto-update system with delta updates across Windows, Linux, and macOS
-- GitHub Actions CI/CD pipeline — automated builds, tests, and releases on push
+- GitHub Actions CI/CD pipeline -- automated builds, tests, and releases on push
 - GitVersion for automatic semantic versioning from git branch topology
 - Channel-based update intervals: alpha (1h), beta (3h), stable (6h)
 - Release notes displayed in the update dialog (from GitHub Release body)
 - Force "Check for Updates" in Help menu with download + restart flow
-- **Windows code signing** with Certum Open Source Developer certificate — eliminates SmartScreen/Trojan false positives
-- `sign-release.ps1` — local script to build, sign, and upload Windows release artifacts
+- **Windows code signing** with Certum Open Source Developer certificate -- eliminates SmartScreen/Trojan false positives
+- `sign-release.ps1` -- local script to build, sign, and upload Windows release artifacts
 - Assembly version stamping in CI for all platforms (SharedAssemblyInfo.cs updated before build)
 
 ### Changed
 
-- Update system completely replaced — Velopack replaces custom AutoUpdateService, Inno Setup, AppImage scripts, and macOS bundle scripts
-- CI/CD completely replaced — GitHub Actions replaces promote.ps1 and release-*.ps1 scripts
-- Git security lock removed — GitHub branch protection rules enforce protected branches
-- GitVersion config updated for v6.x — ContinuousDelivery mode with per-branch labels
+- Update system completely replaced -- Velopack replaces custom AutoUpdateService, Inno Setup, AppImage scripts, and macOS bundle scripts
+- CI/CD completely replaced -- GitHub Actions replaces promote.ps1 and release-*.ps1 scripts
+- Git security lock removed -- GitHub branch protection rules enforce protected branches
+- GitVersion config updated for v6.x -- ContinuousDelivery mode with per-branch labels
 
 ### Removed
 
-- `AutoUpdateService.cs` — replaced by Velopack
-- `UpdateNotifyWindow` and `DataUpdateNotifyWindow` — replaced by inline update dialog
-- `release-alpha.ps1`, `release-beta.ps1`, `release-stable.ps1` — replaced by GitHub Actions
-- `build-installer.ps1`, `build-appimage.sh`, `build-macapp.sh` — replaced by Velopack packaging
-- `git-lock.sh`, `git-unlock.sh` — replaced by GitHub branch protection
-- `evelens-patch-*.xml` update feeds — replaced by GitHub Releases API
+- `AutoUpdateService.cs` -- replaced by Velopack
+- `UpdateNotifyWindow` and `DataUpdateNotifyWindow` -- replaced by inline update dialog
+- `release-alpha.ps1`, `release-beta.ps1`, `release-stable.ps1` -- replaced by GitHub Actions
+- `build-installer.ps1`, `build-appimage.sh`, `build-macapp.sh` -- replaced by Velopack packaging
+- `git-lock.sh`, `git-unlock.sh` -- replaced by GitHub branch protection
+- `evelens-patch-*.xml` update feeds -- replaced by GitHub Releases API
 
 ## [1.0.0-beta.2] - 2026-03-19
 
 ### Added
 
-- **ESI Health State Machine** — per-(character, endpoint) state machine replaces event-based error notifications. States: Healthy, Degraded, Failing, Suspended. Fires only on transitions — no more error spam. (Issue #34)
+- **ESI Health State Machine** -- per-(character, endpoint) state machine replaces event-based error notifications. States: Healthy, Degraded, Failing, Suspended. Fires only on transitions -- no more error spam. (Issue #34)
 - **EndpointHealthTracker** with dynamic rolling time window that self-tunes from ESI cache headers (fast endpoints = short window, slow endpoints = long window)
-- **Hysteresis recovery** — 3 consecutive successes required to transition back to Healthy, preventing the error flapping that caused ~100 activity log entries
-- **`ISchedulerStatus.GetNextFetchTime()`** — reads directly from the scheduler's priority queue, fixing the "19 hours until next refresh" stale display bug
-- **HealthNotificationSubscriber** — bridges state transitions to activity log: Failing = one entry, Suspended = one entry, recovery = auto-clear, Degraded = silence
+- **Hysteresis recovery** -- 3 consecutive successes required to transition back to Healthy, preventing the error flapping that caused ~100 activity log entries
+- **`ISchedulerStatus.GetNextFetchTime()`** -- reads directly from the scheduler's priority queue, fixing the "19 hours until next refresh" stale display bug
+- **HealthNotificationSubscriber** -- bridges state transitions to activity log: Failing = one entry, Suspended = one entry, recovery = auto-clear, Degraded = silence
 - **Traffic-light health dots** on character overview: green (healthy), yellow (degraded/fetching), red (failing/suspended)
 - **42 new tests** for EndpointHealthTracker covering all transitions, hysteresis, dynamic windows, edge cases
-- **In-app Diagnostic Stream viewer** — Debug menu opens a live log window with filters (All/ESI/Events/Warnings/Health/Scheduler), auto-scroll, 2000-line buffer
-- **Debug build isolation** — debug builds use `%APPDATA%\EveLens Debug\` to prevent cross-contamination with production data
-- **`update-sde.ps1`** — automated SDE update pipeline: download, extract, YamlToSqlite, XmlGenerator, diff report, version stamp
-- **Branching policy** in CLAUDE.md — all work on feature/fix/experimental branches from alpha
+- **In-app Diagnostic Stream viewer** -- Debug menu opens a live log window with filters (All/ESI/Events/Warnings/Health/Scheduler), auto-scroll, 2000-line buffer
+- **Debug build isolation** -- debug builds use `%APPDATA%\EveLens Debug\` to prevent cross-contamination with production data
+- **`update-sde.ps1`** -- automated SDE update pipeline: download, extract, YamlToSqlite, XmlGenerator, diff report, version stamp
+- **Branching policy** in CLAUDE.md -- all work on feature/fix/experimental branches from alpha
 
 ### Changed
 
@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Cross-platform support: Windows x64, Linux x64, macOS Apple Silicon
-- Avalonia UI replacing WinForms — dark theme, modern controls
+- Avalonia UI replacing WinForms -- dark theme, modern controls
 - ESI Scheduler with priority queue, per-character rate limiting, phased cold start
 - Resilience pipeline: CircuitBreakerPolicy, CharacterAlivePolicy, RetryPolicy
 - EventAggregator replacing all static events

@@ -280,6 +280,24 @@ if ($DryRun) {
     Write-Host "  Would create release: $releaseTag with $($allFiles.Count) files"
 }
 else {
+    # Extract release notes from CHANGELOG.md
+    Write-Host "  Building release notes from CHANGELOG.md..." -ForegroundColor Yellow
+    $changelogPath = Join-Path $ProjectRoot "CHANGELOG.md"
+    $notes = ""
+    if (Test-Path $changelogPath) {
+        $inUnreleased = $false
+        $lines = @()
+        foreach ($line in Get-Content $changelogPath) {
+            if ($line -match '^\#\# \[Unreleased\]') { $inUnreleased = $true; continue }
+            if ($inUnreleased -and $line -match '^\#\# \[') { break }
+            if ($inUnreleased) { $lines += $line }
+        }
+        $notes = ($lines -join "`n").Trim()
+    }
+    if (-not $notes) { $notes = "See CHANGELOG.md for details." }
+    $notesFile = Join-Path $ProjectRoot "release-notes.md"
+    Set-Content $notesFile $notes -Encoding UTF8
+
     Write-Host "`n=== Uploading to GitHub Release ===" -ForegroundColor Cyan
 
     $prerelease = if ($Channel -eq 'stable') { @() } else { @("--prerelease") }
@@ -296,7 +314,7 @@ else {
         --repo $Repo `
         --title "$AppName $Version" `
         @prerelease `
-        --notes "See CHANGELOG.md for details." `
+        --notes-file release-notes.md `
         @($allFiles)
 
     if ($LASTEXITCODE -ne 0) {
