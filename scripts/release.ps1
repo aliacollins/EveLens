@@ -300,27 +300,33 @@ else {
 
     Write-Host "`n=== Uploading to GitHub Release ===" -ForegroundColor Cyan
 
-    $prerelease = if ($Channel -eq 'stable') { @() } else { @("--prerelease") }
+    $ErrorActionPreference = 'Continue'
+
+    $prerelease = if ($Channel -eq 'stable') { "" } else { "--prerelease" }
 
     # Delete existing release if present
-    gh release view $releaseTag --repo $Repo --json tagName 2>$null
+    $existCheck = gh release view $releaseTag --repo $Repo --json tagName 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Replacing existing release: $releaseTag" -ForegroundColor Yellow
-        gh release delete $releaseTag --repo $Repo --yes --cleanup-tag 2>$null
+        gh release delete $releaseTag --repo $Repo --yes --cleanup-tag 2>&1 | Out-Null
     }
 
-    # Create release
-    gh release create $releaseTag `
-        --repo $Repo `
-        --title "$AppName $Version" `
-        @prerelease `
-        --notes-file release-notes.md `
-        @($allFiles)
+    # Build the gh release create command
+    $ghArgs = @("release", "create", $releaseTag, "--repo", $Repo, "--title", "$AppName $Version", "--notes-file", $notesFile)
+    if ($prerelease) { $ghArgs += $prerelease }
+    $ghArgs += $allFiles
+
+    gh @ghArgs 2>&1 | ForEach-Object { Write-Host "  $_" }
+
+    $ErrorActionPreference = 'Stop'
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Release creation failed."
         exit 1
     }
+
+    # Cleanup
+    Remove-Item $notesFile -ErrorAction SilentlyContinue
 
     Write-Host "`n  Released: https://github.com/$Repo/releases/tag/$releaseTag" -ForegroundColor Green
 }
