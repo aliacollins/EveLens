@@ -38,10 +38,10 @@ $MainProject = "src/EveLens.Avalonia/EveLens.Avalonia.csproj"
 $AppName = "EveLens"
 $Repo = "aliacollins/EveLens"
 
-$Platforms = @(
-    @{ Rid = "win-x64";    Exe = "EveLens.exe"; Dir = "publish/win-x64";    Out = "releases/win";   Sign = $true  }
-    @{ Rid = "linux-x64";  Exe = "EveLens";     Dir = "publish/linux-x64";  Out = "releases/linux"; Sign = $false }
-    @{ Rid = "osx-arm64";  Exe = "EveLens";     Dir = "publish/osx-arm64";  Out = "releases/osx";   Sign = $false }
+$WinPlatform = @{ Rid = "win-x64"; Exe = "EveLens.exe"; Dir = "publish/win-x64"; Out = "releases/win" }
+$OtherPlatforms = @(
+    @{ Rid = "linux-x64";  Dir = "publish/linux-x64";  Zip = "releases/EveLens-$Version-linux-x64.zip" }
+    @{ Rid = "osx-arm64";  Dir = "publish/osx-arm64";  Zip = "releases/EveLens-$Version-osx-arm64.zip" }
 )
 
 # ── Preflight ──
@@ -121,48 +121,52 @@ Set-Content $SharedAsmPath $stampedAsm -NoNewline
 try {
     # ── Run tests ──
     Write-Host "`n=== Running Tests ===" -ForegroundColor Cyan
-    dotnet test tests/EveLens.Tests/EveLens.Tests.csproj -c Release --verbosity minimal
+    $ErrorActionPreference = 'Continue'
+    dotnet test tests/EveLens.Tests/EveLens.Tests.csproj -c Release --verbosity minimal 2>&1 | ForEach-Object { $_ }
+    $ErrorActionPreference = 'Stop'
     if ($LASTEXITCODE -ne 0) {
         throw "Tests failed."
     }
     Write-Host "  Tests passed." -ForegroundColor Green
 
     # ── Build all platforms ──
-    foreach ($plat in $Platforms) {
+    $allPlatforms = @($WinPlatform) + $OtherPlatforms
+    foreach ($plat in $allPlatforms) {
         Write-Host "`n=== Building $($plat.Rid) ===" -ForegroundColor Cyan
         if (Test-Path $plat.Dir) { Remove-Item $plat.Dir -Recurse -Force }
 
+        $ErrorActionPreference = 'Continue'
         dotnet publish $MainProject `
             -c Release -r $plat.Rid --self-contained `
-            -o $plat.Dir -p:Version=$Version
+            -o $plat.Dir -p:Version=$Version 2>&1 | ForEach-Object { $_ }
+        $ErrorActionPreference = 'Stop'
 
         if ($LASTEXITCODE -ne 0) { throw "Build failed for $($plat.Rid)." }
         Write-Host "  Built $($plat.Rid)." -ForegroundColor Green
     }
 
-    # ── Pack all platforms ──
-    foreach ($plat in $Platforms) {
-        Write-Host "`n=== Packing $($plat.Rid) ===" -ForegroundColor Cyan
-        if (Test-Path $plat.Out) { Remove-Item $plat.Out -Recurse -Force }
+    # ── Pack Windows with Velopack + signing ──
+    Write-Host "`n=== Packing win-x64 (signed) ===" -ForegroundColor Cyan
+    if (Test-Path $WinPlatform.Out) { Remove-Item $WinPlatform.Out -Recurse -Force }
 
-        $packArgs = @(
-            "pack"
-            "-u", $AppName
-            "-v", $Version
-            "-p", $plat.Dir
-            "-e", $plat.Exe
-            "--channel", $Channel
-            "-o", $plat.Out
-        )
+    $ErrorActionPreference = 'Continue'
+    & $vpkPath pack `
+        -u $AppName -v $Version `
+        -p $WinPlatform.Dir -e $WinPlatform.Exe `
+        --channel $Channel `
+        --signParams "/sha1 $CertThumbprint /fd SHA256 /tr $TimestampUrl /td SHA256" `
+        -o $WinPlatform.Out 2>&1 | ForEach-Object { $_ }
+    $ErrorActionPreference = 'Stop'
+    if ($LASTEXITCODE -ne 0) { throw "Pack failed for win-x64." }
+    Write-Host "  Packed win-x64 (signed)." -ForegroundColor Green
 
-        if ($plat.Sign) {
-            $packArgs += "--signParams"
-            $packArgs += "/sha1 $CertThumbprint /fd SHA256 /tr $TimestampUrl /td SHA256"
-        }
-
-        & $vpkPath @packArgs
-        if ($LASTEXITCODE -ne 0) { throw "Pack failed for $($plat.Rid)." }
-        Write-Host "  Packed $($plat.Rid)." -ForegroundColor Green
+    # ── Zip Linux and macOS ──
+    if (-not (Test-Path "releases")) { New-Item -ItemType Directory -Path "releases" | Out-Null }
+    foreach ($plat in $OtherPlatforms) {
+        Write-Host "`n=== Zipping $($plat.Rid) ===" -ForegroundColor Cyan
+        if (Test-Path $plat.Zip) { Remove-Item $plat.Zip -Force }
+        Compress-Archive -Path "$($plat.Dir)/*" -DestinationPath $plat.Zip
+        Write-Host "  Zipped $($plat.Rid)." -ForegroundColor Green
     }
 }
 finally {
@@ -174,18 +178,25 @@ finally {
 # ── Collect all artifacts ──
 Write-Host "`n=== Artifacts ===" -ForegroundColor Cyan
 $allFiles = @()
-foreach ($plat in $Platforms) {
-    Get-ChildItem $plat.Out | ForEach-Object {
-        $sizeMB = [math]::Round($_.Length / 1MB, 1)
-        $label = if ($plat.Sign) { "(signed)" } else { "" }
-        Write-Host "  $($_.Name) ($sizeMB MB) $label" -ForegroundColor Green
-        $allFiles += $_.FullName
-    }
+
+# Windows (Velopack)
+Get-ChildItem $WinPlatform.Out | ForEach-Object {
+    $sizeMB = [math]::Round($_.Length / 1MB, 1)
+    Write-Host "  $($_.Name) ($sizeMB MB) (signed)" -ForegroundColor Green
+    $allFiles += $_.FullName
+}
+
+# Linux + macOS (zips)
+foreach ($plat in $OtherPlatforms) {
+    $file = Get-Item $plat.Zip
+    $sizeMB = [math]::Round($file.Length / 1MB, 1)
+    Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+    $allFiles += $file.FullName
 }
 
 # ── Upload ──
 if ($DryRun) {
-    Write-Host "`n=== DRY RUN — skipping upload ===" -ForegroundColor Yellow
+    Write-Host "`n=== DRY RUN -- skipping upload ===" -ForegroundColor Yellow
     Write-Host "  Would create release: $releaseTag with $($allFiles.Count) files"
 }
 else {
