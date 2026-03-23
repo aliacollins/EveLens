@@ -249,3 +249,4 @@ scripts/.tools/
 docs/
 *.md
 !README.md
+!CHANGELOG.md

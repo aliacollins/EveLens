@@ -72,6 +72,21 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Stamp version in SharedAssemblyInfo.cs
+        shell: pwsh
+        run: |
+          $ver = "${{ needs.version.outputs.semver }}"
+          if ($ver -match '^(\d+)\.(\d+)\.(\d+)(?:-([a-z]+)\.?(\d+))?$') {
+            $rev = if ($Matches[4]) { $Matches[5] } else { "0" }
+            $asmVer = "$($Matches[1]).$($Matches[2]).$($Matches[3]).$rev"
+          } else { $asmVer = "$ver.0" }
+          $file = "SharedAssemblyInfo.cs"
+          (Get-Content $file -Raw) `
+            -replace 'AssemblyVersion\("[^"]*"\)', "AssemblyVersion(`"$asmVer`")" `
+            -replace 'AssemblyFileVersion\("[^"]*"\)', "AssemblyFileVersion(`"$asmVer`")" `
+            -replace 'AssemblyInformationalVersion\("[^"]*"\)', "AssemblyInformationalVersion(`"$ver`")" |
+            Set-Content $file -NoNewline
+          Write-Host "Stamped: AssemblyVersion=$asmVer, InformationalVersion=$ver"
       - name: Publish
         run: |
           dotnet publish ${{ env.MAIN_PROJECT }} `
@@ -102,6 +117,19 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Stamp version in SharedAssemblyInfo.cs
+        run: |
+          ver="${{ needs.version.outputs.semver }}"
+          if [[ "$ver" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-([a-z]+)\.?([0-9]+))?$ ]]; then
+            rev="${BASH_REMATCH[6]:-0}"
+            asmVer="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.$rev"
+          else
+            asmVer="${ver}.0"
+          fi
+          sed -i "s/AssemblyVersion(\"[^\"]*\")/AssemblyVersion(\"$asmVer\")/" SharedAssemblyInfo.cs
+          sed -i "s/AssemblyFileVersion(\"[^\"]*\")/AssemblyFileVersion(\"$asmVer\")/" SharedAssemblyInfo.cs
+          sed -i "s/AssemblyInformationalVersion(\"[^\"]*\")/AssemblyInformationalVersion(\"$ver\")/" SharedAssemblyInfo.cs
+          echo "Stamped: AssemblyVersion=$asmVer, InformationalVersion=$ver"
       - name: Publish
         run: |
           dotnet publish ${{ env.MAIN_PROJECT }} \
@@ -132,6 +160,19 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Stamp version in SharedAssemblyInfo.cs
+        run: |
+          ver="${{ needs.version.outputs.semver }}"
+          if [[ "$ver" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)(-([a-z]+)\.?([0-9]+))?$ ]]; then
+            rev="${BASH_REMATCH[6]:-0}"
+            asmVer="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.$rev"
+          else
+            asmVer="${ver}.0"
+          fi
+          sed -i '' "s/AssemblyVersion(\"[^\"]*\")/AssemblyVersion(\"$asmVer\")/" SharedAssemblyInfo.cs
+          sed -i '' "s/AssemblyFileVersion(\"[^\"]*\")/AssemblyFileVersion(\"$asmVer\")/" SharedAssemblyInfo.cs
+          sed -i '' "s/AssemblyInformationalVersion(\"[^\"]*\")/AssemblyInformationalVersion(\"$ver\")/" SharedAssemblyInfo.cs
+          echo "Stamped: AssemblyVersion=$asmVer, InformationalVersion=$ver"
       - name: Publish
         run: |
           dotnet publish ${{ env.MAIN_PROJECT }} \

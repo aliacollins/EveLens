@@ -10,15 +10,11 @@
 
 ---
 
-## EveLens Is Now in Beta
+## Alpha — Experimental Testing Branch
 
-**Starting March 16, 2026** — EveLens enters beta testing ahead of its **stable release on March 20th**.
+**This is the alpha channel.** It contains the latest features and changes, but may be unstable. Use this branch to test new functionality and report issues. Things will break — that's the point.
 
 EveLens is a complete, ground-up rewrite of EVEMon — the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on .NET 8 and Avalonia UI, running natively on **Windows, Linux, and macOS**.
-
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,741 tests, 14 architectural laws, and support for **100+ characters** out of the box.
-
-**Current Version: 1.0.0-beta.2**
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -26,28 +22,22 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-[EveLens Installer](https://github.com/aliacollins/evelens/releases/tag/beta)
+[Latest Alpha Release](https://github.com/aliacollins/evelens/releases)
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
-| **Windows (Installer)** | `.exe` installer | Installs .NET 8 automatically |
+| **Windows (Installer)** | `.exe` installer (code-signed) | Installs .NET 8 automatically |
 | **Windows (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux (AppImage)** | `.AppImage` | None — just download and run |
-| **Linux (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS (App)** | `.app.zip` | None — extract, drag to Applications |
-| **macOS (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
 ### Quick Start
 
-**Windows:** Download and run the installer — it handles everything.
+**Windows:** Download and run the installer — it's code-signed, so no SmartScreen warnings.
 
-**Linux:**
-```bash
-chmod +x EveLens-1.0.0-beta.2-linux-x64.AppImage
-./EveLens-1.0.0-beta.2-linux-x64.AppImage
-```
+**Linux:** Extract and run.
 
-**macOS:** Extract the zip, drag EveLens to Applications, right-click → Open on first launch (unsigned app).
+**macOS:** Extract, drag to Applications, right-click → Open on first launch (unsigned app).
 
 > **Coming from EVEMon?** We recommend a fresh install. EveLens is a complete rewrite and a clean start gives the smoothest experience. Your EVE characters are tied to your ESI tokens, not your old settings.
 
@@ -119,29 +109,13 @@ EveLens 1.0.0 is a complete rewrite. Here's what changed from the original EVEMo
 
 ---
 
-## Alpha Changelog (Cumulative)
-
-See "What's New in 1.0.0" above for the full feature list.
-
----
-
-## Features Being Tested
-
-- Cross-platform stability on Linux and macOS
-- 100+ character ESI scheduling and resilience
-- Auto-update on all platforms
-- Group collapse/expand on overview
-- Window position/size persistence
-
----
-
 ## Update Channels
 
-| Channel | Use Case | Download |
-|---------|----------|----------|
-| Stable | Recommended for daily use (March 20th) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
-| **Beta** | Pre-release testing(you are here) | [Beta Release](https://github.com/aliacollins/evelens/releases/tag/beta) |
-| Alpha | Bleeding edge, experimental features | [Alpha Release](https://github.com/aliacollins/evelens/releases/tag/alpha) |
+| Channel | Use Case | Status |
+|---------|----------|--------|
+| **Alpha** | Experimental — testing new features (you are here) | Active |
+| Beta | Pre-release — feature-complete, stability testing | Coming soon |
+| Stable | Recommended for daily use | Coming soon |
 
 ---
 
