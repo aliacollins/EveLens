@@ -2,7 +2,6 @@
 
 **Character Intelligence for EVE Online**
 
-[![Build & Release](https://github.com/aliacollins/evelens/actions/workflows/release.yml/badge.svg)](https://github.com/aliacollins/evelens/actions/workflows/release.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/aliacollins/evelens?include_prereleases&label=latest)](https://github.com/aliacollins/evelens/releases)
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
@@ -10,9 +9,9 @@
 
 ---
 
-## Alpha — Experimental Testing Branch
+## Beta -- Pre-Release Testing
 
-**This is the alpha channel.** It contains the latest features and changes, but may be unstable. Use this branch to test new functionality and report issues. Things will break — that's the point.
+**This is the beta channel.** Feature-complete and undergoing stability testing before the stable release. Report any issues you find.
 
 EveLens is a complete, ground-up rewrite of EVEMon — the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on .NET 8 and Avalonia UI, running natively on **Windows, Linux, and macOS**.
 
@@ -22,22 +21,45 @@ EveLens is a complete, ground-up rewrite of EVEMon — the character planner EVE
 
 ## Download
 
-[Latest Alpha Release](https://github.com/aliacollins/evelens/releases)
+[Latest Beta Release](https://github.com/aliacollins/evelens/releases)
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
 | **Windows (Installer)** | `.exe` installer (code-signed) | Installs .NET 8 automatically |
 | **Windows (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **Linux** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
-| **macOS** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux (AppImage)** | `.AppImage` | None -- single file, just run |
+| **Linux (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS (App)** | `.app.zip` | None -- extract and run |
+| **macOS (Portable)** | `.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
 
 ### Quick Start
 
-**Windows:** Download and run the installer — it's code-signed, so no SmartScreen warnings.
+**Windows:** Download and run the installer -- it's code-signed, so no SmartScreen warnings.
 
-**Linux:** Extract and run.
+**Linux (AppImage):**
+```bash
+chmod +x EveLens-*-linux-x86_64.AppImage
+./EveLens-*-linux-x86_64.AppImage
+```
 
-**macOS:** Extract, drag to Applications, right-click → Open on first launch (unsigned app).
+**Linux (Portable):**
+```bash
+unzip EveLens-*-linux-x64.zip -d evelens
+chmod +x evelens/EveLens
+./evelens/EveLens
+```
+
+**macOS (.app):**
+1. Download and extract `EveLens-*-osx-arm64.app.zip`
+2. Drag `EveLens.app` to Applications
+3. Right-click the app and select "Open" (required on first launch for unsigned apps)
+
+**macOS (Portable):**
+```bash
+unzip EveLens-*-osx-arm64.zip -d evelens
+chmod +x evelens/EveLens
+./evelens/EveLens
+```
 
 > **Coming from EVEMon?** We recommend a fresh install. EveLens is a complete rewrite and a clean start gives the smoothest experience. Your EVE characters are tied to your ESI tokens, not your old settings.
 
@@ -113,8 +135,8 @@ EveLens 1.0.0 is a complete rewrite. Here's what changed from the original EVEMo
 
 | Channel | Use Case | Status |
 |---------|----------|--------|
-| **Alpha** | Experimental — testing new features (you are here) | Active |
-| Beta | Pre-release — feature-complete, stability testing | Coming soon |
+| Alpha | Experimental -- testing new features | Active |
+| **Beta** | Pre-release -- feature-complete, stability testing (you are here) | Active |
 | Stable | Recommended for daily use | Coming soon |
 
 ---
