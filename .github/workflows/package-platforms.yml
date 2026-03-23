@@ -1,0 +1,152 @@
+name: Package Linux & macOS
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Linux zip from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          # Find the linux zip asset
+          asset=$(gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[].name | select(contains("linux"))')
+          if [ -z "$asset" ]; then
+            echo "No Linux zip found in release $tag — skipping"
+            exit 0
+          fi
+          gh release download "$tag" --repo "${{ github.repository }}" --pattern "*linux*" --dir download/
+          echo "ASSET=$asset" >> $GITHUB_ENV
+          echo "TAG=$tag" >> $GITHUB_ENV
+
+      - name: Create AppImage
+        if: env.ASSET != ''
+        run: |
+          # Extract the zip
+          mkdir -p AppDir/usr/bin AppDir/usr/share/icons/hicolor/256x256/apps
+          cd download && unzip *.zip -d ../AppDir/usr/bin && cd ..
+          chmod +x AppDir/usr/bin/EveLens
+
+          # Create .desktop file
+          cat > AppDir/EveLens.desktop << 'DESKTOP'
+          [Desktop Entry]
+          Name=EveLens
+          Comment=Character Intelligence for EVE Online
+          Exec=EveLens
+          Icon=evelens
+          Type=Application
+          Categories=Game;Utility;
+          DESKTOP
+          sed -i 's/^          //' AppDir/EveLens.desktop
+
+          # Create a simple icon (placeholder — 1x1 pixel PNG)
+          echo -n -e '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82' > AppDir/evelens.png
+          cp AppDir/evelens.png AppDir/usr/share/icons/hicolor/256x256/apps/
+
+          # Create AppRun
+          cat > AppDir/AppRun << 'APPRUN'
+          #!/bin/bash
+          HERE="$(dirname "$(readlink -f "${0}")")"
+          exec "$HERE/usr/bin/EveLens" "$@"
+          APPRUN
+          chmod +x AppDir/AppRun
+
+          # Download appimagetool
+          wget -q "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O appimagetool
+          chmod +x appimagetool
+
+          # Build AppImage
+          version="${TAG#v}"
+          ARCH=x86_64 ./appimagetool --no-appstream AppDir "EveLens-${version}-linux-x86_64.AppImage" || \
+          ARCH=x86_64 ./appimagetool AppDir "EveLens-${version}-linux-x86_64.AppImage"
+
+          echo "APPIMAGE=EveLens-${version}-linux-x86_64.AppImage" >> $GITHUB_ENV
+
+      - name: Upload AppImage to release
+        if: env.APPIMAGE != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$TAG" "$APPIMAGE" --repo "${{ github.repository }}" --clobber
+
+  package-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Download macOS zip from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          asset=$(gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[].name | select(contains("osx"))')
+          if [ -z "$asset" ]; then
+            echo "No macOS zip found in release $tag — skipping"
+            exit 0
+          fi
+          gh release download "$tag" --repo "${{ github.repository }}" --pattern "*osx*" --dir download/
+          echo "ASSET=$asset" >> $GITHUB_ENV
+          echo "TAG=$tag" >> $GITHUB_ENV
+
+      - name: Create .app bundle
+        if: env.ASSET != ''
+        run: |
+          version="${TAG#v}"
+
+          # Extract the zip
+          mkdir -p extracted
+          cd download && unzip *.zip -d ../extracted && cd ..
+
+          # Create .app bundle structure
+          APP="EveLens.app"
+          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/Resources"
+
+          # Copy all files
+          cp -R extracted/* "$APP/Contents/MacOS/"
+          chmod +x "$APP/Contents/MacOS/EveLens"
+
+          # Create Info.plist
+          cat > "$APP/Contents/Info.plist" << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key>
+            <string>EveLens</string>
+            <key>CFBundleDisplayName</key>
+            <string>EveLens</string>
+            <key>CFBundleIdentifier</key>
+            <string>dev.evelens.app</string>
+            <key>CFBundleVersion</key>
+            <string>${version}</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${version}</string>
+            <key>CFBundleExecutable</key>
+            <string>EveLens</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>NSHighResolutionCapable</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST
+          sed -i '' 's/^          //' "$APP/Contents/Info.plist"
+
+          # Zip the .app bundle
+          OUTPUT="EveLens-${version}-osx-arm64.app.zip"
+          ditto -c -k --keepParent "$APP" "$OUTPUT"
+
+          echo "APPZIP=$OUTPUT" >> $GITHUB_ENV
+
+      - name: Upload .app bundle to release
+        if: env.APPZIP != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$TAG" "$APPZIP" --repo "${{ github.repository }}" --clobber
