@@ -1,4 +1,4 @@
-mode: ContinuousDeployment
+mode: ContinuousDelivery
 next-version: 1.0.0
 
 branches:
@@ -6,16 +6,20 @@ branches:
     regex: ^main$
     label: ''
     increment: Patch
+    mode: ContinuousDeployment
+    is-main-branch: true
 
   alpha:
     regex: ^alpha$
     label: alpha
     increment: Minor
+    mode: ContinuousDelivery
 
   beta:
     regex: ^beta$
     label: beta
     increment: Patch
+    mode: ContinuousDelivery
 
   feature:
     regex: ^feature[/-]
