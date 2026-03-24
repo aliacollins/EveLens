@@ -19,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Plan Editor no longer shows unpublished skills like CFO Training or Chief Science Officer ([#37])
 - Scrolling now works correctly in the Plan Editor's Skills and Blueprints tabs ([#39])
-- ESI health state no longer gets stuck on "re-authentication required" after a successful token refresh ([#34])
 
 ## [1.0.0] - 2026-03-23
 
