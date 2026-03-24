@@ -281,18 +281,32 @@ if ($DryRun) {
 }
 else {
     # Extract release notes from CHANGELOG.md
+    # Looks for the section matching the version being released, falls back to [Unreleased]
     Write-Host "  Building release notes from CHANGELOG.md..." -ForegroundColor Yellow
     $changelogPath = Join-Path $ProjectRoot "CHANGELOG.md"
     $notes = ""
     if (Test-Path $changelogPath) {
-        $inUnreleased = $false
+        $inSection = $false
         $lines = @()
         foreach ($line in Get-Content $changelogPath) {
-            if ($line -match '^\#\# \[Unreleased\]') { $inUnreleased = $true; continue }
-            if ($inUnreleased -and $line -match '^\#\# \[') { break }
-            if ($inUnreleased) { $lines += $line }
+            # Match the exact version section first, then fall back to [Unreleased]
+            if ($line -match "^\#\# \[$Version\]") { $inSection = $true; continue }
+            if ($inSection -and $line -match '^\#\# \[') { break }
+            if ($inSection) { $lines += $line }
         }
         $notes = ($lines -join "`n").Trim()
+
+        # Fall back to [Unreleased] if no version-specific section found
+        if (-not $notes) {
+            $inSection = $false
+            $lines = @()
+            foreach ($line in Get-Content $changelogPath) {
+                if ($line -match '^\#\# \[Unreleased\]') { $inSection = $true; continue }
+                if ($inSection -and $line -match '^\#\# \[') { break }
+                if ($inSection) { $lines += $line }
+            }
+            $notes = ($lines -join "`n").Trim()
+        }
     }
     if (-not $notes) { $notes = "See CHANGELOG.md for details." }
     $notesFile = Join-Path $ProjectRoot "release-notes.md"
