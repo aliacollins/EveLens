@@ -35,6 +35,7 @@ namespace EveLens.Common.ViewModels
         public string Name { get; }
         public long Rank { get; }
         public string RankText { get; }
+        public bool IsPublic { get; }
 
         internal SkillEntryTemplate(StaticSkill skill)
         {
@@ -42,6 +43,7 @@ namespace EveLens.Common.ViewModels
             Name = skill.Name;
             Rank = skill.Rank;
             RankText = $"Rank {skill.Rank}";
+            IsPublic = skill.IsPublic;
         }
     }
 
@@ -110,7 +112,13 @@ namespace EveLens.Common.ViewModels
 
         public int TotalTrained { get; private set; }
         public int TotalSkills { get; private set; }
+        public int TotalPublicSkills { get; private set; }
         public long TotalSP { get; private set; }
+
+        /// <summary>
+        /// Skills at each level (index 0 = injected but untrained, 1-5 = trained to that level).
+        /// </summary>
+        public int[] SkillsAtLevel { get; } = new int[6];
 
         public SkillState GetState(int skillId)
             => _states.TryGetValue(skillId, out var s) ? s : default;
@@ -120,13 +128,17 @@ namespace EveLens.Common.ViewModels
             _states.Clear();
             int trained = 0;
             int total = 0;
+            int totalPublic = 0;
             long sp = 0L;
+            Array.Clear(SkillsAtLevel, 0, 6);
 
             foreach (var group in character.SkillGroups)
             {
                 foreach (Skill skill in group)
                 {
                     total++;
+                    if (skill.IsPublic)
+                        totalPublic++;
 
                     var state = new SkillState
                     {
@@ -142,12 +154,14 @@ namespace EveLens.Common.ViewModels
                     {
                         trained++;
                         sp += state.SkillPoints;
+                        SkillsAtLevel[state.Level]++;
                     }
                 }
             }
 
             TotalTrained = trained;
             TotalSkills = total;
+            TotalPublicSkills = totalPublic;
             TotalSP = sp;
         }
     }
@@ -168,6 +182,7 @@ namespace EveLens.Common.ViewModels
         private SkillOverlay? _activeOverlay;
         private bool _showAll;
         private string _filter = string.Empty;
+        private int _levelFilter = -1;
         private bool _isRebuilding;
 
         public FlattenedTreeSource<object> TreeSource { get; } = new();
@@ -176,7 +191,16 @@ namespace EveLens.Common.ViewModels
 
         public int TotalSkills => _activeOverlay?.TotalSkills ?? 0;
 
+        public int TotalPublicSkills => _activeOverlay?.TotalPublicSkills ?? 0;
+
         public long TotalSP => _activeOverlay?.TotalSP ?? 0;
+
+        /// <summary>
+        /// Gets the number of skills at the given level (0 = injected/untrained, 1-5).
+        /// </summary>
+        public int GetSkillsAtLevel(int level)
+            => _activeOverlay?.SkillsAtLevel is { } arr && level >= 0 && level < arr.Length
+                ? arr[level] : 0;
 
         public string StatusText => _activeOverlay != null
             ? $"Trained: {_activeOverlay.TotalTrained} of {_activeOverlay.TotalSkills} skills  |  Total SP: {_activeOverlay.TotalSP:N0}"
@@ -219,6 +243,24 @@ namespace EveLens.Common.ViewModels
                     _filter = newFilter;
                     RebuildTree();
                     OnPropertyChanged(nameof(Filter));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the level filter. -1 means no filter (all levels).
+        /// 0 = injected/untrained, 1-5 = that level.
+        /// </summary>
+        public int LevelFilter
+        {
+            get => _levelFilter;
+            set
+            {
+                if (_levelFilter != value)
+                {
+                    _levelFilter = value;
+                    RebuildTree();
+                    OnPropertyChanged(nameof(LevelFilter));
                 }
             }
         }
@@ -335,11 +377,24 @@ namespace EveLens.Common.ViewModels
         {
             var state = _activeOverlay?.GetState(skill.SkillId) ?? default;
 
-            if (!_showAll && !state.IsKnown)
-                return false;
-
+            // Text filter always applies
             if (_filter.Length > 0 &&
                 !skill.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            // "All Skills" — show every published skill
+            if (_levelFilter == -3)
+                return skill.IsPublic;
+
+            if (_levelFilter >= 0)
+            {
+                if (_levelFilter == 0)
+                    return state.IsKnown && state.Level == 0;
+                return state.IsKnown && state.Level == _levelFilter;
+            }
+
+            // Default (-1 = "All Trained"): respect "trained only" toggle
+            if (!_showAll && !state.IsKnown)
                 return false;
 
             return true;

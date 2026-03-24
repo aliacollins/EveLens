@@ -24,6 +24,7 @@ namespace EveLens.Common.ViewModels
         private readonly PlanEditorViewModel? _planEditor;
         private string _textFilter = string.Empty;
         private bool _showAll = true;
+        private AttributeCombo? _attributeFilter;
         private List<PlanSkillGroupEntry>? _allGroups;
         private List<PlanSkillGroupEntry> _groups = new();
         private StaticSkill? _selectedSkill;
@@ -116,6 +117,34 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
+        /// Gets or sets the attribute combination filter. Null means no filtering (show all).
+        /// </summary>
+        public AttributeCombo? AttributeFilter
+        {
+            get => _attributeFilter;
+            set
+            {
+                if (_attributeFilter != value)
+                {
+                    _attributeFilter = value;
+                    ApplyFilter();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the distinct attribute combinations present in the skill data.
+        /// Populated after <see cref="Refresh"/> is called.
+        /// </summary>
+        public List<AttributeCombo> AvailableAttributeCombos { get; private set; } = new();
+
+        /// <summary>
+        /// Gets the detected attribute combo based on the character's two highest attributes.
+        /// Null if no character is set or attributes are balanced.
+        /// </summary>
+        public AttributeCombo? DetectedRemap { get; private set; }
+
+        /// <summary>
         /// Plans the given skill to the specified level.
         /// </summary>
         public void PlanToLevel(StaticSkill? skill, long level)
@@ -169,7 +198,52 @@ namespace EveLens.Common.ViewModels
                 .Where(g => g.Any())
                 .OrderBy(g => g.Name)
                 .Select(g => new PlanSkillGroupEntry(g, character, _planEditor?.Plan))
+                .Where(g => g.TotalCount > 0)
                 .ToList();
+
+            // Build distinct attribute combos from all published skills
+            AvailableAttributeCombos = _allGroups
+                .SelectMany(g => g.AllSkills)
+                .Select(s => new AttributeCombo(s.StaticSkill.PrimaryAttribute, s.StaticSkill.SecondaryAttribute))
+                .Distinct()
+                .OrderBy(c => c.Primary)
+                .ThenBy(c => c.Secondary)
+                .ToList();
+
+            // Detect the character's current remap from their two highest attributes
+            DetectedRemap = DetectCharacterRemap(character);
+        }
+
+        private AttributeCombo? DetectCharacterRemap(Character? character)
+        {
+            if (character == null)
+                return null;
+
+            var attrs = new[]
+            {
+                EveAttribute.Intelligence,
+                EveAttribute.Perception,
+                EveAttribute.Charisma,
+                EveAttribute.Willpower,
+                EveAttribute.Memory
+            };
+
+            // Sort by effective value descending, take top 2
+            var sorted = attrs
+                .Select(a => (Attr: a, Value: character[a].EffectiveValue))
+                .OrderByDescending(x => x.Value)
+                .ToList();
+
+            var top = sorted[0];
+            var second = sorted[1];
+
+            // Only flag a remap if there's a meaningful gap (not balanced/default 20-20-20-20-20)
+            if (top.Value <= second.Value || second.Value <= sorted[2].Value)
+                return null;
+
+            // Match against available combos — primary is highest, secondary is second-highest
+            return AvailableAttributeCombos.FirstOrDefault(c =>
+                c.Primary == top.Attr && c.Secondary == second.Attr);
         }
 
         private void ApplyFilter()
@@ -185,7 +259,7 @@ namespace EveLens.Common.ViewModels
 
             foreach (var group in _allGroups)
             {
-                group.UpdateVisibility(_showAll, _textFilter, Character, _planEditor?.Plan);
+                group.UpdateVisibility(_showAll, _textFilter, _attributeFilter, Character, _planEditor?.Plan);
 
                 if (group.VisibleSkills.Count > 0)
                     visible.Add(group);
@@ -230,6 +304,7 @@ namespace EveLens.Common.ViewModels
         public int TrainedCount { get; private set; }
         public bool IsExpanded { get; set; }
         public List<PlanSkillEntry> VisibleSkills { get; private set; }
+        internal IReadOnlyList<PlanSkillEntry> AllSkills => _allSkills;
 
         public string TrainedCountText => $"{TrainedCount} / {TotalCount}";
 
@@ -237,6 +312,7 @@ namespace EveLens.Common.ViewModels
         {
             Name = group.Name;
             _allSkills = group
+                .Where(s => s.IsPublic)
                 .OrderBy(s => s.Name)
                 .Select(s => new PlanSkillEntry(s, character, plan))
                 .ToList();
@@ -246,7 +322,8 @@ namespace EveLens.Common.ViewModels
             VisibleSkills = new List<PlanSkillEntry>(_allSkills);
         }
 
-        public void UpdateVisibility(bool showAll, string filter, Character? character, Plan? plan)
+        public void UpdateVisibility(bool showAll, string filter, AttributeCombo? attributeFilter,
+            Character? character, Plan? plan)
         {
             IEnumerable<PlanSkillEntry> filtered = _allSkills;
 
@@ -260,6 +337,13 @@ namespace EveLens.Common.ViewModels
             {
                 filtered = filtered.Where(s =>
                     s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (attributeFilter != null)
+            {
+                filtered = filtered.Where(s =>
+                    s.StaticSkill.PrimaryAttribute == attributeFilter.Primary &&
+                    s.StaticSkill.SecondaryAttribute == attributeFilter.Secondary);
             }
 
             VisibleSkills = filtered.ToList();
@@ -430,5 +514,29 @@ namespace EveLens.Common.ViewModels
             CharacterLevel = characterLevel;
             IsMet = characterLevel >= requiredLevel;
         }
+    }
+
+    /// <summary>
+    /// Represents a primary/secondary attribute combination for skill filtering.
+    /// </summary>
+    public sealed class AttributeCombo : IEquatable<AttributeCombo>
+    {
+        public EveAttribute Primary { get; }
+        public EveAttribute Secondary { get; }
+        public string DisplayText { get; }
+
+        public AttributeCombo(EveAttribute primary, EveAttribute secondary)
+        {
+            Primary = primary;
+            Secondary = secondary;
+            DisplayText = $"{primary} / {secondary}";
+        }
+
+        public bool Equals(AttributeCombo? other)
+            => other != null && Primary == other.Primary && Secondary == other.Secondary;
+
+        public override bool Equals(object? obj) => Equals(obj as AttributeCombo);
+        public override int GetHashCode() => HashCode.Combine(Primary, Secondary);
+        public override string ToString() => DisplayText;
     }
 }

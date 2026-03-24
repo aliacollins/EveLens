@@ -154,9 +154,11 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         ? $"SP: {PrivacyHelper.Mask}" : $"SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints)}";
                     string freeSp = PrivacyHelper.IsSkillPointsHidden
                         ? $"Free SP: {PrivacyHelper.Mask}" : $"Free SP: {ObservableCharacter.FormatLargeNumber(oc.FreeSkillPoints)}";
+                    string totalSp = PrivacyHelper.IsSkillPointsHidden
+                        ? $"Total SP: {PrivacyHelper.Mask}" : $"Total SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints + oc.FreeSkillPoints)}";
                     string remaps = PrivacyHelper.IsRemapsHidden
                         ? $"Remaps: {PrivacyHelper.Mask}" : $"Remaps: {oc.AvailableRemaps}";
-                    StatsLine.Text = string.Join("  \u00b7  ", skills, sp, freeSp, remaps);
+                    StatsLine.Text = string.Join("  \u00b7  ", skills, sp, freeSp, totalSp, remaps);
                 }
             }
             catch

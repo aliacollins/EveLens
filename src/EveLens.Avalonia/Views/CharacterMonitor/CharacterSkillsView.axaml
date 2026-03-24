@@ -39,6 +39,40 @@
             </DockPanel>
         </Border>
 
+        <!-- Skill level breakdown strip — click a level to filter -->
+        <Border DockPanel.Dock="Top" Padding="10,5"
+                Background="{StaticResource EveBackgroundDarkBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <ToggleButton x:Name="AllSkillsBtn" Content="All Skills" IsChecked="True"
+                              FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="-3"
+                              ToolTip.Tip="Show every published skill (trained and uninjected)" />
+                <ToggleButton x:Name="AllTrainedBtn"
+                              FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="-1"
+                              ToolTip.Tip="Show all trained skills (Level I through V plus injected)" />
+                <ToggleButton x:Name="LevelVBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="5"
+                              ToolTip.Tip="Show only Level V skills" />
+                <ToggleButton x:Name="LevelIVBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="4"
+                              ToolTip.Tip="Show only Level IV skills" />
+                <ToggleButton x:Name="LevelIIIBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="3"
+                              ToolTip.Tip="Show only Level III skills" />
+                <ToggleButton x:Name="LevelIIBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="2"
+                              ToolTip.Tip="Show only Level II skills" />
+                <ToggleButton x:Name="LevelIBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="1"
+                              ToolTip.Tip="Show only Level I skills" />
+                <ToggleButton x:Name="LevelZeroBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="0"
+                              ToolTip.Tip="Show only injected but untrained skills" />
+            </StackPanel>
+        </Border>
+
         <!-- Status bar -->
         <Border DockPanel.Dock="Bottom" Padding="10,5"
                 Background="{StaticResource EveBackgroundMediumBrush}"

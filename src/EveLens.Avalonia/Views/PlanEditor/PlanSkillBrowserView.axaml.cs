@@ -35,7 +35,30 @@ namespace EveLens.Avalonia.Views.PlanEditor
             _viewModel = new PlanSkillBrowserViewModel(planEditor);
             _viewModel.Character = planEditor.Character;
             _viewModel.Refresh();
+            PopulateAttributeFilter();
             RefreshGroupsList();
+        }
+
+        private void PopulateAttributeFilter()
+        {
+            if (_viewModel == null) return;
+
+            var detected = _viewModel.DetectedRemap;
+            var items = new List<AttributeFilterItem>
+            {
+                new("All Attributes", false)
+            };
+            int detectedIndex = 0; // default to "All Attributes"
+            for (int i = 0; i < _viewModel.AvailableAttributeCombos.Count; i++)
+            {
+                var c = _viewModel.AvailableAttributeCombos[i];
+                bool isDetected = c.Equals(detected);
+                items.Add(new AttributeFilterItem(c.DisplayText, isDetected));
+                if (isDetected)
+                    detectedIndex = i + 1; // +1 for the "All Attributes" entry
+            }
+            AttributeComboBox.ItemsSource = items;
+            AttributeComboBox.SelectedIndex = detectedIndex;
         }
 
         private void RefreshGroupsList()
@@ -75,6 +98,25 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             if (_viewModel == null) return;
             _viewModel.ShowAll = ShowAllToggle.IsChecked == true;
+            RefreshGroupsList();
+        }
+
+        private void OnAttributeFilterChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            int index = AttributeComboBox.SelectedIndex;
+            if (index <= 0)
+            {
+                // "All Attributes" or nothing selected
+                _viewModel.AttributeFilter = null;
+            }
+            else
+            {
+                // index - 1 maps to AvailableAttributeCombos
+                _viewModel.AttributeFilter = _viewModel.AvailableAttributeCombos[index - 1];
+            }
+
             RefreshGroupsList();
         }
 
@@ -311,6 +353,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
             VisibleSkills = entry.VisibleSkills
                 .Select(s => new PlanSkillBrowserDisplayItem(s))
                 .ToList();
+        }
+    }
+
+    internal sealed class AttributeFilterItem
+    {
+        public string Text { get; }
+        public string StarText { get; }
+
+        public AttributeFilterItem(string text, bool isDetectedRemap)
+        {
+            Text = text;
+            StarText = isDetectedRemap ? "\u2605" : "";
         }
     }
 }

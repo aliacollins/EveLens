@@ -18,6 +18,23 @@
                         <Button Content="Expand" FontSize="10" Padding="8,3" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </StackPanel>
+                    <!-- Attribute filter -->
+                    <ComboBox x:Name="AttributeComboBox" DockPanel.Dock="Bottom"
+                              FontSize="10" Padding="6,3" Margin="0,4,0,0"
+                              CornerRadius="10" HorizontalAlignment="Stretch"
+                              SelectionChanged="OnAttributeFilterChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Text}" FontSize="10"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding StarText}" FontSize="10"
+                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                               Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <!-- Search -->
                     <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
                             BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1">
@@ -70,12 +87,13 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Indented child items -->
+                                <!-- Indented child items (uses StackPanel, not VirtualizingStackPanel,
+                                     to avoid nested virtualization breaking ScrollViewer measurement — Issue #39) -->
                                 <ItemsControl ItemsSource="{Binding VisibleSkills}" HorizontalAlignment="Stretch"
                                               IsVisible="{Binding IsExpanded}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <VirtualizingStackPanel Orientation="Vertical" />
+                                            <StackPanel Orientation="Vertical" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>

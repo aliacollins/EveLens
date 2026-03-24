@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Skill level breakdown strip in the Skills tab -- clickable filter buttons for All Skills, All Trained, Level V through I, and Injected (Discussion #33)
+- Attribute combination filter in Plan Editor skill browser -- dropdown to filter skills by primary/secondary attribute, auto-detects character's current remap with gold star indicator (Issue #38)
+- Total SP (trained + unallocated) now shown in character header stats line
+
 ### Fixed
 
+- Plan Editor skill list no longer includes unpublished skills like CFO Training and Chief Science Officer (Issue #37)
+- Scroll behavior fixed in Plan Editor Skills and Blueprints tabs -- replaced nested VirtualizingStackPanel with StackPanel to prevent ScrollViewer measurement issues (Issue #39)
 - Health state stuck on "re-authentication required" after successful token refresh -- EndpointHealthTracker now subscribes to ESIKeyTokenRefreshedEvent and resets Suspended state automatically (Issue #34)
 
 ## [1.0.0] - 2026-03-23

@@ -6,6 +6,7 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -122,6 +123,44 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void UpdateStatus()
         {
             StatusText.Text = _viewModel?.StatusText ?? "";
+            UpdateLevelBreakdown();
+        }
+
+        private void UpdateLevelBreakdown()
+        {
+            if (_viewModel == null) return;
+
+            AllSkillsBtn.Content = $"All Skills ({_viewModel.TotalPublicSkills})";
+            AllTrainedBtn.Content = $"All Trained ({_viewModel.TotalTrained})";
+            LevelVBtn.Content = $"Level V ({_viewModel.GetSkillsAtLevel(5)})";
+            LevelIVBtn.Content = $"Level IV ({_viewModel.GetSkillsAtLevel(4)})";
+            LevelIIIBtn.Content = $"Level III ({_viewModel.GetSkillsAtLevel(3)})";
+            LevelIIBtn.Content = $"Level II ({_viewModel.GetSkillsAtLevel(2)})";
+            LevelIBtn.Content = $"Level I ({_viewModel.GetSkillsAtLevel(1)})";
+            LevelZeroBtn.Content = $"Injected ({_viewModel.GetSkillsAtLevel(0)})";
+        }
+
+        private ToggleButton?[] LevelButtons => new[]
+        {
+            AllSkillsBtn, AllTrainedBtn, LevelVBtn, LevelIVBtn, LevelIIIBtn,
+            LevelIIBtn, LevelIBtn, LevelZeroBtn
+        };
+
+        private void OnLevelFilterClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not ToggleButton clicked || _viewModel == null) return;
+
+            int tag = clicked.Tag is int t ? t : int.Parse(clicked.Tag?.ToString() ?? "-1");
+
+            // Radio-button behavior: uncheck all others, keep clicked checked
+            foreach (var btn in LevelButtons)
+            {
+                if (btn != null && btn != clicked)
+                    btn.IsChecked = false;
+            }
+            clicked.IsChecked = true;
+
+            _viewModel.LevelFilter = tag;
         }
 
         #region Template Builder
