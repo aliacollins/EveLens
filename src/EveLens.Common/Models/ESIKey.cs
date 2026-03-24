@@ -300,6 +300,14 @@ namespace EveLens.Common.Models
                 HasError = false;
                 ImportIdentities(tokenInfo);
                 AppServices.Notifications.InvalidateAPIError();
+
+                // Notify health tracker that token refresh succeeded — resets Suspended state
+                foreach (var identity in CharacterIdentities)
+                {
+                    if (identity.CCPCharacter != null)
+                        AppServices.EventAggregator?.Publish(
+                            new Core.Events.ESIKeyTokenRefreshedEvent(identity.CCPCharacter.CharacterID));
+                }
             }
             m_queryPending = false;
             AppServices.TraceService?.Trace(ToString());

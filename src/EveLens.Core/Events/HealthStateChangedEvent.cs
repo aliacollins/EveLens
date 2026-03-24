@@ -12,6 +12,16 @@ namespace EveLens.Core.Events
     /// Only fires on actual state changes, never on repeated same-state fetch results.
     /// Uses primitives only (Core has no Infrastructure dependencies).
     /// </summary>
+    /// <summary>
+    /// Published when an ESI key successfully refreshes its access token.
+    /// The health tracker subscribes to reset Suspended state for that character.
+    /// </summary>
+    public sealed class ESIKeyTokenRefreshedEvent
+    {
+        public long CharacterId { get; }
+        public ESIKeyTokenRefreshedEvent(long characterId) => CharacterId = characterId;
+    }
+
     public sealed class HealthStateChangedEvent
     {
         // State constants matching EndpointHealth enum values.

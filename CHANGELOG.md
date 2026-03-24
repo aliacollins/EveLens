@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Health state stuck on "re-authentication required" after successful token refresh -- EndpointHealthTracker now subscribes to ESIKeyTokenRefreshedEvent and resets Suspended state automatically (Issue #34)
+
 ## [1.0.0] - 2026-03-23
 
 ### Added

@@ -114,6 +114,7 @@ namespace EveLens.Common.Events
         private ESIKeyInfoUpdatedEvent() { }
     }
 
+
     public sealed class ItemPricesUpdatedEvent
     {
         public static readonly ItemPricesUpdatedEvent Instance = new();

@@ -41,12 +41,17 @@ namespace EveLens.Infrastructure.Scheduling.Health
 
         private readonly IEventAggregator? _eventAggregator;
         private readonly IDispatcher? _dispatcher;
+        private readonly IDisposable? _tokenRefreshSub;
         private readonly ConcurrentDictionary<(long CharId, long Endpoint), EndpointState> _states = new();
 
         public EndpointHealthTracker(IEventAggregator? eventAggregator = null, IDispatcher? dispatcher = null)
         {
             _eventAggregator = eventAggregator;
             _dispatcher = dispatcher;
+
+            // When a token refresh succeeds, reset Suspended state for that character
+            _tokenRefreshSub = _eventAggregator?.Subscribe<ESIKeyTokenRefreshedEvent>(
+                e => OnReAuthenticated(e.CharacterId));
         }
 
         /// <summary>

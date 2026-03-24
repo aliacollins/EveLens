@@ -366,6 +366,32 @@ namespace EveLens.Tests.Scheduling
             _tracker.GetHealth(CharId2, Skills).Should().Be(EndpointHealth.Suspended);
         }
 
+        [Fact]
+        public void TokenRefreshedEvent_ResetsSuspendedState()
+        {
+            // Simulate auth failure → Suspended
+            _tracker.Record(CharId, Skills, AuthError(_baseTime));
+            _tracker.GetHealth(CharId, Skills).Should().Be(EndpointHealth.Suspended);
+
+            // Publish the event that ESIKey fires on successful token refresh
+            _aggregator.Publish(new Core.Events.ESIKeyTokenRefreshedEvent(CharId));
+
+            // Health should be reset to Healthy
+            _tracker.GetHealth(CharId, Skills).Should().Be(EndpointHealth.Healthy);
+        }
+
+        [Fact]
+        public void TokenRefreshedEvent_DoesNotAffectOtherCharacters()
+        {
+            _tracker.Record(CharId, Skills, AuthError(_baseTime));
+            _tracker.Record(CharId2, Skills, AuthError(_baseTime));
+
+            _aggregator.Publish(new Core.Events.ESIKeyTokenRefreshedEvent(CharId));
+
+            _tracker.GetHealth(CharId, Skills).Should().Be(EndpointHealth.Healthy);
+            _tracker.GetHealth(CharId2, Skills).Should().Be(EndpointHealth.Suspended);
+        }
+
         #endregion
 
         #region Dynamic Time Window
