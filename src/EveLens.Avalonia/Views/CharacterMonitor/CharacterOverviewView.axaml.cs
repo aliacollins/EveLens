@@ -169,10 +169,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     {
                         BuildGroupSection("Ungrouped", ungrouped, ref cardIndex);
                     }
+
+                    // Ghost card after the last group
+                    var ghostWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+                    ghostWrap.Children.Add(BuildGhostCard());
+                    OverviewPanel.Children.Add(ghostWrap);
                 }
                 else
                 {
-                    var wrap = BuildCardWrapPanel(characters, ref cardIndex);
+                    var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true);
                     OverviewPanel.Children.Add(wrap);
                 }
 
@@ -270,7 +275,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             OverviewPanel.Children.Add(wrap);
         }
 
-        private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex)
+        private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
+            bool includeGhostCard = false)
         {
             var wrap = new WrapPanel { Orientation = Orientation.Horizontal };
 
@@ -281,7 +287,87 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 cardIndex++;
             }
 
+            if (includeGhostCard)
+                wrap.Children.Add(BuildGhostCard());
+
             return wrap;
+        }
+
+        private Button BuildGhostCard()
+        {
+            var plusText = new TextBlock
+            {
+                Text = "+",
+                FontSize = 24,
+                FontWeight = FontWeight.Light,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+
+            var labelText = new TextBlock
+            {
+                Text = "Add New Character",
+                FontSize = 11,
+                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center
+            };
+
+            var subtitleText = new TextBlock
+            {
+                Text = "Sign in with EVE to get started",
+                FontSize = 10,
+                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                Opacity = 0.6
+            };
+
+            var content = new StackPanel
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Spacing = 4,
+                Children = { plusText, labelText, subtitleText }
+            };
+
+            // Match real card dimensions — MinHeight same as character cards
+            var cardBorder = new Border
+            {
+                Padding = new Thickness(12, 14),
+                Width = 300,
+                MinHeight = 90,
+                Child = content,
+                BorderThickness = new Thickness(1),
+                BorderBrush = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                CornerRadius = new CornerRadius(6),
+                Background = Brushes.Transparent
+            };
+
+            var btn = new Button
+            {
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0),
+                Margin = new Thickness(4),
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Content = cardBorder,
+                Tag = "GhostCard"
+            };
+            btn.Click += OnAddCharacterFromWelcome;
+
+            return btn;
+        }
+
+        private static int FindGhostCardIndex(WrapPanel wrap)
+        {
+            for (int i = 0; i < wrap.Children.Count; i++)
+            {
+                if (wrap.Children[i] is Button btn && btn.Tag as string == "GhostCard")
+                    return i;
+            }
+            return -1;
         }
 
         private void BuildWelcomeState()
@@ -770,13 +856,22 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     }
                 }
 
-                // Add new characters
+                // Add new characters (insert before ghost card if present)
                 var newChars = currentChars.Where(c => !existingIds.Contains(c.CharacterID)).ToList();
+                int ghostIndex = FindGhostCardIndex(wrap);
                 int staggerBase = wrap.Children.Count;
                 foreach (var character in newChars)
                 {
                     var card = BuildCharacterCard(character, staggerBase);
-                    wrap.Children.Add(card);
+                    if (ghostIndex >= 0)
+                    {
+                        wrap.Children.Insert(ghostIndex, card);
+                        ghostIndex++;
+                    }
+                    else
+                    {
+                        wrap.Children.Add(card);
+                    }
                     staggerBase++;
 
                     _prevBalances[character.CharacterID] = character.Balance;

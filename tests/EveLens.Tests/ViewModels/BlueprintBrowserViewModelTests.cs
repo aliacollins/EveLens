@@ -24,12 +24,14 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
-        public void DefaultState_HasEmptyGroups()
+        public void DefaultState_HasEmptyFlattenedNodes()
         {
             var vm = new BlueprintBrowserViewModel(CreateAggregator());
-            vm.Groups.Should().NotBeNull();
+            vm.FlattenedNodes.Should().NotBeNull();
+            vm.FlattenedNodes.Should().BeEmpty();
             vm.SelectedBlueprint.Should().BeNull();
             vm.TextFilter.Should().BeEmpty();
+            vm.ShowCanBuildOnly.Should().BeFalse();
             vm.Dispose();
         }
 
@@ -71,7 +73,7 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
-        public void CollapseAll_WithNullGroups_DoesNotThrow()
+        public void CollapseAll_WithNoNodes_DoesNotThrow()
         {
             var vm = new BlueprintBrowserViewModel(CreateAggregator());
             var act = () => vm.CollapseAll();
@@ -80,11 +82,31 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
-        public void ExpandAll_WithNullGroups_DoesNotThrow()
+        public void ExpandAll_WithNoNodes_DoesNotThrow()
         {
             var vm = new BlueprintBrowserViewModel(CreateAggregator());
             var act = () => vm.ExpandAll();
             act.Should().NotThrow();
+            vm.Dispose();
+        }
+
+        [Fact]
+        public void ToggleNode_WithNull_DoesNotThrow()
+        {
+            var vm = new BlueprintBrowserViewModel(CreateAggregator());
+            var act = () => vm.ToggleNode(null!);
+            act.Should().NotThrow();
+            vm.Dispose();
+        }
+
+        [Fact]
+        public void ShowCanBuildOnly_CanBeToggled()
+        {
+            var vm = new BlueprintBrowserViewModel(CreateAggregator());
+            vm.ShowCanBuildOnly = true;
+            vm.ShowCanBuildOnly.Should().BeTrue();
+            vm.ShowCanBuildOnly = false;
+            vm.ShowCanBuildOnly.Should().BeFalse();
             vm.Dispose();
         }
 

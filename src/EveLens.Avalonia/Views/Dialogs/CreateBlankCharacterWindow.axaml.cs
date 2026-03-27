@@ -46,6 +46,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             BuildSkillSummary(Race.Amarr);
         }
 
+        protected override void OnOpened(EventArgs e)
+        {
+            base.OnOpened(e);
+            CharacterNameTextBox.Focus();
+        }
+
         private void OnRaceChanged(object? sender, SelectionChangedEventArgs e)
         {
             if (RaceCombo.SelectedIndex < 0) return;

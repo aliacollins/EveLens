@@ -2,13 +2,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanBlueprintBrowserView">
     <Grid ColumnDefinitions="300,*">
-        <!-- Left panel: Blueprint groups as lightweight tree -->
+        <!-- Left panel: Blueprint hierarchy as flat list with depth-based indentation -->
         <DockPanel Grid.Column="0">
             <Border DockPanel.Dock="Top" Padding="8,5"
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                        <ToggleButton x:Name="CanBuildToggle" Content="Can Build Only"
+                                      FontSize="10" Padding="8,3" CornerRadius="10"
+                                      Click="OnCanBuildToggled" />
                         <Button Content="Collapse" FontSize="10" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
                         <Button Content="Expand" FontSize="10" Padding="8,3" CornerRadius="10"
@@ -32,7 +35,7 @@
             </Border>
 
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-                <ItemsControl x:Name="GroupsList" HorizontalAlignment="Stretch">
+                <ItemsControl x:Name="TreeList" HorizontalAlignment="Stretch">
                     <ItemsControl.Styles>
                         <Style Selector="ItemsControl > ContentPresenter">
                             <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -45,9 +48,11 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel>
-                                <Border Classes="group-header" HorizontalAlignment="Stretch"
-                                        PointerPressed="OnGroupHeaderClicked">
+                            <Panel>
+                                <!-- Category node: chevron + name + count, indented by depth -->
+                                <Border IsVisible="{Binding IsCategory}" Classes="group-header"
+                                        Margin="{Binding IndentMargin}"
+                                        PointerPressed="OnNodeToggle">
                                     <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
                                         <TextBlock Grid.Column="0" Text="{Binding Chevron}"
                                                    FontSize="11" Width="16"
@@ -62,36 +67,23 @@
                                                    Margin="8,0" VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
-
-                                <!-- StackPanel (not VirtualizingStackPanel) to avoid nested virtualization
-                                     breaking ScrollViewer measurement — Issue #39 -->
-                                <ItemsControl ItemsSource="{Binding VisibleBlueprints}" HorizontalAlignment="Stretch"
-                                              IsVisible="{Binding IsExpanded}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Padding="24,3,8,3" Classes="item-row"
-                                                    Background="{StaticResource EveBackgroundDarkBrush}"
-                                                    BorderBrush="{StaticResource EveBorderBrush}"
-                                                    BorderThickness="0,0,0,1" HorizontalAlignment="Stretch"
-                                                    PointerPressed="OnBlueprintClicked">
-                                                <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Stretch">
-                                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="11"
-                                                               Foreground="{StaticResource EveTextPrimaryBrush}"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Grid.Column="1" Text="{Binding ProducesText}"
-                                                               FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
-                                                               VerticalAlignment="Center" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
+                                <!-- Leaf item: blueprint name + produces text -->
+                                <Border IsVisible="{Binding IsLeaf}" Classes="item-row"
+                                        Margin="{Binding IndentMargin}" Padding="4,3,8,3"
+                                        Background="{StaticResource EveBackgroundDarkBrush}"
+                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                        BorderThickness="0,0,0,1" HorizontalAlignment="Stretch"
+                                        PointerPressed="OnBlueprintClicked">
+                                    <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Stretch">
+                                        <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="11"
+                                                   Foreground="{Binding NameBrush}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="1" Text="{Binding StatusText}"
+                                                   FontSize="10" Foreground="{Binding StatusBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </Panel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

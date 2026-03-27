@@ -4,11 +4,12 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using EveLens.Common.CustomEventArgs;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
@@ -21,23 +22,29 @@ namespace EveLens.Avalonia.Views.Dialogs
         private SSOAuthenticationService? _authService;
         private string _state = string.Empty;
         private ESIKeyCreationEventArgs? _creationArgs;
+        private readonly List<string> _importedNames = new();
 
         /// <summary>
-        /// True if a character was successfully imported before the dialog closed.
+        /// True if at least one character was imported during this dialog session.
         /// </summary>
-        public bool CharacterImported { get; private set; }
+        public bool CharacterImported => _importedNames.Count > 0;
+
+        /// <summary>
+        /// Names of all characters imported during this dialog session.
+        /// </summary>
+        public IReadOnlyList<string> ImportedCharacterNames => _importedNames;
 
         public AddCharacterWindow()
         {
             InitializeComponent();
 
             OpenLoginBtn.Click += OnOpenLoginClick;
-            AddCharacterBtn.Click += OnAddCharacterClick;
+            AddAnotherBtn.Click += OnAddAnotherClick;
+            DoneBtn.Click += OnDoneClick;
             TryAgainBtn.Click += OnTryAgainClick;
 
             CancelReadyBtn.Click += OnCancelClick;
             CancelWaitingBtn.Click += OnCancelClick;
-            CancelSuccessBtn.Click += OnCancelClick;
             CancelErrorBtn.Click += OnCancelClick;
         }
 
@@ -51,8 +58,16 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private async void OnOpenLoginClick(object? sender, RoutedEventArgs e)
         {
+            await StartSSOLogin();
+        }
+
+        private async System.Threading.Tasks.Task StartSSOLogin()
+        {
             try
             {
+                CleanupServer();
+                _creationArgs = null;
+
                 _authService = SSOAuthenticationService.GetInstance();
                 _state = DateTime.UtcNow.ToFileTime().ToString();
                 _server = new SSOWebServerHttpListener();
@@ -141,7 +156,22 @@ namespace EveLens.Avalonia.Views.Dialogs
                     return;
                 }
 
-                CharacterNameText.Text = identity.CharacterName;
+                // Auto-import: create the ESI key immediately
+                _creationArgs.CreateOrUpdate();
+                string name = identity.CharacterName ?? "Unknown";
+
+                // Show previous imports if any
+                if (_importedNames.Count > 0)
+                {
+                    PreviousAddsDivider.IsVisible = true;
+                    PreviousAddsLabel.IsVisible = true;
+                    RebuildPreviousAddsList();
+                }
+
+                // Add to session list
+                _importedNames.Add(name);
+
+                CharacterNameText.Text = name;
                 ShowPanel("success");
             }
             catch (Exception ex)
@@ -151,22 +181,30 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
-        private void OnAddCharacterClick(object? sender, RoutedEventArgs e)
+        private void RebuildPreviousAddsList()
         {
-            try
+            PreviousAddsList.Children.Clear();
+            foreach (var name in _importedNames)
             {
-                if (_creationArgs == null) return;
+                PreviousAddsList.Children.Add(new TextBlock
+                {
+                    Text = $"\u2713 {name}",
+                    FontSize = 11,
+                    Foreground = (IBrush?)this.FindResource("EveTextSecondaryBrush") ?? Brushes.Gray
+                });
+            }
+        }
 
-                _creationArgs.CreateOrUpdate();
-                CharacterImported = true;
-                CleanupServer();
-                Close();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error adding character: {ex}");
-                ShowError($"Failed to add character: {ex.Message}");
-            }
+        private async void OnAddAnotherClick(object? sender, RoutedEventArgs e)
+        {
+            // Go directly to browser login, skip the landing page
+            await StartSSOLogin();
+        }
+
+        private void OnDoneClick(object? sender, RoutedEventArgs e)
+        {
+            CleanupServer();
+            Close();
         }
 
         private void OnTryAgainClick(object? sender, RoutedEventArgs e)
