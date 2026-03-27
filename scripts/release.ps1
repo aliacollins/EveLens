@@ -242,7 +242,9 @@ rm -rf "`$APP_DIR"
 echo "=== macOS .app bundle created ==="
 "@
 
-    $wslScript | Set-Content "scripts/make-macapp.sh" -Encoding UTF8 -NoNewline
+    # Write with Unix line endings and no BOM for WSL/bash compatibility
+    $wslScript = $wslScript -replace "`r`n", "`n"
+    [System.IO.File]::WriteAllText("$ProjectRoot/scripts/make-macapp.sh", $wslScript, (New-Object System.Text.UTF8Encoding $false))
     $ErrorActionPreference = 'Continue'
     wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'

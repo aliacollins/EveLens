@@ -67,15 +67,38 @@ Requires [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) in
 1. Download `EveLens-*-osx-arm64.app.zip` from the release page
 2. Extract the zip -- you'll get `EveLens.app`
 3. Drag `EveLens.app` to your Applications folder
-4. **First launch:** Right-click the app and select "Open" (required for unsigned apps)
-5. After the first launch, it opens normally from Launchpad
+4. **First launch -- important:** macOS blocks apps from unidentified developers by default. You need to do ONE of these:
+
+**Option A: Right-click to open (easiest)**
+- Right-click (or Ctrl+click) `EveLens.app` → select **Open** → click **Open** in the dialog
+- You only need to do this once -- after that it opens normally
+
+**Option B: Remove quarantine via Terminal (if Option A doesn't work)**
+```bash
+# Navigate to where you extracted EveLens.app, then run:
+xattr -cr EveLens.app
+```
+This removes the macOS quarantine flag. Double-click to open normally after this.
+
+**Option C: System Settings**
+- Open **System Settings** → **Privacy & Security**
+- Scroll down -- you'll see "EveLens was blocked from use because it is not from an identified developer"
+- Click **Open Anyway** → enter your password → click **Open**
+
+> **Why is this needed?** EveLens is code-signed on Windows but not yet on macOS (Apple requires a separate $99/year developer certificate). The app is safe -- it's open source and you can verify the code yourself.
 
 ### macOS (Portable)
 
 ```bash
 unzip EveLens-*-osx-arm64.zip -d evelens
-chmod +x evelens/EveLens
-./evelens/EveLens
+cd evelens
+
+# Remove quarantine and set executable permission
+xattr -cr .
+chmod +x EveLens
+
+# Run
+./EveLens
 ```
 
 > **Coming from EVEMon?** We recommend a fresh start. EveLens is a complete rewrite -- your EVE characters are tied to your ESI tokens, not your old settings. Add your characters through the ESI login and you're good to go.
