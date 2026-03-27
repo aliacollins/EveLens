@@ -3,6 +3,7 @@
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterSkillQueueView">
     <DockPanel>
+        <!-- Status bar (bottom) -->
         <Border DockPanel.Dock="Bottom" Padding="10,5"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">

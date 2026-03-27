@@ -169,6 +169,14 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
+## Alpha Changelog (Cumulative)
+
+See [CHANGELOG.md](CHANGELOG.md) for the full changelog. The alpha channel receives all in-progress changes.
+
+## Features Being Tested
+
+Features currently in alpha/beta testing before stable release.
+
 ## License
 
 GPL v2 -- See [LICENSE](src/EveLens.Common/Resources/License/gpl.txt)

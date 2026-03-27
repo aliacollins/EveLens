@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Queue health monitor** — a clock icon in the status bar shows how many character queues need attention. Click it to see all characters sorted by urgency with countdown timers and end dates. Click any character to jump straight to their Queue tab ([#43])
+- **Queue end date** in the Queue tab — the status bar now shows when the queue finishes and a countdown timer so you know exactly when to refresh your training plan
+- **Add Character card** — a ghost card in the character overview lets you add new characters without navigating menus. The portrait strip also has a `+` button for quick access ([#41])
+- **Add Another flow** — after adding a character via SSO, you can immediately add another without reopening the dialog. Characters are auto-imported on successful login — no extra confirmation step needed
+- **Group colors in portrait strip** — characters are ordered by group with colored accent bars under their portraits, and wider spacing between groups so you can visually identify teams at a glance ([#42])
+
+### Changed
+
+- **Manage Character Groups** completely redesigned — tag-based UI shows each character with colored group tags. Click `+ Assign` to pick a group from a radio-button flyout. Groups are managed inline with rename (✏) and delete (✕) icons ([#42])
+- **Blueprint browser** uses the same hierarchical tree as Ships and Items — no more duplicate "Amarr" entries. The full market group path is preserved (e.g., Ship Blueprints › Frigates › Amarr) with a "Can Build Only" filter ([#39])
+
+### Fixed
+
+- **TextBox auto-focus** — dialog text inputs now auto-focus on open across all dialogs: Create Blank Character, Manage Groups, Manage Plans, Implant Sets, and Skill Constellation search ([#42])
+
+### Removed
+
+- **Google Analytics tracker** — removed dead code that hashed MAC addresses for fingerprinting. Never had callers, never had consent ([#40])
+- **In-game browser server** — removed legacy IGB HTTP server (5 files) that could bind port 80. CCP retired the IGB years ago ([#40])
+
 ## [1.1.0-beta.1] - 2026-03-24
 
 ### Added
