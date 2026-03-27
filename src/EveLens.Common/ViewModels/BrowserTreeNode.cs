@@ -100,6 +100,31 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
+        /// Builds a tree from a BlueprintMarketGroup, which stores children in
+        /// <see cref="BlueprintMarketGroup.Blueprints"/> instead of MarketGroup.Items.
+        /// </summary>
+        public static BrowserTreeNode FromBlueprintMarketGroup(
+            BlueprintMarketGroup group, int depth, Character? character)
+        {
+            var children = new List<BrowserTreeNode>();
+
+            foreach (var subGroup in group.SubGroups.OrderBy(g => g.Name))
+            {
+                var child = FromBlueprintMarketGroup(subGroup, depth + 1, character);
+                if (child.TotalLeafCount > 0)
+                    children.Add(child);
+            }
+
+            foreach (var bp in group.Blueprints.OrderBy(b => b.Name))
+            {
+                bool canBuild = CanCharacterUse(bp, character);
+                children.Add(new BrowserTreeNode(bp.Name, depth + 1, bp, canBuild));
+            }
+
+            return new BrowserTreeNode(group.Name, depth, group, children);
+        }
+
+        /// <summary>
         /// Applies a text filter and optional can-use filter.
         /// Returns true if this node or any descendant is visible.
         /// </summary>
@@ -195,5 +220,6 @@ namespace EveLens.Common.ViewModels
 
             return true;
         }
+
     }
 }

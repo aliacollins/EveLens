@@ -16,15 +16,17 @@ namespace EveLens.Common.ViewModels
 {
     /// <summary>
     /// ViewModel for the blueprint browser view showing blueprints organized by market groups.
+    /// Uses <see cref="BrowserTreeNode"/> for hierarchical display (same pattern as Ship/Item browsers).
     /// </summary>
     public sealed class BlueprintBrowserViewModel : CharacterViewModelBase
     {
         private readonly PlanEditorViewModel? _planEditor;
         private string _textFilter = string.Empty;
-        private List<BlueprintGroupEntry> _groups = new();
-        private List<BlueprintGroupEntry>? _allGroups;
+        private bool _showCanBuildOnly;
         private Blueprint? _selectedBlueprint;
         private BlueprintDetailInfo? _selectedBlueprintDetail;
+        private List<BrowserTreeNode> _topLevelNodes = new();
+        private List<BrowserTreeNode> _flattenedNodes = new();
 
         public BlueprintBrowserViewModel() : base()
         {
@@ -56,9 +58,9 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
-        /// Gets the list of blueprint groups currently visible after filtering.
+        /// Gets the flattened list of visible tree nodes (for binding to a flat ItemsControl).
         /// </summary>
-        public List<BlueprintGroupEntry> Groups => _groups;
+        public List<BrowserTreeNode> FlattenedNodes => _flattenedNodes;
 
         /// <summary>
         /// Gets or sets the currently selected blueprint.
@@ -96,7 +98,23 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
-        /// Called when the character changes. Rebuilds the group data.
+        /// Gets or sets whether to show only blueprints the character can build.
+        /// </summary>
+        public bool ShowCanBuildOnly
+        {
+            get => _showCanBuildOnly;
+            set
+            {
+                if (_showCanBuildOnly != value)
+                {
+                    _showCanBuildOnly = value;
+                    ApplyFilter();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called when the character changes. Rebuilds the tree.
         /// </summary>
         protected override void OnCharacterChanged()
         {
@@ -105,14 +123,13 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
-        /// Rebuilds the blueprint groups from static data and applies the current filter.
+        /// Rebuilds the blueprint tree from static data and applies the current filter.
         /// </summary>
         public void Refresh()
         {
-            BuildGroupData();
+            BuildTree();
             ApplyFilter();
 
-            // Recompute detail if a blueprint is selected (character may have changed)
             if (_selectedBlueprint != null)
                 SelectBlueprint(_selectedBlueprint);
         }
@@ -185,15 +202,23 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
+        /// Toggles a tree node's expanded state and rebuilds the flattened list.
+        /// </summary>
+        public void ToggleNode(BrowserTreeNode node)
+        {
+            if (node == null || node.IsLeaf) return;
+            node.IsExpanded = !node.IsExpanded;
+            UpdateFlattenedNodes();
+        }
+
+        /// <summary>
         /// Collapses all blueprint groups.
         /// </summary>
         public void CollapseAll()
         {
-            if (_allGroups != null)
-            {
-                foreach (var g in _allGroups)
-                    g.IsExpanded = false;
-            }
+            foreach (var node in _topLevelNodes)
+                node.SetExpandedAll(false);
+            UpdateFlattenedNodes();
         }
 
         /// <summary>
@@ -201,83 +226,51 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public void ExpandAll()
         {
-            if (_allGroups != null)
-            {
-                foreach (var g in _allGroups)
-                    g.IsExpanded = true;
-            }
+            foreach (var node in _topLevelNodes)
+                node.SetExpandedAll(true);
+            UpdateFlattenedNodes();
         }
 
-        private void BuildGroupData()
+        private void BuildTree()
         {
             var marketGroups = StaticBlueprints.BlueprintMarketGroups;
             if (marketGroups == null)
             {
-                _allGroups = null;
+                _topLevelNodes = new List<BrowserTreeNode>();
                 return;
             }
 
-            var groups = new List<BlueprintGroupEntry>();
-            CollectGroups(marketGroups, groups);
+            var character = Character as Character;
 
-            _allGroups = groups
-                .Where(g => g.AllBlueprints.Count > 0)
-                .OrderBy(g => g.Name)
-                .ToList();
-        }
-
-        private static void CollectGroups(BlueprintMarketGroupCollection collection, List<BlueprintGroupEntry> result)
-        {
-            foreach (var group in collection)
+            var nodes = new List<BrowserTreeNode>();
+            foreach (var group in marketGroups.OrderBy(g => g.Name))
             {
-                // If this group has blueprints directly, add it as an entry
-                if (group.Blueprints.Any())
-                {
-                    var entries = new List<BlueprintEntry>();
-                    foreach (var bp in group.Blueprints)
-                    {
-                        entries.Add(new BlueprintEntry(bp));
-                    }
-
-                    result.Add(new BlueprintGroupEntry(
-                        group.Name,
-                        entries.OrderBy(e => e.Name).ToList()));
-                }
-
-                // Recurse into subgroups
-                if (group.SubGroups.Any())
-                    CollectGroups(group.SubGroups, result);
+                var node = BrowserTreeNode.FromBlueprintMarketGroup(group, 0, character);
+                if (node.TotalLeafCount > 0)
+                    nodes.Add(node);
             }
+
+            _topLevelNodes = nodes;
         }
 
         private void ApplyFilter()
         {
-            if (_allGroups == null)
+            if (_topLevelNodes.Count == 0)
             {
-                _groups = new List<BlueprintGroupEntry>();
+                _flattenedNodes = new List<BrowserTreeNode>();
                 return;
             }
 
-            var visible = new List<BlueprintGroupEntry>();
+            foreach (var node in _topLevelNodes)
+                node.ApplyFilter(_textFilter, _showCanBuildOnly);
 
-            foreach (var group in _allGroups)
-            {
-                if (string.IsNullOrEmpty(_textFilter))
-                {
-                    group.VisibleBlueprints = group.AllBlueprints;
-                }
-                else
-                {
-                    group.VisibleBlueprints = group.AllBlueprints
-                        .Where(b => b.Name.Contains(_textFilter, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-                }
+            UpdateFlattenedNodes();
+        }
 
-                if (group.VisibleBlueprints.Count > 0)
-                    visible.Add(group);
-            }
-
-            _groups = visible;
+        private void UpdateFlattenedNodes()
+        {
+            _flattenedNodes = BrowserTreeNode.FlattenVisible(
+                _topLevelNodes.Where(n => n.VisibleChildren.Count > 0 || n.IsLeaf));
         }
 
         private static string FormatProductionTime(double seconds)
@@ -300,38 +293,6 @@ namespace EveLens.Common.ViewModels
         }
 
         #region Nested Types
-
-        public sealed class BlueprintGroupEntry
-        {
-            public string Name { get; }
-            public List<BlueprintEntry> AllBlueprints { get; }
-            public List<BlueprintEntry> VisibleBlueprints { get; set; }
-            public bool IsExpanded { get; set; }
-
-            public string CountText => $"{VisibleBlueprints.Count} blueprints";
-
-            public BlueprintGroupEntry(string name, List<BlueprintEntry> allBlueprints)
-            {
-                Name = name;
-                AllBlueprints = allBlueprints;
-                VisibleBlueprints = allBlueprints;
-                IsExpanded = false;
-            }
-        }
-
-        public sealed class BlueprintEntry
-        {
-            public Blueprint Blueprint { get; }
-            public string Name { get; }
-            public string ProducesItemName { get; }
-
-            public BlueprintEntry(Blueprint blueprint)
-            {
-                Blueprint = blueprint;
-                Name = blueprint.Name;
-                ProducesItemName = blueprint.ProducesItem?.Name ?? string.Empty;
-            }
-        }
 
         public sealed class BlueprintDetailInfo
         {

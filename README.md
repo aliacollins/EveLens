@@ -140,9 +140,9 @@ Per-endpoint health state machine that tracks ESI reliability per character. Tra
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| **Stable** | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
 | Beta | Pre-release testing | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
-| Alpha | Bleeding edge, experimental features | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
+| **Alpha** | Bleeding edge, experimental features(you are here) | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
 
 ---
 
@@ -168,6 +168,18 @@ EVEMon was created by **Jimi Charalampidis** and **57+ contributors** (2006-2015
 I'm not accepting donations -- I just want to know if EveLens makes your EVE life a little easier. If it does, that's enough for me. Building something people genuinely find useful and actually use is what drives me. Share it with your corp, mention it in a fleet chat, or just drop me a message and tell me what you think. If it works for you, that would mean the world -- not ISK. I take donations in kind words. o7
 
 ---
+
+## What's New in 1.0.1
+
+See [CHANGELOG.md](CHANGELOG.md) for the full changelog.
+
+## Alpha Changelog (Cumulative)
+
+See [CHANGELOG.md](CHANGELOG.md) for the full changelog. The alpha channel receives all in-progress changes.
+
+## Features Being Tested
+
+Features currently in alpha/beta testing before stable release.
 
 ## License
 

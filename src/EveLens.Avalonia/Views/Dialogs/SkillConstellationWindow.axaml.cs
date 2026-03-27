@@ -230,6 +230,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ToggleLabelsBtn.Content = Canvas.ShowAllLabels ? "Hide Labels" : "Show All Labels";
             };
 
+            Opened += (_, _) => SearchBox.Focus();
+
             // Search
             SearchBox.TextChanged += (_, _) => OnSearchTextChanged();
             ClearSearchBtn.Click += (_, _) =>

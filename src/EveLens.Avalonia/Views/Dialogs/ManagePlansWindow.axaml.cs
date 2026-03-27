@@ -284,7 +284,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 }
             };
 
-            nameBox.AttachedToVisualTree += (_, _) => nameBox.SelectAll();
+            nameBox.AttachedToVisualTree += (_, _) => { nameBox.Focus(); nameBox.SelectAll(); };
             okBtn.Click += (_, _) =>
             {
                 result = nameBox.Text?.Trim();
