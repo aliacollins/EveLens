@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-03-27</date>
+      <version>1.0.1.1</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.1-alpha.1
+
+Queue monitor, add character UX, group redesign, blueprint tree, dead code removal (#39, #40, #41, #42, #43)]]></message>
+    </release>
+    <release>
       <date>2026-03-19</date>
       <version>1.0.0.47</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -94,16 +104,6 @@ Smarter error notifications: ESI hiccups suppressed, persistent errors show the 
       <message><![CDATA[EveLens 1.0.0-alpha.40
 
 Fix auto-update: hard kill process so Inno installer can proceed]]></message>
-    </release>
-    <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.39</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.39
-
-Remove retry (caused ESI error cascade at scale), suppress PI idle spam from activity log]]></message>
     </release>
   </releases>
   <datafiles>
