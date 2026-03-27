@@ -169,6 +169,10 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
+## What's New in 1.0.1
+
+See [CHANGELOG.md](CHANGELOG.md) for the full changelog.
+
 ## Alpha Changelog (Cumulative)
 
 See [CHANGELOG.md](CHANGELOG.md) for the full changelog. The alpha channel receives all in-progress changes.
