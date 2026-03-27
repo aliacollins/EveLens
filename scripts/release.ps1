@@ -188,17 +188,29 @@ try {
     Compress-Archive -Path "$($OtherPlatforms[1].Dir)/*" -DestinationPath $macZip
     Write-Host "  Zipped osx-arm64." -ForegroundColor Green
 
-    $appBundleDir = "releases/EveLens.app"
+    # Build .app bundle via WSL to preserve Unix permissions and executable bit
     $appBundleZip = "releases/EveLens-${Version}-osx-arm64.app.zip"
-    if (Test-Path $appBundleDir) { Remove-Item $appBundleDir -Recurse -Force }
     if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
 
-    New-Item -ItemType Directory -Path "$appBundleDir/Contents/MacOS" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$appBundleDir/Contents/Resources" -Force | Out-Null
+    $wslPublishDir = "/mnt/d/evemon-main/publish/osx-arm64"
+    $wslReleasesDir = "/mnt/d/evemon-main/releases"
+    $wslScript = @"
+#!/bin/bash
+set -e
 
-    Copy-Item -Path "$($OtherPlatforms[1].Dir)/*" -Destination "$appBundleDir/Contents/MacOS/" -Recurse
+APP_DIR="/tmp/EveLens.app"
+rm -rf "`$APP_DIR"
+mkdir -p "`$APP_DIR/Contents/MacOS"
+mkdir -p "`$APP_DIR/Contents/Resources"
 
-    @"
+# Copy published files preserving structure
+cp -r $wslPublishDir/* "`$APP_DIR/Contents/MacOS/"
+
+# Set executable permission on the main binary
+chmod +x "`$APP_DIR/Contents/MacOS/EveLens"
+
+# Create Info.plist
+cat > "`$APP_DIR/Contents/Info.plist" << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -221,11 +233,25 @@ try {
   <true/>
 </dict>
 </plist>
-"@ | Set-Content "$appBundleDir/Contents/Info.plist" -Encoding UTF8
+PLIST
 
-    Compress-Archive -Path $appBundleDir -DestinationPath $appBundleZip
-    Remove-Item $appBundleDir -Recurse -Force
-    Write-Host "  macOS .app bundle created." -ForegroundColor Green
+# Zip with Unix permissions preserved (use cd to get clean paths)
+cd /tmp
+zip -r -y "$wslReleasesDir/EveLens-${Version}-osx-arm64.app.zip" EveLens.app
+rm -rf "`$APP_DIR"
+echo "=== macOS .app bundle created ==="
+"@
+
+    $wslScript | Set-Content "scripts/make-macapp.sh" -Encoding UTF8 -NoNewline
+    $ErrorActionPreference = 'Continue'
+    wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh 2>&1 | ForEach-Object { $_ }
+    $ErrorActionPreference = 'Stop'
+
+    if (Test-Path $appBundleZip) {
+        Write-Host "  macOS .app bundle created." -ForegroundColor Green
+    } else {
+        Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."
+    }
 }
 finally {
     # Restore SharedAssemblyInfo.cs
