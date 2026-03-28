@@ -103,10 +103,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var nameRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 2 };
                 nameRow.Children.Add(new TextBlock
                 {
-                    Text = character.Name.Split(' ')[0],
+                    Text = character.Name,
                     FontSize = FontScaleService.Caption,
                     Foreground = FindBrush("EveAccentPrimaryBrush"),
-                    TextAlignment = TextAlignment.Center
+                    TextAlignment = TextAlignment.Center,
+                    MaxWidth = 80,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    [ToolTip.TipProperty] = character.Name
                 });
                 var removeBtn = new Button
                 {
@@ -254,10 +257,12 @@ namespace EveLens.Avalonia.Views.Dialogs
                 grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
                 var nameBlock = new TextBlock
                 {
-                    Text = _vm.SelectedCharacters[i].Name.Split(' ')[0],
+                    Text = _vm.SelectedCharacters[i].Name,
                     FontSize = FontScaleService.Small,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = FindBrush("EveAccentPrimaryBrush"),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    [ToolTip.TipProperty] = _vm.SelectedCharacters[i].Name,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     [Grid.ColumnProperty] = i + 1
                 };
