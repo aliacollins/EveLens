@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-29</date>
+      <version>1.1.0.7</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-alpha.7
+
+Show full character names in Skill Comparison (#45)]]></message>
+    </release>
+    <release>
+      <date>2026-03-29</date>
       <version>1.1.0.6</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Fix promote.ps1 version counter for cross-channel promotions]]></message>
       <message><![CDATA[EveLens 1.0.0-alpha.45
 
 Fix version regression, add branching policy]]></message>
-    </release>
-    <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.1
-
-ESI health state machine, SDE Catalyst expansion, debug isolation, diagnostic viewer]]></message>
     </release>
   </releases>
   <datafiles>
