@@ -176,13 +176,16 @@ namespace EveLens.Avalonia.Views
 
                         if (groupChars.Count == 0) continue;
 
-                        // Add wider gap between groups
+                        // Divider line between groups
                         if (needsGap)
                         {
                             CharStrip.Children.Add(new Border
                             {
-                                Width = 8,
-                                Background = Brushes.Transparent
+                                Width = 1,
+                                Height = 40,
+                                Background = FindStripBrush("EveTextDisabledBrush", Brushes.Gray),
+                                Margin = new Thickness(6, 0),
+                                VerticalAlignment = VerticalAlignment.Center
                             });
                         }
 

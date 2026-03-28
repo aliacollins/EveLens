@@ -36,6 +36,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             "#FFB07DC7", "#FF5DD5C7", "#FFE86DA4", "#FFA4C75D",
         };
 
+        private CharacterGroupSettings? _expandedGroup;
+
         public ManageGroupsWindow()
         {
             InitializeComponent();
@@ -399,7 +401,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         #endregion
 
-        #region Group Chips (bottom bar)
+        #region Group Chips (bottom bar) + Reorder Panel
 
         private void BuildGroupChips()
         {
@@ -411,10 +413,20 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var group = groups[i];
                 int colorIndex = i % TagColors.Length;
                 var tagColor = Color.Parse(TagColors[colorIndex]);
-                var bgColor = new Color(30, tagColor.R, tagColor.G, tagColor.B);
+                bool isExpanded = group == _expandedGroup;
+                var bgColor = new Color((byte)(isExpanded ? 60 : 30), tagColor.R, tagColor.G, tagColor.B);
                 int memberCount = group.CharacterGuids.Count;
 
                 var chipContent = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+
+                // Chevron
+                chipContent.Children.Add(new TextBlock
+                {
+                    Text = isExpanded ? "\u25BE" : "\u25B8",
+                    FontSize = FontScaleService.Small,
+                    Foreground = new SolidColorBrush(tagColor),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
 
                 // Group name + count
                 chipContent.Children.Add(new TextBlock
@@ -474,6 +486,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 {
                     try
                     {
+                        if (_expandedGroup == capturedGroup) _expandedGroup = null;
                         Settings.CharacterGroups.Remove(capturedGroup);
                         Settings.Save();
                         NotifyGroupsChanged();
@@ -483,14 +496,23 @@ namespace EveLens.Avalonia.Views.Dialogs
                 };
                 chipContent.Children.Add(deleteBtn);
 
-                var chip = new Border
+                var chip = new Button
                 {
-                    Background = new SolidColorBrush(bgColor),
-                    CornerRadius = new CornerRadius(12),
-                    Padding = new Thickness(10, 3, 6, 3),
-                    Margin = new Thickness(0, 0, 4, 4),
-                    Child = chipContent
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Padding = new Thickness(0),
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    Tag = group,
+                    Content = new Border
+                    {
+                        Background = new SolidColorBrush(bgColor),
+                        CornerRadius = new CornerRadius(12),
+                        Padding = new Thickness(10, 3, 6, 3),
+                        Margin = new Thickness(0, 0, 4, 4),
+                        Child = chipContent
+                    }
                 };
+                chip.Click += OnGroupChipClicked;
                 GroupChipsPanel.Children.Add(chip);
             }
 
@@ -504,6 +526,176 @@ namespace EveLens.Avalonia.Views.Dialogs
                     VerticalAlignment = VerticalAlignment.Center
                 });
             }
+
+            BuildReorderPanel();
+        }
+
+        private void OnGroupChipClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn || btn.Tag is not CharacterGroupSettings group) return;
+            _expandedGroup = _expandedGroup == group ? null : group;
+            BuildGroupChips();
+        }
+
+        private void BuildReorderPanel()
+        {
+            if (_expandedGroup == null)
+            {
+                ReorderPanel.IsVisible = false;
+                return;
+            }
+
+            ReorderPanel.IsVisible = true;
+            var group = _expandedGroup;
+            var groups = Settings.CharacterGroups;
+            int groupIndex = groups.IndexOf(group);
+
+            int colorIndex = groupIndex % TagColors.Length;
+            var tagColor = Color.Parse(TagColors[colorIndex]);
+            ReorderTitle.Text = $"Reorder: {group.Name}";
+            ReorderTitle.Foreground = new SolidColorBrush(tagColor);
+
+            MoveGroupLeftBtn.IsEnabled = groupIndex > 0;
+            MoveGroupRightBtn.IsEnabled = groupIndex < groups.Count - 1;
+
+            ReorderMembersList.Children.Clear();
+            var allChars = AppServices.Characters.Where(c => c.Monitored).ToList();
+
+            for (int i = 0; i < group.CharacterGuids.Count; i++)
+            {
+                var guid = group.CharacterGuids[i];
+                var character = allChars.FirstOrDefault(c => c.Guid == guid);
+                if (character == null) continue;
+
+                int capturedIndex = i;
+                var row = new Grid
+                {
+                    ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto"),
+                    Margin = new Thickness(0, 1)
+                };
+
+                // Position number
+                row.Children.Add(new TextBlock
+                {
+                    Text = $"{i + 1}.",
+                    FontSize = FontScaleService.Small,
+                    Foreground = GetBrush("EveTextDisabledBrush"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    MinWidth = 20,
+                    [Grid.ColumnProperty] = 0
+                });
+
+                // Character name
+                row.Children.Add(new TextBlock
+                {
+                    Text = character.Name,
+                    FontSize = FontScaleService.Body,
+                    Foreground = GetBrush("EveTextPrimaryBrush"),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    [Grid.ColumnProperty] = 1
+                });
+
+                // Move up
+                var upBtn = new Button
+                {
+                    Content = "\u25B2",
+                    FontSize = FontScaleService.Tiny,
+                    Padding = new Thickness(6, 2),
+                    CornerRadius = new CornerRadius(4),
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = GetBrush("EveBorderBrush"),
+                    IsEnabled = i > 0,
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    MinWidth = 0, MinHeight = 0,
+                    Margin = new Thickness(4, 0, 2, 0),
+                    [Grid.ColumnProperty] = 2
+                };
+                upBtn.Click += (_, _) => MoveMemberInGroup(group, capturedIndex, -1);
+                row.Children.Add(upBtn);
+
+                // Move down
+                var downBtn = new Button
+                {
+                    Content = "\u25BC",
+                    FontSize = FontScaleService.Tiny,
+                    Padding = new Thickness(6, 2),
+                    CornerRadius = new CornerRadius(4),
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = GetBrush("EveBorderBrush"),
+                    IsEnabled = i < group.CharacterGuids.Count - 1,
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    MinWidth = 0, MinHeight = 0,
+                    [Grid.ColumnProperty] = 3
+                };
+                downBtn.Click += (_, _) => MoveMemberInGroup(group, capturedIndex, +1);
+                row.Children.Add(downBtn);
+
+                ReorderMembersList.Children.Add(row);
+            }
+
+            if (group.CharacterGuids.Count == 0)
+            {
+                ReorderMembersList.Children.Add(new TextBlock
+                {
+                    Text = "No members — assign characters above.",
+                    FontSize = FontScaleService.Small,
+                    Foreground = GetBrush("EveTextDisabledBrush")
+                });
+            }
+        }
+
+        private void MoveMemberInGroup(CharacterGroupSettings group, int index, int direction)
+        {
+            try
+            {
+                int newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= group.CharacterGuids.Count) return;
+
+                (group.CharacterGuids[index], group.CharacterGuids[newIndex]) =
+                    (group.CharacterGuids[newIndex], group.CharacterGuids[index]);
+
+                Settings.Save();
+                NotifyGroupsChanged();
+                BuildReorderPanel();
+            }
+            catch (Exception ex) { Debug.WriteLine($"Error moving member: {ex}"); }
+        }
+
+        private void OnMoveGroupLeft(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_expandedGroup == null) return;
+                var groups = Settings.CharacterGroups;
+                int index = groups.IndexOf(_expandedGroup);
+                if (index <= 0) return;
+
+                (groups[index - 1], groups[index]) = (groups[index], groups[index - 1]);
+                Settings.Save();
+                NotifyGroupsChanged();
+                BuildGroupChips();
+            }
+            catch (Exception ex) { Debug.WriteLine($"Error moving group: {ex}"); }
+        }
+
+        private void OnMoveGroupRight(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_expandedGroup == null) return;
+                var groups = Settings.CharacterGroups;
+                int index = groups.IndexOf(_expandedGroup);
+                if (index < 0 || index >= groups.Count - 1) return;
+
+                (groups[index], groups[index + 1]) = (groups[index + 1], groups[index]);
+                Settings.Save();
+                NotifyGroupsChanged();
+                BuildGroupChips();
+            }
+            catch (Exception ex) { Debug.WriteLine($"Error moving group: {ex}"); }
         }
 
         #endregion

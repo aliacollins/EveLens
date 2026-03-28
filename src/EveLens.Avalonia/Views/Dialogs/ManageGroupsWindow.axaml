@@ -19,20 +19,55 @@
         <Border DockPanel.Dock="Bottom" Padding="8,8"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 CornerRadius="6" Margin="0,8,0,0">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="Groups" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveAccentPrimaryBrush}"
-                           Margin="0,0,0,6" />
-                <WrapPanel x:Name="GroupChipsPanel" DockPanel.Dock="Top"
-                           Orientation="Horizontal" Margin="0,0,0,6" />
+            <StackPanel Spacing="6">
+                <TextBlock Text="Groups" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <TextBlock TextWrapping="Wrap"
+                           FontSize="{DynamicResource EveFontCaption}"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           Margin="0,0,0,4"
+                           Text="Click a group to reorder its members. Use ◀ ▶ to change group order. ✏ to rename, ✕ to delete." />
+                <WrapPanel x:Name="GroupChipsPanel" Orientation="Horizontal" />
+                <!-- Expanded member reorder panel (shown when a group chip is clicked) -->
+                <Border x:Name="ReorderPanel" IsVisible="False"
+                        Background="{StaticResource EveBackgroundDarkBrush}"
+                        CornerRadius="4" Padding="8,6">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,4">
+                            <TextBlock x:Name="ReorderTitle" DockPanel.Dock="Left"
+                                       FontSize="{DynamicResource EveFontSmall}" FontWeight="SemiBold"
+                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                        Spacing="4" HorizontalAlignment="Right">
+                                <Button x:Name="MoveGroupLeftBtn" Content="◀" FontSize="{DynamicResource EveFontCaption}"
+                                        Padding="6,2" CornerRadius="4" Background="Transparent"
+                                        BorderThickness="1" BorderBrush="{StaticResource EveBorderBrush}"
+                                        Click="OnMoveGroupLeft" ToolTip.Tip="Move group left" />
+                                <Button x:Name="MoveGroupRightBtn" Content="▶" FontSize="{DynamicResource EveFontCaption}"
+                                        Padding="6,2" CornerRadius="4" Background="Transparent"
+                                        BorderThickness="1" BorderBrush="{StaticResource EveBorderBrush}"
+                                        Click="OnMoveGroupRight" ToolTip.Tip="Move group right" />
+                            </StackPanel>
+                        </DockPanel>
+                        <StackPanel x:Name="ReorderMembersList" Spacing="1" />
+                    </StackPanel>
+                </Border>
                 <Button x:Name="NewGroupBtn" Content="+ New Group" FontSize="{DynamicResource EveFontSmall}"
                         Padding="8,3" CornerRadius="12" Click="OnNewGroupClick" />
-            </DockPanel>
+            </StackPanel>
         </Border>
 
         <!-- Main: Character list with tags -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel x:Name="CharacterListPanel" Spacing="2" />
-        </ScrollViewer>
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap"
+                       FontSize="{DynamicResource EveFontSmall}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       Margin="0,0,0,6"
+                       Text="Click ⇄ to assign a character to a group. Click ✕ on a tag to remove. Each character can be in one group." />
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="CharacterListPanel" Spacing="2" />
+            </ScrollViewer>
+        </DockPanel>
     </DockPanel>
 </Window>
