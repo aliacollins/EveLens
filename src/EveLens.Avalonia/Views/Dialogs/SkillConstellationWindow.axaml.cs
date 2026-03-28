@@ -18,6 +18,7 @@ using EveLens.Common.Models;
 using SkiaSharp;
 
 using SkiaSharp;
+using EveLens.Common.Services;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
@@ -25,6 +26,7 @@ namespace EveLens.Avalonia.Views.Dialogs
     {
         private Character? _character;
         private readonly Dictionary<string, SkillNode> _nodeMap = new();
+        private IDisposable? _fontScaleSub;
 
         // Predefined colors for skill groups (cycle if more groups than colors)
         private static readonly SKColor[] GroupColors =
@@ -59,6 +61,21 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             BuildConstellationData();
             WireEvents();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildUI()
+        {
+            _nodeMap.Clear();
+            BuildConstellationData();
         }
 
         private void BuildConstellationData()

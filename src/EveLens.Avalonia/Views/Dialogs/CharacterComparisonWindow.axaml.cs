@@ -57,11 +57,23 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        private IDisposable? _fontScaleSub;
+
         public CharacterComparisonWindow()
         {
             InitializeComponent();
             BuildCharacterPicker();
             UpdateStatus();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshAll));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            _vm.Dispose();
+            base.OnClosed(e);
         }
 
         #region Character Picker
@@ -91,10 +103,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var nameRow = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, Spacing = 2 };
                 nameRow.Children.Add(new TextBlock
                 {
-                    Text = character.Name.Split(' ')[0],
+                    Text = character.Name,
                     FontSize = FontScaleService.Caption,
                     Foreground = FindBrush("EveAccentPrimaryBrush"),
-                    TextAlignment = TextAlignment.Center
+                    TextAlignment = TextAlignment.Center,
+                    MaxWidth = 80,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    [ToolTip.TipProperty] = character.Name
                 });
                 var removeBtn = new Button
                 {
@@ -239,13 +254,15 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             for (int i = 0; i < _vm.SelectedCharacters.Count; i++)
             {
-                grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 90 });
                 var nameBlock = new TextBlock
                 {
-                    Text = _vm.SelectedCharacters[i].Name.Split(' ')[0],
+                    Text = _vm.SelectedCharacters[i].Name,
                     FontSize = FontScaleService.Small,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = FindBrush("EveAccentPrimaryBrush"),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    [ToolTip.TipProperty] = _vm.SelectedCharacters[i].Name,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     [Grid.ColumnProperty] = i + 1
                 };
@@ -337,7 +354,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             // Level blocks per character
             for (int i = 0; i < skill.Levels.Length; i++)
             {
-                grid.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 90 });
 
                 if (!skill.IsKnown[i])
                 {
@@ -441,6 +458,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             BuildCharacterPicker();
             BuildComparisonGrid();
             UpdateStatus();
+
+            // Auto-size window width based on character count
+            int chars = _vm.SelectedCharacters.Count;
+            double neededWidth = 220 + (chars * 110); // skill col + ~110px per character
+            if (neededWidth > Width)
+                Width = Math.Min(neededWidth, 1600);
         }
 
         private void UpdateStatus()

@@ -25,6 +25,7 @@ using EveLens.Common.ViewModels;
 using EveLens.Common.ViewModels.Lists;
 
 using EveLens.Common.ViewModels.Lists;
+using EveLens.Common.Services;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
@@ -42,6 +43,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private FlattenedTreeSource<object>? _treeSource;
         private bool _isRebuilding;
         private long _characterId;
+        private IDisposable? _fontScaleSub;
         private readonly List<StandingDisplayEntry> _activeEntries = new();
 
         public CharacterStandingsView()
@@ -53,6 +55,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
+            _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData));
             LoadData();
         }
 
@@ -65,6 +69,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
+            _fontScaleSub?.Dispose();
+            _fontScaleSub = null;
 
             if (_treeSource != null)
             {

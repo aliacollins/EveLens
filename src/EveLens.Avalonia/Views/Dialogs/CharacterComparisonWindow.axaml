@@ -60,18 +60,19 @@
                        Foreground="{StaticResource EveTextSecondaryBrush}" />
         </Border>
 
-        <!-- Empty state -->
-        <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
-                    Spacing="8" IsVisible="True">
-            <TextBlock Text="Select at least 2 characters to compare"
-                       FontSize="{DynamicResource EveFontSubheading}"
-                       Foreground="{StaticResource EveTextDisabledBrush}"
-                       HorizontalAlignment="Center" />
-            <TextBlock Text="Click the + button above to add characters"
-                       FontSize="{DynamicResource EveFontSmall}"
-                       Foreground="{StaticResource EveTextDisabledBrush}"
-                       HorizontalAlignment="Center" />
-        </StackPanel>
+        <!-- Empty state — Grid fills remaining space so centering works -->
+        <Grid x:Name="EmptyState" IsVisible="True">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="Select at least 2 characters to compare"
+                           FontSize="{DynamicResource EveFontSubheading}"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center" />
+                <TextBlock Text="Click the + button above to add characters"
+                           FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{StaticResource EveTextDisabledBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center" />
+            </StackPanel>
+        </Grid>
 
         <!-- Comparison grid -->
         <ScrollViewer x:Name="ComparisonScroller" IsVisible="False"

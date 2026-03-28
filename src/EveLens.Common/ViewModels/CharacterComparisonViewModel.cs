@@ -88,7 +88,7 @@ namespace EveLens.Common.ViewModels
             {
                 var skills = new List<ComparisonSkillEntry>();
 
-                foreach (var skill in skillGroup.OrderBy(s => s.Name))
+                foreach (var skill in skillGroup.Where(s => s.IsPublic || s.IsKnown).OrderBy(s => s.Name))
                 {
                     var levels = new int[_selectedCharacters.Count];
                     var isKnown = new bool[_selectedCharacters.Count];

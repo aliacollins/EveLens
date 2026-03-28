@@ -46,6 +46,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         }
 
         private IDisposable? _dataUpdatedSub;
+        private IDisposable? _fontScaleSub;
         private long _characterId;
         private SkillOverlayViewModel? _viewModel;
 
@@ -59,6 +60,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             base.OnAttachedToVisualTree(e);
             _dataUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterUpdatedEvent>(OnDataUpdated);
+            _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData));
             LoadData();
         }
 
@@ -73,6 +76,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+            _fontScaleSub?.Dispose();
+            _fontScaleSub = null;
 
             if (_viewModel != null)
             {
@@ -154,12 +159,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             LevelIIBtn.Content = $"Level II ({_viewModel.GetSkillsAtLevel(2)})";
             LevelIBtn.Content = $"Level I ({_viewModel.GetSkillsAtLevel(1)})";
             LevelZeroBtn.Content = $"Injected ({_viewModel.GetSkillsAtLevel(0)})";
+
+            int untrained = _viewModel.TotalPublicSkills - _viewModel.TotalTrained;
+            UntrainedBtn.Content = $"Untrained ({untrained})";
         }
 
         private ToggleButton?[] LevelButtons => new[]
         {
             AllSkillsBtn, AllTrainedBtn, LevelVBtn, LevelIVBtn, LevelIIIBtn,
-            LevelIIBtn, LevelIBtn, LevelZeroBtn
+            LevelIIBtn, LevelIBtn, LevelZeroBtn, UntrainedBtn
         };
 
         private void OnLevelFilterClicked(object? sender, RoutedEventArgs e)

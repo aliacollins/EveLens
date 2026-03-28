@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Skill comparison, font scaling, ESI token fix, group reorder, queue monitor, add character UX (#34, #39, #40, #41, #42, #43)
+- Add Untrained filter button to Skills tab (#33)
+- Consistent skill counts: filter unpublished skills uniformly (#37, #33)
+- Show full character names in Skill Comparison (#45)
+- Fix live font scaling in code-behind windows (#42 feedback)
 - Character Skill Comparison, theme-aware level blocks
 
 ### Added

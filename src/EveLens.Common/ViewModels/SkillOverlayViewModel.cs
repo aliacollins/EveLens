@@ -203,7 +203,7 @@ namespace EveLens.Common.ViewModels
                 ? arr[level] : 0;
 
         public string StatusText => _activeOverlay != null
-            ? $"Trained: {_activeOverlay.TotalTrained} of {_activeOverlay.TotalSkills} skills  |  Total SP: {_activeOverlay.TotalSP:N0}"
+            ? $"Trained: {_activeOverlay.TotalTrained} of {_activeOverlay.TotalPublicSkills} skills  |  Total SP: {_activeOverlay.TotalSP:N0}"
             : "";
 
         internal SkillState GetSkillState(int skillId)
@@ -385,6 +385,10 @@ namespace EveLens.Common.ViewModels
             // "All Skills" — show every published skill
             if (_levelFilter == -3)
                 return skill.IsPublic;
+
+            // "Untrained" — published skills the character hasn't injected
+            if (_levelFilter == -2)
+                return skill.IsPublic && !state.IsKnown;
 
             if (_levelFilter >= 0)
             {

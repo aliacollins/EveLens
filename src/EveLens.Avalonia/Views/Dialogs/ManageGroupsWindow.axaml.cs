@@ -37,6 +37,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         };
 
         private CharacterGroupSettings? _expandedGroup;
+        private IDisposable? _fontScaleSub;
 
         public ManageGroupsWindow()
         {
@@ -47,6 +48,16 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             base.OnOpened(e);
             RebuildUI();
+
+            // Rebuild when font scale changes so code-behind sizes update
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
         }
 
         private void RebuildUI()

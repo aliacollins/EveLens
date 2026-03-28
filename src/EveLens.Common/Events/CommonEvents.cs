@@ -36,6 +36,15 @@ namespace EveLens.Common.Events
         private SettingsChangedEvent() { }
     }
 
+    /// <summary>
+    /// Published when font scale changes. Windows with code-behind font sizes rebuild.
+    /// </summary>
+    public sealed class FontScaleChangedEvent
+    {
+        public static readonly FontScaleChangedEvent Instance = new();
+        private FontScaleChangedEvent() { }
+    }
+
     public sealed class ESIKeyCollectionChangedEvent
     {
         public static readonly ESIKeyCollectionChangedEvent Instance = new();

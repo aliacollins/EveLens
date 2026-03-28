@@ -41,6 +41,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private IDisposable? _collectionChangedSub;
         private IDisposable? _privacyModeSub;
         private IDisposable? _settingsChangedSub;
+        private IDisposable? _fontScaleSub;
 
         // Track previous ISK/SP values per character for flash-on-change
         private readonly Dictionary<long, decimal> _prevBalances = new();
@@ -84,6 +85,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _settingsChangedSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(
                 _ => Dispatcher.UIThread.Post(LoadData));
 
+            _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => Dispatcher.UIThread.Post(LoadData));
+
             LoadData();
         }
 
@@ -103,6 +107,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _privacyModeSub = null;
             _settingsChangedSub?.Dispose();
             _settingsChangedSub = null;
+            _fontScaleSub?.Dispose();
+            _fontScaleSub = null;
 
             base.OnDetachedFromVisualTree(e);
         }

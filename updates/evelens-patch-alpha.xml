@@ -6,6 +6,46 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.9</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-alpha.9
+
+Add Untrained filter button to Skills tab (#33)]]></message>
+    </release>
+    <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.8</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-alpha.8
+
+Consistent skill counts: filter unpublished skills uniformly (#37, #33)]]></message>
+    </release>
+    <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.7</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-alpha.7
+
+Show full character names in Skill Comparison (#45)]]></message>
+    </release>
+    <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.6</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-alpha.6
+
+Fix live font scaling in code-behind windows (#42 feedback)]]></message>
+    </release>
+    <release>
       <date>2026-03-28</date>
       <version>1.1.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -64,46 +104,6 @@ Queue monitor, add character UX, group redesign, blueprint tree, dead code remov
       <message><![CDATA[EveLens 1.0.0-alpha.47
 
 Fix promote.ps1 array-join bug in version counter]]></message>
-    </release>
-    <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.46</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.46
-
-Fix promote.ps1 version counter for cross-channel promotions]]></message>
-    </release>
-    <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.45</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.45
-
-Fix version regression, add branching policy]]></message>
-    </release>
-    <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.1
-
-ESI health state machine, SDE Catalyst expansion, debug isolation, diagnostic viewer]]></message>
-    </release>
-    <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.44</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.44
-
-Fix promote.ps1 cross-branch merge strategy for alpha-to-beta promotions]]></message>
     </release>
   </releases>
   <datafiles>

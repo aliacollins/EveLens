@@ -16,12 +16,14 @@ using Avalonia.Platform.Storage;
 using EveLens.Common.Models;
 
 using EveLens.Common.Models;
+using EveLens.Common.Services;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class ManagePlansWindow : Window
     {
         private Character? _character;
+        private IDisposable? _fontScaleSub;
 
         public ManagePlansWindow()
         {
@@ -38,6 +40,15 @@ namespace EveLens.Avalonia.Views.Dialogs
             _character = character;
             Title = $"Manage Plans \u2014 {character.Name}";
             RefreshGrid();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshGrid));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
         }
 
         private void RefreshGrid()
