@@ -642,6 +642,7 @@ namespace EveLens.Avalonia.Views
 
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
+            SkillFarmMenuItem.Click += OnSkillFarmClick;
             SkillConstellationMenuItem.Click += OnSkillConstellationClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
 
@@ -1844,6 +1845,19 @@ namespace EveLens.Avalonia.Views
             try
             {
                 var window = new CharacterComparisonWindow();
+                await window.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error: {ex}");
+            }
+        }
+
+        private async void OnSkillFarmClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var window = new SkillFarmDashboardWindow();
                 await window.ShowDialog(this);
             }
             catch (Exception ex)
