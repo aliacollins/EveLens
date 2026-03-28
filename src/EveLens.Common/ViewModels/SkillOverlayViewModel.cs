@@ -386,6 +386,10 @@ namespace EveLens.Common.ViewModels
             if (_levelFilter == -3)
                 return skill.IsPublic;
 
+            // "Untrained" — published skills the character hasn't injected
+            if (_levelFilter == -2)
+                return skill.IsPublic && !state.IsKnown;
+
             if (_levelFilter >= 0)
             {
                 if (_levelFilter == 0)
