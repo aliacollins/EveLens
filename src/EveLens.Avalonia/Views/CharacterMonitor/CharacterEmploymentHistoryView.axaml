@@ -9,15 +9,15 @@
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <TextBlock Text="Employment History is not enabled for this character."
-                           FontSize="12"
+                           FontSize="{DynamicResource EveFontSubheading}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Enable this to start fetching data from EVE Online."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            HorizontalAlignment="Center" />
                 <Button Content="Enable Employment History"
-                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
                         HorizontalAlignment="Center"
                         Click="OnEnableEndpoint" />
             </StackPanel>
@@ -25,9 +25,9 @@
 
         <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
             <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                <TextBlock Text="ESI scope not authorized" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
-                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
                            Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
             </StackPanel>
@@ -38,7 +38,7 @@
         <Border DockPanel.Dock="Bottom" Padding="10,5"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="StatusText" Text="Records: 0" FontSize="11"
+            <TextBlock x:Name="StatusText" Text="Records: 0" FontSize="{DynamicResource EveFontBody}"
                        Foreground="{StaticResource EveTextSecondaryBrush}" />
         </Border>
 
@@ -76,14 +76,14 @@
                                             <Image Width="32" Height="32" Stretch="UniformToFill" />
                                         </Border>
                                         <TextBlock Text="{Binding CorporationName}"
-                                                   FontSize="10" FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontSmall}" FontWeight="SemiBold"
                                                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                                                    TextAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
                                                    MaxLines="1" MaxWidth="136"
                                                    ToolTip.Tip="{Binding CorporationName}" />
                                         <TextBlock Text="{Binding DurationText}"
-                                                   FontSize="9"
+                                                   FontSize="{DynamicResource EveFontCaption}"
                                                    Foreground="{StaticResource EveTextDisabledBrush}"
                                                    TextAlignment="Center" />
                                     </StackPanel>
@@ -120,11 +120,11 @@
                                         HorizontalAlignment="Center" />
                                 <!-- Date + Duration -->
                                 <TextBlock Text="{Binding StartDate, StringFormat='{}{0:MMM yyyy}'}"
-                                           FontSize="10"
+                                           FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{StaticResource EveTextSecondaryBrush}"
                                            TextAlignment="Center" />
                                 <TextBlock Text="{Binding DurationText}"
-                                           FontSize="9"
+                                           FontSize="{DynamicResource EveFontCaption}"
                                            Foreground="{StaticResource EveTextDisabledBrush}"
                                            TextAlignment="Center" />
                             </StackPanel>

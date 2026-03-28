@@ -11,12 +11,12 @@
         <!-- Header -->
         <TextBlock DockPanel.Dock="Top"
                    Text="Select ESI Scopes"
-                   FontSize="16" FontWeight="SemiBold"
+                   FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                    Margin="0,0,0,8" />
 
         <TextBlock DockPanel.Dock="Top"
                    Text="Check the feature groups and individual scopes to request. Skills &amp; Training Queue is always required."
-                   TextWrapping="Wrap" FontSize="12" Foreground="Gray"
+                   TextWrapping="Wrap" FontSize="{DynamicResource EveFontSubheading}" Foreground="Gray"
                    Margin="0,0,0,8" />
 
         <!-- Buttons at bottom -->

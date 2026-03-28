@@ -6,6 +6,15 @@
          ═══════════════════════════════════════════════════════════════ -->
 
     <Styles.Resources>
+        <!-- Font scale: 7 tiers (defaults at 100%) -->
+        <x:Double x:Key="EveFontTiny">8</x:Double>
+        <x:Double x:Key="EveFontCaption">9</x:Double>
+        <x:Double x:Key="EveFontSmall">10</x:Double>
+        <x:Double x:Key="EveFontBody">11</x:Double>
+        <x:Double x:Key="EveFontSubheading">12</x:Double>
+        <x:Double x:Key="EveFontHeading">13</x:Double>
+        <x:Double x:Key="EveFontTitle">15</x:Double>
+
         <!-- Background palette -->
         <Color x:Key="EveBackgroundDarkest">#FF000000</Color>
         <Color x:Key="EveBackgroundDark">#FF0A0A0A</Color>

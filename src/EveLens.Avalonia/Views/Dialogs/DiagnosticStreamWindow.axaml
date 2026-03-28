@@ -12,9 +12,9 @@
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="Filter:" FontSize="11" VerticalAlignment="Center"
+                <TextBlock Text="Filter:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
-                <ComboBox x:Name="FilterCombo" FontSize="11" MinWidth="120"
+                <ComboBox x:Name="FilterCombo" FontSize="{DynamicResource EveFontBody}" MinWidth="120"
                           SelectedIndex="0">
                     <ComboBoxItem Content="All" />
                     <ComboBoxItem Content="ESI Requests" />
@@ -23,12 +23,12 @@
                     <ComboBoxItem Content="Health" />
                     <ComboBoxItem Content="Scheduler" />
                 </ComboBox>
-                <Button x:Name="ClearBtn" Content="Clear" FontSize="11"
+                <Button x:Name="ClearBtn" Content="Clear" FontSize="{DynamicResource EveFontBody}"
                         Padding="10,3" CornerRadius="10" />
                 <CheckBox x:Name="AutoScrollCheck" Content="Auto-scroll"
-                          FontSize="11" IsChecked="True"
+                          FontSize="{DynamicResource EveFontBody}" IsChecked="True"
                           Foreground="{StaticResource EveTextSecondaryBrush}" />
-                <TextBlock x:Name="LineCountText" Text="0 lines" FontSize="11"
+                <TextBlock x:Name="LineCountText" Text="0 lines" FontSize="{DynamicResource EveFontBody}"
                            VerticalAlignment="Center" Margin="12,0,0,0"
                            Foreground="{StaticResource EveTextDisabledBrush}" />
             </StackPanel>
@@ -38,7 +38,7 @@
         <Border DockPanel.Dock="Bottom" Padding="8,3"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="StatusText" Text="Listening..." FontSize="10"
+            <TextBlock x:Name="StatusText" Text="Listening..." FontSize="{DynamicResource EveFontSmall}"
                        Foreground="{StaticResource EveTextDisabledBrush}" />
         </Border>
 

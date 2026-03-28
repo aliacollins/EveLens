@@ -11,6 +11,8 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using EveLens.Common.Services;
 
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class EsiScopeEditorWindow : Window
@@ -64,7 +66,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 {
                     Content = group.Name,
                     FontWeight = global::Avalonia.Media.FontWeight.SemiBold,
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Tag = group.Name
                 };
                 groupCheckBox.IsCheckedChanged += OnGroupCheckChanged;
@@ -77,7 +79,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     var scopeCheckBox = new CheckBox
                     {
                         Content = scope,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Margin = new global::Avalonia.Thickness(20, 0, 0, 0),
                         Tag = scope
                     };

@@ -7,6 +7,17 @@
          ═══════════════════════════════════════════════════════════════ -->
 
     <Styles.Resources>
+        <!-- Font scale: 7 tiers derived from a base of 11pt at 100%.
+             These are the defaults — FontScaleService overrides at runtime
+             when the user changes the scale percentage. -->
+        <x:Double x:Key="EveFontTiny">8</x:Double>
+        <x:Double x:Key="EveFontCaption">9</x:Double>
+        <x:Double x:Key="EveFontSmall">10</x:Double>
+        <x:Double x:Key="EveFontBody">11</x:Double>
+        <x:Double x:Key="EveFontSubheading">12</x:Double>
+        <x:Double x:Key="EveFontHeading">13</x:Double>
+        <x:Double x:Key="EveFontTitle">15</x:Double>
+
         <!-- Background palette -->
         <Color x:Key="EveBackgroundDarkest">#FF0D0D1A</Color>
         <Color x:Key="EveBackgroundDark">#FF1A1A2E</Color>

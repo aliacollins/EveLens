@@ -4,10 +4,10 @@
     <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
                     Spacing="8">
-            <TextBlock x:Name="TitleBlock" FontSize="14" FontWeight="SemiBold"
+            <TextBlock x:Name="TitleBlock" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveTextSecondaryBrush}"
                        HorizontalAlignment="Center" TextAlignment="Center" />
-            <TextBlock x:Name="SubtitleBlock" FontSize="11"
+            <TextBlock x:Name="SubtitleBlock" FontSize="{DynamicResource EveFontBody}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" TextAlignment="Center"
                        TextWrapping="Wrap" MaxWidth="400" />

@@ -105,6 +105,17 @@ namespace EveLens.Avalonia.Views.Dialogs
             // --- Appearance ---
             PopulateThemeCombo();
             SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
+            FontScaleSlider.Value = _settings.UI.FontScalePercent;
+            FontScaleLabel.Text = $"{_settings.UI.FontScalePercent}%";
+            FontScaleSlider.PropertyChanged += (_, e) =>
+            {
+                if (_isUpdating || e.Property.Name != "Value") return;
+                int pct = (int)FontScaleSlider.Value;
+                FontScaleLabel.Text = $"{pct}%";
+                _settings.UI.FontScalePercent = pct;
+                FontScaleService.Apply(pct);
+                Settings.Save();
+            };
 
             // --- Window Behavior ---
             LoadTraySettings();
@@ -356,7 +367,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 headerLeft.Children.Add(new TextBlock
                 {
                     Text = group.GroupName,
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = FindBrush("EveAccentPrimaryBrush"),
                     VerticalAlignment = VerticalAlignment.Center
@@ -364,7 +375,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 headerLeft.Children.Add(new TextBlock
                 {
                     Text = $"({group.CharacterCount})",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = FindBrush("EveTextDisabledBrush"),
                     VerticalAlignment = VerticalAlignment.Center
                 });
@@ -376,7 +387,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     var checkMark = new TextBlock
                     {
                         Text = "\u2713",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = FindBrush("EveSuccessGreenBrush"),
                         VerticalAlignment = VerticalAlignment.Center
                     };
@@ -398,7 +409,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     var nameBlock = new TextBlock
                     {
                         Text = entry.Name,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = FindBrush("EveTextPrimaryBrush"),
                         VerticalAlignment = VerticalAlignment.Center
                     };
@@ -410,7 +421,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         var reauthBtn = new Button
                         {
                             Content = "Re-authenticate",
-                            FontSize = 10,
+                            FontSize = FontScaleService.Small,
                             Padding = new Thickness(8, 2),
                             CornerRadius = new CornerRadius(10),
                             Foreground = FindBrush("EveWarningYellowBrush"),
@@ -842,14 +853,14 @@ namespace EveLens.Avalonia.Views.Dialogs
             var restartBtn = new Button
             {
                 Content = "Restart",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
             };
             var cancelBtn = new Button
             {
                 Content = "Cancel",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
             };
@@ -878,7 +889,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         {
                             Text = "EveLens will restart to apply the new theme.\nPlease save any work in progress (e.g., skill plans being edited).",
                             TextWrapping = TextWrapping.Wrap,
-                            FontSize = 12,
+                            FontSize = FontScaleService.Subheading,
                             VerticalAlignment = VerticalAlignment.Center
                         }
                     }

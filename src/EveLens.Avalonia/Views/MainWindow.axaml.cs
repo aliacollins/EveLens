@@ -274,7 +274,7 @@ namespace EveLens.Avalonia.Views
             var nameText = new TextBlock
             {
                 Text = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name.Split(' ')[0],
-                FontSize = 9,
+                FontSize = FontScaleService.Caption,
                 MaxWidth = 50,
                 TextAlignment = TextAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -1044,7 +1044,7 @@ namespace EveLens.Avalonia.Views
                 panel.Children.Add(new TextBlock
                 {
                     Text = "Queue Health",
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
                     Margin = new Thickness(8, 4, 8, 6)
@@ -1080,7 +1080,7 @@ namespace EveLens.Avalonia.Views
                     grid.Children.Add(new TextBlock
                     {
                         Text = character.Name,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
                         VerticalAlignment = VerticalAlignment.Center,
                         TextTrimming = TextTrimming.CharacterEllipsis,
@@ -1091,7 +1091,7 @@ namespace EveLens.Avalonia.Views
                     grid.Children.Add(new TextBlock
                     {
                         Text = status,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         FontWeight = FontWeight.SemiBold,
                         Foreground = color,
                         VerticalAlignment = VerticalAlignment.Center,
@@ -1107,7 +1107,7 @@ namespace EveLens.Avalonia.Views
                         grid.Children.Add(new TextBlock
                         {
                             Text = endDate,
-                            FontSize = 10,
+                            FontSize = FontScaleService.Small,
                             Foreground = FindStripBrush("EveTextDisabledBrush", Brushes.Gray),
                             VerticalAlignment = VerticalAlignment.Center,
                             Margin = new Thickness(8, 0, 0, 0),
@@ -1361,7 +1361,7 @@ namespace EveLens.Avalonia.Views
                             {
                                 Text = $"SettingsWindow constructor failed:\n\n{ctorEx}",
                                 TextWrapping = TextWrapping.Wrap,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 Margin = new Thickness(16)
                             }
                         }
@@ -1389,7 +1389,7 @@ namespace EveLens.Avalonia.Views
                             {
                                 Text = $"Settings failed:\n\n{ex}",
                                 TextWrapping = TextWrapping.Wrap,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 Margin = new Thickness(16)
                             }
                         }
@@ -1471,7 +1471,7 @@ namespace EveLens.Avalonia.Views
                 var listBox = new ListBox
                 {
                     ItemsSource = characters.Select(c => c.Name).ToList(),
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Margin = new Thickness(0, 0, 0, 8)
                 };
                 listBox.SelectedIndex = 0;
@@ -1479,7 +1479,7 @@ namespace EveLens.Avalonia.Views
                 var deleteBtn = new Button
                 {
                     Content = "Delete Selected",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Padding = new Thickness(12, 5),
                     CornerRadius = new CornerRadius(12),
                     Foreground = Brushes.Red,
@@ -1499,7 +1499,7 @@ namespace EveLens.Avalonia.Views
                             new TextBlock
                             {
                                 Text = "Select a character:",
-                                FontSize = 12,
+                                FontSize = FontScaleService.Subheading,
                                 Margin = new Thickness(0, 0, 0, 8),
                                 [DockPanel.DockProperty] = Dock.Top
                             },
@@ -1603,7 +1603,7 @@ namespace EveLens.Avalonia.Views
                 var nameBox = new TextBox
                 {
                     Text = defaultName,
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Margin = new Thickness(0, 8, 0, 0),
                     Watermark = "Enter plan name..."
                 };
@@ -1611,7 +1611,7 @@ namespace EveLens.Avalonia.Views
                 var errorText = new TextBlock
                 {
                     Text = "A plan with this name already exists.",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = FindStripBrush("EveErrorRedBrush", Brushes.Red),
                     Margin = new Thickness(0, 4, 0, 0),
                     IsVisible = false
@@ -1620,7 +1620,7 @@ namespace EveLens.Avalonia.Views
                 var createBtn = new Button
                 {
                     Content = "Create",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Padding = new Thickness(12, 5),
                     CornerRadius = new CornerRadius(12),
                     HorizontalAlignment = HorizontalAlignment.Right,
@@ -1647,7 +1647,7 @@ namespace EveLens.Avalonia.Views
                         Margin = new Thickness(16),
                         Children =
                         {
-                            new TextBlock { Text = "Plan name:", FontSize = 12 },
+                            new TextBlock { Text = "Plan name:", FontSize = FontScaleService.Subheading },
                             nameBox,
                             errorText,
                             createBtn
@@ -1913,7 +1913,7 @@ namespace EveLens.Avalonia.Views
                             HorizontalAlignment = HorizontalAlignment.Center,
                             TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20),
-                            FontSize = 11
+                            FontSize = FontScaleService.Body
                         }
                     };
                     await errDialog.ShowDialog(this);
@@ -1946,7 +1946,7 @@ namespace EveLens.Avalonia.Views
                     var downloadBtn = new Button
                     {
                         Content = "Download & Restart",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
                         Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
@@ -1954,7 +1954,7 @@ namespace EveLens.Avalonia.Views
                     var laterBtn = new Button
                     {
                         Content = "Later",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
                     };
@@ -2002,14 +2002,14 @@ namespace EveLens.Avalonia.Views
                     header.Children.Add(new TextBlock
                     {
                         Text = $"EveLens {pendingVersion} is available",
-                        FontSize = 14,
+                        FontSize = FontScaleService.Title,
                         FontWeight = FontWeight.SemiBold,
                         Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
                     });
                     header.Children.Add(new TextBlock
                     {
                         Text = $"You are running v{currentVersion}",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
                     });
                     DockPanel.SetDock(header, global::Avalonia.Controls.Dock.Top);
@@ -2023,7 +2023,7 @@ namespace EveLens.Avalonia.Views
                             Content = new TextBlock
                             {
                                 Text = releaseNotes,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
                                 Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
                             }
@@ -2050,13 +2050,13 @@ namespace EveLens.Avalonia.Views
                                 new TextBlock
                                 {
                                     Text = $"Current version: v{currentVersion}",
-                                    FontSize = 12,
+                                    FontSize = FontScaleService.Subheading,
                                     Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
                                 },
                                 new TextBlock
                                 {
                                     Text = "You are running the latest version.",
-                                    FontSize = 11,
+                                    FontSize = FontScaleService.Body,
                                     Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)
                                 }
                             }
@@ -2144,7 +2144,7 @@ namespace EveLens.Avalonia.Views
             var okBtn = new Button
             {
                 Content = "OK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 Foreground = Brushes.Red
@@ -2152,7 +2152,7 @@ namespace EveLens.Avalonia.Views
             var cancelBtn = new Button
             {
                 Content = "Cancel",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
             };
@@ -2180,7 +2180,7 @@ namespace EveLens.Avalonia.Views
                         {
                             Text = message,
                             TextWrapping = TextWrapping.Wrap,
-                            FontSize = 12,
+                            FontSize = FontScaleService.Subheading,
                             VerticalAlignment = VerticalAlignment.Center
                         }
                     }
@@ -2199,7 +2199,7 @@ namespace EveLens.Avalonia.Views
             var closeBtn = new Button
             {
                 Content = "Close",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 HorizontalAlignment = HorizontalAlignment.Right
@@ -2222,7 +2222,7 @@ namespace EveLens.Avalonia.Views
                             Content = new TextBlock
                             {
                                 Text = text,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 FontFamily = new global::Avalonia.Media.FontFamily("Consolas, Courier New, monospace"),
                                 TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
                                 Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)

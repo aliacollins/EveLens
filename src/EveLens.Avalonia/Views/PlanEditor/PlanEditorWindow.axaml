@@ -20,12 +20,12 @@
                         BorderThickness="1" MinWidth="220" MaxWidth="300">
                     <DockPanel>
                         <Button x:Name="ClearSearchBtn" DockPanel.Dock="Right"
-                                Content="&#x2715;" FontSize="10"
+                                Content="&#x2715;" FontSize="{DynamicResource EveFontSmall}"
                                 Background="Transparent" BorderThickness="0"
                                 Padding="8,4" CornerRadius="0,14,14,0"
                                 IsVisible="False" Click="OnClearSearch" />
                         <TextBox x:Name="SearchBox" Watermark="Search skills..."
-                                 FontSize="11" Padding="10,5"
+                                 FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                  Background="Transparent" BorderThickness="0"
                                  TextChanged="OnSearchChanged" />
                     </DockPanel>
@@ -33,9 +33,9 @@
 
                 <!-- Left: plan name and character -->
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <TextBlock x:Name="PlanNameText" FontSize="15" FontWeight="Bold"
+                    <TextBlock x:Name="PlanNameText" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                    <TextBlock x:Name="CharacterNameText" FontSize="12"
+                    <TextBlock x:Name="CharacterNameText" FontSize="{DynamicResource EveFontSubheading}"
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                VerticalAlignment="Center" />
                 </StackPanel>
@@ -47,19 +47,19 @@
                 Background="{StaticResource EveBackgroundMediumBrush}">
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <ToggleButton x:Name="PlanTab" Content="Plan" IsChecked="True"
-                              FontSize="11" Padding="12,5" CornerRadius="12"
+                              FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
                 <ToggleButton x:Name="SkillsTab" Content="Skills"
-                              FontSize="11" Padding="12,5" CornerRadius="12"
+                              FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
                 <ToggleButton x:Name="ShipsTab" Content="Ships"
-                              FontSize="11" Padding="12,5" CornerRadius="12"
+                              FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
                 <ToggleButton x:Name="ItemsTab" Content="Items"
-                              FontSize="11" Padding="12,5" CornerRadius="12"
+                              FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
                 <ToggleButton x:Name="BlueprintsTab" Content="Blueprints"
-                              FontSize="11" Padding="12,5" CornerRadius="12"
+                              FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
             </StackPanel>
         </Border>
@@ -70,14 +70,14 @@
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                    <Button Content="Clear Plan" FontSize="11"
+                    <Button Content="Clear Plan" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnClearPlan" />
-                    <Button Content="Import Fit ▾" FontSize="11"
+                    <Button Content="Import Fit ▾" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnImportFitMenu" />
-                    <Button Content="Export ▾" FontSize="11"
+                    <Button Content="Export ▾" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnExportMenu" />
                 </StackPanel>
-                <TextBlock x:Name="StatusText" FontSize="11"
+                <TextBlock x:Name="StatusText" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            VerticalAlignment="Center" />
             </DockPanel>

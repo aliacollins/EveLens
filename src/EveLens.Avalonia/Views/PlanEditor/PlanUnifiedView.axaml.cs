@@ -26,6 +26,8 @@ using EveLens.Common.ViewModels;
 using EveLens.Avalonia.ViewModels;
 using EveLens.SkillPlanner;
 
+using EveLens.SkillPlanner;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanUnifiedView : UserControl
@@ -490,7 +492,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 border.Child = new TextBlock
                 {
                     Text = "\u25C7 Remap point \u2014 right-click to configure",
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = new SolidColorBrush(Color.Parse("#99E6A817")),
                     VerticalAlignment = VerticalAlignment.Center,
@@ -508,7 +510,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             line.Children.Add(new TextBlock
             {
                 Text = "\u25C6 Remap \u2014",
-                FontSize = 9,
+                FontSize = FontScaleService.Caption,
                 FontWeight = FontWeight.Bold,
                 Foreground = GoldBrush,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -522,7 +524,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     line.Children.Add(new TextBlock
                     {
                         Text = $"{delta.Name}\u2192{delta.NewValue}",
-                        FontSize = 9,
+                        FontSize = FontScaleService.Caption,
                         Foreground = delta.ValueBrush,
                         FontWeight = FontWeight.SemiBold,
                         VerticalAlignment = VerticalAlignment.Center,
@@ -535,7 +537,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 line.Children.Add(new TextBlock
                 {
                     Text = $"INT\u2192{divider.Intelligence}  PER\u2192{divider.Perception}  WIL\u2192{divider.Willpower}  CHA\u2192{divider.Charisma}  MEM\u2192{divider.Memory}",
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Foreground = new SolidColorBrush(Color.Parse("#FFD0D0D0")),
                     VerticalAlignment = VerticalAlignment.Center,
                 });
@@ -547,14 +549,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 line.Children.Add(new TextBlock
                 {
                     Text = "\u00B7",
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                     VerticalAlignment = VerticalAlignment.Center,
                 });
                 line.Children.Add(new TextBlock
                 {
                     Text = divider.TimeSavingsText,
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
                     VerticalAlignment = VerticalAlignment.Center,
                 });
@@ -567,7 +569,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 line.Children.Add(new TextBlock
                 {
                     Text = isAvailable ? "\u2713" : "\u23F0",
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Foreground = divider.AvailabilityBrush ?? new SolidColorBrush(Color.Parse("#FF909090")),
                     VerticalAlignment = VerticalAlignment.Center,
                 });
@@ -737,7 +739,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var label = new TextBlock
             {
                 Text = header.FocusLabel,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = header.AccentBrush,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -749,7 +751,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var countText = new TextBlock
             {
                 Text = $"{header.SkillCount} skills",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(10, 0, 0, 0),
@@ -761,7 +763,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var timeText = new TextBlock
             {
                 Text = header.TrainingTimeText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = new SolidColorBrush(Color.Parse("#FFF0F0F0")),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -847,7 +849,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     Child = new TextBlock
                     {
                         Text = "\uD83D\uDCD6",
-                        FontSize = 9,
+                        FontSize = FontScaleService.Caption,
                     }
                 };
                 ToolTip.SetTip(bookBadge, $"Skillbook not owned \u2014 {item.Entry.Skill.FormattedCost}");
@@ -866,7 +868,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     var omegaBadge = new TextBlock
                     {
                         Text = "\u03A9",
-                        FontSize = 9,
+                        FontSize = FontScaleService.Caption,
                         Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                         VerticalAlignment = VerticalAlignment.Center,
                         Margin = new Thickness(0, 0, 4, 0),
@@ -887,7 +889,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         Child = new TextBlock
                         {
                             Text = "\u03A9",
-                            FontSize = 10,
+                            FontSize = FontScaleService.Small,
                             FontWeight = FontWeight.Bold,
                             Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
                         }
@@ -900,7 +902,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             nameStack.Children.Add(new TextBlock
             {
                 Text = item.SkillName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = isOmega && !isCharOmega
                     ? new SolidColorBrush(Color.Parse("#FFFFD54F"))
@@ -913,7 +915,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var upBtn = new Button
                 {
                     Content = "\u25B2",
-                    FontSize = 7,
+                    FontSize = FontScaleService.Tiny,
                     Padding = new Thickness(3, 0),
                     CornerRadius = new CornerRadius(3),
                     Background = Brushes.Transparent,
@@ -933,7 +935,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var downBtn = new Button
                 {
                     Content = "\u25BC",
-                    FontSize = 7,
+                    FontSize = FontScaleService.Tiny,
                     Padding = new Thickness(3, 0),
                     CornerRadius = new CornerRadius(3),
                     Background = Brushes.Transparent,
@@ -956,7 +958,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var timeTb = new TextBlock
             {
                 Text = item.TrainingTimeText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = item.TimeBrush,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -982,7 +984,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var sphrTb = new TextBlock
             {
                 Text = item.SpPerHourText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = item.SpPerHourBrush,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -1027,7 +1029,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 Child = new TextBlock
                 {
                     Text = text,
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Foreground = foreground,
                     HorizontalAlignment = HorizontalAlignment.Center,
                 }
@@ -1308,7 +1310,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             heroStack.Children.Add(new TextBlock
             {
                 Text = FormatTime(stats.TrainingTime),
-                FontSize = 22,
+                FontSize = FontScaleService.Title,
                 FontWeight = FontWeight.Bold,
                 Foreground = GoldBrush,
             });
@@ -1324,7 +1326,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 Text = trainedCount > 0
                     ? $"{remaining} of {totalEntries} skills remaining"
                     : $"{totalEntries} skills to train",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
             });
 
@@ -1335,7 +1337,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 heroStack.Children.Add(new TextBlock
                 {
                     Text = $"Finishes {finishDate:MMM d, yyyy}",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF808080")),
                 });
             }
@@ -1358,7 +1360,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             SidebarContent.Children.Add(new TextBlock
             {
                 Text = string.Join(" \u00B7 ", costParts),
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
                 Margin = new Thickness(0, 0, 0, 8),
             });
@@ -1387,7 +1389,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     remapLine.Children.Add(new TextBlock
                     {
                         Text = "\u2713 Available now",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
                     });
                 }
@@ -1397,7 +1399,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     remapLine.Children.Add(new TextBlock
                     {
                         Text = $"\u23F0 Next in {daysUntil}d",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
                     });
                 }
@@ -1407,13 +1409,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     remapLine.Children.Add(new TextBlock
                     {
                         Text = "\u00B7",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                     });
                     remapLine.Children.Add(new TextBlock
                     {
                         Text = $"{bonusRemaps} bonus",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = GoldBrush,
                     });
                 }
@@ -1430,7 +1432,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 SidebarContent.Children.Add(new TextBlock
                 {
                     Text = "\u26A1 Analyzing\u2026",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = GoldBrush,
                     Margin = new Thickness(0, 4, 0, 0),
                 });
@@ -1460,7 +1462,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 resultLine.Children.Add(new TextBlock
                 {
                     Text = "\u26A1",
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Foreground = GoldBrush,
                     VerticalAlignment = VerticalAlignment.Center,
                 });
@@ -1468,7 +1470,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 resultLine.Children.Add(new TextBlock
                 {
                     Text = FormatTimeCompact(_optimizerVm.CurrentDuration),
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                     VerticalAlignment = VerticalAlignment.Center,
                 });
@@ -1478,7 +1480,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     resultLine.Children.Add(new TextBlock
                     {
                         Text = "\u2192",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                         VerticalAlignment = VerticalAlignment.Center,
                     });
@@ -1486,7 +1488,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     resultLine.Children.Add(new TextBlock
                     {
                         Text = FormatTimeCompact(_optimizerVm.OptimalDuration),
-                        FontSize = 12,
+                        FontSize = FontScaleService.Subheading,
                         FontWeight = FontWeight.Bold,
                         Foreground = hasSavings
                             ? new SolidColorBrush(Color.Parse("#FF81C784"))
@@ -1499,7 +1501,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         resultLine.Children.Add(new TextBlock
                         {
                             Text = $"\u2713 -{FormatTimeCompact(savings)}",
-                            FontSize = 11,
+                            FontSize = FontScaleService.Body,
                             FontWeight = FontWeight.SemiBold,
                             Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
                             VerticalAlignment = VerticalAlignment.Center,
@@ -1511,7 +1513,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     resultLine.Children.Add(new TextBlock
                     {
                         Text = "\u2713 Already optimal",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = GoldBrush,
                         VerticalAlignment = VerticalAlignment.Center,
                     });
@@ -1529,7 +1531,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     SidebarContent.Children.Add(new TextBlock
                     {
                         Text = "Current: " + string.Join("  ", currentParts),
-                        FontSize = 10,
+                        FontSize = FontScaleService.Small,
                         Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                         Margin = new Thickness(0, 6, 0, 0),
                     });
@@ -1540,7 +1542,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         Text = hasSavings
                             ? $"To save {FormatTimeCompact(savings)}, remap to:"
                             : "Change attributes to:",
-                        FontSize = 10,
+                        FontSize = FontScaleService.Small,
                         Foreground = hasSavings
                             ? new SolidColorBrush(Color.Parse("#FF81C784"))
                             : new SolidColorBrush(Color.Parse("#FFB0B0B0")),
@@ -1565,7 +1567,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         row.Children.Add(new TextBlock
                         {
                             Text = GetAttributeShortName(attr),
-                            FontSize = 11,
+                            FontSize = FontScaleService.Body,
                             FontWeight = FontWeight.SemiBold,
                             Foreground = GetAttributeBrush(attr),
                             Width = 30,
@@ -1576,21 +1578,21 @@ namespace EveLens.Avalonia.Views.PlanEditor
                             row.Children.Add(new TextBlock
                             {
                                 Text = current.ToString(),
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                                 VerticalAlignment = VerticalAlignment.Center,
                             });
                             row.Children.Add(new TextBlock
                             {
                                 Text = "\u2192",
-                                FontSize = 10,
+                                FontSize = FontScaleService.Small,
                                 Foreground = new SolidColorBrush(Color.Parse("#FF505050")),
                                 VerticalAlignment = VerticalAlignment.Center,
                             });
                             row.Children.Add(new TextBlock
                             {
                                 Text = optimal.ToString(),
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 FontWeight = FontWeight.Bold,
                                 Foreground = new SolidColorBrush(Color.Parse("#FFF0F0F0")),
                                 VerticalAlignment = VerticalAlignment.Center,
@@ -1600,7 +1602,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                             row.Children.Add(new TextBlock
                             {
                                 Text = $"({sign}{delta})",
-                                FontSize = 10,
+                                FontSize = FontScaleService.Small,
                                 Foreground = delta > 0
                                     ? new SolidColorBrush(Color.Parse("#FF81C784"))
                                     : new SolidColorBrush(Color.Parse("#FFCF6679")),
@@ -1612,7 +1614,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                             row.Children.Add(new TextBlock
                             {
                                 Text = optimal.ToString(),
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 Foreground = new SolidColorBrush(Color.Parse("#FF505050")),
                                 VerticalAlignment = VerticalAlignment.Center,
                             });
@@ -1634,7 +1636,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                             SidebarContent.Children.Add(new TextBlock
                             {
                                 Text = "Top improved:",
-                                FontSize = 10,
+                                FontSize = FontScaleService.Small,
                                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                                 Margin = new Thickness(0, 4, 0, 2),
                             });
@@ -1644,7 +1646,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                                 SidebarContent.Children.Add(new TextBlock
                                 {
                                     Text = $"\u00B7 {skill.SkillName} {RomanNumeral(skill.Level)} \u2014 {FormatTimeCompact(skill.TimeSaved)} faster",
-                                    FontSize = 10,
+                                    FontSize = FontScaleService.Small,
                                     Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
                                     TextTrimming = TextTrimming.CharacterEllipsis,
                                     Margin = new Thickness(4, 1, 0, 0),
@@ -1658,7 +1660,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var rerunBtn = new Button
                 {
                     Content = "\u21BB Re-analyze",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
                     Margin = new Thickness(0, 6, 0, 0),
@@ -1672,7 +1674,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     Content = _showAdvanced
                         ? "Hide manual adjustment \u25B4"
                         : "Adjust manually \u25BE",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
                     Background = Brushes.Transparent,
@@ -1698,7 +1700,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 SidebarContent.Children.Add(new TextBlock
                 {
                     Text = _optimizerVm.ErrorMessage,
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
                     TextWrapping = TextWrapping.Wrap,
                     Margin = new Thickness(0, 4, 0, 4),
@@ -1707,7 +1709,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var retryBtn = new Button
                 {
                     Content = "Try Again",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
                 };
@@ -1720,7 +1722,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var optimizeBtn = new Button
             {
                 Content = "\u26A1 Optimize Plan",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(12),
                 Margin = new Thickness(0, 2, 0, 0),
@@ -1758,7 +1760,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 durationLine.Children.Add(new TextBlock
                 {
                     Text = FormatTimeCompact(manualTime),
-                    FontSize = 13,
+                    FontSize = FontScaleService.Heading,
                     FontWeight = FontWeight.Bold,
                     Foreground = diff > TimeSpan.Zero
                         ? new SolidColorBrush(Color.Parse("#FF81C784"))
@@ -1772,7 +1774,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     durationLine.Children.Add(new TextBlock
                     {
                         Text = $"(-{FormatTimeCompact(diff)})",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
                         VerticalAlignment = VerticalAlignment.Bottom,
                         Margin = new Thickness(0, 0, 0, 1),
@@ -1783,7 +1785,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     durationLine.Children.Add(new TextBlock
                     {
                         Text = $"(+{FormatTimeCompact(diff.Negate())})",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
                         VerticalAlignment = VerticalAlignment.Bottom,
                         Margin = new Thickness(0, 0, 0, 1),
@@ -1794,7 +1796,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 durationLine.Children.Add(new TextBlock
                 {
                     Text = $"vs {FormatTimeCompact(currentTime)}",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                     VerticalAlignment = VerticalAlignment.Bottom,
                     Margin = new Thickness(0, 0, 0, 1),
@@ -1805,7 +1807,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 durationLine.Children.Add(new TextBlock
                 {
                     Text = "Drag to see time impact",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                 });
             }
@@ -1819,7 +1821,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 SidebarContent.Children.Add(new TextBlock
                 {
                     Text = $"\u26A0 {unassigned} point{(unassigned != 1 ? "s" : "")} unassigned",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
                     Margin = new Thickness(0, 0, 0, 4),
@@ -1847,7 +1849,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var decBtn = new Button
                 {
                     Content = "\u2212",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Width = 20,
                     Height = 20,
                     Padding = new Thickness(0),
@@ -1869,7 +1871,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var label = new TextBlock
                 {
                     Text = $"{GetAttributeShortName(attr)} {effective}",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = isOptimal
                         ? GetAttributeBrush(attr)
@@ -1919,7 +1921,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var incBtn = new Button
                 {
                     Content = "+",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Width = 20,
                     Height = 20,
                     Padding = new Thickness(0),
@@ -1950,7 +1952,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var resetOptBtn = new Button
             {
                 Content = "Reset to optimal",
-                FontSize = 9,
+                FontSize = FontScaleService.Caption,
                 Padding = new Thickness(6, 2),
                 CornerRadius = new CornerRadius(10),
             };
@@ -1964,7 +1966,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var resetCurBtn = new Button
             {
                 Content = "Reset to current",
-                FontSize = 9,
+                FontSize = FontScaleService.Caption,
                 Padding = new Thickness(6, 2),
                 CornerRadius = new CornerRadius(10),
             };
@@ -1985,7 +1987,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             dividerPanel.Children.Add(new TextBlock
             {
                 Text = label,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 6, 0),
@@ -2006,7 +2008,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 SidebarContent.Children.Add(new TextBlock
                 {
                     Text = description,
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Foreground = new SolidColorBrush(Color.Parse("#FF585868")),
                     TextWrapping = TextWrapping.Wrap,
                     Margin = new Thickness(0, 0, 0, 2),
@@ -2052,7 +2054,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             SidebarContent.Children.Add(new TextBlock
             {
                 Text = "Browse and add skills to your training plan.",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 6),
@@ -2061,7 +2063,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             SidebarContent.Children.Add(new TextBlock
             {
                 Text = "Use the Skills, Ships, Items, or Blueprints tabs to add skills to your plan.",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 8),
@@ -2070,7 +2072,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var addBtn = new Button
             {
                 Content = "+ Add Skills",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 4),
                 CornerRadius = new CornerRadius(12),
                 HorizontalAlignment = HorizontalAlignment.Stretch,

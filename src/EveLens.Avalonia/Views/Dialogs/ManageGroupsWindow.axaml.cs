@@ -24,6 +24,8 @@ using EveLens.Common.Service;
 using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
 
+using EveLens.Common.SettingsObjects;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class ManageGroupsWindow : Window
@@ -113,7 +115,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var nameText = new TextBlock
             {
                 Text = character.Name,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = GetBrush("EveAccentPrimaryBrush"),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -171,7 +173,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             tagPanel.Children.Add(new TextBlock
             {
                 Text = group.Name,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(tagColor),
                 VerticalAlignment = VerticalAlignment.Center
             });
@@ -179,7 +181,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var removeBtn = new Button
             {
                 Content = "\u2715",
-                FontSize = 8,
+                FontSize = FontScaleService.Tiny,
                 Padding = new Thickness(2, 0),
                 Background = Brushes.Transparent,
                 BorderThickness = new Thickness(0),
@@ -236,7 +238,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 panel.Children.Add(new TextBlock
                 {
                     Text = "Assign to one group:",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = GetBrush("EveTextDisabledBrush"),
                     Margin = new Thickness(4, 2, 0, 4)
                 });
@@ -250,7 +252,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Content = new TextBlock
                     {
                         Text = "No group",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = GetBrush("EveTextSecondaryBrush")
                     }
                 };
@@ -281,7 +283,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         Content = new TextBlock
                         {
                             Text = group.Name,
-                            FontSize = 11,
+                            FontSize = FontScaleService.Body,
                             Foreground = new SolidColorBrush(tagColor)
                         }
                     };
@@ -301,7 +303,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var newGroupBtn = new Button
                 {
                     Content = "+ New Group...",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Background = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
                     Padding = new Thickness(8, 4),
@@ -418,7 +420,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 chipContent.Children.Add(new TextBlock
                 {
                     Text = $"{group.Name} ({memberCount})",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(tagColor),
                     VerticalAlignment = VerticalAlignment.Center
                 });
@@ -428,7 +430,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var renameBtn = new Button
                 {
                     Content = "\u270E",
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Padding = new Thickness(2, 0),
                     Background = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
@@ -458,7 +460,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var deleteBtn = new Button
                 {
                     Content = "\u2715",
-                    FontSize = 9,
+                    FontSize = FontScaleService.Caption,
                     Padding = new Thickness(2, 0),
                     Background = Brushes.Transparent,
                     BorderThickness = new Thickness(0),
@@ -497,7 +499,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 GroupChipsPanel.Children.Add(new TextBlock
                 {
                     Text = "No groups yet — click '+ New Group' to create one.",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = GetBrush("EveTextDisabledBrush"),
                     VerticalAlignment = VerticalAlignment.Center
                 });
@@ -552,7 +554,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var nameBox = new TextBox
             {
                 Text = defaultName,
-                FontSize = 12,
+                FontSize = FontScaleService.Subheading,
                 Margin = new Thickness(0, 8, 0, 0),
                 Watermark = "Enter name..."
             };
@@ -560,7 +562,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var okBtn = new Button
             {
                 Content = "OK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -577,7 +579,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Margin = new Thickness(16),
                     Children =
                     {
-                        new TextBlock { Text = "Name:", FontSize = 12 },
+                        new TextBlock { Text = "Name:", FontSize = FontScaleService.Subheading },
                         nameBox,
                         okBtn
                     }

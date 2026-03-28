@@ -13,6 +13,8 @@ using Avalonia.Media;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
 
+using EveLens.Common.Models;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class RemapAttributeDialog : Window
@@ -91,7 +93,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var decBtn = new Button
                 {
                     Content = "\u2212",
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Width = 28, Height = 28,
                     Padding = new Thickness(0),
                     CornerRadius = new CornerRadius(14),
@@ -107,7 +109,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // Attribute name + value
                 var valueTb = new TextBlock
                 {
-                    FontSize = 13,
+                    FontSize = FontScaleService.Heading,
                     FontWeight = FontWeight.Bold,
                     Foreground = GetBrush(attr),
                     HorizontalAlignment = HorizontalAlignment.Center,
@@ -148,7 +150,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var incBtn = new Button
                 {
                     Content = "+",
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Width = 28, Height = 28,
                     Padding = new Thickness(0),
                     CornerRadius = new CornerRadius(14),

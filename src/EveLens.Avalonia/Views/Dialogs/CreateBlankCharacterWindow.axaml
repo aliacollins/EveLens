@@ -5,54 +5,54 @@
         Width="460" Height="520"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
-        CanResize="False">
+        CanResize="True">
 
     <DockPanel Margin="20">
         <!-- Header -->
         <TextBlock DockPanel.Dock="Top"
                    Text="Create a local character for planning"
-                   FontSize="11"
+                   FontSize="{DynamicResource EveFontBody}"
                    Foreground="{StaticResource EveTextSecondaryBrush}"
                    Margin="0,0,0,12" />
 
         <!-- Name -->
-        <TextBlock DockPanel.Dock="Top" Text="Name" FontSize="11"
+        <TextBlock DockPanel.Dock="Top" Text="Name" FontSize="{DynamicResource EveFontBody}"
                    Foreground="{StaticResource EveTextPrimaryBrush}"
                    Margin="0,0,0,4" />
         <TextBox x:Name="CharacterNameTextBox" DockPanel.Dock="Top"
                  Watermark="Enter character name..."
-                 FontSize="11"
+                 FontSize="{DynamicResource EveFontBody}"
                  Margin="0,0,0,12" />
 
         <!-- Race -->
-        <TextBlock DockPanel.Dock="Top" Text="Race" FontSize="11"
+        <TextBlock DockPanel.Dock="Top" Text="Race" FontSize="{DynamicResource EveFontBody}"
                    Foreground="{StaticResource EveTextPrimaryBrush}"
                    Margin="0,0,0,4" />
         <ComboBox x:Name="RaceCombo" DockPanel.Dock="Top"
-                  FontSize="11" HorizontalAlignment="Stretch"
+                  FontSize="{DynamicResource EveFontBody}" HorizontalAlignment="Stretch"
                   Margin="0,0,0,12" />
 
         <!-- Skill summary header -->
         <TextBlock x:Name="SkillSummaryHeader" DockPanel.Dock="Top"
                    Text="Starting Skills"
-                   FontSize="12" FontWeight="SemiBold"
+                   FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                    Margin="0,0,0,6" />
 
         <!-- Bottom row: SP text + buttons -->
         <DockPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
             <TextBlock x:Name="SkillPointsText" DockPanel.Dock="Left"
-                       Text="" FontSize="11"
+                       Text="" FontSize="{DynamicResource EveFontBody}"
                        Foreground="{StaticResource EveTextSecondaryBrush}"
                        VerticalAlignment="Center" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                         Spacing="8" HorizontalAlignment="Right">
                 <Button x:Name="CreateBtn" Content="Create"
-                        FontSize="11" Padding="14,6"
+                        FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                         CornerRadius="12"
                         Foreground="{StaticResource EveAccentPrimaryBrush}" />
                 <Button x:Name="CancelBtn" Content="Cancel"
-                        FontSize="11" Padding="14,6"
+                        FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                         CornerRadius="12" />
             </StackPanel>
         </DockPanel>
