@@ -4,42 +4,42 @@
     <Border x:Name="DetailBorder" Background="{StaticResource EveBackgroundMediumBrush}"
             CornerRadius="6" Padding="12" IsVisible="False">
         <StackPanel Spacing="8">
-            <TextBlock x:Name="DetailSkillName" FontSize="14" FontWeight="Bold"
+            <TextBlock x:Name="DetailSkillName" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}" />
-            <TextBlock x:Name="DetailDescription" FontSize="11" TextWrapping="Wrap"
+            <TextBlock x:Name="DetailDescription" FontSize="{DynamicResource EveFontBody}" TextWrapping="Wrap"
                        Foreground="{StaticResource EveTextSecondaryBrush}"
                        MaxHeight="80" />
 
             <Border Height="1" Background="{StaticResource EveBorderBrush}" />
 
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4">
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Primary:" FontSize="11"
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Primary:" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
-                <TextBlock x:Name="DetailPrimary" Grid.Row="0" Grid.Column="1" FontSize="11"
+                <TextBlock x:Name="DetailPrimary" Grid.Row="0" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Secondary:" FontSize="11"
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Secondary:" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
-                <TextBlock x:Name="DetailSecondary" Grid.Row="1" Grid.Column="1" FontSize="11"
+                <TextBlock x:Name="DetailSecondary" Grid.Row="1" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Training:" FontSize="11"
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Training:" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
-                <TextBlock x:Name="DetailTrainingTime" Grid.Row="2" Grid.Column="1" FontSize="11"
+                <TextBlock x:Name="DetailTrainingTime" Grid.Row="2" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="SP/hr:" FontSize="11"
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="SP/hr:" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
-                <TextBlock x:Name="DetailSpPerHour" Grid.Row="3" Grid.Column="1" FontSize="11"
+                <TextBlock x:Name="DetailSpPerHour" Grid.Row="3" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
             </Grid>
 
             <!-- Prerequisites -->
-            <TextBlock Text="Prerequisites" FontSize="12" FontWeight="SemiBold"
+            <TextBlock Text="Prerequisites" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}" Margin="0,4,0,2" />
             <ItemsControl x:Name="PrereqList">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="8,2">
-                            <TextBlock Text="{Binding StatusIcon}" FontSize="11" />
-                            <TextBlock Text="{Binding Text}" FontSize="11"
+                            <TextBlock Text="{Binding StatusIcon}" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock Text="{Binding Text}" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{Binding TextBrush}" />
                         </StackPanel>
                     </DataTemplate>
@@ -48,13 +48,13 @@
 
             <!-- Notes -->
             <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4,0,0" />
-            <TextBlock Text="Notes" FontSize="12" FontWeight="SemiBold"
+            <TextBlock Text="Notes" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}" Margin="0,4,0,2" />
             <TextBox x:Name="NotesTextBox"
                      AcceptsReturn="True" TextWrapping="Wrap"
                      MinHeight="60" MaxHeight="120"
                      Watermark="Add a note..."
-                     FontSize="11"
+                     FontSize="{DynamicResource EveFontBody}"
                      Background="{StaticResource EveBackgroundDarkestBrush}"
                      Foreground="{StaticResource EveTextPrimaryBrush}"
                      BorderBrush="{StaticResource EveBorderBrush}"

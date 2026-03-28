@@ -30,14 +30,14 @@
                         ToolTip.Tip="Click to change account status">
                     <StackPanel Spacing="0" HorizontalAlignment="Center">
                         <TextBlock x:Name="AccountStatusLabel"
-                                   FontSize="11" FontWeight="SemiBold"
+                                   FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
                                    HorizontalAlignment="Center" />
                         <StackPanel Orientation="Horizontal" Spacing="3"
                                     HorizontalAlignment="Center">
                             <TextBlock x:Name="OverrideModeLabel"
                                        FontSize="8.5"
                                        Foreground="{StaticResource EveTextDisabledBrush}" />
-                            <TextBlock Text="&#x25BE;" FontSize="8"
+                            <TextBlock Text="&#x25BE;" FontSize="{DynamicResource EveFontTiny}"
                                        Foreground="{StaticResource EveTextDisabledBrush}"
                                        VerticalAlignment="Center" />
                         </StackPanel>
@@ -57,11 +57,11 @@
             <StackPanel Grid.Column="1" Spacing="1">
                 <!-- Name -->
                 <TextBlock Text="{Binding Name}"
-                           FontSize="15" FontWeight="Bold"
+                           FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                            Foreground="{StaticResource EveAccentPrimaryBrush}" />
 
                 <!-- Race / Bloodline (hidden when unset) -->
-                <TextBlock x:Name="RaceText" FontSize="11"
+                <TextBlock x:Name="RaceText" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            IsVisible="False" />
 
@@ -72,7 +72,7 @@
                                Foreground="{StaticResource EveSuccessGreenBrush}" />
                     <TextBlock x:Name="BalanceChangeIndicator"
                                Text="{Binding BalanceChangeText}"
-                               FontSize="10" FontWeight="SemiBold"
+                               FontSize="{DynamicResource EveFontSmall}" FontWeight="SemiBold"
                                VerticalAlignment="Center">
                         <TextBlock.Transitions>
                             <Transitions>
@@ -84,30 +84,30 @@
 
                 <!-- Corporation -->
                 <TextBlock Text="{Binding CorporationName, StringFormat='Corporation: {0}'}"
-                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Alliance (always shown to prevent layout shift) -->
                 <TextBlock x:Name="AllianceText"
-                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Security Status -->
                 <TextBlock Text="{Binding SecurityStatusText}"
-                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Active Ship -->
                 <TextBlock Text="{Binding ShipText}"
-                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Location + Docked status -->
                 <TextBlock x:Name="LocationText"
-                           FontSize="11" Foreground="{StaticResource EveSuccessGreenBrush}" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveSuccessGreenBrush}" />
                 <TextBlock x:Name="DockedText"
-                           FontSize="11" Foreground="{StaticResource EveTextSecondaryBrush}" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Inline stats line -->
                 <Border BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0"
                         Margin="0,4,0,0" Padding="0,4,0,0">
-                    <TextBlock x:Name="StatsLine" FontSize="10"
+                    <TextBlock x:Name="StatsLine" FontSize="{DynamicResource EveFontSmall}"
                                Foreground="{StaticResource EveTextDisabledBrush}" />
                 </Border>
             </StackPanel>

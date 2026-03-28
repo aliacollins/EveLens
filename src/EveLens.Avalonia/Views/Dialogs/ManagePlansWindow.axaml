@@ -11,22 +11,22 @@
         <!-- Bottom button bar -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
                     Spacing="6" Margin="0,8,0,0">
-            <Button x:Name="OpenBtn" Content="Open" FontSize="11"
+            <Button x:Name="OpenBtn" Content="Open" FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12" Click="OnOpenClick" />
-            <Button x:Name="NewBtn" Content="New" FontSize="11"
+            <Button x:Name="NewBtn" Content="New" FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12" Click="OnNewClick" />
-            <Button x:Name="DuplicateBtn" Content="Duplicate" FontSize="11"
+            <Button x:Name="DuplicateBtn" Content="Duplicate" FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12" Click="OnDuplicateClick" />
-            <Button x:Name="RenameBtn" Content="Rename" FontSize="11"
+            <Button x:Name="RenameBtn" Content="Rename" FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12" Click="OnRenameClick" />
-            <Button x:Name="DeleteBtn" Content="Delete" FontSize="11"
+            <Button x:Name="DeleteBtn" Content="Delete" FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12"
                     Foreground="{StaticResource EveErrorRedBrush}"
                     Click="OnDeleteClick" />
             <Separator Width="1" Margin="4,0" />
-            <Button x:Name="ImportBtn" Content="Import..." FontSize="11"
+            <Button x:Name="ImportBtn" Content="Import..." FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12" Click="OnImportClick" />
-            <Button x:Name="FromQueueBtn" Content="From Queue" FontSize="11"
+            <Button x:Name="FromQueueBtn" Content="From Queue" FontSize="{DynamicResource EveFontBody}"
                     Padding="10,4" CornerRadius="12" Click="OnFromQueueClick" />
         </StackPanel>
 

@@ -20,6 +20,8 @@ using EveLens.Common.Service;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 
+using EveLens.Common.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterClonesView : UserControl
@@ -129,7 +131,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevron = new TextBlock
             {
                 Text = "\u25BC",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Width = 16,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = FindBrush("EveTextSecondaryBrush")
@@ -140,7 +142,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameText = new TextBlock
             {
                 Text = clone.Name,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -154,7 +156,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 Text = clone.TotalImplantCount > 0
                     ? $"{clone.TotalImplantCount} implant{(clone.TotalImplantCount != 1 ? "s" : "")}"
                     : "No implants",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0),
                 Foreground = FindBrush("EveTextSecondaryBrush")
@@ -205,7 +207,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var slotText = new TextBlock
                 {
                     Text = implant.Bonus > 0 ? $"+{implant.Bonus} {implant.SlotLabel}" : implant.SlotLabel,
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     MinWidth = 60,
                     VerticalAlignment = VerticalAlignment.Center,
                     Foreground = FindBrush("EveAccentPrimaryBrush")
@@ -216,7 +218,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var implantName = new TextBlock
                 {
                     Text = implant.Name,
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     VerticalAlignment = VerticalAlignment.Center,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     Foreground = FindBrush("EveTextPrimaryBrush")
@@ -244,7 +246,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     Child = new TextBlock
                     {
                         Text = "No implants installed",
-                        FontSize = 10,
+                        FontSize = FontScaleService.Small,
                         Foreground = FindBrush("EveTextDisabledBrush"),
                         FontStyle = FontStyle.Italic
                     }
@@ -292,7 +294,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var labelText = new TextBlock
             {
                 Text = label + ":",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 MinWidth = 90,
                 VerticalAlignment = VerticalAlignment.Center,
                 Foreground = FindBrush("EveTextSecondaryBrush")
@@ -303,7 +305,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var valueText = new TextBlock
             {
                 Text = value,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Foreground = FindBrush("EveTextPrimaryBrush")

@@ -12,6 +12,8 @@ using EveLens.Avalonia.ViewModels;
 using EveLens.Common.Data;
 using EveLens.Common.ViewModels;
 
+using EveLens.Common.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanBlueprintBrowserView : UserControl
@@ -133,7 +135,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 PrereqsList.Children.Add(new TextBlock
                 {
                     Text = "None",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush)this.FindResource("EveTextDisabledBrush")!
                 });
             }
@@ -145,7 +147,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     grid.Children.Add(new TextBlock
                     {
                         Text = prereq.IsMet ? "\u2713 " : "\u2717 ",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = prereq.IsMet
                             ? (IBrush)this.FindResource("EveSuccessGreenBrush")!
                             : (IBrush)this.FindResource("EveErrorRedBrush")!,
@@ -154,7 +156,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     grid.Children.Add(new TextBlock
                     {
                         Text = prereq.DisplayText,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = prereq.IsMet
                             ? (IBrush)this.FindResource("EveTextSecondaryBrush")!
                             : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
@@ -171,14 +173,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 grid.Children.Add(new TextBlock
                 {
                     Text = material.Name,
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush)this.FindResource("EveTextPrimaryBrush")!,
                     [Grid.ColumnProperty] = 0
                 });
                 grid.Children.Add(new TextBlock
                 {
                     Text = material.QuantityText,
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush)this.FindResource("EveTextSecondaryBrush")!,
                     [Grid.ColumnProperty] = 1
                 });

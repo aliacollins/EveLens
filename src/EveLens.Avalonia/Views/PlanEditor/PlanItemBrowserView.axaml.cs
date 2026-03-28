@@ -13,6 +13,8 @@ using EveLens.Avalonia.ViewModels;
 using EveLens.Common.Data;
 using EveLens.Common.ViewModels;
 
+using EveLens.Common.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanItemBrowserView : UserControl
@@ -127,7 +129,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 PrereqsList.Children.Add(new TextBlock
                 {
                     Text = "None",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush)this.FindResource("EveTextDisabledBrush")!
                 });
             }
@@ -170,7 +172,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 PropertiesList.Children.Add(new TextBlock
                 {
                     Text = section.CategoryName,
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = (IBrush)this.FindResource("EveAccentPrimaryBrush")!,
                     Margin = new global::Avalonia.Thickness(0, 4, 0, 2)
@@ -182,14 +184,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     grid.Children.Add(new TextBlock
                     {
                         Text = prop.Name,
-                        FontSize = 10,
+                        FontSize = FontScaleService.Small,
                         Foreground = (IBrush)this.FindResource("EveTextSecondaryBrush")!,
                         [Grid.ColumnProperty] = 0
                     });
                     grid.Children.Add(new TextBlock
                     {
                         Text = prop.FormattedValue,
-                        FontSize = 10,
+                        FontSize = FontScaleService.Small,
                         Foreground = (IBrush)this.FindResource("EveTextPrimaryBrush")!,
                         [Grid.ColumnProperty] = 1
                     });
@@ -205,7 +207,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             grid.Children.Add(new TextBlock
             {
                 Text = prereq.IsMet ? "\u2713 " : "\u2717 ",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveSuccessGreenBrush")!
                     : (IBrush)this.FindResource("EveErrorRedBrush")!,
@@ -215,7 +217,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             grid.Children.Add(new TextBlock
             {
                 Text = prereq.DisplayText,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveTextSecondaryBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,

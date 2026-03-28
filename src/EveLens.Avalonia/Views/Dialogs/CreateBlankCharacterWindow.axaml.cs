@@ -16,6 +16,8 @@ using EveLens.Common.Data;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Helpers;
 
+using EveLens.Common.Helpers;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class CreateBlankCharacterWindow : Window
@@ -102,7 +104,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         return new TextBlock
                         {
                             Text = $"{header.Name} ({header.Count})",
-                            FontSize = 11,
+                            FontSize = FontScaleService.Body,
                             FontWeight = FontWeight.SemiBold,
                             Foreground = (IBrush?)Application.Current?.FindResource("EveAccentPrimaryBrush") ?? Brushes.Gold,
                             Margin = new Thickness(0, 6, 0, 2)
@@ -113,7 +115,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         return new TextBlock
                         {
                             Text = $"  {entry.Name} {ToRoman(entry.Level)}",
-                            FontSize = 11,
+                            FontSize = FontScaleService.Body,
                             Foreground = (IBrush?)Application.Current?.FindResource("EveTextPrimaryBrush") ?? Brushes.White,
                             Margin = new Thickness(16, 1, 0, 1)
                         };

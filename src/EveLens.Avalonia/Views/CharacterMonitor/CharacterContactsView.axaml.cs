@@ -20,6 +20,8 @@ using EveLens.Common.Models;
 using EveLens.Common.ViewModels;
 using EveLens.Common.ViewModels.Lists;
 
+using EveLens.Common.ViewModels.Lists;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterContactsView : UserControl
@@ -199,7 +201,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevronTb = new TextBlock
             {
                 Text = node.Chevron,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Width = 16,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -210,7 +212,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = groupName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -222,7 +224,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var countTb = new TextBlock
             {
                 Text = countText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0)
             };
@@ -258,7 +260,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = contact.Name,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = GetNameBrush(contact.Standing),
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -270,7 +272,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var standingTb = new TextBlock
             {
                 Text = contact.Standing.ToString("+0.00;-0.00;0.00"),
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = GetStandingBrush(contact.Standing),
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 50,
@@ -284,7 +286,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var watchlistTb = new TextBlock
             {
                 Text = contact.IsInWatchlist ? "\u2605" : string.Empty,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 20,
                 TextAlignment = TextAlignment.Center

@@ -10,15 +10,15 @@
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <TextBlock Text="Loyalty Points is not enabled for this character."
-                           FontSize="12"
+                           FontSize="{DynamicResource EveFontSubheading}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Enable this to start fetching data from EVE Online."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            HorizontalAlignment="Center" />
                 <Button Content="Enable Loyalty Points"
-                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
                         HorizontalAlignment="Center"
                         Click="OnEnableEndpoint" />
             </StackPanel>
@@ -26,9 +26,9 @@
 
         <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
             <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                <TextBlock Text="ESI scope not authorized" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
-                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
                            Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
             </StackPanel>
@@ -39,7 +39,7 @@
             <Border DockPanel.Dock="Bottom" Padding="10,5"
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-                <TextBlock x:Name="StatusText" Text="Corporations: 0" FontSize="11"
+                <TextBlock x:Name="StatusText" Text="Corporations: 0" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
             </Border>
 
@@ -64,14 +64,14 @@
                                         <Border Grid.Column="0" Width="32" Height="32" CornerRadius="4"
                                                 Background="{StaticResource EveBackgroundMediumBrush}"
                                                 Margin="0,0,10,0" VerticalAlignment="Center" ClipToBounds="True">
-                                            <TextBlock Text="{Binding Initial}" FontSize="14" FontWeight="SemiBold"
+                                            <TextBlock Text="{Binding Initial}" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                                                        Foreground="{StaticResource EveTextSecondaryBrush}"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
-                                        <TextBlock Grid.Column="1" Text="{Binding CorporationName}" FontSize="11"
+                                        <TextBlock Grid.Column="1" Text="{Binding CorporationName}" FontSize="{DynamicResource EveFontBody}"
                                                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="{Binding PointsText}" FontSize="11"
+                                        <TextBlock Grid.Column="2" Text="{Binding PointsText}" FontSize="{DynamicResource EveFontBody}"
                                                    Foreground="{StaticResource EveSuccessGreenBrush}"
                                                    VerticalAlignment="Center" Margin="12,0,0,0" />
                                     </Grid>

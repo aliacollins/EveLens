@@ -109,6 +109,9 @@ namespace EveLens.Avalonia
             Settings.Initialize();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Settings.Initialize done", printMethod: false);
 
+            // Apply font scale from settings (before any views are created)
+            FontScaleService.Apply(Settings.UI.FontScalePercent);
+
             // Phase 6: Load static datafiles
             splash.UpdateStatus("Loading game data...");
             Dispatcher.UIThread.RunJobs();

@@ -9,15 +9,15 @@
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <TextBlock Text="Research Points is not enabled for this character."
-                           FontSize="12"
+                           FontSize="{DynamicResource EveFontSubheading}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Enable this to start fetching data from EVE Online."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            HorizontalAlignment="Center" />
                 <Button Content="Enable Research Points"
-                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
                         HorizontalAlignment="Center"
                         Click="OnEnableEndpoint" />
             </StackPanel>
@@ -25,9 +25,9 @@
 
         <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
             <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                <TextBlock Text="ESI scope not authorized" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
-                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
                            Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
             </StackPanel>
