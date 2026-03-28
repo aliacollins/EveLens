@@ -57,11 +57,23 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        private IDisposable? _fontScaleSub;
+
         public CharacterComparisonWindow()
         {
             InitializeComponent();
             BuildCharacterPicker();
             UpdateStatus();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshAll));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            _vm.Dispose();
+            base.OnClosed(e);
         }
 
         #region Character Picker

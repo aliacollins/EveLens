@@ -21,6 +21,8 @@ namespace EveLens.Avalonia.Views.Dialogs
     public partial class AboutWindow : Window
     {
         private readonly Dictionary<string, Button> _tabButtons = new();
+        private IDisposable? _fontScaleSub;
+        private string _activeTab = "about";
 
         // Theme brushes resolved at construction
         private readonly IBrush _accentBrush;
@@ -49,6 +51,23 @@ namespace EveLens.Avalonia.Views.Dialogs
             BuildTabs();
             ShowTab("about");
             OkButton.Click += (_, _) => Close();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildContent));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildContent()
+        {
+            TabBar.Children.Clear();
+            _tabButtons.Clear();
+            BuildTabs();
+            ShowTab(_activeTab);
         }
 
         private static IBrush FindBrush(string key, IBrush fallback)
@@ -99,6 +118,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void ShowTab(string tabId)
         {
+            _activeTab = tabId;
             foreach (var (id, btn) in _tabButtons)
             {
                 if (id == tabId)

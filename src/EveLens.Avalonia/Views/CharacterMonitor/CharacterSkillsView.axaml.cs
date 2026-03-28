@@ -46,6 +46,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         }
 
         private IDisposable? _dataUpdatedSub;
+        private IDisposable? _fontScaleSub;
         private long _characterId;
         private SkillOverlayViewModel? _viewModel;
 
@@ -59,6 +60,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             base.OnAttachedToVisualTree(e);
             _dataUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterUpdatedEvent>(OnDataUpdated);
+            _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData));
             LoadData();
         }
 
@@ -73,6 +76,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+            _fontScaleSub?.Dispose();
+            _fontScaleSub = null;
 
             if (_viewModel != null)
             {
