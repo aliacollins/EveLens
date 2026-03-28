@@ -17,6 +17,8 @@ using Avalonia.Themes.Fluent;
 using EveLens.Common;
 using Velopack;
 
+using Velopack;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia
 {
     internal static class Program
@@ -106,7 +108,7 @@ namespace EveLens.Avalonia
                     Content = "OK",
                     HorizontalAlignment = HorizontalAlignment.Center,
                     Padding = new Thickness(24, 6),
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Cursor = new global::Avalonia.Input.Cursor(
                         global::Avalonia.Input.StandardCursorType.Hand),
                 };
@@ -122,7 +124,7 @@ namespace EveLens.Avalonia
                         new TextBlock
                         {
                             Text = "EveLens is already running",
-                            FontSize = 16,
+                            FontSize = FontScaleService.Title,
                             FontWeight = FontWeight.SemiBold,
                             Foreground = new SolidColorBrush(Color.Parse("#E6A817")),
                             HorizontalAlignment = HorizontalAlignment.Center,
@@ -130,7 +132,7 @@ namespace EveLens.Avalonia
                         new TextBlock
                         {
                             Text = "Check your taskbar or system tray for the existing session.",
-                            FontSize = 12,
+                            FontSize = FontScaleService.Subheading,
                             Foreground = new SolidColorBrush(Color.Parse("#AAAAAA")),
                             HorizontalAlignment = HorizontalAlignment.Center,
                             Margin = new Thickness(0, 0, 0, 12),

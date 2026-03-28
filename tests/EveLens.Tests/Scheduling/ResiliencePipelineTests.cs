@@ -23,8 +23,8 @@ namespace EveLens.Tests.Scheduling
         {
             ErrorClassifier.Classify(200).Should().Be(ErrorClassifier.ErrorClass.Success);
             ErrorClassifier.Classify(304).Should().Be(ErrorClassifier.ErrorClass.Success);
-            ErrorClassifier.Classify(401).Should().Be(ErrorClassifier.ErrorClass.Auth);
-            ErrorClassifier.Classify(403).Should().Be(ErrorClassifier.ErrorClass.Auth);
+            ErrorClassifier.Classify(401).Should().Be(ErrorClassifier.ErrorClass.TokenExpired);
+            ErrorClassifier.Classify(403).Should().Be(ErrorClassifier.ErrorClass.AuthPermanent);
             ErrorClassifier.Classify(429).Should().Be(ErrorClassifier.ErrorClass.RateLimit);
             ErrorClassifier.Classify(500).Should().Be(ErrorClassifier.ErrorClass.Transient);
             ErrorClassifier.Classify(502).Should().Be(ErrorClassifier.ErrorClass.Transient);

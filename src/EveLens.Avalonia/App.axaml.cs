@@ -109,6 +109,9 @@ namespace EveLens.Avalonia
             Settings.Initialize();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Settings.Initialize done", printMethod: false);
 
+            // Apply font scale from settings (before any views are created)
+            FontScaleService.Apply(Settings.UI.FontScalePercent);
+
             // Phase 6: Load static datafiles
             splash.UpdateStatus("Loading game data...");
             Dispatcher.UIThread.RunJobs();
@@ -130,6 +133,18 @@ namespace EveLens.Avalonia
             Task.Run(() => Settings.ImportDataAsync()).Wait();
             AppServices.SetDataLoaded(true);
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - data loaded", printMethod: false);
+
+            // Phase 8b: Refresh all ESI tokens before the scheduler starts dispatching.
+            // On startup, all access tokens are expired. Without this, the scheduler
+            // fires hundreds of requests with expired tokens, burning CCP's error budget
+            // and triggering the 420 cascade (Issue #34).
+            splash.UpdateStatus("Refreshing ESI tokens...");
+            Dispatcher.UIThread.RunJobs();
+            foreach (var key in EveLensClient.ESIKeys)
+                key.ForceUpdate();
+
+            // Give token refreshes a moment to complete before scheduler fires
+            Task.Delay(TimeSpan.FromSeconds(3)).Wait();
 
             // Close splash and restore normal shutdown behavior before creating the main window
             splash.Close();

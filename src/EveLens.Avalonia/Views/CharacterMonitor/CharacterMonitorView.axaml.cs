@@ -16,6 +16,8 @@ using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 using EveLens.Core.Events;
 
+using EveLens.Core.Events;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterMonitorView : UserControl
@@ -231,7 +233,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 {
                     Content = displayName,
                     IsChecked = isEnabled,
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Padding = new Thickness(4, 1),
                     Tag = method,
                 };

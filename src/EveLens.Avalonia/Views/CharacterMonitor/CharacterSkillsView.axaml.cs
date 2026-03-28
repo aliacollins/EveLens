@@ -18,6 +18,8 @@ using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 
+using EveLens.Common.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterSkillsView : UserControl
@@ -211,7 +213,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevronTb = new TextBlock
             {
                 Text = node.Chevron,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Width = 16,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -222,7 +224,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = groupName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -234,7 +236,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var countTb = new TextBlock
             {
                 Text = countText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0)
             };
@@ -245,7 +247,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var spTb = new TextBlock
             {
                 Text = spText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(4, 0)
             };
@@ -290,7 +292,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = skillTemplate.Name,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = nameBrush,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -323,7 +325,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var rankTb = new TextBlock
             {
                 Text = skillTemplate.RankText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 55,
                 TextAlignment = TextAlignment.Right,
@@ -337,7 +339,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var spTb = new TextBlock
             {
                 Text = spText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 75,
                 TextAlignment = TextAlignment.Right,

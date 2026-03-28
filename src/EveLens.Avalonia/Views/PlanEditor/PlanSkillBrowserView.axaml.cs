@@ -16,6 +16,8 @@ using EveLens.Common.Models;
 using EveLens.Common.ViewModels;
 using EveLens.Avalonia.ViewModels;
 
+using EveLens.Avalonia.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanSkillBrowserView : UserControl
@@ -188,7 +190,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 PrereqsList.Children.Add(new TextBlock
                 {
                     Text = "None",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush)this.FindResource("EveTextDisabledBrush")!
                 });
             }
@@ -212,7 +214,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var levelText = new TextBlock
             {
                 Text = $"Level {level.LevelText}:",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = level.IsTrained
                     ? (IBrush)this.FindResource("EveAccentPrimaryBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
@@ -225,7 +227,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var timeText = new TextBlock
             {
                 Text = level.IsTrained ? "Trained" : level.TrainingTimeText,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = level.IsTrained
                     ? (IBrush)this.FindResource("EveTextDisabledBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
@@ -240,7 +242,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var planBtn = new Button
                 {
                     Content = $"Plan to {level.LevelText}",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Padding = new global::Avalonia.Thickness(8, 2),
                     CornerRadius = new global::Avalonia.CornerRadius(10),
                     Tag = level.Level
@@ -254,7 +256,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var plannedLabel = new TextBlock
                 {
                     Text = "Planned",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = (IBrush)this.FindResource("EveWarningYellowBrush")!,
                     VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center
                 };
@@ -275,7 +277,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var indicator = new TextBlock
             {
                 Text = prereq.IsMet ? "\u2713 " : "\u2717 ",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveSuccessGreenBrush")!
                     : (IBrush)this.FindResource("EveErrorRedBrush")!,
@@ -287,7 +289,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var nameText = new TextBlock
             {
                 Text = prereq.DisplayText,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveTextSecondaryBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,

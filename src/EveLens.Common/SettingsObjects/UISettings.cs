@@ -64,6 +64,14 @@ namespace EveLens.Common.SettingsObjects
         public string ThemeName { get; set; } = "DarkSpace";
 
         /// <summary>
+        /// Gets or sets the font scale percentage (80-150).
+        /// 100 = default sizes, 120 = 20% larger, 150 = 50% larger.
+        /// Changes apply immediately via DynamicResource.
+        /// </summary>
+        [XmlElement("fontScalePercent")]
+        public int FontScalePercent { get; set; } = 100;
+
+        /// <summary>
         /// When true, removes images and colours to make EveLens looks like some boring business application.
         /// </summary>
         [XmlElement("safeForWork")]

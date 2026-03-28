@@ -166,6 +166,14 @@ namespace EveLens.Common.Models
         [XmlIgnore]
         public bool IsTokenRefreshing => m_queryPending;
 
+        /// <summary>
+        /// True when the access token has expired or will expire within the proactive
+        /// refresh window (100 seconds). ESI requests should NOT be sent with this token.
+        /// </summary>
+        [XmlIgnore]
+        public bool IsTokenExpiredOrExpiring =>
+            m_keyExpires < DateTime.UtcNow.AddSeconds(100);
+
 #if false
         /// <summary>
         /// Gets the account expiration date and time. RIP Account status API.
@@ -239,7 +247,9 @@ namespace EveLens.Common.Models
         internal void CheckAccessToken()
         {
             var rt = RefreshToken;
-            if (m_keyExpires < DateTime.UtcNow && !string.IsNullOrEmpty(rt) && !m_queryPending)
+            // Proactive refresh: start refreshing 100 seconds before expiry to prevent
+            // any request from going out with an expired token (Issue #34)
+            if (m_keyExpires < DateTime.UtcNow.AddSeconds(100) && !string.IsNullOrEmpty(rt) && !m_queryPending)
             {
                 var auth = SSOAuthenticationService.GetInstance();
                 if (auth == null)

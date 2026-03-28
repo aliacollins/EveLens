@@ -30,6 +30,8 @@ using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Views.Dialogs;
 using EveLens.Core.Events;
 
+using EveLens.Core.Events;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterOverviewView : UserControl
@@ -207,7 +209,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevron = new TextBlock
             {
                 Text = isCollapsed ? "\u25B6" : "\u25BC",  // ▶ or ▼
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 6, 0),
@@ -217,7 +219,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var label = new TextBlock
             {
                 Text = groupName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -228,7 +230,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var count = new TextBlock
             {
                 Text = $"{characters.Count}",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
@@ -298,7 +300,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var plusText = new TextBlock
             {
                 Text = "+",
-                FontSize = 24,
+                FontSize = FontScaleService.Title,
                 FontWeight = FontWeight.Light,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 HorizontalAlignment = HorizontalAlignment.Center
@@ -307,7 +309,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var labelText = new TextBlock
             {
                 Text = "Add New Character",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center
@@ -316,7 +318,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var subtitleText = new TextBlock
             {
                 Text = "Sign in with EVE to get started",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
@@ -383,7 +385,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             container.Children.Add(new TextBlock
             {
                 Text = "Welcome to EveLens",
-                FontSize = 15,
+                FontSize = FontScaleService.Title,
                 FontWeight = FontWeight.Bold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -393,7 +395,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             container.Children.Add(new TextBlock
             {
                 Text = "Add your first character to start monitoring\nskills, wallet, assets, and more.",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
@@ -404,7 +406,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var addButton = new Button
             {
                 Content = "Add Character",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(16, 6),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
@@ -420,7 +422,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             container.Children.Add(new TextBlock
             {
                 Text = "You can also add characters from the File menu.",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
@@ -494,7 +496,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             infoPanel.Children.Add(new TextBlock
             {
                 Text = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name,
-                FontSize = 13, FontWeight = FontWeight.Bold,
+                FontSize = FontScaleService.Heading, FontWeight = FontWeight.Bold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
@@ -502,7 +504,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var iskText = new TextBlock
             {
                 Text = PrivacyHelper.IsBalanceHidden ? $"{PrivacyHelper.Mask} ISK" : $"{character.Balance:N2} ISK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
                 Tag = "IskText",
                 Transitions = new global::Avalonia.Animation.Transitions
@@ -520,7 +522,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var spText = new TextBlock
             {
                 Text = PrivacyHelper.IsSkillPointsHidden ? $"{PrivacyHelper.Mask} SP" : $"{character.SkillPoints:N0} SP",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
                 Tag = "SpText",
                 Transitions = new global::Avalonia.Animation.Transitions
@@ -540,7 +542,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var badgeText = new TextBlock
             {
                 Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha",
-                FontSize = 9, FontWeight = FontWeight.SemiBold,
+                FontSize = FontScaleService.Caption, FontWeight = FontWeight.SemiBold,
                 Foreground = isOmega
                     ? new SolidColorBrush(Color.Parse("#FF00C853"))
                     : new SolidColorBrush(Color.Parse("#FFFF6D00"))
@@ -561,7 +563,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // Training status
             var trainingText = new TextBlock
             {
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveWarningYellowBrush", Brushes.Yellow),
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Tag = "TrainingText"

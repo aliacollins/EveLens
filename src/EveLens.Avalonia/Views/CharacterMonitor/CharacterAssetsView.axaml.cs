@@ -20,6 +20,8 @@ using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Events;
 using EveLens.Common.Services;
 
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterAssetsView : UserControl
@@ -251,7 +253,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevronTb = new TextBlock
             {
                 Text = node.Chevron,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Width = 16,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -262,7 +264,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = groupName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -274,7 +276,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var countTb = new TextBlock
             {
                 Text = countText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0)
             };
@@ -287,7 +289,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var valTb = new TextBlock
                 {
                     Text = summaryText,
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     VerticalAlignment = VerticalAlignment.Center,
                     Margin = new Thickness(4, 0)
                 };
@@ -326,7 +328,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = item.ItemName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
@@ -337,7 +339,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var qtyTb = new TextBlock
             {
                 Text = item.QuantityText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0),
                 MinWidth = 50,
@@ -350,7 +352,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var valTb = new TextBlock
             {
                 Text = item.ValueText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 80,
                 TextAlignment = TextAlignment.Right

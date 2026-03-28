@@ -4,11 +4,11 @@
     <Border Background="{StaticResource EveBackgroundMediumBrush}"
             CornerRadius="6" Padding="12,10" Margin="4">
         <StackPanel Spacing="6">
-            <TextBlock Text="Cost" FontSize="10"
+            <TextBlock Text="Cost" FontSize="{DynamicResource EveFontSmall}"
                        Foreground="{StaticResource EveTextDisabledBrush}" />
-            <TextBlock x:Name="BooksCostText" FontSize="14" FontWeight="Bold"
+            <TextBlock x:Name="BooksCostText" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                        Foreground="{StaticResource EveSuccessGreenBrush}" />
-            <TextBlock x:Name="NotKnownCostText" FontSize="11"
+            <TextBlock x:Name="NotKnownCostText" FontSize="{DynamicResource EveFontBody}"
                        Foreground="{StaticResource EveTextSecondaryBrush}" />
         </StackPanel>
     </Border>

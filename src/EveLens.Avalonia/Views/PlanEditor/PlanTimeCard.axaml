@@ -4,11 +4,11 @@
     <Border Background="{StaticResource EveBackgroundMediumBrush}"
             CornerRadius="6" Padding="12,10" Margin="4">
         <StackPanel Spacing="6">
-            <TextBlock Text="Training Time" FontSize="10"
+            <TextBlock Text="Training Time" FontSize="{DynamicResource EveFontSmall}"
                        Foreground="{StaticResource EveTextDisabledBrush}" />
-            <TextBlock x:Name="TotalTimeText" FontSize="14" FontWeight="Bold"
+            <TextBlock x:Name="TotalTimeText" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                        Foreground="{StaticResource EveTextPrimaryBrush}" />
-            <TextBlock x:Name="CompletionText" FontSize="11"
+            <TextBlock x:Name="CompletionText" FontSize="{DynamicResource EveFontBody}"
                        Foreground="{StaticResource EveTextSecondaryBrush}" />
         </StackPanel>
     </Border>

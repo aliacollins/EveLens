@@ -14,6 +14,8 @@ using EveLens.Common.CustomEventArgs;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
 
+using EveLens.Common.Service;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class AddCharacterWindow : Window
@@ -189,7 +191,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 PreviousAddsList.Children.Add(new TextBlock
                 {
                     Text = $"\u2713 {name}",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush?)this.FindResource("EveTextSecondaryBrush") ?? Brushes.Gray
                 });
             }

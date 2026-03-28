@@ -5,29 +5,29 @@
         Width="420" Height="320"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
-        CanResize="False">
+        CanResize="True">
 
     <Grid Margin="20">
         <!-- State: Ready (initial landing) -->
         <Border x:Name="ReadyPanel" IsVisible="True">
             <StackPanel VerticalAlignment="Center" Spacing="8">
                 <TextBlock Text="Sign in with EVE Online"
-                           FontSize="14" FontWeight="SemiBold"
+                           FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{StaticResource EveAccentPrimaryBrush}" />
                 <TextBlock Text="Your browser will open to CCP's secure login page. EveLens never sees your password."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
                             HorizontalAlignment="Right">
                     <Button x:Name="OpenLoginBtn"
                             Content="Sign in with EVE"
-                            FontSize="11" Padding="14,6"
+                            FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                             CornerRadius="12"
                             Foreground="{StaticResource EveAccentPrimaryBrush}" />
                     <Button x:Name="CancelReadyBtn"
                             Content="Cancel"
-                            FontSize="11" Padding="14,6"
+                            FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                             CornerRadius="12" />
                 </StackPanel>
             </StackPanel>
@@ -37,10 +37,10 @@
         <Border x:Name="WaitingPanel" IsVisible="False">
             <StackPanel VerticalAlignment="Center" Spacing="8">
                 <TextBlock Text="Waiting for login..."
-                           FontSize="14" FontWeight="SemiBold"
+                           FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{StaticResource EveWarningYellowBrush}" />
                 <TextBlock Text="Complete the sign-in in your browser, then return here."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            TextWrapping="Wrap" />
                 <ProgressBar IsIndeterminate="True" Margin="0,8,0,0"
@@ -48,7 +48,7 @@
                              Foreground="{StaticResource EveAccentPrimaryBrush}" />
                 <Button x:Name="CancelWaitingBtn"
                         Content="Cancel"
-                        FontSize="11" Padding="14,6"
+                        FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                         CornerRadius="12"
                         HorizontalAlignment="Right"
                         Margin="0,8,0,0" />
@@ -60,16 +60,16 @@
             <StackPanel VerticalAlignment="Top" Spacing="8">
                 <!-- Just-added character -->
                 <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="&#x2713;" FontSize="18"
+                    <TextBlock Text="&#x2713;" FontSize="{DynamicResource EveFontTitle}"
                                Foreground="{StaticResource EveSuccessGreenBrush}"
                                VerticalAlignment="Center" />
                     <StackPanel Spacing="2">
                         <TextBlock x:Name="CharacterNameText"
                                    Text="Character Name"
-                                   FontSize="14" FontWeight="Bold"
+                                   FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{StaticResource EveAccentPrimaryBrush}" />
                         <TextBlock Text="Added successfully"
-                                   FontSize="11"
+                                   FontSize="{DynamicResource EveFontBody}"
                                    Foreground="{StaticResource EveSuccessGreenBrush}" />
                     </StackPanel>
                 </StackPanel>
@@ -80,7 +80,7 @@
                         Margin="0,4" IsVisible="False" />
                 <TextBlock x:Name="PreviousAddsLabel"
                            Text="Added earlier this session:"
-                           FontSize="10"
+                           FontSize="{DynamicResource EveFontSmall}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            IsVisible="False" />
                 <StackPanel x:Name="PreviousAddsList" Spacing="2" />
@@ -90,12 +90,12 @@
                             HorizontalAlignment="Right">
                     <Button x:Name="AddAnotherBtn"
                             Content="+ Add Another"
-                            FontSize="11" Padding="14,6"
+                            FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                             CornerRadius="12"
                             Foreground="{StaticResource EveAccentPrimaryBrush}" />
                     <Button x:Name="DoneBtn"
                             Content="Done"
-                            FontSize="11" Padding="14,6"
+                            FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                             CornerRadius="12" />
                 </StackPanel>
             </StackPanel>
@@ -105,22 +105,22 @@
         <Border x:Name="ErrorPanel" IsVisible="False">
             <StackPanel VerticalAlignment="Center" Spacing="8">
                 <TextBlock Text="Authentication failed"
-                           FontSize="14" FontWeight="SemiBold"
+                           FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{StaticResource EveErrorRedBrush}" />
                 <TextBlock x:Name="ErrorMessageText"
                            Text="An error occurred."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            TextWrapping="Wrap" />
                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,12,0,0"
                             HorizontalAlignment="Right">
                     <Button x:Name="TryAgainBtn"
                             Content="Try Again"
-                            FontSize="11" Padding="14,6"
+                            FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                             CornerRadius="12" />
                     <Button x:Name="CancelErrorBtn"
                             Content="Cancel"
-                            FontSize="11" Padding="14,6"
+                            FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                             CornerRadius="12" />
                 </StackPanel>
             </StackPanel>

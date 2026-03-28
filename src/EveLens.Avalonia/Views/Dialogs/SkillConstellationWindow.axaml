@@ -15,10 +15,10 @@
         <StackPanel Margin="24,20" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="8">
             <StackPanel Spacing="4">
                 <TextBlock x:Name="TitleText" Text="SKILL CONSTELLATION"
-                           FontSize="15" FontWeight="SemiBold"
+                           FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="#E8A817" LetterSpacing="2" />
                 <TextBlock x:Name="CharInfoText" Text=""
-                           FontSize="11" Foreground="#484F58" />
+                           FontSize="{DynamicResource EveFontBody}" Foreground="#484F58" />
             </StackPanel>
 
             <!-- Search bar -->
@@ -26,13 +26,13 @@
                     CornerRadius="14" Padding="0" Width="260">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Left" Text="&#x1F50D;"
-                               FontSize="12" VerticalAlignment="Center" Margin="10,0,6,0"
+                               FontSize="{DynamicResource EveFontSubheading}" VerticalAlignment="Center" Margin="10,0,6,0"
                                Foreground="#484F58" />
                     <Button x:Name="ClearSearchBtn" DockPanel.Dock="Right" Classes="ghost"
-                            Content="&#x2715;" FontSize="10" Padding="8,4" IsVisible="False"
+                            Content="&#x2715;" FontSize="{DynamicResource EveFontSmall}" Padding="8,4" IsVisible="False"
                             Foreground="#484F58" />
                     <TextBox x:Name="SearchBox" Watermark="Search skills..."
-                             FontSize="11" Background="Transparent" BorderThickness="0"
+                             FontSize="{DynamicResource EveFontBody}" Background="Transparent" BorderThickness="0"
                              Foreground="#C9D1D9" Padding="2,6" />
                 </DockPanel>
             </Border>
@@ -52,20 +52,20 @@
                     Orientation="Horizontal" Spacing="16">
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Border Width="8" Height="8" CornerRadius="4" Background="#E8A44A" />
-                <TextBlock Text="Trained" FontSize="10" Foreground="#484F58" />
+                <TextBlock Text="Trained" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Border Width="6" Height="6" CornerRadius="3"
                         Background="Transparent" BorderBrush="#30FFFFFF" BorderThickness="1" />
-                <TextBlock Text="Untrained" FontSize="10" Foreground="#484F58" />
+                <TextBlock Text="Untrained" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Border Width="8" Height="8" CornerRadius="4" Background="#E8A44A"
                         BoxShadow="0 0 8 0 #E8A44A" />
-                <TextBlock Text="Training" FontSize="10" Foreground="#484F58" />
+                <TextBlock Text="Training" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
             </StackPanel>
             <Button x:Name="ToggleLabelsBtn" Classes="ghost"
-                    Content="Show All Labels" FontSize="10" Padding="4,2" />
+                    Content="Show All Labels" FontSize="{DynamicResource EveFontSmall}" Padding="4,2" />
         </StackPanel>
 
         <!-- HUD: Bottom center — group chips -->
@@ -81,7 +81,7 @@
 
         <!-- HUD: Bottom right — controls hint -->
         <TextBlock Text="Scroll to zoom  ·  Drag to pan  ·  Click stars to inspect"
-                   FontSize="9" Foreground="#2D333B"
+                   FontSize="{DynamicResource EveFontCaption}" Foreground="#2D333B"
                    VerticalAlignment="Bottom" HorizontalAlignment="Right"
                    Margin="0,0,24,60" />
 
@@ -95,25 +95,25 @@
                 <!-- Header -->
                 <DockPanel>
                     <Button x:Name="CloseDetailBtn" DockPanel.Dock="Right" Classes="ghost"
-                            Content="×" FontSize="14" Padding="4,0" VerticalAlignment="Top" />
+                            Content="×" FontSize="{DynamicResource EveFontTitle}" Padding="4,0" VerticalAlignment="Top" />
                     <StackPanel Spacing="4">
-                        <TextBlock x:Name="DetailName" FontSize="14" FontWeight="SemiBold"
+                        <TextBlock x:Name="DetailName" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                                    Foreground="#F0F6FC" />
-                        <TextBlock x:Name="DetailGroup" FontSize="10" />
+                        <TextBlock x:Name="DetailGroup" FontSize="{DynamicResource EveFontSmall}" />
                     </StackPanel>
                 </DockPanel>
 
                 <!-- Level bar -->
                 <StackPanel Spacing="5">
-                    <TextBlock Text="LEVEL" FontSize="10" Foreground="#484F58"
+                    <TextBlock Text="LEVEL" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58"
                                LetterSpacing="1" />
                     <StackPanel x:Name="LevelPips" Orientation="Horizontal" Spacing="3" />
-                    <TextBlock x:Name="LevelStatus" FontSize="11" Foreground="#8B949E" />
+                    <TextBlock x:Name="LevelStatus" FontSize="{DynamicResource EveFontBody}" Foreground="#8B949E" />
                 </StackPanel>
 
                 <!-- Prerequisites -->
                 <StackPanel x:Name="PrereqSection" Spacing="5">
-                    <TextBlock Text="PREREQUISITES" FontSize="10" Foreground="#484F58"
+                    <TextBlock Text="PREREQUISITES" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58"
                                LetterSpacing="1" />
                     <StackPanel x:Name="PrereqList" Spacing="2" />
                 </StackPanel>

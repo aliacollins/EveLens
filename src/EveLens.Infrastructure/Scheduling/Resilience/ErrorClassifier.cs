@@ -15,7 +15,10 @@ namespace EveLens.Common.Scheduling.Resilience
         {
             Success,
             Transient,
-            Auth,
+            /// <summary>Token expired (401) — should auto-refresh, not permanent.</summary>
+            TokenExpired,
+            /// <summary>Forbidden (403) — wrong scopes or character transfer, user action needed.</summary>
+            AuthPermanent,
             RateLimit,
             Permanent,
             TokenRefresh,
@@ -25,7 +28,8 @@ namespace EveLens.Common.Scheduling.Resilience
         public static ErrorClass Classify(int statusCode) => statusCode switch
         {
             200 or 304 => ErrorClass.Success,
-            401 or 403 => ErrorClass.Auth,
+            401 => ErrorClass.TokenExpired,     // Transient — token refresh will fix it
+            403 => ErrorClass.AuthPermanent,     // Permanent — scopes revoked or character transferred
             429 => ErrorClass.RateLimit,
             >= 500 => ErrorClass.Transient,
             -1 => ErrorClass.TokenRefresh,
