@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-03-28</date>
+      <version>1.1.0.2</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-beta.2
+
+Font scaling, ESI token fix, group reorder, queue monitor, add character UX (#34, #39, #40, #41, #42, #43)]]></message>
+    </release>
+    <release>
       <date>2026-03-27</date>
       <version>1.0.1.1</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
