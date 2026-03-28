@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-29</date>
+      <version>1.1.0.9</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-alpha.9
+
+Add Untrained filter button to Skills tab (#33)]]></message>
+    </release>
+    <release>
+      <date>2026-03-29</date>
       <version>1.1.0.8</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Queue monitor, add character UX, group redesign, blueprint tree, dead code remov
       <message><![CDATA[EveLens 1.0.0-alpha.47
 
 Fix promote.ps1 array-join bug in version counter]]></message>
-    </release>
-    <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.46</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.46
-
-Fix promote.ps1 version counter for cross-channel promotions]]></message>
     </release>
   </releases>
   <datafiles>
