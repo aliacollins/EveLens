@@ -1038,8 +1038,20 @@ namespace EveLens.Avalonia.Views.PlanEditor
             return border;
         }
 
-        private static Control BuildLevelBlocks(int trainedLevel, int targetLevel, bool isTraining)
+        private Control BuildLevelBlocks(int trainedLevel, int targetLevel, bool isTraining)
         {
+            // Theme-aware level blocks — accent color at various opacities
+            var accentColor = Color.Parse("#FFE6A817");
+            if (this.TryFindResource("EveAccentPrimary", this.ActualThemeVariant, out var accentRes) && accentRes is Color ac)
+                accentColor = ac;
+
+            var trainedBrush = new SolidColorBrush(accentColor);
+            IBrush trainingBrush = Brushes.LimeGreen;
+            if (this.TryFindResource("EveSuccessGreenBrush", this.ActualThemeVariant, out var greenRes) && greenRes is IBrush gb)
+                trainingBrush = gb;
+            var plannedBrush = new SolidColorBrush(new Color(80, accentColor.R, accentColor.G, accentColor.B));
+            var emptyBrush = new SolidColorBrush(new Color(30, accentColor.R, accentColor.G, accentColor.B));
+
             var panel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -1052,13 +1064,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 IBrush fill;
                 if (i <= trainedLevel)
-                    fill = new SolidColorBrush(Color.Parse("#FFE6A817")); // Gold = trained
+                    fill = trainedBrush;
                 else if (i == targetLevel && isTraining)
-                    fill = new SolidColorBrush(Color.Parse("#FF81C784")); // Green = training
+                    fill = trainingBrush;
                 else if (i <= targetLevel)
-                    fill = new SolidColorBrush(Color.Parse("#FF4A4A5A")); // Dark = planned but not trained
+                    fill = plannedBrush;
                 else
-                    fill = new SolidColorBrush(Color.Parse("#FF252535")); // Darkest = not planned
+                    fill = emptyBrush;
 
                 panel.Children.Add(new Border
                 {

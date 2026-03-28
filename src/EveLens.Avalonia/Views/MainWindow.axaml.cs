@@ -1843,21 +1843,8 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                var dialog = new Window
-                {
-                    Title = "Character Comparison",
-                    Width = 300,
-                    Height = 150,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new TextBlock
-                    {
-                        Text = "Character Comparison — Coming soon",
-                        VerticalAlignment = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(20)
-                    }
-                };
-                await dialog.ShowDialog(this);
+                var window = new CharacterComparisonWindow();
+                await window.ShowDialog(this);
             }
             catch (Exception ex)
             {
