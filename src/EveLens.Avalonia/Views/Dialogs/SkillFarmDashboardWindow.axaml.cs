@@ -20,6 +20,7 @@ using EveLens.Avalonia.Services;
 using EveLens.Common;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
+using EveLens.Common.Helpers;
 using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
 using EveLens.Common.ViewModels;
@@ -150,7 +151,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 if (optimizedNet > netProfit)
                 {
                     displayNet = optimizedNet;
-                    netDetail = $"sell all via {bestSeller.Character.Name.Split(' ')[0]} ({bestSeller.SalesTaxPercent:F1}% tax)";
+                    netDetail = $"sell all via {CharName(bestSeller.Character).Split(' ')[0]} ({bestSeller.SalesTaxPercent:F1}% tax)";
                 }
             }
 
@@ -367,8 +368,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                     // Tooltip with details
                     string tooltip = alertType == FarmAlertType.ReadyButPaused
-                        ? $"{alert.CharacterName}: {entry.ExtractionsAvailable} injectors ready"
-                        : $"{alert.CharacterName}: {alert.Message}";
+                        ? $"{CharName(alert.CharacterName)}: {entry.ExtractionsAvailable} injectors ready"
+                        : $"{CharName(alert.CharacterName)}: {alert.Message}";
                     ToolTip.SetTip(container, tooltip);
 
                     portraitStrip.Children.Add(container);
@@ -453,7 +454,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             });
             namePanel.Children.Add(new TextBlock
             {
-                Text = entry.Character.Name,
+                Text = CharName(entry.Character),
                 FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveAccentPrimaryBrush"),
                 VerticalAlignment = VerticalAlignment.Center
@@ -636,7 +637,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                     row.Children.Add(new TextBlock
                     {
-                        Text = character.Name,
+                        Text = CharName(character),
                         FontSize = FontScaleService.Body,
                         Foreground = FindBrush("EveAccentPrimaryBrush"),
                         VerticalAlignment = VerticalAlignment.Center
@@ -700,6 +701,12 @@ namespace EveLens.Avalonia.Views.Dialogs
         #endregion
 
         #region Helpers
+
+        private static string CharName(Character character)
+            => PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name;
+
+        private static string CharName(string name)
+            => PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : name;
 
         private void UpdateStatus()
         {
