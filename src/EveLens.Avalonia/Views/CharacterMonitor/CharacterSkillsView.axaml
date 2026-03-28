@@ -70,6 +70,9 @@
                 <ToggleButton x:Name="LevelZeroBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
                               Click="OnLevelFilterClicked" Tag="0"
                               ToolTip.Tip="Show only injected but untrained skills" />
+                <ToggleButton x:Name="UntrainedBtn" FontSize="9.5" Padding="8,3" CornerRadius="10"
+                              Click="OnLevelFilterClicked" Tag="-2"
+                              ToolTip.Tip="Show skills not yet injected — what you can still learn" />
             </StackPanel>
         </Border>
 
