@@ -68,7 +68,8 @@ namespace EveLens.Tests.Architecture
             // not event-subscribing ViewModels requiring disposal.
             var dataProjectionExclusions = new HashSet<string>
             {
-                "ItemPropertiesViewModel"
+                "ItemPropertiesViewModel",
+                "CharacterComparisonViewModel"
             };
 
             // Every concrete ViewModel in the ViewModels namespace should inherit from ViewModelBase

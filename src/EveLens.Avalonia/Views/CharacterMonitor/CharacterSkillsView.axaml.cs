@@ -24,12 +24,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterSkillsView : UserControl
     {
-        private static readonly IBrush FilledBlock = new SolidColorBrush(Color.Parse("#FFE6A817"));
-        private static readonly IBrush EmptyBlock = new SolidColorBrush(Color.Parse("#FF2A2A4A"));
-        private static readonly IBrush TrainingBlock = new SolidColorBrush(Color.Parse("#FF81C784"));
-        private static readonly IBrush TrainedNameColor = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
-        private static readonly IBrush UntrainedNameColor = new SolidColorBrush(Color.Parse("#FF505060"));
-        private static readonly IBrush TrainingNameColor = new SolidColorBrush(Color.Parse("#FF81C784"));
+        // Theme-aware — resolved per render. Accent color used for trained blocks.
+        private IBrush FilledBlock => FindThemeBrush("EveAccentPrimaryBrush") ?? Brushes.Gold;
+        private IBrush EmptyBlock => GetAccentDimBrush(30);
+        private IBrush TrainingBlock => FindThemeBrush("EveSuccessGreenBrush") ?? Brushes.LimeGreen;
+        private IBrush TrainedNameColor => FindThemeBrush("EveTextPrimaryBrush") ?? Brushes.White;
+        private IBrush UntrainedNameColor => FindThemeBrush("EveTextDisabledBrush") ?? Brushes.Gray;
+        private IBrush TrainingNameColor => FindThemeBrush("EveSuccessGreenBrush") ?? Brushes.LimeGreen;
+
+        private IBrush? FindThemeBrush(string key)
+        {
+            if (this.TryFindResource(key, this.ActualThemeVariant, out var res) && res is IBrush b) return b;
+            return null;
+        }
+
+        private IBrush GetAccentDimBrush(byte alpha)
+        {
+            if (this.TryFindResource("EveAccentPrimary", this.ActualThemeVariant, out var res) && res is Color c)
+                return new SolidColorBrush(new Color(alpha, c.R, c.G, c.B));
+            return new SolidColorBrush(Color.Parse("#1E707070"));
+        }
 
         private IDisposable? _dataUpdatedSub;
         private long _characterId;
@@ -370,7 +384,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             return null;
         }
 
-        private static IBrush BlockColor(int lvl, SkillState state)
+        private IBrush BlockColor(int lvl, SkillState state)
         {
             if (lvl <= state.Level) return FilledBlock;
             if (state.IsTraining && lvl == state.Level + 1) return TrainingBlock;
