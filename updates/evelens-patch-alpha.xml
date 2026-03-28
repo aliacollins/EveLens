@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-03-28</date>
+      <version>1.0.1.4</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.1-alpha.4
+
+Group and character reorder, strip divider, help text (#42)]]></message>
+    </release>
+    <release>
+      <date>2026-03-28</date>
       <version>1.0.1.3</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
@@ -94,16 +104,6 @@ Fix promote.ps1 cross-branch merge strategy for alpha-to-beta promotions]]></mes
       <message><![CDATA[EveLens 1.0.0-alpha.43
 
 Fix window position save/restore across restarts and multi-monitor setups]]></message>
-    </release>
-    <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.42</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.42
-
-Beta launch prep: scrollbar fix, window position save, tray toggle, group collapse/reorder, README rewrite]]></message>
     </release>
   </releases>
   <datafiles>
