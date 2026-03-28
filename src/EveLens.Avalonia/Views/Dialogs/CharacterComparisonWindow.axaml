@@ -1,0 +1,82 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EveLens.Avalonia.Views.Dialogs.CharacterComparisonWindow"
+        Title="Character Skill Comparison"
+        Width="850" Height="650"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        Background="{StaticResource EveBackgroundDarkBrush}"
+        CanResize="True">
+
+    <DockPanel Margin="12">
+        <!-- Character picker (top) -->
+        <Border DockPanel.Dock="Top" Padding="8,8"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                CornerRadius="6" Margin="0,0,0,8">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Select Characters to Compare"
+                           FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <WrapPanel x:Name="CharacterPickerPanel" Orientation="Horizontal" />
+            </StackPanel>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Padding="8,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                CornerRadius="6" Margin="0,0,0,4">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                    <ToggleButton x:Name="DifferencesToggle" Content="Differences Only"
+                                  FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                                  Click="OnDifferencesToggled" />
+                    <Button Content="Collapse All" FontSize="{DynamicResource EveFontSmall}"
+                            Padding="8,3" CornerRadius="10" Click="OnCollapseAll" />
+                    <Button Content="Expand All" FontSize="{DynamicResource EveFontSmall}"
+                            Padding="8,3" CornerRadius="10" Click="OnExpandAll" />
+                </StackPanel>
+                <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
+                        BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1">
+                    <DockPanel>
+                        <Button x:Name="ClearFilterBtn" DockPanel.Dock="Right"
+                                Content="&#x2715;" FontSize="{DynamicResource EveFontCaption}"
+                                Background="Transparent" BorderThickness="0"
+                                Padding="6,3" CornerRadius="0,12,12,0"
+                                IsVisible="False" Click="OnClearFilter" />
+                        <TextBox x:Name="FilterBox" Watermark="Search skills..."
+                                 FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
+                                 Background="Transparent" BorderThickness="0"
+                                 TextChanged="OnFilterChanged" />
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar (bottom) -->
+        <Border DockPanel.Dock="Bottom" Padding="10,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="StatusText" FontSize="{DynamicResource EveFontBody}"
+                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </Border>
+
+        <!-- Empty state -->
+        <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Spacing="8" IsVisible="True">
+            <TextBlock Text="Select at least 2 characters to compare"
+                       FontSize="{DynamicResource EveFontSubheading}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Click the + button above to add characters"
+                       FontSize="{DynamicResource EveFontSmall}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Comparison grid -->
+        <ScrollViewer x:Name="ComparisonScroller" IsVisible="False"
+                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ComparisonPanel" Spacing="1" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>
