@@ -55,10 +55,19 @@ namespace EveLens.Tests.Scheduling
             CacheDuration = cache ?? TimeSpan.FromMinutes(2)
         };
 
-        private FetchRecord AuthError(DateTime timestamp) => new()
+        /// <summary>401 Unauthorized — token expired, transient (should NOT trigger Suspended).</summary>
+        private FetchRecord TokenExpiredError(DateTime timestamp) => new()
         {
             Timestamp = timestamp,
             StatusCode = 401,
+            CacheDuration = TimeSpan.FromMinutes(2)
+        };
+
+        /// <summary>403 Forbidden — permanent auth failure (SHOULD trigger Suspended).</summary>
+        private FetchRecord AuthError(DateTime timestamp) => new()
+        {
+            Timestamp = timestamp,
+            StatusCode = 403,
             CacheDuration = TimeSpan.FromMinutes(2)
         };
 
@@ -306,6 +315,15 @@ namespace EveLens.Tests.Scheduling
             _tracker.Record(CharId, Skills, AuthError(_baseTime));
 
             _tracker.GetHealth(CharId, Skills).Should().Be(EndpointHealth.Suspended);
+        }
+
+        [Fact]
+        public void TokenExpired401_DoesNotTriggerSuspended()
+        {
+            _tracker.Record(CharId, Skills, TokenExpiredError(_baseTime));
+
+            // 401 should NOT go to Suspended — token refresh will handle it
+            _tracker.GetHealth(CharId, Skills).Should().NotBe(EndpointHealth.Suspended);
         }
 
         [Fact]

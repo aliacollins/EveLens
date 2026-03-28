@@ -714,8 +714,11 @@ namespace EveLens.Common.Services
                 if (esiKey == null || EsiErrors.IsErrorCountExceeded)
                     return new FetchOutcome { StatusCode = 0 };
 
-                // Token refresh in-flight — skip this cycle, scheduler retries in ~3s
-                if (string.IsNullOrEmpty(esiKey.AccessToken) && esiKey.IsTokenRefreshing)
+                // Token expired/expiring or refresh in-flight — skip this cycle.
+                // Don't send requests with expired tokens; the scheduler retries in ~3s.
+                // This prevents 401 bursts that burn CCP's per-IP error budget (Issue #34).
+                if (esiKey.IsTokenExpiredOrExpiring || esiKey.IsTokenRefreshing ||
+                    string.IsNullOrEmpty(esiKey.AccessToken))
                     return new FetchOutcome { StatusCode = -1 };
 
                 // Set monitor to Updating for UI throbber
@@ -793,8 +796,11 @@ namespace EveLens.Common.Services
                 if (esiKey == null || EsiErrors.IsErrorCountExceeded)
                     return new FetchOutcome { StatusCode = 0 };
 
-                // Token refresh in-flight — skip this cycle, scheduler retries in ~3s
-                if (string.IsNullOrEmpty(esiKey.AccessToken) && esiKey.IsTokenRefreshing)
+                // Token expired/expiring or refresh in-flight — skip this cycle.
+                // Don't send requests with expired tokens; the scheduler retries in ~3s.
+                // This prevents 401 bursts that burn CCP's per-IP error budget (Issue #34).
+                if (esiKey.IsTokenExpiredOrExpiring || esiKey.IsTokenRefreshing ||
+                    string.IsNullOrEmpty(esiKey.AccessToken))
                     return new FetchOutcome { StatusCode = -1 };
 
                 // Set monitor to Updating for UI throbber

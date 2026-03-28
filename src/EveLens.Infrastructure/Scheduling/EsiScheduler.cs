@@ -320,8 +320,13 @@ namespace EveLens.Common.Scheduling
                         Enqueue(job, nextDue304 + FetchPolicy.GetJitter(job.Priority));
                         break;
 
-                    case 401:
-                    case 403: // Auth failed — suspend all jobs for this character
+                    case 401: // Token expired — don't suspend, token refresh will handle it.
+                        // The pre-flight check should prevent most 401s (Issue #34).
+                        // If one slips through, just re-enqueue with short backoff.
+                        Enqueue(job, DateTime.UtcNow.AddSeconds(15));
+                        break;
+
+                    case 403: // Forbidden — wrong scopes or character transfer, suspend
                         if (_authStates.TryGetValue(job.CharacterId, out var authState))
                             authState.MarkFailed();
                         BumpGeneration(job.CharacterId);
