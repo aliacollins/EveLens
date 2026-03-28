@@ -63,6 +63,7 @@ namespace EveLens.Avalonia.Views
         private NotificationCenterViewModel? _notificationVm;
         private IDisposable? _notificationSentSub;
         private IDisposable? _privacyModeSub;
+        private IDisposable? _fontScaleSub;
 
         public MainWindow()
         {
@@ -134,6 +135,9 @@ namespace EveLens.Avalonia.Views
 
             // Rebuild strip when groups change (Manage Groups dialog)
             AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(
+                _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
                 _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
 
             // Clean up backup files from previous auto-update
@@ -2373,6 +2377,7 @@ namespace EveLens.Avalonia.Views
             _monitoredChangedSub?.Dispose();
             _notificationSentSub?.Dispose();
             _privacyModeSub?.Dispose();
+            _fontScaleSub?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
             _observableCharacters.Clear();
             _cachedViews.Clear();

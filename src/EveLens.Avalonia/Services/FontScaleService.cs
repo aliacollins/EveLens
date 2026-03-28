@@ -5,6 +5,7 @@
 
 using System;
 using Avalonia;
+using EveLens.Common.Services;
 
 namespace EveLens.Avalonia.Services
 {
@@ -12,6 +13,9 @@ namespace EveLens.Avalonia.Services
     /// Manages font scaling across the application. Computes 7 font size tiers
     /// from a base percentage (80-150%) and writes them to Application.Resources
     /// as DynamicResource values. All AXAML bindings update automatically.
+    /// Code-behind consumers use the static properties (Tiny, Body, etc.) which
+    /// are recomputed on each Apply() call. Open windows should subscribe to
+    /// <see cref="EveLens.Common.Events.FontScaleChangedEvent"/> to rebuild.
     /// </summary>
     public static class FontScaleService
     {
@@ -67,6 +71,10 @@ namespace EveLens.Avalonia.Services
             resources["EveFontSubheading"] = Subheading;
             resources["EveFontHeading"] = Heading;
             resources["EveFontTitle"] = Title;
+
+            // Notify open windows that use code-behind font sizes to rebuild
+            AppServices.EventAggregator?.Publish(
+                EveLens.Common.Events.FontScaleChangedEvent.Instance);
         }
     }
 }

@@ -20,6 +20,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private readonly Dictionary<string, CheckBox> _groupCheckBoxes = new();
         private readonly Dictionary<string, CheckBox> _scopeCheckBoxes = new();
         private bool _isUpdating;
+        private IDisposable? _fontScaleSub;
 
         /// <summary>
         /// The scopes selected by the user when OK is clicked.
@@ -51,6 +52,22 @@ namespace EveLens.Avalonia.Views.Dialogs
             ClearAllButton.Click += OnClearAllClick;
             OkButton.Click += OnOkClick;
             CancelButton.Click += OnCancelClick;
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildUI()
+        {
+            var currentChecked = CollectCheckedScopes();
+            BuildScopeTree();
+            ApplyChecks(currentChecked);
         }
 
         private void BuildScopeTree()

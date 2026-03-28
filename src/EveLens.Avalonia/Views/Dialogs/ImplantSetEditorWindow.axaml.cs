@@ -16,6 +16,7 @@ using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
 
 using EveLens.Common.Models;
+using EveLens.Common.Services;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
@@ -26,6 +27,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private bool _isCustomSet;
         private readonly ComboBox[] _slotCombos = new ComboBox[10];
         private bool _suppressSlotChange;
+        private IDisposable? _fontScaleSub;
 
         private static readonly ImplantSlots[] AllSlots = new[]
         {
@@ -52,6 +54,22 @@ namespace EveLens.Avalonia.Views.Dialogs
             _character = character;
             BuildSlotRows();
             RefreshSetList();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildUI()
+        {
+            BuildSlotRows();
+            PopulateSlotCombos();
+            UpdateBonusSummary();
         }
 
         private void BuildSlotRows()
