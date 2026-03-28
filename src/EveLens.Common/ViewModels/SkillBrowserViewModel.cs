@@ -201,7 +201,9 @@ namespace EveLens.Common.ViewModels
         public SkillBrowserGroupEntry(SkillGroup group)
         {
             Name = group.Name;
-            _allSkills = group.Select(s => new SkillBrowserSkillEntry(s)).ToList();
+            // Filter out unpublished skills (CFO Training, Chief Science Officer, etc.)
+            _allSkills = group.Where(s => s.IsPublic || s.IsKnown)
+                .Select(s => new SkillBrowserSkillEntry(s)).ToList();
             TotalCount = _allSkills.Count;
             TrainedCount = _allSkills.Count(s => s.IsKnown);
             TotalSP = group.TotalSP;

@@ -203,7 +203,7 @@ namespace EveLens.Common.ViewModels
                 ? arr[level] : 0;
 
         public string StatusText => _activeOverlay != null
-            ? $"Trained: {_activeOverlay.TotalTrained} of {_activeOverlay.TotalSkills} skills  |  Total SP: {_activeOverlay.TotalSP:N0}"
+            ? $"Trained: {_activeOverlay.TotalTrained} of {_activeOverlay.TotalPublicSkills} skills  |  Total SP: {_activeOverlay.TotalSP:N0}"
             : "";
 
         internal SkillState GetSkillState(int skillId)
