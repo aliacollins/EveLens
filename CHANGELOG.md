@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-03-29
 - 1.1.0 release candidate: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign
 
 ### Added
@@ -44,7 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Google Analytics tracker** -- removed dead code that hashed MAC addresses for fingerprinting. Never had callers, never had consent ([#40])
 - **In-game browser server** -- removed legacy IGB HTTP server (5 files) that could bind port 80. CCP retired the IGB years ago ([#40])
-
 ## [1.1.0-beta.1] - 2026-03-24
 
 ### Added

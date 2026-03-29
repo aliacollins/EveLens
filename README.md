@@ -163,8 +163,8 @@ Per-endpoint health state machine that tracks ESI reliability per character. Tra
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
-| **Beta** | Pre-release testing(you are here) | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
+| **Stable** | Recommended for daily use(you are here) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| Beta | Pre-release testing | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
 | Alpha | Bleeding edge, experimental features | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
 
 ---

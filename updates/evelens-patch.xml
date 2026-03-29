@@ -1,9 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   STABLE Update Channel (EveLens 1.x+)
   Old 5.x clients check patch.xml (frozen). New EveLens clients check this file.
 -->
 <evelens>
   <releases>
+    <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.1.0</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.1.0/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0
+
+1.1.0 stable: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign]]></message>
+    </release>
   </releases>
 </evelens>
