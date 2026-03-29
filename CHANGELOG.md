@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix live font scaling in code-behind windows (#42 feedback)
 - Character Skill Comparison, theme-aware level blocks
 
+### Fixed
+
+- **Queue Health now shows all characters** -- previously only "monitored" characters (a legacy EVEMon concept with no UI toggle) appeared in the Queue Health flyout and badge. Characters migrated from old EVEMon settings could become invisible ghosts. All characters are now guaranteed to be monitored on import ([#47])
+- **Queue Health flyout scrolls** -- added ScrollViewer with max height to prevent the flyout from overflowing off-screen with many characters
+
 ### Added
 
 - **Variable font scaling** -- a Font Size slider in Settings > Appearance scales all text from 80% to 150%. Every font in the app (895 values across 71 files) now uses a 7-tier type scale derived from a single base size. Changes apply live as you drag the slider and persist across sessions. Architecture tests prevent hardcoded font sizes from creeping back in
