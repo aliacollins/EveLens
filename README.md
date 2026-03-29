@@ -9,11 +9,11 @@
 
 ---
 
-## EveLens 1.0.0 Is Here
+## EveLens 1.1.0 Is Here
 
 EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,783 tests, 14 architectural laws, and support for **100+ characters** out of the box.
+This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,811 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.0.0](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens 1.1.0](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -143,11 +143,20 @@ Per-endpoint health state machine that tracks ESI reliability per character. Tra
 - 82 new types, 31 modified types, 127 typeDogma changes
 - All balance changes: carrier cargo bays, fighter stats, FAX cap booster bonuses, Black Ops tank nerfs
 
+### Character Skill Comparison
+Compare up to 10 characters side-by-side. Skills are shown with color-coded level blocks so differences jump out immediately. Toggle to show only skills that differ across characters. Columns auto-size and show full character names.
+
+### Variable Font Scaling
+A slider in Settings scales all text from 80% to 150%. Changes apply instantly as you drag -- no restart needed. Works across every window, dialog, and control in the app.
+
+### Queue Health Monitor
+A clock icon in the status bar shows how many of your characters need training attention. Click to see everyone sorted by urgency -- empty queues at the top, healthy at the bottom. Click any name to jump to their Queue tab. Scrollable for large fleets.
+
 ### Everything Else
 - **Clone tracking** -- jump clone locations, implants, and jump cooldown timer (respects Infomorph Synchronizing skill)
 - **Native OS notifications** -- skill completions via your system's notification center
 - **Activity center** -- bell icon with 200-entry event log, smart noise filtering
-- **Character groups** -- organize characters by purpose
+- **Character groups** -- organize characters by purpose with colored tags and custom ordering
 - **Balance change indicator** -- real-time ISK delta with directional arrows
 - **Auto-update** -- Velopack-powered updates with delta downloads, checks in the background
 - **Data cache** -- near-instant tab loading, limited offline viewing
@@ -192,17 +201,19 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.0.1
+## What's New in 1.1.0
 
-See [CHANGELOG.md](CHANGELOG.md) for the full changelog.
+- **Character Skill Comparison** -- compare up to 10 characters side-by-side with color-coded level blocks
+- **Variable font scaling** -- 80% to 150%, applies live from Settings
+- **Queue health monitor** -- clock icon in status bar shows who needs training attention
+- **Add Character redesigned** -- "+" card in overview, "Add Another" flow for bulk imports
+- **Manage Groups redesigned** -- tag-based UI, drag reorder, colored portrait strip dividers
+- **Blueprint tree browser** -- proper hierarchy, no more duplicate categories
+- **Untrained skill filter** -- see exactly what you haven't injected yet
+- **ESI stability fix** -- tokens refresh proactively, 30+ character setups stay healthy
+- **Security cleanup** -- removed dead analytics tracker and legacy IGB server code
 
-## Alpha Changelog (Cumulative)
-
-See [CHANGELOG.md](CHANGELOG.md) for the full changelog. The alpha channel receives all in-progress changes.
-
-## Features Being Tested
-
-Features currently in alpha/beta testing before stable release.
+Full details: [1.1.0 Release Notes](https://github.com/aliacollins/EveLens/discussions/49) | [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
