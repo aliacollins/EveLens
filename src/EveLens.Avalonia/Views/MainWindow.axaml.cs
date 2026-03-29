@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -63,6 +64,7 @@ namespace EveLens.Avalonia.Views
         private NotificationCenterViewModel? _notificationVm;
         private IDisposable? _notificationSentSub;
         private IDisposable? _privacyModeSub;
+        private IDisposable? _fontScaleSub;
 
         public MainWindow()
         {
@@ -132,6 +134,13 @@ namespace EveLens.Avalonia.Views
             _privacyModeSub = AppServices.EventAggregator?.Subscribe<Common.Events.PrivacyModeChangedEvent>(
                 _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
 
+            // Rebuild strip when groups change (Manage Groups dialog)
+            AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(
+                _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => Dispatcher.UIThread.Post(RebuildCharacterStrip));
+
             // Clean up backup files from previous auto-update
             // Velopack handles auto-updates now — old UpdateManager disabled.
             // VelopackUpdateService starts background checks in AppServices.Bootstrap().
@@ -139,19 +148,87 @@ namespace EveLens.Avalonia.Views
 
         #region Portrait Strip
 
+        // Group tag colors — matches ManageGroupsWindow
+        private static readonly string[] StripGroupColors =
+        {
+            "#FF4A9EE8", "#FFE8A44A", "#FF6DBA6D", "#FFC75D5D",
+            "#FFB07DC7", "#FF5DD5C7", "#FFE86DA4", "#FFA4C75D",
+        };
+
         private void BuildCharacterStrip()
         {
             try
             {
                 _overviewView ??= new CharacterOverviewView();
 
-                foreach (Character character in _viewModel.Characters)
-                {
-                    var observable = new ObservableCharacter(character);
-                    _observableCharacters.Add(observable);
+                var allChars = _viewModel.Characters.ToList();
+                var groups = Settings.CharacterGroups;
 
-                    var slot = BuildCharacterSlot(character);
-                    CharStrip.Children.Add(slot);
+                if (groups.Count > 0)
+                {
+                    var placed = new HashSet<Guid>();
+                    bool needsGap = false;
+
+                    for (int gi = 0; gi < groups.Count; gi++)
+                    {
+                        var group = groups[gi];
+                        var groupChars = new List<Character>();
+                        foreach (var guid in group.CharacterGuids)
+                        {
+                            var ch = allChars.FirstOrDefault(c => c.Guid == guid);
+                            if (ch != null) { groupChars.Add(ch); placed.Add(guid); }
+                        }
+
+                        if (groupChars.Count == 0) continue;
+
+                        // Divider line between groups
+                        if (needsGap)
+                        {
+                            CharStrip.Children.Add(new Border
+                            {
+                                Width = 1,
+                                Height = 40,
+                                Background = FindStripBrush("EveTextDisabledBrush", Brushes.Gray),
+                                Margin = new Thickness(6, 0),
+                                VerticalAlignment = VerticalAlignment.Center
+                            });
+                        }
+
+                        string color = StripGroupColors[gi % StripGroupColors.Length];
+                        foreach (var character in groupChars)
+                        {
+                            _observableCharacters.Add(new ObservableCharacter(character));
+                            CharStrip.Children.Add(BuildCharacterSlot(character, color));
+                        }
+                        needsGap = true;
+                    }
+
+                    // Ungrouped at the end
+                    var ungrouped = allChars.Where(c => !placed.Contains(c.Guid)).ToList();
+                    if (ungrouped.Count > 0)
+                    {
+                        if (needsGap)
+                        {
+                            CharStrip.Children.Add(new Border
+                            {
+                                Width = 8,
+                                Background = Brushes.Transparent
+                            });
+                        }
+                        foreach (var character in ungrouped)
+                        {
+                            _observableCharacters.Add(new ObservableCharacter(character));
+                            CharStrip.Children.Add(BuildCharacterSlot(character, null));
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Character character in allChars)
+                    {
+                        _observableCharacters.Add(new ObservableCharacter(character));
+                        CharStrip.Children.Add(BuildCharacterSlot(character, null));
+                    }
                 }
 
                 SelectCharacter(null);
@@ -162,7 +239,7 @@ namespace EveLens.Avalonia.Views
             }
         }
 
-        private Button BuildCharacterSlot(Character character)
+        private Button BuildCharacterSlot(Character character, string? groupColorHex = null)
         {
             // 32×32 portrait
             var portraitImage = new Image
@@ -205,7 +282,7 @@ namespace EveLens.Avalonia.Views
             var nameText = new TextBlock
             {
                 Text = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name.Split(' ')[0],
-                FontSize = 9,
+                FontSize = FontScaleService.Caption,
                 MaxWidth = 50,
                 TextAlignment = TextAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
@@ -220,6 +297,20 @@ namespace EveLens.Avalonia.Views
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Children = { portraitGrid, nameText }
             };
+
+            // Group color accent bar (thin line under the name)
+            if (groupColorHex != null)
+            {
+                slotPanel.Children.Add(new Border
+                {
+                    Height = 2,
+                    Width = 32,
+                    CornerRadius = new CornerRadius(1),
+                    Background = new SolidColorBrush(Color.Parse(groupColorHex)),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(0, -1, 0, 0)
+                });
+            }
 
             var btn = new Button
             {
@@ -538,6 +629,7 @@ namespace EveLens.Avalonia.Views
         {
             // File menu
             AddCharMenuItem.Click += OnAddCharacterClick;
+            AddCharStripBtn.Click += OnAddCharacterClick;
             CreateBlankCharMenuItem.Click += OnCreateBlankCharacterClick;
             ManageCharsMenuItem.Click += OnManageCharactersClick;
             ManageGroupsMenuItem.Click += OnManageGroupsClick;
@@ -829,10 +921,251 @@ namespace EveLens.Avalonia.Views
                 var server = AppServices.EVEServer;
                 ServerStatusText.Text = server?.IsOnline == true ? "Server: Online" : "Server: Offline";
                 UpdateEsiCountdown();
+                UpdateQueueHealth();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error updating status: {ex}");
+            }
+        }
+
+        private void UpdateQueueHealth()
+        {
+            try
+            {
+                var chars = AppServices.Characters.ToList();
+                if (chars.Count == 0)
+                {
+                    QueueBadge.IsVisible = false;
+                    return;
+                }
+
+                int ok = 0, low = 0, paused = 0, empty = 0;
+                var now = DateTime.UtcNow;
+
+                foreach (var character in chars)
+                {
+                    if (character is not CCPCharacter ccp)
+                    {
+                        empty++;
+                        continue;
+                    }
+
+                    var queue = ccp.SkillQueue;
+                    if (queue == null || !queue.Any())
+                    {
+                        empty++;
+                        continue;
+                    }
+
+                    if (queue.IsPaused || !ccp.IsTraining)
+                    {
+                        paused++;
+                        continue;
+                    }
+
+                    var remaining = queue.EndTime - now;
+                    if (remaining.TotalDays < 5)
+                        low++;
+                    else
+                        ok++;
+                }
+
+                int trouble = low + paused + empty;
+
+                // Badge on clock icon
+                QueueBadge.IsVisible = trouble > 0;
+                QueueBadgeText.Text = trouble.ToString();
+                QueueBadge.Background = empty > 0
+                    ? FindStripBrush("EveErrorRedBrush", Brushes.Red)
+                    : FindStripBrush("EveWarningYellowBrush", Brushes.Yellow);
+
+                // Summary text
+                // Badge color: red if any empty, yellow otherwise
+                if (trouble > 0)
+                {
+                    QueueBadge.Background = empty > 0
+                        ? FindStripBrush("EveErrorRedBrush", Brushes.Red)
+                        : FindStripBrush("EveWarningYellowBrush", Brushes.Yellow);
+                }
+            }
+            catch
+            {
+                // Non-critical
+            }
+        }
+
+        private void OnQueueHealthClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var chars = AppServices.Characters.ToList();
+                if (chars.Count == 0) return;
+
+                var now = DateTime.UtcNow;
+                var entries = new List<(Character Char, string Status, string EndDate, TimeSpan Remaining, IBrush Color)>();
+
+                foreach (var character in chars)
+                {
+                    if (character is not CCPCharacter ccp || ccp.SkillQueue == null || !ccp.SkillQueue.Any())
+                    {
+                        entries.Add((character, "Empty", "", TimeSpan.Zero,
+                            FindStripBrush("EveErrorRedBrush", Brushes.Red)!));
+                        continue;
+                    }
+
+                    if (ccp.SkillQueue.IsPaused || !ccp.IsTraining)
+                    {
+                        entries.Add((character, "Paused", "", TimeSpan.Zero,
+                            FindStripBrush("EveWarningYellowBrush", Brushes.Yellow)!));
+                        continue;
+                    }
+
+                    var remaining = ccp.SkillQueue.EndTime - now;
+                    if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+
+                    string timeStr;
+                    string endDateStr = ccp.SkillQueue.EndTime.ToString("MMM dd HH:mm");
+                    IBrush color;
+                    if (remaining.TotalDays < 5)
+                    {
+                        timeStr = remaining.TotalDays >= 1
+                            ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
+                            : $"{(int)remaining.TotalHours}h {remaining.Minutes}m";
+                        color = FindStripBrush("EveWarningYellowBrush", Brushes.Yellow)!;
+                    }
+                    else
+                    {
+                        timeStr = $"{(int)remaining.TotalDays}d {remaining.Hours}h";
+                        color = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)!;
+                    }
+
+                    entries.Add((character, timeStr, endDateStr, remaining, color));
+                }
+
+                // Sort by urgency (empty/low first)
+                entries.Sort((a, b) => a.Remaining.CompareTo(b.Remaining));
+
+                var flyout = new Flyout { Placement = PlacementMode.TopEdgeAlignedLeft };
+                var panel = new StackPanel { Spacing = 1, MinWidth = 280 };
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "Queue Health",
+                    FontSize = FontScaleService.Subheading,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                    Margin = new Thickness(8, 4, 8, 6)
+                });
+
+                foreach (var (character, status, endDate, _, color) in entries)
+                {
+                    var capturedChar = character;
+                    var row = new Button
+                    {
+                        Background = Brushes.Transparent,
+                        BorderThickness = new Thickness(0),
+                        Padding = new Thickness(8, 3),
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        Cursor = new Cursor(StandardCursorType.Hand)
+                    };
+
+                    var grid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto") };
+
+                    // Status dot
+                    grid.Children.Add(new Border
+                    {
+                        Width = 8, Height = 8,
+                        CornerRadius = new CornerRadius(4),
+                        Background = color,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 0, 8, 0),
+                        [Grid.ColumnProperty] = 0
+                    });
+
+                    // Character name
+                    grid.Children.Add(new TextBlock
+                    {
+                        Text = character.Name,
+                        FontSize = FontScaleService.Body,
+                        Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        TextTrimming = TextTrimming.CharacterEllipsis,
+                        [Grid.ColumnProperty] = 1
+                    });
+
+                    // Time remaining
+                    grid.Children.Add(new TextBlock
+                    {
+                        Text = status,
+                        FontSize = FontScaleService.Body,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = color,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(12, 0, 0, 0),
+                        TextAlignment = TextAlignment.Right,
+                        MinWidth = 55,
+                        [Grid.ColumnProperty] = 2
+                    });
+
+                    // End date (for training characters)
+                    if (!string.IsNullOrEmpty(endDate))
+                    {
+                        grid.Children.Add(new TextBlock
+                        {
+                            Text = endDate,
+                            FontSize = FontScaleService.Small,
+                            Foreground = FindStripBrush("EveTextDisabledBrush", Brushes.Gray),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Margin = new Thickness(8, 0, 0, 0),
+                            MinWidth = 80,
+                            [Grid.ColumnProperty] = 3
+                        });
+                    }
+
+                    row.Content = grid;
+                    row.Click += (_, _) =>
+                    {
+                        flyout.Hide();
+                        NavigateToCharacterQueue(capturedChar);
+                    };
+                    panel.Children.Add(row);
+                }
+
+                flyout.Content = new Border
+                {
+                    Background = FindStripBrush("EveBackgroundMediumBrush", Brushes.Black),
+                    BorderBrush = FindStripBrush("EveBorderBrush", Brushes.Gray),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(0, 4),
+                    MaxHeight = 480,
+                    Child = new ScrollViewer
+                    {
+                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        Content = panel
+                    }
+                };
+
+                flyout.ShowAt(QueueHealthBtn);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing queue flyout: {ex}");
+            }
+        }
+
+        private void NavigateToCharacterQueue(Character character)
+        {
+            SelectCharacter(character);
+
+            // Navigate to Queue tab (index 1) in the CharacterMonitorView
+            if (MainContent.Content is CharacterMonitor.CharacterMonitorView monitorView)
+            {
+                var tabs = monitorView.FindControl<TabControl>("SubTabs");
+                if (tabs != null)
+                    tabs.SelectedIndex = 1; // Queue tab
             }
         }
 
@@ -1041,7 +1374,7 @@ namespace EveLens.Avalonia.Views
                             {
                                 Text = $"SettingsWindow constructor failed:\n\n{ctorEx}",
                                 TextWrapping = TextWrapping.Wrap,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 Margin = new Thickness(16)
                             }
                         }
@@ -1069,7 +1402,7 @@ namespace EveLens.Avalonia.Views
                             {
                                 Text = $"Settings failed:\n\n{ex}",
                                 TextWrapping = TextWrapping.Wrap,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 Margin = new Thickness(16)
                             }
                         }
@@ -1151,7 +1484,7 @@ namespace EveLens.Avalonia.Views
                 var listBox = new ListBox
                 {
                     ItemsSource = characters.Select(c => c.Name).ToList(),
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Margin = new Thickness(0, 0, 0, 8)
                 };
                 listBox.SelectedIndex = 0;
@@ -1159,7 +1492,7 @@ namespace EveLens.Avalonia.Views
                 var deleteBtn = new Button
                 {
                     Content = "Delete Selected",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Padding = new Thickness(12, 5),
                     CornerRadius = new CornerRadius(12),
                     Foreground = Brushes.Red,
@@ -1179,7 +1512,7 @@ namespace EveLens.Avalonia.Views
                             new TextBlock
                             {
                                 Text = "Select a character:",
-                                FontSize = 12,
+                                FontSize = FontScaleService.Subheading,
                                 Margin = new Thickness(0, 0, 0, 8),
                                 [DockPanel.DockProperty] = Dock.Top
                             },
@@ -1283,7 +1616,7 @@ namespace EveLens.Avalonia.Views
                 var nameBox = new TextBox
                 {
                     Text = defaultName,
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Margin = new Thickness(0, 8, 0, 0),
                     Watermark = "Enter plan name..."
                 };
@@ -1291,7 +1624,7 @@ namespace EveLens.Avalonia.Views
                 var errorText = new TextBlock
                 {
                     Text = "A plan with this name already exists.",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = FindStripBrush("EveErrorRedBrush", Brushes.Red),
                     Margin = new Thickness(0, 4, 0, 0),
                     IsVisible = false
@@ -1300,7 +1633,7 @@ namespace EveLens.Avalonia.Views
                 var createBtn = new Button
                 {
                     Content = "Create",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Padding = new Thickness(12, 5),
                     CornerRadius = new CornerRadius(12),
                     HorizontalAlignment = HorizontalAlignment.Right,
@@ -1327,7 +1660,7 @@ namespace EveLens.Avalonia.Views
                         Margin = new Thickness(16),
                         Children =
                         {
-                            new TextBlock { Text = "Plan name:", FontSize = 12 },
+                            new TextBlock { Text = "Plan name:", FontSize = FontScaleService.Subheading },
                             nameBox,
                             errorText,
                             createBtn
@@ -1520,21 +1853,8 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                var dialog = new Window
-                {
-                    Title = "Character Comparison",
-                    Width = 300,
-                    Height = 150,
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                    Content = new TextBlock
-                    {
-                        Text = "Character Comparison — Coming soon",
-                        VerticalAlignment = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Margin = new Thickness(20)
-                    }
-                };
-                await dialog.ShowDialog(this);
+                var window = new CharacterComparisonWindow();
+                await window.ShowDialog(this);
             }
             catch (Exception ex)
             {
@@ -1593,7 +1913,7 @@ namespace EveLens.Avalonia.Views
                             HorizontalAlignment = HorizontalAlignment.Center,
                             TextWrapping = TextWrapping.Wrap,
                             Margin = new Thickness(20),
-                            FontSize = 11
+                            FontSize = FontScaleService.Body
                         }
                     };
                     await errDialog.ShowDialog(this);
@@ -1626,7 +1946,7 @@ namespace EveLens.Avalonia.Views
                     var downloadBtn = new Button
                     {
                         Content = "Download & Restart",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
                         Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
@@ -1634,7 +1954,7 @@ namespace EveLens.Avalonia.Views
                     var laterBtn = new Button
                     {
                         Content = "Later",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
                     };
@@ -1682,14 +2002,14 @@ namespace EveLens.Avalonia.Views
                     header.Children.Add(new TextBlock
                     {
                         Text = $"EveLens {pendingVersion} is available",
-                        FontSize = 14,
+                        FontSize = FontScaleService.Title,
                         FontWeight = FontWeight.SemiBold,
                         Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
                     });
                     header.Children.Add(new TextBlock
                     {
                         Text = $"You are running v{currentVersion}",
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
                     });
                     DockPanel.SetDock(header, global::Avalonia.Controls.Dock.Top);
@@ -1703,7 +2023,7 @@ namespace EveLens.Avalonia.Views
                             Content = new TextBlock
                             {
                                 Text = releaseNotes,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
                                 Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
                             }
@@ -1730,13 +2050,13 @@ namespace EveLens.Avalonia.Views
                                 new TextBlock
                                 {
                                     Text = $"Current version: v{currentVersion}",
-                                    FontSize = 12,
+                                    FontSize = FontScaleService.Subheading,
                                     Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
                                 },
                                 new TextBlock
                                 {
                                     Text = "You are running the latest version.",
-                                    FontSize = 11,
+                                    FontSize = FontScaleService.Body,
                                     Foreground = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)
                                 }
                             }
@@ -1824,7 +2144,7 @@ namespace EveLens.Avalonia.Views
             var okBtn = new Button
             {
                 Content = "OK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 Foreground = Brushes.Red
@@ -1832,7 +2152,7 @@ namespace EveLens.Avalonia.Views
             var cancelBtn = new Button
             {
                 Content = "Cancel",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
             };
@@ -1860,7 +2180,7 @@ namespace EveLens.Avalonia.Views
                         {
                             Text = message,
                             TextWrapping = TextWrapping.Wrap,
-                            FontSize = 12,
+                            FontSize = FontScaleService.Subheading,
                             VerticalAlignment = VerticalAlignment.Center
                         }
                     }
@@ -1879,7 +2199,7 @@ namespace EveLens.Avalonia.Views
             var closeBtn = new Button
             {
                 Content = "Close",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 HorizontalAlignment = HorizontalAlignment.Right
@@ -1902,7 +2222,7 @@ namespace EveLens.Avalonia.Views
                             Content = new TextBlock
                             {
                                 Text = text,
-                                FontSize = 11,
+                                FontSize = FontScaleService.Body,
                                 FontFamily = new global::Avalonia.Media.FontFamily("Consolas, Courier New, monospace"),
                                 TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
                                 Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White)
@@ -2063,6 +2383,7 @@ namespace EveLens.Avalonia.Views
             _monitoredChangedSub?.Dispose();
             _notificationSentSub?.Dispose();
             _privacyModeSub?.Dispose();
+            _fontScaleSub?.Dispose();
             foreach (var oc in _observableCharacters) oc.Dispose();
             _observableCharacters.Clear();
             _cachedViews.Clear();

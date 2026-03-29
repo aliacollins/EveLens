@@ -3,10 +3,11 @@
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterSkillQueueView">
     <DockPanel>
+        <!-- Status bar (bottom) -->
         <Border DockPanel.Dock="Bottom" Padding="10,5"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="StatusText" Text="Skills in queue: 0" FontSize="11"
+            <TextBlock x:Name="StatusText" Text="Skills in queue: 0" FontSize="{DynamicResource EveFontBody}"
                        Foreground="{StaticResource EveTextSecondaryBrush}" />
         </Border>
         <Grid>
@@ -36,18 +37,18 @@
                             <Grid ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto">
                                 <!-- Row 0: Skill name + rank + end time -->
                                 <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="{Binding SkillText}" FontSize="12"
+                                    <TextBlock Text="{Binding SkillText}" FontSize="{DynamicResource EveFontSubheading}"
                                                Foreground="{Binding NameBrush}" FontWeight="SemiBold" />
-                                    <TextBlock Text="{Binding RankText}" FontSize="10"
+                                    <TextBlock Text="{Binding RankText}" FontSize="{DynamicResource EveFontSmall}"
                                                Foreground="{StaticResource EveTextDisabledBrush}"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
                                 <TextBlock Grid.Row="0" Grid.Column="1"
-                                           Text="{Binding StatusText}" FontSize="11"
+                                           Text="{Binding StatusText}" FontSize="{DynamicResource EveFontBody}"
                                            Foreground="{Binding StatusBrush}"
                                            VerticalAlignment="Center" Margin="8,0" />
                                 <TextBlock Grid.Row="0" Grid.Column="2"
-                                           Text="{Binding TimeText}" FontSize="10"
+                                           Text="{Binding TimeText}" FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{StaticResource EveTextSecondaryBrush}"
                                            VerticalAlignment="Center" />
                                 <!-- Row 1: Progress bar -->

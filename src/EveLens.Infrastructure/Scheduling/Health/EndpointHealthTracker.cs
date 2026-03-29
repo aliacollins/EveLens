@@ -71,11 +71,23 @@ namespace EveLens.Infrastructure.Scheduling.Health
                 oldHealth = state.Health;
                 state.Push(record);
 
-                // Auth failures are immediate — no window evaluation needed
                 var errorClass = ErrorClassifier.Classify(record.StatusCode);
-                if (errorClass == ErrorClassifier.ErrorClass.Auth)
+
+                // 403 Forbidden = permanent auth failure (wrong scopes, character transfer)
+                // → Immediate Suspended, user must re-authenticate
+                if (errorClass == ErrorClassifier.ErrorClass.AuthPermanent)
                 {
                     state.Health = EndpointHealth.Suspended;
+                    state.ConsecutiveSuccesses = 0;
+                }
+                // 401 Unauthorized = token expired, refresh in progress
+                // → Treat as transient, NOT Suspended. The pre-flight check in
+                //   CharacterQueryOrchestrator should prevent most 401s, but if one
+                //   slips through, don't panic — the token will refresh shortly.
+                else if (errorClass == ErrorClassifier.ErrorClass.TokenExpired)
+                {
+                    // Don't change health state — just record the failure for window evaluation.
+                    // The token refresh will succeed and requests will resume normally.
                     state.ConsecutiveSuccesses = 0;
                 }
                 else

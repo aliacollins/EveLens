@@ -6,6 +6,56 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.6</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-beta.6
+
+1.1.0 release candidate: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign]]></message>
+    </release>
+    <release>
+      <date>2026-03-29</date>
+      <version>1.1.0.5</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-beta.5
+
+Font scaling live updates, full names in comparison, consistent skill counts, untrained filter (#33, #37, #42, #45)]]></message>
+    </release>
+    <release>
+      <date>2026-03-28</date>
+      <version>1.1.0.4</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-beta.4
+
+Skill comparison, font scaling, ESI token fix, group reorder, queue monitor, add character UX (#34, #39, #40, #41, #42, #43)]]></message>
+    </release>
+    <release>
+      <date>2026-03-28</date>
+      <version>1.1.0.2</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-beta.2
+
+Font scaling, ESI token fix, group reorder, queue monitor, add character UX (#34, #39, #40, #41, #42, #43)]]></message>
+    </release>
+    <release>
+      <date>2026-03-27</date>
+      <version>1.0.1.1</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.0.1.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.0.1-beta.1
+
+Queue monitor, add character UX, group redesign, blueprint tree, dead code removal (#39, #40, #41, #42, #43)]]></message>
+    </release>
+    <release>
       <date>2026-03-19</date>
       <version>1.0.0.2</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>

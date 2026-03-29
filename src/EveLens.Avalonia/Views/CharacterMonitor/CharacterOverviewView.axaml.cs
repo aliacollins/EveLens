@@ -30,6 +30,8 @@ using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Views.Dialogs;
 using EveLens.Core.Events;
 
+using EveLens.Core.Events;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterOverviewView : UserControl
@@ -39,6 +41,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private IDisposable? _collectionChangedSub;
         private IDisposable? _privacyModeSub;
         private IDisposable? _settingsChangedSub;
+        private IDisposable? _fontScaleSub;
 
         // Track previous ISK/SP values per character for flash-on-change
         private readonly Dictionary<long, decimal> _prevBalances = new();
@@ -82,6 +85,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _settingsChangedSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(
                 _ => Dispatcher.UIThread.Post(LoadData));
 
+            _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => Dispatcher.UIThread.Post(LoadData));
+
             LoadData();
         }
 
@@ -101,6 +107,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _privacyModeSub = null;
             _settingsChangedSub?.Dispose();
             _settingsChangedSub = null;
+            _fontScaleSub?.Dispose();
+            _fontScaleSub = null;
 
             base.OnDetachedFromVisualTree(e);
         }
@@ -169,10 +177,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     {
                         BuildGroupSection("Ungrouped", ungrouped, ref cardIndex);
                     }
+
+                    // Ghost card after the last group
+                    var ghostWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+                    ghostWrap.Children.Add(BuildGhostCard());
+                    OverviewPanel.Children.Add(ghostWrap);
                 }
                 else
                 {
-                    var wrap = BuildCardWrapPanel(characters, ref cardIndex);
+                    var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true);
                     OverviewPanel.Children.Add(wrap);
                 }
 
@@ -202,7 +215,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevron = new TextBlock
             {
                 Text = isCollapsed ? "\u25B6" : "\u25BC",  // ▶ or ▼
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 6, 0),
@@ -212,7 +225,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var label = new TextBlock
             {
                 Text = groupName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -223,7 +236,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var count = new TextBlock
             {
                 Text = $"{characters.Count}",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 8, 0),
@@ -270,7 +283,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             OverviewPanel.Children.Add(wrap);
         }
 
-        private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex)
+        private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
+            bool includeGhostCard = false)
         {
             var wrap = new WrapPanel { Orientation = Orientation.Horizontal };
 
@@ -281,7 +295,87 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 cardIndex++;
             }
 
+            if (includeGhostCard)
+                wrap.Children.Add(BuildGhostCard());
+
             return wrap;
+        }
+
+        private Button BuildGhostCard()
+        {
+            var plusText = new TextBlock
+            {
+                Text = "+",
+                FontSize = FontScaleService.Title,
+                FontWeight = FontWeight.Light,
+                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+
+            var labelText = new TextBlock
+            {
+                Text = "Add New Character",
+                FontSize = FontScaleService.Body,
+                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center
+            };
+
+            var subtitleText = new TextBlock
+            {
+                Text = "Sign in with EVE to get started",
+                FontSize = FontScaleService.Small,
+                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                Opacity = 0.6
+            };
+
+            var content = new StackPanel
+            {
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Spacing = 4,
+                Children = { plusText, labelText, subtitleText }
+            };
+
+            // Match real card dimensions — MinHeight same as character cards
+            var cardBorder = new Border
+            {
+                Padding = new Thickness(12, 14),
+                Width = 300,
+                MinHeight = 90,
+                Child = content,
+                BorderThickness = new Thickness(1),
+                BorderBrush = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                CornerRadius = new CornerRadius(6),
+                Background = Brushes.Transparent
+            };
+
+            var btn = new Button
+            {
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0),
+                Margin = new Thickness(4),
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Content = cardBorder,
+                Tag = "GhostCard"
+            };
+            btn.Click += OnAddCharacterFromWelcome;
+
+            return btn;
+        }
+
+        private static int FindGhostCardIndex(WrapPanel wrap)
+        {
+            for (int i = 0; i < wrap.Children.Count; i++)
+            {
+                if (wrap.Children[i] is Button btn && btn.Tag as string == "GhostCard")
+                    return i;
+            }
+            return -1;
         }
 
         private void BuildWelcomeState()
@@ -297,7 +391,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             container.Children.Add(new TextBlock
             {
                 Text = "Welcome to EveLens",
-                FontSize = 15,
+                FontSize = FontScaleService.Title,
                 FontWeight = FontWeight.Bold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -307,7 +401,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             container.Children.Add(new TextBlock
             {
                 Text = "Add your first character to start monitoring\nskills, wallet, assets, and more.",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
@@ -318,7 +412,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var addButton = new Button
             {
                 Content = "Add Character",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(16, 6),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
@@ -334,7 +428,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             container.Children.Add(new TextBlock
             {
                 Text = "You can also add characters from the File menu.",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
                 HorizontalAlignment = HorizontalAlignment.Center,
                 TextAlignment = TextAlignment.Center,
@@ -408,7 +502,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             infoPanel.Children.Add(new TextBlock
             {
                 Text = PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name,
-                FontSize = 13, FontWeight = FontWeight.Bold,
+                FontSize = FontScaleService.Heading, FontWeight = FontWeight.Bold,
                 Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                 TextTrimming = TextTrimming.CharacterEllipsis
             });
@@ -416,7 +510,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var iskText = new TextBlock
             {
                 Text = PrivacyHelper.IsBalanceHidden ? $"{PrivacyHelper.Mask} ISK" : $"{character.Balance:N2} ISK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveSuccessGreenBrush", Brushes.LimeGreen),
                 Tag = "IskText",
                 Transitions = new global::Avalonia.Animation.Transitions
@@ -434,7 +528,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var spText = new TextBlock
             {
                 Text = PrivacyHelper.IsSkillPointsHidden ? $"{PrivacyHelper.Mask} SP" : $"{character.SkillPoints:N0} SP",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
                 Tag = "SpText",
                 Transitions = new global::Avalonia.Animation.Transitions
@@ -454,7 +548,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var badgeText = new TextBlock
             {
                 Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha",
-                FontSize = 9, FontWeight = FontWeight.SemiBold,
+                FontSize = FontScaleService.Caption, FontWeight = FontWeight.SemiBold,
                 Foreground = isOmega
                     ? new SolidColorBrush(Color.Parse("#FF00C853"))
                     : new SolidColorBrush(Color.Parse("#FFFF6D00"))
@@ -475,7 +569,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // Training status
             var trainingText = new TextBlock
             {
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = FindBrush("EveWarningYellowBrush", Brushes.Yellow),
                 TextTrimming = TextTrimming.CharacterEllipsis,
                 Tag = "TrainingText"
@@ -770,13 +864,22 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     }
                 }
 
-                // Add new characters
+                // Add new characters (insert before ghost card if present)
                 var newChars = currentChars.Where(c => !existingIds.Contains(c.CharacterID)).ToList();
+                int ghostIndex = FindGhostCardIndex(wrap);
                 int staggerBase = wrap.Children.Count;
                 foreach (var character in newChars)
                 {
                     var card = BuildCharacterCard(character, staggerBase);
-                    wrap.Children.Add(card);
+                    if (ghostIndex >= 0)
+                    {
+                        wrap.Children.Insert(ghostIndex, card);
+                        ghostIndex++;
+                    }
+                    else
+                    {
+                        wrap.Children.Add(card);
+                    }
                     staggerBase++;
 
                     _prevBalances[character.CharacterID] = character.Balance;

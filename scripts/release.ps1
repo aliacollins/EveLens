@@ -188,17 +188,29 @@ try {
     Compress-Archive -Path "$($OtherPlatforms[1].Dir)/*" -DestinationPath $macZip
     Write-Host "  Zipped osx-arm64." -ForegroundColor Green
 
-    $appBundleDir = "releases/EveLens.app"
+    # Build .app bundle via WSL to preserve Unix permissions and executable bit
     $appBundleZip = "releases/EveLens-${Version}-osx-arm64.app.zip"
-    if (Test-Path $appBundleDir) { Remove-Item $appBundleDir -Recurse -Force }
     if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
 
-    New-Item -ItemType Directory -Path "$appBundleDir/Contents/MacOS" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$appBundleDir/Contents/Resources" -Force | Out-Null
+    $wslPublishDir = "/mnt/d/evemon-main/publish/osx-arm64"
+    $wslReleasesDir = "/mnt/d/evemon-main/releases"
+    $wslScript = @"
+#!/bin/bash
+set -e
 
-    Copy-Item -Path "$($OtherPlatforms[1].Dir)/*" -Destination "$appBundleDir/Contents/MacOS/" -Recurse
+APP_DIR="/tmp/EveLens.app"
+rm -rf "`$APP_DIR"
+mkdir -p "`$APP_DIR/Contents/MacOS"
+mkdir -p "`$APP_DIR/Contents/Resources"
 
-    @"
+# Copy published files preserving structure
+cp -r $wslPublishDir/* "`$APP_DIR/Contents/MacOS/"
+
+# Set executable permission on the main binary
+chmod +x "`$APP_DIR/Contents/MacOS/EveLens"
+
+# Create Info.plist
+cat > "`$APP_DIR/Contents/Info.plist" << 'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -221,11 +233,27 @@ try {
   <true/>
 </dict>
 </plist>
-"@ | Set-Content "$appBundleDir/Contents/Info.plist" -Encoding UTF8
+PLIST
 
-    Compress-Archive -Path $appBundleDir -DestinationPath $appBundleZip
-    Remove-Item $appBundleDir -Recurse -Force
-    Write-Host "  macOS .app bundle created." -ForegroundColor Green
+# Zip with Unix permissions preserved (use cd to get clean paths)
+cd /tmp
+zip -r -y "$wslReleasesDir/EveLens-${Version}-osx-arm64.app.zip" EveLens.app
+rm -rf "`$APP_DIR"
+echo "=== macOS .app bundle created ==="
+"@
+
+    # Write with Unix line endings and no BOM for WSL/bash compatibility
+    $wslScript = $wslScript -replace "`r`n", "`n"
+    [System.IO.File]::WriteAllText("$ProjectRoot/scripts/make-macapp.sh", $wslScript, (New-Object System.Text.UTF8Encoding $false))
+    $ErrorActionPreference = 'Continue'
+    wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh 2>&1 | ForEach-Object { $_ }
+    $ErrorActionPreference = 'Stop'
+
+    if (Test-Path $appBundleZip) {
+        Write-Host "  macOS .app bundle created." -ForegroundColor Green
+    } else {
+        Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."
+    }
 }
 finally {
     # Restore SharedAssemblyInfo.cs
@@ -281,18 +309,32 @@ if ($DryRun) {
 }
 else {
     # Extract release notes from CHANGELOG.md
+    # Looks for the section matching the version being released, falls back to [Unreleased]
     Write-Host "  Building release notes from CHANGELOG.md..." -ForegroundColor Yellow
     $changelogPath = Join-Path $ProjectRoot "CHANGELOG.md"
     $notes = ""
     if (Test-Path $changelogPath) {
-        $inUnreleased = $false
+        $inSection = $false
         $lines = @()
         foreach ($line in Get-Content $changelogPath) {
-            if ($line -match '^\#\# \[Unreleased\]') { $inUnreleased = $true; continue }
-            if ($inUnreleased -and $line -match '^\#\# \[') { break }
-            if ($inUnreleased) { $lines += $line }
+            # Match the exact version section first, then fall back to [Unreleased]
+            if ($line -match "^\#\# \[$Version\]") { $inSection = $true; continue }
+            if ($inSection -and $line -match '^\#\# \[') { break }
+            if ($inSection) { $lines += $line }
         }
         $notes = ($lines -join "`n").Trim()
+
+        # Fall back to [Unreleased] if no version-specific section found
+        if (-not $notes) {
+            $inSection = $false
+            $lines = @()
+            foreach ($line in Get-Content $changelogPath) {
+                if ($line -match '^\#\# \[Unreleased\]') { $inSection = $true; continue }
+                if ($inSection -and $line -match '^\#\# \[') { break }
+                if ($inSection) { $lines += $line }
+            }
+            $notes = ($lines -join "`n").Trim()
+        }
     }
     if (-not $notes) { $notes = "See CHANGELOG.md for details." }
     $notesFile = Join-Path $ProjectRoot "release-notes.md"

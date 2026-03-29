@@ -6,6 +6,7 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -17,18 +18,35 @@ using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 
+using EveLens.Common.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterSkillsView : UserControl
     {
-        private static readonly IBrush FilledBlock = new SolidColorBrush(Color.Parse("#FFE6A817"));
-        private static readonly IBrush EmptyBlock = new SolidColorBrush(Color.Parse("#FF2A2A4A"));
-        private static readonly IBrush TrainingBlock = new SolidColorBrush(Color.Parse("#FF81C784"));
-        private static readonly IBrush TrainedNameColor = new SolidColorBrush(Color.Parse("#FFF0F0F0"));
-        private static readonly IBrush UntrainedNameColor = new SolidColorBrush(Color.Parse("#FF505060"));
-        private static readonly IBrush TrainingNameColor = new SolidColorBrush(Color.Parse("#FF81C784"));
+        // Theme-aware — resolved per render. Accent color used for trained blocks.
+        private IBrush FilledBlock => FindThemeBrush("EveAccentPrimaryBrush") ?? Brushes.Gold;
+        private IBrush EmptyBlock => GetAccentDimBrush(30);
+        private IBrush TrainingBlock => FindThemeBrush("EveSuccessGreenBrush") ?? Brushes.LimeGreen;
+        private IBrush TrainedNameColor => FindThemeBrush("EveTextPrimaryBrush") ?? Brushes.White;
+        private IBrush UntrainedNameColor => FindThemeBrush("EveTextDisabledBrush") ?? Brushes.Gray;
+        private IBrush TrainingNameColor => FindThemeBrush("EveSuccessGreenBrush") ?? Brushes.LimeGreen;
+
+        private IBrush? FindThemeBrush(string key)
+        {
+            if (this.TryFindResource(key, this.ActualThemeVariant, out var res) && res is IBrush b) return b;
+            return null;
+        }
+
+        private IBrush GetAccentDimBrush(byte alpha)
+        {
+            if (this.TryFindResource("EveAccentPrimary", this.ActualThemeVariant, out var res) && res is Color c)
+                return new SolidColorBrush(new Color(alpha, c.R, c.G, c.B));
+            return new SolidColorBrush(Color.Parse("#1E707070"));
+        }
 
         private IDisposable? _dataUpdatedSub;
+        private IDisposable? _fontScaleSub;
         private long _characterId;
         private SkillOverlayViewModel? _viewModel;
 
@@ -42,6 +60,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             base.OnAttachedToVisualTree(e);
             _dataUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterUpdatedEvent>(OnDataUpdated);
+            _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData));
             LoadData();
         }
 
@@ -56,6 +76,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+            _fontScaleSub?.Dispose();
+            _fontScaleSub = null;
 
             if (_viewModel != null)
             {
@@ -122,6 +144,47 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void UpdateStatus()
         {
             StatusText.Text = _viewModel?.StatusText ?? "";
+            UpdateLevelBreakdown();
+        }
+
+        private void UpdateLevelBreakdown()
+        {
+            if (_viewModel == null) return;
+
+            AllSkillsBtn.Content = $"All Skills ({_viewModel.TotalPublicSkills})";
+            AllTrainedBtn.Content = $"All Trained ({_viewModel.TotalTrained})";
+            LevelVBtn.Content = $"Level V ({_viewModel.GetSkillsAtLevel(5)})";
+            LevelIVBtn.Content = $"Level IV ({_viewModel.GetSkillsAtLevel(4)})";
+            LevelIIIBtn.Content = $"Level III ({_viewModel.GetSkillsAtLevel(3)})";
+            LevelIIBtn.Content = $"Level II ({_viewModel.GetSkillsAtLevel(2)})";
+            LevelIBtn.Content = $"Level I ({_viewModel.GetSkillsAtLevel(1)})";
+            LevelZeroBtn.Content = $"Injected ({_viewModel.GetSkillsAtLevel(0)})";
+
+            int untrained = _viewModel.TotalPublicSkills - _viewModel.TotalTrained;
+            UntrainedBtn.Content = $"Untrained ({untrained})";
+        }
+
+        private ToggleButton?[] LevelButtons => new[]
+        {
+            AllSkillsBtn, AllTrainedBtn, LevelVBtn, LevelIVBtn, LevelIIIBtn,
+            LevelIIBtn, LevelIBtn, LevelZeroBtn, UntrainedBtn
+        };
+
+        private void OnLevelFilterClicked(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not ToggleButton clicked || _viewModel == null) return;
+
+            int tag = clicked.Tag is int t ? t : int.Parse(clicked.Tag?.ToString() ?? "-1");
+
+            // Radio-button behavior: uncheck all others, keep clicked checked
+            foreach (var btn in LevelButtons)
+            {
+                if (btn != null && btn != clicked)
+                    btn.IsChecked = false;
+            }
+            clicked.IsChecked = true;
+
+            _viewModel.LevelFilter = tag;
         }
 
         #region Template Builder
@@ -172,7 +235,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var chevronTb = new TextBlock
             {
                 Text = node.Chevron,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Width = 16,
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -183,7 +246,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = groupName,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 FontWeight = FontWeight.SemiBold,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -195,7 +258,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var countTb = new TextBlock
             {
                 Text = countText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0)
             };
@@ -206,7 +269,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var spTb = new TextBlock
             {
                 Text = spText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(4, 0)
             };
@@ -251,7 +314,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var nameTb = new TextBlock
             {
                 Text = skillTemplate.Name,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = nameBrush,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis
@@ -284,7 +347,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var rankTb = new TextBlock
             {
                 Text = skillTemplate.RankText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 55,
                 TextAlignment = TextAlignment.Right,
@@ -298,7 +361,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var spTb = new TextBlock
             {
                 Text = spText,
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 VerticalAlignment = VerticalAlignment.Center,
                 MinWidth = 75,
                 TextAlignment = TextAlignment.Right,
@@ -329,7 +392,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             return null;
         }
 
-        private static IBrush BlockColor(int lvl, SkillState state)
+        private IBrush BlockColor(int lvl, SkillState state)
         {
             if (lvl <= state.Level) return FilledBlock;
             if (state.IsTraining && lvl == state.Level + 1) return TrainingBlock;

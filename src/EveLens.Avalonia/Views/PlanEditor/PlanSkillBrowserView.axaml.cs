@@ -16,6 +16,8 @@ using EveLens.Common.Models;
 using EveLens.Common.ViewModels;
 using EveLens.Avalonia.ViewModels;
 
+using EveLens.Avalonia.ViewModels;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanSkillBrowserView : UserControl
@@ -35,7 +37,30 @@ namespace EveLens.Avalonia.Views.PlanEditor
             _viewModel = new PlanSkillBrowserViewModel(planEditor);
             _viewModel.Character = planEditor.Character;
             _viewModel.Refresh();
+            PopulateAttributeFilter();
             RefreshGroupsList();
+        }
+
+        private void PopulateAttributeFilter()
+        {
+            if (_viewModel == null) return;
+
+            var detected = _viewModel.DetectedRemap;
+            var items = new List<AttributeFilterItem>
+            {
+                new("All Attributes", false)
+            };
+            int detectedIndex = 0; // default to "All Attributes"
+            for (int i = 0; i < _viewModel.AvailableAttributeCombos.Count; i++)
+            {
+                var c = _viewModel.AvailableAttributeCombos[i];
+                bool isDetected = c.Equals(detected);
+                items.Add(new AttributeFilterItem(c.DisplayText, isDetected));
+                if (isDetected)
+                    detectedIndex = i + 1; // +1 for the "All Attributes" entry
+            }
+            AttributeComboBox.ItemsSource = items;
+            AttributeComboBox.SelectedIndex = detectedIndex;
         }
 
         private void RefreshGroupsList()
@@ -75,6 +100,25 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             if (_viewModel == null) return;
             _viewModel.ShowAll = ShowAllToggle.IsChecked == true;
+            RefreshGroupsList();
+        }
+
+        private void OnAttributeFilterChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            int index = AttributeComboBox.SelectedIndex;
+            if (index <= 0)
+            {
+                // "All Attributes" or nothing selected
+                _viewModel.AttributeFilter = null;
+            }
+            else
+            {
+                // index - 1 maps to AvailableAttributeCombos
+                _viewModel.AttributeFilter = _viewModel.AvailableAttributeCombos[index - 1];
+            }
+
             RefreshGroupsList();
         }
 
@@ -146,7 +190,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 PrereqsList.Children.Add(new TextBlock
                 {
                     Text = "None",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (IBrush)this.FindResource("EveTextDisabledBrush")!
                 });
             }
@@ -170,7 +214,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var levelText = new TextBlock
             {
                 Text = $"Level {level.LevelText}:",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = level.IsTrained
                     ? (IBrush)this.FindResource("EveAccentPrimaryBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
@@ -183,7 +227,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var timeText = new TextBlock
             {
                 Text = level.IsTrained ? "Trained" : level.TrainingTimeText,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = level.IsTrained
                     ? (IBrush)this.FindResource("EveTextDisabledBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
@@ -198,7 +242,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var planBtn = new Button
                 {
                     Content = $"Plan to {level.LevelText}",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Padding = new global::Avalonia.Thickness(8, 2),
                     CornerRadius = new global::Avalonia.CornerRadius(10),
                     Tag = level.Level
@@ -212,7 +256,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var plannedLabel = new TextBlock
                 {
                     Text = "Planned",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Foreground = (IBrush)this.FindResource("EveWarningYellowBrush")!,
                     VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center
                 };
@@ -233,7 +277,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var indicator = new TextBlock
             {
                 Text = prereq.IsMet ? "\u2713 " : "\u2717 ",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveSuccessGreenBrush")!
                     : (IBrush)this.FindResource("EveErrorRedBrush")!,
@@ -245,7 +289,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var nameText = new TextBlock
             {
                 Text = prereq.DisplayText,
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Foreground = prereq.IsMet
                     ? (IBrush)this.FindResource("EveTextSecondaryBrush")!
                     : (IBrush)this.FindResource("EveTextPrimaryBrush")!,
@@ -311,6 +355,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
             VisibleSkills = entry.VisibleSkills
                 .Select(s => new PlanSkillBrowserDisplayItem(s))
                 .ToList();
+        }
+    }
+
+    internal sealed class AttributeFilterItem
+    {
+        public string Text { get; }
+        public string StarText { get; }
+
+        public AttributeFilterItem(string text, bool isDetectedRemap)
+        {
+            Text = text;
+            StarText = isDetectedRemap ? "\u2605" : "";
         }
     }
 }

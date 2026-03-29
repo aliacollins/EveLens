@@ -6,104 +6,104 @@
 <evelens>
   <releases>
     <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.47</version>
+      <date>2026-03-29</date>
+      <version>1.1.0.10</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.47
+      <message><![CDATA[EveLens 1.1.0-alpha.10
 
-Fix promote.ps1 array-join bug in version counter]]></message>
+Fix Queue Health not displaying all characters (#47)]]></message>
     </release>
     <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.46</version>
+      <date>2026-03-29</date>
+      <version>1.1.0.9</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.46
+      <message><![CDATA[EveLens 1.1.0-alpha.9
 
-Fix promote.ps1 version counter for cross-channel promotions]]></message>
+Add Untrained filter button to Skills tab (#33)]]></message>
     </release>
     <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.45</version>
+      <date>2026-03-29</date>
+      <version>1.1.0.8</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.45
+      <message><![CDATA[EveLens 1.1.0-alpha.8
 
-Fix version regression, add branching policy]]></message>
+Consistent skill counts: filter unpublished skills uniformly (#37, #33)]]></message>
     </release>
     <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.1</version>
+      <date>2026-03-29</date>
+      <version>1.1.0.7</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.1
+      <message><![CDATA[EveLens 1.1.0-alpha.7
 
-ESI health state machine, SDE Catalyst expansion, debug isolation, diagnostic viewer]]></message>
+Show full character names in Skill Comparison (#45)]]></message>
     </release>
     <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.44</version>
+      <date>2026-03-29</date>
+      <version>1.1.0.6</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.44
+      <message><![CDATA[EveLens 1.1.0-alpha.6
 
-Fix promote.ps1 cross-branch merge strategy for alpha-to-beta promotions]]></message>
+Fix live font scaling in code-behind windows (#42 feedback)]]></message>
     </release>
     <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.43</version>
+      <date>2026-03-28</date>
+      <version>1.1.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.43
+      <message><![CDATA[EveLens 1.1.0-alpha.5
 
-Fix window position save/restore across restarts and multi-monitor setups]]></message>
+Character Skill Comparison, theme-aware level blocks]]></message>
     </release>
     <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.42</version>
+      <date>2026-03-28</date>
+      <version>1.0.1.4</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.42
+      <message><![CDATA[EveLens 1.0.1-alpha.4
 
-Beta launch prep: scrollbar fix, window position save, tray toggle, group collapse/reorder, README rewrite]]></message>
+Group and character reorder, strip divider, help text (#42)]]></message>
     </release>
     <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.41</version>
+      <date>2026-03-28</date>
+      <version>1.0.1.3</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.41
+      <message><![CDATA[EveLens 1.0.1-alpha.3
 
-Smarter error notifications: ESI hiccups suppressed, persistent errors show the cause]]></message>
+Fix ESI token race condition: pre-flight check, proactive refresh, 401/403 distinction (#34)]]></message>
     </release>
     <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.40</version>
+      <date>2026-03-28</date>
+      <version>1.0.1.2</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.40
+      <message><![CDATA[EveLens 1.0.1-alpha.2
 
-Fix auto-update: hard kill process so Inno installer can proceed]]></message>
+Variable font scaling: 895 hardcoded sizes replaced with 7-tier DynamicResource scale, settings slider 80-150%]]></message>
     </release>
     <release>
-      <date>2026-03-16</date>
-      <version>1.0.0.39</version>
+      <date>2026-03-27</date>
+      <version>1.0.1.1</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.0.1.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-alpha.39
+      <message><![CDATA[EveLens 1.0.1-alpha.1
 
-Remove retry (caused ESI error cascade at scale), suppress PI idle spam from activity log]]></message>
+Queue monitor, add character UX, group redesign, blueprint tree, dead code removal (#39, #40, #41, #42, #43)]]></message>
     </release>
   </releases>
   <datafiles>

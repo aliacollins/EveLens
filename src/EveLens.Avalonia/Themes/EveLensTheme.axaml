@@ -556,13 +556,13 @@
     </Style>
     <Style Selector="DataGrid.plan-grid DataGridRow">
         <Setter Property="MinHeight" Value="22" />
-        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontSize" Value="{DynamicResource EveFontSmall}" />
     </Style>
     <Style Selector="DataGrid.plan-grid DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
         <Setter Property="Fill" Value="{StaticResource EveBackgroundLightBrush}" />
     </Style>
     <Style Selector="DataGrid.plan-grid DataGridColumnHeader">
-        <Setter Property="FontSize" Value="9" />
+        <Setter Property="FontSize" Value="{DynamicResource EveFontCaption}" />
         <Setter Property="Foreground" Value="{StaticResource EveTextDisabledBrush}" />
         <Setter Property="Padding" Value="4,3" />
         <Setter Property="MinHeight" Value="24" />

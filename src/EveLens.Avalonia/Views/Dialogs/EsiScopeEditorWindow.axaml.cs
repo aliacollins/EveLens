@@ -11,6 +11,8 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using EveLens.Common.Services;
 
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class EsiScopeEditorWindow : Window
@@ -18,6 +20,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private readonly Dictionary<string, CheckBox> _groupCheckBoxes = new();
         private readonly Dictionary<string, CheckBox> _scopeCheckBoxes = new();
         private bool _isUpdating;
+        private IDisposable? _fontScaleSub;
 
         /// <summary>
         /// The scopes selected by the user when OK is clicked.
@@ -49,6 +52,22 @@ namespace EveLens.Avalonia.Views.Dialogs
             ClearAllButton.Click += OnClearAllClick;
             OkButton.Click += OnOkClick;
             CancelButton.Click += OnCancelClick;
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildUI()
+        {
+            var currentChecked = CollectCheckedScopes();
+            BuildScopeTree();
+            ApplyChecks(currentChecked);
         }
 
         private void BuildScopeTree()
@@ -64,7 +83,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 {
                     Content = group.Name,
                     FontWeight = global::Avalonia.Media.FontWeight.SemiBold,
-                    FontSize = 12,
+                    FontSize = FontScaleService.Subheading,
                     Tag = group.Name
                 };
                 groupCheckBox.IsCheckedChanged += OnGroupCheckChanged;
@@ -77,7 +96,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     var scopeCheckBox = new CheckBox
                     {
                         Content = scope,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Margin = new global::Avalonia.Thickness(20, 0, 0, 0),
                         Tag = scope
                     };

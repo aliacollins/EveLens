@@ -14,11 +14,15 @@ using Avalonia.Media;
 using EveLens.Common;
 using EveLens.Common.Services;
 
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class AboutWindow : Window
     {
         private readonly Dictionary<string, Button> _tabButtons = new();
+        private IDisposable? _fontScaleSub;
+        private string _activeTab = "about";
 
         // Theme brushes resolved at construction
         private readonly IBrush _accentBrush;
@@ -47,6 +51,23 @@ namespace EveLens.Avalonia.Views.Dialogs
             BuildTabs();
             ShowTab("about");
             OkButton.Click += (_, _) => Close();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildContent));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildContent()
+        {
+            TabBar.Children.Clear();
+            _tabButtons.Clear();
+            BuildTabs();
+            ShowTab(_activeTab);
         }
 
         private static IBrush FindBrush(string key, IBrush fallback)
@@ -78,7 +99,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var btn = new Button
                 {
                     Content = label,
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     FontWeight = FontWeight.Medium,
                     Padding = new Thickness(16, 6),
                     Background = Brushes.Transparent,
@@ -97,6 +118,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void ShowTab(string tabId)
         {
+            _activeTab = tabId;
             foreach (var (id, btn) in _tabButtons)
             {
                 if (id == tabId)
@@ -133,7 +155,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                      + "skill planning tool that EVE Online players have relied on since 2006. "
                      + "Dark theme, modern plan editor, cross-platform architecture, and the same "
                      + "skill optimization engine under the hood.",
-                FontSize = 12, Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
+                FontSize = FontScaleService.Subheading, Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
                 LineHeight = 22, Margin = new Thickness(0, 0, 0, 20),
             });
 
@@ -141,12 +163,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             AddSectionHeader(stack, "MAINTAINER");
             stack.Children.Add(new TextBlock
             {
-                Text = "Alia Collins", FontSize = 13, FontWeight = FontWeight.SemiBold,
+                Text = "Alia Collins", FontSize = FontScaleService.Heading, FontWeight = FontWeight.SemiBold,
                 Foreground = _accentBrush, Margin = new Thickness(0, 2, 0, 0),
             });
             stack.Children.Add(new TextBlock
             {
-                Text = "Active Developer", FontSize = 11,
+                Text = "Active Developer", FontSize = FontScaleService.Body,
                 Foreground = _textSecondaryBrush, Margin = new Thickness(0, 0, 0, 16),
             });
 
@@ -156,7 +178,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 stack.Children.Add(new TextBlock
                 {
-                    Text = api, FontSize = 11, Foreground = _textSecondaryBrush,
+                    Text = api, FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush,
                     Margin = new Thickness(0, 1, 0, 1),
                 });
             }
@@ -167,7 +189,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 stack.Children.Add(new TextBlock
                 {
-                    Text = tool, FontSize = 11, Foreground = _textSecondaryBrush,
+                    Text = tool, FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush,
                     Margin = new Thickness(0, 1, 0, 1),
                 });
             }
@@ -178,7 +200,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 Text = "I don't accept donations. If you want to support the legacy, "
                      + "please donate to Peter Han who maintained EVEMon for years.",
-                FontSize = 11, Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
+                FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
                 LineHeight = 18,
             });
 
@@ -198,7 +220,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             stack.Children.Add(new TextBlock
             {
                 Text = "EveLens is forked from peterhaneve/evemon (v4.0.20).",
-                FontSize = 11, Foreground = _textDisabledBrush, TextAlignment = TextAlignment.Center,
+                FontSize = FontScaleService.Body, Foreground = _textDisabledBrush, TextAlignment = TextAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 Margin = new Thickness(0, 0, 0, 12),
             });
@@ -261,7 +283,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             };
             avatar.Child = new TextBlock
             {
-                Text = name[..1], FontSize = 7, FontWeight = FontWeight.Bold,
+                Text = name[..1], FontSize = FontScaleService.Tiny, FontWeight = FontWeight.Bold,
                 Foreground = foreground, HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
@@ -269,7 +291,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             panel.Children.Add(new TextBlock
             {
-                Text = name, FontSize = 10, Foreground = foreground,
+                Text = name, FontSize = FontScaleService.Small, Foreground = foreground,
                 VerticalAlignment = VerticalAlignment.Center,
             });
 
@@ -281,7 +303,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             parent.Children.Add(new TextBlock
             {
-                Text = text, FontSize = 10, FontWeight = FontWeight.SemiBold,
+                Text = text, FontSize = FontScaleService.Small, FontWeight = FontWeight.SemiBold,
                 Foreground = _accentBrush, LetterSpacing = 1.5,
                 Margin = new Thickness(0, topMargin, 0, 2),
             });
@@ -296,7 +318,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             var btn = new Button
             {
-                Content = label, FontSize = 11, Padding = new Thickness(0),
+                Content = label, FontSize = FontScaleService.Body, Padding = new Thickness(0),
                 Background = Brushes.Transparent, BorderThickness = new Thickness(0),
                 Foreground = _accentSecondaryBrush, Cursor = new Cursor(StandardCursorType.Hand),
                 HorizontalAlignment = HorizontalAlignment.Left,
@@ -319,7 +341,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var gplStack = new StackPanel { Spacing = 6 };
             gplStack.Children.Add(new TextBlock
             {
-                Text = "GNU General Public License v2", FontSize = 12,
+                Text = "GNU General Public License v2", FontSize = FontScaleService.Subheading,
                 FontWeight = FontWeight.SemiBold, Foreground = _textPrimaryBrush,
             });
             gplStack.Children.Add(new TextBlock
@@ -327,7 +349,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Text = "EveLens is free software: you can redistribute it and/or modify it under the "
                      + "terms of the GNU General Public License as published by the Free Software Foundation, "
                      + "either version 2 of the License, or (at your option) any later version.",
-                FontSize = 11, Foreground = _textSecondaryBrush,
+                FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush,
                 TextWrapping = TextWrapping.Wrap, LineHeight = 20,
             });
             gplStack.Children.Add(new TextBlock
@@ -335,7 +357,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Text = "This program is distributed in the hope that it will be useful, but WITHOUT ANY "
                      + "WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR "
                      + "A PARTICULAR PURPOSE.",
-                FontSize = 11, Foreground = _textSecondaryBrush,
+                FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush,
                 TextWrapping = TextWrapping.Wrap, LineHeight = 20,
                 Margin = new Thickness(0, 4, 0, 0),
             });
@@ -354,10 +376,10 @@ namespace EveLens.Avalonia.Views.Dialogs
             foreach (var (prefix, highlight, suffix) in attributions)
             {
                 var line = new StackPanel { Orientation = Orientation.Horizontal };
-                line.Children.Add(new TextBlock { Text = prefix, FontSize = 11, Foreground = _textSecondaryBrush });
-                line.Children.Add(new TextBlock { Text = highlight, FontSize = 11, Foreground = _textPrimaryBrush });
+                line.Children.Add(new TextBlock { Text = prefix, FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush });
+                line.Children.Add(new TextBlock { Text = highlight, FontSize = FontScaleService.Body, Foreground = _textPrimaryBrush });
                 if (!string.IsNullOrEmpty(suffix))
-                    line.Children.Add(new TextBlock { Text = suffix, FontSize = 11, Foreground = _textSecondaryBrush });
+                    line.Children.Add(new TextBlock { Text = suffix, FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush });
                 attrStack.Children.Add(line);
             }
             stack.Children.Add(attrStack);
@@ -365,18 +387,18 @@ namespace EveLens.Avalonia.Views.Dialogs
             // Copyright
             stack.Children.Add(new TextBlock
             {
-                Text = BuildInfo.Copyright, FontSize = 9,
+                Text = BuildInfo.Copyright, FontSize = FontScaleService.Caption,
                 Foreground = _textDisabledBrush, TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 4),
             });
             stack.Children.Add(new TextBlock
             {
-                Text = "Licensed under GPL v2", FontSize = 9, Foreground = _textDisabledBrush,
+                Text = "Licensed under GPL v2", FontSize = FontScaleService.Caption, Foreground = _textDisabledBrush,
             });
             stack.Children.Add(new TextBlock
             {
                 Text = "EVE Online and all related logos are trademarks of CCP hf.",
-                FontSize = 9, Foreground = _textDisabledBrush, TextWrapping = TextWrapping.Wrap,
+                FontSize = FontScaleService.Caption, Foreground = _textDisabledBrush, TextWrapping = TextWrapping.Wrap,
             });
 
             // Links
@@ -398,8 +420,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Cursor = new Cursor(StandardCursorType.Hand),
                 };
                 var linkPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-                linkPanel.Children.Add(new TextBlock { Text = label, FontSize = 10, Foreground = _successGreenBrush });
-                linkPanel.Children.Add(new TextBlock { Text = "\u2197", FontSize = 10, Foreground = _textDisabledBrush });
+                linkPanel.Children.Add(new TextBlock { Text = label, FontSize = FontScaleService.Small, Foreground = _successGreenBrush });
+                linkPanel.Children.Add(new TextBlock { Text = "\u2197", FontSize = FontScaleService.Small, Foreground = _textDisabledBrush });
                 linkBtn.Child = linkPanel;
 
                 if (url.StartsWith("http", StringComparison.OrdinalIgnoreCase))

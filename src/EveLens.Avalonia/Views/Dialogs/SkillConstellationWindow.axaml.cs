@@ -17,12 +17,16 @@ using EveLens.Common.Data;
 using EveLens.Common.Models;
 using SkiaSharp;
 
+using SkiaSharp;
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class SkillConstellationWindow : Window
     {
         private Character? _character;
         private readonly Dictionary<string, SkillNode> _nodeMap = new();
+        private IDisposable? _fontScaleSub;
 
         // Predefined colors for skill groups (cycle if more groups than colors)
         private static readonly SKColor[] GroupColors =
@@ -57,6 +61,21 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             BuildConstellationData();
             WireEvents();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildUI()
+        {
+            _nodeMap.Clear();
+            BuildConstellationData();
         }
 
         private void BuildConstellationData()
@@ -179,7 +198,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var chip = new Button
                 {
                     Content = $"{group.Name} {trained}/{total}",
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     Padding = new Thickness(10, 5),
                     CornerRadius = new CornerRadius(4),
                     Background = new SolidColorBrush(Colors.Transparent),
@@ -229,6 +248,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Canvas.ShowAllLabels = !Canvas.ShowAllLabels;
                 ToggleLabelsBtn.Content = Canvas.ShowAllLabels ? "Hide Labels" : "Show All Labels";
             };
+
+            Opened += (_, _) => SearchBox.Focus();
 
             // Search
             SearchBox.TextChanged += (_, _) => OnSearchTextChanged();
@@ -288,7 +309,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                                 new TextBlock
                                 {
                                     Text = $"Lv {node.Level}",
-                                    FontSize = 9,
+                                    FontSize = FontScaleService.Caption,
                                     Foreground = node.Level > 0
                                         ? new SolidColorBrush(Color.FromRgb(0x6D, 0xBA, 0x6D))
                                         : new SolidColorBrush(Color.FromRgb(0x48, 0x4F, 0x58)),
@@ -304,13 +325,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                                         new TextBlock
                                         {
                                             Text = node.Name,
-                                            FontSize = 11,
+                                            FontSize = FontScaleService.Body,
                                             Foreground = new SolidColorBrush(Color.FromRgb(0xC9, 0xD1, 0xD9))
                                         },
                                         new TextBlock
                                         {
                                             Text = node.GroupName,
-                                            FontSize = 9,
+                                            FontSize = FontScaleService.Caption,
                                             Foreground = new SolidColorBrush(avColor)
                                         }
                                     }
@@ -335,7 +356,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 SearchResultsList.Children.Add(new TextBlock
                 {
                     Text = "No skills found",
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = new SolidColorBrush(Color.FromRgb(0x48, 0x4F, 0x58)),
                     Margin = new Thickness(8, 4)
                 });
@@ -417,19 +438,19 @@ namespace EveLens.Avalonia.Views.Dialogs
                         Foreground = prereqNode.Level > 0
                             ? new SolidColorBrush(Color.FromRgb(0x6D, 0xBA, 0x6D))
                             : new SolidColorBrush(Color.FromRgb(0xC7, 0x5D, 0x5D)),
-                        FontSize = 10
+                        FontSize = FontScaleService.Small
                     });
                     row.Children.Add(new TextBlock
                     {
                         Text = prereqNode.Name,
-                        FontSize = 11,
+                        FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.FromRgb(0xC9, 0xD1, 0xD9)),
                         Cursor = new Cursor(StandardCursorType.Hand)
                     });
                     row.Children.Add(new TextBlock
                     {
                         Text = $"Lv {prereqNode.Level}",
-                        FontSize = 9,
+                        FontSize = FontScaleService.Caption,
                         Foreground = new SolidColorBrush(Color.FromRgb(0x48, 0x4F, 0x58)),
                         HorizontalAlignment = HorizontalAlignment.Right
                     });

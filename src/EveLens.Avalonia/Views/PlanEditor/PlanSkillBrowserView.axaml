@@ -11,24 +11,41 @@
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
                         <ToggleButton x:Name="ShowAllToggle" Content="Show All" IsChecked="True"
-                                      FontSize="10" Padding="8,3" CornerRadius="10"
+                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                       Click="OnShowAllToggled" />
-                        <Button Content="Collapse" FontSize="10" Padding="8,3" CornerRadius="10"
+                        <Button Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button Content="Expand" FontSize="10" Padding="8,3" CornerRadius="10"
+                        <Button Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </StackPanel>
+                    <!-- Attribute filter -->
+                    <ComboBox x:Name="AttributeComboBox" DockPanel.Dock="Bottom"
+                              FontSize="{DynamicResource EveFontSmall}" Padding="6,3" Margin="0,4,0,0"
+                              CornerRadius="10" HorizontalAlignment="Stretch"
+                              SelectionChanged="OnAttributeFilterChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Text}" FontSize="{DynamicResource EveFontSmall}"
+                                               VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding StarText}" FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                               Margin="6,0,0,0" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <!-- Search -->
                     <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
                             BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1">
                         <DockPanel>
                             <Button x:Name="ClearFilterBtn" DockPanel.Dock="Right"
-                                    Content="&#x2715;" FontSize="9"
+                                    Content="&#x2715;" FontSize="{DynamicResource EveFontCaption}"
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
                             <TextBox x:Name="FilterBox" Watermark="Search skills..."
-                                     FontSize="10" Padding="8,4"
+                                     FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
                         </DockPanel>
@@ -57,25 +74,26 @@
                                         PointerPressed="OnGroupHeaderClicked">
                                     <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
                                         <TextBlock Grid.Column="0" Text="{Binding Chevron}"
-                                                   FontSize="11" Width="16"
+                                                   FontSize="{DynamicResource EveFontBody}" Width="16"
                                                    Foreground="{StaticResource EveTextSecondaryBrush}"
                                                    VerticalAlignment="Center" />
                                         <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                   FontSize="11" FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
                                                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                                                    VerticalAlignment="Center" />
                                         <TextBlock Grid.Column="2" Text="{Binding TrainedCountText}"
-                                                   FontSize="10" Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                   FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextSecondaryBrush}"
                                                    Margin="8,0" VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
 
-                                <!-- Indented child items -->
+                                <!-- Indented child items (uses StackPanel, not VirtualizingStackPanel,
+                                     to avoid nested virtualization breaking ScrollViewer measurement — Issue #39) -->
                                 <ItemsControl ItemsSource="{Binding VisibleSkills}" HorizontalAlignment="Stretch"
                                               IsVisible="{Binding IsExpanded}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <VirtualizingStackPanel Orientation="Vertical" />
+                                            <StackPanel Orientation="Vertical" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
@@ -86,14 +104,14 @@
                                                     BorderThickness="0,0,0,1" HorizontalAlignment="Stretch"
                                                     PointerPressed="OnSkillItemClicked">
                                                 <Grid ColumnDefinitions="*,Auto,Auto" HorizontalAlignment="Stretch">
-                                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="11"
+                                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="{DynamicResource EveFontBody}"
                                                                Foreground="{Binding NameBrush}"
                                                                TextTrimming="CharacterEllipsis" />
                                                     <TextBlock Grid.Column="1" Text="{Binding LevelText}"
-                                                               FontSize="10" Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                               FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextSecondaryBrush}"
                                                                Margin="8,0" VerticalAlignment="Center" />
                                                     <TextBlock Grid.Column="2" Text="{Binding RankText}"
-                                                               FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                                                               FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}"
                                                                MinWidth="60" TextAlignment="Right"
                                                                VerticalAlignment="Center" />
                                                 </Grid>
@@ -112,37 +130,37 @@
         <Border Grid.Column="1" BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1,0,0,0">
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
                 <StackPanel x:Name="DetailPanel" Margin="16,12" Spacing="10" IsVisible="False">
-                    <TextBlock x:Name="DetailName" FontSize="15" FontWeight="Bold"
+                    <TextBlock x:Name="DetailName" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                Foreground="{StaticResource EveAccentPrimaryBrush}" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="Rank:" FontSize="11"
+                            <TextBlock Text="Rank:" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
-                            <TextBlock x:Name="DetailRank" FontSize="11"
+                            <TextBlock x:Name="DetailRank" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="Primary:" FontSize="11"
+                            <TextBlock Text="Primary:" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
-                            <TextBlock x:Name="DetailPrimary" FontSize="11"
+                            <TextBlock x:Name="DetailPrimary" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="Secondary:" FontSize="11"
+                            <TextBlock Text="Secondary:" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
-                            <TextBlock x:Name="DetailSecondary" FontSize="11"
+                            <TextBlock x:Name="DetailSecondary" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                     </StackPanel>
-                    <TextBlock x:Name="DetailDescription" FontSize="11" TextWrapping="Wrap"
+                    <TextBlock x:Name="DetailDescription" FontSize="{DynamicResource EveFontBody}" TextWrapping="Wrap"
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="80" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock Text="Training Time:" FontSize="12" FontWeight="SemiBold"
+                    <TextBlock Text="Training Time:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="LevelsList" Spacing="4" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock Text="Prerequisites:" FontSize="12" FontWeight="SemiBold"
+                    <TextBlock Text="Prerequisites:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
                 </StackPanel>

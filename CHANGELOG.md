@@ -6,121 +6,117 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- 1.1.0 release candidate: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign
+
+### Added
+
+- **Character Skill Comparison** -- compare up to 10 characters side-by-side with theme-aware level blocks, differences-only toggle, and auto-sizing columns ([#45])
+- **Variable font scaling** -- a Font Size slider in Settings > Appearance scales all text from 80% to 150%. Every font in the app (895 values across 71 files) now uses a 7-tier type scale derived from a single base size. Changes apply live as you drag the slider and persist across sessions. Architecture tests prevent hardcoded font sizes from creeping back in
+- **Untrained filter** -- new filter button in the Skills tab shows skills not yet injected ([#33])
+- **Queue health monitor** -- a clock icon in the status bar shows how many character queues need attention. Click it to see all characters sorted by urgency with countdown timers and end dates. Click any character to jump straight to their Queue tab ([#43])
+- **Queue end date** in the Queue tab -- the status bar now shows when the queue finishes and a countdown timer so you know exactly when to refresh your training plan
+- **Add Character card** -- a ghost card in the character overview lets you add new characters without navigating menus. The portrait strip also has a `+` button for quick access ([#41])
+- **Add Another flow** -- after adding a character via SSO, you can immediately add another without reopening the dialog. Characters are auto-imported on successful login, no extra confirmation step needed
+- **Group and character reorder** -- click a group chip to expand a member reorder panel with ▲ ▼ buttons. ◀ ▶ moves groups left/right to change their display order in the Overview and portrait strip ([#42])
+- **Group dividers in portrait strip** -- visible separator lines between groups for clearer visual separation ([#42])
+- **Help text in Manage Groups** -- guidance text explains how to assign characters, reorder members, and manage groups ([#42])
+
+### Changed
+
+- **Manage Character Groups** completely redesigned -- tag-based UI shows each character with colored group tags. Click `+ Assign` to pick a group from a radio-button flyout. Groups are managed inline with rename and delete icons ([#42])
+- **Group colors in portrait strip** -- characters are ordered by group with colored accent bars under their portraits ([#42])
+- **Blueprint browser** uses the same hierarchical tree as Ships and Items -- no more duplicate "Amarr" entries. The full market group path is preserved with a "Can Build Only" filter ([#39])
+- **Consistent skill counts** -- unpublished skills are now filtered uniformly across the Skills tab, Plan Editor, and Character Comparison ([#37], [#33])
 
 ### Fixed
 
-- Health state stuck on "re-authentication required" after successful token refresh -- EndpointHealthTracker now subscribes to ESIKeyTokenRefreshedEvent and resets Suspended state automatically (Issue #34)
+- **Queue Health now shows all characters** -- previously only "monitored" characters (a legacy EVEMon concept with no UI toggle) appeared in the Queue Health flyout and badge. Characters migrated from old EVEMon settings could become invisible ghosts. All characters are now guaranteed to be monitored on import ([#47])
+- **Queue Health flyout scrolls** -- added ScrollViewer with max height to prevent the flyout from overflowing off-screen with many characters
+- **Full character names in Comparison** -- column headers and portraits now show full names instead of first name only ([#45])
+- **Live font scaling** -- code-behind windows (Manage Groups, Comparison, Skills, Overview, dialogs) now rebuild on font scale change instead of showing stale sizes ([#42])
+- **ESI token race condition** -- requests no longer fire with expired tokens. Tokens refresh proactively 100 seconds before expiry, and a pre-flight check blocks any request when the token is expired or refreshing. This prevents the error budget depletion that caused the scheduler to back off for 20+ hours with 30+ characters ([#34])
+- **401 vs 403 distinction** -- expired tokens (401) are now treated as transient and don't trigger "re-authentication required" notifications. Only permanent auth failures like revoked scopes (403) trigger that message. The scheduler re-enqueues 401s after 15 seconds instead of suspending all jobs ([#34])
+- **Startup token refresh** -- all ESI tokens are refreshed during the splash screen before the scheduler starts dispatching, preventing the burst of 401s that occurred on app launch ([#34])
+- **TextBox auto-focus** -- dialog text inputs now auto-focus on open across all dialogs: Create Blank Character, Manage Groups, Manage Plans, Implant Sets, and Skill Constellation search ([#42])
+- **macOS .app bundle** -- the app was not recognised by macOS because executable permissions were lost during packaging. Now built via WSL with proper Unix permissions
+
+### Removed
+
+- **Google Analytics tracker** -- removed dead code that hashed MAC addresses for fingerprinting. Never had callers, never had consent ([#40])
+- **In-game browser server** -- removed legacy IGB HTTP server (5 files) that could bind port 80. CCP retired the IGB years ago ([#40])
+
+## [1.1.0-beta.1] - 2026-03-24
+
+### Added
+
+- **Skill level breakdown** in the Skills tab — filter buttons let you instantly see how many skills you have at each level (V, IV, III, II, I) and switch between All Skills, All Trained, or Injected ([#33])
+- **Attribute filter** in the Plan Editor — filter the skill list by primary/secondary attribute combo (e.g. Intelligence/Memory) to plan around your current remap. Your active remap is auto-detected and marked with a ★ ([#38])
+- **Total SP** (trained + unallocated) now displayed in the character header stats line
+
+### Fixed
+
+- Plan Editor no longer shows unpublished skills like CFO Training or Chief Science Officer ([#37])
+- Scrolling now works correctly in the Plan Editor's Skills and Blueprints tabs ([#39])
 
 ## [1.0.0] - 2026-03-23
 
 ### Added
 
-- Velopack auto-update system with delta updates across Windows, Linux, and macOS
-- GitHub Actions CI/CD pipeline -- automated builds, tests, and releases on push
-- GitVersion for automatic semantic versioning from git branch topology
-- Channel-based update intervals: alpha (1h), beta (3h), stable (6h)
-- Release notes displayed in the update dialog (from GitHub Release body)
-- Force "Check for Updates" in Help menu with download + restart flow
-- **Windows code signing** with Certum Open Source Developer certificate -- eliminates SmartScreen/Trojan false positives
-- `sign-release.ps1` -- local script to build, sign, and upload Windows release artifacts
-- Assembly version stamping in CI for all platforms (SharedAssemblyInfo.cs updated before build)
+- **Auto-updates** via Velopack with delta downloads across Windows, Linux, and macOS
+- **Windows code signing** — eliminates SmartScreen warnings and false-positive antivirus detections
+- "Check for Updates" in the Help menu with release notes in the update dialog
 
 ### Changed
 
-- Update system completely replaced -- Velopack replaces custom AutoUpdateService, Inno Setup, AppImage scripts, and macOS bundle scripts
-- CI/CD completely replaced -- GitHub Actions replaces promote.ps1 and release-*.ps1 scripts
-- Git security lock removed -- GitHub branch protection rules enforce protected branches
-- GitVersion config updated for v6.x -- ContinuousDelivery mode with per-branch labels
-
-### Removed
-
-- `AutoUpdateService.cs` -- replaced by Velopack
-- `UpdateNotifyWindow` and `DataUpdateNotifyWindow` -- replaced by inline update dialog
-- `release-alpha.ps1`, `release-beta.ps1`, `release-stable.ps1` -- replaced by GitHub Actions
-- `build-installer.ps1`, `build-appimage.sh`, `build-macapp.sh` -- replaced by Velopack packaging
-- `git-lock.sh`, `git-unlock.sh` -- replaced by GitHub branch protection
-- `evelens-patch-*.xml` update feeds -- replaced by GitHub Releases API
+- Update system completely replaced — Velopack handles all packaging and delivery
+- Build and release pipeline moved to GitHub Actions
 
 ## [1.0.0-beta.2] - 2026-03-19
 
 ### Added
 
-- **ESI Health State Machine** -- per-(character, endpoint) state machine replaces event-based error notifications. States: Healthy, Degraded, Failing, Suspended. Fires only on transitions -- no more error spam. (Issue #34)
-- **EndpointHealthTracker** with dynamic rolling time window that self-tunes from ESI cache headers (fast endpoints = short window, slow endpoints = long window)
-- **Hysteresis recovery** -- 3 consecutive successes required to transition back to Healthy, preventing the error flapping that caused ~100 activity log entries
-- **`ISchedulerStatus.GetNextFetchTime()`** -- reads directly from the scheduler's priority queue, fixing the "19 hours until next refresh" stale display bug
-- **HealthNotificationSubscriber** -- bridges state transitions to activity log: Failing = one entry, Suspended = one entry, recovery = auto-clear, Degraded = silence
-- **Traffic-light health dots** on character overview: green (healthy), yellow (degraded/fetching), red (failing/suspended)
-- **42 new tests** for EndpointHealthTracker covering all transitions, hysteresis, dynamic windows, edge cases
-- **In-app Diagnostic Stream viewer** -- Debug menu opens a live log window with filters (All/ESI/Events/Warnings/Health/Scheduler), auto-scroll, 2000-line buffer
-- **Debug build isolation** -- debug builds use `%APPDATA%\EveLens Debug\` to prevent cross-contamination with production data
-- **`update-sde.ps1`** -- automated SDE update pipeline: download, extract, YamlToSqlite, XmlGenerator, diff report, version stamp
-- **Branching policy** in CLAUDE.md -- all work on feature/fix/experimental branches from alpha
-
-### Changed
-
-- **SDE updated to CCP build 3261822** (Catalyst expansion, March 18 2026):
-  - 5 new skills: Capital Disintegrator Specialization, Amarr/Caldari/Gallente/Minmatar Fighter Specialization
-  - 82 new types, 31 modified types, 127 typeDogma changes
-  - All balance changes: carrier cargo bays, fighter stats (squadron 9→6, HP/DPS +50%), FAX cap booster bonuses, Black Ops tank nerfs, SOCT damage nerfs, recon targeting range -15%
-- Status bar countdown reads from scheduler queue instead of stale QueryMonitor reconstruction
-- CharacterOverviewView uses CharacterHealthSummary instead of QueryMonitors.HasErrors
-- TcpJsonLoggerProvider refactored with Start/Stop control and OnLogLine callback for in-process subscribers
-- Scheduler-driven ESI endpoints disconnected from ShouldNotifyError (8 non-scheduler callers kept for backward compat)
+- **ESI health tracking** — smart per-endpoint health states replace noisy error notifications. You'll see one clear message when something breaks, and a recovery message when it's fixed — no more walls of error spam ([#34])
+- **Health indicators** on the character overview — green (healthy), yellow (degraded), red (failing)
+- **Live diagnostic viewer** in the Debug menu — real-time log with filters for ESI, events, warnings, and scheduler activity
+- **SDE update to Catalyst expansion** (March 18, 2026) — 5 new skills, 82 new item types, carrier/fighter/FAX/Black Ops balance changes
 
 ### Fixed
 
-- ~100 ESI error entries accumulating in activity log during intermittent connectivity (Issue #34)
-- "19 hours until next refresh" stale display when error cache expires before scheduler's next fetch
-- Error notification flapping caused by ShouldNotifyError gate resetting on every success
-- XmlGenerator NuGet version conflict (System.Configuration.ConfigurationManager 8.0.0 → 8.0.1)
-- promote.ps1 version counter resetting on cross-channel promotions (array-join bug in PowerShell)
-- promote.ps1 not fetching remote ref before reading target branch version
+- ~100 ESI error entries flooding the activity log during brief connectivity issues ([#34])
+- "19 hours until next refresh" showing stale times when error cache expired
+- Debug builds now use a separate data folder to avoid contaminating production settings
 
 ## [1.0.0-beta.1] - 2026-03-16
 
 ### Added
 
-- Window position save/restore across restarts and multi-monitor setups
-
-### Fixed
-
-- promote.ps1 cross-branch merge strategy for alpha-to-beta promotions
-
-## [1.0.0-alpha.44] - 2026-03-15
-
-### Added
-
-- Smarter ESI error notifications: 3-consecutive-failure suppression for transient errors
-- Immediate notification for auth failures (401/403) and not-found (404)
-- Error categorization labels: Token refresh, Connection error, Auth expired, Not found, Rate limited, ESI server error
-- 29 new tests in ErrorNotificationTests.cs
+- Window position and size remembered across restarts, including multi-monitor setups
 
 ## [1.0.0-alpha.1] - 2026-02-25
 
 ### Added
 
-- Cross-platform support: Windows x64, Linux x64, macOS Apple Silicon
-- Avalonia UI replacing WinForms -- dark theme, modern controls
-- ESI Scheduler with priority queue, per-character rate limiting, phased cold start
-- Resilience pipeline: CircuitBreakerPolicy, CharacterAlivePolicy, RetryPolicy
-- EventAggregator replacing all static events
-- 19 character sub-tab views (Skills, Assets, Mail, Contracts, etc.)
-- MVVM ViewModels for all list views with filter/sort/group pipeline
-- Plan editor with skill browser and attribute optimizer
-- Settings migration from EVEMon (`%APPDATA%\EVEMon` → `%APPDATA%\EveLens`)
-- Auto-update checking via patch XML feeds
-- TCP diagnostic stream on port 5555 for structured JSON-lines debugging
-- 1741 tests covering architecture, models, services, serialization, integration
+- **Cross-platform support** — Windows x64, Linux x64, macOS Apple Silicon
+- **Modern dark UI** built on Avalonia, replacing the legacy WinForms interface
+- **Smart ESI scheduler** with priority queue, per-character rate limiting, and phased cold start
+- **19 character tabs** — Skills, Assets, Market Orders, Contracts, Mail, Industry Jobs, Wallet, Notifications, Kill Log, Planetary, and more
+- **Plan Editor** with skill browser, training time calculator, and attribute optimizer
+- **Settings migration** — existing EVEMon settings imported automatically on first launch
+- **TCP diagnostic stream** on port 5555 for real-time structured debugging
 
 ### Changed
 
-- Complete architectural rewrite from monolithic EVEMon to modular EveLens
-- Assembly hierarchy: Core → Data → Serialization → Models → Infrastructure → Common → EveLens
-- Brand identity: EVEMon → EveLens (Character Intelligence for EVE Online)
+- Complete rewrite from monolithic EVEMon to modular EveLens architecture
+- Rebranded from EVEMon to EveLens — Character Intelligence for EVE Online
 
-[unreleased]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.2...HEAD
+[#33]: https://github.com/aliacollins/EveLens/discussions/33
+[#34]: https://github.com/aliacollins/EveLens/issues/34
+[#37]: https://github.com/aliacollins/EveLens/issues/37
+[#38]: https://github.com/aliacollins/EveLens/issues/38
+[#39]: https://github.com/aliacollins/EveLens/issues/39
+[unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...HEAD
+[1.1.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0...v1.1.0-beta.1
+[1.0.0]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.2...v1.0.0
 [1.0.0-beta.2]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.1...v1.0.0-beta.2
-[1.0.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0-alpha.44...v1.0.0-beta.1
-[1.0.0-alpha.44]: https://github.com/aliacollins/evelens/compare/v1.0.0-alpha.1...v1.0.0-alpha.44
+[1.0.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0-alpha.1...v1.0.0-beta.1
 [1.0.0-alpha.1]: https://github.com/aliacollins/evelens/releases/tag/v1.0.0-alpha.1

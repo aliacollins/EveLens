@@ -15,6 +15,9 @@ using EveLens.Common.Data;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
 
+using EveLens.Common.Models;
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class ImplantSetEditorWindow : Window
@@ -24,6 +27,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private bool _isCustomSet;
         private readonly ComboBox[] _slotCombos = new ComboBox[10];
         private bool _suppressSlotChange;
+        private IDisposable? _fontScaleSub;
 
         private static readonly ImplantSlots[] AllSlots = new[]
         {
@@ -50,6 +54,22 @@ namespace EveLens.Avalonia.Views.Dialogs
             _character = character;
             BuildSlotRows();
             RefreshSetList();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RebuildUI));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
+        }
+
+        private void RebuildUI()
+        {
+            BuildSlotRows();
+            PopulateSlotCombos();
+            UpdateBonusSummary();
         }
 
         private void BuildSlotRows()
@@ -63,7 +83,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var label = new TextBlock
                 {
                     Text = SlotLabels[i],
-                    FontSize = 11,
+                    FontSize = FontScaleService.Body,
                     Foreground = (global::Avalonia.Media.IBrush?)Application.Current?.FindResource("EveTextSecondaryBrush")
                         ?? global::Avalonia.Media.Brushes.Gray,
                     VerticalAlignment = VerticalAlignment.Center,
@@ -73,7 +93,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 var combo = new ComboBox
                 {
-                    FontSize = 10,
+                    FontSize = FontScaleService.Small,
                     MinWidth = 250,
                     VerticalAlignment = VerticalAlignment.Center,
                     IsEnabled = false,
@@ -318,7 +338,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var nameBox = new TextBox
             {
                 Text = defaultName,
-                FontSize = 12,
+                FontSize = FontScaleService.Subheading,
                 Margin = new Thickness(0, 8, 0, 0),
                 Watermark = "Enter name..."
             };
@@ -326,7 +346,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var okBtn = new Button
             {
                 Content = "OK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -343,14 +363,14 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Margin = new Thickness(16),
                     Children =
                     {
-                        new TextBlock { Text = "Name:", FontSize = 12 },
+                        new TextBlock { Text = "Name:", FontSize = FontScaleService.Subheading },
                         nameBox,
                         okBtn
                     }
                 }
             };
 
-            nameBox.AttachedToVisualTree += (_, _) => nameBox.SelectAll();
+            nameBox.AttachedToVisualTree += (_, _) => { nameBox.Focus(); nameBox.SelectAll(); };
             okBtn.Click += (_, _) =>
             {
                 result = nameBox.Text?.Trim();

@@ -91,14 +91,41 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (emptyState != null) emptyState.IsVisible = isEmpty;
             if (scroller != null) scroller.IsVisible = !isEmpty;
 
-            var status = this.FindControl<TextBlock>("StatusText");
-            if (status != null)
+            var ccp = character as CCPCharacter;
+            var statusParts = new System.Collections.Generic.List<string>();
+
+            if (isEmpty)
             {
-                status.Text = isEmpty
-                    ? "No skills in training"
-                    : $"Skills in queue: {_viewModel.QueueEntries.Count}" +
-                      (_viewModel.TrainingCount > 0 ? $"  |  Currently training: {_viewModel.CurrentTrainingText}" : "  |  Paused");
+                StatusText.Text = "No skills in training";
+                return;
             }
+
+            statusParts.Add($"Skills in queue: {_viewModel.QueueEntries.Count}");
+
+            if (_viewModel.TrainingCount > 0 && ccp?.SkillQueue != null && ccp.IsTraining)
+            {
+                // Queue end countdown
+                var endTime = ccp.SkillQueue.EndTime;
+                var remaining = endTime - DateTime.UtcNow;
+                if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
+
+                string countdown;
+                if (remaining.TotalDays >= 1)
+                    countdown = $"{(int)remaining.TotalDays}d {remaining.Hours}h {remaining.Minutes}m";
+                else if (remaining.TotalHours >= 1)
+                    countdown = $"{(int)remaining.TotalHours}h {remaining.Minutes}m";
+                else
+                    countdown = $"{remaining.Minutes}m {remaining.Seconds}s";
+
+                statusParts.Add($"Ends in: {countdown}");
+                statusParts.Add($"Ends on: {endTime:ddd dd MMM HH:mm} EVE");
+            }
+            else
+            {
+                statusParts.Add("Paused");
+            }
+
+            StatusText.Text = string.Join("  |  ", statusParts);
         }
     }
 

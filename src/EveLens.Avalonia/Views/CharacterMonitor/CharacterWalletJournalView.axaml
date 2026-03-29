@@ -15,15 +15,15 @@
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
                 <TextBlock Text="Wallet Journal is not enabled for this character."
-                           FontSize="12"
+                           FontSize="{DynamicResource EveFontSubheading}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Center" />
                 <TextBlock Text="Enable this to start fetching data from EVE Online."
-                           FontSize="11"
+                           FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            HorizontalAlignment="Center" />
                 <Button Content="Enable Wallet Journal"
-                        FontSize="11" Padding="16,6" CornerRadius="12"
+                        FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
                         HorizontalAlignment="Center"
                         Click="OnEnableEndpoint" />
             </StackPanel>
@@ -31,9 +31,9 @@
 
         <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
             <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="ESI scope not authorized" FontSize="14" FontWeight="SemiBold"
+                <TextBlock Text="ESI scope not authorized" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
-                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
                            Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
             </StackPanel>
@@ -47,9 +47,9 @@
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
                                 VerticalAlignment="Center">
-                        <Button Content="Collapse All" FontSize="11" Padding="10,4"
+                        <Button Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnCollapseAll" />
-                        <Button Content="Expand All" FontSize="11" Padding="10,4"
+                        <Button Content="Expand All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnExpandAll" />
                     </StackPanel>
 
@@ -63,7 +63,7 @@
                             <DockPanel>
                                 <Button x:Name="ClearFilterButton"
                                         DockPanel.Dock="Right"
-                                        Content="&#x2715;" FontSize="10"
+                                        Content="&#x2715;" FontSize="{DynamicResource EveFontSmall}"
                                         Background="Transparent" BorderThickness="0"
                                         Padding="8,4" CornerRadius="0,14,14,0"
                                         IsVisible="False"
@@ -71,22 +71,22 @@
                                 <TextBox x:Name="FilterBox"
                                          Watermark="Search journal..."
                                          Background="Transparent" BorderThickness="0"
-                                         FontSize="11" Padding="10,5"
+                                         FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                          TextChanged="OnFilterTextChanged" />
                             </DockPanel>
                         </Border>
 
                         <!-- Type filter -->
-                        <TextBlock Text="Type:" FontSize="11" VerticalAlignment="Center"
+                        <TextBlock Text="Type:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
-                        <ComboBox x:Name="TypeFilterCombo" FontSize="11"
+                        <ComboBox x:Name="TypeFilterCombo" FontSize="{DynamicResource EveFontBody}"
                                   MinWidth="140" Padding="8,4"
                                   SelectionChanged="OnTypeFilterChanged" />
 
                         <!-- Grouping -->
-                        <TextBlock Text="Group:" FontSize="11" VerticalAlignment="Center"
+                        <TextBlock Text="Group:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
-                        <ComboBox x:Name="GroupingCombo" FontSize="11"
+                        <ComboBox x:Name="GroupingCombo" FontSize="{DynamicResource EveFontBody}"
                                   MinWidth="140" Padding="8,4"
                                   SelectionChanged="OnGroupingChanged" />
                     </StackPanel>
@@ -97,7 +97,7 @@
             <Border DockPanel.Dock="Bottom" Padding="10,5"
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-                <TextBlock x:Name="StatusText" FontSize="11"
+                <TextBlock x:Name="StatusText" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
             </Border>
 
@@ -128,16 +128,16 @@
                                             PointerPressed="OnGroupHeaderClicked">
                                         <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
                                             <TextBlock Grid.Column="0" Text="{Binding Chevron}"
-                                                       FontSize="11" Width="16"
+                                                       FontSize="{DynamicResource EveFontBody}" Width="16"
                                                        Foreground="{StaticResource EveTextSecondaryBrush}"
                                                        VerticalAlignment="Center" />
                                             <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                       FontSize="11" FontWeight="SemiBold"
+                                                       FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
                                                        Foreground="{StaticResource EveAccentPrimaryBrush}"
                                                        VerticalAlignment="Center"
                                                        TextTrimming="CharacterEllipsis" />
                                             <TextBlock Grid.Column="2" Text="{Binding CountText}"
-                                                       FontSize="10"
+                                                       FontSize="{DynamicResource EveFontSmall}"
                                                        Foreground="{StaticResource EveTextSecondaryBrush}"
                                                        VerticalAlignment="Center" Margin="8,0" />
                                         </Grid>
@@ -160,21 +160,21 @@
                                                         BorderThickness="0,0,0,0.5" HorizontalAlignment="Stretch">
                                                     <Grid ColumnDefinitions="140,*,130,130" HorizontalAlignment="Stretch">
                                                         <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat=\{0:yyyy-MM-dd HH:mm\}}"
-                                                                   FontSize="10" Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                                   FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextSecondaryBrush}"
                                                                    VerticalAlignment="Center" />
                                                         <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center" Margin="8,0">
-                                                            <TextBlock Text="{Binding Type}" FontSize="11"
+                                                            <TextBlock Text="{Binding Type}" FontSize="{DynamicResource EveFontBody}"
                                                                        Foreground="{StaticResource EveTextPrimaryBrush}"
                                                                        TextTrimming="CharacterEllipsis" />
-                                                            <TextBlock Text="{Binding Reason}" FontSize="10"
+                                                            <TextBlock Text="{Binding Reason}" FontSize="{DynamicResource EveFontSmall}"
                                                                        Foreground="{StaticResource EveTextDisabledBrush}"
                                                                        TextTrimming="CharacterEllipsis" />
                                                         </StackPanel>
                                                         <TextBlock Grid.Column="2" Text="{Binding Amount, StringFormat=\{0:N2\} ISK}"
-                                                                   FontSize="11" Foreground="{Binding AmountBrush}"
+                                                                   FontSize="{DynamicResource EveFontBody}" Foreground="{Binding AmountBrush}"
                                                                    TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" />
                                                         <TextBlock Grid.Column="3" Text="{Binding Balance, StringFormat=\{0:N2\} ISK}"
-                                                                   FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                                                                   FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}"
                                                                    TextAlignment="Right" VerticalAlignment="Center" />
                                                     </Grid>
                                                 </Border>

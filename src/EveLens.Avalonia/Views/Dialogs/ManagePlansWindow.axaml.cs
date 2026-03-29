@@ -15,11 +15,15 @@ using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using EveLens.Common.Models;
 
+using EveLens.Common.Models;
+using EveLens.Common.Services;
+using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
     public partial class ManagePlansWindow : Window
     {
         private Character? _character;
+        private IDisposable? _fontScaleSub;
 
         public ManagePlansWindow()
         {
@@ -36,6 +40,15 @@ namespace EveLens.Avalonia.Views.Dialogs
             _character = character;
             Title = $"Manage Plans \u2014 {character.Name}";
             RefreshGrid();
+
+            _fontScaleSub = AppServices.EventAggregator?.Subscribe<EveLens.Common.Events.FontScaleChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshGrid));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _fontScaleSub?.Dispose();
+            base.OnClosed(e);
         }
 
         private void RefreshGrid()
@@ -232,7 +245,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var nameBox = new TextBox
             {
                 Text = defaultName,
-                FontSize = 12,
+                FontSize = FontScaleService.Subheading,
                 Margin = new Thickness(0, 8, 0, 0),
                 Watermark = "Enter plan name..."
             };
@@ -240,7 +253,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var errorText = new TextBlock
             {
                 Text = "A plan with this name already exists.",
-                FontSize = 10,
+                FontSize = FontScaleService.Small,
                 Foreground = (global::Avalonia.Media.IBrush?)Application.Current?.FindResource("EveErrorRedBrush")
                              ?? global::Avalonia.Media.Brushes.Red,
                 Margin = new Thickness(0, 4, 0, 0),
@@ -250,7 +263,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var okBtn = new Button
             {
                 Content = "OK",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 HorizontalAlignment = HorizontalAlignment.Right,
@@ -276,7 +289,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Margin = new Thickness(16),
                     Children =
                     {
-                        new TextBlock { Text = "Plan name:", FontSize = 12 },
+                        new TextBlock { Text = "Plan name:", FontSize = FontScaleService.Subheading },
                         nameBox,
                         errorText,
                         okBtn
@@ -284,7 +297,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 }
             };
 
-            nameBox.AttachedToVisualTree += (_, _) => nameBox.SelectAll();
+            nameBox.AttachedToVisualTree += (_, _) => { nameBox.Focus(); nameBox.SelectAll(); };
             okBtn.Click += (_, _) =>
             {
                 result = nameBox.Text?.Trim();
@@ -303,7 +316,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var okBtn = new Button
             {
                 Content = "Delete",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12),
                 Foreground = global::Avalonia.Media.Brushes.Red
@@ -311,7 +324,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             var cancelBtn = new Button
             {
                 Content = "Cancel",
-                FontSize = 11,
+                FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
             };
@@ -339,7 +352,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         {
                             Text = message,
                             TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
-                            FontSize = 12,
+                            FontSize = FontScaleService.Subheading,
                             VerticalAlignment = VerticalAlignment.Center
                         }
                     }

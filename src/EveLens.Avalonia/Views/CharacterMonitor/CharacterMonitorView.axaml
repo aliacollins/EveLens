@@ -15,70 +15,70 @@
                     HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                     <TextBlock x:Name="LoadingTitle" Text="Warming up the pod..."
-                               FontSize="13" FontWeight="SemiBold"
+                               FontSize="{DynamicResource EveFontHeading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveAccentPrimaryBrush}"
                                HorizontalAlignment="Center" />
                     <TextBlock x:Name="LoadingSubtext" Text="Connecting to ESI"
-                               FontSize="10" Foreground="{StaticResource EveTextDisabledBrush}"
+                               FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}"
                                HorizontalAlignment="Center" />
                 </StackPanel>
             </Border>
 
             <!-- Sub-tabs with compact headers -->
-            <TabControl x:Name="SubTabs" TabStripPlacement="Top" Padding="0" FontSize="11">
+            <TabControl x:Name="SubTabs" TabStripPlacement="Top" Padding="0" FontSize="{DynamicResource EveFontBody}">
 
                 <!-- Character info tabs -->
-                <TabItem Header="Skills" FontSize="11">
+                <TabItem Header="Skills" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterSkillsView />
                 </TabItem>
-                <TabItem Header="Queue" FontSize="11">
+                <TabItem Header="Queue" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterSkillQueueView />
                 </TabItem>
-                <TabItem x:Name="TabClones" Header="Clones" FontSize="11">
+                <TabItem x:Name="TabClones" Header="Clones" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterClonesView />
                 </TabItem>
-                <TabItem x:Name="TabEmployment" Header="Employment" FontSize="11">
+                <TabItem x:Name="TabEmployment" Header="Employment" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterEmploymentHistoryView />
                 </TabItem>
-                <TabItem x:Name="TabStandings" Header="Standings" FontSize="11">
+                <TabItem x:Name="TabStandings" Header="Standings" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterStandingsView />
                 </TabItem>
-                <TabItem x:Name="TabContacts" Header="Contacts" FontSize="11">
+                <TabItem x:Name="TabContacts" Header="Contacts" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterContactsView />
                 </TabItem>
-                <TabItem x:Name="TabMedals" Header="Medals" FontSize="11">
+                <TabItem x:Name="TabMedals" Header="Medals" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterMedalsView />
                 </TabItem>
-                <TabItem x:Name="TabLP" Header="LP" FontSize="11">
+                <TabItem x:Name="TabLP" Header="LP" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterLoyaltyView />
                 </TabItem>
 
                 <!-- Data tabs -->
-                <TabItem x:Name="TabAssets" Header="Assets" FontSize="11">
+                <TabItem x:Name="TabAssets" Header="Assets" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterAssetsView />
                 </TabItem>
-                <TabItem x:Name="TabOrders" Header="Orders" FontSize="11">
+                <TabItem x:Name="TabOrders" Header="Orders" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterMarketOrdersView />
                 </TabItem>
-                <TabItem x:Name="TabContracts" Header="Contracts" FontSize="11">
+                <TabItem x:Name="TabContracts" Header="Contracts" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterContractsView />
                 </TabItem>
-                <TabItem x:Name="TabIndustry" Header="Industry" FontSize="11">
+                <TabItem x:Name="TabIndustry" Header="Industry" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterIndustryJobsView />
                 </TabItem>
-                <TabItem x:Name="TabJournal" Header="Journal" FontSize="11">
+                <TabItem x:Name="TabJournal" Header="Journal" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterWalletJournalView />
                 </TabItem>
-                <TabItem x:Name="TabTransactions" Header="Transactions" FontSize="11">
+                <TabItem x:Name="TabTransactions" Header="Transactions" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterWalletTransactionsView />
                 </TabItem>
-                <TabItem x:Name="TabMail" Header="Mail" FontSize="11">
+                <TabItem x:Name="TabMail" Header="Mail" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterMailMessagesView />
                 </TabItem>
-                <TabItem x:Name="TabNotify" Header="Notify" FontSize="11">
+                <TabItem x:Name="TabNotify" Header="Notify" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterNotificationsView />
                 </TabItem>
-                <TabItem x:Name="TabKills" Header="Kills" FontSize="11">
+                <TabItem x:Name="TabKills" Header="Kills" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterKillLogView />
                 </TabItem>
             </TabControl>
@@ -88,7 +88,7 @@
                     HorizontalAlignment="Right" VerticalAlignment="Top"
                     Background="Transparent" BorderThickness="0"
                     Padding="8,4" Margin="4,2"
-                    FontSize="13"
+                    FontSize="{DynamicResource EveFontHeading}"
                     Foreground="{StaticResource EveTextSecondaryBrush}"
                     ToolTip.Tip="Manage ESI Endpoints">
                 <Button.Content>&#x2699;</Button.Content>
@@ -99,10 +99,10 @@
                                 BorderThickness="1" CornerRadius="6"
                                 Padding="12" MinWidth="260" MaxHeight="420">
                             <StackPanel Spacing="6">
-                                <TextBlock Text="ESI Endpoints" FontSize="12" FontWeight="SemiBold"
+                                <TextBlock Text="ESI Endpoints" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                            Foreground="{StaticResource EveAccentPrimaryBrush}" />
                                 <TextBlock Text="Choose which data to fetch for this character."
-                                           FontSize="10"
+                                           FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{StaticResource EveTextDisabledBrush}"
                                            TextWrapping="Wrap" />
                                 <Separator Margin="0,2" />
@@ -115,9 +115,9 @@
                                 <Separator Margin="0,2" />
                                 <StackPanel Orientation="Horizontal" Spacing="6"
                                             HorizontalAlignment="Right">
-                                    <Button Content="Enable All" FontSize="10" Padding="10,3"
+                                    <Button Content="Enable All" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                                             CornerRadius="12" Click="OnEnableAllEndpoints" />
-                                    <Button Content="Disable All" FontSize="10" Padding="10,3"
+                                    <Button Content="Disable All" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                                             CornerRadius="12" Click="OnDisableAllEndpoints" />
                                 </StackPanel>
                             </StackPanel>
