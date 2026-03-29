@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -932,7 +933,7 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                var chars = _viewModel.Characters;
+                var chars = AppServices.Characters.ToList();
                 if (chars.Count == 0)
                 {
                     QueueBadge.IsVisible = false;
@@ -998,7 +999,7 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                var chars = _viewModel.Characters;
+                var chars = AppServices.Characters.ToList();
                 if (chars.Count == 0) return;
 
                 var now = DateTime.UtcNow;
@@ -1139,7 +1140,12 @@ namespace EveLens.Avalonia.Views
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(6),
                     Padding = new Thickness(0, 4),
-                    Child = panel
+                    MaxHeight = 480,
+                    Child = new ScrollViewer
+                    {
+                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                        Content = panel
+                    }
                 };
 
                 flyout.ShowAt(QueueHealthBtn);

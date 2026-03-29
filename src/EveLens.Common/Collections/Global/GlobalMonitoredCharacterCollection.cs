@@ -92,13 +92,6 @@ namespace EveLens.Common.Collections.Global
         {
             Items.Clear();
 
-            if (!monitoredCharacters.Any())
-            {
-                AppServices.TraceService?.Trace("MonitoredCharactersChanged");
-                AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
-                return;
-            }
-
             foreach (MonitoredCharacterSettings characterSettings in monitoredCharacters)
             {
                 Character character = AppServices.Characters[characterSettings.CharacterGuid.ToString()];
@@ -108,10 +101,22 @@ namespace EveLens.Common.Collections.Global
                 Items.Add(character);
                 character.Monitored = true;
                 character.UISettings = characterSettings.Settings;
-
-                AppServices.TraceService?.Trace("MonitoredCharactersChanged");
-                AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
             }
+
+            // Ensure every character is monitored — EveLens has no UI to unmonitor,
+            // so unmonitored characters are ghosts from migrated EVEMon settings.
+            // Full removal of Character.Monitored is tracked for 1.2.0.
+            foreach (Character character in AppServices.Characters)
+            {
+                if (!character.Monitored && !Items.Contains(character))
+                {
+                    Items.Add(character);
+                    character.Monitored = true;
+                }
+            }
+
+            AppServices.TraceService?.Trace("MonitoredCharactersChanged");
+            AppServices.EventAggregator?.Publish(CommonEvents.MonitoredCharacterCollectionChangedEvent.Instance);
         }
 
         /// <summary>
