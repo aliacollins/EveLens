@@ -239,11 +239,14 @@ namespace EveLens.Avalonia
                             // On Linux/X11 the process can exit before Post() runs,
                             // so ShutdownRequested never fires and settings are lost.
                             IsExiting = true;
-                            AppServices.TraceService?.Trace("Window Closing — saving settings before exit");
+
+                            // Close all modeless child windows first to prevent zombie
+                            // processes on macOS where owned windows block shutdown.
+                            if (desktop.MainWindow is MainWindow mw2)
+                                mw2.CloseChildWindows();
+
                             try
                             {
-                                // Fully synchronous — no async, no .GetAwaiter().GetResult()
-                                // which deadlocks on Linux due to Avalonia sync context.
                                 Settings.SaveSynchronousForShutdown();
                             }
                             catch (Exception ex)
@@ -307,6 +310,8 @@ namespace EveLens.Avalonia
             exitItem.Click += (_, _) =>
             {
                 IsExiting = true;
+                if (desktop.MainWindow is MainWindow mw3)
+                    mw3.CloseChildWindows();
                 DestroyTrayIcon();
                 desktop.Shutdown();
             };

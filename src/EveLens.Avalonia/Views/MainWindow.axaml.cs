@@ -65,6 +65,7 @@ namespace EveLens.Avalonia.Views
         private IDisposable? _notificationSentSub;
         private IDisposable? _privacyModeSub;
         private IDisposable? _fontScaleSub;
+        private readonly List<Window> _childWindows = new();
 
         public MainWindow()
         {
@@ -846,7 +847,7 @@ namespace EveLens.Avalonia.Views
                 try
                 {
                     var window = new Dialogs.DiagnosticStreamWindow();
-                    window.Show(this);
+                    ShowChildWindow(window);
                 }
                 catch (Exception ex) { Debug.WriteLine($"Diag stream error: {ex}"); }
             };
@@ -1684,10 +1685,10 @@ namespace EveLens.Avalonia.Views
 
                 var editorWindow = new PlanEditorWindow
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 editorWindow.Initialize(plan, character);
-                editorWindow.Show(this);
+                ShowChildWindow(editorWindow);
             }
             catch (Exception ex)
             {
@@ -1731,10 +1732,10 @@ namespace EveLens.Avalonia.Views
                 {
                     var editorWindow = new PlanEditorWindow
                     {
-                        WindowStartupLocation = WindowStartupLocation.CenterOwner
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen
                     };
                     editorWindow.Initialize(managePlansWindow.SelectedPlan, character);
-                    editorWindow.Show(this);
+                    ShowChildWindow(editorWindow);
                 }
             }
             catch (Exception ex)
@@ -1789,10 +1790,10 @@ namespace EveLens.Avalonia.Views
 
                 var editorWindow = new PlanEditorWindow
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 editorWindow.Initialize(plan, character);
-                editorWindow.Show(this);
+                ShowChildWindow(editorWindow);
             }
             catch (Exception ex)
             {
@@ -1838,10 +1839,10 @@ namespace EveLens.Avalonia.Views
 
                 var editorWindow = new PlanEditorWindow
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 editorWindow.Initialize(plan, character);
-                editorWindow.Show(this);
+                ShowChildWindow(editorWindow);
             }
             catch (Exception ex)
             {
@@ -1894,7 +1895,7 @@ namespace EveLens.Avalonia.Views
 
                 var window = new SkillConstellationWindow();
                 window.Initialize(character);
-                window.Show(this);
+                ShowChildWindow(window);
             }
             catch (Exception ex)
             {
@@ -2373,9 +2374,37 @@ namespace EveLens.Avalonia.Views
             };
         }
 
+        /// <summary>
+        /// Shows a modeless child window and registers it for lifecycle tracking.
+        /// Windows are shown without an owner so they behave as independent top-level
+        /// windows on all platforms — each appears in Alt+Tab / Cmd+` and the user
+        /// can freely switch between them using OS-level shortcuts.
+        /// </summary>
+        private void ShowChildWindow(Window child)
+        {
+            _childWindows.Add(child);
+            child.Closed += (_, _) => _childWindows.Remove(child);
+            child.Show();
+        }
+
+        /// <summary>
+        /// Closes all tracked modeless child windows.
+        /// Called before app shutdown to prevent zombie processes on macOS.
+        /// </summary>
+        internal void CloseChildWindows()
+        {
+            // Snapshot the list — Close triggers Closed which modifies _childWindows
+            foreach (var window in _childWindows.ToList())
+            {
+                try { window.Close(); }
+                catch (Exception ex) { Debug.WriteLine($"Error closing child window: {ex.Message}"); }
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             SaveWindowLocationNow();
+            CloseChildWindows();
             _notificationVm?.Save();
             _notificationVm?.Dispose();
             _tickSubscription?.Dispose();

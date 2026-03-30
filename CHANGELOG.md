@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
+- **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
+- **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
+
+## [1.1.0] - 2026-03-29
+
 ### Added
 
 - **Character Skill Comparison** -- compare up to 10 characters side-by-side with theme-aware level blocks, differences-only toggle, and auto-sizing columns ([#45])
@@ -113,7 +121,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#37]: https://github.com/aliacollins/EveLens/issues/37
 [#38]: https://github.com/aliacollins/EveLens/issues/38
 [#39]: https://github.com/aliacollins/EveLens/issues/39
-[unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...HEAD
+[#40]: https://github.com/aliacollins/EveLens/issues/40
+[#41]: https://github.com/aliacollins/EveLens/issues/41
+[#42]: https://github.com/aliacollins/EveLens/issues/42
+[#43]: https://github.com/aliacollins/EveLens/issues/43
+[#45]: https://github.com/aliacollins/EveLens/issues/45
+[#47]: https://github.com/aliacollins/EveLens/issues/47
+[unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...v1.1.0
 [1.1.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0...v1.1.0-beta.1
 [1.0.0]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.2...v1.0.0
 [1.0.0-beta.2]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.1...v1.0.0-beta.2
