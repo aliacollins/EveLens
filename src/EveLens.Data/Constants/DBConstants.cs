@@ -737,8 +737,10 @@ namespace EveLens.Common.Constants
         public const int FrekiBlueprintID = 32208;
         public const int MimirBlueprintID = 32210;
         public const int MiningFrigateSkillID = 32918;
+        public const int SkillExtractorID = 40519;
         public const int LargeSkillInjectorID = 40520;
         public const int SmallSkillInjectorID = 45635;
+        public const int PlexTypeID = 44992;
         public const int FleetCoordinationSkillID = 57318;
         public const int FleetFormationsSkillID = 57317;
 

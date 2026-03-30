@@ -48,6 +48,7 @@ namespace EveLens.Common.SettingsObjects
 
             SystemTrayTooltip = new TrayTooltipSettings();
             SkillPieChart = new SkillPieChartSettings();
+            SkillFarm = new SkillFarmSettings();
             SystemTrayPopup = new TrayPopupSettings();
             MainWindow = new MainWindowSettings();
             PlanWindow = new PlanWindowSettings();
@@ -295,6 +296,12 @@ namespace EveLens.Common.SettingsObjects
         /// <value>
         /// The skill pie chart settings.
         /// </value>
+        /// <summary>
+        /// Gets or sets the skill farm dashboard settings.
+        /// </summary>
+        [XmlElement("skillFarm")]
+        public SkillFarmSettings SkillFarm { get; set; }
+
         [XmlElement("skillPieChart")]
         public SkillPieChartSettings SkillPieChart { get; set; }
 

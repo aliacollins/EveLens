@@ -33,6 +33,7 @@
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison" />
+                <MenuItem x:Name="SkillFarmMenuItem" Header="Skill _Farm Dashboard" />
                 <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
                 <Separator />
                 <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache" />
