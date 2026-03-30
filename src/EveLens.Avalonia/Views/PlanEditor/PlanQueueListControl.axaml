@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="EveLens.Avalonia.Views.PlanEditor.PlanQueueListControl">
+
+    <!-- Timeline minimap -->
+    <DockPanel>
+        <StackPanel x:Name="MinimapContainer" DockPanel.Dock="Top" Margin="0,0,0,4">
+            <Border x:Name="MinimapBar" Height="6" CornerRadius="3"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    ClipToBounds="True">
+                <StackPanel x:Name="MinimapItems" Orientation="Horizontal" />
+            </Border>
+            <!-- Legend chips -->
+            <WrapPanel x:Name="LegendPanel" Orientation="Horizontal" Margin="0,4,0,0" />
+        </StackPanel>
+
+        <!-- Column headers matching old design: SKILL | TIME | R | PRI | SEC | SP/HR | LEVEL -->
+        <Grid x:Name="HeaderRow" DockPanel.Dock="Top"
+              ColumnDefinitions="24,*,100,40,75,75,55,60"
+              Margin="18,0,8,0" Height="24">
+            <TextBlock Grid.Column="0" Text="" />
+            <TextBlock Grid.Column="1" Text="SKILL" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2" Text="TIME" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="3" Text="R" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="4" Text="PRI" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="5" Text="SEC" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="6" Text="SP/HR" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Grid.Column="7" Text="LEVEL" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+        </Grid>
+        <Border DockPanel.Dock="Top" Height="1"
+                Background="{StaticResource EveBorderBrush}" Margin="0,0,0,2" />
+
+        <!-- Skill queue rows -->
+        <Panel>
+            <ScrollViewer x:Name="QueueScroller"
+                          HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="QueueList" x:FieldModifier="private"
+                              HorizontalAlignment="Stretch">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
+            <!-- Drag overlay: indicator line + ghost badge -->
+            <Canvas x:Name="DragCanvas" IsHitTestVisible="False"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Border x:Name="InsertIndicator" Height="2" IsVisible="False"
+                        CornerRadius="1" IsHitTestVisible="False" />
+            </Canvas>
+            <!-- Toast notification -->
+            <Border x:Name="ToastBorder" IsVisible="False" IsHitTestVisible="False"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="0,0,0,16" CornerRadius="8" Padding="18,7">
+                <TextBlock x:Name="ToastText" FontSize="{DynamicResource EveFontSmall}"
+                           FontWeight="Medium" Foreground="White" />
+            </Border>
+        </Panel>
+    </DockPanel>
+</UserControl>

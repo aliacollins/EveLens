@@ -39,6 +39,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
     {
         private PlanEditorViewModel? _viewModel;
         private PlanOptimizerViewModel? _optimizerVm;
+        private PlanQueueManager? _queueVm;
         private string _currentFilter = "";
         private List<IPlanDisplayItem>? _currentDisplayItems;
         private List<PlanEntryDisplayItem>? _currentEntryItems;
@@ -115,10 +116,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private void Refresh()
         {
             if (_viewModel?.DisplayPlan == null)
-            {
-                PlanItemsControl.ItemsSource = null;
                 return;
-            }
+
+            // Update the new queue list control
+            RefreshQueueList();
 
             Character? character = _viewModel.Character;
             PlanEntry[] entries = _viewModel.DisplayPlan.ToArray();
@@ -448,23 +449,46 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void RebuildItemsControlFromDisplayItems(List<IPlanDisplayItem> items)
         {
-            var controls = new List<Control>();
-            foreach (var item in items)
+            // Legacy — kept for compatibility but new queue list is primary
+            RefreshQueueList();
+        }
+
+        private bool _queueEventsWired;
+
+        private void RefreshQueueList()
+        {
+            if (_viewModel?.Plan == null) return;
+
+            _queueVm ??= new PlanQueueManager();
+            _queueVm.Initialize(_viewModel.Plan, _viewModel.Character as Character);
+
+            QueueListControl.SetViewModel(_queueVm);
+
+            if (!_queueEventsWired)
             {
-                switch (item)
-                {
-                    case PlanRemapDivider divider:
-                        controls.Add(BuildRemapDividerRow(divider));
-                        break;
-                    case PlanSectionHeader header:
-                        controls.Add(BuildSectionHeaderRow(header));
-                        break;
-                    case PlanEntryDisplayItem entry:
-                        controls.Add(BuildSkillRow(entry));
-                        break;
-                }
+                QueueListControl.Reordered += OnQueueReordered;
+                QueueListControl.SkillDoubleClicked += OnQueueSkillDoubleClicked;
+                _queueEventsWired = true;
             }
-            PlanItemsControl.ItemsSource = controls;
+        }
+
+        private void OnQueueReordered()
+        {
+            // The plan has been modified by drag-drop. Force everything to refresh.
+            if (_viewModel != null)
+            {
+                _viewModel.Plan.UpdateStatistics();
+                _viewModel.UpdateDisplayPlan();
+            }
+            UpdateStatsHeader();
+            if (_activeSidebarTab == "Plan")
+                BuildSidebarContent();
+            UpdateParentStatusBar();
+        }
+
+        private void OnQueueSkillDoubleClicked(PlanQueueItem item)
+        {
+            ShowSkillDetail(item.Skill);
         }
 
         private static string FormatRemapAttributes(RemappingPoint rp)
