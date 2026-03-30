@@ -101,7 +101,7 @@
             <!-- Column 1: Gap (space between list and sidebar) -->
 
             <!-- Column 2: Left-sticking sidebar -->
-            <Border x:Name="SidebarBorder" Grid.Column="2" Width="280"
+            <Border x:Name="SidebarBorder" Grid.Column="2" Width="320"
                     HorizontalAlignment="Left"
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1,0,0,0">

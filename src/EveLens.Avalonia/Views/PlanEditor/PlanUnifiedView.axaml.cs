@@ -16,7 +16,12 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
+using EveLens.Avalonia.Converters;
+using EveLens.Common.Data;
+using EveLens.Common.Service;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Helpers;
 using EveLens.Common.Models;
@@ -792,6 +797,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             border.PointerEntered += (_, _) => border.Background = hoverBg;
             border.PointerExited += (_, _) => border.Background = normalBg;
+            border.DoubleTapped += (_, _) => ShowSkillDetail(item.Entry.Skill);
 
             // Context menu on the skill row
             border.ContextMenu = BuildSkillContextMenu(item);
@@ -1274,6 +1280,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnSidebarTabClick(object? sender, RoutedEventArgs e)
         {
+            _sidebarDetailSkill = null;
+
             if (sender == PlanTab)
                 _activeSidebarTab = "Plan";
             else if (sender == AddTab)
@@ -1284,6 +1292,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             BuildSidebarContent();
         }
+
+        private StaticSkill? _sidebarDetailSkill;
 
         private void BuildSidebarContent()
         {
@@ -1297,7 +1307,434 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 case "Add":
                     BuildAddPanel();
                     break;
+                case "SkillDetail":
+                    if (_sidebarDetailSkill != null)
+                        BuildSkillDetailPanel(_sidebarDetailSkill);
+                    else
+                        BuildPlanPanel();
+                    break;
             }
+        }
+
+        /// <summary>
+        /// Removes all planned entries for the given skill above the target level.
+        /// Uses TryRemoveSet for proper cascade removal of dependents.
+        /// </summary>
+        private void RemoveSkillLevelsAbove(StaticSkill skill, long targetLevel)
+        {
+            if (_viewModel?.Plan == null) return;
+            var plan = _viewModel.Plan;
+            int plannedLevel = plan.GetPlannedLevel(skill);
+
+            var entriesToRemove = new List<PlanEntry>();
+            for (int i = plannedLevel; i > targetLevel; i--)
+            {
+                var entry = plan.GetEntry(skill, i);
+                if (entry != null)
+                    entriesToRemove.Add(entry);
+            }
+            if (entriesToRemove.Count > 0)
+            {
+                var op = plan.TryRemoveSet(entriesToRemove);
+                op.Perform();
+            }
+        }
+
+        private void ShowSkillDetail(StaticSkill skill)
+        {
+            _sidebarDetailSkill = skill;
+            _activeSidebarTab = "SkillDetail";
+            PlanTab.IsChecked = false;
+            AddTab.IsChecked = false;
+            BuildSidebarContent();
+        }
+
+        private void BuildSkillDetailPanel(StaticSkill skill)
+        {
+            var character = _viewModel?.Character as Character;
+            var accentBrush = (IBrush)Application.Current!.FindResource("EveAccentPrimaryBrush")!;
+            var secondaryBrush = (IBrush)Application.Current!.FindResource("EveTextSecondaryBrush")!;
+            var primaryBrush = (IBrush)Application.Current!.FindResource("EveTextPrimaryBrush")!;
+            var disabledBrush = (IBrush)Application.Current!.FindResource("EveTextDisabledBrush")!;
+            var warningBrush = (IBrush)Application.Current!.FindResource("EveWarningYellowBrush")!;
+            var errorBrush = (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!;
+
+            var charSkill = character?.Skills[skill.ID];
+            long currentLevel = charSkill?.Level ?? 0;
+            int plannedLevel = _viewModel?.Plan?.GetPlannedLevel(skill) ?? 0;
+
+            // ── Back button ──
+            var backBtn = new Button
+            {
+                Content = "\u2190 Back",
+                Background = Brushes.Transparent,
+                Foreground = secondaryBrush,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0, 2),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                FontSize = FontScaleService.Small,
+            };
+            backBtn.Click += (_, _) =>
+            {
+                _sidebarDetailSkill = null;
+                _activeSidebarTab = "Plan";
+                PlanTab.IsChecked = true;
+                AddTab.IsChecked = false;
+                BuildSidebarContent();
+            };
+            SidebarContent.Children.Add(backBtn);
+
+            // ── Hero card ──
+            var heroCard = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#10E6A817")),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(12, 10),
+            };
+            var heroStack = new StackPanel { Spacing = 4 };
+            heroStack.Children.Add(new TextBlock
+            {
+                Text = skill.Name,
+                FontSize = FontScaleService.Subheading,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = accentBrush,
+            });
+
+            // Interactive level blocks — click to plan/downgrade
+            var levelPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 3 };
+            for (int i = 1; i <= 5; i++)
+            {
+                bool trained = i <= currentLevel;
+                bool planned = !trained && _viewModel?.Plan?.IsPlanned(skill, i) == true;
+
+                var block = new Border
+                {
+                    Width = 28, Height = 12,
+                    CornerRadius = new CornerRadius(2),
+                    Background = trained ? accentBrush
+                        : planned ? new SolidColorBrush(Color.Parse("#FF4CAF50"))
+                        : new SolidColorBrush(Color.Parse("#FF2A2A3A")),
+                    Cursor = trained ? null : new Cursor(StandardCursorType.Hand),
+                };
+
+                if (!trained)
+                {
+                    int capturedLevel = i;
+                    block.Tapped += async (_, _) =>
+                    {
+                        if (_viewModel?.Plan == null) return;
+
+                        if (planned && capturedLevel < plannedLevel)
+                        {
+                            bool confirmed = await ShowDowngradeConfirmation(skill, capturedLevel);
+                            if (!confirmed) return;
+                            RemoveSkillLevelsAbove(skill, capturedLevel);
+                        }
+                        else if (!planned)
+                        {
+                            _viewModel.Plan.PlanTo(skill, capturedLevel);
+                        }
+
+                        _viewModel.UpdateDisplayPlan();
+                        Refresh();
+                        UpdateStatsHeader();
+                        ShowSkillDetail(skill);
+                    };
+
+                    ToolTip.SetTip(block, planned ? $"Downgrade to {capturedLevel}" : $"Plan to {capturedLevel}");
+                }
+                else
+                {
+                    ToolTip.SetTip(block, $"Level {i} (trained)");
+                }
+
+                levelPanel.Children.Add(block);
+            }
+            heroStack.Children.Add(levelPanel);
+
+            heroStack.Children.Add(new TextBlock
+            {
+                Text = $"Rank {skill.Rank}  \u00B7  {skill.PrimaryAttribute} / {skill.SecondaryAttribute}",
+                FontSize = FontScaleService.Small,
+                Foreground = disabledBrush,
+            });
+            heroCard.Child = heroStack;
+            SidebarContent.Children.Add(heroCard);
+
+            // ── Description ──
+            if (!string.IsNullOrWhiteSpace(skill.Description))
+            {
+                SidebarContent.Children.Add(new TextBlock
+                {
+                    Text = skill.Description,
+                    FontSize = FontScaleService.Small,
+                    Foreground = secondaryBrush,
+                    TextWrapping = TextWrapping.Wrap,
+                });
+            }
+
+            // ── Plan to / Remove actions ──
+            if (character != null && _viewModel?.Plan != null)
+            {
+                var btnRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+
+                if (currentLevel < 5)
+                {
+                    btnRow.Children.Add(new TextBlock
+                    {
+                        Text = "Plan to",
+                        FontSize = FontScaleService.Small,
+                        Foreground = secondaryBrush,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    });
+
+                    for (int lvl = 1; lvl <= 5; lvl++)
+                    {
+                        if (lvl <= currentLevel) continue;
+
+                        int capturedLevel = lvl;
+                        bool alreadyPlanned = _viewModel.Plan.IsPlanned(skill, lvl);
+                        var planBtn = new Button
+                        {
+                            Content = lvl.ToString(),
+                            MinWidth = 32, MinHeight = 26,
+                            Padding = new Thickness(6, 2),
+                            FontSize = FontScaleService.Small,
+                            FontWeight = FontWeight.SemiBold,
+                            IsEnabled = !alreadyPlanned,
+                            Background = alreadyPlanned
+                                ? new SolidColorBrush(Color.Parse("#FF2A2A3A"))
+                                : new SolidColorBrush(Color.Parse("#30E6A817")),
+                            Foreground = alreadyPlanned ? disabledBrush : accentBrush,
+                            CornerRadius = new CornerRadius(4),
+                        };
+                        planBtn.Click += (_, _) =>
+                        {
+                            _viewModel.Plan.PlanTo(skill, capturedLevel);
+                            _viewModel.UpdateDisplayPlan();
+                            Refresh();
+                            UpdateStatsHeader();
+                            ShowSkillDetail(skill);
+                        };
+                        btnRow.Children.Add(planBtn);
+                    }
+                }
+
+                // Remove from plan link
+                if (plannedLevel > 0)
+                {
+                    var removeBtn = new Button
+                    {
+                        Content = "Remove",
+                        Background = Brushes.Transparent,
+                        Foreground = errorBrush,
+                        BorderThickness = new Thickness(0),
+                        Padding = new Thickness(8, 2),
+                        Cursor = new Cursor(StandardCursorType.Hand),
+                        FontSize = FontScaleService.Small,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    };
+                    removeBtn.Click += async (_, _) =>
+                    {
+                        bool confirmed = await ShowDowngradeConfirmation(skill, 0);
+                        if (!confirmed) return;
+                        RemoveSkillLevelsAbove(skill, currentLevel);
+                        _viewModel!.UpdateDisplayPlan();
+                        Refresh();
+                        UpdateStatsHeader();
+                        ShowSkillDetail(skill);
+                    };
+                    btnRow.Children.Add(removeBtn);
+                }
+
+                SidebarContent.Children.Add(btnRow);
+            }
+
+            // ── Unlocked Skills ──
+            var dependents = StaticSkills.GetDependentSkills(skill);
+            if (dependents.Count > 0)
+            {
+                SidebarContent.Children.Add(new TextBlock
+                {
+                    Text = $"Unlocks Skills ({dependents.Count})",
+                    FontSize = FontScaleService.Small,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = primaryBrush,
+                    Margin = new Thickness(0, 4, 0, 2),
+                });
+
+                var skillsWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+                foreach (var dep in dependents.OrderBy(d => d.Skill.Name))
+                {
+                    var capturedSkill = dep.Skill;
+                    var chip = new Button
+                    {
+                        Content = dep.Skill.Name,
+                        Background = new SolidColorBrush(Color.Parse("#18FFFFFF")),
+                        Foreground = accentBrush,
+                        BorderThickness = new Thickness(0),
+                        CornerRadius = new CornerRadius(10),
+                        Padding = new Thickness(8, 3),
+                        Margin = new Thickness(0, 0, 4, 4),
+                        Cursor = new Cursor(StandardCursorType.Hand),
+                        FontSize = FontScaleService.Small,
+                    };
+                    chip.Click += (_, _) => ShowSkillDetail(capturedSkill);
+                    skillsWrap.Children.Add(chip);
+                }
+                SidebarContent.Children.Add(skillsWrap);
+            }
+
+            // ── Items requiring this skill (with icons) ──
+            var items = StaticSkills.GetItemsRequiringSkill(skill);
+            if (items.Count > 0)
+            {
+                var byLevel = items
+                    .Select(item => new { Item = item, RequiredLevel = item.Prerequisites.Where(p => p.Skill.ID == skill.ID).Max(p => p.Level) })
+                    .GroupBy(x => x.RequiredLevel)
+                    .OrderBy(g => g.Key);
+
+                foreach (var group in byLevel)
+                {
+                    var groupItems = group.OrderBy(x => x.Item.Name).ToList();
+                    SidebarContent.Children.Add(new TextBlock
+                    {
+                        Text = $"Enables at Level {group.Key} ({groupItems.Count})",
+                        FontSize = FontScaleService.Small,
+                        FontWeight = FontWeight.SemiBold,
+                        Foreground = primaryBrush,
+                        Margin = new Thickness(0, 4, 0, 2),
+                    });
+
+                    var itemsList = new StackPanel { Spacing = 2 };
+                    int limit = 12;
+                    foreach (var x in groupItems.Take(limit))
+                    {
+                        var row = new StackPanel
+                        {
+                            Orientation = Orientation.Horizontal,
+                            Spacing = 6,
+                        };
+
+                        var icon = new Image
+                        {
+                            Width = 24, Height = 24,
+                            Stretch = Stretch.Uniform,
+                        };
+                        LoadItemIconAsync(icon, x.Item.ID);
+                        row.Children.Add(icon);
+
+                        row.Children.Add(new TextBlock
+                        {
+                            Text = x.Item.Name,
+                            FontSize = FontScaleService.Small,
+                            Foreground = secondaryBrush,
+                            VerticalAlignment = VerticalAlignment.Center,
+                            TextTrimming = TextTrimming.CharacterEllipsis,
+                        });
+
+                        itemsList.Children.Add(row);
+                    }
+                    if (groupItems.Count > limit)
+                    {
+                        itemsList.Children.Add(new TextBlock
+                        {
+                            Text = $"+{groupItems.Count - limit} more",
+                            FontSize = FontScaleService.Small,
+                            Foreground = disabledBrush,
+                            FontStyle = FontStyle.Italic,
+                            Margin = new Thickness(30, 0, 0, 0),
+                        });
+                    }
+                    SidebarContent.Children.Add(itemsList);
+                }
+            }
+        }
+
+        private async System.Threading.Tasks.Task<bool> ShowDowngradeConfirmation(StaticSkill skill, int targetLevel)
+        {
+            var parentWindow = this.FindAncestorOfType<Window>();
+            if (parentWindow == null) return false;
+
+            string message = targetLevel == 0
+                ? $"Remove {skill.Name} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
+                : $"Downgrade {skill.Name} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
+
+            var result = false;
+            var dialog = new Window
+            {
+                Title = "Confirm Change",
+                Width = 380, Height = 180,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Background = (IBrush)Application.Current!.FindResource("EveBackgroundDarkBrush")!,
+                CanResize = false,
+                Content = new StackPanel
+                {
+                    Margin = new Thickness(20),
+                    Spacing = 16,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = message,
+                            TextWrapping = TextWrapping.Wrap,
+                            FontSize = FontScaleService.Body,
+                            Foreground = (IBrush)Application.Current!.FindResource("EveTextPrimaryBrush")!,
+                        },
+                    }
+                }
+            };
+
+            var btnPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Spacing = 8,
+            };
+
+            var cancelBtn = new Button
+            {
+                Content = "Cancel",
+                MinWidth = 80,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+            };
+            cancelBtn.Click += (_, _) => dialog.Close();
+
+            var confirmBtn = new Button
+            {
+                Content = targetLevel == 0 ? "Remove" : "Downgrade",
+                MinWidth = 80,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                Foreground = (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!,
+            };
+            confirmBtn.Click += (_, _) => { result = true; dialog.Close(); };
+
+            btnPanel.Children.Add(cancelBtn);
+            btnPanel.Children.Add(confirmBtn);
+            ((StackPanel)dialog.Content).Children.Add(btnPanel);
+
+            await dialog.ShowDialog(parentWindow);
+            return result;
+        }
+
+        private static async void LoadItemIconAsync(Image target, int typeId)
+        {
+            if (typeId <= 0) return;
+            try
+            {
+                var url = ImageHelper.GetTypeImageURL(typeId, 32);
+                var skBitmap = await ImageService.GetImageAsync(url).ConfigureAwait(false);
+                if (skBitmap != null)
+                {
+                    var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                        skBitmap, typeof(Bitmap), null, System.Globalization.CultureInfo.InvariantCulture);
+                    if (converted is Bitmap bitmap)
+                    {
+                        Dispatcher.UIThread.Post(() => target.Source = bitmap);
+                    }
+                }
+            }
+            catch { /* Non-critical — show blank icon */ }
         }
 
         #region Plan Tab

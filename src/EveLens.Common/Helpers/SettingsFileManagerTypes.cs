@@ -261,6 +261,7 @@ namespace EveLens.Common.Helpers
     {
         public string? Name { get; set; }
         public string? Description { get; set; }
+        public DateTime? LastActivity { get; set; }
         public List<JsonPlanEntry> Entries { get; set; } = new List<JsonPlanEntry>();
         public List<JsonInvalidPlanEntry> InvalidEntries { get; set; } = new List<JsonInvalidPlanEntry>();
         public string SortCriteria { get; set; } = "None";

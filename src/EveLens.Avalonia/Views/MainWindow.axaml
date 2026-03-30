@@ -20,13 +20,13 @@
                 <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings" />
                 <MenuItem x:Name="ResetSettingsMenuItem" Header="Re_set Settings" />
                 <Separator />
-                <MenuItem x:Name="SettingsMenuItem" Header="_Settings" />
+                <MenuItem x:Name="SettingsMenuItem" Header="_Settings" InputGesture="Ctrl+OemComma" />
                 <Separator />
-                <MenuItem x:Name="ExitMenuItem" Header="E_xit" />
+                <MenuItem x:Name="ExitMenuItem" Header="E_xit" InputGesture="Ctrl+Q" />
             </MenuItem>
-            <MenuItem Header="_Plans">
-                <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan" />
-                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans" />
+            <MenuItem x:Name="PlansMenu" Header="_Plans">
+                <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan" InputGesture="Ctrl+N" />
+                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans" InputGesture="Ctrl+M" />
                 <Separator />
                 <MenuItem x:Name="ImportPlanMenuItem" Header="_Import Plan from File" />
                 <MenuItem x:Name="CreateFromQueueMenuItem" Header="_Create Plan from Queue" />
@@ -43,6 +43,7 @@
                 <MenuItem x:Name="UserGuideMenuItem" Header="_User Guide" />
                 <MenuItem x:Name="ReportIssueMenuItem" Header="_Report Issue" />
                 <Separator />
+                <MenuItem x:Name="KeyboardShortcutsMenuItem" Header="_Keyboard Shortcuts" />
                 <MenuItem x:Name="AboutMenuItem" Header="_About EveLens" />
             </MenuItem>
         </Menu>

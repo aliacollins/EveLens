@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Recent Plans menu** -- the Plans menu now shows the 5 most recently opened plans per character with training time, for quick access without going through Manage Plans
+- **Skill detail sidebar** -- double-click any skill in the Plan Editor to see description, unlocked skills, enabled items (with icons), and plan-to actions in the right panel. Click unlocked skills to drill into the prerequisite tree
+- **Skill browser filters** -- four filter modes in the Plan Editor's Skills tab: All Skills, Trained, Have Prerequisites, and Untrained
+- **Keyboard shortcuts** -- Ctrl+Q (quit), Ctrl+W (close plan window), Ctrl+Shift+W (close all child windows), Ctrl+N (new plan), Ctrl+M (manage plans), Ctrl+, (settings). All shown in menus and Help > Keyboard Shortcuts dialog with OS-specific labels
+- **Reverse skill/item lookups** -- new StaticSkills.GetDependentSkills() and GetItemsRequiringSkill() for browsing what a skill unlocks
+- **Plan activity tracking** -- plans now track when they were last opened via LastActivity timestamp, persisted across sessions
+
+### Changed
+
+- **macOS install instructions** -- simplified to xattr-only method since right-click Open and Privacy Settings don't work with unsigned apps (Gatekeeper reports "broken" not "unsigned")
+- **Skill browser attribute filter** defaults to "All Attributes" instead of auto-selecting the detected remap
+- **Plan Editor sidebar** widened to 320px for better content layout
+
 ### Fixed
 
 - **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
