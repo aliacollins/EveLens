@@ -1815,8 +1815,13 @@ namespace EveLens.Avalonia.Views
 
                 nameBox.AttachedToVisualTree += (_, _) =>
                 {
-                    nameBox.Focus();
-                    nameBox.SelectAll();
+                    // Defer to after layout so TextBox is fully ready for input.
+                    // Focus + SelectAll ensures typing immediately replaces the default name.
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        nameBox.Focus();
+                        nameBox.SelectAll();
+                    }, DispatcherPriority.Input);
                 };
                 createBtn.Click += (_, _) =>
                 {
