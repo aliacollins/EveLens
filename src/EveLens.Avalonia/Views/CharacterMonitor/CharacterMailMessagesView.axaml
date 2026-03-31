@@ -120,9 +120,10 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
-                                    <!-- Group header -->
+                                    <!-- Group header (hidden for flat "All Mail" view) -->
                                     <Border Classes="group-header" HorizontalAlignment="Stretch"
-                                            PointerPressed="OnGroupHeaderClicked">
+                                            PointerPressed="OnGroupHeaderClicked"
+                                            IsVisible="{Binding ShowHeader}">
                                         <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
                                             <TextBlock Grid.Column="0" Text="{Binding Chevron}"
                                                        FontSize="{DynamicResource EveFontBody}" Width="16"

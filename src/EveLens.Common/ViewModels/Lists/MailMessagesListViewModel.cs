@@ -45,6 +45,11 @@ namespace EveLens.Common.ViewModels.Lists
             return ccp.EVEMailMessages;
         }
 
+        /// <summary>
+        /// Gets all mail items for flat display (no grouping, for Gmail-style view).
+        /// </summary>
+        public IEnumerable<EveMailMessage> GetSourceItemsForDisplay() => GetSourceItems();
+
         protected override bool MatchesFilter(EveMailMessage x, string filter)
         {
             return x.SenderName.Contains(filter, ignoreCase: true) ||
