@@ -43,6 +43,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private IDisposable? _settingsChangedSub;
         private IDisposable? _fontScaleSub;
 
+        // Debug: when true, cards cycle through all queue health states for visual testing
+        private bool _debugQueueTints;
+
         // Track previous ISK/SP values per character for flash-on-change
         private readonly Dictionary<long, decimal> _prevBalances = new();
         private readonly Dictionary<long, long> _prevSkillPoints = new();
@@ -583,12 +586,45 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             cardGrid.Children.Add(portraitContainer);
             cardGrid.Children.Add(infoPanel);
 
-            var cardBorder = new Border
+            // Queue health state determines card tint and left border
+            var (queueTint, queueBorderBrush) = _debugQueueTints
+                ? GetDebugQueueHealthBrushes(staggerIndex)
+                : GetQueueHealthBrushes(character);
+
+            var cardContent = new Grid();
+            // Tint overlay on the card background
+            if (queueTint != null)
+            {
+                cardContent.Children.Add(new Border
+                {
+                    Background = queueTint,
+                    CornerRadius = new CornerRadius(6),
+                    IsHitTestVisible = false,
+                });
+            }
+            // Left border accent strip
+            if (queueBorderBrush != null)
+            {
+                cardContent.Children.Add(new Border
+                {
+                    Width = 3,
+                    Background = queueBorderBrush,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    CornerRadius = new CornerRadius(6, 0, 0, 6),
+                    IsHitTestVisible = false,
+                });
+            }
+            cardContent.Children.Add(new Border
             {
                 Padding = new Thickness(12, 10),
+                Child = cardGrid
+            });
+
+            var cardBorder = new Border
+            {
                 Width = 300,
                 MinHeight = 90,
-                Child = cardGrid
+                Child = cardContent
             };
             cardBorder.Classes.Add("card");
 
@@ -903,6 +939,79 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// Debug: returns tint/border cycling through all states based on card index.
+        /// Call ToggleDebugQueueTints() to enable from the Debug menu.
+        /// </summary>
+        private static (IBrush? tint, IBrush? border) GetDebugQueueHealthBrushes(int index)
+        {
+            string[] tintKeys = { "EveQueueHealthyTint", "EveQueueWarningTint", "EveQueueCriticalTint", "EveQueueEmptyTint", "EveQueuePausedTint" };
+            string[] borderKeys = { "EveQueueHealthyBorder", "EveQueueWarningBorder", "EveQueueCriticalBorder", "EveQueueEmptyBorder", "EveQueuePausedBorder" };
+            int state = index % 5;
+            return (
+                Application.Current?.FindResource(tintKeys[state]) as IBrush,
+                Application.Current?.FindResource(borderKeys[state]) as IBrush);
+        }
+
+        /// <summary>
+        /// Toggles debug queue tint mode — cycles cards through all health states.
+        /// </summary>
+        public void ToggleDebugQueueTints()
+        {
+            _debugQueueTints = !_debugQueueTints;
+            LoadData();
+        }
+
+        /// <summary>
+        /// Returns (backgroundTint, leftBorderBrush) based on queue health state.
+        /// Uses theme-aware resources defined in each palette.
+        /// </summary>
+        private static (IBrush? tint, IBrush? border) GetQueueHealthBrushes(Character character)
+        {
+            if (character is not CCPCharacter ccp)
+                return (null, null);
+
+            // Not training at all
+            if (!ccp.IsTraining || ccp.CurrentlyTrainingSkill == null)
+            {
+                return (
+                    Application.Current?.FindResource("EveQueuePausedTint") as IBrush,
+                    Application.Current?.FindResource("EveQueuePausedBorder") as IBrush);
+            }
+
+            var queueEnd = ccp.SkillQueue.EndTime;
+            var remaining = queueEnd - DateTime.UtcNow;
+
+            if (remaining.TotalHours <= 0)
+            {
+                // Queue empty
+                return (
+                    Application.Current?.FindResource("EveQueueEmptyTint") as IBrush,
+                    Application.Current?.FindResource("EveQueueEmptyBorder") as IBrush);
+            }
+
+            if (remaining.TotalHours < 4)
+            {
+                // Critical — less than 4 hours
+                return (
+                    Application.Current?.FindResource("EveQueueCriticalTint") as IBrush,
+                    Application.Current?.FindResource("EveQueueCriticalBorder") as IBrush);
+            }
+
+            if (remaining.TotalHours < 24)
+            {
+                // Warning — less than 24 hours
+                return (
+                    Application.Current?.FindResource("EveQueueWarningTint") as IBrush,
+                    Application.Current?.FindResource("EveQueueWarningBorder") as IBrush);
+            }
+
+            // Healthy — subtle green tint
+            return (
+                Application.Current?.FindResource("EveQueueHealthyTint") as IBrush,
+                Application.Current?.FindResource("EveQueueHealthyBorder") as IBrush);
+        }
 
         private static void UpdateTrainingText(TextBlock textBlock, Character character)
         {

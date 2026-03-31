@@ -907,7 +907,15 @@ namespace EveLens.Avalonia.Views
             utilSubMenu.Items.Add(healthStatus);
 
             // ── Assemble ──
+            var queueTintItem = new MenuItem { Header = "Toggle Queue Health Tints" };
+            queueTintItem.Click += (_, _) =>
+            {
+                if (_overviewView != null)
+                    _overviewView.ToggleDebugQueueTints();
+            };
+
             debugMenu.Items.Add(diagStreamItem);
+            debugMenu.Items.Add(queueTintItem);
             debugMenu.Items.Add(new Separator());
             debugMenu.Items.Add(updateSubMenu);
             debugMenu.Items.Add(notifySubMenu);
