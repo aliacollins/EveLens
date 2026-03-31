@@ -620,6 +620,24 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 Child = cardGrid
             });
 
+            // Status icon in top-right corner
+            var (statusIcon, statusColor) = _debugQueueTints
+                ? GetDebugStatusIcon(staggerIndex)
+                : GetQueueStatusIcon(character);
+            if (statusIcon != null)
+            {
+                cardContent.Children.Add(new TextBlock
+                {
+                    Text = statusIcon,
+                    FontSize = FontScaleService.Body,
+                    Foreground = statusColor ?? Brushes.Gray,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(0, 6, 8, 0),
+                    IsHitTestVisible = false,
+                });
+            }
+
             var cardBorder = new Border
             {
                 Width = 300,
@@ -939,6 +957,46 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// Returns (icon, color) for queue health status badge on card.
+        /// </summary>
+        private static (string? icon, IBrush? color) GetQueueStatusIcon(Character character)
+        {
+            if (character is not CCPCharacter ccp)
+                return (null, null);
+
+            if (!ccp.IsTraining || ccp.CurrentlyTrainingSkill == null)
+                return ("\u23F8", Brushes.Gray); // ⏸ Paused
+
+            var remaining = ccp.SkillQueue.EndTime - DateTime.UtcNow;
+
+            if (remaining.TotalHours <= 0)
+                return ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush); // ⚠ Empty
+
+            if (remaining.TotalHours < 4)
+                return ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush); // ⚠ Critical
+
+            if (remaining.TotalHours < 24)
+                return ("\u23F1", Application.Current?.FindResource("EveWarningYellowBrush") as IBrush); // ⏱ Hurry
+
+            return ("\u2714", Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush); // ✔ Good
+        }
+
+        /// <summary>
+        /// Debug: cycles through all status icons.
+        /// </summary>
+        private static (string? icon, IBrush? color) GetDebugStatusIcon(int index)
+        {
+            return (index % 5) switch
+            {
+                0 => ("\u2714", Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush),  // ✔
+                1 => ("\u23F1", Application.Current?.FindResource("EveWarningYellowBrush") as IBrush), // ⏱
+                2 => ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush),      // ⚠
+                3 => ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush),      // ⚠
+                _ => ("\u23F8", Brushes.Gray),                                                          // ⏸
+            };
+        }
 
         /// <summary>
         /// Debug: returns tint/border cycling through all states based on card index.

@@ -37,11 +37,11 @@
         <Color x:Key="EveSuccessGreen">#FF81C784</Color>
 
         <!-- Queue health card tints (subtle background for overview cards) -->
-        <SolidColorBrush x:Key="EveQueueHealthyTint" Color="{StaticResource EveSuccessGreen}" Opacity="0.06" />
-        <SolidColorBrush x:Key="EveQueueWarningTint" Color="{StaticResource EveWarningYellow}" Opacity="0.06" />
-        <SolidColorBrush x:Key="EveQueueCriticalTint" Color="{StaticResource EveErrorRed}" Opacity="0.10" />
-        <SolidColorBrush x:Key="EveQueueEmptyTint" Color="{StaticResource EveErrorRed}" Opacity="0.14" />
-        <SolidColorBrush x:Key="EveQueuePausedTint" Color="#808090" Opacity="0.06" />
+        <SolidColorBrush x:Key="EveQueueHealthyTint" Color="{StaticResource EveSuccessGreen}" Opacity="0.10" />
+        <SolidColorBrush x:Key="EveQueueWarningTint" Color="{StaticResource EveWarningYellow}" Opacity="0.12" />
+        <SolidColorBrush x:Key="EveQueueCriticalTint" Color="{StaticResource EveErrorRed}" Opacity="0.16" />
+        <SolidColorBrush x:Key="EveQueueEmptyTint" Color="{StaticResource EveErrorRed}" Opacity="0.20" />
+        <SolidColorBrush x:Key="EveQueuePausedTint" Color="#808090" Opacity="0.10" />
         <SolidColorBrush x:Key="EveQueueHealthyBorder" Color="{StaticResource EveSuccessGreen}" Opacity="0.4" />
         <SolidColorBrush x:Key="EveQueueWarningBorder" Color="{StaticResource EveWarningYellow}" Opacity="0.5" />
         <SolidColorBrush x:Key="EveQueueCriticalBorder" Color="{StaticResource EveErrorRed}" Opacity="0.7" />
