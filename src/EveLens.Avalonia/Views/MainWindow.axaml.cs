@@ -1813,7 +1813,11 @@ namespace EveLens.Avalonia.Views
                     }
                 };
 
-                nameBox.AttachedToVisualTree += (_, _) => nameBox.SelectAll();
+                nameBox.AttachedToVisualTree += (_, _) =>
+                {
+                    nameBox.Focus();
+                    nameBox.SelectAll();
+                };
                 createBtn.Click += (_, _) =>
                 {
                     planName = nameBox.Text?.Trim();
