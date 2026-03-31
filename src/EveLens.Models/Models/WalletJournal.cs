@@ -47,7 +47,20 @@ namespace EveLens.Common.Models
             TaxAmount = src.TaxAmount;
 
             Reason = ParseReason(src.Reason ?? string.Empty);
-            m_refType = ServiceLocator.NameResolver.GetRefTypeName(src.RefTypeID);
+
+            // Use the raw ESI ref_type string (humanized) as primary display name.
+            // Fall back to the legacy RefTypes.xml mapping only if no raw string available.
+            string legacyName = ServiceLocator.NameResolver.GetRefTypeName(src.RefTypeID);
+            if (!string.IsNullOrEmpty(src.RawRefType) &&
+                (legacyName == "Undefined" || legacyName == "Unknown" || string.IsNullOrEmpty(legacyName)))
+            {
+                m_refType = HumanizeRefType(src.RawRefType);
+            }
+            else
+            {
+                m_refType = legacyName;
+            }
+
             m_taxReceiver = GetTaxReceiver();
         }
 
@@ -114,6 +127,24 @@ namespace EveLens.Common.Models
 
 
         #region Helper Methods
+
+        /// <summary>
+        /// Converts ESI ref_type snake_case string to human-readable title case.
+        /// e.g. "player_trading" → "Player Trading", "market_escrow" → "Market Escrow"
+        /// </summary>
+        private static string HumanizeRefType(string rawRefType)
+        {
+            if (string.IsNullOrEmpty(rawRefType))
+                return "Unknown";
+
+            var words = rawRefType.Split('_');
+            for (int i = 0; i < words.Length; i++)
+            {
+                if (words[i].Length > 0)
+                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1);
+            }
+            return string.Join(" ", words);
+        }
 
         /// <summary>
         /// Gets the tax receiver.
