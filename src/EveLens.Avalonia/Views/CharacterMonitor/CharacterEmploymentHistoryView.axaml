@@ -52,25 +52,78 @@
             </DockPanel>
         </Border>
 
-        <!-- Vertical list view (hidden by default) — matches other DataGrid tabs -->
-        <DataGrid x:Name="ListGrid" IsVisible="False"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserReorderColumns="True"
-                  CanUserResizeColumns="True"
-                  CanUserSortColumns="True"
-                  GridLinesVisibility="Horizontal"
-                  BorderThickness="0"
-                  Background="{StaticResource EveBackgroundDarkBrush}"
-                  Foreground="{StaticResource EveTextPrimaryBrush}"
-                  FontSize="{DynamicResource EveFontBody}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Corporation" Binding="{Binding CorporationName}" Width="*" />
-                <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="110" />
-                <DataGridTextColumn Header="End Date" Binding="{Binding EndDateText}" Width="110" />
-                <DataGridTextColumn Header="Duration" Binding="{Binding DurationText}" Width="100" />
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- Vertical list view — card-row style -->
+        <ScrollViewer x:Name="ListScroller" IsVisible="False"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="ListItems" Margin="12,8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="4" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                CornerRadius="6" Padding="12,10"
+                                BorderBrush="{StaticResource EveBorderBrush}"
+                                BorderThickness="0.5">
+                            <Grid ColumnDefinitions="40,*,Auto,Auto">
+                                <!-- Corp initial circle -->
+                                <Border Grid.Column="0" Width="34" Height="34"
+                                        CornerRadius="17"
+                                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                                        VerticalAlignment="Center">
+                                    <Border Width="34" Height="34" CornerRadius="17"
+                                            Background="{StaticResource EveBackgroundDarkestBrush}"
+                                            BorderBrush="{StaticResource EveBorderBrush}"
+                                            BorderThickness="1" ClipToBounds="True">
+                                        <Image Width="34" Height="34" Stretch="UniformToFill" />
+                                    </Border>
+                                </Border>
+
+                                <!-- Corp name + date range -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding CorporationName}"
+                                               FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveTextDisabledBrush}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0:yyyy-MM-dd} → {1}">
+                                                <Binding Path="StartDate" />
+                                                <Binding Path="EndDateText" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Duration badge -->
+                                <Border Grid.Column="2" CornerRadius="10"
+                                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                                        Padding="10,4" VerticalAlignment="Center" Margin="8,0">
+                                    <TextBlock Text="{Binding DurationText}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                                </Border>
+
+                                <!-- Current indicator -->
+                                <Border Grid.Column="3" CornerRadius="10"
+                                        Padding="8,4" VerticalAlignment="Center"
+                                        IsVisible="{Binding IsCurrent}">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="#2054D878" />
+                                    </Border.Background>
+                                    <TextBlock Text="Current" FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveSuccessGreenBrush}"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
         <!-- Horizontal timeline (drag or wheel to scroll) -->
         <ScrollViewer x:Name="TimelineScroller"
