@@ -310,6 +310,7 @@ namespace EveLens.Common.Helpers
             {
                 Name = plan.Name,
                 Description = plan.Description,
+                LastActivity = plan.LastActivity != DateTime.MinValue ? plan.LastActivity : null,
                 SortCriteria = plan.SortingPreferences?.Criteria.ToString() ?? "None",
                 SortOrder = plan.SortingPreferences?.Order.ToString() ?? "None",
                 GroupByPriority = plan.SortingPreferences?.GroupByPriority ?? false

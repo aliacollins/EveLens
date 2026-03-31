@@ -8,6 +8,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - 1.1.0 release candidate: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign
 
+## [1.2.0-beta.1] - 2026-03-31
+
+### Added
+
+- **Drag-to-reorder in Plan Editor** -- grab the grip handle to reorder skills in your training plan. Multi-select with shift/ctrl+click, drag as a group. Prerequisite constraints enforced in real-time (blue indicator = valid, red = blocked). Toast notifications on success/failure. Ghost placeholder shows original position during drag. Press animation with scale transition for tactile feedback
+- **Chain ribbons** -- colored left-edge strips visually group related skills by training goal. Colors are stable (deterministic from goal skill ID). Chain position drives ribbon corner radius (first/mid/last/solo)
+- **Timeline minimap** -- proportional colored bar at the top of the plan showing time distribution by chain. Legend chips show chain names
+- **Goal inference engine** -- automatically detects training goals (leaf skills with no in-plan dependents) and assigns prerequisite chains. Shared prerequisites resolved by first-claimer rule
+- **Skill Farm Dashboard** -- full economics dashboard for skill extraction characters. ESI Jita pricing for PLEX and extractors, per-character tax from Accounting skill, extraction readiness tracking, monthly profit projections, and Omega sustainability analysis. Privacy mode support hides character names for streaming/screenshots
+- **Recent Plans menu** -- the Plans menu now shows the 5 most recently opened plans per character with training time, for quick access without going through Manage Plans
+- **Skill detail sidebar** -- double-click any skill in the Plan Editor to see description, unlocked skills, enabled items (with icons), and plan-to actions in the right panel. Click unlocked skills to drill into the prerequisite tree
+- **Skill browser filters** -- four filter modes in the Plan Editor's Skills tab: All Skills, Trained, Have Prerequisites, and Untrained
+- **Keyboard shortcuts** -- Ctrl+Q (quit), Ctrl+W (close plan window), Ctrl+Shift+W (close all child windows), Ctrl+N (new plan), Ctrl+M (manage plans), Ctrl+, (settings). All shown in menus and Help > Keyboard Shortcuts dialog with OS-specific labels
+- **Reverse skill/item lookups** -- new StaticSkills.GetDependentSkills() and GetItemsRequiringSkill() for browsing what a skill unlocks
+- **Plan activity tracking** -- plans now track when they were last opened via LastActivity timestamp, persisted across sessions
+- **Queue health on overview cards** -- theme-aware card tints across all 6 palettes show queue status at a glance. Status dots with labels: green (>5 days), yellow (<5 days), red (<24 hours), dark red (empty), gray (paused). Click a status dot to navigate to that character
+
+### Changed
+
+- **macOS install instructions** -- simplified to xattr-only method since right-click Open and Privacy Settings don't work with unsigned apps (Gatekeeper reports "broken" not "unsigned")
+- **Skill browser attribute filter** defaults to "All Attributes" instead of auto-selecting the detected remap
+- **Plan Editor sidebar** widened to 320px for better content layout
+- **Gmail-style mail view** -- split view with mail list on left, reading pane on right. Click a mail to read inline instead of opening a separate window. Body auto-loads when ESI finishes downloading. Flat list sorted newest first
+- **Employment history list view** -- toggle between horizontal Timeline and vertical List view. Card-row design with corp logos, date range, duration badge, and "Current" indicator. View preference saved across sessions
+- **Skill level breakdown tooltip** -- hover the stats line in the character header to see skill counts at each level (V:3 IV:5 III:8 etc.)
+
+### Fixed
+
+- **Market transaction item names** -- item names were blank because the ESI→model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
+- **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" → "Player Trading")
+- **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
+- **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
+- **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
+- **New Plan dialog keyboard focus ([#50])** -- TextBox now receives focus immediately on open. Typing replaces the default "Plan N" name without needing to click first
+
+### Removed
+
+- **Queue health flyout** -- the clock icon and flyout in the status bar have been replaced by the overview card tints and status dots, which are more scalable and visible
+
+## [1.1.0] - 2026-03-29
+
 ### Added
 
 - **Character Skill Comparison** -- compare up to 10 characters side-by-side with theme-aware level blocks, differences-only toggle, and auto-sizing columns ([#45])
@@ -114,7 +155,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#37]: https://github.com/aliacollins/EveLens/issues/37
 [#38]: https://github.com/aliacollins/EveLens/issues/38
 [#39]: https://github.com/aliacollins/EveLens/issues/39
-[unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...HEAD
+[#40]: https://github.com/aliacollins/EveLens/issues/40
+[#41]: https://github.com/aliacollins/EveLens/issues/41
+[#42]: https://github.com/aliacollins/EveLens/issues/42
+[#43]: https://github.com/aliacollins/EveLens/issues/43
+[#45]: https://github.com/aliacollins/EveLens/issues/45
+[#47]: https://github.com/aliacollins/EveLens/issues/47
+[#50]: https://github.com/aliacollins/EveLens/issues/50
+[unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...v1.1.0
 [1.1.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0...v1.1.0-beta.1
 [1.0.0]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.2...v1.0.0
 [1.0.0-beta.2]: https://github.com/aliacollins/evelens/compare/v1.0.0-beta.1...v1.0.0-beta.2

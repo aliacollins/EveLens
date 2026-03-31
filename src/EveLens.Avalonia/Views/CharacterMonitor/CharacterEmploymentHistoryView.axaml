@@ -34,13 +34,109 @@
         </Border>
 
         <DockPanel x:Name="DataContent">
-        <!-- Status bar -->
+        <!-- Status bar with view toggle -->
         <Border DockPanel.Dock="Bottom" Padding="10,5"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="StatusText" Text="Records: 0" FontSize="{DynamicResource EveFontBody}"
-                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
+                    <ToggleButton x:Name="TimelineViewBtn" Content="Timeline" IsChecked="True"
+                                  FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                                  Click="OnViewToggle" />
+                    <ToggleButton x:Name="ListViewBtn" Content="List"
+                                  FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                                  Click="OnViewToggle" />
+                </StackPanel>
+                <TextBlock x:Name="StatusText" Text="Records: 0" FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" VerticalAlignment="Center" />
+            </DockPanel>
         </Border>
+
+        <!-- Both views in a Panel so DockPanel gives full remaining space -->
+        <Panel>
+        <!-- Vertical list view — card-row style -->
+        <ListBox x:Name="ListItems" IsVisible="False"
+                 Background="Transparent" BorderThickness="0"
+                 Margin="12,8"
+                 HorizontalAlignment="Stretch"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,0,0,4" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+            </ListBox.Styles>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                CornerRadius="6" Padding="12,10"
+                                BorderBrush="{StaticResource EveBorderBrush}"
+                                BorderThickness="0.5"
+                                HorizontalAlignment="Stretch">
+                            <Grid ColumnDefinitions="40,*,Auto,Auto" HorizontalAlignment="Stretch">
+                                <!-- Corp initial circle -->
+                                <Border Grid.Column="0" Width="34" Height="34"
+                                        CornerRadius="17"
+                                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                                        VerticalAlignment="Center">
+                                    <Border Width="34" Height="34" CornerRadius="17"
+                                            Background="{StaticResource EveBackgroundDarkestBrush}"
+                                            BorderBrush="{StaticResource EveBorderBrush}"
+                                            BorderThickness="1" ClipToBounds="True">
+                                        <Image Width="34" Height="34" Stretch="UniformToFill" />
+                                    </Border>
+                                </Border>
+
+                                <!-- Corp name + date range -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding CorporationName}"
+                                               FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                               TextTrimming="CharacterEllipsis" />
+                                    <TextBlock FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveTextDisabledBrush}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0:yyyy-MM-dd} → {1}">
+                                                <Binding Path="StartDate" />
+                                                <Binding Path="EndDateText" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <!-- Duration badge -->
+                                <Border Grid.Column="2" CornerRadius="10"
+                                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                                        Padding="10,4" VerticalAlignment="Center" Margin="8,0">
+                                    <TextBlock Text="{Binding DurationText}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveTextSecondaryBrush}" />
+                                </Border>
+
+                                <!-- Current indicator -->
+                                <Border Grid.Column="3" CornerRadius="10"
+                                        Padding="8,4" VerticalAlignment="Center"
+                                        IsVisible="{Binding IsCurrent}">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="#2054D878" />
+                                    </Border.Background>
+                                    <TextBlock Text="Current" FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveSuccessGreenBrush}"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
         <!-- Horizontal timeline (drag or wheel to scroll) -->
         <ScrollViewer x:Name="TimelineScroller"
@@ -134,6 +230,7 @@
 
             </Grid>
         </ScrollViewer>
+        </Panel>
         </DockPanel>
     </Panel>
 </UserControl>

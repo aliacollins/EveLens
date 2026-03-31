@@ -90,6 +90,7 @@ namespace EveLens.Common.ViewModels
         public bool IsCurrent { get; }
         public string CorporationName => Record.CorporationName;
         public DateTime StartDate => Record.StartDate;
+        public string EndDateText => IsCurrent ? "Present" : (StartDate + Duration).ToString("yyyy-MM-dd");
 
         public string DurationText
         {

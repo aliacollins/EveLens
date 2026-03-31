@@ -39,6 +39,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         public void Initialize(Plan plan, Character character)
         {
+            plan.LastActivity = DateTime.UtcNow;
+
             _viewModel = new PlanEditorViewModel();
             _viewModel.Character = character;
             _viewModel.Plan = plan;
@@ -392,6 +394,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
+
+            // Ctrl+W closes the plan editor window
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.W)
+            {
+                Close();
+                e.Handled = true;
+                return;
+            }
 
             if (_unifiedView == null || !ContentPanel.Children.Contains(_unifiedView))
                 return;

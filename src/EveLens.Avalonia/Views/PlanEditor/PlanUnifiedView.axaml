@@ -50,58 +50,15 @@
                     <StackPanel x:Name="TimelineBar" Orientation="Horizontal" />
                 </Border>
 
-                <!-- Column headers -->
-                <Border DockPanel.Dock="Top" Padding="0,4,10,4"
-                        Background="{StaticResource EveBackgroundMediumBrush}"
-                        BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
-                    <Grid ColumnDefinitions="*,100,45,75,75,65,60">
-                        <TextBlock Grid.Column="0" Text="SKILL" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   VerticalAlignment="Center" Padding="12,2" />
-                        <TextBlock Grid.Column="1" Text="TIME" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   HorizontalAlignment="Right" VerticalAlignment="Center"
-                                   Padding="0,2,8,2" />
-                        <TextBlock Grid.Column="2" Text="R" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Padding="2" ToolTip.Tip="Rank" />
-                        <TextBlock Grid.Column="3" Text="PRI" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Padding="2" ToolTip.Tip="Primary Attribute" />
-                        <TextBlock Grid.Column="4" Text="SEC" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Padding="2" ToolTip.Tip="Secondary Attribute" />
-                        <TextBlock Grid.Column="5" Text="SP/HR" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   HorizontalAlignment="Right" VerticalAlignment="Center"
-                                   Padding="0,2,8,2" />
-                        <TextBlock Grid.Column="6" Text="LEVEL" FontSize="{DynamicResource EveFontCaption}" FontWeight="SemiBold"
-                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Padding="2" />
-                    </Grid>
-                </Border>
-
-                <!-- Scrollable segmented skill list -->
-                <ScrollViewer x:Name="SkillListScroller"
-                              Background="{StaticResource EveBackgroundDarkBrush}">
-                    <ItemsControl x:Name="PlanItemsControl" Margin="0,0,10,0">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <VirtualizingStackPanel Orientation="Vertical" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- Queue list with chain ribbons, time bars, headers, and drag reorder -->
+                <local:PlanQueueListControl x:Name="QueueListControl"
+                                            Background="{StaticResource EveBackgroundDarkBrush}" />
             </DockPanel>
 
             <!-- Column 1: Gap (space between list and sidebar) -->
 
             <!-- Column 2: Left-sticking sidebar -->
-            <Border x:Name="SidebarBorder" Grid.Column="2" Width="280"
+            <Border x:Name="SidebarBorder" Grid.Column="2" Width="320"
                     HorizontalAlignment="Left"
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1,0,0,0">

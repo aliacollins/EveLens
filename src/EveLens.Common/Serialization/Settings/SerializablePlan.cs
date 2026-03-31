@@ -34,6 +34,9 @@ namespace EveLens.Common.Serialization.Settings
         [XmlAttribute("description")]
         public string? Description { get; set; }
 
+        [XmlAttribute("lastActivity")]
+        public DateTime LastActivity { get; set; }
+
         [XmlElement("sorting")]
         public PlanSorting SortingPreferences { get; set; }
 

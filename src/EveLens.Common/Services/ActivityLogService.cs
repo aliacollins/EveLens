@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using EveLens.Common.Models;
 
@@ -50,7 +51,11 @@ namespace EveLens.Common.Services
                     ? entries.Take(MaxEntries).ToList()
                     : new List<ActivityEntry>(entries);
 
-                var json = JsonSerializer.Serialize(toSave, new JsonSerializerOptions { WriteIndented = false });
+                var json = JsonSerializer.Serialize(toSave, new JsonSerializerOptions
+                {
+                    WriteIndented = false,
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                });
                 File.WriteAllText(_filePath, json);
             }
             catch

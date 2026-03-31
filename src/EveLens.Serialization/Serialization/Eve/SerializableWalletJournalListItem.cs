@@ -18,6 +18,13 @@ namespace EveLens.Common.Serialization.Eve
         [XmlAttribute("refTypeID")]
         public int RefTypeID { get; set; }
 
+        /// <summary>
+        /// Raw ref_type string from ESI (e.g. "player_trading", "market_escrow").
+        /// Used as display fallback when the legacy RefTypes.xml mapping is stale.
+        /// </summary>
+        [XmlAttribute("rawRefType")]
+        public string? RawRefType { get; set; }
+
         [XmlAttribute("ownerID1")]
         public long OwnerID1 { get; set; }
 

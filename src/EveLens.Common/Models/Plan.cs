@@ -45,6 +45,7 @@ namespace EveLens.Common.Models
         {
             SortingPreferences = new PlanSorting();
             m_invalidEntries = new InvalidPlanEntry[0];
+            LastActivity = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -67,10 +68,11 @@ namespace EveLens.Common.Models
         {
             serial.ThrowIfNull(nameof(serial));
 
-            // Update name
+            // Update name and metadata
             Name = serial.Name;
             Description = serial.Description ?? string.Empty;
             SortingPreferences = serial.SortingPreferences;
+            LastActivity = serial.LastActivity;
 
             // Update entries
             List<PlanEntry> entries = new List<PlanEntry>();
@@ -127,6 +129,7 @@ namespace EveLens.Common.Models
             {
                 Name = Name,
                 Description = Description,
+                LastActivity = LastActivity,
                 SortingPreferences = SortingPreferences
             };
 

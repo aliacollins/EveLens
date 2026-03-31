@@ -132,6 +132,52 @@ namespace EveLens.Tests.Models
             }
         }
 
+        [Fact]
+        public void SerializablePlan_XmlRoundTrip_PreservesLastActivity()
+        {
+            var timestamp = new DateTime(2026, 3, 30, 14, 0, 0, DateTimeKind.Utc);
+            var plan = new SerializablePlan
+            {
+                Name = "Test Plan",
+                LastActivity = timestamp
+            };
+
+            var result = XmlRoundTrip(plan);
+            result.LastActivity.Should().Be(timestamp);
+        }
+
+        [Fact]
+        public void SerializablePlan_XmlRoundTrip_DefaultLastActivity_IsMinValue()
+        {
+            var plan = new SerializablePlan { Name = "New Plan" };
+
+            var result = XmlRoundTrip(plan);
+            result.LastActivity.Should().Be(DateTime.MinValue);
+        }
+
+        [Fact]
+        public void JsonPlan_LastActivity_NullForNewPlans()
+        {
+            // Existing plans without LastActivity should deserialize as null
+            var json = new EveLens.Common.Helpers.JsonPlan
+            {
+                Name = "Legacy Plan"
+            };
+            json.LastActivity.Should().BeNull();
+        }
+
+        [Fact]
+        public void JsonPlan_LastActivity_PreservesTimestamp()
+        {
+            var timestamp = new DateTime(2026, 3, 30, 14, 0, 0, DateTimeKind.Utc);
+            var json = new EveLens.Common.Helpers.JsonPlan
+            {
+                Name = "Recent Plan",
+                LastActivity = timestamp
+            };
+            json.LastActivity.Should().Be(timestamp);
+        }
+
         private static T XmlRoundTrip<T>(T obj) where T : class
         {
             var serializer = new XmlSerializer(typeof(T));

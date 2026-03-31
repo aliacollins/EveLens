@@ -20,19 +20,20 @@
                 <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings" />
                 <MenuItem x:Name="ResetSettingsMenuItem" Header="Re_set Settings" />
                 <Separator />
-                <MenuItem x:Name="SettingsMenuItem" Header="_Settings" />
+                <MenuItem x:Name="SettingsMenuItem" Header="_Settings" InputGesture="Ctrl+OemComma" />
                 <Separator />
-                <MenuItem x:Name="ExitMenuItem" Header="E_xit" />
+                <MenuItem x:Name="ExitMenuItem" Header="E_xit" InputGesture="Ctrl+Q" />
             </MenuItem>
-            <MenuItem Header="_Plans">
-                <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan" />
-                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans" />
+            <MenuItem x:Name="PlansMenu" Header="_Plans">
+                <MenuItem x:Name="NewPlanMenuItem" Header="_New Plan" InputGesture="Ctrl+N" />
+                <MenuItem x:Name="ManagePlansMenuItem" Header="_Manage Plans" InputGesture="Ctrl+M" />
                 <Separator />
                 <MenuItem x:Name="ImportPlanMenuItem" Header="_Import Plan from File" />
                 <MenuItem x:Name="CreateFromQueueMenuItem" Header="_Create Plan from Queue" />
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison" />
+                <MenuItem x:Name="SkillFarmMenuItem" Header="Skill _Farm Dashboard" />
                 <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
                 <Separator />
                 <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache" />
@@ -43,6 +44,7 @@
                 <MenuItem x:Name="UserGuideMenuItem" Header="_User Guide" />
                 <MenuItem x:Name="ReportIssueMenuItem" Header="_Report Issue" />
                 <Separator />
+                <MenuItem x:Name="KeyboardShortcutsMenuItem" Header="_Keyboard Shortcuts" />
                 <MenuItem x:Name="AboutMenuItem" Header="_About EveLens" />
             </MenuItem>
         </Menu>
@@ -121,27 +123,6 @@
                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
                                   Data="M3.53 2.47a.75.75 0 00-1.06 1.06l18 18a.75.75 0 001.06-1.06l-3.18-3.18C19.87 15.77 21.38 14.04 22.5 12c-1.808-4.695-5.805-7.5-10.5-7.5-1.77 0-3.42.41-4.89 1.13L3.53 2.47zM12 9a3 3 0 012.76 4.18l-3.94-3.94A2.99 2.99 0 0112 9zm-7.4.44C5.84 8.04 7.37 6.94 9.08 6.3l-1.6-1.6C5.7 5.78 4.13 7.27 3 9.15c-.32.54-.62 1.12-.88 1.72.04.1.08.19.13.28.92 1.87 2.32 3.47 4.01 4.64l-1.5-1.5c-.96-.9-1.7-1.97-2.16-3.15a12.5 12.5 0 010-.7zM12 17c-1.1 0-2.14-.26-3.07-.72l-1.51-1.51A5 5 0 0017 12c0-.54-.09-1.06-.25-1.55l2.16 2.16c-.35.66-.78 1.28-1.27 1.84-.5.57-1.06 1.07-1.67 1.5A8.14 8.14 0 0112 17z"
                                   IsVisible="False" />
-                    </Panel>
-                </Button>
-
-                <!-- Queue health clock icon with flyout -->
-                <Button x:Name="QueueHealthBtn" DockPanel.Dock="Right"
-                        Background="Transparent" BorderThickness="0"
-                        Padding="8,0" VerticalAlignment="Center"
-                        ClipToBounds="False"
-                        Cursor="Hand" ToolTip.Tip="Queue Health"
-                        Click="OnQueueHealthClick">
-                    <Panel ClipToBounds="False">
-                        <TextBlock Text="&#x23F1;" FontSize="{DynamicResource EveFontTitle}" VerticalAlignment="Center" />
-                        <Border x:Name="QueueBadge" IsVisible="False"
-                                Background="{StaticResource EveWarningYellowBrush}"
-                                CornerRadius="7" MinWidth="14" Height="14"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                Margin="8,-4,-6,0" Padding="3,0">
-                            <TextBlock x:Name="QueueBadgeText" Text="0" FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="Black" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" />
-                        </Border>
                     </Panel>
                 </Button>
 

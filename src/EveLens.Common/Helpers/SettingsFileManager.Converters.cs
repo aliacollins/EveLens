@@ -209,6 +209,7 @@ namespace EveLens.Common.Helpers
             {
                 Name = json.Name ?? string.Empty,
                 Description = json.Description ?? string.Empty,
+                LastActivity = json.LastActivity ?? DateTime.MinValue,
                 Owner = characterGuid,
                 SortingPreferences = new PlanSorting
                 {
