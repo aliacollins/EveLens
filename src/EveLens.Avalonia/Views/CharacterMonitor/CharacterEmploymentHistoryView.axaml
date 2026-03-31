@@ -52,6 +52,8 @@
             </DockPanel>
         </Border>
 
+        <!-- Both views in a Panel so DockPanel gives full remaining space -->
+        <Panel>
         <!-- Vertical list view — card-row style -->
         <ListBox x:Name="ListItems" IsVisible="False"
                  Background="Transparent" BorderThickness="0"
@@ -228,6 +230,7 @@
 
             </Grid>
         </ScrollViewer>
+        </Panel>
         </DockPanel>
     </Panel>
 </UserControl>
