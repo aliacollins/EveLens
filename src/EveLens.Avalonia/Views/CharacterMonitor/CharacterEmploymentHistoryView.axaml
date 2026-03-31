@@ -34,13 +34,68 @@
         </Border>
 
         <DockPanel x:Name="DataContent">
-        <!-- Status bar -->
+        <!-- Status bar with view toggle -->
         <Border DockPanel.Dock="Bottom" Padding="10,5"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="StatusText" Text="Records: 0" FontSize="{DynamicResource EveFontBody}"
-                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
+                    <ToggleButton x:Name="TimelineViewBtn" Content="Timeline" IsChecked="True"
+                                  FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                                  Click="OnViewToggle" />
+                    <ToggleButton x:Name="ListViewBtn" Content="List"
+                                  FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                                  Click="OnViewToggle" />
+                </StackPanel>
+                <TextBlock x:Name="StatusText" Text="Records: 0" FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" VerticalAlignment="Center" />
+            </DockPanel>
         </Border>
+
+        <!-- Vertical list view (hidden by default) -->
+        <ScrollViewer x:Name="ListScroller" IsVisible="False"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="ListItems" Margin="20,12">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="2" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
+                                BorderBrush="{StaticResource EveBorderBrush}"
+                                BorderThickness="0,0,0,1" Padding="12,8">
+                            <Grid ColumnDefinitions="40,*,Auto,Auto">
+                                <!-- Corp logo -->
+                                <Border Grid.Column="0" Width="32" Height="32"
+                                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                        BorderThickness="1" CornerRadius="2">
+                                    <Image Width="32" Height="32" Stretch="UniformToFill" />
+                                </Border>
+                                <!-- Corp name -->
+                                <TextBlock Grid.Column="1" Text="{Binding CorporationName}"
+                                           FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                                           Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                           VerticalAlignment="Center" Margin="8,0,0,0"
+                                           TextTrimming="CharacterEllipsis" />
+                                <!-- Duration -->
+                                <TextBlock Grid.Column="2" Text="{Binding DurationText}"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                                           VerticalAlignment="Center" Margin="12,0" />
+                                <!-- Start date -->
+                                <TextBlock Grid.Column="3" Text="{Binding StartDate, StringFormat='{}{0:MMM yyyy}'}"
+                                           FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{StaticResource EveTextDisabledBrush}"
+                                           VerticalAlignment="Center" MinWidth="70" TextAlignment="Right" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
         <!-- Horizontal timeline (drag or wheel to scroll) -->
         <ScrollViewer x:Name="TimelineScroller"

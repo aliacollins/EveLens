@@ -206,6 +206,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             LoadData();
         }
 
+        private void OnViewToggle(object? sender, RoutedEventArgs e)
+        {
+            bool showList = sender == ListViewBtn;
+            TimelineViewBtn.IsChecked = !showList;
+            ListViewBtn.IsChecked = showList;
+            TimelineScroller.IsVisible = !showList;
+            ListScroller.IsVisible = showList;
+
+            // Bind list view to same data source as timeline
+            if (showList && ListItems.ItemsSource == null)
+                ListItems.ItemsSource = TimelineItems.ItemsSource;
+        }
+
         private void OnDataUpdated(CharacterUpdatedEvent evt)
         {
             if (evt.Character?.CharacterID == _characterId)
