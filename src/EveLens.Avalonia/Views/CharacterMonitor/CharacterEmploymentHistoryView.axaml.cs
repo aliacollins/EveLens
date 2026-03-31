@@ -212,11 +212,14 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             TimelineViewBtn.IsChecked = !showList;
             ListViewBtn.IsChecked = showList;
             TimelineScroller.IsVisible = !showList;
-            ListScroller.IsVisible = showList;
+            ListGrid.IsVisible = showList;
 
-            // Bind list view to same data source as timeline
-            if (showList && ListItems.ItemsSource == null)
-                ListItems.ItemsSource = TimelineItems.ItemsSource;
+            // Bind grid to same data — must use .ToList() for DataGrid (Law #20)
+            if (showList && ListGrid.ItemsSource == null)
+            {
+                var source = TimelineItems.ItemsSource as System.Collections.IEnumerable;
+                ListGrid.ItemsSource = source?.Cast<object>().ToList();
+            }
         }
 
         private void OnDataUpdated(CharacterUpdatedEvent evt)

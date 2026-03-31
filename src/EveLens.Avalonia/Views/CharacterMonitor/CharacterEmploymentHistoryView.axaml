@@ -52,50 +52,24 @@
             </DockPanel>
         </Border>
 
-        <!-- Vertical list view (hidden by default) -->
-        <ScrollViewer x:Name="ListScroller" IsVisible="False"
-                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="ListItems" Margin="20,12">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="2" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="{StaticResource EveBackgroundMediumBrush}"
-                                BorderBrush="{StaticResource EveBorderBrush}"
-                                BorderThickness="0,0,0,1" Padding="12,8">
-                            <Grid ColumnDefinitions="40,*,Auto,Auto">
-                                <!-- Corp logo -->
-                                <Border Grid.Column="0" Width="32" Height="32"
-                                        Background="{StaticResource EveBackgroundDarkestBrush}"
-                                        BorderBrush="{StaticResource EveBorderBrush}"
-                                        BorderThickness="1" CornerRadius="2">
-                                    <Image Width="32" Height="32" Stretch="UniformToFill" />
-                                </Border>
-                                <!-- Corp name -->
-                                <TextBlock Grid.Column="1" Text="{Binding CorporationName}"
-                                           FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
-                                           Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                           TextTrimming="CharacterEllipsis" />
-                                <!-- Duration -->
-                                <TextBlock Grid.Column="2" Text="{Binding DurationText}"
-                                           FontSize="{DynamicResource EveFontBody}"
-                                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                                           VerticalAlignment="Center" Margin="12,0" />
-                                <!-- Start date -->
-                                <TextBlock Grid.Column="3" Text="{Binding StartDate, StringFormat='{}{0:MMM yyyy}'}"
-                                           FontSize="{DynamicResource EveFontSmall}"
-                                           Foreground="{StaticResource EveTextDisabledBrush}"
-                                           VerticalAlignment="Center" MinWidth="70" TextAlignment="Right" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <!-- Vertical list view (hidden by default) — matches other DataGrid tabs -->
+        <DataGrid x:Name="ListGrid" IsVisible="False"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserReorderColumns="True"
+                  CanUserResizeColumns="True"
+                  CanUserSortColumns="True"
+                  GridLinesVisibility="Horizontal"
+                  BorderThickness="0"
+                  Background="{StaticResource EveBackgroundDarkBrush}"
+                  Foreground="{StaticResource EveTextPrimaryBrush}"
+                  FontSize="{DynamicResource EveFontBody}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Corporation" Binding="{Binding CorporationName}" Width="*" />
+                <DataGridTextColumn Header="Duration" Binding="{Binding DurationText}" Width="120" />
+                <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="110" />
+            </DataGrid.Columns>
+        </DataGrid>
 
         <!-- Horizontal timeline (drag or wheel to scroll) -->
         <ScrollViewer x:Name="TimelineScroller"
