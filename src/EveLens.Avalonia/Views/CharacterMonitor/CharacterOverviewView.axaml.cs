@@ -10,6 +10,7 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -620,22 +621,53 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 Child = cardGrid
             });
 
-            // Status icon in top-right corner
-            var (statusIcon, statusColor) = _debugQueueTints
-                ? GetDebugStatusIcon(staggerIndex)
-                : GetQueueStatusIcon(character);
-            if (statusIcon != null)
+            // Status dot + label in top-right corner — click to navigate to Queue tab
+            var (statusBrush, statusTooltip) = _debugQueueTints
+                ? GetDebugStatusDot(staggerIndex)
+                : GetQueueStatusDot(character);
+            if (statusBrush != null)
             {
-                cardContent.Children.Add(new TextBlock
+                var statusPanel = new StackPanel
                 {
-                    Text = statusIcon,
-                    FontSize = FontScaleService.Body,
-                    Foreground = statusColor ?? Brushes.Gray,
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 4,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Top,
-                    Margin = new Thickness(0, 6, 8, 0),
-                    IsHitTestVisible = false,
+                    Margin = new Thickness(0, 8, 10, 0),
+                    Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+                };
+
+                statusPanel.Children.Add(new Ellipse
+                {
+                    Width = 8, Height = 8,
+                    Fill = statusBrush,
+                    VerticalAlignment = VerticalAlignment.Center,
                 });
+
+                statusPanel.Children.Add(new TextBlock
+                {
+                    Text = statusTooltip,
+                    FontSize = FontScaleService.Caption,
+                    Foreground = statusBrush,
+                    VerticalAlignment = VerticalAlignment.Center,
+                });
+
+                ToolTip.SetTip(statusPanel, $"Queue: {statusTooltip}\nClick to open Queue tab");
+
+                // Click navigates to this character's Queue tab
+                var capturedChar = character;
+                statusPanel.PointerPressed += (_, e) =>
+                {
+                    e.Handled = true;
+                    var mainWindow = this.FindAncestorOfType<MainWindow>();
+                    if (mainWindow != null)
+                    {
+                        mainWindow.NavigateToCharacter(capturedChar);
+                        // TODO: auto-switch to Queue sub-tab
+                    }
+                };
+
+                cardContent.Children.Add(statusPanel);
             }
 
             var cardBorder = new Border
@@ -959,42 +991,43 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         #region Helpers
 
         /// <summary>
-        /// Returns (icon, color) for queue health status badge on card.
+        /// Returns (dotBrush, label) for queue health status on card.
+        /// Thresholds: >5d green, less than 5d yellow, less than 24h red, empty dark red, paused gray.
         /// </summary>
-        private static (string? icon, IBrush? color) GetQueueStatusIcon(Character character)
+        private static (IBrush? brush, string label) GetQueueStatusDot(Character character)
         {
             if (character is not CCPCharacter ccp)
-                return (null, null);
+                return (null, "");
 
             if (!ccp.IsTraining || ccp.CurrentlyTrainingSkill == null)
-                return ("\u23F8", Brushes.Gray); // ⏸ Paused
+                return (new SolidColorBrush(Color.Parse("#707080")), "Paused");
 
             var remaining = ccp.SkillQueue.EndTime - DateTime.UtcNow;
 
             if (remaining.TotalHours <= 0)
-                return ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush); // ⚠ Empty
-
-            if (remaining.TotalHours < 4)
-                return ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush); // ⚠ Critical
+                return (new SolidColorBrush(Color.Parse("#B71C1C")), "Empty");
 
             if (remaining.TotalHours < 24)
-                return ("\u23F1", Application.Current?.FindResource("EveWarningYellowBrush") as IBrush); // ⏱ Hurry
+                return (Application.Current?.FindResource("EveErrorRedBrush") as IBrush, $"{(int)remaining.TotalHours}h left");
 
-            return ("\u2714", Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush); // ✔ Good
+            if (remaining.TotalDays < 5)
+                return (Application.Current?.FindResource("EveWarningYellowBrush") as IBrush, $"{(int)remaining.TotalDays}d left");
+
+            return (Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush, $"{(int)remaining.TotalDays}d left");
         }
 
         /// <summary>
-        /// Debug: cycles through all status icons.
+        /// Debug: cycles through all status dots.
         /// </summary>
-        private static (string? icon, IBrush? color) GetDebugStatusIcon(int index)
+        private static (IBrush? brush, string label) GetDebugStatusDot(int index)
         {
             return (index % 5) switch
             {
-                0 => ("\u2714", Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush),  // ✔
-                1 => ("\u23F1", Application.Current?.FindResource("EveWarningYellowBrush") as IBrush), // ⏱
-                2 => ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush),      // ⚠
-                3 => ("\u26A0", Application.Current?.FindResource("EveErrorRedBrush") as IBrush),      // ⚠
-                _ => ("\u23F8", Brushes.Gray),                                                          // ⏸
+                0 => (Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush, "14d left"),
+                1 => (Application.Current?.FindResource("EveWarningYellowBrush") as IBrush, "3d left"),
+                2 => (Application.Current?.FindResource("EveErrorRedBrush") as IBrush, "8h left"),
+                3 => (new SolidColorBrush(Color.Parse("#B71C1C")), "Empty"),
+                _ => (new SolidColorBrush(Color.Parse("#707080")), "Paused"),
             };
         }
 
@@ -1049,23 +1082,23 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     Application.Current?.FindResource("EveQueueEmptyBorder") as IBrush);
             }
 
-            if (remaining.TotalHours < 4)
+            if (remaining.TotalHours < 24)
             {
-                // Critical — less than 4 hours
+                // Critical — less than 24 hours
                 return (
                     Application.Current?.FindResource("EveQueueCriticalTint") as IBrush,
                     Application.Current?.FindResource("EveQueueCriticalBorder") as IBrush);
             }
 
-            if (remaining.TotalHours < 24)
+            if (remaining.TotalDays < 5)
             {
-                // Warning — less than 24 hours
+                // Warning — less than 5 days
                 return (
                     Application.Current?.FindResource("EveQueueWarningTint") as IBrush,
                     Application.Current?.FindResource("EveQueueWarningBorder") as IBrush);
             }
 
-            // Healthy — subtle green tint
+            // Healthy — subtle green tint (>5 days)
             return (
                 Application.Current?.FindResource("EveQueueHealthyTint") as IBrush,
                 Application.Current?.FindResource("EveQueueHealthyBorder") as IBrush);
