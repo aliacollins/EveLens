@@ -333,6 +333,12 @@ namespace EveLens.Common.SettingsObjects
         public Dictionary<string, List<string>> CollapseStates { get; set; } = new();
 
         /// <summary>
+        /// Gets or sets whether the employment history shows in list view (true) or timeline (false).
+        /// </summary>
+        [XmlIgnore]
+        public bool EmploymentHistoryListView { get; set; }
+
+        /// <summary>
         /// Gets or sets the confirmed tips.
         /// </summary>
         /// <value>

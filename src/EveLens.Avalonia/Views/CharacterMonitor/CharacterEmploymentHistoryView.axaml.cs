@@ -18,6 +18,7 @@ using Avalonia.Interactivity;
 using EveLens.Common.Constants;
 using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Events;
+using EveLens.Common;
 using EveLens.Common.Services;
 
 namespace EveLens.Avalonia.Views.CharacterMonitor
@@ -122,6 +123,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             global::Avalonia.Threading.Dispatcher.UIThread.Post(
                 () => LoadCorpLogos(timeline),
                 global::Avalonia.Threading.DispatcherPriority.Background);
+
+            // Restore saved view preference
+            if (Settings.UI.EmploymentHistoryListView)
+                ApplyViewMode(true);
         }
 
         private void LoadCorpLogos(System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
@@ -209,16 +214,23 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void OnViewToggle(object? sender, RoutedEventArgs e)
         {
             bool showList = sender == ListViewBtn;
+            ApplyViewMode(showList);
+        }
+
+        private void ApplyViewMode(bool showList)
+        {
             TimelineViewBtn.IsChecked = !showList;
             ListViewBtn.IsChecked = showList;
             TimelineScroller.IsVisible = !showList;
             ListItems.IsVisible = showList;
 
+            // Save preference
+            Settings.UI.EmploymentHistoryListView = showList;
+            AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
+
             if (showList)
             {
                 ListItems.ItemsSource = TimelineItems.ItemsSource;
-
-                // Load corp logos for list items (deferred to after render)
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     if (TimelineItems.ItemsSource is System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
