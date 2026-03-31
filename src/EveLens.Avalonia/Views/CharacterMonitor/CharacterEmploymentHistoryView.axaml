@@ -66,8 +66,9 @@
                   FontSize="{DynamicResource EveFontBody}">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Corporation" Binding="{Binding CorporationName}" Width="*" />
-                <DataGridTextColumn Header="Duration" Binding="{Binding DurationText}" Width="120" />
                 <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="110" />
+                <DataGridTextColumn Header="End Date" Binding="{Binding EndDateText}" Width="110" />
+                <DataGridTextColumn Header="Duration" Binding="{Binding DurationText}" Width="100" />
             </DataGrid.Columns>
         </DataGrid>
 
