@@ -26,9 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **macOS install instructions** -- simplified to xattr-only method since right-click Open and Privacy Settings don't work with unsigned apps (Gatekeeper reports "broken" not "unsigned")
 - **Skill browser attribute filter** defaults to "All Attributes" instead of auto-selecting the detected remap
 - **Plan Editor sidebar** widened to 320px for better content layout
+- **Gmail-style mail view** -- split view with mail list on left, reading pane on right. Click a mail to read inline instead of opening a separate window. Body auto-loads when ESI finishes downloading. Flat list sorted newest first
+- **Employment history list view** -- toggle between horizontal Timeline and vertical List view. Card-row design with corp logos, date range, duration badge, and "Current" indicator. View preference saved across sessions
+- **Skill level breakdown tooltip** -- hover the stats line in the character header to see skill counts at each level (V:3 IV:5 III:8 etc.)
 
 ### Fixed
 
+- **Market transaction item names** -- item names were blank because the ESI→model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
+- **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" → "Player Trading")
 - **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
 - **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
 - **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
