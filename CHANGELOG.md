@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0-beta.1] - 2026-03-31
+
 ### Added
 
 - **Drag-to-reorder in Plan Editor** -- grab the grip handle to reorder skills in your training plan. Multi-select with shift/ctrl+click, drag as a group. Prerequisite constraints enforced in real-time (blue indicator = valid, red = blocked). Toast notifications on success/failure. Ghost placeholder shows original position during drag. Press animation with scale transition for tactile feedback
