@@ -214,8 +214,43 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             TimelineScroller.IsVisible = !showList;
             ListScroller.IsVisible = showList;
 
-            if (showList && ListItems.ItemsSource == null)
+            if (showList)
+            {
                 ListItems.ItemsSource = TimelineItems.ItemsSource;
+
+                // Load corp logos for list items (deferred to after render)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (TimelineItems.ItemsSource is System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
+                        LoadListCorpLogos(timeline);
+                }, global::Avalonia.Threading.DispatcherPriority.Render);
+            }
+        }
+
+        private void LoadListCorpLogos(System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
+        {
+            try
+            {
+                var images = ListItems.GetVisualDescendants().OfType<Image>().ToList();
+                for (int i = 0; i < Math.Min(images.Count, timeline.Count); i++)
+                {
+                    var entry = timeline[i];
+                    var img = images[i];
+
+                    var corpImage = entry.Record.CorporationImage;
+                    if (corpImage != null)
+                    {
+                        var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                            corpImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
+                        if (converted is Bitmap bitmap)
+                        {
+                            (img.Source as IDisposable)?.Dispose();
+                            img.Source = bitmap;
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
         private void OnDataUpdated(CharacterUpdatedEvent evt)

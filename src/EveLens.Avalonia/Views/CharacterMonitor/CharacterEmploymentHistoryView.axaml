@@ -55,7 +55,12 @@
         <!-- Vertical list view — card-row style -->
         <ScrollViewer x:Name="ListScroller" IsVisible="False"
                       HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="ListItems" Margin="12,8">
+            <ItemsControl x:Name="ListItems" Margin="12,8" HorizontalAlignment="Stretch">
+                <ItemsControl.Styles>
+                    <Style Selector="ItemsControl > ContentPresenter">
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                    </Style>
+                </ItemsControl.Styles>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Spacing="4" />
@@ -66,7 +71,8 @@
                         <Border Background="{StaticResource EveBackgroundMediumBrush}"
                                 CornerRadius="6" Padding="12,10"
                                 BorderBrush="{StaticResource EveBorderBrush}"
-                                BorderThickness="0.5">
+                                BorderThickness="0.5"
+                                HorizontalAlignment="Stretch">
                             <Grid ColumnDefinitions="40,*,Auto,Auto">
                                 <!-- Corp initial circle -->
                                 <Border Grid.Column="0" Width="34" Height="34"
