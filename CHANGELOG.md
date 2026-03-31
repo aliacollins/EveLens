@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Keyboard shortcuts** -- Ctrl+Q (quit), Ctrl+W (close plan window), Ctrl+Shift+W (close all child windows), Ctrl+N (new plan), Ctrl+M (manage plans), Ctrl+, (settings). All shown in menus and Help > Keyboard Shortcuts dialog with OS-specific labels
 - **Reverse skill/item lookups** -- new StaticSkills.GetDependentSkills() and GetItemsRequiringSkill() for browsing what a skill unlocks
 - **Plan activity tracking** -- plans now track when they were last opened via LastActivity timestamp, persisted across sessions
+- **Queue health on overview cards** -- theme-aware card tints across all 6 palettes show queue status at a glance. Status dots with labels: green (>5 days), yellow (<5 days), red (<24 hours), dark red (empty), gray (paused). Click a status dot to navigate to that character
 
 ### Changed
 
@@ -37,6 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
 - **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
 - **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
+- **New Plan dialog keyboard focus ([#50])** -- TextBox now receives focus immediately on open. Typing replaces the default "Plan N" name without needing to click first
+
+### Removed
+
+- **Queue health flyout** -- the clock icon and flyout in the status bar have been replaced by the overview card tints and status dots, which are more scalable and visible
 
 ## [1.1.0] - 2026-03-29
 
@@ -152,6 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#43]: https://github.com/aliacollins/EveLens/issues/43
 [#45]: https://github.com/aliacollins/EveLens/issues/45
 [#47]: https://github.com/aliacollins/EveLens/issues/47
+[#50]: https://github.com/aliacollins/EveLens/issues/50
 [unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...v1.1.0
 [1.1.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0...v1.1.0-beta.1
