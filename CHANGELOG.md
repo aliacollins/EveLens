@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Drag-to-reorder in Plan Editor** -- grab the grip handle to reorder skills in your training plan. Multi-select with shift/ctrl+click, drag as a group. Prerequisite constraints enforced in real-time (blue indicator = valid, red = blocked). Toast notifications on success/failure. Ghost placeholder shows original position during drag. Press animation with scale transition for tactile feedback
+- **Chain ribbons** -- colored left-edge strips visually group related skills by training goal. Colors are stable (deterministic from goal skill ID). Chain position drives ribbon corner radius (first/mid/last/solo)
+- **Timeline minimap** -- proportional colored bar at the top of the plan showing time distribution by chain. Legend chips show chain names
+- **Goal inference engine** -- automatically detects training goals (leaf skills with no in-plan dependents) and assigns prerequisite chains. Shared prerequisites resolved by first-claimer rule
 - **Skill Farm Dashboard** -- full economics dashboard for skill extraction characters. ESI Jita pricing for PLEX and extractors, per-character tax from Accounting skill, extraction readiness tracking, monthly profit projections, and Omega sustainability analysis. Privacy mode support hides character names for streaming/screenshots
 - **Recent Plans menu** -- the Plans menu now shows the 5 most recently opened plans per character with training time, for quick access without going through Manage Plans
 - **Skill detail sidebar** -- double-click any skill in the Plan Editor to see description, unlocked skills, enabled items (with icons), and plan-to actions in the right panel. Click unlocked skills to drill into the prerequisite tree
