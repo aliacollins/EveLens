@@ -11,7 +11,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Animation;
 using Avalonia.Media;
+using Avalonia.Media.Transformation;
 using Avalonia.Threading;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
@@ -104,6 +106,22 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 BorderBrush = selected ? new SolidColorBrush(Color.FromArgb(56, 74, 148, 240)) : Brushes.Transparent,
                 BorderThickness = new Thickness(1.5),
                 ClipToBounds = false,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                RenderTransform = TransformOperations.Parse("scale(1,1)"),
+                RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative),
+                Transitions = new global::Avalonia.Animation.Transitions
+                {
+                    new global::Avalonia.Animation.TransformOperationsTransition
+                    {
+                        Property = Border.RenderTransformProperty,
+                        Duration = TimeSpan.FromMilliseconds(100),
+                    },
+                    new global::Avalonia.Animation.BrushTransition
+                    {
+                        Property = Border.BackgroundProperty,
+                        Duration = TimeSpan.FromMilliseconds(150),
+                    }
+                },
             };
 
             container.PointerEntered += (_, _) =>
@@ -117,18 +135,23 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     container.Background = normalBg;
             };
 
-            // Click for selection
+            // Press feedback — scale down slightly on press, spring back on release
             container.PointerPressed += (_, e) =>
             {
                 if (e.Source is Control c && c.Tag?.ToString() == "grip")
-                    return; // grip handles drag start
+                    return;
 
+                container.RenderTransform = TransformOperations.Parse("scale(0.98, 0.98)");
                 HandleRowClick(index, e);
-                e.Handled = true;
+            };
+            container.PointerReleased += (_, _) =>
+            {
+                container.RenderTransform = TransformOperations.Parse("scale(1, 1)");
             };
 
-            // Double-click for skill detail
-            container.DoubleTapped += (_, _) => SkillDoubleClicked?.Invoke(item);
+            // Double-click for skill detail — fires after PointerPressed
+            var capturedItem = item;
+            container.DoubleTapped += (_, _) => SkillDoubleClicked?.Invoke(capturedItem);
 
             // 8-column grid matching old design: grip | skill | time | R | PRI | SEC | SP/HR | LEVEL
             var grid = new Grid
@@ -266,7 +289,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             Grid.SetColumn(spText, 6);
 
-            // ── Col 7: Level pips (old style — wider blocks) ──
+            // ── Col 7: Level blocks (standard 10x12, matches Skills tab) ──
+            var accentColor = Color.Parse("#FFE6A817");
+            var trainedBrush = new SolidColorBrush(accentColor);
+            var plannedBrush = new SolidColorBrush(new Color(80, accentColor.R, accentColor.G, accentColor.B));
+            var emptyBrush = new SolidColorBrush(new Color(30, accentColor.R, accentColor.G, accentColor.B));
+
             var pipsPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -276,22 +304,20 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             for (int lvl = 1; lvl <= 5; lvl++)
             {
-                bool trained = lvl <= item.TrainedLevel;
-                bool queued = !trained && lvl <= item.Level;
+                IBrush fill;
+                if (lvl <= item.TrainedLevel)
+                    fill = trainedBrush;
+                else if (lvl <= item.Level)
+                    fill = plannedBrush;
+                else
+                    fill = emptyBrush;
 
                 pipsPanel.Children.Add(new Border
                 {
-                    Width = 8, Height = 12,
+                    Width = 10,
+                    Height = 12,
                     CornerRadius = new CornerRadius(2),
-                    Background = trained
-                        ? new SolidColorBrush(Color.Parse("#D4A020"))
-                        : queued
-                            ? new SolidColorBrush(Color.FromArgb(56, 212, 160, 32))
-                            : Brushes.Transparent,
-                    BorderBrush = trained || queued
-                        ? new SolidColorBrush(Color.Parse("#D4A020"))
-                        : new SolidColorBrush(Color.Parse("#323C4A")),
-                    BorderThickness = new Thickness(1),
+                    Background = fill,
                 });
             }
             Grid.SetColumn(pipsPanel, 7);
@@ -370,7 +396,28 @@ namespace EveLens.Avalonia.Views.PlanEditor
             }
 
             _lastClickIndex = index;
-            Rebuild();
+            UpdateSelectionVisuals();
+        }
+
+        /// <summary>
+        /// Updates row visuals to reflect selection state without rebuilding.
+        /// This avoids destroying controls, which would break DoubleTapped events.
+        /// </summary>
+        private void UpdateSelectionVisuals()
+        {
+            var selectedBg = new SolidColorBrush(Color.FromArgb(45, 74, 148, 240));
+            var selectedBorder = new SolidColorBrush(Color.FromArgb(56, 74, 148, 240));
+            var normalBorder = Brushes.Transparent;
+
+            for (int i = 0; i < _rowControls.Count; i++)
+            {
+                if (_rowControls[i] is Border b)
+                {
+                    bool sel = _selected.Contains(i);
+                    b.Background = sel ? selectedBg : Brushes.Transparent;
+                    b.BorderBrush = sel ? selectedBorder : normalBorder;
+                }
+            }
         }
 
         #endregion
@@ -384,11 +431,20 @@ namespace EveLens.Avalonia.Views.PlanEditor
             _dragStartY = e.GetPosition(QueueScroller).Y;
             _currentInsertSlot = -1;
 
-            // Dim selected rows
+            // Ghost the selected rows — keep them visible as a faded placeholder
+            // so the list doesn't jump while dragging
             foreach (int si in _selected)
             {
                 if (si < _rowControls.Count)
-                    _rowControls[si].Opacity = 0.3;
+                {
+                    _rowControls[si].Opacity = 0.15;
+                    if (_rowControls[si] is Border b)
+                    {
+                        b.BorderBrush = new SolidColorBrush(Color.Parse("#323C4A"));
+                        b.BorderThickness = new Thickness(1);
+                        b.Background = new SolidColorBrush(Color.FromArgb(8, 255, 255, 255));
+                    }
+                }
             }
 
             // Create ghost badge
@@ -454,6 +510,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             InsertIndicator.Background = valid
                 ? new SolidColorBrush(Color.Parse("#4A94F0"))
                 : new SolidColorBrush(Color.Parse("#E84A4A"));
+
+            // Ghost stays at original position, indicator shows target — no displacement needed
         }
 
         private void OnDragPointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -471,9 +529,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 _dragGhost = null;
             }
 
-            // Restore opacity
+            // Restore opacity and clear transforms
             foreach (var row in _rowControls)
+            {
                 row.Opacity = 1.0;
+                row.RenderTransform = null;
+            }
 
             InsertIndicator.IsVisible = false;
 
@@ -500,6 +561,56 @@ namespace EveLens.Avalonia.Views.PlanEditor
             _isDragging = false;
             _dragStartIndex = -1;
             _currentInsertSlot = -1;
+        }
+
+        /// <summary>
+        /// Applies RenderTransform displacement to non-selected rows during drag.
+        /// Rows between the original position and the insertion slot slide up/down
+        /// by one row height to visually make room for the dragged items.
+        /// </summary>
+        private void ApplyDragDisplacement(List<int> selectedIndices, int insertSlot)
+        {
+            int selectedCount = selectedIndices.Count;
+            double displacement = selectedCount * RowHeight;
+            var selectedSet = new HashSet<int>(selectedIndices);
+
+            for (int i = 0; i < _rowControls.Count; i++)
+            {
+                if (selectedSet.Contains(i))
+                    continue; // dragged rows stay dimmed, no transform
+
+                // Calculate whether this row needs to shift
+                // If dragging DOWN: rows between original positions and insert slot shift UP
+                // If dragging UP: rows between insert slot and original positions shift DOWN
+                bool needsShift = false;
+                double shiftY = 0;
+
+                int minSelected = selectedIndices[0];
+                int maxSelected = selectedIndices[selectedIndices.Count - 1];
+
+                if (insertSlot > maxSelected)
+                {
+                    // Dragging down — rows between maxSelected+1 and insertSlot-1 shift up
+                    if (i > maxSelected && i < insertSlot)
+                    {
+                        needsShift = true;
+                        shiftY = -displacement;
+                    }
+                }
+                else if (insertSlot <= minSelected)
+                {
+                    // Dragging up — rows between insertSlot and minSelected-1 shift down
+                    if (i >= insertSlot && i < minSelected)
+                    {
+                        needsShift = true;
+                        shiftY = displacement;
+                    }
+                }
+
+                _rowControls[i].RenderTransform = needsShift
+                    ? new TranslateTransform(0, shiftY)
+                    : null;
+            }
         }
 
         #endregion
