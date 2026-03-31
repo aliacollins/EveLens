@@ -212,7 +212,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             TimelineViewBtn.IsChecked = !showList;
             ListViewBtn.IsChecked = showList;
             TimelineScroller.IsVisible = !showList;
-            ListScroller.IsVisible = showList;
+            ListItems.IsVisible = showList;
 
             if (showList)
             {

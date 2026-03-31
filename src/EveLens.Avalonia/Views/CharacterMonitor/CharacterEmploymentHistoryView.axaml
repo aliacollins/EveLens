@@ -53,27 +53,33 @@
         </Border>
 
         <!-- Vertical list view — card-row style -->
-        <ScrollViewer x:Name="ListScroller" IsVisible="False"
-                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="ListItems" Margin="12,8" HorizontalAlignment="Stretch">
-                <ItemsControl.Styles>
-                    <Style Selector="ItemsControl > ContentPresenter">
-                        <Setter Property="HorizontalAlignment" Value="Stretch" />
-                    </Style>
-                </ItemsControl.Styles>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="4" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
+        <ListBox x:Name="ListItems" IsVisible="False"
+                 Background="Transparent" BorderThickness="0"
+                 Margin="12,8"
+                 HorizontalAlignment="Stretch"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,0,0,4" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                    <Setter Property="Background" Value="Transparent" />
+                </Style>
+            </ListBox.Styles>
+                <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border Background="{StaticResource EveBackgroundMediumBrush}"
                                 CornerRadius="6" Padding="12,10"
                                 BorderBrush="{StaticResource EveBorderBrush}"
                                 BorderThickness="0.5"
                                 HorizontalAlignment="Stretch">
-                            <Grid ColumnDefinitions="40,*,Auto,Auto">
+                            <Grid ColumnDefinitions="40,*,Auto,Auto" HorizontalAlignment="Stretch">
                                 <!-- Corp initial circle -->
                                 <Border Grid.Column="0" Width="34" Height="34"
                                         CornerRadius="17"
@@ -127,9 +133,8 @@
                             </Grid>
                         </Border>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
         <!-- Horizontal timeline (drag or wheel to scroll) -->
         <ScrollViewer x:Name="TimelineScroller"
