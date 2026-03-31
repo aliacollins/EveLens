@@ -98,118 +98,173 @@
                                Title="No mail messages"
                                Subtitle="Mail messages from EVE Online will appear here" />
 
-            <!-- Grouped mail accordion -->
-            <ScrollViewer x:Name="MailScroller"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto">
-                <ItemsControl x:Name="MailGroupsList" Margin="0"
-                              HorizontalAlignment="Stretch">
-                    <ItemsControl.Styles>
-                        <Style Selector="ItemsControl > ContentPresenter">
-                            <Setter Property="HorizontalAlignment" Value="Stretch" />
-                        </Style>
-                    </ItemsControl.Styles>
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <!-- Group header: ▸ Name   Count -->
-                                <Border Classes="group-header" HorizontalAlignment="Stretch"
-                                        PointerPressed="OnGroupHeaderClicked">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
-                                        <TextBlock Grid.Column="0" Text="{Binding Chevron}"
-                                                   FontSize="{DynamicResource EveFontBody}" Width="16"
-                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" Text="{Binding Name}"
-                                                   FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                   VerticalAlignment="Center"
-                                                   TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Grid.Column="2" Text="{Binding CountText}"
-                                                   FontSize="{DynamicResource EveFontSmall}"
-                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                   VerticalAlignment="Center" Margin="8,0" />
-                                    </Grid>
-                                </Border>
+            <!-- Gmail-style split: mail list (left) + reading pane (right) -->
+            <Grid ColumnDefinitions="*,8,*">
 
-                                <!-- Mail items in group -->
-                                <ItemsControl ItemsSource="{Binding Items}"
-                                              HorizontalAlignment="Stretch"
-                                              IsVisible="{Binding IsExpanded}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <VirtualizingStackPanel Orientation="Vertical" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <!-- Each mail as a clickable item row -->
-                                            <Border Classes="item-row"
-                                                    Background="{StaticResource EveBackgroundDarkBrush}"
-                                                    Padding="12,6,12,6"
-                                                    BorderBrush="{StaticResource EveBorderBrush}"
-                                                    BorderThickness="0,0,0,0.5"
-                                                    HorizontalAlignment="Stretch"
-                                                    Cursor="Hand"
-                                                    PointerPressed="OnMailItemClicked">
-                                                <Border.Tag>
-                                                    <Binding />
-                                                </Border.Tag>
-                                                <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                                      RowDefinitions="Auto,Auto"
-                                                      HorizontalAlignment="Stretch">
-                                                    <!-- Row 0: [new dot] [Sender] Subject [Date] -->
-                                                    <Ellipse Grid.Row="0" Grid.Column="0"
-                                                             Width="6" Height="6"
-                                                             Fill="{StaticResource EveAccentPrimaryBrush}"
-                                                             IsVisible="{Binding IsNew}"
-                                                             VerticalAlignment="Center"
-                                                             Margin="0,0,8,0" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="1"
-                                                               Text="{Binding SenderName}"
-                                                               FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
-                                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               Margin="0,0,10,0"
-                                                               MaxWidth="160"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="2"
-                                                               Text="{Binding Subject}"
-                                                               FontSize="{DynamicResource EveFontBody}"
-                                                               Foreground="{StaticResource EveTextPrimaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               ToolTip.Tip="{Binding Subject}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="3"
-                                                               Text="{Binding SentDateText}"
-                                                               FontSize="{DynamicResource EveFontSmall}"
-                                                               Foreground="{StaticResource EveTextSecondaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               Margin="10,0,0,0" />
-                                                    <!-- Row 1: Recipient info -->
-                                                    <TextBlock Grid.Row="1" Grid.Column="1"
-                                                               Grid.ColumnSpan="3"
-                                                               Text="{Binding RecipientText}"
-                                                               FontSize="{DynamicResource EveFontSmall}"
-                                                               Foreground="{StaticResource EveTextDisabledBrush}"
-                                                               VerticalAlignment="Center"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               Margin="0,2,0,0" />
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                <!-- Left: Mail list -->
+                <ScrollViewer Grid.Column="0" x:Name="MailScroller"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="MailGroupsList" Margin="0"
+                                  HorizontalAlignment="Stretch">
+                        <ItemsControl.Styles>
+                            <Style Selector="ItemsControl > ContentPresenter">
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            </Style>
+                        </ItemsControl.Styles>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <!-- Group header -->
+                                    <Border Classes="group-header" HorizontalAlignment="Stretch"
+                                            PointerPressed="OnGroupHeaderClicked">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" HorizontalAlignment="Stretch">
+                                            <TextBlock Grid.Column="0" Text="{Binding Chevron}"
+                                                       FontSize="{DynamicResource EveFontBody}" Width="16"
+                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{Binding Name}"
+                                                       FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                       VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Grid.Column="2" Text="{Binding CountText}"
+                                                       FontSize="{DynamicResource EveFontSmall}"
+                                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                       VerticalAlignment="Center" Margin="8,0" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Mail items in group -->
+                                    <ItemsControl ItemsSource="{Binding Items}"
+                                                  HorizontalAlignment="Stretch"
+                                                  IsVisible="{Binding IsExpanded}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <VirtualizingStackPanel Orientation="Vertical" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Classes="item-row"
+                                                        Background="{StaticResource EveBackgroundDarkBrush}"
+                                                        Padding="12,6,12,6"
+                                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                                        BorderThickness="0,0,0,0.5"
+                                                        HorizontalAlignment="Stretch"
+                                                        Cursor="Hand"
+                                                        PointerPressed="OnMailItemClicked">
+                                                    <Border.Tag>
+                                                        <Binding />
+                                                    </Border.Tag>
+                                                    <Grid ColumnDefinitions="Auto,*,Auto"
+                                                          RowDefinitions="Auto,Auto"
+                                                          HorizontalAlignment="Stretch">
+                                                        <!-- Row 0: [new dot] Sender — Subject [Date] -->
+                                                        <StackPanel Grid.Row="0" Grid.Column="0"
+                                                                    Orientation="Horizontal" Spacing="6">
+                                                            <Ellipse Width="6" Height="6"
+                                                                     Fill="{StaticResource EveAccentPrimaryBrush}"
+                                                                     IsVisible="{Binding IsNew}"
+                                                                     VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding SenderName}"
+                                                                       FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                                                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                                       VerticalAlignment="Center"
+                                                                       MaxWidth="140"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Row="0" Grid.Column="2"
+                                                                   Text="{Binding SentDateText}"
+                                                                   FontSize="{DynamicResource EveFontSmall}"
+                                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   Margin="8,0,0,0" />
+                                                        <!-- Row 1: Subject with preview -->
+                                                        <TextBlock Grid.Row="1" Grid.Column="0"
+                                                                   Grid.ColumnSpan="3"
+                                                                   Text="{Binding Subject}"
+                                                                   FontSize="{DynamicResource EveFontSmall}"
+                                                                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                                                                   VerticalAlignment="Center"
+                                                                   TextTrimming="CharacterEllipsis"
+                                                                   Margin="0,2,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Divider -->
+                <Border Grid.Column="1" Width="1" Background="{StaticResource EveBorderBrush}"
+                        HorizontalAlignment="Center" />
+
+                <!-- Right: Reading pane -->
+                <Border Grid.Column="2" Background="{StaticResource EveBackgroundDarkBrush}">
+                    <Panel>
+                        <!-- No mail selected state -->
+                        <TextBlock x:Name="ReadingPanePlaceholder"
+                                   Text="Select a mail to read"
+                                   FontSize="{DynamicResource EveFontBody}"
+                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+
+                        <!-- Mail content -->
+                        <DockPanel x:Name="ReadingPane" IsVisible="False">
+                            <!-- Mail header with back button -->
+                            <Border DockPanel.Dock="Top" Padding="16,12"
+                                    Background="{StaticResource EveBackgroundMediumBrush}"
+                                    BorderBrush="{StaticResource EveBorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <StackPanel Spacing="4">
+                                    <Button Content="&#x2190; Back to list"
+                                            Background="Transparent" BorderThickness="0"
+                                            Foreground="{StaticResource EveTextSecondaryBrush}"
+                                            FontSize="{DynamicResource EveFontSmall}"
+                                            Padding="0,2" Cursor="Hand"
+                                            Click="OnBackToList" />
+                                    <TextBlock x:Name="ReadingSubject"
+                                               FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                                               Foreground="{StaticResource EveTextPrimaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock x:Name="ReadingSender"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                                        <TextBlock x:Name="ReadingDate"
+                                                   FontSize="{DynamicResource EveFontSmall}"
+                                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="ReadingRecipients"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource EveTextDisabledBrush}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Mail body -->
+                            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto">
+                                <TextBlock x:Name="ReadingBody"
+                                           Padding="16,12"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource EveTextPrimaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Panel>
+                </Border>
+            </Grid>
         </DockPanel>
     </Panel>
 </UserControl>

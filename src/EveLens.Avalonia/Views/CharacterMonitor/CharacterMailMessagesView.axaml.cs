@@ -171,7 +171,16 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void OnBodyDownloaded(CharacterEVEMailBodyDownloadedEvent evt)
         {
             if (evt.Character?.CharacterID == _characterId)
-                global::Avalonia.Threading.Dispatcher.UIThread.Post(PopulateView);
+            {
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    PopulateView();
+
+                    // Update reading pane if showing a mail that just got its body
+                    if (ReadingPane.IsVisible && ReadingPane.Tag is MailDisplayEntry entry && entry.HasBody)
+                        ReadingBody.Text = entry.BodyText;
+                });
+            }
         }
 
         private void OnGroupByChanged(object? sender, SelectionChangedEventArgs e)
@@ -206,26 +215,32 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             if (sender is Border { Tag: MailDisplayEntry entry })
             {
-                // Check if body is available
+                ReadingPanePlaceholder.IsVisible = false;
+                ReadingPane.IsVisible = true;
+
+                ReadingSubject.Text = entry.Subject;
+                ReadingSender.Text = entry.SenderName;
+                ReadingDate.Text = entry.SentDateText;
+                ReadingRecipients.Text = entry.RecipientText;
+                ReadingPane.Tag = entry;
+
                 if (!entry.HasBody)
                 {
-                    // Trigger download
                     entry.Mail.GetMailBody();
-
-                    // Show window with loading message
-                    var window = new MailReadingWindow();
-                    window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText,
-                        "Loading mail body from EVE servers...\n\nPlease wait a moment and try reopening this message.");
-                    window.Show();
+                    ReadingBody.Text = "Loading mail body from EVE servers...";
                 }
                 else
                 {
-                    // Body is already available
-                    var window = new MailReadingWindow();
-                    window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText, entry.BodyText);
-                    window.Show();
+                    ReadingBody.Text = entry.BodyText;
                 }
             }
+        }
+
+        private void OnBackToList(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            ReadingPane.IsVisible = false;
+            ReadingPanePlaceholder.IsVisible = true;
+            ReadingPane.Tag = null;
         }
 
         private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)
