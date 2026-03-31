@@ -226,7 +226,6 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             // Save preference
             Settings.UI.EmploymentHistoryListView = showList;
-            AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
 
             if (showList)
             {
