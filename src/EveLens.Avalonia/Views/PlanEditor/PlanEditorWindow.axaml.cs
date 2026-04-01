@@ -267,7 +267,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         AllowMultiple = false,
                         FileTypeFilter = new[]
                         {
-                            new FilePickerFileType("Fitting Files") { Patterns = new[] { "*.txt", "*.xml", "*.clf", "*.fit" } },
+                            new FilePickerFileType("Fitting Files") { Patterns = new[] { "*.txt", "*.xml", "*.clf", "*.fit", "*.emp" } },
                             new FilePickerFileType("All Files") { Patterns = new[] { "*" } },
                         }
                     });

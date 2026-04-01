@@ -338,18 +338,35 @@ namespace EveLens.Common.Helpers
             SerializablePlan result = null;
             try
             {
-                // Is the format compressed ? 
+                // .emp files: try plain XML first (EveLens exports uncompressed),
+                // fall back to gzip decompression (legacy EVEMon format)
                 if (filename.EndsWith(".emp", StringComparison.OrdinalIgnoreCase))
                 {
-                    string tempFile = Util.UncompressToTempFile(filename);
+                    // Check if it's plain XML by reading the first bytes
+                    bool isPlainXml = false;
                     try
                     {
-                        return ImportFromXML(tempFile);
+                        using var peek = new System.IO.StreamReader(filename);
+                        char[] buf = new char[5];
+                        int read = peek.Read(buf, 0, 5);
+                        isPlainXml = read >= 5 && new string(buf).StartsWith("<?xml");
                     }
-                    finally
+                    catch { }
+
+                    if (!isPlainXml)
                     {
-                        FileHelper.DeleteFile(tempFile);
+                        // Try gzip decompression (legacy EVEMon format)
+                        string tempFile = Util.UncompressToTempFile(filename);
+                        try
+                        {
+                            return ImportFromXML(tempFile);
+                        }
+                        finally
+                        {
+                            FileHelper.DeleteFile(tempFile);
+                        }
                     }
+                    // Plain XML — fall through to normal parsing below
                 }
 
                 // Reads the revision number from the file
