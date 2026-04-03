@@ -287,7 +287,7 @@ namespace EveLens.Common.ViewModels
             OnPropertyChanged(nameof(Groups));
         }
 
-        private void RefreshPlannedLevels()
+        public void RefreshPlannedLevels()
         {
             if (_allGroups != null)
             {

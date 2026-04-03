@@ -188,15 +188,23 @@ namespace EveLens.Avalonia
             {
                 try
                 {
-                    // We're on the UI thread here. SmartSettingsManager.PerformSaveAsync
-                    // uses _dispatcher.Post(Export) which needs the UI thread to be free.
-                    // Calling .Wait() would deadlock on Linux/macOS.
-                    //
-                    // Instead: Export synchronously (we're on the UI thread), then write
-                    // to disk synchronously. This guarantees the save completes before
-                    // the process exits.
-                    Settings.SaveSynchronousForShutdown();
-                    EveIDToName.SaveImmediateAsync().GetAwaiter().GetResult();
+                    // Save settings with a timeout — Windows OS shutdown gives ~5 seconds.
+                    // If save takes too long, abandon it rather than blocking shutdown.
+                    var saveTask = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            Settings.SaveSynchronousForShutdown();
+                        }
+                        catch { /* Non-critical — don't block shutdown */ }
+                    });
+
+                    // Wait up to 3 seconds for settings save
+                    saveTask.Wait(TimeSpan.FromSeconds(3));
+
+                    // ID-to-name cache: fire and forget, don't block
+                    try { EveIDToName.SaveImmediateAsync().Wait(TimeSpan.FromSeconds(1)); }
+                    catch { }
                 }
                 catch (Exception ex)
                 {
