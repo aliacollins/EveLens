@@ -327,9 +327,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             _viewModel.PlanToLevel(_viewModel.SelectedSkill, level);
 
-            // Refresh the detail panel to show updated planned status
-            _viewModel.Refresh();
-            RefreshGroupsList();
+            // Update planned levels without rebuilding groups (preserves expand/collapse state)
+            _viewModel.RefreshPlannedLevels();
             UpdateDetailPanel();
 
             // Update status bar in parent window

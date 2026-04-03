@@ -1712,7 +1712,19 @@ namespace EveLens.Avalonia.Views
                 string path = files[0].Path.LocalPath;
                 string planName = System.IO.Path.GetFileNameWithoutExtension(path);
                 planName = character.Plans.GetUniqueName(planName);
-                var plan = new Plan(character) { Name = planName };
+
+                // Import entries from the file
+                var serialPlan = PlanIOHelper.ImportFromXML(path);
+                Plan plan;
+                if (serialPlan != null && serialPlan.Entries.Count > 0)
+                {
+                    serialPlan.Name = planName;
+                    plan = new Plan(character, serialPlan);
+                }
+                else
+                {
+                    plan = new Plan(character) { Name = planName };
+                }
                 character.Plans.Add(plan);
 
                 var editorWindow = new PlanEditorWindow

@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 1.2.0-beta.1: Drag-reorder, skill detail sidebar, Gmail mail, queue health cards, skill farm dashboard
 - 1.1.0 release candidate: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign
 
+## [1.2.0-beta.2] - 2026-04-04
+
+### Added
+
+- **Plan import/export overhaul** -- Import Fit now handles .emp plan files, .txt plan exports, and EVE game clipboard format ("Skill Name 3"). Clipboard copy outputs game-compatible format for direct paste into EVE skill queue
+- **Queue health on overview cards** -- theme-aware card tints across all 6 palettes. Status dots with labels: green (>5 days), yellow (<5 days), red (<24 hours), dark red (empty), gray (paused). Click to navigate to character
+
+### Fixed
+
+- **Plan import was creating empty plans ([#51])** -- the file was read for its name but entries were never imported. Fixed across all import paths (Plans menu, Manage Plans, Plan Editor)
+- **Plan import gzip error** -- .emp files exported by EveLens are plain XML, but import assumed gzip. Now auto-detects format
+- **Skill browser collapsed after Plan To ([#52])** -- adding a skill from the browser no longer resets expand/collapse state of categories
+- **Windows shutdown hang ([#53])** -- settings save now runs with a 3-second timeout. If disk I/O is slow, the app exits cleanly instead of blocking Windows shutdown
+- **New Plan dialog keyboard focus ([#50])** -- TextBox receives focus immediately, typing replaces default name
+
 ## [1.2.0-beta.1] - 2026-03-31
 
 ### Added
@@ -163,6 +178,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#45]: https://github.com/aliacollins/EveLens/issues/45
 [#47]: https://github.com/aliacollins/EveLens/issues/47
 [#50]: https://github.com/aliacollins/EveLens/issues/50
+[#51]: https://github.com/aliacollins/EveLens/issues/51
+[#52]: https://github.com/aliacollins/EveLens/issues/52
+[#53]: https://github.com/aliacollins/EveLens/issues/53
 [unreleased]: https://github.com/aliacollins/evelens/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/aliacollins/evelens/compare/v1.1.0-beta.1...v1.1.0
 [1.1.0-beta.1]: https://github.com/aliacollins/evelens/compare/v1.0.0...v1.1.0-beta.1

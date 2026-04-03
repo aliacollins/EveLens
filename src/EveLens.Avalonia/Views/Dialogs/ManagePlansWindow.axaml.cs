@@ -15,6 +15,7 @@ using Avalonia.Layout;
 using Avalonia.Platform.Storage;
 using EveLens.Common.Models;
 
+using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Avalonia.Services;
@@ -194,7 +195,18 @@ namespace EveLens.Avalonia.Views.Dialogs
                 string path = files[0].Path.LocalPath;
                 string planName = Path.GetFileNameWithoutExtension(path);
                 planName = _character.Plans.GetUniqueName(planName);
-                var plan = new Plan(_character) { Name = planName };
+
+                var serialPlan = PlanIOHelper.ImportFromXML(path);
+                Plan plan;
+                if (serialPlan != null && serialPlan.Entries.Count > 0)
+                {
+                    serialPlan.Name = planName;
+                    plan = new Plan(_character, serialPlan);
+                }
+                else
+                {
+                    plan = new Plan(_character) { Name = planName };
+                }
                 _character.Plans.Add(plan);
                 RefreshGrid();
             }
