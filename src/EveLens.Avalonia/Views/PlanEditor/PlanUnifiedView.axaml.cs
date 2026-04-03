@@ -2725,31 +2725,19 @@ namespace EveLens.Avalonia.Views.PlanEditor
             Refresh();
         }
 
-        private void CopyPlanToClipboard()
+        private async void CopyPlanToClipboard()
         {
-            if (_viewModel == null) return;
+            if (_viewModel?.Plan == null) return;
 
-            if (_currentEntryItems == null || _currentEntryItems.Count == 0)
-                return;
-
-            var entries = _currentEntryItems.Select(d => d.Entry).ToList();
-
-            // Build clean skill plan text (EVE-friendly format)
+            // Game-compatible format: "Skill Name N" per line (numeric levels)
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"Skill Plan: {_viewModel.Plan?.Name ?? "Untitled"}");
-            sb.AppendLine();
-
-            foreach (var entry in entries)
+            foreach (var entry in _viewModel.Plan)
             {
-                string levelStr = RomanNumeral((int)entry.Level);
-                sb.AppendLine($"{entry.Skill.Name} {levelStr}");
+                sb.AppendLine($"{entry.Skill.Name} {entry.Level}");
             }
 
-            sb.AppendLine();
-            sb.AppendLine($"Total: {entries.Count} skills, {FormatTime(_viewModel.PlanStats.TrainingTime)}");
-
-            string text = sb.ToString();
-            AppServices.ClipboardService?.SetText(text);
+            if (AppServices.ClipboardService != null)
+                await AppServices.ClipboardService.SetTextAsync(sb.ToString());
         }
 
         #endregion
