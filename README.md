@@ -9,11 +9,11 @@
 
 ---
 
-## EveLens 1.0.0 Is Here
+## EveLens 1.2.0 Is Here
 
 EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,783 tests, 14 architectural laws, and support for **100+ characters** out of the box.
+This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,843 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.0.0](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens 1.2.0](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -134,11 +134,20 @@ Per-endpoint health state machine that tracks ESI reliability per character. Tra
 - 82 new types, 31 modified types, 127 typeDogma changes
 - All balance changes: carrier cargo bays, fighter stats, FAX cap booster bonuses, Black Ops tank nerfs
 
+### Character Skill Comparison
+Compare up to 10 characters side-by-side. Skills are shown with color-coded level blocks so differences jump out immediately. Toggle to show only skills that differ across characters. Columns auto-size and show full character names.
+
+### Variable Font Scaling
+A slider in Settings scales all text from 80% to 150%. Changes apply instantly as you drag -- no restart needed. Works across every window, dialog, and control in the app.
+
+### Queue Health Monitor
+A clock icon in the status bar shows how many of your characters need training attention. Click to see everyone sorted by urgency -- empty queues at the top, healthy at the bottom. Click any name to jump to their Queue tab. Scrollable for large fleets.
+
 ### Everything Else
 - **Clone tracking** -- jump clone locations, implants, and jump cooldown timer (respects Infomorph Synchronizing skill)
 - **Native OS notifications** -- skill completions via your system's notification center
 - **Activity center** -- bell icon with 200-entry event log, smart noise filtering
-- **Character groups** -- organize characters by purpose
+- **Character groups** -- organize characters by purpose with colored tags and custom ordering
 - **Balance change indicator** -- real-time ISK delta with directional arrows
 - **Auto-update** -- Velopack-powered updates with delta downloads, checks in the background
 - **Data cache** -- near-instant tab loading, limited offline viewing
@@ -154,8 +163,8 @@ Per-endpoint health state machine that tracks ESI reliability per character. Tra
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
-| **Beta** | Pre-release testing(you are here) | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
+| **Stable** | Recommended for daily use(you are here) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| Beta | Pre-release testing | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
 | Alpha | Bleeding edge, experimental features | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
 
 ---
@@ -183,17 +192,29 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.0.1
+## What's New in 1.2.0
 
-See [CHANGELOG.md](CHANGELOG.md) for the full changelog.
+- **Drag-to-reorder in Plan Editor** -- grab, multi-select, drag groups with real-time prerequisite validation
+- **Skill Farm Dashboard** -- full economics for extraction characters: Jita pricing, tax, profit projections, Omega sustainability
+- **Plan import/export overhaul** -- supports .emp, .txt, and EVE game clipboard format. Copy plans directly into the EVE skill queue
+- **Skill detail sidebar** -- double-click any skill for description, unlocks, enabled items, and plan-to actions
+- **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
+- **Chain ribbons + timeline minimap** -- visual skill grouping by training goal
+- **Queue health on overview cards** -- color-coded status dots at a glance
+- **Gmail-style mail** -- split view with inline reading pane
+- **Bug fixes** -- plan import creating empty plans ([#51](https://github.com/aliacollins/EveLens/issues/51)), Windows shutdown hang ([#53](https://github.com/aliacollins/EveLens/issues/53)), skill browser collapse ([#52](https://github.com/aliacollins/EveLens/issues/52)), and more
 
-## Alpha Changelog (Cumulative)
+Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0) | [CHANGELOG.md](CHANGELOG.md)
 
-See [CHANGELOG.md](CHANGELOG.md) for the full changelog. The alpha channel receives all in-progress changes.
+---
 
-## Features Being Tested
+## Release History
 
-Features currently in alpha/beta testing before stable release.
+| Version | Date | Highlights |
+|---------|------|------------|
+| **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
+| **[1.1.0](https://github.com/aliacollins/EveLens/releases/tag/v1.1.0)** | March 29, 2026 | Character Skill Comparison, variable font scaling, queue health monitor, ESI token fix, add character UX, group management redesign |
+| **[1.0.0](https://github.com/aliacollins/EveLens/releases/tag/v1.0.0)** | March 23, 2026 | First stable release -- Velopack auto-updates, Windows code signing, cross-platform launch |
 
 ## License
 
