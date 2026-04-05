@@ -7,22 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.0-beta.2] - 2026-04-04
-
-### Added
-
-- **Plan import/export overhaul** -- Import Fit now handles .emp plan files, .txt plan exports, and EVE game clipboard format ("Skill Name 3"). Clipboard copy outputs game-compatible format for direct paste into EVE skill queue
-- **Queue health on overview cards** -- theme-aware card tints across all 6 palettes. Status dots with labels: green (>5 days), yellow (<5 days), red (<24 hours), dark red (empty), gray (paused). Click to navigate to character
-
-### Fixed
-
-- **Plan import was creating empty plans ([#51])** -- the file was read for its name but entries were never imported. Fixed across all import paths (Plans menu, Manage Plans, Plan Editor)
-- **Plan import gzip error** -- .emp files exported by EveLens are plain XML, but import assumed gzip. Now auto-detects format
-- **Skill browser collapsed after Plan To ([#52])** -- adding a skill from the browser no longer resets expand/collapse state of categories
-- **Windows shutdown hang ([#53])** -- settings save now runs with a 3-second timeout. If disk I/O is slow, the app exits cleanly instead of blocking Windows shutdown
-- **New Plan dialog keyboard focus ([#50])** -- TextBox receives focus immediately, typing replaces default name
-
-## [1.2.0-beta.1] - 2026-03-31
+## [1.2.0] - 2026-04-05
+- 1.2.0: Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards
+## [1.2.0] - 2026-04-05
 
 ### Added
 
@@ -38,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Reverse skill/item lookups** -- new StaticSkills.GetDependentSkills() and GetItemsRequiringSkill() for browsing what a skill unlocks
 - **Plan activity tracking** -- plans now track when they were last opened via LastActivity timestamp, persisted across sessions
 - **Queue health on overview cards** -- theme-aware card tints across all 6 palettes show queue status at a glance. Status dots with labels: green (>5 days), yellow (<5 days), red (<24 hours), dark red (empty), gray (paused). Click a status dot to navigate to that character
+- **Plan import/export overhaul** -- Import Fit now handles .emp plan files, .txt plan exports, and EVE game clipboard format ("Skill Name 3"). Clipboard copy outputs game-compatible format for direct paste into EVE skill queue
+- **Plan import regression tests** -- 19 tests covering XML round-trip, .emp format detection (plain XML + gzip), BOM handling, edge cases, and revision parsing ([#51])
 
 ### Changed
 
@@ -50,12 +39,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Plan import was creating empty plans ([#51])** -- the file was read for its name but entries were never imported. Fixed across all import paths (Plans menu, Manage Plans, Plan Editor). Reported by [@TinkeringGoblin](https://github.com/TinkeringGoblin)
+- **Plan import gzip error** -- .emp files exported by EveLens are plain XML, but import assumed gzip. Now auto-detects format
+- **Skill browser collapsed after Plan To ([#52])** -- adding a skill from the browser no longer resets expand/collapse state of categories. Reported by [@NotmoGit](https://github.com/NotmoGit)
+- **Windows shutdown hang ([#53])** -- settings save now runs with a 3-second timeout. If disk I/O is slow, the app exits cleanly instead of blocking Windows shutdown. Reported by [@Kickunio](https://github.com/Kickunio)
 - **Market transaction item names** -- item names were blank because the ESI→model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
 - **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" → "Player Trading")
 - **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
 - **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
 - **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
-- **New Plan dialog keyboard focus ([#50])** -- TextBox now receives focus immediately on open. Typing replaces the default "Plan N" name without needing to click first
+- **New Plan dialog keyboard focus ([#50])** -- TextBox now receives focus immediately on open. Typing replaces the default "Plan N" name without needing to click first. Reported by [@AnszaKalltiern](https://github.com/AnszaKalltiern)
 
 ### Removed
 
@@ -99,19 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Google Analytics tracker** -- removed dead code that hashed MAC addresses for fingerprinting. Never had callers, never had consent ([#40])
 - **In-game browser server** -- removed legacy IGB HTTP server (5 files) that could bind port 80. CCP retired the IGB years ago ([#40])
-
-## [1.1.0-beta.1] - 2026-03-24
-
-### Added
-
-- **Skill level breakdown** in the Skills tab — filter buttons let you instantly see how many skills you have at each level (V, IV, III, II, I) and switch between All Skills, All Trained, or Injected ([#33])
-- **Attribute filter** in the Plan Editor — filter the skill list by primary/secondary attribute combo (e.g. Intelligence/Memory) to plan around your current remap. Your active remap is auto-detected and marked with a ★ ([#38])
-- **Total SP** (trained + unallocated) now displayed in the character header stats line
-
-### Fixed
-
-- Plan Editor no longer shows unpublished skills like CFO Training or Chief Science Officer ([#37])
-- Scrolling now works correctly in the Plan Editor's Skills and Blueprints tabs ([#39])
 
 ## [1.0.0] - 2026-03-23
 
