@@ -9,11 +9,11 @@
 
 ---
 
-## EveLens 1.1.0 Is Here
+## EveLens 1.2.0 Is Here
 
 EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,811 tests, 14 architectural laws, and support for **100+ characters** out of the box.
+This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,843 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.1.0](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens 1.2.0](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -192,19 +192,29 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.1.0
+## What's New in 1.2.0
 
-- **Character Skill Comparison** -- compare up to 10 characters side-by-side with color-coded level blocks
-- **Variable font scaling** -- 80% to 150%, applies live from Settings
-- **Queue health monitor** -- clock icon in status bar shows who needs training attention
-- **Add Character redesigned** -- "+" card in overview, "Add Another" flow for bulk imports
-- **Manage Groups redesigned** -- tag-based UI, drag reorder, colored portrait strip dividers
-- **Blueprint tree browser** -- proper hierarchy, no more duplicate categories
-- **Untrained skill filter** -- see exactly what you haven't injected yet
-- **ESI stability fix** -- tokens refresh proactively, 30+ character setups stay healthy
-- **Security cleanup** -- removed dead analytics tracker and legacy IGB server code
+- **Drag-to-reorder in Plan Editor** -- grab, multi-select, drag groups with real-time prerequisite validation
+- **Skill Farm Dashboard** -- full economics for extraction characters: Jita pricing, tax, profit projections, Omega sustainability
+- **Plan import/export overhaul** -- supports .emp, .txt, and EVE game clipboard format. Copy plans directly into the EVE skill queue
+- **Skill detail sidebar** -- double-click any skill for description, unlocks, enabled items, and plan-to actions
+- **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
+- **Chain ribbons + timeline minimap** -- visual skill grouping by training goal
+- **Queue health on overview cards** -- color-coded status dots at a glance
+- **Gmail-style mail** -- split view with inline reading pane
+- **Bug fixes** -- plan import creating empty plans ([#51](https://github.com/aliacollins/EveLens/issues/51)), Windows shutdown hang ([#53](https://github.com/aliacollins/EveLens/issues/53)), skill browser collapse ([#52](https://github.com/aliacollins/EveLens/issues/52)), and more
 
-Full details: [1.1.0 Release Notes](https://github.com/aliacollins/EveLens/discussions/49) | [CHANGELOG.md](CHANGELOG.md)
+Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0) | [CHANGELOG.md](CHANGELOG.md)
+
+---
+
+## Release History
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
+| **[1.1.0](https://github.com/aliacollins/EveLens/releases/tag/v1.1.0)** | March 29, 2026 | Character Skill Comparison, variable font scaling, queue health monitor, ESI token fix, add character UX, group management redesign |
+| **[1.0.0](https://github.com/aliacollins/EveLens/releases/tag/v1.0.0)** | March 23, 2026 | First stable release -- Velopack auto-updates, Windows code signing, cross-platform launch |
 
 ## License
 
