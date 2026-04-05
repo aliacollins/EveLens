@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Plan import tests (#51 regression), macapp fix
 - 1.2.0-beta.2: Plan import fix, queue health cards, Windows shutdown fix, skill browser state
 - 1.2.0-beta.1: Drag-reorder, skill detail sidebar, Gmail mail, queue health cards, skill farm dashboard
 - 1.1.0 release candidate: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign

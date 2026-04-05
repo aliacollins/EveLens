@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-04-05</date>
+      <version>1.1.0.9</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.1.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.1.0-beta.9
+
+Plan import tests (#51 regression), macapp fix]]></message>
+    </release>
+    <release>
       <date>2026-04-04</date>
       <version>1.1.0.8</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
@@ -94,16 +104,6 @@ ESI health state machine, SDE Catalyst expansion, debug isolation, version count
       <message><![CDATA[EveLens 1.0.0-beta.1
 
 ESI health state machine, SDE Catalyst expansion, debug isolation, diagnostic viewer]]></message>
-    </release>
-    <release>
-      <date>2026-03-19</date>
-      <version>1.0.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.0.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.0.0-beta.1
-
-ESI health state machine, SDE Catalyst expansion, debug isolation, diagnostic viewer, branching policy]]></message>
     </release>
   </releases>
   <datafiles>
