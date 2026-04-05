@@ -48,6 +48,12 @@ namespace EveLens.Common.Models
         #region Properties
 
         /// <summary>
+        /// Gets or sets the UTC timestamp of the last activity on this plan.
+        /// Updated on create, rename, add/remove entries, reorder, and import.
+        /// </summary>
+        public DateTime LastActivity { get; internal set; }
+
+        /// <summary>
         /// Gets or sets the plan's name.
         /// </summary>
         public string Name

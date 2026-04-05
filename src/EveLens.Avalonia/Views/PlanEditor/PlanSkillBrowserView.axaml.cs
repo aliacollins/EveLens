@@ -60,7 +60,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     detectedIndex = i + 1; // +1 for the "All Attributes" entry
             }
             AttributeComboBox.ItemsSource = items;
-            AttributeComboBox.SelectedIndex = detectedIndex;
+            AttributeComboBox.SelectedIndex = 0; // Default to "All Attributes"
         }
 
         private void RefreshGroupsList()
@@ -99,7 +99,25 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private void OnShowAllToggled(object? sender, RoutedEventArgs e)
         {
             if (_viewModel == null) return;
-            _viewModel.ShowAll = ShowAllToggle.IsChecked == true;
+            _viewModel.ShowAll = true;
+            RefreshGroupsList();
+        }
+
+        private void OnFilterModeClick(object? sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            SkillFilterMode mode = SkillFilterMode.AllSkills;
+            if (sender == FilterTrainedBtn) mode = SkillFilterMode.Trained;
+            else if (sender == FilterPrereqBtn) mode = SkillFilterMode.HavePrerequisites;
+            else if (sender == FilterUntrainedBtn) mode = SkillFilterMode.Untrained;
+
+            FilterAllBtn.IsChecked = mode == SkillFilterMode.AllSkills;
+            FilterTrainedBtn.IsChecked = mode == SkillFilterMode.Trained;
+            FilterPrereqBtn.IsChecked = mode == SkillFilterMode.HavePrerequisites;
+            FilterUntrainedBtn.IsChecked = mode == SkillFilterMode.Untrained;
+
+            _viewModel.FilterMode = mode;
             RefreshGroupsList();
         }
 
@@ -309,9 +327,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             _viewModel.PlanToLevel(_viewModel.SelectedSkill, level);
 
-            // Refresh the detail panel to show updated planned status
-            _viewModel.Refresh();
-            RefreshGroupsList();
+            // Update planned levels without rebuilding groups (preserves expand/collapse state)
+            _viewModel.RefreshPlannedLevels();
             UpdateDetailPanel();
 
             // Update status bar in parent window

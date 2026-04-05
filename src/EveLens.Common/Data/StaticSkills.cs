@@ -167,5 +167,78 @@ namespace EveLens.Common.Data
         }
 
         #endregion
+
+
+        #region Reverse Lookups
+
+        private static Dictionary<long, List<StaticSkillLevel>>? s_dependentSkills;
+        private static Dictionary<long, List<Item>>? s_itemsByRequiredSkill;
+
+        /// <summary>
+        /// Gets all skills that directly require the given skill as a prerequisite.
+        /// Returns (skill, required level of the given skill) pairs.
+        /// </summary>
+        public static IReadOnlyList<StaticSkillLevel> GetDependentSkills(StaticSkill skill)
+        {
+            EnsureDependentSkillsBuilt();
+            return s_dependentSkills!.TryGetValue(skill.ID, out var list)
+                ? list
+                : Array.Empty<StaticSkillLevel>();
+        }
+
+        private static void EnsureDependentSkillsBuilt()
+        {
+            if (s_dependentSkills != null)
+                return;
+
+            var index = new Dictionary<long, List<StaticSkillLevel>>();
+            foreach (var skill in AllSkills)
+            {
+                foreach (var prereq in skill.Prerequisites)
+                {
+                    if (!index.TryGetValue(prereq.Skill.ID, out var list))
+                    {
+                        list = new List<StaticSkillLevel>();
+                        index[prereq.Skill.ID] = list;
+                    }
+                    list.Add(new StaticSkillLevel(skill, prereq.Level));
+                }
+            }
+            s_dependentSkills = index;
+        }
+
+        /// <summary>
+        /// Gets all items/ships that require the given skill (at any level).
+        /// </summary>
+        public static IReadOnlyList<Item> GetItemsRequiringSkill(StaticSkill skill)
+        {
+            EnsureItemsBySkillBuilt();
+            return s_itemsByRequiredSkill!.TryGetValue(skill.ID, out var list)
+                ? list
+                : (IReadOnlyList<Item>)Array.Empty<Item>();
+        }
+
+        private static void EnsureItemsBySkillBuilt()
+        {
+            if (s_itemsByRequiredSkill != null)
+                return;
+
+            var index = new Dictionary<long, List<Item>>();
+            foreach (var item in StaticItems.AllItems)
+            {
+                foreach (var prereq in item.Prerequisites)
+                {
+                    if (!index.TryGetValue(prereq.Skill.ID, out var list))
+                    {
+                        list = new List<Item>();
+                        index[prereq.Skill.ID] = list;
+                    }
+                    list.Add(item);
+                }
+            }
+            s_itemsByRequiredSkill = index;
+        }
+
+        #endregion
     }
 }

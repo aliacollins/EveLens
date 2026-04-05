@@ -24,6 +24,7 @@ namespace EveLens.Common.ViewModels
         private readonly PlanEditorViewModel? _planEditor;
         private string _textFilter = string.Empty;
         private bool _showAll = true;
+        private SkillFilterMode _filterMode = SkillFilterMode.AllSkills;
         private AttributeCombo? _attributeFilter;
         private List<PlanSkillGroupEntry>? _allGroups;
         private List<PlanSkillGroupEntry> _groups = new();
@@ -102,6 +103,7 @@ namespace EveLens.Common.ViewModels
 
         /// <summary>
         /// Gets or sets whether to show all skills (true) or only untrained/partially trained (false).
+        /// Legacy property — use FilterMode for new code.
         /// </summary>
         public bool ShowAll
         {
@@ -111,6 +113,22 @@ namespace EveLens.Common.ViewModels
                 if (_showAll != value)
                 {
                     _showAll = value;
+                    ApplyFilter();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the skill filter mode: All Skills, Trained, Have Prerequisites, or Untrained.
+        /// </summary>
+        public SkillFilterMode FilterMode
+        {
+            get => _filterMode;
+            set
+            {
+                if (_filterMode != value)
+                {
+                    _filterMode = value;
                     ApplyFilter();
                 }
             }
@@ -259,7 +277,7 @@ namespace EveLens.Common.ViewModels
 
             foreach (var group in _allGroups)
             {
-                group.UpdateVisibility(_showAll, _textFilter, _attributeFilter, Character, _planEditor?.Plan);
+                group.UpdateVisibility(_showAll, _filterMode, _textFilter, _attributeFilter, Character, _planEditor?.Plan);
 
                 if (group.VisibleSkills.Count > 0)
                     visible.Add(group);
@@ -269,7 +287,7 @@ namespace EveLens.Common.ViewModels
             OnPropertyChanged(nameof(Groups));
         }
 
-        private void RefreshPlannedLevels()
+        public void RefreshPlannedLevels()
         {
             if (_allGroups != null)
             {
@@ -322,15 +340,30 @@ namespace EveLens.Common.ViewModels
             VisibleSkills = new List<PlanSkillEntry>(_allSkills);
         }
 
-        public void UpdateVisibility(bool showAll, string filter, AttributeCombo? attributeFilter,
-            Character? character, Plan? plan)
+        public void UpdateVisibility(bool showAll, SkillFilterMode filterMode, string filter,
+            AttributeCombo? attributeFilter, Character? character, Plan? plan)
         {
             IEnumerable<PlanSkillEntry> filtered = _allSkills;
 
+            // Legacy ShowAll toggle
             if (!showAll)
             {
-                // Show only untrained or partially trained (< level 5)
                 filtered = filtered.Where(s => !s.IsKnown || s.CharacterLevel < 5);
+            }
+
+            // New filter modes
+            switch (filterMode)
+            {
+                case SkillFilterMode.Trained:
+                    filtered = filtered.Where(s => s.IsKnown);
+                    break;
+                case SkillFilterMode.HavePrerequisites:
+                    filtered = filtered.Where(s => !s.IsKnown && character != null &&
+                        s.StaticSkill.Prerequisites.All(p => character.GetSkillLevel(p.Skill) >= p.Level));
+                    break;
+                case SkillFilterMode.Untrained:
+                    filtered = filtered.Where(s => !s.IsKnown);
+                    break;
             }
 
             if (!string.IsNullOrEmpty(filter))
@@ -538,5 +571,16 @@ namespace EveLens.Common.ViewModels
         public override bool Equals(object? obj) => Equals(obj as AttributeCombo);
         public override int GetHashCode() => HashCode.Combine(Primary, Secondary);
         public override string ToString() => DisplayText;
+    }
+
+    /// <summary>
+    /// Filter modes for the skill browser.
+    /// </summary>
+    public enum SkillFilterMode
+    {
+        AllSkills,
+        Trained,
+        HavePrerequisites,
+        Untrained
     }
 }

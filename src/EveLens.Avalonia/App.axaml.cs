@@ -188,15 +188,23 @@ namespace EveLens.Avalonia
             {
                 try
                 {
-                    // We're on the UI thread here. SmartSettingsManager.PerformSaveAsync
-                    // uses _dispatcher.Post(Export) which needs the UI thread to be free.
-                    // Calling .Wait() would deadlock on Linux/macOS.
-                    //
-                    // Instead: Export synchronously (we're on the UI thread), then write
-                    // to disk synchronously. This guarantees the save completes before
-                    // the process exits.
-                    Settings.SaveSynchronousForShutdown();
-                    EveIDToName.SaveImmediateAsync().GetAwaiter().GetResult();
+                    // Save settings with a timeout — Windows OS shutdown gives ~5 seconds.
+                    // If save takes too long, abandon it rather than blocking shutdown.
+                    var saveTask = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            Settings.SaveSynchronousForShutdown();
+                        }
+                        catch { /* Non-critical — don't block shutdown */ }
+                    });
+
+                    // Wait up to 3 seconds for settings save
+                    saveTask.Wait(TimeSpan.FromSeconds(3));
+
+                    // ID-to-name cache: fire and forget, don't block
+                    try { EveIDToName.SaveImmediateAsync().Wait(TimeSpan.FromSeconds(1)); }
+                    catch { }
                 }
                 catch (Exception ex)
                 {
@@ -239,11 +247,14 @@ namespace EveLens.Avalonia
                             // On Linux/X11 the process can exit before Post() runs,
                             // so ShutdownRequested never fires and settings are lost.
                             IsExiting = true;
-                            AppServices.TraceService?.Trace("Window Closing — saving settings before exit");
+
+                            // Close all modeless child windows first to prevent zombie
+                            // processes on macOS where owned windows block shutdown.
+                            if (desktop.MainWindow is MainWindow mw2)
+                                mw2.CloseChildWindows();
+
                             try
                             {
-                                // Fully synchronous — no async, no .GetAwaiter().GetResult()
-                                // which deadlocks on Linux due to Avalonia sync context.
                                 Settings.SaveSynchronousForShutdown();
                             }
                             catch (Exception ex)
@@ -307,6 +318,8 @@ namespace EveLens.Avalonia
             exitItem.Click += (_, _) =>
             {
                 IsExiting = true;
+                if (desktop.MainWindow is MainWindow mw3)
+                    mw3.CloseChildWindows();
                 DestroyTrayIcon();
                 desktop.Shutdown();
             };

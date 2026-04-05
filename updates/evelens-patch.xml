@@ -6,14 +6,48 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-04-05</date>
+      <version>1.2.0.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/stable</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/stable/EveLens-install-1.2.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.2.0
+
+NEW FEATURES:
+• Drag-to-reorder in Plan Editor — grab skills, multi-select with Shift/Ctrl, prerequisite constraints enforced in real-time
+• Chain ribbons & timeline minimap — visual skill grouping by training goal with time distribution
+• Skill Farm Dashboard — full economics for extraction characters: Jita pricing, tax, profit projections, Omega sustainability
+• Recent Plans menu — quick access to your 5 most recently opened plans
+• Skill detail sidebar — double-click any skill to see description, unlocks, enabled items, and plan-to actions
+• Keyboard shortcuts — Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
+• Plan import/export overhaul — supports .emp, .txt, and EVE game clipboard format
+• Queue health on overview cards — color-coded status dots with at-a-glance queue health
+
+IMPROVEMENTS:
+• Gmail-style mail view with inline reading pane
+• Employment history toggle between Timeline and List view
+• Skill level breakdown tooltip on character header
+• macOS install simplified to xattr-only method
+
+BUG FIXES:
+• Plan import was creating empty plans — fixed across all import paths (thanks @TinkeringGoblin)
+• Skill browser no longer collapses after Plan To (thanks @NotmoGit)
+• Windows shutdown no longer hangs — 3-second timeout on save (thanks @Kickunio)
+• Market transaction item names no longer blank
+• Wallet journal no longer shows "Undefined" for new ESI ref types
+• Unicode ship names display correctly
+• App no longer hangs on quit with child windows open (macOS)
+• New Plan dialog keyboard focus works immediately (thanks @AnszaKalltiern)]]></message>
+    </release>
+    <release>
       <date>2026-03-29</date>
       <version>1.1.0.0</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/v1.1.0</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.1.0/EveLens-install-1.1.0.exe</autopatchurl>
+      <url>https://github.com/aliacollins/evelens/releases/tag/stable</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/stable/EveLens-install-1.1.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EveLens 1.1.0
 
-1.1.0 stable: Skill Comparison, font scaling, queue health, ESI token fix, add character UX, group management redesign]]></message>
+Character Skill Comparison, variable font scaling, queue health monitor, ESI token race fix, add character UX, manage groups redesign, blueprint browser, and more.]]></message>
     </release>
   </releases>
 </evelens>

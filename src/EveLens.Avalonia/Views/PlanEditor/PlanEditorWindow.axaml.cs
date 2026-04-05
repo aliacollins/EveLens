@@ -39,6 +39,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         public void Initialize(Plan plan, Character character)
         {
+            plan.LastActivity = DateTime.UtcNow;
+
             _viewModel = new PlanEditorViewModel();
             _viewModel.Character = character;
             _viewModel.Plan = plan;
@@ -155,20 +157,19 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 try
                 {
                     if (_viewModel?.Plan == null) return;
-                    var settings = new PlanExportSettings
+                    // Game-compatible format: "Skill Name N" per line
+                    var sb = new System.Text.StringBuilder();
+                    foreach (var entry in _viewModel.Plan)
                     {
-                        EntryNumber = true,
-                        EntryTrainingTimes = true,
-                        FooterCount = true,
-                        FooterTotalTime = true,
-                    };
-                    string text = PlanIOHelper.ExportAsText(_viewModel.Plan, settings);
+                        sb.AppendLine($"{entry.Skill.Name} {entry.Level}");
+                    }
                     if (AppServices.ClipboardService != null)
-                        await AppServices.ClipboardService.SetTextAsync(text);
+                        await AppServices.ClipboardService.SetTextAsync(sb.ToString());
+                    Title = $"Plan Editor — Copied {_viewModel.Plan.Count()} skills";
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Copy to clipboard failed: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
                 }
             };
             menu.Items.Add(copyItem);
@@ -242,6 +243,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     string? clipText = await (AppServices.ClipboardService?.GetTextAsync() ?? Task.FromResult<string?>(null));
                     if (string.IsNullOrWhiteSpace(clipText))
                         return;
+
+                    // Try plan text format first ("1. Skill V (time)")
+                    if (TryImportPlanTextFormat(clipText))
+                        return;
+
+                    // Try simple skill list ("Skill Name 3" — game clipboard format)
+                    if (TryImportSimpleSkillList(clipText))
+                        return;
+
+                    // Fall through to fitting parser
                     await ImportFitFromText(clipText);
                 }
                 catch (Exception ex)
@@ -265,16 +276,46 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         AllowMultiple = false,
                         FileTypeFilter = new[]
                         {
-                            new FilePickerFileType("Fitting Files") { Patterns = new[] { "*.txt", "*.xml", "*.clf", "*.fit" } },
+                            new FilePickerFileType("Fitting Files") { Patterns = new[] { "*.txt", "*.xml", "*.clf", "*.fit", "*.emp" } },
                             new FilePickerFileType("All Files") { Patterns = new[] { "*" } },
                         }
                     });
 
                     if (files.Count == 0) return;
 
+                    string filePath = files[0].Path.LocalPath;
+
+                    // .emp and plan .xml files use PlanIOHelper, not fitting parser
+                    if (filePath.EndsWith(".emp", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ImportPlanFromFile(filePath);
+                        return;
+                    }
+
                     await using var stream = await files[0].OpenReadAsync();
                     using var reader = new System.IO.StreamReader(stream);
                     string fitText = await reader.ReadToEndAsync();
+
+                    // Check if it's a plan XML (starts with <?xml and contains <plan)
+                    if (fitText.TrimStart().StartsWith("<?xml", StringComparison.OrdinalIgnoreCase)
+                        && fitText.Contains("<plan", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Save to temp file for PlanIOHelper
+                        string tempPath = System.IO.Path.GetTempFileName();
+                        await System.IO.File.WriteAllTextAsync(tempPath, fitText);
+                        try { ImportPlanFromFile(tempPath); }
+                        finally { System.IO.File.Delete(tempPath); }
+                        return;
+                    }
+
+                    // Check if it's a plan text export (lines like "1. Skill Name I (time)")
+                    if (TryImportPlanTextFormat(fitText))
+                        return;
+
+                    // Check if it's a simple skill list ("Skill Name 3" — game format)
+                    if (TryImportSimpleSkillList(fitText))
+                        return;
+
                     await ImportFitFromText(fitText);
                 }
                 catch (Exception ex)
@@ -286,6 +327,179 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             btn.ContextMenu = menu;
             menu.Open(btn);
+        }
+
+        private void ImportPlanFromFile(string filePath)
+        {
+            try
+            {
+                if (_viewModel?.Plan == null)
+                {
+                    AppServices.TraceService?.Trace($"ImportPlan: no plan/viewmodel");
+                    return;
+                }
+
+                AppServices.TraceService?.Trace($"ImportPlan: reading {filePath}");
+
+                var serialPlan = PlanIOHelper.ImportFromXML(filePath);
+                if (serialPlan == null)
+                {
+                    AppServices.TraceService?.Trace("ImportPlan: ImportFromXML returned null");
+                    Title = "Import failed — file could not be parsed";
+                    return;
+                }
+
+                AppServices.TraceService?.Trace($"ImportPlan: {serialPlan.Entries.Count} entries found");
+
+                if (serialPlan.Entries.Count == 0)
+                {
+                    Title = "Import failed — no skill entries in file";
+                    return;
+                }
+
+                var plan = _viewModel.Plan;
+                int added = 0;
+                foreach (var entry in serialPlan.Entries)
+                {
+                    var skill = Common.Data.StaticSkills.GetSkillByID(entry.ID);
+                    if (skill == null || skill == Common.Data.StaticSkill.UnknownStaticSkill)
+                        continue;
+
+                    plan.PlanTo(skill, entry.Level);
+                    added++;
+                }
+
+                AppServices.TraceService?.Trace($"ImportPlan: planned {added} skills");
+
+                _viewModel.UpdateDisplayPlan();
+                if (_unifiedView != null)
+                    _unifiedView.SetViewModel(_viewModel);
+                UpdateStatusBar();
+
+                Title = $"Plan Editor — Imported {added} skills";
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"ImportPlan ERROR: {ex.Message}");
+                Title = $"Import failed: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Tries to parse plan text export format: "N. Skill Name Level (time)"
+        /// Returns true if it looks like a plan text and was imported.
+        /// </summary>
+        private bool TryImportPlanTextFormat(string text)
+        {
+            if (_viewModel?.Plan == null || string.IsNullOrWhiteSpace(text))
+                return false;
+
+            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            // Heuristic: plan text starts with "1."
+            if (lines.Length == 0 || !lines[0].TrimStart().StartsWith("1."))
+                return false;
+
+            var romanToInt = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["I"] = 1, ["II"] = 2, ["III"] = 3, ["IV"] = 4, ["V"] = 5
+            };
+
+            var plan = _viewModel.Plan;
+            int added = 0;
+
+            foreach (var line in lines)
+            {
+                // Strip "N. " prefix and "(time)" suffix
+                string trimmed = line.Trim();
+                int dotPos = trimmed.IndexOf(". ");
+                if (dotPos < 0) continue;
+                trimmed = trimmed.Substring(dotPos + 2);
+
+                int parenPos = trimmed.LastIndexOf('(');
+                if (parenPos > 0)
+                    trimmed = trimmed.Substring(0, parenPos).Trim();
+
+                // Last word should be roman numeral (level)
+                int lastSpace = trimmed.LastIndexOf(' ');
+                if (lastSpace < 0) continue;
+
+                string levelStr = trimmed.Substring(lastSpace + 1);
+                string skillName = trimmed.Substring(0, lastSpace).Trim();
+
+                if (!romanToInt.TryGetValue(levelStr, out int level))
+                    continue;
+
+                var skill = Common.Data.StaticSkills.GetSkillByName(skillName);
+                if (skill == null) continue;
+
+                plan.PlanTo(skill, level);
+                added++;
+            }
+
+            if (added == 0)
+                return false;
+
+            _viewModel.UpdateDisplayPlan();
+            if (_unifiedView != null)
+                _unifiedView.SetViewModel(_viewModel);
+            UpdateStatusBar();
+            Title = $"Plan Editor — Imported {added} skills from text";
+            return true;
+        }
+
+        /// <summary>
+        /// Tries to parse simple skill list: "Skill Name N" (one per line).
+        /// This is the format from the EVE game client clipboard.
+        /// </summary>
+        private bool TryImportSimpleSkillList(string text)
+        {
+            if (_viewModel?.Plan == null || string.IsNullOrWhiteSpace(text))
+                return false;
+
+            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length == 0) return false;
+
+            var plan = _viewModel.Plan;
+            int added = 0;
+            int matched = 0;
+
+            foreach (var rawLine in lines)
+            {
+                string line = rawLine.Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+
+                // Find the last space — everything after is the level number
+                int lastSpace = line.LastIndexOf(' ');
+                if (lastSpace < 0) continue;
+
+                string levelStr = line.Substring(lastSpace + 1);
+                string skillName = line.Substring(0, lastSpace).Trim();
+
+                if (!int.TryParse(levelStr, out int level) || level < 1 || level > 5)
+                    continue;
+
+                matched++;
+
+                var skill = Common.Data.StaticSkills.GetSkillByName(skillName);
+                if (skill == null) continue;
+
+                plan.PlanTo(skill, level);
+                added++;
+            }
+
+            // Only count as a match if most lines parsed successfully
+            if (matched < lines.Length / 2)
+                return false;
+
+            if (added == 0)
+                return false;
+
+            _viewModel.UpdateDisplayPlan();
+            if (_unifiedView != null)
+                _unifiedView.SetViewModel(_viewModel);
+            UpdateStatusBar();
+            Title = $"Plan Editor — Imported {added} skills";
+            return true;
         }
 
         private async System.Threading.Tasks.Task ImportFitFromText(string fitText)
@@ -392,6 +606,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
+
+            // Ctrl+W closes the plan editor window
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.W)
+            {
+                Close();
+                e.Handled = true;
+                return;
+            }
 
             if (_unifiedView == null || !ContentPanel.Children.Contains(_unifiedView))
                 return;

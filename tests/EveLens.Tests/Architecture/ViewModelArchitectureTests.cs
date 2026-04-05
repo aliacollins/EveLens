@@ -69,7 +69,8 @@ namespace EveLens.Tests.Architecture
             var dataProjectionExclusions = new HashSet<string>
             {
                 "ItemPropertiesViewModel",
-                "CharacterComparisonViewModel"
+                "CharacterComparisonViewModel",
+                "SkillFarmDashboardViewModel"
             };
 
             // Every concrete ViewModel in the ViewModels namespace should inherit from ViewModelBase

@@ -159,6 +159,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     string remaps = PrivacyHelper.IsRemapsHidden
                         ? $"Remaps: {PrivacyHelper.Mask}" : $"Remaps: {oc.AvailableRemaps}";
                     StatsLine.Text = string.Join("  \u00b7  ", skills, sp, freeSp, totalSp, remaps);
+
+                    // Skill level breakdown tooltip — shows V:3 IV:5 III:8 etc.
+                    if (!PrivacyHelper.IsSkillPointsHidden)
+                    {
+                        var ch = oc.Character;
+                        var breakdown = string.Join("  ",
+                            $"V: {ch.GetSkillCountAtLevel(5)}",
+                            $"IV: {ch.GetSkillCountAtLevel(4)}",
+                            $"III: {ch.GetSkillCountAtLevel(3)}",
+                            $"II: {ch.GetSkillCountAtLevel(2)}",
+                            $"I: {ch.GetSkillCountAtLevel(1)}");
+                        ToolTip.SetTip(StatsLine, $"Skill Levels\n{breakdown}");
+                    }
                 }
             }
             catch

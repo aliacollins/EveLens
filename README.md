@@ -67,25 +67,16 @@ Requires [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) in
 1. Download `EveLens-*-osx-arm64.app.zip` from the release page
 2. Extract the zip -- you'll get `EveLens.app`
 3. Drag `EveLens.app` to your Applications folder
-4. **First launch -- important:** macOS blocks apps from unidentified developers by default. You need to do ONE of these:
+4. **First launch -- important:** macOS blocks unsigned apps. Open Terminal and run:
 
-**Option A: Right-click to open (easiest)**
-- Right-click (or Ctrl+click) `EveLens.app` → select **Open** → click **Open** in the dialog
-- You only need to do this once -- after that it opens normally
-
-**Option B: Remove quarantine via Terminal (if Option A doesn't work)**
 ```bash
 # Navigate to where you extracted EveLens.app, then run:
 xattr -cr EveLens.app
 ```
+
 This removes the macOS quarantine flag. Double-click to open normally after this.
 
-**Option C: System Settings**
-- Open **System Settings** → **Privacy & Security**
-- Scroll down -- you'll see "EveLens was blocked from use because it is not from an identified developer"
-- Click **Open Anyway** → enter your password → click **Open**
-
-> **Why is this needed?** EveLens is code-signed on Windows but not yet on macOS (Apple requires a separate $99/year developer certificate). The app is safe -- it's open source and you can verify the code yourself.
+> **Why is this needed?** EveLens is code-signed on Windows but not yet on macOS (Apple requires a separate $99/year developer certificate). Without a macOS signature, Gatekeeper reports the app as "broken" rather than "unsigned", so the usual right-click Open workaround doesn't work. The `xattr -cr` command is the reliable fix. The app is safe -- it's open source and you can verify the code yourself.
 
 ### macOS (Portable)
 

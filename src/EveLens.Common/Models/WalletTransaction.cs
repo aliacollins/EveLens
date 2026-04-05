@@ -37,7 +37,9 @@ namespace EveLens.Common.Models
             ID = src.ID;
             JournalID = src.JournalTransactionID;
             Date = src.TransactionDate;
-            ItemName = src.TypeName;
+            ItemName = !string.IsNullOrEmpty(src.TypeName)
+                ? src.TypeName
+                : StaticItems.GetItemName(src.TypeID);
             Quantity = src.Quantity;
             Price = src.Price;
             m_clientID = src.ClientID;

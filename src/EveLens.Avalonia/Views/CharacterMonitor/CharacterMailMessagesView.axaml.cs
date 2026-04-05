@@ -109,15 +109,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             PopulateView();
         }
 
+        private List<MailDisplayEntry>? _flatMailList;
+        private MailDisplayEntry? _selectedMail;
+
         private void PopulateView()
         {
             if (_viewModel == null) return;
 
-            var grouped = _viewModel.GroupedItems;
+            // Get all items as a flat list, newest first
+            var allItems = _viewModel.GetSourceItemsForDisplay();
             var emptyState = this.FindControl<UserControl>("EmptyState");
             var scroller = this.FindControl<ScrollViewer>("MailScroller");
 
-            if (grouped == null || grouped.Count == 0 || grouped.All(g => g.Items.Count == 0))
+            if (allItems == null || !allItems.Any())
             {
                 if (emptyState != null) emptyState.IsVisible = true;
                 if (scroller != null) scroller.IsVisible = false;
@@ -128,19 +132,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (emptyState != null) emptyState.IsVisible = false;
             if (scroller != null) scroller.IsVisible = true;
 
-            var groups = new List<MailGroupEntry>();
-            foreach (var group in grouped)
-            {
-                var entries = group.Items
-                    .Select(mail => new MailDisplayEntry(mail, _viewModel.IsNewItem(mail)))
-                    .ToList();
-                if (entries.Count > 0)
-                    groups.Add(new MailGroupEntry(group.Key, entries));
-            }
+            _flatMailList = allItems
+                .OrderByDescending(m => m.SentDate)
+                .Select(mail => new MailDisplayEntry(mail, _viewModel.IsNewItem(mail)))
+                .ToList();
 
-            CollapseStateHelper.InitializeGroups(_characterId, "MailMessages", groups);
-            MailGroupsList.ItemsSource = groups;
-            StatusText.Text = $"Mail: {_viewModel.TotalItemCount} message{(_viewModel.TotalItemCount == 1 ? "" : "s")}";
+            // Wrap in a single group (header hidden) for the existing ItemsControl template
+            var singleGroup = new MailGroupEntry("All Mail", _flatMailList);
+            singleGroup.IsExpanded = true;
+            singleGroup.ShowHeader = false;
+            MailGroupsList.ItemsSource = new[] { singleGroup };
+            StatusText.Text = $"Mail: {_flatMailList.Count} message{(_flatMailList.Count == 1 ? "" : "s")}";
         }
 
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
@@ -171,7 +173,16 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private void OnBodyDownloaded(CharacterEVEMailBodyDownloadedEvent evt)
         {
             if (evt.Character?.CharacterID == _characterId)
-                global::Avalonia.Threading.Dispatcher.UIThread.Post(PopulateView);
+            {
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    PopulateView();
+
+                    // Update reading pane if showing a mail that just got its body
+                    if (ReadingPane.IsVisible && ReadingPane.Tag is MailDisplayEntry entry && entry.HasBody)
+                        ReadingBody.Text = entry.BodyText;
+                });
+            }
         }
 
         private void OnGroupByChanged(object? sender, SelectionChangedEventArgs e)
@@ -204,28 +215,66 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private void OnMailItemClicked(object? sender, PointerPressedEventArgs e)
         {
-            if (sender is Border { Tag: MailDisplayEntry entry })
+            if (sender is Border border && border.Tag is MailDisplayEntry entry)
             {
-                // Check if body is available
+                _selectedMail = entry;
+
+                // Update selection highlighting on all visible mail rows
+                UpdateMailSelectionHighlight();
+
+                // Show reading pane
+                ReadingPanePlaceholder.IsVisible = false;
+                ReadingPane.IsVisible = true;
+
+                ReadingSubject.Text = entry.Subject;
+                ReadingSender.Text = $"From: {entry.SenderName}";
+                ReadingDate.Text = entry.SentDateText;
+                ReadingRecipients.Text = $"To: {entry.RecipientText}";
+                ReadingPane.Tag = entry;
+
                 if (!entry.HasBody)
                 {
-                    // Trigger download
                     entry.Mail.GetMailBody();
-
-                    // Show window with loading message
-                    var window = new MailReadingWindow();
-                    window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText,
-                        "Loading mail body from EVE servers...\n\nPlease wait a moment and try reopening this message.");
-                    window.Show();
+                    ReadingBody.Text = "Loading mail body from EVE servers...";
                 }
                 else
                 {
-                    // Body is already available
-                    var window = new MailReadingWindow();
-                    window.SetMail(entry.Subject, entry.SenderName, entry.SentDateText, entry.BodyText);
-                    window.Show();
+                    ReadingBody.Text = entry.BodyText;
                 }
             }
+        }
+
+        private void UpdateMailSelectionHighlight()
+        {
+            // Walk the visual tree to find all item-row borders and highlight the selected one
+            var selectedBg = new global::Avalonia.Media.SolidColorBrush(
+                global::Avalonia.Media.Color.FromArgb(40, 74, 148, 240));
+
+            foreach (var child in GetAllMailRowBorders(MailGroupsList))
+            {
+                if (child is Border b && b.Tag is MailDisplayEntry entry)
+                {
+                    b.Background = entry == _selectedMail
+                        ? selectedBg
+                        : (global::Avalonia.Media.IBrush)Application.Current!.FindResource("EveBackgroundDarkBrush")!;
+                }
+            }
+        }
+
+        private static IEnumerable<Control> GetAllMailRowBorders(Control root)
+        {
+            foreach (var child in root.GetVisualDescendants())
+            {
+                if (child is Border b && b.Classes.Contains("item-row"))
+                    yield return b;
+            }
+        }
+
+        private void OnBackToList(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            ReadingPane.IsVisible = false;
+            ReadingPanePlaceholder.IsVisible = true;
+            ReadingPane.Tag = null;
         }
 
         private void OnGroupHeaderClicked(object? sender, PointerPressedEventArgs e)

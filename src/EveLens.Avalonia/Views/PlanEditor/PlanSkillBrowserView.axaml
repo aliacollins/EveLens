@@ -9,15 +9,24 @@
                     Background="{StaticResource EveBackgroundMediumBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
-                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                        <ToggleButton x:Name="ShowAllToggle" Content="Show All" IsChecked="True"
-                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
-                                      Click="OnShowAllToggled" />
-                        <Button Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                    <WrapPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,4,0,0">
+                        <ToggleButton x:Name="FilterAllBtn" Content="All Skills" IsChecked="True"
+                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                                      Click="OnFilterModeClick" />
+                        <ToggleButton x:Name="FilterTrainedBtn" Content="Trained"
+                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                                      Click="OnFilterModeClick" />
+                        <ToggleButton x:Name="FilterPrereqBtn" Content="Have Prerequisites"
+                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                                      Click="OnFilterModeClick" />
+                        <ToggleButton x:Name="FilterUntrainedBtn" Content="Untrained"
+                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                                      Click="OnFilterModeClick" />
+                        <Button Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                 Click="OnExpandAll" />
-                    </StackPanel>
+                    </WrapPanel>
                     <!-- Attribute filter -->
                     <ComboBox x:Name="AttributeComboBox" DockPanel.Dock="Bottom"
                               FontSize="{DynamicResource EveFontSmall}" Padding="6,3" Margin="0,4,0,0"

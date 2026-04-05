@@ -29,6 +29,12 @@ namespace EveLens.Common.Serialization.Esi
 
         // Can be one of 117 items, see https://gist.github.com/ccp-zoetrope/c03db66d90c2148724c06171bc52e0ec
         // to convert to integer
+        /// <summary>
+        /// Raw ref_type string from ESI, preserved for display when enum mapping is missing.
+        /// </summary>
+        [IgnoreDataMember]
+        public string RawRefType { get; private set; } = string.Empty;
+
         [DataMember(Name = "ref_type")]
         private string RefTypeJson
         {
@@ -39,7 +45,10 @@ namespace EveLens.Common.Serialization.Esi
             set
             {
                 if (!string.IsNullOrEmpty(value))
+                {
+                    RawRefType = value;
                     Enum.TryParse(value, true, out refType);
+                }
             }
         }
 
@@ -192,6 +201,7 @@ namespace EveLens.Common.Serialization.Esi
                 OwnerID1 = OwnerID1,
                 OwnerID2 = OwnerID2,
                 RefTypeID = RefTypeID,
+                RawRefType = RawRefType,
                 TaxAmount = TaxAmount,
                 TaxReceiverID = TaxReceiverID
             };

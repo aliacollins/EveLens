@@ -65,6 +65,7 @@ namespace EveLens.Avalonia.Views
         private IDisposable? _notificationSentSub;
         private IDisposable? _privacyModeSub;
         private IDisposable? _fontScaleSub;
+        private readonly List<Window> _childWindows = new();
 
         public MainWindow()
         {
@@ -413,6 +414,7 @@ namespace EveLens.Avalonia.Views
             ManagePlansMenuItem.IsEnabled = hasChar;
             ImportPlanMenuItem.IsEnabled = hasChar;
             CreateFromQueueMenuItem.IsEnabled = hasChar;
+            RebuildRecentPlansMenu();
         }
 
         /// <summary>
@@ -639,7 +641,8 @@ namespace EveLens.Avalonia.Views
             SettingsMenuItem.Click += OnSettingsClick;
             ExitMenuItem.Click += OnExitClick;
 
-            // Plans menu
+            // Plans menu — rebuild recent plans every time the menu opens
+            PlansMenu.SubmenuOpened += (_, _) => RebuildRecentPlansMenu();
             NewPlanMenuItem.Click += OnNewPlanClick;
             ManagePlansMenuItem.Click += OnManagePlansClick;
             ImportPlanMenuItem.Click += OnImportPlanClick;
@@ -647,6 +650,7 @@ namespace EveLens.Avalonia.Views
 
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
+            SkillFarmMenuItem.Click += OnSkillFarmClick;
             SkillConstellationMenuItem.Click += OnSkillConstellationClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
 
@@ -654,6 +658,7 @@ namespace EveLens.Avalonia.Views
             CheckUpdatesMenuItem.Click += OnCheckUpdatesClick;
             UserGuideMenuItem.Click += OnUserGuideClick;
             ReportIssueMenuItem.Click += OnReportIssueClick;
+            KeyboardShortcutsMenuItem.Click += OnKeyboardShortcutsClick;
             AboutMenuItem.Click += OnAboutClick;
 
             // Debug menu (only in debug builds)
@@ -846,7 +851,7 @@ namespace EveLens.Avalonia.Views
                 try
                 {
                     var window = new Dialogs.DiagnosticStreamWindow();
-                    window.Show(this);
+                    ShowChildWindow(window);
                 }
                 catch (Exception ex) { Debug.WriteLine($"Diag stream error: {ex}"); }
             };
@@ -902,7 +907,15 @@ namespace EveLens.Avalonia.Views
             utilSubMenu.Items.Add(healthStatus);
 
             // ── Assemble ──
+            var queueTintItem = new MenuItem { Header = "Toggle Queue Health Tints" };
+            queueTintItem.Click += (_, _) =>
+            {
+                if (_overviewView != null)
+                    _overviewView.ToggleDebugQueueTints();
+            };
+
             debugMenu.Items.Add(diagStreamItem);
+            debugMenu.Items.Add(queueTintItem);
             debugMenu.Items.Add(new Separator());
             debugMenu.Items.Add(updateSubMenu);
             debugMenu.Items.Add(notifySubMenu);
@@ -921,7 +934,6 @@ namespace EveLens.Avalonia.Views
                 var server = AppServices.EVEServer;
                 ServerStatusText.Text = server?.IsOnline == true ? "Server: Online" : "Server: Offline";
                 UpdateEsiCountdown();
-                UpdateQueueHealth();
             }
             catch (Exception ex)
             {
@@ -929,232 +941,7 @@ namespace EveLens.Avalonia.Views
             }
         }
 
-        private void UpdateQueueHealth()
-        {
-            try
-            {
-                var chars = AppServices.Characters.ToList();
-                if (chars.Count == 0)
-                {
-                    QueueBadge.IsVisible = false;
-                    return;
-                }
-
-                int ok = 0, low = 0, paused = 0, empty = 0;
-                var now = DateTime.UtcNow;
-
-                foreach (var character in chars)
-                {
-                    if (character is not CCPCharacter ccp)
-                    {
-                        empty++;
-                        continue;
-                    }
-
-                    var queue = ccp.SkillQueue;
-                    if (queue == null || !queue.Any())
-                    {
-                        empty++;
-                        continue;
-                    }
-
-                    if (queue.IsPaused || !ccp.IsTraining)
-                    {
-                        paused++;
-                        continue;
-                    }
-
-                    var remaining = queue.EndTime - now;
-                    if (remaining.TotalDays < 5)
-                        low++;
-                    else
-                        ok++;
-                }
-
-                int trouble = low + paused + empty;
-
-                // Badge on clock icon
-                QueueBadge.IsVisible = trouble > 0;
-                QueueBadgeText.Text = trouble.ToString();
-                QueueBadge.Background = empty > 0
-                    ? FindStripBrush("EveErrorRedBrush", Brushes.Red)
-                    : FindStripBrush("EveWarningYellowBrush", Brushes.Yellow);
-
-                // Summary text
-                // Badge color: red if any empty, yellow otherwise
-                if (trouble > 0)
-                {
-                    QueueBadge.Background = empty > 0
-                        ? FindStripBrush("EveErrorRedBrush", Brushes.Red)
-                        : FindStripBrush("EveWarningYellowBrush", Brushes.Yellow);
-                }
-            }
-            catch
-            {
-                // Non-critical
-            }
-        }
-
-        private void OnQueueHealthClick(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var chars = AppServices.Characters.ToList();
-                if (chars.Count == 0) return;
-
-                var now = DateTime.UtcNow;
-                var entries = new List<(Character Char, string Status, string EndDate, TimeSpan Remaining, IBrush Color)>();
-
-                foreach (var character in chars)
-                {
-                    if (character is not CCPCharacter ccp || ccp.SkillQueue == null || !ccp.SkillQueue.Any())
-                    {
-                        entries.Add((character, "Empty", "", TimeSpan.Zero,
-                            FindStripBrush("EveErrorRedBrush", Brushes.Red)!));
-                        continue;
-                    }
-
-                    if (ccp.SkillQueue.IsPaused || !ccp.IsTraining)
-                    {
-                        entries.Add((character, "Paused", "", TimeSpan.Zero,
-                            FindStripBrush("EveWarningYellowBrush", Brushes.Yellow)!));
-                        continue;
-                    }
-
-                    var remaining = ccp.SkillQueue.EndTime - now;
-                    if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
-
-                    string timeStr;
-                    string endDateStr = ccp.SkillQueue.EndTime.ToString("MMM dd HH:mm");
-                    IBrush color;
-                    if (remaining.TotalDays < 5)
-                    {
-                        timeStr = remaining.TotalDays >= 1
-                            ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
-                            : $"{(int)remaining.TotalHours}h {remaining.Minutes}m";
-                        color = FindStripBrush("EveWarningYellowBrush", Brushes.Yellow)!;
-                    }
-                    else
-                    {
-                        timeStr = $"{(int)remaining.TotalDays}d {remaining.Hours}h";
-                        color = FindStripBrush("EveSuccessGreenBrush", Brushes.LimeGreen)!;
-                    }
-
-                    entries.Add((character, timeStr, endDateStr, remaining, color));
-                }
-
-                // Sort by urgency (empty/low first)
-                entries.Sort((a, b) => a.Remaining.CompareTo(b.Remaining));
-
-                var flyout = new Flyout { Placement = PlacementMode.TopEdgeAlignedLeft };
-                var panel = new StackPanel { Spacing = 1, MinWidth = 280 };
-
-                panel.Children.Add(new TextBlock
-                {
-                    Text = "Queue Health",
-                    FontSize = FontScaleService.Subheading,
-                    FontWeight = FontWeight.SemiBold,
-                    Foreground = FindStripBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                    Margin = new Thickness(8, 4, 8, 6)
-                });
-
-                foreach (var (character, status, endDate, _, color) in entries)
-                {
-                    var capturedChar = character;
-                    var row = new Button
-                    {
-                        Background = Brushes.Transparent,
-                        BorderThickness = new Thickness(0),
-                        Padding = new Thickness(8, 3),
-                        HorizontalAlignment = HorizontalAlignment.Stretch,
-                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                        Cursor = new Cursor(StandardCursorType.Hand)
-                    };
-
-                    var grid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*,Auto,Auto") };
-
-                    // Status dot
-                    grid.Children.Add(new Border
-                    {
-                        Width = 8, Height = 8,
-                        CornerRadius = new CornerRadius(4),
-                        Background = color,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(0, 0, 8, 0),
-                        [Grid.ColumnProperty] = 0
-                    });
-
-                    // Character name
-                    grid.Children.Add(new TextBlock
-                    {
-                        Text = character.Name,
-                        FontSize = FontScaleService.Body,
-                        Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
-                        VerticalAlignment = VerticalAlignment.Center,
-                        TextTrimming = TextTrimming.CharacterEllipsis,
-                        [Grid.ColumnProperty] = 1
-                    });
-
-                    // Time remaining
-                    grid.Children.Add(new TextBlock
-                    {
-                        Text = status,
-                        FontSize = FontScaleService.Body,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = color,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        Margin = new Thickness(12, 0, 0, 0),
-                        TextAlignment = TextAlignment.Right,
-                        MinWidth = 55,
-                        [Grid.ColumnProperty] = 2
-                    });
-
-                    // End date (for training characters)
-                    if (!string.IsNullOrEmpty(endDate))
-                    {
-                        grid.Children.Add(new TextBlock
-                        {
-                            Text = endDate,
-                            FontSize = FontScaleService.Small,
-                            Foreground = FindStripBrush("EveTextDisabledBrush", Brushes.Gray),
-                            VerticalAlignment = VerticalAlignment.Center,
-                            Margin = new Thickness(8, 0, 0, 0),
-                            MinWidth = 80,
-                            [Grid.ColumnProperty] = 3
-                        });
-                    }
-
-                    row.Content = grid;
-                    row.Click += (_, _) =>
-                    {
-                        flyout.Hide();
-                        NavigateToCharacterQueue(capturedChar);
-                    };
-                    panel.Children.Add(row);
-                }
-
-                flyout.Content = new Border
-                {
-                    Background = FindStripBrush("EveBackgroundMediumBrush", Brushes.Black),
-                    BorderBrush = FindStripBrush("EveBorderBrush", Brushes.Gray),
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(0, 4),
-                    MaxHeight = 480,
-                    Child = new ScrollViewer
-                    {
-                        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                        Content = panel
-                    }
-                };
-
-                flyout.ShowAt(QueueHealthBtn);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error showing queue flyout: {ex}");
-            }
-        }
+        // Queue health flyout removed — replaced by card tints + status dots on Overview.
 
         private void NavigateToCharacterQueue(Character character)
         {
@@ -1413,6 +1200,86 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        private async void OnKeyboardShortcutsClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                bool isMac = System.Runtime.InteropServices.RuntimeInformation
+                    .IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX);
+                string mod = isMac ? "\u2318" : "Ctrl";
+                string quit = isMac ? "\u2318Q" : "Ctrl+Q";
+
+                var shortcuts = new[]
+                {
+                    ($"{mod}+,", "Open Settings"),
+                    ($"{mod}+N", "New Plan"),
+                    ($"{mod}+M", "Manage Plans"),
+                    ($"{mod}+W", "Close Plan Window"),
+                    ($"{mod}+Shift+W", "Close All Plan Windows"),
+                    (quit, "Quit EveLens"),
+                    ("", ""),
+                    ("Alt+\u2191 / Alt+\u2193", "Move Skill Up / Down (Plan Editor)"),
+                    ("Delete", "Remove Skill (Plan Editor)"),
+                };
+
+                var grid = new Grid
+                {
+                    ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+                    RowDefinitions = new RowDefinitions(string.Join(",", shortcuts.Select(_ => "Auto"))),
+                    Margin = new Thickness(20, 16),
+                };
+
+                for (int i = 0; i < shortcuts.Length; i++)
+                {
+                    var (key, desc) = shortcuts[i];
+                    if (string.IsNullOrEmpty(key))
+                    {
+                        // Spacer row
+                        continue;
+                    }
+
+                    var keyText = new TextBlock
+                    {
+                        Text = key,
+                        FontWeight = FontWeight.SemiBold,
+                        FontSize = FontScaleService.Body,
+                        Foreground = (IBrush)Application.Current!.FindResource("EveAccentPrimaryBrush")!,
+                        Margin = new Thickness(0, 3, 20, 3),
+                        [Grid.ColumnProperty] = 0,
+                        [Grid.RowProperty] = i,
+                    };
+
+                    var descText = new TextBlock
+                    {
+                        Text = desc,
+                        FontSize = FontScaleService.Body,
+                        Foreground = (IBrush)Application.Current!.FindResource("EveTextPrimaryBrush")!,
+                        Margin = new Thickness(0, 3),
+                        [Grid.ColumnProperty] = 1,
+                        [Grid.RowProperty] = i,
+                    };
+
+                    grid.Children.Add(keyText);
+                    grid.Children.Add(descText);
+                }
+
+                var dialog = new Window
+                {
+                    Title = "Keyboard Shortcuts",
+                    Width = 400, Height = 340,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Background = (IBrush)Application.Current!.FindResource("EveBackgroundDarkBrush")!,
+                    CanResize = false,
+                    Content = new ScrollViewer { Content = grid },
+                };
+                await dialog.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error showing shortcuts: {ex}");
+            }
+        }
+
         private async void OnAboutClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -1584,6 +1451,58 @@ namespace EveLens.Avalonia.Views
             return _selectedCharacter;
         }
 
+        /// <summary>
+        /// Rebuilds the recent plans section of the Plans menu for the current character.
+        /// Shows up to 5 most recently active plans below a separator.
+        /// </summary>
+        private void RebuildRecentPlansMenu()
+        {
+            // Remove old dynamic items (everything after the 4 static items + separator)
+            while (PlansMenu.Items.Count > 5)
+                PlansMenu.Items.RemoveAt(PlansMenu.Items.Count - 1);
+
+            var character = _selectedCharacter;
+            if (character == null)
+                return;
+
+            var recentPlans = character.Plans
+                .Where(p => p.LastActivity > DateTime.MinValue)
+                .OrderByDescending(p => p.LastActivity)
+                .Take(5)
+                .ToList();
+
+            if (recentPlans.Count == 0)
+                return;
+
+            PlansMenu.Items.Add(new Separator());
+
+            foreach (var plan in recentPlans)
+            {
+                string timeText = TimeFormatHelper.FormatRemaining(plan.TotalTrainingTime);
+                var item = new MenuItem { Header = $"{plan.Name} ({timeText})" };
+
+                var capturedPlan = plan;
+                item.Click += (_, _) =>
+                {
+                    try
+                    {
+                        var editorWindow = new PlanEditorWindow
+                        {
+                            WindowStartupLocation = WindowStartupLocation.CenterScreen
+                        };
+                        editorWindow.Initialize(capturedPlan, character);
+                        ShowChildWindow(editorWindow);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Error opening recent plan: {ex}");
+                    }
+                };
+
+                PlansMenu.Items.Add(item);
+            }
+        }
+
         private async void OnNewPlanClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -1668,7 +1587,16 @@ namespace EveLens.Avalonia.Views
                     }
                 };
 
-                nameBox.AttachedToVisualTree += (_, _) => nameBox.SelectAll();
+                nameBox.AttachedToVisualTree += (_, _) =>
+                {
+                    // Defer to after layout so TextBox is fully ready for input.
+                    // Focus + SelectAll ensures typing immediately replaces the default name.
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        nameBox.Focus();
+                        nameBox.SelectAll();
+                    }, DispatcherPriority.Input);
+                };
                 createBtn.Click += (_, _) =>
                 {
                     planName = nameBox.Text?.Trim();
@@ -1684,10 +1612,10 @@ namespace EveLens.Avalonia.Views
 
                 var editorWindow = new PlanEditorWindow
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 editorWindow.Initialize(plan, character);
-                editorWindow.Show(this);
+                ShowChildWindow(editorWindow);
             }
             catch (Exception ex)
             {
@@ -1731,10 +1659,10 @@ namespace EveLens.Avalonia.Views
                 {
                     var editorWindow = new PlanEditorWindow
                     {
-                        WindowStartupLocation = WindowStartupLocation.CenterOwner
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen
                     };
                     editorWindow.Initialize(managePlansWindow.SelectedPlan, character);
-                    editorWindow.Show(this);
+                    ShowChildWindow(editorWindow);
                 }
             }
             catch (Exception ex)
@@ -1784,15 +1712,27 @@ namespace EveLens.Avalonia.Views
                 string path = files[0].Path.LocalPath;
                 string planName = System.IO.Path.GetFileNameWithoutExtension(path);
                 planName = character.Plans.GetUniqueName(planName);
-                var plan = new Plan(character) { Name = planName };
+
+                // Import entries from the file
+                var serialPlan = PlanIOHelper.ImportFromXML(path);
+                Plan plan;
+                if (serialPlan != null && serialPlan.Entries.Count > 0)
+                {
+                    serialPlan.Name = planName;
+                    plan = new Plan(character, serialPlan);
+                }
+                else
+                {
+                    plan = new Plan(character) { Name = planName };
+                }
                 character.Plans.Add(plan);
 
                 var editorWindow = new PlanEditorWindow
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 editorWindow.Initialize(plan, character);
-                editorWindow.Show(this);
+                ShowChildWindow(editorWindow);
             }
             catch (Exception ex)
             {
@@ -1838,10 +1778,10 @@ namespace EveLens.Avalonia.Views
 
                 var editorWindow = new PlanEditorWindow
                 {
-                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen
                 };
                 editorWindow.Initialize(plan, character);
-                editorWindow.Show(this);
+                ShowChildWindow(editorWindow);
             }
             catch (Exception ex)
             {
@@ -1854,6 +1794,19 @@ namespace EveLens.Avalonia.Views
             try
             {
                 var window = new CharacterComparisonWindow();
+                await window.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error: {ex}");
+            }
+        }
+
+        private async void OnSkillFarmClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var window = new SkillFarmDashboardWindow();
                 await window.ShowDialog(this);
             }
             catch (Exception ex)
@@ -1894,7 +1847,7 @@ namespace EveLens.Avalonia.Views
 
                 var window = new SkillConstellationWindow();
                 window.Initialize(character);
-                window.Show(this);
+                ShowChildWindow(window);
             }
             catch (Exception ex)
             {
@@ -2373,9 +2326,69 @@ namespace EveLens.Avalonia.Views
             };
         }
 
+        /// <summary>
+        /// Shows a modeless child window and registers it for lifecycle tracking.
+        /// Windows are shown without an owner so they behave as independent top-level
+        /// windows on all platforms — each appears in Alt+Tab / Cmd+` and the user
+        /// can freely switch between them using OS-level shortcuts.
+        /// </summary>
+        private void ShowChildWindow(Window child)
+        {
+            _childWindows.Add(child);
+            child.Closed += (_, _) => _childWindows.Remove(child);
+            child.Show();
+        }
+
+        /// <summary>
+        /// Closes all tracked modeless child windows.
+        /// Called before app shutdown to prevent zombie processes on macOS.
+        /// </summary>
+        internal void CloseChildWindows()
+        {
+            // Snapshot the list — Close triggers Closed which modifies _childWindows
+            foreach (var window in _childWindows.ToList())
+            {
+                try { window.Close(); }
+                catch (Exception ex) { Debug.WriteLine($"Error closing child window: {ex.Message}"); }
+            }
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
+
+            bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+
+            switch (e.Key)
+            {
+                case Key.Q:
+                    Close();
+                    e.Handled = true;
+                    break;
+                case Key.W when shift:
+                    CloseChildWindows();
+                    e.Handled = true;
+                    break;
+                case Key.OemComma:
+                    OnSettingsClick(this, e);
+                    e.Handled = true;
+                    break;
+                case Key.N:
+                    OnNewPlanClick(this, e);
+                    e.Handled = true;
+                    break;
+                case Key.M:
+                    OnManagePlansClick(this, e);
+                    e.Handled = true;
+                    break;
+            }
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             SaveWindowLocationNow();
+            CloseChildWindows();
             _notificationVm?.Save();
             _notificationVm?.Dispose();
             _tickSubscription?.Dispose();

@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -52,6 +53,7 @@ namespace EveLens.Common.Helpers
         internal static readonly JsonSerializerOptions DirectJsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
             Converters = { new JsonStringEnumConverter() }
@@ -61,6 +63,7 @@ namespace EveLens.Common.Helpers
         private static readonly JsonSerializerOptions s_jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             Converters = { new JsonStringEnumConverter() }

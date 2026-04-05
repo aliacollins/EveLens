@@ -1,0 +1,98 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EveLens.Avalonia.Views.Dialogs.SkillFarmDashboardWindow"
+        Title="Skill Farm Dashboard"
+        Width="1150" Height="750"
+        MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        Background="{StaticResource EveBackgroundDarkBrush}"
+        CanResize="True">
+
+    <DockPanel Margin="12">
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Padding="10,5"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="StatusText" FontSize="{DynamicResource EveFontBody}"
+                       Foreground="{StaticResource EveTextSecondaryBrush}" />
+        </Border>
+
+        <!-- Top: Title + actions -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="Skill Farm Dashboard" FontSize="{DynamicResource EveFontTitle}"
+                           FontWeight="Bold" Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <Border CornerRadius="8" Background="{StaticResource EveBackgroundMediumBrush}"
+                        Padding="6,2" VerticalAlignment="Center"
+                        ToolTip.Tip="How this works:&#10;&#10;• Designate characters as skill farms using + Add Character&#10;• Characters with 5M+ SP can extract 500K SP into a Large Skill Injector&#10;• Extractors are bought, injectors are sold — the spread is your profit&#10;• Monthly economics assume characters are training with current implants&#10;• 'Sell via' shows optimal tax if all injectors sold through one character&#10;• Omega cost = 500 PLEX × accounts per month&#10;• Prices are live from Jita (ESI)">
+                    <TextBlock Text="?" FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
+                </Border>
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
+                        HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button x:Name="AddCharBtn" Content="+ Add Character"
+                        FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
+                        CornerRadius="12" Click="OnAddCharacterClick" />
+                <Button x:Name="RefreshBtn" Content="Refresh"
+                        FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
+                        CornerRadius="12" Click="OnRefreshClick" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Market prices bar -->
+        <Border DockPanel.Dock="Top" Padding="10,6"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                CornerRadius="6" Margin="0,0,0,6">
+            <StackPanel x:Name="PricesPanel" Orientation="Horizontal" Spacing="20" />
+        </Border>
+
+        <!-- Summary cards (wrap to second row if needed) -->
+        <WrapPanel x:Name="SummaryPanel" DockPanel.Dock="Top"
+                   Orientation="Horizontal" Margin="0,0,0,6" />
+
+        <!-- Alerts -->
+        <Border x:Name="AlertsPanel" DockPanel.Dock="Top" Padding="8,6"
+                Background="{StaticResource EveBackgroundDarkBrush}"
+                CornerRadius="6" Margin="0,0,0,6" IsVisible="False">
+            <StackPanel x:Name="AlertsList" Spacing="3" />
+        </Border>
+
+        <!-- Toolbar -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                <ToggleButton x:Name="ReadyOnlyToggle" Content="Ready Only"
+                              FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
+                              CornerRadius="10" Click="OnReadyOnlyToggled" />
+            </StackPanel>
+            <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1" MaxWidth="300">
+                <TextBox x:Name="FilterBox" Watermark="Search characters..."
+                         FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
+                         Background="Transparent" BorderThickness="0"
+                         TextChanged="OnFilterChanged" />
+            </Border>
+        </DockPanel>
+
+        <!-- Empty state -->
+        <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Spacing="8" IsVisible="True">
+            <TextBlock Text="No farm characters designated"
+                       FontSize="{DynamicResource EveFontSubheading}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" />
+            <TextBlock Text="Click '+ Add Character' to designate characters as skill farms"
+                       FontSize="{DynamicResource EveFontSmall}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       HorizontalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Character table -->
+        <ScrollViewer x:Name="TableScroller" IsVisible="False"
+                      HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="CharacterTable" Spacing="1" />
+        </ScrollViewer>
+    </DockPanel>
+</Window>

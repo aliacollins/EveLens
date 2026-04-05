@@ -18,6 +18,7 @@ using Avalonia.Interactivity;
 using EveLens.Common.Constants;
 using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Events;
+using EveLens.Common;
 using EveLens.Common.Services;
 
 namespace EveLens.Avalonia.Views.CharacterMonitor
@@ -122,6 +123,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             global::Avalonia.Threading.Dispatcher.UIThread.Post(
                 () => LoadCorpLogos(timeline),
                 global::Avalonia.Threading.DispatcherPriority.Background);
+
+            // Restore saved view preference
+            if (Settings.UI.EmploymentHistoryListView)
+                ApplyViewMode(true);
         }
 
         private void LoadCorpLogos(System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
@@ -204,6 +209,59 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var oc = parentView?.DataContext as ObservableCharacter;
             oc?.EnableEndpoint(ESIAPICharacterMethods.EmploymentHistory);
             LoadData();
+        }
+
+        private void OnViewToggle(object? sender, RoutedEventArgs e)
+        {
+            bool showList = sender == ListViewBtn;
+            ApplyViewMode(showList);
+        }
+
+        private void ApplyViewMode(bool showList)
+        {
+            TimelineViewBtn.IsChecked = !showList;
+            ListViewBtn.IsChecked = showList;
+            TimelineScroller.IsVisible = !showList;
+            ListItems.IsVisible = showList;
+
+            // Save preference
+            Settings.UI.EmploymentHistoryListView = showList;
+
+            if (showList)
+            {
+                ListItems.ItemsSource = TimelineItems.ItemsSource;
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (TimelineItems.ItemsSource is System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
+                        LoadListCorpLogos(timeline);
+                }, global::Avalonia.Threading.DispatcherPriority.Render);
+            }
+        }
+
+        private void LoadListCorpLogos(System.Collections.Generic.List<EmploymentTimelineEntry> timeline)
+        {
+            try
+            {
+                var images = ListItems.GetVisualDescendants().OfType<Image>().ToList();
+                for (int i = 0; i < Math.Min(images.Count, timeline.Count); i++)
+                {
+                    var entry = timeline[i];
+                    var img = images[i];
+
+                    var corpImage = entry.Record.CorporationImage;
+                    if (corpImage != null)
+                    {
+                        var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                            corpImage, typeof(Bitmap), null, CultureInfo.InvariantCulture);
+                        if (converted is Bitmap bitmap)
+                        {
+                            (img.Source as IDisposable)?.Dispose();
+                            img.Source = bitmap;
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
         private void OnDataUpdated(CharacterUpdatedEvent evt)

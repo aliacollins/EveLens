@@ -20,6 +20,7 @@ namespace EveLens.Avalonia.ViewModels
         public string Name { get; }
         public string CountText { get; }
         public IReadOnlyList<MailDisplayEntry> Items { get; }
+        public bool ShowHeader { get; set; } = true;
 
         public bool IsExpanded
         {

@@ -5,6 +5,7 @@
 
 using System;
 using System.IO;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace EveLens.Common.Services
         private static readonly JsonSerializerOptions s_options = new JsonSerializerOptions
         {
             WriteIndented = false,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             Converters = { new JsonStringEnumConverter() }
         };
