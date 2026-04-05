@@ -9,16 +9,6 @@
       <date>2026-04-05</date>
       <version>1.2.0.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.2.0</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.2.0/EveLens-install-1.2.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.2.0
-
-1.2.0: Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards]]></message>
-    </release>
-    <release>
-      <date>2026-04-05</date>
-      <version>1.2.0.0</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/stable</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/stable/EveLens-install-1.2.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EveLens 1.2.0
