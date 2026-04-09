@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-04-09
+
 ### Fixed
 
-- Plan training time no longer includes cerebral accelerator (booster) bonuses, which caused wildly inaccurate times (e.g. 163 days shown vs 225 days in-game). EveLens now calculates using base attributes + implants only, matching the EVE client for long-term plans. Booster infrastructure removed entirely; will be redesigned with proper user controls in a future release.
+- **Plan training time was significantly underestimated** -- cerebral accelerator (booster) bonuses were being applied permanently to all skills in a plan, regardless of booster expiry. A 225-day plan would show as ~163 days. EveLens now calculates training time using base attributes + implants only, matching the EVE client exactly.
+
+### Changed
+
+- Removed all cerebral accelerator infrastructure from training calculations. Booster support will be redesigned in a future release with explicit user controls rather than unreliable auto-detection.
+- Added `MaxEffectiveAttributePoints` constant (32) with regression tests enforcing the attribute cap: no attribute used in training calculations can exceed base (27) + implant (5).
 
 ## [1.2.0] - 2026-04-05
 - 1.2.0: Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards

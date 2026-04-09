@@ -6,6 +6,21 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-04-09</date>
+      <version>1.2.1.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.2.1</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/stable/EveLens-install-1.2.1.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.2.1
+
+BUG FIX:
+• Plan training time was significantly underestimated — cerebral accelerator bonuses were being applied permanently to all skills in a plan, regardless of booster expiry. A 225-day plan would show as ~163 days. Training times now use base attributes + implants only, matching the EVE client exactly.
+
+CHANGES:
+• Removed unreliable booster auto-detection from training calculations. Booster support will be redesigned with explicit user controls in a future release.
+• Added MaxEffectiveAttributePoints cap (32) with regression tests — no attribute can exceed base (27) + implant (5) in calculations.]]></message>
+    </release>
+    <release>
       <date>2026-04-05</date>
       <version>1.2.0.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.2.0</url>
