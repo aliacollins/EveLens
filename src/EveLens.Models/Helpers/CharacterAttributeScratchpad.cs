@@ -20,7 +20,6 @@ namespace EveLens.Common.Helpers
 
         private long m_base;
         private long m_implantBonus;
-        private long m_boosterBonus;
 
         /// <summary>
         /// Constructor from a character attribute.
@@ -36,12 +35,10 @@ namespace EveLens.Common.Helpers
         /// </summary>
         /// <param name="baseAttribute"></param>
         /// <param name="implantBonus"></param>
-        /// <param name="boosterBonus"></param>
-        internal void Reset(long baseAttribute, long implantBonus, long boosterBonus = 0)
+        internal void Reset(long baseAttribute, long implantBonus)
         {
             m_base = baseAttribute;
             m_implantBonus = implantBonus;
-            m_boosterBonus = boosterBonus;
             UpdateEffectiveAttribute();
         }
 
@@ -53,7 +50,6 @@ namespace EveLens.Common.Helpers
         {
             m_base = src.Base;
             m_implantBonus = src.ImplantBonus;
-            m_boosterBonus = src.BoosterBonus;
             UpdateEffectiveAttribute();
         }
 
@@ -62,7 +58,7 @@ namespace EveLens.Common.Helpers
         /// </summary>
         internal void UpdateEffectiveAttribute()
         {
-            EffectiveValue = m_base + m_implantBonus + m_boosterBonus;
+            EffectiveValue = m_base + m_implantBonus;
         }
 
         /// <summary>
@@ -92,19 +88,6 @@ namespace EveLens.Common.Helpers
         }
 
         /// <summary>
-        /// Gets or sets the bonus from cerebral accelerators (boosters).
-        /// </summary>
-        public long BoosterBonus
-        {
-            get { return m_boosterBonus; }
-            set
-            {
-                m_boosterBonus = value;
-                UpdateEffectiveAttribute();
-            }
-        }
-
-        /// <summary>
         /// Gets the effective attribute value.
         /// </summary>
         public long EffectiveValue { get; private set; }
@@ -117,7 +100,6 @@ namespace EveLens.Common.Helpers
         /// <item>%B for attribute base value</item>
         /// <item>%b for base bonus</item>
         /// <item>%i for implant bonus</item>
-        /// <item>%o for booster bonus</item>
         /// <item>%r for remapping points</item>
         /// <item>%e for effective value</item>
         /// </list>
@@ -133,7 +115,6 @@ namespace EveLens.Common.Helpers
             format = format.Replace("%B", EveConstants.CharacterBaseAttributePoints.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%b", m_base.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%i", ImplantBonus.ToString(CultureConstants.DefaultCulture));
-            format = format.Replace("%o", BoosterBonus.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%r", (m_base - EveConstants.CharacterBaseAttributePoints).ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%e", EffectiveValue.ToString("0", CultureConstants.DefaultCulture));
             return format;

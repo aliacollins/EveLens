@@ -480,41 +480,6 @@ namespace EveLens.Common.Models
         #endregion
 
 
-        #region Boosters
-
-        /// <summary>
-        /// Gets or sets the active cerebral accelerator (booster) if detected.
-        /// Null if no booster is active.
-        /// </summary>
-        public BoosterInfo? ActiveBooster { get; private set; }
-
-        /// <summary>
-        /// Gets whether a booster is currently active.
-        /// </summary>
-        public bool HasActiveBooster => ActiveBooster != null && ActiveBooster.IsActive;
-
-        /// <summary>
-        /// Clears the active booster when it has expired.
-        /// </summary>
-        internal void ClearExpiredBooster()
-        {
-            if (ActiveBooster != null && !ActiveBooster.IsActive)
-                ActiveBooster = null;
-        }
-
-        /// <summary>
-        /// Gets the Biology skill level (0-5), used for booster duration calculation.
-        /// </summary>
-        private int GetBiologySkillLevel()
-        {
-            // Biology skill ID is 3405
-            var biologySkill = Skills[DBConstants.BiologySkillID];
-            return biologySkill != null ? (int)biologySkill.Level : 0;
-        }
-
-        #endregion
-
-
         #region Skills
 
         /// <summary>
@@ -881,104 +846,23 @@ namespace EveLens.Common.Models
             AvailableReMaps = attribs.BonusRemaps;
             LastReMapDate = attribs.LastRemap;
 
-            // Detect booster by checking if any attribute exceeds the maximum possible without a booster
-            // Maximum without booster = MaxBaseAttributePoints (27) + MaxImplantPoints (5) = 32
-            int detectedBoosterBonus = DetectBoosterFromAttributes(
-                attribs.Intelligence, attribs.Perception, attribs.Willpower,
-                attribs.Charisma, attribs.Memory);
-
-            SetAttribute(EveAttribute.Intelligence, attribs.Intelligence, detectedBoosterBonus);
-            SetAttribute(EveAttribute.Perception, attribs.Perception, detectedBoosterBonus);
-            SetAttribute(EveAttribute.Willpower, attribs.Willpower, detectedBoosterBonus);
-            SetAttribute(EveAttribute.Charisma, attribs.Charisma, detectedBoosterBonus);
-            SetAttribute(EveAttribute.Memory, attribs.Memory, detectedBoosterBonus);
-
-            // Update booster tracking
-            UpdateBoosterTracking(detectedBoosterBonus);
+            SetAttribute(EveAttribute.Intelligence, attribs.Intelligence);
+            SetAttribute(EveAttribute.Perception, attribs.Perception);
+            SetAttribute(EveAttribute.Willpower, attribs.Willpower);
+            SetAttribute(EveAttribute.Charisma, attribs.Charisma);
+            SetAttribute(EveAttribute.Memory, attribs.Memory);
         }
 
         /// <summary>
-        /// Detects if a cerebral accelerator (booster) is active by analyzing attribute values.
-        /// Boosters apply a uniform bonus to ALL attributes.
-        /// </summary>
-        /// <param name="intel">Intelligence total from ESI.</param>
-        /// <param name="perc">Perception total from ESI.</param>
-        /// <param name="will">Willpower total from ESI.</param>
-        /// <param name="char">Charisma total from ESI.</param>
-        /// <param name="mem">Memory total from ESI.</param>
-        /// <returns>The detected booster bonus, or 0 if no booster detected.</returns>
-        private int DetectBoosterFromAttributes(int intel, int perc, int will, int chr, int mem)
-        {
-            // Get implant bonuses
-            long implantIntel = CurrentImplants[EveAttribute.Intelligence]?.Bonus ?? 0;
-            long implantPerc = CurrentImplants[EveAttribute.Perception]?.Bonus ?? 0;
-            long implantWill = CurrentImplants[EveAttribute.Willpower]?.Bonus ?? 0;
-            long implantChr = CurrentImplants[EveAttribute.Charisma]?.Bonus ?? 0;
-            long implantMem = CurrentImplants[EveAttribute.Memory]?.Bonus ?? 0;
-
-            // Total base attribute points is always 99 for all characters:
-            // 5 attributes × 17 base + 14 spare points = 99
-            // Formula: total = base + implant + booster (for each attribute)
-            // Sum: sum(total) = sum(base) + sum(implant) + 5*booster
-            // Since sum(base) = 99: booster = (sum(total) - 99 - sum(implant)) / 5
-            const int TotalBasePoints = 99;
-            int totalAttributes = intel + perc + will + chr + mem;
-            long totalImplants = implantIntel + implantPerc + implantWill + implantChr + implantMem;
-
-            int calculatedBooster = (totalAttributes - TotalBasePoints - (int)totalImplants) / 5;
-
-            // Sanity check: booster should be 0-12 (max known cerebral accelerator)
-            if (calculatedBooster < 0)
-                return 0;
-            if (calculatedBooster > EveConstants.MaxBoosterBonus)
-                return EveConstants.MaxBoosterBonus;
-
-            return calculatedBooster;
-        }
-
-        /// <summary>
-        /// Updates the booster tracking based on detected bonus.
-        /// </summary>
-        /// <param name="detectedBonus">The detected booster bonus.</param>
-        private void UpdateBoosterTracking(int detectedBonus)
-        {
-            if (detectedBonus > 0)
-            {
-                // Booster detected
-                if (ActiveBooster == null || ActiveBooster.Bonus != detectedBonus)
-                {
-                    // New booster or different booster
-                    int biologyLevel = GetBiologySkillLevel();
-                    ActiveBooster = BoosterInfo.Create(detectedBonus, biologyLevel);
-                    ServiceLocator.TraceService.Trace($"Booster detected: +{detectedBonus} (Biology Level {biologyLevel})");
-                }
-                else if (ActiveBooster != null && !ActiveBooster.IsActive)
-                {
-                    // Booster was tracked but thought to be expired - reset it
-                    int biologyLevel = GetBiologySkillLevel();
-                    ActiveBooster = BoosterInfo.Create(detectedBonus, biologyLevel);
-                    ServiceLocator.TraceService.Trace($"Booster re-detected after expiry: +{detectedBonus}");
-                }
-            }
-            else
-            {
-                // No booster detected - clear if expired
-                ClearExpiredBooster();
-            }
-        }
-
-        /// <summary>
-        /// Attributes include current implants and potentially boosters!
-        /// Subtracts implant bonus and booster bonus to get the true base.
+        /// Sets the base attribute value from ESI.
+        /// ESI returns base + implant, so subtract the implant bonus.
         /// </summary>
         /// <param name="attribute">The attribute to set.</param>
         /// <param name="value">The value reported by Attributes ESI call.</param>
-        /// <param name="boosterBonus">The detected booster bonus.</param>
-        private void SetAttribute(EveAttribute attribute, int value, int boosterBonus)
+        private void SetAttribute(EveAttribute attribute, int value)
         {
             int implantBonus = (int)(CurrentImplants[attribute]?.Bonus ?? 0);
-            // Base = Total - Implant - Booster
-            m_attributes[(int)attribute].Base = value - implantBonus - boosterBonus;
+            m_attributes[(int)attribute].Base = value - implantBonus;
         }
 
         /// <summary>

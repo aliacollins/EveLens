@@ -280,13 +280,12 @@ namespace EveLens.Common.ViewModels
 
             _displayPlan.RebuildPlanFrom(_plan, true);
 
-            // Share remapping points and booster points
+            // Share remapping points
             PlanEntry[] srcEntries = _plan.ToArray();
             PlanEntry[] destEntries = _displayPlan.ToArray();
             for (int i = 0; i < srcEntries.Length && i < destEntries.Length; i++)
             {
                 destEntries[i].Remapping = srcEntries[i].Remapping;
-                destEntries[i].BoosterPoint = srcEntries[i].BoosterPoint;
             }
 
             // Apply sort
@@ -317,20 +316,7 @@ namespace EveLens.Common.ViewModels
                 if (_plan.ChosenImplantSet != null)
                     scratchpad = scratchpad.After(_plan.ChosenImplantSet);
 
-                if (_plan.HasBoosterSimulation)
-                {
-                    int boosterBonus = _plan.SimulatedBoosterBonus;
-                    scratchpad.Memory.BoosterBonus = boosterBonus;
-                    scratchpad.Charisma.BoosterBonus = boosterBonus;
-                    scratchpad.Intelligence.BoosterBonus = boosterBonus;
-                    scratchpad.Perception.BoosterBonus = boosterBonus;
-                    scratchpad.Willpower.BoosterBonus = boosterBonus;
-                }
-
                 _displayPlan.UpdateStatistics(scratchpad, true, true);
-
-                if (_displayPlan.HasBoosterInjectionPoints)
-                    _displayPlan.UpdateOldTrainingTimes();
             }
 
             PlanEntry[] entries = _displayPlan.ToArray();

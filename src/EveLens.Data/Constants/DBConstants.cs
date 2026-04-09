@@ -479,7 +479,7 @@ namespace EveLens.Common.Constants
         public const int StandardIndustrialShipsMarketGroupID = 8;
         public const int ShipEquipmentsMarketGroupID = 9;
         public const int AmmosAndChargesMarketGroupID = 11;
-        public const int ImplantsAndBoostersMarketGroupID = 24;
+        public const int ImplantsMarketGroupID_Parent = 24;
         public const int ImplantsMarketGroupID = 27;
         public const int SkillsMarketGroupID = 150;
         public const int DronesMarketGroupID = 157;
@@ -505,7 +505,7 @@ namespace EveLens.Common.Constants
         public const int ReconShipsMarketGroupID = 824;
         public const int ExhumersMarketGroupID = 874;
         public const int ShipModificationsMarketGroupID = 955;
-        public const int BoostersMarketGroupID = 977;
+        public const int CombatBoostersMarketGroupID = 977;
         public const int CapitalIndustrialShipsMarketGroupID = 1047;
         public const int ElectronicAttackFrigatesMarketGroupID = 1065;
         public const int HeavyInterdictorsMarketGroupID = 1070;
@@ -623,7 +623,6 @@ namespace EveLens.Common.Constants
         public const int HullUpgradesSkillID = 3394;
         public const int ScienceSkillID = 3402;
         public const int ResearchSkillID = 3403;
-        public const int BiologySkillID = 3405;
         public const int LaboratoryOperationSkillID = 3406;
         public const int MetallurgySkillID = 3409;
         public const int CyberneticsSkillID = 3411;

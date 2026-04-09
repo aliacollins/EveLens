@@ -15,29 +15,6 @@ namespace EveLens.Common.Helpers
 {
     public static class AttributesOptimizer
     {
-        #region Helper Methods
-
-        /// <summary>
-        /// Applies the simulated booster bonus from the plan to a scratchpad.
-        /// </summary>
-        /// <param name="scratchpad">The scratchpad to modify.</param>
-        /// <param name="plan">The plan containing booster settings.</param>
-        private static void ApplyPlanBoosterBonus(CharacterScratchpad scratchpad, BasePlan plan)
-        {
-            if (!plan.HasBoosterSimulation)
-                return;
-
-            int boosterBonus = plan.SimulatedBoosterBonus;
-            scratchpad.Memory.BoosterBonus = boosterBonus;
-            scratchpad.Charisma.BoosterBonus = boosterBonus;
-            scratchpad.Intelligence.BoosterBonus = boosterBonus;
-            scratchpad.Perception.BoosterBonus = boosterBonus;
-            scratchpad.Willpower.BoosterBonus = boosterBonus;
-        }
-
-        #endregion
-
-
         #region Computations
 
         /// <summary>
@@ -159,7 +136,7 @@ namespace EveLens.Common.Helpers
             CharacterScratchpad scratchpad = plan.ChosenImplantSet != null
                 ? new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet))
                 : new CharacterScratchpad(plan.Character);
-            ApplyPlanBoosterBonus(scratchpad, plan);
+
             Collection<RemappingResult> remappingList = new Collection<RemappingResult>();
             Collection<ISkillLevel> list = new Collection<ISkillLevel>();
 
@@ -197,7 +174,7 @@ namespace EveLens.Common.Helpers
             CharacterScratchpad scratchpad = plan.ChosenImplantSet != null
                 ? new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet))
                 : new CharacterScratchpad(plan.Character);
-            ApplyPlanBoosterBonus(scratchpad, plan);
+
             RemappingResult remapping = new RemappingResult(scratchpad);
 
             // Scroll through the entries and split it into remappings
@@ -228,7 +205,7 @@ namespace EveLens.Common.Helpers
             CharacterScratchpad scratchpad = plan.ChosenImplantSet != null
                 ? new CharacterScratchpad(character.After(plan.ChosenImplantSet))
                 : new CharacterScratchpad(character);
-            ApplyPlanBoosterBonus(scratchpad, plan);
+
             scratchpad.ClearSkills();
 
             // Create a new plan

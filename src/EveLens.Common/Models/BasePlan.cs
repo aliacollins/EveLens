@@ -99,31 +99,6 @@ namespace EveLens.Common.Models
         public ImplantSet? ChosenImplantSet { get; set; }
 
         /// <summary>
-        /// Gets or sets the simulated booster bonus (0-12 points to all attributes).
-        /// </summary>
-        public int SimulatedBoosterBonus { get; set; }
-
-        /// <summary>
-        /// Gets or sets the simulated booster duration in hours.
-        /// </summary>
-        public int SimulatedBoosterDurationHours { get; set; }
-
-        /// <summary>
-        /// Gets whether a booster simulation is currently active for this plan.
-        /// </summary>
-        public bool HasBoosterSimulation => SimulatedBoosterBonus > 0 && SimulatedBoosterDurationHours > 0;
-
-        /// <summary>
-        /// Gets whether this plan has any booster injection points.
-        /// </summary>
-        public bool HasBoosterInjectionPoints => Items.Any(entry => entry.BoosterPoint != null);
-
-        /// <summary>
-        /// Gets the first booster injection point in this plan, if any.
-        /// </summary>
-        public BoosterPoint? FirstBoosterInjectionPoint => Items.FirstOrDefault(entry => entry.BoosterPoint != null)?.BoosterPoint;
-
-        /// <summary>
         /// Gets the owner of this plan.
         /// </summary>
         public BaseCharacter Character { get; }
@@ -184,28 +159,8 @@ namespace EveLens.Common.Models
 
         /// <summary>
         /// Gets the total training time for this plan.
-        /// When booster injection points exist, this sums individual entry times
-        /// which have boosters properly applied from UpdateStatistics().
         /// </summary>
-        public TimeSpan TotalTrainingTime
-        {
-            get
-            {
-                // If boosters exist, sum the entry TrainingTimes which have boosters applied
-                if (HasBoosterInjectionPoints)
-                {
-                    TimeSpan total = TimeSpan.Zero;
-                    foreach (var entry in Items)
-                    {
-                        total += entry.TrainingTime;
-                    }
-                    return total;
-                }
-
-                // No boosters - use the standard calculation
-                return GetTotalTime(null, true);
-            }
-        }
+        public TimeSpan TotalTrainingTime => GetTotalTime(null, true);
 
         /// <summary>
         /// Gets the total training time for this plan, using the given scratchpad.
@@ -999,10 +954,6 @@ namespace EveLens.Common.Models
             scratchpadWithoutImplants.ClearImplants();
             DateTime time = DateTime.Now;
 
-            // Track active booster state
-            BoosterPoint? activeBooster = null;
-            TimeSpan boosterTimeRemaining = TimeSpan.Zero;
-
             // Update the statistics
             foreach (PlanEntry entry in Items)
             {
@@ -1014,31 +965,8 @@ namespace EveLens.Common.Models
                     scratchpadWithoutImplants.Remap(entry.Remapping);
                 }
 
-                // Apply booster injection point (new booster replaces old one)
-                if (entry.BoosterPoint != null)
-                {
-                    activeBooster = entry.BoosterPoint;
-                    boosterTimeRemaining = entry.BoosterPoint.Duration;
-                    ApplyBoosterToScratchpad(scratchpad, activeBooster.Bonus);
-                    ApplyBoosterToScratchpad(scratchpadWithoutImplants, activeBooster.Bonus);
-                }
-
                 // Update entry's statistics
                 entry.UpdateStatistics(scratchpad, scratchpadWithoutImplants, ref time);
-
-                // Track booster duration and remove if expired
-                if (activeBooster != null)
-                {
-                    boosterTimeRemaining -= entry.TrainingTime;
-                    if (boosterTimeRemaining <= TimeSpan.Zero)
-                    {
-                        // Booster has expired
-                        RemoveBoosterFromScratchpad(scratchpad, activeBooster.Bonus);
-                        RemoveBoosterFromScratchpad(scratchpadWithoutImplants, activeBooster.Bonus);
-                        activeBooster = null;
-                        boosterTimeRemaining = TimeSpan.Zero;
-                    }
-                }
 
                 // Update the scratchpad
                 if (!trainSkills)
@@ -1047,30 +975,6 @@ namespace EveLens.Common.Models
                 scratchpad.Train(entry.Skill, entry.Level);
                 scratchpadWithoutImplants.Train(entry.Skill, entry.Level);
             }
-        }
-
-        /// <summary>
-        /// Applies the booster bonus to all attributes in the scratchpad.
-        /// </summary>
-        private static void ApplyBoosterToScratchpad(CharacterScratchpad scratchpad, int bonus)
-        {
-            scratchpad.Intelligence.BoosterBonus = bonus;
-            scratchpad.Perception.BoosterBonus = bonus;
-            scratchpad.Willpower.BoosterBonus = bonus;
-            scratchpad.Charisma.BoosterBonus = bonus;
-            scratchpad.Memory.BoosterBonus = bonus;
-        }
-
-        /// <summary>
-        /// Removes the booster bonus from all attributes in the scratchpad.
-        /// </summary>
-        private static void RemoveBoosterFromScratchpad(CharacterScratchpad scratchpad, int bonus)
-        {
-            scratchpad.Intelligence.BoosterBonus = 0;
-            scratchpad.Perception.BoosterBonus = 0;
-            scratchpad.Willpower.BoosterBonus = 0;
-            scratchpad.Charisma.BoosterBonus = 0;
-            scratchpad.Memory.BoosterBonus = 0;
         }
 
         /// <summary>
@@ -1086,7 +990,7 @@ namespace EveLens.Common.Models
 
         /// <summary>
         /// Updates the statistics of the entries in the same way the given character would train this plan.
-        /// OldTrainingTime represents the baseline (without booster injections) for comparison.
+        /// OldTrainingTime represents the baseline for comparison (e.g. with different implant set).
         /// </summary>
         /// <param name="scratchpad">The scratchpad.</param>
         /// <param name="applyRemappingPoints">if set to <c>true</c> [apply remapping points].</param>
@@ -1095,10 +999,6 @@ namespace EveLens.Common.Models
         public void UpdateOldTrainingTimes(CharacterScratchpad scratchpad, bool applyRemappingPoints, bool trainSkills)
         {
             scratchpad.ThrowIfNull(nameof(scratchpad));
-
-            // Note: Booster injection points are NOT applied here.
-            // OldTrainingTime serves as the baseline (no booster) for comparison with TrainingTime (with booster).
-            // This allows the diff column to show the time saved by the booster.
 
             // Update the statistics
             foreach (PlanEntry entry in Items)
@@ -1126,8 +1026,6 @@ namespace EveLens.Common.Models
             var scratchpad = ChosenImplantSet != null
                 ? new CharacterScratchpad(Character.After(ChosenImplantSet))
                 : new CharacterScratchpad(Character);
-            BoosterPoint? activeBooster = null;
-            TimeSpan boosterTimeRemaining = TimeSpan.Zero;
             float trainingRate = Character.EffectiveCharacterStatus.GetTrainingRate();
             string cloneStatus = Character.EffectiveCharacterStatus.ToString();
 
@@ -1135,29 +1033,19 @@ namespace EveLens.Common.Models
             {
                 // Metadata
                 writer.WriteLine($"# CloneStatus: {cloneStatus}, TrainingRate: {trainingRate}");
-                writer.WriteLine($"# HasBoosterInjections: {HasBoosterInjectionPoints}");
 
                 // Header
                 writer.WriteLine("SkillName,Level,Rank,PrimaryAttr,SecondaryAttr," +
-                    "PrimaryValue,SecondaryValue,BoosterBonus,SPToTrain,SPPerHourOmega,TrainingRate," +
+                    "PrimaryValue,SecondaryValue,SPToTrain,SPPerHourOmega,TrainingRate," +
                     "TrainingTimeHours,TrainingTimeFormatted,OldTrainingTimeHours," +
-                    "TimeSavedHours,BoosterRemainingHours");
+                    "TimeSavedHours");
 
                 foreach (PlanEntry entry in Items)
                 {
-                    // Apply booster if this entry has one
-                    if (entry.BoosterPoint != null)
-                    {
-                        activeBooster = entry.BoosterPoint;
-                        boosterTimeRemaining = entry.BoosterPoint.Duration;
-                        ApplyBoosterToScratchpad(scratchpad, activeBooster.Bonus);
-                    }
-
                     // Get attribute values
                     var skill = entry.Skill;
                     float primaryVal = scratchpad[skill.PrimaryAttribute].EffectiveValue;
                     float secondaryVal = scratchpad[skill.SecondaryAttribute].EffectiveValue;
-                    int boosterBonus = activeBooster?.Bonus ?? 0;
 
                     // Calculate SP per hour: Primary * 60 + Secondary * 30
                     float spPerHour = primaryVal * 60 + secondaryVal * 30;
@@ -1170,23 +1058,10 @@ namespace EveLens.Common.Models
                     // Write row
                     writer.WriteLine($"{skill.Name},{entry.Level},{skill.Rank}," +
                         $"{skill.PrimaryAttribute},{skill.SecondaryAttribute}," +
-                        $"{primaryVal:F1},{secondaryVal:F1},{boosterBonus}," +
+                        $"{primaryVal:F1},{secondaryVal:F1}," +
                         $"{entry.SkillPointsRequired},{spPerHour:F0},{trainingRate:F1}," +
                         $"{trainingTime.TotalHours:F4},{FormatTimeSpan(trainingTime)}," +
-                        $"{oldTrainingTime.TotalHours:F4},{timeSaved.TotalHours:F4}," +
-                        $"{boosterTimeRemaining.TotalHours:F4}");
-
-                    // Track booster duration
-                    if (activeBooster != null)
-                    {
-                        boosterTimeRemaining -= trainingTime;
-                        if (boosterTimeRemaining <= TimeSpan.Zero)
-                        {
-                            RemoveBoosterFromScratchpad(scratchpad, activeBooster.Bonus);
-                            activeBooster = null;
-                            boosterTimeRemaining = TimeSpan.Zero;
-                        }
-                    }
+                        $"{oldTrainingTime.TotalHours:F4},{timeSaved.TotalHours:F4}");
 
                     // Train the skill in scratchpad
                     scratchpad.Train(skill, entry.Level);
@@ -1195,7 +1070,7 @@ namespace EveLens.Common.Models
                 // Summary line
                 var totalTime = TotalTrainingTime;
                 writer.WriteLine();
-                writer.WriteLine($"TOTAL,,,,,,,,,{totalTime.TotalHours:F4},{FormatTimeSpan(totalTime)},,");
+                writer.WriteLine($"TOTAL,,,,,,,,{totalTime.TotalHours:F4},{FormatTimeSpan(totalTime)},,");
             }
         }
 

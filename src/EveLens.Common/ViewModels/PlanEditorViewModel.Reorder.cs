@@ -12,7 +12,7 @@ using EveLens.Common.Models;
 
 namespace EveLens.Common.ViewModels
 {
-    // Reorder partial: move up/down, drag-drop, remapping, booster injection points.
+    // Reorder partial: move up/down, drag-drop, remapping.
     public sealed partial class PlanEditorViewModel
     {
         #region Move Operations
@@ -192,39 +192,6 @@ namespace EveLens.Common.ViewModels
             PlanEntry? originalEntry = GetOriginalEntry(entryAfterRemapping);
             if (originalEntry != null)
                 originalEntry.Remapping = null;
-        }
-
-        #endregion
-
-
-        #region Booster Points
-
-        /// <summary>
-        /// Sets a booster injection point on the specified display entry.
-        /// </summary>
-        public void SetBoosterPoint(PlanEntry displayEntry, int bonus, int durationHours)
-        {
-            if (_plan == null || displayEntry == null)
-                return;
-
-            PlanEntry? originalEntry = GetOriginalEntry(displayEntry);
-            if (originalEntry == null)
-                return;
-
-            originalEntry.BoosterPoint = new BoosterPoint(bonus, durationHours);
-        }
-
-        /// <summary>
-        /// Removes the booster injection point from the specified display entry.
-        /// </summary>
-        public void RemoveBoosterPoint(PlanEntry displayEntry)
-        {
-            if (_plan == null || displayEntry == null)
-                return;
-
-            PlanEntry? originalEntry = GetOriginalEntry(displayEntry);
-            if (originalEntry != null)
-                originalEntry.BoosterPoint = null;
         }
 
         #endregion

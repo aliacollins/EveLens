@@ -2,16 +2,14 @@
 """
 EVE Online Skill Training Time Validator
 
-This tool validates EVEMon's skill training time calculations against
+This tool validates EveLens's skill training time calculations against
 the official EVE Online formulas from EVE University Wiki.
 
 Formulas:
-- SP/hour (Omega) = Primary × 60 + Secondary × 30
-- SP/hour (Alpha) = Primary × 30 + Secondary × 15
-- SP for level = 250 × rank × sqrt(32)^(level-1)
+- SP/hour (Omega) = Primary x 60 + Secondary x 30
+- SP/hour (Alpha) = Primary x 30 + Secondary x 15
+- SP for level = 250 x rank x sqrt(32)^(level-1)
 - Training time = SP to train / SP per hour
-
-Cerebral Accelerators add a flat bonus to ALL attributes.
 """
 
 import math
@@ -49,7 +47,7 @@ class CloneState(Enum):
 
 @dataclass
 class Attributes:
-    """Character attributes including implants and boosters"""
+    """Character attributes including implants"""
     intelligence: int = 17  # Base is 17-27 depending on remap
     perception: int = 17
     charisma: int = 17
@@ -63,34 +61,25 @@ class Attributes:
     wil_implant: int = 0
     mem_implant: int = 0
 
-    # Booster bonus (applies to ALL attributes)
-    booster_bonus: int = 0
-
-    def get_effective(self, attr_name: str) -> int:
-        """Get effective attribute value including implants and boosters"""
-        base = getattr(self, attr_name)
-        implant = getattr(self, f"{attr_name[:3]}_implant")
-        return base + implant + self.booster_bonus
-
     @property
     def effective_intelligence(self) -> int:
-        return self.intelligence + self.int_implant + self.booster_bonus
+        return self.intelligence + self.int_implant
 
     @property
     def effective_perception(self) -> int:
-        return self.perception + self.per_implant + self.booster_bonus
+        return self.perception + self.per_implant
 
     @property
     def effective_charisma(self) -> int:
-        return self.charisma + self.cha_implant + self.booster_bonus
+        return self.charisma + self.cha_implant
 
     @property
     def effective_willpower(self) -> int:
-        return self.willpower + self.wil_implant + self.booster_bonus
+        return self.willpower + self.wil_implant
 
     @property
     def effective_memory(self) -> int:
-        return self.memory + self.mem_implant + self.booster_bonus
+        return self.memory + self.mem_implant
 
 
 @dataclass
@@ -130,10 +119,9 @@ def calculate_sp_per_hour(attrs: Attributes, skill: Skill,
     """
     Calculate SP per hour for training a skill.
 
-    Omega: SP/hour = Primary × 60 + Secondary × 30
-    Alpha: SP/hour = Primary × 30 + Secondary × 15
+    Omega: SP/hour = Primary x 60 + Secondary x 30
+    Alpha: SP/hour = Primary x 30 + Secondary x 15
     """
-    # Get effective attribute values
     attr_map = {
         'intelligence': attrs.effective_intelligence,
         'perception': attrs.effective_perception,
@@ -161,7 +149,7 @@ def calculate_training_time(sp: int, sp_per_hour: float) -> float:
 def format_time(hours: float) -> str:
     """Format hours into days, hours, minutes, seconds"""
     if hours == float('inf'):
-        return "∞"
+        return "inf"
 
     total_seconds = int(hours * 3600)
     days, remainder = divmod(total_seconds, 86400)
@@ -182,29 +170,21 @@ def format_time(hours: float) -> str:
 
 
 def validate_single_skill(attrs: Attributes, skill: Skill, target_level: int,
-                          booster_bonus: int = 0, booster_hours: float = 0,
                           clone_state: CloneState = CloneState.OMEGA):
-    """
-    Validate training time for a single skill, optionally with a booster.
-
-    If booster_hours > 0, calculates split training (boosted + non-boosted).
-    """
+    """Validate training time for a single skill."""
     print(f"\n{'='*60}")
     print(f"Skill: {skill.name} (Rank {skill.rank})")
-    print(f"Training: Level {skill.current_level} → Level {target_level}")
+    print(f"Training: Level {skill.current_level} -> Level {target_level}")
     print(f"Attributes: {skill.primary_attr.capitalize()} (Primary), "
           f"{skill.secondary_attr.capitalize()} (Secondary)")
     print(f"{'='*60}")
 
-    # Calculate SP needed
     sp_needed = skill.sp_to_train(target_level)
     print(f"\nSP to train: {sp_needed:,}")
 
-    # Calculate without booster
-    sp_per_hour_base = calculate_sp_per_hour(attrs, skill, clone_state)
-    time_base_hours = calculate_training_time(sp_needed, sp_per_hour_base)
+    sp_per_hour = calculate_sp_per_hour(attrs, skill, clone_state)
+    time_hours = calculate_training_time(sp_needed, sp_per_hour)
 
-    # Get attribute values for display
     attr_map = {
         'intelligence': attrs.effective_intelligence,
         'perception': attrs.effective_perception,
@@ -216,141 +196,38 @@ def validate_single_skill(attrs: Attributes, skill: Skill, target_level: int,
     primary_val = attr_map[skill.primary_attr]
     secondary_val = attr_map[skill.secondary_attr]
 
-    print(f"\n--- Without Booster ---")
     print(f"Primary ({skill.primary_attr}): {primary_val}")
     print(f"Secondary ({skill.secondary_attr}): {secondary_val}")
-    print(f"SP/hour: {sp_per_hour_base:,.0f}")
-    print(f"Training time: {format_time(time_base_hours)}")
-
-    # Calculate with booster if specified
-    if booster_bonus > 0:
-        # Create boosted attributes
-        boosted_attrs = Attributes(
-            intelligence=attrs.intelligence,
-            perception=attrs.perception,
-            charisma=attrs.charisma,
-            willpower=attrs.willpower,
-            memory=attrs.memory,
-            int_implant=attrs.int_implant,
-            per_implant=attrs.per_implant,
-            cha_implant=attrs.cha_implant,
-            wil_implant=attrs.wil_implant,
-            mem_implant=attrs.mem_implant,
-            booster_bonus=booster_bonus
-        )
-
-        sp_per_hour_boosted = calculate_sp_per_hour(boosted_attrs, skill, clone_state)
-
-        boosted_primary = attr_map[skill.primary_attr] + booster_bonus
-        boosted_secondary = attr_map[skill.secondary_attr] + booster_bonus
-
-        print(f"\n--- With +{booster_bonus} Booster ---")
-        print(f"Primary ({skill.primary_attr}): {boosted_primary} (+{booster_bonus})")
-        print(f"Secondary ({skill.secondary_attr}): {boosted_secondary} (+{booster_bonus})")
-        print(f"SP/hour: {sp_per_hour_boosted:,.0f}")
-
-        if booster_hours > 0 and booster_hours * sp_per_hour_boosted < sp_needed:
-            # Split calculation - booster expires mid-training
-            sp_trained_boosted = booster_hours * sp_per_hour_boosted
-            sp_remaining = sp_needed - sp_trained_boosted
-            time_remaining = sp_remaining / sp_per_hour_base
-            total_time = booster_hours + time_remaining
-
-            print(f"Booster duration: {format_time(booster_hours)}")
-            print(f"SP trained while boosted: {sp_trained_boosted:,.0f}")
-            print(f"SP remaining after booster: {sp_remaining:,.0f}")
-            print(f"Time for remaining SP: {format_time(time_remaining)}")
-            print(f"Total training time: {format_time(total_time)}")
-        else:
-            # Full training under booster
-            time_boosted_hours = calculate_training_time(sp_needed, sp_per_hour_boosted)
-            print(f"Training time (full booster): {format_time(time_boosted_hours)}")
-
-        # Show time saved
-        time_boosted_full = calculate_training_time(sp_needed, sp_per_hour_boosted)
-        time_saved = time_base_hours - time_boosted_full
-        print(f"\n--- Time Saved (full duration) ---")
-        print(f"Without booster: {format_time(time_base_hours)}")
-        print(f"With booster:    {format_time(time_boosted_full)}")
-        print(f"Time saved:      {format_time(time_saved)} ({time_saved/time_base_hours*100:.1f}%)")
+    print(f"SP/hour: {sp_per_hour:,.0f}")
+    print(f"Training time: {format_time(time_hours)}")
 
 
-def validate_plan(attrs: Attributes, skills: list, booster_bonus: int = 0,
-                  booster_hours: float = 0, clone_state: CloneState = CloneState.OMEGA):
-    """
-    Validate training time for a plan (list of skills).
-    Tracks booster duration across skills.
-    """
+def validate_plan(attrs: Attributes, skills: list,
+                  clone_state: CloneState = CloneState.OMEGA):
+    """Validate training time for a plan (list of skills)."""
     print(f"\n{'='*60}")
     print(f"PLAN VALIDATION")
-    if booster_bonus > 0:
-        print(f"Booster: +{booster_bonus} for {format_time(booster_hours)}")
     print(f"{'='*60}")
 
-    total_time_base = 0
-    total_time_boosted = 0
-    booster_remaining = booster_hours
+    total_time = 0
 
-    boosted_attrs = Attributes(
-        intelligence=attrs.intelligence,
-        perception=attrs.perception,
-        charisma=attrs.charisma,
-        willpower=attrs.willpower,
-        memory=attrs.memory,
-        int_implant=attrs.int_implant,
-        per_implant=attrs.per_implant,
-        cha_implant=attrs.cha_implant,
-        wil_implant=attrs.wil_implant,
-        mem_implant=attrs.mem_implant,
-        booster_bonus=booster_bonus
-    )
-
-    print(f"\n{'Skill':<30} {'Level':<8} {'SP':>10} {'Base':>12} {'Boosted':>12} {'Saved':>10}")
-    print("-" * 82)
+    print(f"\n{'Skill':<30} {'Level':<8} {'SP':>10} {'Time':>12}")
+    print("-" * 60)
 
     for skill, target_level in skills:
         sp_needed = skill.sp_to_train(target_level)
-        sp_per_hour_base = calculate_sp_per_hour(attrs, skill, clone_state)
-        sp_per_hour_boosted = calculate_sp_per_hour(boosted_attrs, skill, clone_state)
+        sp_per_hour = calculate_sp_per_hour(attrs, skill, clone_state)
+        time_hours = calculate_training_time(sp_needed, sp_per_hour)
+        total_time += time_hours
 
-        time_base = calculate_training_time(sp_needed, sp_per_hour_base)
-        total_time_base += time_base
+        print(f"{skill.name:<30} {skill.current_level}->{target_level:<5} "
+              f"{sp_needed:>10,} {format_time(time_hours):>12}")
 
-        if booster_bonus > 0 and booster_remaining > 0:
-            # Calculate with booster (possibly partial)
-            sp_can_train_boosted = booster_remaining * sp_per_hour_boosted
-
-            if sp_can_train_boosted >= sp_needed:
-                # Full skill under booster
-                time_actual = calculate_training_time(sp_needed, sp_per_hour_boosted)
-                booster_remaining -= time_actual
-            else:
-                # Booster expires mid-skill
-                time_boosted_part = booster_remaining
-                sp_trained_boosted = time_boosted_part * sp_per_hour_boosted
-                sp_remaining = sp_needed - sp_trained_boosted
-                time_normal_part = calculate_training_time(sp_remaining, sp_per_hour_base)
-                time_actual = time_boosted_part + time_normal_part
-                booster_remaining = 0
-
-            time_saved = time_base - time_actual
-            total_time_boosted += time_actual
-        else:
-            time_actual = time_base
-            time_saved = 0
-            total_time_boosted += time_actual
-
-        print(f"{skill.name:<30} {skill.current_level}→{target_level:<5} "
-              f"{sp_needed:>10,} {format_time(time_base):>12} "
-              f"{format_time(time_actual):>12} {format_time(time_saved):>10}")
-
-        # Update skill state for next iteration
         skill.current_level = target_level
         skill.current_sp = 0
 
-    print("-" * 82)
-    print(f"{'TOTAL':<30} {'':<8} {'':<10} {format_time(total_time_base):>12} "
-          f"{format_time(total_time_boosted):>12} {format_time(total_time_base - total_time_boosted):>10}")
+    print("-" * 60)
+    print(f"{'TOTAL':<30} {'':<8} {'':<10} {format_time(total_time):>12}")
 
 
 def interactive_mode():
@@ -359,7 +236,6 @@ def interactive_mode():
     print("EVE Online Training Time Calculator - Interactive Mode")
     print("="*60)
 
-    # Get attributes
     print("\nEnter character attributes (base + implants):")
     try:
         primary = int(input("Primary attribute value: "))
@@ -367,9 +243,7 @@ def interactive_mode():
         skill_rank = int(input("Skill rank (multiplier): "))
         current_level = int(input("Current skill level (0-4): "))
         target_level = int(input("Target skill level (1-5): "))
-        booster = int(input("Booster bonus (0 for none): "))
 
-        # Create a simple skill
         skill = Skill(
             name="Test Skill",
             rank=skill_rank,
@@ -378,22 +252,21 @@ def interactive_mode():
             current_level=current_level
         )
 
-        # Create attributes
         attrs = Attributes(
             perception=primary,
             willpower=secondary
         )
 
-        validate_single_skill(attrs, skill, target_level, booster)
+        validate_single_skill(attrs, skill, target_level)
 
     except ValueError as e:
         print(f"Invalid input: {e}")
 
 
 def example_usage():
-    """Show example usage with typical EVEMon scenario"""
+    """Show example usage with typical scenario"""
     print("\n" + "="*60)
-    print("EXAMPLE: Validating Booster Time Savings")
+    print("EXAMPLE: Training Time Calculation")
     print("="*60)
 
     # Typical character attributes (remapped for combat skills)
@@ -407,7 +280,6 @@ def example_usage():
         wil_implant=5,      # +5 implant
     )
 
-    # Example skill: Gunnery (Perception/Willpower, Rank 1)
     gunnery = Skill(
         name="Gunnery",
         rank=1,
@@ -416,8 +288,8 @@ def example_usage():
         current_level=0
     )
 
-    print("\n--- Single Skill: Gunnery 0→5 ---")
-    validate_single_skill(attrs, gunnery, 5, booster_bonus=10, booster_hours=24)
+    print("\n--- Single Skill: Gunnery 0->5 ---")
+    validate_single_skill(attrs, gunnery, 5)
 
     # Example plan with multiple skills
     print("\n" + "="*60)
@@ -432,7 +304,7 @@ def example_usage():
         (Skill("Sharpshooter", 2, "perception", "willpower", 0), 4),
     ]
 
-    validate_plan(attrs, skills, booster_bonus=10, booster_hours=24)
+    validate_plan(attrs, skills)
 
 
 if __name__ == "__main__":
@@ -449,6 +321,5 @@ if __name__ == "__main__":
     elif args.example:
         example_usage()
     else:
-        # Default: show example
         example_usage()
         print("\n\nUse -i for interactive mode, -e for examples")

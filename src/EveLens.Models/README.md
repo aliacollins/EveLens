@@ -3,7 +3,7 @@
 Domain model base classes and collection infrastructure. The "nouns" of the application.
 
 ## What goes here
-- Model base classes extracted from Common: `AccountStatus`, `BoosterInfo`, `WalletJournal`, etc.
+- Model base classes extracted from Common: `AccountStatus`, `WalletJournal`, etc.
 - Typed collection classes: `ReadonlyCollection<T>`, `ReadonlyKeyedCollection<T>`, `FastList<T>`
 - Collection extensions and comparers
 - Helper classes: `CharacterAttributeScratchpad`, `FormatHelper`, `TaskHelper`

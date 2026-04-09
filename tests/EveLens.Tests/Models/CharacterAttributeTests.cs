@@ -56,27 +56,6 @@ namespace EveLens.Tests.Models
                 EveConstants.CharacterBaseAttributePoints + EveConstants.MaxRemappablePointsPerAttribute);
         }
 
-        [Fact]
-        public void EveConstants_MaxAttributeWithoutBooster_Is32()
-        {
-            // MaxAttributeWithoutBooster = MaxBaseAttributePoints + MaxImplantPoints
-            EveConstants.MaxAttributeWithoutBooster.Should().Be(32);
-            EveConstants.MaxAttributeWithoutBooster.Should().Be(
-                EveConstants.MaxBaseAttributePoints + EveConstants.MaxImplantPoints);
-        }
-
-        [Fact]
-        public void EveConstants_MaxBoosterBonus_Is12()
-        {
-            EveConstants.MaxBoosterBonus.Should().Be(12);
-        }
-
-        [Fact]
-        public void EveConstants_BaseBoosterDurationHours_Is24()
-        {
-            EveConstants.BaseBoosterDurationHours.Should().Be(24);
-        }
-
         #endregion
 
         #region Total base points invariant
@@ -219,6 +198,14 @@ namespace EveLens.Tests.Models
             ((int)EveAttribute.Memory).Should().Be(4);
         }
 
+        [Fact]
+        public void EveConstants_MaxEffectiveAttributePoints_Is32()
+        {
+            EveConstants.MaxEffectiveAttributePoints.Should().Be(32);
+            EveConstants.MaxEffectiveAttributePoints.Should().Be(
+                EveConstants.MaxBaseAttributePoints + EveConstants.MaxImplantPoints);
+        }
+
         #endregion
 
         #region SP per hour formula validation
@@ -243,7 +230,7 @@ namespace EveLens.Tests.Models
         [Fact]
         public void SPPerHour_MaxRemap_Is2250()
         {
-            // Maximum SP/hour with optimal remap (no implants, no booster)
+            // Maximum SP/hour with optimal remap (no implants)
             float maxSPPerHour = EveConstants.MaxBaseAttributePoints * 60f +
                                  (99 - EveConstants.MaxBaseAttributePoints - 3 * EveConstants.CharacterBaseAttributePoints) * 30f;
             // 27 * 60 + 21 * 30 = 1620 + 630 = 2250
@@ -261,74 +248,6 @@ namespace EveLens.Tests.Models
             spPerHour.Should().Be(2700f);
         }
 
-        [Fact]
-        public void SPPerHour_WithBooster_AddsBonusSP()
-        {
-            // With max booster (+12): (27+12)*60 + (21+12)*30 = 39*60 + 33*30 = 2340 + 990 = 3330
-            int primaryWithBooster = EveConstants.MaxBaseAttributePoints + EveConstants.MaxBoosterBonus;
-            int secondaryWithBooster = 21 + EveConstants.MaxBoosterBonus;
-            float spPerHour = primaryWithBooster * 60f + secondaryWithBooster * 30f;
-            spPerHour.Should().Be(3330f);
-        }
-
-        #endregion
-
-        #region Booster detection math
-
-        [Fact]
-        public void BoosterDetection_NoBooster_ReturnsZero()
-        {
-            // Total = 99 base + implants + 5*booster
-            // If total == 99 + implants, booster = 0
-            int totalAttributes = 99;  // No implants, no booster
-            int totalImplants = 0;
-            int calculatedBooster = (totalAttributes - 99 - totalImplants) / 5;
-            calculatedBooster.Should().Be(0);
-        }
-
-        [Fact]
-        public void BoosterDetection_WithBooster_DetectsCorrectly()
-        {
-            // Character with +5 booster, no implants
-            // Each attribute gets +5, so total = 99 + 5*5 = 124
-            int boosterBonus = 5;
-            int totalAttributes = 99 + 5 * boosterBonus;  // 124
-            int totalImplants = 0;
-            int calculatedBooster = (totalAttributes - 99 - totalImplants) / 5;
-            calculatedBooster.Should().Be(5);
-        }
-
-        [Fact]
-        public void BoosterDetection_WithImplantsAndBooster_DetectsCorrectly()
-        {
-            // Character with +5 implants (total 25 implant bonus) and +10 booster
-            int boosterBonus = 10;
-            int totalImplantBonus = 25;  // 5 implants * 5 bonus each
-            int totalAttributes = 99 + totalImplantBonus + 5 * boosterBonus;  // 99 + 25 + 50 = 174
-            int calculatedBooster = (totalAttributes - 99 - totalImplantBonus) / 5;
-            calculatedBooster.Should().Be(10);
-        }
-
-        [Fact]
-        public void BoosterDetection_MaxBooster_CappedAt12()
-        {
-            // Even if calculation yields > 12, it should be capped
-            int calculatedBooster = 15;  // Hypothetical oversize
-            if (calculatedBooster > EveConstants.MaxBoosterBonus)
-                calculatedBooster = EveConstants.MaxBoosterBonus;
-            calculatedBooster.Should().Be(12);
-        }
-
-        [Fact]
-        public void BoosterDetection_NegativeResult_ReturnsZero()
-        {
-            // If calculation yields negative (rounding/API error), should return 0
-            int calculatedBooster = -1;
-            if (calculatedBooster < 0)
-                calculatedBooster = 0;
-            calculatedBooster.Should().Be(0);
-        }
-
         #endregion
 
         #region Alpha vs Omega SP training
@@ -343,6 +262,97 @@ namespace EveLens.Tests.Models
         public void MaxSkillsInQueue_Is50()
         {
             EveConstants.MaxSkillsInQueue.Should().Be(50);
+        }
+
+        #endregion
+
+        #region Regression: booster must not affect effective value
+
+        [Fact]
+        public void ScratchpadEffectiveValue_ExcludesBooster()
+        {
+            // Regression: booster bonus was previously included in EffectiveValue,
+            // causing plan training times to be wildly optimistic (163d vs 225d in-game).
+            // EffectiveValue must be base + implant only.
+            var scratchpad = new EveLens.Common.Helpers.CharacterAttributeScratchpad(
+                EveAttribute.Intelligence);
+            scratchpad.Reset(27, 5); // base 27, implant 5
+            scratchpad.EffectiveValue.Should().Be(32); // 27 + 5, no booster
+        }
+
+        [Fact]
+        public void ScratchpadEffectiveValue_MatchesBaseAndImplant()
+        {
+            // Simulate max remap + max implant for all 5 attributes
+            var attrs = new (EveAttribute attr, long baseVal, long implant)[]
+            {
+                (EveAttribute.Intelligence, 27, 5),
+                (EveAttribute.Memory, 21, 5),
+                (EveAttribute.Perception, 17, 5),
+                (EveAttribute.Willpower, 17, 5),
+                (EveAttribute.Charisma, 17, 5),
+            };
+
+            foreach (var (attr, baseVal, implant) in attrs)
+            {
+                var sp = new EveLens.Common.Helpers.CharacterAttributeScratchpad(attr);
+                sp.Reset(baseVal, implant);
+                sp.EffectiveValue.Should().Be(baseVal + implant,
+                    $"{attr} should be base({baseVal}) + implant({implant})");
+            }
+        }
+
+        [Fact]
+        public void SPPerHour_WithImplants_MatchesEveFormula()
+        {
+            // Exact scenario from bug report: Int/Mem remap + 5 implants
+            // EVE formula: SP/min = Primary + Secondary/2
+            // SP/hour = Primary * 60 + Secondary * 30
+            int intEffective = 27 + 5; // 32
+            int memEffective = 21 + 5; // 26
+
+            float spPerHour = intEffective * 60f + memEffective * 30f;
+            spPerHour.Should().Be(2700f);
+
+            // Verify this matches what a 200,000 SP skill would take
+            // Time = SP / SP_per_hour = 200000 / 2700 = 74.074 hours = 3d 2h 4m
+            double hours = 200_000.0 / 2700.0;
+            hours.Should().BeApproximately(74.074, 0.01);
+        }
+
+        [Fact]
+        public void ScratchpadEffectiveValue_NeverExceedsMaxEffective()
+        {
+            // No attribute should ever exceed MaxEffectiveAttributePoints (32)
+            // in training time calculations. This guards against any future
+            // bonus being accidentally added back.
+            foreach (EveAttribute attr in new[]
+            {
+                EveAttribute.Intelligence, EveAttribute.Memory,
+                EveAttribute.Perception, EveAttribute.Willpower,
+                EveAttribute.Charisma
+            })
+            {
+                var sp = new EveLens.Common.Helpers.CharacterAttributeScratchpad(attr);
+                sp.Reset(EveConstants.MaxBaseAttributePoints, EveConstants.MaxImplantPoints);
+                sp.EffectiveValue.Should().Be(EveConstants.MaxEffectiveAttributePoints,
+                    $"{attr} effective should be exactly {EveConstants.MaxEffectiveAttributePoints}");
+                sp.EffectiveValue.Should().BeLessOrEqualTo(EveConstants.MaxEffectiveAttributePoints,
+                    $"{attr} effective must never exceed cap");
+            }
+        }
+
+        [Fact]
+        public void MaxSPPerHour_WithImplants_Is2700()
+        {
+            // The absolute maximum SP/hour an Omega character can achieve:
+            // Primary 32 (27+5) * 60 + Secondary 26 (21+5) * 30 = 1920 + 780 = 2700
+            // This is the ceiling — no training time calculation should use a higher rate.
+            int maxPrimary = EveConstants.MaxEffectiveAttributePoints; // 32
+            int maxSecondary = (99 - EveConstants.MaxBaseAttributePoints
+                - 3 * EveConstants.CharacterBaseAttributePoints) + EveConstants.MaxImplantPoints; // 26
+            float maxSpPerHour = maxPrimary * 60f + maxSecondary * 30f;
+            maxSpPerHour.Should().Be(2700f);
         }
 
         #endregion

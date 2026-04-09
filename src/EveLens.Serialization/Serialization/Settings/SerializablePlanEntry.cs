@@ -46,8 +46,5 @@ namespace EveLens.Common.Serialization.Settings
 
         [XmlElement("remapping")]
         public SerializableRemappingPoint? Remapping { get; set; }
-
-        [XmlElement("booster")]
-        public SerializableBoosterPoint? Booster { get; set; }
     }
 }
