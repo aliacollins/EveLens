@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.2.0](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens 1.2.1](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -212,6 +212,7 @@ Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/relea
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **[1.2.1](https://github.com/aliacollins/EveLens/releases/tag/v1.2.1)** | April 9, 2026 | Fix plan training time calculation -- booster bonuses were inflating times |
 | **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
 | **[1.1.0](https://github.com/aliacollins/EveLens/releases/tag/v1.1.0)** | March 29, 2026 | Character Skill Comparison, variable font scaling, queue health monitor, ESI token fix, add character UX, group management redesign |
 | **[1.0.0](https://github.com/aliacollins/EveLens/releases/tag/v1.0.0)** | March 23, 2026 | First stable release -- Velopack auto-updates, Windows code signing, cross-platform launch |
