@@ -17,7 +17,7 @@ namespace EveLens.Common.ViewModels
     /// Immutable per-skill state extracted from a character. Avoids touching the live
     /// <see cref="Skill"/> model objects during rendering.
     /// </summary>
-    internal readonly struct SkillState
+    public readonly struct SkillState
     {
         public byte Level { get; init; }
         public long SkillPoints { get; init; }
@@ -29,16 +29,19 @@ namespace EveLens.Common.ViewModels
     /// Immutable template for a single skill, built once from <see cref="StaticSkill"/> data.
     /// Shared across all characters. Contains only SDE-sourced display data.
     /// </summary>
-    internal sealed class SkillEntryTemplate
+    public sealed class SkillEntryTemplate
     {
         public int SkillId { get; }
         public string Name { get; }
+        public string LocalizedName => _skill.LocalizedName;
         public long Rank { get; }
         public string RankText { get; }
         public bool IsPublic { get; }
+        private readonly StaticSkill _skill;
 
         internal SkillEntryTemplate(StaticSkill skill)
         {
+            _skill = skill;
             SkillId = skill.ID;
             Name = skill.Name;
             Rank = skill.Rank;
@@ -51,14 +54,17 @@ namespace EveLens.Common.ViewModels
     /// Immutable template for a skill group, built once from <see cref="StaticSkillGroup"/> data.
     /// Contains a sorted list of <see cref="SkillEntryTemplate"/> entries.
     /// </summary>
-    internal sealed class SkillGroupTemplate
+    public sealed class SkillGroupTemplate
     {
         public int GroupId { get; }
         public string Name { get; }
+        public string LocalizedName => _group.LocalizedName;
         public IReadOnlyList<SkillEntryTemplate> Skills { get; }
+        private readonly StaticSkillGroup _group;
 
         internal SkillGroupTemplate(StaticSkillGroup group)
         {
+            _group = group;
             GroupId = group.ID;
             Name = group.Name;
             Skills = group.OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase)
@@ -72,7 +78,7 @@ namespace EveLens.Common.ViewModels
     /// Shared by all characters. Lazy-initialized; returns an empty list if static data has
     /// not been loaded yet.
     /// </summary>
-    internal sealed class SkillTemplate
+    public sealed class SkillTemplate
     {
         private static readonly Lazy<SkillTemplate> s_instance = new(Build);
 
@@ -206,7 +212,9 @@ namespace EveLens.Common.ViewModels
             ? $"Trained: {_activeOverlay.TotalTrained} of {_activeOverlay.TotalPublicSkills} skills  |  Total SP: {_activeOverlay.TotalSP:N0}"
             : "";
 
-        internal SkillState GetSkillState(int skillId)
+        public static SkillTemplate? SkillTemplateInstance => s_template;
+
+        public SkillState GetSkillState(int skillId)
             => _activeOverlay?.GetState(skillId) ?? default;
 
         public SkillOverlayViewModel() : base()

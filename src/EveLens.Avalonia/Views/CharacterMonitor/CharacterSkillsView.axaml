@@ -10,13 +10,15 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
                             VerticalAlignment="Center">
-                    <Button Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
+                    <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                             CornerRadius="12" Click="OnCollapseAll" />
-                    <Button Content="Expand All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
+                    <Button x:Name="ExpandAllBtn" Content="Expand All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                             CornerRadius="12" Click="OnExpandAll" />
                     <ToggleButton x:Name="ShowAllToggle" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                   Content="Trained Only" IsChecked="False"
                                   CornerRadius="12" Click="OnToggleShowAll" />
+                    <Button x:Name="ExportCsvBtn" Content="Export CSV" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
+                            CornerRadius="12" Click="OnExportCsv" />
                 </StackPanel>
 
                 <Border CornerRadius="14"

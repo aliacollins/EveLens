@@ -25,7 +25,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterMedalsView()
         {
             InitializeComponent();
+            LocalizeUI();
         }
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableMedals");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableMedalsBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+        }
+
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {

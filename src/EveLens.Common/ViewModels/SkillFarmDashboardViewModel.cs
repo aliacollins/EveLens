@@ -267,6 +267,51 @@ namespace EveLens.Common.ViewModels
             }
         }
 
+        public void SortBy(string column, bool descending)
+        {
+            _entries.Sort((a, b) =>
+            {
+                int cmp = column switch
+                {
+                    "Character" => string.Compare(a.Character.Name, b.Character.Name, StringComparison.OrdinalIgnoreCase),
+                    "SP" => a.CurrentSP.CompareTo(b.CurrentSP),
+                    "Injectors" => a.ExtractionsAvailable.CompareTo(b.ExtractionsAvailable),
+                    "Extractor Cost" => a.ExtractorCost.CompareTo(b.ExtractorCost),
+                    "Revenue" => a.GrossRevenuePerExtraction.CompareTo(b.GrossRevenuePerExtraction),
+                    "Net Profit" => a.NetProfitPerExtraction.CompareTo(b.NetProfitPerExtraction),
+                    "SP/hr" => a.SpPerHour.CompareTo(b.SpPerHour),
+                    "Status" => string.Compare(a.StatusText, b.StatusText, StringComparison.OrdinalIgnoreCase),
+                    _ => 0,
+                };
+                return descending ? -cmp : cmp;
+            });
+        }
+
+        public int AddAllEligible()
+        {
+            var settings = Settings.UI.SkillFarm;
+            var allChars = AppServices.Characters?.Cast<Character>().ToList() ?? new List<Character>();
+            int added = 0;
+
+            foreach (var character in allChars)
+            {
+                if (character.SkillPoints < MinimumSPForExtraction) continue;
+                if (settings.FarmCharacters.Any(f => f.CharacterGuid == character.Guid)) continue;
+
+                settings.FarmCharacters.Add(new SkillFarmCharacterSettings
+                {
+                    CharacterGuid = character.Guid,
+                    ExtractionThreshold = settings.DefaultExtractionThreshold
+                });
+                added++;
+            }
+
+            if (added > 0)
+                Settings.Save();
+
+            return added;
+        }
+
         public void AddFarmCharacter(Character character)
         {
             var settings = Settings.UI.SkillFarm;

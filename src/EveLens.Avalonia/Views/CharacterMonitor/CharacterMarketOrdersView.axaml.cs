@@ -27,6 +27,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterMarketOrdersView()
         {
             InitializeComponent();
+            LocalizeUI();
+        }
+
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableMarketOrders");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableMarketOrderBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            FilterLabel.Text = Loc.Get("ListView.Filter");
+            FilterBox.Watermark = Loc.Get("ListView.SearchMarketOrders");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

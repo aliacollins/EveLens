@@ -38,6 +38,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private readonly List<Control> _rowControls = new();
         private Border? _dragGhost;
 
+        // Threshold drag: press captures position, promotes to drag after 5px movement
+        private bool _dragPending;
+        private int _dragPendingIndex = -1;
+        private double _dragPendingY;
+        private PointerPressedEventArgs? _dragPendingEvent;
+        private const double DragThreshold = 5.0;
+
         /// <summary>
         /// Event raised when skills are reordered via drag.
         /// </summary>
@@ -51,6 +58,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanQueueListControl()
         {
             InitializeComponent();
+            LocalizeHeaders();
+        }
+
+        private void LocalizeHeaders()
+        {
+            HeaderSkill.Text = Loc.Get("Plan.Skill");
+            HeaderTime.Text = Loc.Get("Plan.Time");
+            HeaderRank.Text = Loc.Get("Plan.Rank");
+            HeaderPri.Text = Loc.Get("Plan.Primary");
+            HeaderSec.Text = Loc.Get("Plan.Secondary");
+            HeaderSphr.Text = Loc.Get("Plan.SPPerHour");
+            HeaderLevel.Text = Loc.Get("Plan.Level");
         }
 
         public void SetViewModel(PlanQueueManager viewModel)
@@ -124,6 +143,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 },
             };
 
+            ToolTip.SetTip(container, Loc.Get("Plan.DragToReorder"));
+            ToolTip.SetShowDelay(container, 800);
+
             container.PointerEntered += (_, _) =>
             {
                 if (!_selected.Contains(index))
@@ -135,28 +157,32 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     container.Background = normalBg;
             };
 
-            // Press feedback — scale down slightly on press, spring back on release
+            // Press: start tracking for threshold drag (whole row is draggable)
             container.PointerPressed += (_, e) =>
             {
-                if (e.Source is Control c && c.Tag?.ToString() == "grip")
-                    return;
+                var props = e.GetCurrentPoint(this).Properties;
+                if (!props.IsLeftButtonPressed) return;
+
+                _dragPending = true;
+                _dragPendingIndex = index;
+                _dragPendingY = e.GetPosition(QueueScroller).Y;
+                _dragPendingEvent = e;
 
                 container.RenderTransform = TransformOperations.Parse("scale(0.98, 0.98)");
-                HandleRowClick(index, e);
-            };
-            container.PointerReleased += (_, _) =>
-            {
-                container.RenderTransform = TransformOperations.Parse("scale(1, 1)");
+
+                e.Pointer.Capture(QueueScroller);
+                QueueScroller.PointerMoved += OnPendingDragPointerMoved;
+                QueueScroller.PointerReleased += OnPendingDragPointerReleased;
             };
 
-            // Double-click for skill detail — fires after PointerPressed
+            // Double-click for skill detail
             var capturedItem = item;
             container.DoubleTapped += (_, _) => SkillDoubleClicked?.Invoke(capturedItem);
 
-            // 8-column grid matching old design: grip | skill | time | R | PRI | SEC | SP/HR | LEVEL
+            // 7-column grid: skill | time | R | PRI | SEC | SP/HR | LEVEL
             var grid = new Grid
             {
-                ColumnDefinitions = ColumnDefinitions.Parse("24,*,100,40,75,75,55,60"),
+                ColumnDefinitions = ColumnDefinitions.Parse("*,100,40,75,75,55,60"),
                 Margin = new Thickness(18, 0, 8, 0),
             };
 
@@ -188,33 +214,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     break;
             }
 
-            // ── Col 0: Grip handle ──
-            var grip = new TextBlock
-            {
-                Text = "\u2807",
-                FontSize = FontScaleService.Body,
-                Foreground = selected
-                    ? new SolidColorBrush(Color.Parse("#4A94F0"))
-                    : new SolidColorBrush(Color.Parse("#323C4A")),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
-                Cursor = new Cursor(StandardCursorType.SizeAll),
-                Tag = "grip",
-            };
-            grip.PointerPressed += (_, e) =>
-            {
-                if (!_selected.Contains(index))
-                {
-                    _selected.Clear();
-                    _selected.Add(index);
-                    Rebuild();
-                }
-                StartDrag(index, e);
-                e.Handled = true;
-            };
-            Grid.SetColumn(grip, 0);
-
-            // ── Col 1: Skill name with omega badge ──
+            // ── Col 0: Skill name with omega badge ──
             var namePanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
@@ -240,9 +240,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             });
-            Grid.SetColumn(namePanel, 1);
+            Grid.SetColumn(namePanel, 0);
 
-            // ── Col 2: Time (with color for long durations) ──
+            // ── Col 1: Time (with color for long durations) ──
             var timeColor = item.TimeSeverity switch
             {
                 TimeSeverity.Massive => Color.Parse("#E84A4A"),
@@ -257,9 +257,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Grid.SetColumn(timeText, 2);
+            Grid.SetColumn(timeText, 1);
 
-            // ── Col 3: Rank ──
+            // ── Col 2: Rank ──
             var rankText = new TextBlock
             {
                 Text = item.Rank.ToString(),
@@ -268,17 +268,17 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Grid.SetColumn(rankText, 3);
+            Grid.SetColumn(rankText, 2);
 
-            // ── Col 4: Primary attribute (full name, colored pill) ──
+            // ── Col 3: Primary attribute (full name, colored pill) ──
             var priPill = BuildFullAttrPill(item.PrimaryAttribute);
-            Grid.SetColumn(priPill, 4);
+            Grid.SetColumn(priPill, 3);
 
-            // ── Col 5: Secondary attribute (full name, colored pill) ──
+            // ── Col 4: Secondary attribute (full name, colored pill) ──
             var secPill = BuildFullAttrPill(item.SecondaryAttribute);
-            Grid.SetColumn(secPill, 5);
+            Grid.SetColumn(secPill, 4);
 
-            // ── Col 6: SP/HR ──
+            // ── Col 5: SP/HR ──
             var spText = new TextBlock
             {
                 Text = item.SkillPointsPerHour.ToString("N0"),
@@ -287,9 +287,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             };
-            Grid.SetColumn(spText, 6);
+            Grid.SetColumn(spText, 5);
 
-            // ── Col 7: Level blocks (standard 10x12, matches Skills tab) ──
+            // ── Col 6: Level blocks (standard 10x12, matches Skills tab) ──
             var accentColor = Color.Parse("#FFE6A817");
             var trainedBrush = new SolidColorBrush(accentColor);
             var plannedBrush = new SolidColorBrush(new Color(80, accentColor.R, accentColor.G, accentColor.B));
@@ -320,10 +320,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     Background = fill,
                 });
             }
-            Grid.SetColumn(pipsPanel, 7);
+            Grid.SetColumn(pipsPanel, 6);
 
             grid.Children.Add(ribbon);
-            grid.Children.Add(grip);
             grid.Children.Add(namePanel);
             grid.Children.Add(timeText);
             grid.Children.Add(rankText);
@@ -424,15 +423,60 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         #region Drag Reorder (Pointer Capture + RenderTransform)
 
-        private void StartDrag(int index, PointerPressedEventArgs e)
+        // Threshold drag handlers: track press, promote to drag after 5px movement
+        private void OnPendingDragPointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_dragPending) return;
+
+            double currentY = e.GetPosition(QueueScroller).Y;
+            double delta = Math.Abs(currentY - _dragPendingY);
+
+            if (delta < DragThreshold) return;
+
+            // Promote to real drag
+            _dragPending = false;
+            QueueScroller.PointerMoved -= OnPendingDragPointerMoved;
+            QueueScroller.PointerReleased -= OnPendingDragPointerReleased;
+
+            // Ensure pressed row is selected
+            if (!_selected.Contains(_dragPendingIndex))
+            {
+                _selected.Clear();
+                _selected.Add(_dragPendingIndex);
+                UpdateSelectionVisuals();
+            }
+
+            PromoteToDrag(_dragPendingIndex, _dragPendingY, e);
+        }
+
+        private void OnPendingDragPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            // Did not exceed threshold — treat as a click
+            _dragPending = false;
+            QueueScroller.PointerMoved -= OnPendingDragPointerMoved;
+            QueueScroller.PointerReleased -= OnPendingDragPointerReleased;
+            e.Pointer.Capture(null);
+
+            // Restore scale on the row
+            if (_dragPendingIndex >= 0 && _dragPendingIndex < _rowControls.Count)
+                _rowControls[_dragPendingIndex].RenderTransform = TransformOperations.Parse("scale(1, 1)");
+
+            // Process as selection click
+            if (_dragPendingEvent != null)
+                HandleRowClick(_dragPendingIndex, _dragPendingEvent);
+
+            _dragPendingEvent = null;
+            _dragPendingIndex = -1;
+        }
+
+        private void PromoteToDrag(int index, double startY, PointerEventArgs e)
         {
             _isDragging = true;
             _dragStartIndex = index;
-            _dragStartY = e.GetPosition(QueueScroller).Y;
+            _dragStartY = startY + QueueScroller.Offset.Y;
             _currentInsertSlot = -1;
 
-            // Ghost the selected rows — keep them visible as a faded placeholder
-            // so the list doesn't jump while dragging
+            // Ghost the selected rows
             foreach (int si in _selected)
             {
                 if (si < _rowControls.Count)
@@ -468,12 +512,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     FontWeight = FontWeight.SemiBold,
                 },
             };
+            double viewportY = e.GetPosition(QueueScroller).Y;
             Canvas.SetLeft(_dragGhost, 40);
-            Canvas.SetTop(_dragGhost, _dragStartY - 16);
+            Canvas.SetTop(_dragGhost, viewportY - 16);
             DragCanvas.Children.Add(_dragGhost);
-            DragCanvas.IsHitTestVisible = false; // keep it as overlay only
+            DragCanvas.IsHitTestVisible = false;
 
-            // Capture on the scroller so we get reliable move events
             e.Pointer.Capture(QueueScroller);
             QueueScroller.PointerMoved += OnDragPointerMoved;
             QueueScroller.PointerReleased += OnDragPointerReleased;
@@ -485,15 +529,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             if (!_isDragging || _viewModel == null) return;
 
-            double currentY = e.GetPosition(QueueScroller).Y;
+            double viewportY = e.GetPosition(QueueScroller).Y;
+            double absoluteY = viewportY + QueueScroller.Offset.Y;
             int totalItems = _viewModel.Items.Count;
 
-            // Move ghost badge
             if (_dragGhost != null)
-                Canvas.SetTop(_dragGhost, currentY - 16);
+                Canvas.SetTop(_dragGhost, viewportY - 16);
 
-            // Determine slot
-            int slot = (int)Math.Round(currentY / RowHeight);
+            int slot = (int)Math.Round(absoluteY / RowHeight);
             slot = Math.Max(0, Math.Min(totalItems, slot));
 
             if (slot == _currentInsertSlot) return;
@@ -502,16 +545,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var indices = _selected.OrderBy(i => i).ToList();
             bool valid = _viewModel.CanMove(indices, slot);
 
-            // Position indicator
+            double indicatorViewportY = slot * RowHeight - QueueScroller.Offset.Y - 1;
             InsertIndicator.IsVisible = true;
             Canvas.SetLeft(InsertIndicator, 18);
-            Canvas.SetTop(InsertIndicator, slot * RowHeight - 1);
+            Canvas.SetTop(InsertIndicator, indicatorViewportY);
             InsertIndicator.Width = Math.Max(100, QueueScroller.Bounds.Width - 26);
             InsertIndicator.Background = valid
                 ? new SolidColorBrush(Color.Parse("#4A94F0"))
                 : new SolidColorBrush(Color.Parse("#E84A4A"));
-
-            // Ghost stays at original position, indicator shows target — no displacement needed
         }
 
         private void OnDragPointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -522,14 +563,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
             QueueScroller.PointerReleased -= OnDragPointerReleased;
             e.Pointer.Capture(null);
 
-            // Remove ghost
             if (_dragGhost != null)
             {
                 DragCanvas.Children.Remove(_dragGhost);
                 _dragGhost = null;
             }
 
-            // Restore opacity and clear transforms
             foreach (var row in _rowControls)
             {
                 row.Opacity = 1.0;
@@ -550,67 +589,19 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                     Rebuild();
                     Reordered?.Invoke();
-                    ShowToast("Queue reordered", false);
+                    ShowToast(Loc.Get("Plan.QueueReordered"), false);
                 }
                 else
                 {
-                    ShowToast("Prerequisite constraint blocks this", true);
+                    string reason = _viewModel.GetBlockingReason(indices, _currentInsertSlot)
+                        ?? "Prerequisite constraints block this move";
+                    ShowToast(reason, true);
                 }
             }
 
             _isDragging = false;
             _dragStartIndex = -1;
             _currentInsertSlot = -1;
-        }
-
-        /// <summary>
-        /// Applies RenderTransform displacement to non-selected rows during drag.
-        /// Rows between the original position and the insertion slot slide up/down
-        /// by one row height to visually make room for the dragged items.
-        /// </summary>
-        private void ApplyDragDisplacement(List<int> selectedIndices, int insertSlot)
-        {
-            int selectedCount = selectedIndices.Count;
-            double displacement = selectedCount * RowHeight;
-            var selectedSet = new HashSet<int>(selectedIndices);
-
-            for (int i = 0; i < _rowControls.Count; i++)
-            {
-                if (selectedSet.Contains(i))
-                    continue; // dragged rows stay dimmed, no transform
-
-                // Calculate whether this row needs to shift
-                // If dragging DOWN: rows between original positions and insert slot shift UP
-                // If dragging UP: rows between insert slot and original positions shift DOWN
-                bool needsShift = false;
-                double shiftY = 0;
-
-                int minSelected = selectedIndices[0];
-                int maxSelected = selectedIndices[selectedIndices.Count - 1];
-
-                if (insertSlot > maxSelected)
-                {
-                    // Dragging down — rows between maxSelected+1 and insertSlot-1 shift up
-                    if (i > maxSelected && i < insertSlot)
-                    {
-                        needsShift = true;
-                        shiftY = -displacement;
-                    }
-                }
-                else if (insertSlot <= minSelected)
-                {
-                    // Dragging up — rows between insertSlot and minSelected-1 shift down
-                    if (i >= insertSlot && i < minSelected)
-                    {
-                        needsShift = true;
-                        shiftY = displacement;
-                    }
-                }
-
-                _rowControls[i].RenderTransform = needsShift
-                    ? new TranslateTransform(0, shiftY)
-                    : null;
-            }
         }
 
         #endregion
@@ -729,5 +720,15 @@ namespace EveLens.Avalonia.Views.PlanEditor
         #endregion
 
         public IReadOnlySet<int> SelectedIndices => _selected;
+
+        public List<int> GetSelectedIndicesSorted() => _selected.OrderBy(i => i).ToList();
+
+        public void SetSelection(IEnumerable<int> indices)
+        {
+            _selected.Clear();
+            foreach (int i in indices)
+                _selected.Add(i);
+            UpdateSelectionVisuals();
+        }
     }
 }

@@ -96,6 +96,18 @@ namespace EveLens.Common.Data
         public string Name { get; }
 
         /// <summary>
+        /// Gets the localized name for this market group (falls back to English Name).
+        /// </summary>
+        public string LocalizedName
+        {
+            get
+            {
+                string translated = StaticTranslations.GetGroupName(ID);
+                return string.IsNullOrEmpty(translated) ? Name : translated;
+            }
+        }
+
+        /// <summary>
         /// Gets the collection of all the items in this category and its descendants.
         /// </summary>
         public IEnumerable<Item> AllItems

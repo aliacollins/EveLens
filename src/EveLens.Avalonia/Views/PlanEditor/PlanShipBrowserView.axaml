@@ -12,9 +12,9 @@
                         <ToggleButton x:Name="CanFlyToggle" Content="Can Fly Only"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                       Click="OnCanFlyToggled" />
-                        <Button Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="CollapseBtn" Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="ExpandBtn" Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </StackPanel>
                     <!-- Race filter toggles -->
@@ -128,7 +128,7 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="100" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="RequiredSkillsLabel" Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
                     <Button x:Name="PlanToFlyBtn" Content="Plan to Fly" FontSize="{DynamicResource EveFontBody}"

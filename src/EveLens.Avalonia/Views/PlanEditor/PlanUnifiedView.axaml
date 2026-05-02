@@ -29,11 +29,11 @@
                     <ToggleButton x:Name="SidebarToggle" Content="☰" IsChecked="True"
                                   FontSize="{DynamicResource EveFontSmall}" Padding="6,2" CornerRadius="8"
                                   Click="OnSidebarToggle" ToolTip.Tip="Toggle sidebar" />
-                    <Button Content="+ Add Skills" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="AddSkillsBtn" Content="+ Add Skills" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
                             CornerRadius="8" Click="OnAddSkills" />
-                    <Button Content="Copy Skill Plan" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="CopyPlanBtn" Content="Copy Skill Plan" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
                             CornerRadius="8" Click="OnCopyClick" />
-                    <Button Content="Group by Attr" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="GroupByAttrBtn" Content="Group by Attr" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
                             CornerRadius="8" Click="OnGroupByAttribute"
                             ToolTip.Tip="Reorder plan by primary attribute for optimal remapping" />
                 </StackPanel>
@@ -69,10 +69,10 @@
                         <Border DockPanel.Dock="Top" Padding="8,6"
                                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                <ToggleButton x:Name="PlanTab" Content="Plan" IsChecked="True"
+                                <ToggleButton x:Name="SidebarPlanTab" Content="Plan" IsChecked="True"
                                               FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                               Click="OnSidebarTabClick" />
-                                <ToggleButton x:Name="AddTab" Content="Add"
+                                <ToggleButton x:Name="SidebarAddTab" Content="Add"
                                               FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                               Click="OnSidebarTabClick" />
                             </StackPanel>

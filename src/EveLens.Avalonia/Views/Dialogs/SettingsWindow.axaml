@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="EveLens.Avalonia.Views.Dialogs.SettingsWindow"
+        x:Name="SettingsWin"
         Title="EveLens Settings"
         Width="700" Height="580"
         MinWidth="560" MinHeight="480"
@@ -112,43 +113,43 @@
                 <StackPanel x:Name="SidebarPanel" Spacing="0" Margin="0,4,0,0">
                     <Button x:Name="NavAppearance" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
-                            <TextBlock Text="Appearance" FontSize="{DynamicResource EveFontBody}" />
-                            <TextBlock Text="Theme, colors, compatibility"
+                            <TextBlock x:Name="NavAppearanceTitle" Text="Appearance" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock x:Name="NavAppearanceSub" Text="Theme, colors, compatibility"
                                        FontSize="{DynamicResource EveFontCaption}" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="NavWindow" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
-                            <TextBlock Text="Window" FontSize="{DynamicResource EveFontBody}" />
-                            <TextBlock Text="Tray icon, close behavior"
+                            <TextBlock x:Name="NavWindowTitle" Text="Window" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock x:Name="NavWindowSub" Text="Tray icon, close behavior"
                                        FontSize="{DynamicResource EveFontCaption}" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="NavNotifications" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
-                            <TextBlock Text="Notifications" FontSize="{DynamicResource EveFontBody}" />
-                            <TextBlock Text="Alerts, email, calendar"
+                            <TextBlock x:Name="NavNotificationsTitle" Text="Notifications" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock x:Name="NavNotificationsSub" Text="Alerts, email, calendar"
                                        FontSize="{DynamicResource EveFontCaption}" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="NavData" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
-                            <TextBlock Text="Data" FontSize="{DynamicResource EveFontBody}" />
-                            <TextBlock Text="Updates, market prices"
+                            <TextBlock x:Name="NavDataTitle" Text="Data" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock x:Name="NavDataSub" Text="Updates, market prices"
                                        FontSize="{DynamicResource EveFontCaption}" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="NavNetwork" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
-                            <TextBlock Text="Network" FontSize="{DynamicResource EveFontBody}" />
-                            <TextBlock Text="Proxy, SSO credentials"
+                            <TextBlock x:Name="NavNetworkTitle" Text="Network" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock x:Name="NavNetworkSub" Text="Proxy, SSO credentials"
                                        FontSize="{DynamicResource EveFontCaption}" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="NavEsi" Classes="sidebar-btn">
                         <StackPanel Spacing="1">
-                            <TextBlock Text="ESI" FontSize="{DynamicResource EveFontBody}" />
-                            <TextBlock Text="API scopes, permissions"
+                            <TextBlock x:Name="NavEsiTitle" Text="ESI" FontSize="{DynamicResource EveFontBody}" />
+                            <TextBlock x:Name="NavEsiSub" Text="API scopes, permissions"
                                        FontSize="{DynamicResource EveFontCaption}" Foreground="{DynamicResource EveTextDisabledBrush}" />
                         </StackPanel>
                     </Button>
@@ -164,17 +165,17 @@
                     <!-- APPEARANCE                              -->
                     <!-- ═══════════════════════════════════════ -->
                     <StackPanel x:Name="AppearancePanel" Spacing="14">
-                        <TextBlock Text="Appearance" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                        <TextBlock x:Name="AppearanceTitle" Text="Appearance" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-                        <TextBlock Text="Customize the look and feel of EveLens."
+                        <TextBlock x:Name="AppearanceDesc" Text="Customize the look and feel of EveLens."
                                    FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
                         <!-- Theme -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Theme" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Choose the visual theme for the application."
+                                <TextBlock x:Name="ThemeLabel" Text="Theme" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="ThemeDesc" Text="Choose the visual theme for the application."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ComboBox x:Name="ThemeCombo" Grid.Column="1" Width="200" FontSize="{DynamicResource EveFontBody}"
@@ -183,7 +184,7 @@
 
                         <StackPanel x:Name="ThemeRestartPanel" Orientation="Horizontal" Spacing="8"
                                     IsVisible="False">
-                            <TextBlock Text="Restart required to apply"
+                            <TextBlock x:Name="ThemeRestartText" Text="Restart required to apply"
                                        FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveWarningYellowBrush}"
                                        VerticalAlignment="Center" />
                             <Button x:Name="RestartNowButton" Content="Restart Now"
@@ -193,8 +194,8 @@
                         <!-- Font Scale -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Font Size" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Scale all text in the application (80%-150%)."
+                                <TextBlock x:Name="FontSizeLabel" Text="Font Size" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="FontSizeDesc" Text="Scale all text in the application (80%-150%)."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
@@ -208,11 +209,25 @@
                             </StackPanel>
                         </Grid>
 
+                        <!-- Language -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock x:Name="LanguageLabel" Text="Language" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="LanguageDesc" Text="Game terms use CCP's official translations."
+                                           FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                                <TextBlock x:Name="LanguageRestartNote" Text="" IsVisible="False"
+                                           FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveWarningYellowBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="LanguageCombo" Grid.Column="1"
+                                      FontSize="{DynamicResource EveFontBody}"
+                                      VerticalAlignment="Center" MinWidth="200" />
+                        </Grid>
+
                         <!-- Safe for Work -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Safe for Work" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Hide character portraits and identifying colors."
+                                <TextBlock x:Name="SafeForWorkLabel" Text="Safe for Work" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="SafeForWorkDesc" Text="Hide character portraits and identifying colors."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="SafeForWorkToggle" Grid.Column="1"
@@ -220,7 +235,7 @@
                         </Grid>
 
                         <!-- Open Data Directory -->
-                        <Button x:Name="OpenDataDirButton" Content="Open Data Directory"
+                        <Button x:Name="OpenDataDirButton" Content="Open Data Directory" Tag="OpenDataDir"
                                 CornerRadius="12" Padding="10,4" FontSize="{DynamicResource EveFontBody}"
                                 HorizontalAlignment="Left" Margin="0,4,0,0" />
                     </StackPanel>
@@ -229,17 +244,17 @@
                     <!-- WINDOW BEHAVIOR                         -->
                     <!-- ═══════════════════════════════════════ -->
                     <StackPanel x:Name="WindowPanel" Spacing="14" IsVisible="False">
-                        <TextBlock Text="Window Behavior" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                        <TextBlock x:Name="WindowTitle" Text="Window Behavior" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-                        <TextBlock Text="Configure how the main window and system tray behave."
+                        <TextBlock x:Name="WindowDesc" Text="Configure how the main window and system tray behave."
                                    FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
                         <!-- Minimize to Tray -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Minimize to Tray" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="When enabled, closing the window minimizes EveLens to the system tray instead of exiting. Click the tray icon to restore."
+                                <TextBlock x:Name="MinToTrayLabel" Text="Minimize to Tray" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="MinToTrayDesc" Text="When enabled, closing the window minimizes EveLens to the system tray instead of exiting. Click the tray icon to restore."
                                            TextWrapping="Wrap" FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
@@ -250,8 +265,8 @@
                         <!-- Tray Tooltip Display -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Tray Tooltip Display" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Choose what information shows when hovering the system tray icon."
+                                <TextBlock x:Name="TrayTooltipLabel" Text="Tray Tooltip Display" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="TrayTooltipDesc" Text="Choose what information shows when hovering the system tray icon."
                                            TextWrapping="Wrap" FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
@@ -265,17 +280,17 @@
                     <!-- NOTIFICATIONS                           -->
                     <!-- ═══════════════════════════════════════ -->
                     <StackPanel x:Name="NotificationsPanel" Spacing="14" IsVisible="False">
-                        <TextBlock Text="Notifications" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                        <TextBlock x:Name="NotificationsTitle" Text="Notifications" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-                        <TextBlock Text="Configure alerts and notifications for skill training and events."
+                        <TextBlock x:Name="NotificationsDesc" Text="Configure alerts and notifications for skill training and events."
                                    FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
                         <!-- OS Notifications -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="OS Notifications" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Show Windows toast notifications for skill completions and alerts."
+                                <TextBlock x:Name="OsNotifyLabel" Text="OS Notifications" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="OsNotifyDesc" Text="Show Windows toast notifications for skill completions and alerts."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="OsNotificationsToggle" Grid.Column="1"
@@ -285,8 +300,8 @@
                         <!-- Play Sound -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Play Sound" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Play a sound when skill training completes."
+                                <TextBlock x:Name="PlaySoundLabel" Text="Play Sound" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="PlaySoundDesc" Text="Play a sound when skill training completes."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="PlaySoundToggle" Grid.Column="1"
@@ -298,8 +313,8 @@
                         <!-- Email Alerts -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Email Alerts" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
-                                <TextBlock Text="Send an email when skill training completes."
+                                <TextBlock x:Name="EmailAlertsLabel" Text="Email Alerts" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
+                                <TextBlock x:Name="EmailAlertsDesc" Text="Send an email when skill training completes."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="SendMailToggle" Grid.Column="1"
@@ -309,7 +324,7 @@
                         <StackPanel x:Name="EmailOptionsPanel" Spacing="10" Margin="12,0,0,0"
                                     IsVisible="False">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Provider" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
+                                <TextBlock x:Name="EmailProviderLabel" Text="Provider" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
                                 <ComboBox x:Name="EmailProviderCombo" Width="140" FontSize="{DynamicResource EveFontBody}">
                                     <ComboBoxItem Content="Gmail" />
                                     <ComboBoxItem Content="Outlook" />
@@ -319,11 +334,11 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="SMTP Server" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
+                                <TextBlock x:Name="SmtpServerLabel" Text="SMTP Server" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
                                 <TextBox x:Name="SmtpServerTextBox" Width="200" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Port" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
+                                <TextBlock x:Name="EmailPortLabel" Text="Port" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
                                 <NumericUpDown x:Name="EmailPortNumber" Minimum="1" Maximum="65535" Value="25"
                                                Width="100" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
@@ -331,8 +346,8 @@
                             <!-- SSL/TLS -->
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel>
-                                    <TextBlock Text="SSL/TLS" FontSize="{DynamicResource EveFontBody}" />
-                                    <TextBlock Text="Require encrypted connection."
+                                    <TextBlock x:Name="SslLabel" Text="SSL/TLS" FontSize="{DynamicResource EveFontBody}" />
+                                    <TextBlock x:Name="SslDesc" Text="Require encrypted connection."
                                                FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                                 </StackPanel>
                                 <ToggleSwitch x:Name="RequiresSslToggle" Grid.Column="1"
@@ -342,8 +357,8 @@
                             <!-- Authentication -->
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel>
-                                    <TextBlock Text="Authentication" FontSize="{DynamicResource EveFontBody}" />
-                                    <TextBlock Text="Server requires username and password."
+                                    <TextBlock x:Name="AuthLabel" Text="Authentication" FontSize="{DynamicResource EveFontBody}" />
+                                    <TextBlock x:Name="AuthDesc" Text="Server requires username and password."
                                                FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                                 </StackPanel>
                                 <ToggleSwitch x:Name="EmailAuthToggle" Grid.Column="1"
@@ -353,30 +368,30 @@
                             <StackPanel x:Name="EmailAuthPanel" Spacing="6" Margin="12,0,0,0"
                                         IsVisible="False">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Username" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="80" />
+                                    <TextBlock x:Name="UsernameLabel" Text="Username" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="80" />
                                     <TextBox x:Name="EmailAuthUserTextBox" Width="200" FontSize="{DynamicResource EveFontBody}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Password" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="80" />
+                                    <TextBlock x:Name="PasswordLabel" Text="Password" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="80" />
                                     <TextBox x:Name="EmailAuthPasswordTextBox" Width="200" FontSize="{DynamicResource EveFontBody}"
                                              PasswordChar="&#x25CF;" />
                                 </StackPanel>
                             </StackPanel>
 
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="From" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
+                                <TextBlock x:Name="EmailFromLabel" Text="From" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
                                 <TextBox x:Name="EmailFromTextBox" Width="200" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="To" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
+                                <TextBlock x:Name="EmailToLabel" Text="To" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="100" />
                                 <TextBox x:Name="EmailToTextBox" Width="200" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
 
                             <!-- Short Format -->
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel>
-                                    <TextBlock Text="Short Format" FontSize="{DynamicResource EveFontBody}" />
-                                    <TextBlock Text="Use a compact email format."
+                                    <TextBlock x:Name="ShortFormatLabel" Text="Short Format" FontSize="{DynamicResource EveFontBody}" />
+                                    <TextBlock x:Name="ShortFormatDesc" Text="Use a compact email format."
                                                FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                                 </StackPanel>
                                 <ToggleSwitch x:Name="EmailShortFormatToggle" Grid.Column="1"
@@ -389,8 +404,8 @@
                         <!-- External Calendar -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="External Calendar" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
-                                <TextBlock Text="Sync skill training schedules to an external calendar."
+                                <TextBlock x:Name="CalendarLabel" Text="External Calendar" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
+                                <TextBlock x:Name="CalendarDesc" Text="Sync skill training schedules to an external calendar."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="CalendarEnabledToggle" Grid.Column="1"
@@ -400,20 +415,20 @@
                         <StackPanel x:Name="CalendarOptionsPanel" Spacing="8" Margin="12,0,0,0"
                                     IsVisible="False">
                             <StackPanel Spacing="4">
-                                <RadioButton x:Name="GoogleCalendarRadio" Content="Google Calendar"
+                                <RadioButton x:Name="GoogleCalendarRadio" Content="Google Calendar" Tag="GoogleCal"
                                              GroupName="CalendarProvider" FontSize="{DynamicResource EveFontBody}" />
-                                <RadioButton x:Name="OutlookCalendarRadio" Content="Microsoft Outlook"
+                                <RadioButton x:Name="OutlookCalendarRadio" Content="Microsoft Outlook" Tag="OutlookCal"
                                              GroupName="CalendarProvider" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
 
                             <!-- Google Calendar options -->
                             <StackPanel x:Name="GoogleCalendarPanel" Spacing="6">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Calendar Name" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
+                                    <TextBlock x:Name="CalNameLabel" Text="Calendar Name" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
                                     <TextBox x:Name="GoogleCalNameTextBox" Width="200" FontSize="{DynamicResource EveFontBody}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Reminder" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
+                                    <TextBlock x:Name="ReminderLabel" Text="Reminder" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
                                     <ComboBox x:Name="GoogleReminderCombo" Width="120" FontSize="{DynamicResource EveFontBody}">
                                         <ComboBoxItem Content="Email" />
                                         <ComboBoxItem Content="Pop-up" />
@@ -424,34 +439,34 @@
 
                             <!-- Outlook options -->
                             <StackPanel x:Name="OutlookCalendarPanel" Spacing="6">
-                                <CheckBox x:Name="OutlookDefaultCalCheckBox" Content="Use default calendar"
+                                <CheckBox x:Name="OutlookDefaultCalCheckBox" Content="Use default calendar" Tag="OutlookDefault"
                                           FontSize="{DynamicResource EveFontBody}" />
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <TextBlock Text="Calendar Path" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
+                                    <TextBlock x:Name="CalPathLabel" Text="Calendar Path" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
                                     <TextBox x:Name="OutlookCalPathTextBox" Width="200" FontSize="{DynamicResource EveFontBody}" />
                                 </StackPanel>
                             </StackPanel>
 
-                            <CheckBox x:Name="CalendarRemindingCheckBox" Content="Enable reminders" FontSize="{DynamicResource EveFontBody}" />
+                            <CheckBox x:Name="CalendarRemindingCheckBox" Content="Enable reminders" Tag="EnableReminders" FontSize="{DynamicResource EveFontBody}" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Interval (min)" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
+                                <TextBlock x:Name="CalIntervalLabel" Text="Interval (min)" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="110" />
                                 <NumericUpDown x:Name="CalendarRemindingInterval" Minimum="1" Maximum="120"
                                                Value="10" Width="80" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
 
-                            <CheckBox x:Name="CalendarAltRemindingCheckBox" Content="Use alternate reminding times"
+                            <CheckBox x:Name="CalendarAltRemindingCheckBox" Content="Use alternate reminding times" Tag="AltReminding"
                                       FontSize="{DynamicResource EveFontBody}" />
                             <Grid ColumnDefinitions="Auto,Auto,Auto,8,Auto,Auto,Auto" Margin="0,2,0,0">
-                                <TextBlock Text="Early" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="50" />
+                                <TextBlock x:Name="CalEarlyLabel" Text="Early" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="50" />
                                 <TimePicker x:Name="CalendarEarlyTimePicker" Grid.Column="1"
                                             ClockIdentifier="24HourClock" />
                                 <TextBlock Grid.Column="2" Width="8" />
-                                <TextBlock Text="Late" Grid.Column="4" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="CalLateLabel" Text="Late" Grid.Column="4" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" />
                                 <TimePicker x:Name="CalendarLateTimePicker" Grid.Column="5"
                                             ClockIdentifier="24HourClock" Margin="8,0,0,0" />
                             </Grid>
 
-                            <CheckBox x:Name="CalendarLastQueuedOnlyCheckBox" Content="Export last queued skill only"
+                            <CheckBox x:Name="CalendarLastQueuedOnlyCheckBox" Content="Export last queued skill only" Tag="LastQueued"
                                       FontSize="{DynamicResource EveFontBody}" Margin="0,4,0,0" />
                         </StackPanel>
                     </StackPanel>
@@ -460,17 +475,17 @@
                     <!-- DATA & UPDATES                          -->
                     <!-- ═══════════════════════════════════════ -->
                     <StackPanel x:Name="DataPanel" Spacing="14" IsVisible="False">
-                        <TextBlock Text="Data &amp; Updates" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                        <TextBlock x:Name="DataTitle" Text="Data &amp; Updates" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-                        <TextBlock Text="Manage automatic updates and market data providers."
+                        <TextBlock x:Name="DataDesc" Text="Manage automatic updates and market data providers."
                                    FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
                         <!-- Check for Updates -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Check for Updates" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Automatically check for new EveLens versions on startup."
+                                <TextBlock x:Name="CheckUpdatesLabel" Text="Check for Updates" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="CheckUpdatesDesc" Text="Automatically check for new EveLens versions on startup."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="CheckForUpdatesToggle" Grid.Column="1"
@@ -480,8 +495,8 @@
                         <!-- Check Time -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Clock Sync" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Verify system clock is synchronized on startup."
+                                <TextBlock x:Name="ClockSyncLabel" Text="Clock Sync" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="ClockSyncDesc" Text="Verify system clock is synchronized on startup."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="CheckTimeToggle" Grid.Column="1"
@@ -493,8 +508,8 @@
                         <!-- Market Price Provider -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Market Price Provider" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Source for market price lookups."
+                                <TextBlock x:Name="MarketPriceLabel" Text="Market Price Provider" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="MarketPriceDesc" Text="Source for market price lookups."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ComboBox x:Name="MarketPriceProviderCombo" Grid.Column="1"
@@ -506,17 +521,17 @@
                     <!-- NETWORK                                 -->
                     <!-- ═══════════════════════════════════════ -->
                     <StackPanel x:Name="NetworkPanel" Spacing="14" IsVisible="False">
-                        <TextBlock Text="Network" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                        <TextBlock x:Name="NetworkTitle" Text="Network" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-                        <TextBlock Text="Configure proxy and SSO credentials."
+                        <TextBlock x:Name="NetworkDesc" Text="Configure proxy and SSO credentials."
                                    FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
                         <!-- HTTP Proxy -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="HTTP Proxy" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
-                                <TextBlock Text="Route traffic through a custom proxy server."
+                                <TextBlock x:Name="HttpProxyLabel" Text="HTTP Proxy" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
+                                <TextBlock x:Name="HttpProxyDesc" Text="Route traffic through a custom proxy server."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="UseProxyToggle" Grid.Column="1"
@@ -526,11 +541,11 @@
                         <StackPanel x:Name="ProxyPanel" Spacing="6" Margin="12,0,0,0"
                                     IsVisible="False">
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Host" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="40" />
+                                <TextBlock x:Name="ProxyHostLabel" Text="Host" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="40" />
                                 <TextBox x:Name="ProxyHostTextBox" Width="220" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Port" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="40" />
+                                <TextBlock x:Name="ProxyPortLabel" Text="Port" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="40" />
                                 <TextBox x:Name="ProxyPortTextBox" Width="80" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
                         </StackPanel>
@@ -539,15 +554,15 @@
 
                         <!-- SSO Credentials -->
                         <StackPanel Spacing="6">
-                            <TextBlock Text="SSO Credentials" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
-                            <TextBlock Text="Override built-in EveLens SSO client credentials."
+                            <TextBlock x:Name="SsoLabel" Text="SSO Credentials" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="SsoDesc" Text="Override built-in EveLens SSO client credentials."
                                        FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                                <TextBlock Text="Client ID" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="90" />
+                                <TextBlock x:Name="ClientIdLabel" Text="Client ID" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="90" />
                                 <TextBox x:Name="SsoClientIdTextBox" Width="280" FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="Client Secret" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="90" />
+                                <TextBlock x:Name="ClientSecretLabel" Text="Client Secret" VerticalAlignment="Center" FontSize="{DynamicResource EveFontBody}" Width="90" />
                                 <TextBox x:Name="SsoClientSecretTextBox" Width="280" FontSize="{DynamicResource EveFontBody}"
                                          PasswordChar="*" />
                             </StackPanel>
@@ -562,17 +577,17 @@
                     <!-- ESI SCOPES                              -->
                     <!-- ═══════════════════════════════════════ -->
                     <StackPanel x:Name="EsiPanel" Spacing="14" IsVisible="False">
-                        <TextBlock Text="ESI Scopes" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                        <TextBlock x:Name="EsiTitle" Text="ESI Scopes" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                    Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-                        <TextBlock Text="Controls which API scopes EveLens requests when authenticating."
+                        <TextBlock x:Name="EsiDesc" Text="Controls which API scopes EveLens requests when authenticating."
                                    FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}"
                                    Margin="0,-8,0,0" />
 
                         <!-- Preset -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
-                                <TextBlock Text="Scope Preset" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock Text="Choose a predefined set of API permissions."
+                                <TextBlock x:Name="ScopePresetLabel" Text="Scope Preset" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="ScopePresetDesc" Text="Choose a predefined set of API permissions."
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ComboBox x:Name="EsiPresetCombo" Grid.Column="1"
@@ -587,22 +602,22 @@
                                 CornerRadius="12" Padding="10,4" FontSize="{DynamicResource EveFontBody}"
                                 HorizontalAlignment="Left" />
 
-                        <TextBlock Text="Changes take effect the next time you authenticate a character."
+                        <TextBlock x:Name="EsiChangesNote" Text="Changes take effect the next time you authenticate a character."
                                    TextWrapping="Wrap" FontSize="{DynamicResource EveFontSmall}"
                                    Foreground="{DynamicResource EveTextDisabledBrush}" />
 
                         <Separator />
 
-                        <TextBlock Text="Character Scopes" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                        <TextBlock x:Name="CharScopesLabel" Text="Character Scopes" FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource EveTextSecondaryBrush}" Margin="0,0,0,4" />
 
                         <StackPanel x:Name="CharacterScopePanel" Spacing="0" />
 
-                        <TextBlock x:Name="NoCharactersLabel" Text="No characters authenticated yet."
+                        <TextBlock x:Name="NoCharactersLabel" Text="No characters authenticated yet." Tag="NoCharsAuth"
                                    FontSize="{DynamicResource EveFontSmall}" IsVisible="False"
                                    Foreground="{DynamicResource EveTextDisabledBrush}" />
 
-                        <TextBlock Text="Characters not matching the selected preset can be re-authenticated to update their scopes."
+                        <TextBlock x:Name="EsiReauthNote" Text="Characters not matching the selected preset can be re-authenticated to update their scopes."
                                    TextWrapping="Wrap" FontSize="{DynamicResource EveFontSmall}" Margin="0,4,0,0"
                                    Foreground="{DynamicResource EveTextDisabledBrush}" />
                     </StackPanel>

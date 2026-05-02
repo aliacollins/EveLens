@@ -15,6 +15,7 @@ using EveLens.Common.ViewModels;
 
 using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Services;
+using EveLens.Common.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanItemBrowserView : UserControl
@@ -25,6 +26,17 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanItemBrowserView()
         {
             InitializeComponent();
+            LocalizeControls();
+        }
+
+        private void LocalizeControls()
+        {
+            CanUseToggle.Content = Loc.Get("ItemBrowser.CanUseOnly");
+            CollapseAllBtn.Content = Loc.Get("ItemBrowser.CollapseAll");
+            FilterBox.Watermark = Loc.Get("ItemBrowser.SearchItems");
+            RequiredSkillsLabel.Text = Loc.Get("ItemBrowser.RequiredSkills");
+            PlanToUseBtn.Content = Loc.Get("ItemBrowser.PlanToUse");
+            PropertiesHeader.Text = Loc.Get("ItemBrowser.Properties");
         }
 
         public void SetViewModel(PlanEditorViewModel planEditor)
@@ -119,7 +131,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             DetailPanel.IsVisible = true;
             DetailName.Text = detail.Name;
-            DetailSlot.Text = $"Slot: {detail.SlotType}";
+            DetailSlot.Text = $"{Loc.Get("ItemBrowser.Slot")} {detail.SlotType}";
             DetailDescription.Text = detail.Description;
             PlanToUseBtn.IsVisible = !detail.CanUse;
 

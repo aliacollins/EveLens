@@ -32,6 +32,8 @@ namespace EveLens.Avalonia.Views.Dialogs
         private readonly SkillFarmDashboardViewModel _vm = new();
         private string _filter = string.Empty;
         private bool _readyOnly;
+        private string _sortColumn = string.Empty;
+        private bool _sortDescending;
 
         public SkillFarmDashboardWindow()
         {
@@ -417,16 +419,16 @@ namespace EveLens.Avalonia.Views.Dialogs
         private Border BuildHeaderRow()
         {
             var grid = MakeGrid();
-            AddToGrid(grid, "Character", 0, HorizontalAlignment.Left, true);
-            AddToGrid(grid, "SP", 1, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Injectors", 2, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Extractor Cost", 3, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Revenue", 4, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Net Profit", 5, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "SP/hr", 6, HorizontalAlignment.Right, true);
+            AddSortableHeader(grid, "Character", 0, HorizontalAlignment.Left);
+            AddSortableHeader(grid, "SP", 1, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Injectors", 2, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Extractor Cost", 3, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Revenue", 4, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Net Profit", 5, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "SP/hr", 6, HorizontalAlignment.Right);
             AddToGrid(grid, "Impl", 7, HorizontalAlignment.Center, true);
             AddToGrid(grid, "Tax", 8, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Status", 9, HorizontalAlignment.Right, true);
+            AddSortableHeader(grid, "Status", 9, HorizontalAlignment.Right);
 
             return new Border
             {
@@ -436,6 +438,41 @@ namespace EveLens.Avalonia.Views.Dialogs
                 BorderThickness = new Thickness(0, 0, 0, 1),
                 Child = grid
             };
+        }
+
+        private void AddSortableHeader(Grid grid, string label, int col, HorizontalAlignment align)
+        {
+            string arrow = _sortColumn == label ? (_sortDescending ? " ▼" : " ▲") : "";
+            var btn = new Button
+            {
+                Content = label + arrow,
+                FontSize = FontScaleService.Caption,
+                Foreground = _sortColumn == label
+                    ? (FindBrush("EveAccentPrimaryBrush") ?? Brushes.Gold)
+                    : (FindBrush("EveTextDisabledBrush") ?? Brushes.Gray),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(4, 0),
+                HorizontalAlignment = align,
+                HorizontalContentAlignment = align,
+                MinWidth = 50,
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+            };
+            var capturedLabel = label;
+            btn.Click += (_, _) =>
+            {
+                if (_sortColumn == capturedLabel)
+                    _sortDescending = !_sortDescending;
+                else
+                {
+                    _sortColumn = capturedLabel;
+                    _sortDescending = true;
+                }
+                _vm.SortBy(_sortColumn, _sortDescending);
+                BuildCharacterTable();
+            };
+            Grid.SetColumn(btn, col);
+            grid.Children.Add(btn);
         }
 
         private Border BuildRow(FarmCharacterEntry entry)
@@ -682,6 +719,16 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void OnRefreshClick(object? sender, RoutedEventArgs e)
         {
             FetchPricesAndRebuild();
+        }
+
+        private void OnAddAllEligibleClick(object? sender, RoutedEventArgs e)
+        {
+            int added = _vm.AddAllEligible();
+            if (added > 0)
+            {
+                _vm.Refresh();
+                RebuildUI();
+            }
         }
 
         private void OnFilterChanged(object? sender, TextChangedEventArgs e)

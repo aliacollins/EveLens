@@ -73,6 +73,12 @@ namespace EveLens.Common.SettingsObjects
         public int FontScalePercent { get; set; } = 100;
 
         /// <summary>
+        /// UI language code. "en" for English, "zh-CN" for Simplified Chinese.
+        /// </summary>
+        [XmlElement("language")]
+        public string Language { get; set; } = "en";
+
+        /// <summary>
         /// When true, removes images and colours to make EveLens looks like some boring business application.
         /// </summary>
         [XmlElement("safeForWork")]

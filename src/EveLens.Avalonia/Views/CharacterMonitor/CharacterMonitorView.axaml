@@ -28,10 +28,10 @@
             <TabControl x:Name="SubTabs" TabStripPlacement="Top" Padding="0" FontSize="{DynamicResource EveFontBody}">
 
                 <!-- Character info tabs -->
-                <TabItem Header="Skills" FontSize="{DynamicResource EveFontBody}">
+                <TabItem x:Name="TabSkills" Header="Skills" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterSkillsView />
                 </TabItem>
-                <TabItem Header="Queue" FontSize="{DynamicResource EveFontBody}">
+                <TabItem x:Name="TabQueue" Header="Queue" FontSize="{DynamicResource EveFontBody}">
                     <local:CharacterSkillQueueView />
                 </TabItem>
                 <TabItem x:Name="TabClones" Header="Clones" FontSize="{DynamicResource EveFontBody}">
@@ -99,9 +99,9 @@
                                 BorderThickness="1" CornerRadius="6"
                                 Padding="12" MinWidth="260" MaxHeight="420">
                             <StackPanel Spacing="6">
-                                <TextBlock Text="ESI Endpoints" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                                <TextBlock x:Name="EndpointsTitle" Text="ESI Endpoints" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                            Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                                <TextBlock Text="Choose which data to fetch for this character."
+                                <TextBlock x:Name="EndpointsDesc" Text="Choose which data to fetch for this character."
                                            FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{StaticResource EveTextDisabledBrush}"
                                            TextWrapping="Wrap" />
@@ -115,9 +115,9 @@
                                 <Separator Margin="0,2" />
                                 <StackPanel Orientation="Horizontal" Spacing="6"
                                             HorizontalAlignment="Right">
-                                    <Button Content="Enable All" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
+                                    <Button x:Name="EnableAllBtn" Content="Enable All" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                                             CornerRadius="12" Click="OnEnableAllEndpoints" />
-                                    <Button Content="Disable All" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
+                                    <Button x:Name="DisableAllBtn" Content="Disable All" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                                             CornerRadius="12" Click="OnDisableAllEndpoints" />
                                 </StackPanel>
                             </StackPanel>

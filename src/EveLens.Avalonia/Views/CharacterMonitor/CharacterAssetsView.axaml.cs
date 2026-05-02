@@ -35,6 +35,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             InitializeComponent();
             AssetItemsControl.ItemTemplate = CreateNodeTemplate();
+            LocalizeUI();
+        }
+
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableAssets");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableAssetBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            EmptyTitle.Text = Loc.Get("ListView.NoAssets");
+            EmptySubtext.Text = Loc.Get("ListView.NoAssetsDesc");
+            GroupByLabel.Text = Loc.Get("ListView.GroupBy");
+            GroupLocation.Content = Loc.Get("ListView.Location");
+            GroupRegion.Content = Loc.Get("ListView.Region");
+            GroupCategory.Content = Loc.Get("ListView.Category");
+            GroupContainer.Content = Loc.Get("ListView.Container");
+            CollapseAllBtn.Content = Loc.Get("Action.CollapseAll");
+            ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
+            FilterBox.Watermark = Loc.Get("ListView.SearchAssets");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

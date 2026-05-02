@@ -116,6 +116,12 @@ namespace EveLens.Common.ViewModels
             return PlanReorderService.CanMove(_plan.ToList(), selectedIndices, insertBefore);
         }
 
+        public string? GetBlockingReason(IReadOnlyList<int> selectedIndices, int insertBefore)
+        {
+            if (_plan == null) return null;
+            return PlanReorderService.GetBlockingReason(_plan.ToList(), selectedIndices, insertBefore);
+        }
+
         /// <summary>
         /// Performs a drag move and rebuilds.
         /// Returns the new indices of the moved items.

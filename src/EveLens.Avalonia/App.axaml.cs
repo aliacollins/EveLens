@@ -109,11 +109,12 @@ namespace EveLens.Avalonia
             Settings.Initialize();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Settings.Initialize done", printMethod: false);
 
-            // Apply font scale from settings (before any views are created)
+            // Apply font scale and language from settings (before any views are created)
             FontScaleService.Apply(Settings.UI.FontScalePercent);
+            Loc.Language = Settings.UI.Language ?? "en";
 
             // Phase 6: Load static datafiles
-            splash.UpdateStatus("Loading game data...");
+            splash.UpdateStatus(Loc.Get("Splash.LoadingGameData"));
             Dispatcher.UIThread.RunJobs();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Loading game data", printMethod: false);
             Task.Run(() => GlobalDatafileCollection.LoadAsync()).Wait();

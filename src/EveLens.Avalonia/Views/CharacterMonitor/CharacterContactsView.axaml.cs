@@ -20,6 +20,7 @@ using EveLens.Common.Models;
 using EveLens.Common.ViewModels;
 using EveLens.Common.ViewModels.Lists;
 
+using EveLens.Common.Services;
 using EveLens.Common.ViewModels.Lists;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
@@ -38,8 +39,21 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterContactsView()
         {
             InitializeComponent();
+            LocalizeUI();
             ContactItemsControl.ItemTemplate = CreateNodeTemplate();
         }
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableContacts");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableContactsBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            GroupByLabel.Text = Loc.Get("ListView.GroupBy");
+            CollapseAllBtn.Content = Loc.Get("Action.CollapseAll");
+            ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
+        }
+
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {

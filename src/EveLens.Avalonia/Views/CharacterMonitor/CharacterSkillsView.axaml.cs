@@ -54,6 +54,12 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             InitializeComponent();
             SkillItemsControl.ItemTemplate = CreateNodeTemplate();
+
+            CollapseAllBtn.Content = Loc.Get("Action.CollapseAll");
+            ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
+            ShowAllToggle.Content = Loc.Get("Action.TrainedOnly");
+            ExportCsvBtn.Content = Loc.Get("Action.ExportCsv");
+            FilterBox.Watermark = Loc.Get("Action.Search");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -151,17 +157,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             if (_viewModel == null) return;
 
-            AllSkillsBtn.Content = $"All Skills ({_viewModel.TotalPublicSkills})";
-            AllTrainedBtn.Content = $"All Trained ({_viewModel.TotalTrained})";
-            LevelVBtn.Content = $"Level V ({_viewModel.GetSkillsAtLevel(5)})";
-            LevelIVBtn.Content = $"Level IV ({_viewModel.GetSkillsAtLevel(4)})";
-            LevelIIIBtn.Content = $"Level III ({_viewModel.GetSkillsAtLevel(3)})";
-            LevelIIBtn.Content = $"Level II ({_viewModel.GetSkillsAtLevel(2)})";
-            LevelIBtn.Content = $"Level I ({_viewModel.GetSkillsAtLevel(1)})";
-            LevelZeroBtn.Content = $"Injected ({_viewModel.GetSkillsAtLevel(0)})";
+            AllSkillsBtn.Content = $"{Loc.Get("Skills.AllSkills")} ({_viewModel.TotalPublicSkills})";
+            AllTrainedBtn.Content = $"{Loc.Get("Skills.AllTrained")} ({_viewModel.TotalTrained})";
+            LevelVBtn.Content = $"{Loc.Get("Skills.LevelV")} ({_viewModel.GetSkillsAtLevel(5)})";
+            LevelIVBtn.Content = $"{Loc.Get("Skills.LevelIV")} ({_viewModel.GetSkillsAtLevel(4)})";
+            LevelIIIBtn.Content = $"{Loc.Get("Skills.LevelIII")} ({_viewModel.GetSkillsAtLevel(3)})";
+            LevelIIBtn.Content = $"{Loc.Get("Skills.LevelII")} ({_viewModel.GetSkillsAtLevel(2)})";
+            LevelIBtn.Content = $"{Loc.Get("Skills.LevelI")} ({_viewModel.GetSkillsAtLevel(1)})";
+            LevelZeroBtn.Content = $"{Loc.Get("Skills.Injected")} ({_viewModel.GetSkillsAtLevel(0)})";
 
             int untrained = _viewModel.TotalPublicSkills - _viewModel.TotalTrained;
-            UntrainedBtn.Content = $"Untrained ({untrained})";
+            UntrainedBtn.Content = $"{Loc.Get("Skills.Untrained")} ({untrained})";
         }
 
         private ToggleButton?[] LevelButtons => new[]
@@ -204,7 +210,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private Control BuildGroupHeader(FlatTreeNode<object> node)
         {
             var groupTemplate = node.Data as SkillGroupTemplate;
-            var groupName = groupTemplate?.Name ?? node.GroupKey;
+            var groupName = groupTemplate?.LocalizedName ?? node.GroupKey;
 
             // Compute group stats from the overlay
             string countText = "";
@@ -313,7 +319,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // Skill name
             var nameTb = new TextBlock
             {
-                Text = skillTemplate.Name,
+                Text = skillTemplate.LocalizedName,
                 FontSize = FontScaleService.Body,
                 Foreground = nameBrush,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -429,7 +435,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             if (_viewModel == null) return;
             _viewModel.ShowAll = ShowAllToggle.IsChecked == true;
-            ShowAllToggle.Content = _viewModel.ShowAll ? "All Skills" : "Trained Only";
+            ShowAllToggle.Content = _viewModel.ShowAll ? Loc.Get("Action.AllSkills") : Loc.Get("Action.TrainedOnly");
             UpdateStatus();
         }
 
@@ -448,6 +454,51 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _viewModel.Filter = string.Empty;
             ClearFilterBtn.IsVisible = false;
             UpdateStatus();
+        }
+
+        private async void OnExportCsv(object? sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            try
+            {
+                var topLevel = TopLevel.GetTopLevel(this);
+                if (topLevel == null) return;
+
+                string charName = _viewModel.Character?.Name?.Replace(" ", "_") ?? "skills";
+                var result = await topLevel.StorageProvider.SaveFilePickerAsync(
+                    new global::Avalonia.Platform.Storage.FilePickerSaveOptions
+                    {
+                        Title = "Export Skills to CSV",
+                        SuggestedFileName = $"{charName}_skills.csv",
+                        FileTypeChoices = new[]
+                        {
+                            new global::Avalonia.Platform.Storage.FilePickerFileType("CSV Files")
+                                { Patterns = new[] { "*.csv" } },
+                        }
+                    });
+
+                if (result == null) return;
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Group,Skill,Rank,Level,Skill Points,Known,Training");
+
+                var template = SkillOverlayViewModel.SkillTemplateInstance;
+                if (template != null)
+                {
+                    foreach (var group in template.Groups)
+                    {
+                        foreach (var skill in group.Skills)
+                        {
+                            var state = _viewModel.GetSkillState(skill.SkillId);
+                            sb.AppendLine($"\"{group.Name}\",\"{skill.Name}\",{skill.Rank},{state.Level},{state.SkillPoints},{state.IsKnown},{state.IsTraining}");
+                        }
+                    }
+                }
+
+                await System.IO.File.WriteAllTextAsync(result.Path.LocalPath, sb.ToString());
+            }
+            catch { }
         }
 
         #endregion

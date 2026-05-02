@@ -9,7 +9,7 @@
     <DockPanel>
         <!-- Menu bar -->
         <Menu x:Name="MainMenu" DockPanel.Dock="Top">
-            <MenuItem Header="_File">
+            <MenuItem x:Name="FileMenu" Header="_File">
                 <MenuItem x:Name="AddCharMenuItem" Header="_Add Character" />
                 <MenuItem x:Name="CreateBlankCharMenuItem" Header="Create _Blank Character" />
                 <MenuItem x:Name="ManageCharsMenuItem" Header="_Manage Characters" />
@@ -31,14 +31,15 @@
                 <MenuItem x:Name="ImportPlanMenuItem" Header="_Import Plan from File" />
                 <MenuItem x:Name="CreateFromQueueMenuItem" Header="_Create Plan from Queue" />
             </MenuItem>
-            <MenuItem Header="_Tools">
+            <MenuItem x:Name="ToolsMenu" Header="_Tools">
                 <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison" />
                 <MenuItem x:Name="SkillFarmMenuItem" Header="Skill _Farm Dashboard" />
+                <MenuItem x:Name="GlobalPlanMenuItem" Header="_Doctrine Designer" InputGesture="Ctrl+G" />
                 <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
                 <Separator />
                 <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache" />
             </MenuItem>
-            <MenuItem Header="_Help">
+            <MenuItem x:Name="HelpMenu" Header="_Help">
                 <MenuItem x:Name="CheckUpdatesMenuItem" Header="_Check for Updates" />
                 <Separator />
                 <MenuItem x:Name="UserGuideMenuItem" Header="_User Guide" />
@@ -64,7 +65,8 @@
                 <!-- Right-docked items (outermost first) -->
                 <TextBlock DockPanel.Dock="Right" x:Name="EsiActivityText"
                            Text="" FontSize="{DynamicResource EveFontBody}" HorizontalAlignment="Right"
-                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           ToolTip.Tip="Time since the last ESI endpoint returned data" />
 
                 <!-- Privacy mode flyout -->
                 <Button x:Name="PrivacyBtn" DockPanel.Dock="Right"
@@ -216,7 +218,8 @@
 
                 <!-- Remaining space: next update countdown -->
                 <TextBlock x:Name="NextUpdateText" Text="" FontSize="{DynamicResource EveFontBody}"
-                           Foreground="{StaticResource EveWarningYellowBrush}" />
+                           Foreground="{StaticResource EveWarningYellowBrush}"
+                           ToolTip.Tip="Countdown to the next scheduled ESI data fetch. ESI endpoints have their own cache timers (typically 5-60 min) — this is not a polling rate." />
             </DockPanel>
         </Border>
 

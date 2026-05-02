@@ -176,6 +176,8 @@ namespace EveLens.Common
         /// </summary>
         public static IList<CharacterGroupSettings> CharacterGroups { get; private set; } = new List<CharacterGroupSettings>();
 
+        public static IList<GlobalPlanTemplate> GlobalPlanTemplates { get; set; } = new List<GlobalPlanTemplate>();
+
         #endregion
 
 
@@ -226,6 +228,9 @@ namespace EveLens.Common
 
                 // Character groups
                 CharacterGroups = new List<CharacterGroupSettings>(s_settings.CharacterGroups);
+
+                // Global plan templates
+                GlobalPlanTemplates = new List<GlobalPlanTemplate>(s_settings.GlobalPlanTemplates);
 
                 // Scheduler
                 Scheduler.Import(s_settings.Scheduler);

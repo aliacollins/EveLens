@@ -12,7 +12,7 @@
                         <ToggleButton x:Name="CanUseToggle" Content="Can Use Only"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                       Click="OnCanUseToggled" />
-                        <Button Content="Collapse All" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
                     </StackPanel>
                     <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
@@ -100,7 +100,7 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="100" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="RequiredSkillsLabel" Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
                     <Button x:Name="PlanToUseBtn" Content="Plan to Use" FontSize="{DynamicResource EveFontBody}"

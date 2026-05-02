@@ -9,6 +9,7 @@
     <!-- TextBlock -->
     <Style Selector="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource EveTextPrimaryBrush}" />
+        <Setter Property="FontFamily" Value="Segoe UI, Helvetica Neue, Helvetica, Arial, Noto Sans, Liberation Sans, DejaVu Sans, sans-serif" />
     </Style>
 
     <!-- ── Button: 2D raised look ──

@@ -28,7 +28,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private static readonly SolidColorBrush OmegaTextBrush = new(Color.Parse("#FF00C853"));
         private static readonly SolidColorBrush AlphaTextBrush = new(Color.Parse("#FFFF6D00"));
 
-        private static readonly string[] OverrideLabels = { "Auto-detect", "Alpha override", "Omega override" };
+        private static string[] OverrideLabels => new[] { Loc.Get("Header.AutoDetect"), Loc.Get("Header.AlphaOverride"), Loc.Get("Header.OmegaOverride") };
 
         private ObservableCharacter? _observable;
         private IDisposable? _privacySub;
@@ -102,24 +102,29 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             try
             {
+                // Corporation
+                CorporationText.Text = PrivacyHelper.IsCorpAllianceHidden
+                    ? $"{Loc.Get("Header.Corporation")}: {PrivacyHelper.Mask}"
+                    : $"{Loc.Get("Header.Corporation")}: {oc.CorporationName}";
+
                 // Location
-                LocationText.Text = $"Located in: {oc.LocationText}";
+                LocationText.Text = $"{Loc.Get("Header.LocatedIn")}: {oc.LocationText}";
                 DockedText.Text = !string.IsNullOrEmpty(oc.DockedText)
-                    ? $"Docked at: {oc.DockedText}"
-                    : "In space";
+                    ? $"{Loc.Get("Header.DockedAt")}: {oc.DockedText}"
+                    : Loc.Get("Header.InSpace");
 
                 // Alliance (always shown — em dash when none to prevent layout shift)
                 if (PrivacyHelper.IsCorpAllianceHidden)
                 {
-                    AllianceText.Text = $"Alliance: {PrivacyHelper.Mask}";
+                    AllianceText.Text = $"{Loc.Get("Header.Alliance")}: {PrivacyHelper.Mask}";
                 }
                 else
                 {
                     bool hasAlliance = !string.IsNullOrEmpty(oc.AllianceName)
                                        && !oc.AllianceName.Equals("(None)", StringComparison.OrdinalIgnoreCase);
                     AllianceText.Text = hasAlliance
-                        ? $"Alliance: {oc.AllianceName}"
-                        : "Alliance: \u2014";
+                        ? $"{Loc.Get("Header.Alliance")}: {oc.AllianceName}"
+                        : $"{Loc.Get("Header.Alliance")}: \u2014";
                 }
 
                 // Balance change flash
@@ -137,7 +142,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var effectiveStatus = oc.Character.EffectiveCharacterStatus;
                 bool isOmega = effectiveStatus == AccountStatus.Omega;
                 PortraitBorder.BorderBrush = isOmega ? OmegaBorderBrush : AlphaBorderBrush;
-                AccountStatusLabel.Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha";
+                AccountStatusLabel.Text = isOmega ? $"\u03A9 {Loc.Get("Eve.Omega")}" : $"\u03B1 {Loc.Get("Eve.Alpha")}";
                 AccountStatusLabel.Foreground = isOmega ? OmegaTextBrush : AlphaTextBrush;
 
                 // Override mode label
@@ -149,15 +154,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 {
                     var inv = CultureInfo.InvariantCulture;
                     string skills = PrivacyHelper.IsSkillPointsHidden
-                        ? $"Skills: {PrivacyHelper.Mask}" : $"Skills: {oc.KnownSkillCount.ToString("N0", inv)}";
+                        ? $"{Loc.Get("Header.Skills")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.Skills")}: {oc.KnownSkillCount.ToString("N0", inv)}";
                     string sp = PrivacyHelper.IsSkillPointsHidden
-                        ? $"SP: {PrivacyHelper.Mask}" : $"SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints)}";
+                        ? $"{Loc.Get("Header.SP")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.SP")}: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints)}";
                     string freeSp = PrivacyHelper.IsSkillPointsHidden
-                        ? $"Free SP: {PrivacyHelper.Mask}" : $"Free SP: {ObservableCharacter.FormatLargeNumber(oc.FreeSkillPoints)}";
+                        ? $"{Loc.Get("Header.FreeSP")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.FreeSP")}: {ObservableCharacter.FormatLargeNumber(oc.FreeSkillPoints)}";
                     string totalSp = PrivacyHelper.IsSkillPointsHidden
-                        ? $"Total SP: {PrivacyHelper.Mask}" : $"Total SP: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints + oc.FreeSkillPoints)}";
+                        ? $"{Loc.Get("Header.TotalSP")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.TotalSP")}: {ObservableCharacter.FormatLargeNumber(oc.SkillPoints + oc.FreeSkillPoints)}";
                     string remaps = PrivacyHelper.IsRemapsHidden
-                        ? $"Remaps: {PrivacyHelper.Mask}" : $"Remaps: {oc.AvailableRemaps}";
+                        ? $"{Loc.Get("Header.Remaps")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.Remaps")}: {oc.AvailableRemaps}";
                     StatsLine.Text = string.Join("  \u00b7  ", skills, sp, freeSp, totalSp, remaps);
 
                     // Skill level breakdown tooltip — shows V:3 IV:5 III:8 etc.

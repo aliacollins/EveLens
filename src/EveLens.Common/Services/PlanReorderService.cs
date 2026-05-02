@@ -73,55 +73,71 @@ namespace EveLens.Common.Services
         }
 
         /// <summary>
+        /// Returns a human-readable reason why the move is blocked, or null if valid.
+        /// </summary>
+        public static string? GetBlockingReason(
+            IReadOnlyList<PlanEntry> entries,
+            IReadOnlyList<int> selectedIndices,
+            int insertBefore)
+        {
+            if (entries.Count == 0 || selectedIndices.Count == 0)
+                return "No skills selected";
+
+            var simulated = SimulateMove(entries, selectedIndices, insertBefore);
+            return FindPrerequisiteViolation(simulated);
+        }
+
+        /// <summary>
         /// Validates that every skill's prerequisites appear before it in the list,
         /// AND that same-skill levels are in ascending order (level II before III, etc.).
         /// </summary>
         private static bool ValidatePrerequisiteOrder(List<PlanEntry> entries)
         {
-            // Build a position map using (skillId, level) as key to handle
-            // multiple entries for the same skill at different levels
+            return FindPrerequisiteViolation(entries) == null;
+        }
+
+        private static string? FindPrerequisiteViolation(List<PlanEntry> entries)
+        {
             var positionOf = new Dictionary<(int skillId, long level), int>();
-            // Also track the highest position for each skill ID (for cross-skill prereq checks)
-            var lastPositionBySkill = new Dictionary<int, int>();
 
             for (int i = 0; i < entries.Count; i++)
             {
                 var key = (entries[i].Skill.ID, entries[i].Level);
                 positionOf[key] = i;
-                lastPositionBySkill[entries[i].Skill.ID] = i;
             }
 
             for (int i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
 
-                // Check 1: Same-skill level ordering — previous level must come first
                 if (entry.Level > 1)
                 {
                     var prevLevelKey = (entry.Skill.ID, entry.Level - 1);
                     if (positionOf.TryGetValue(prevLevelKey, out int prevLevelPos))
                     {
                         if (prevLevelPos > i)
-                            return false; // level N-1 comes after level N
+                            return $"{entry.Skill.Name} {ToRoman(entry.Level)} needs {entry.Skill.Name} {ToRoman(entry.Level - 1)} first";
                     }
                 }
 
-                // Check 2: Cross-skill prerequisites must come before this entry
                 foreach (var prereq in entry.Skill.Prerequisites)
                 {
-                    // The prerequisite requires skill X at level Y.
-                    // All levels of skill X up to Y must be before this entry.
-                    // We check if the required level of the prereq skill is positioned after us.
                     var prereqKey = (prereq.Skill.ID, prereq.Level);
                     if (positionOf.TryGetValue(prereqKey, out int prereqPos))
                     {
                         if (prereqPos > i)
-                            return false;
+                            return $"{entry.Skill.Name} {ToRoman(entry.Level)} needs {prereq.Skill.Name} {ToRoman(prereq.Level)} first";
                     }
                 }
             }
 
-            return true;
+            return null;
         }
+
+        private static string ToRoman(long level) => level switch
+        {
+            1 => "I", 2 => "II", 3 => "III", 4 => "IV", 5 => "V",
+            _ => level.ToString()
+        };
     }
 }

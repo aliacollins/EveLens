@@ -72,20 +72,23 @@ namespace EveLens.Avalonia.Views
             InitializeComponent();
             RestoreWindowLocation();
 
-            // On Linux/macOS, use PNG icon instead of .ico for better WM compatibility
-            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
-                    System.Runtime.InteropServices.OSPlatform.Windows))
+            // Explicitly set the window icon after InitializeComponent to ensure it
+            // survives theme/style loading. Use .png on Linux/macOS for WM compatibility.
+            try
             {
-                try
-                {
-                    var uri = new Uri("avares://EveLens/Properties/EveLens.png");
-                    Icon = new WindowIcon(global::Avalonia.Platform.AssetLoader.Open(uri));
-                }
-                catch { /* Fall back to .ico from AXAML */ }
+                bool isWindows = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+                    System.Runtime.InteropServices.OSPlatform.Windows);
+                string iconPath = isWindows
+                    ? "avares://EveLens/Properties/EveLens.ico"
+                    : "avares://EveLens/Properties/EveLens.png";
+                Icon = new WindowIcon(global::Avalonia.Platform.AssetLoader.Open(new Uri(iconPath)));
             }
+            catch { /* Fall back to .ico from AXAML */ }
 
             if (AppServices.IsDebugBuild)
                 Title += " [DEBUG]";
+
+            LocalizeUI();
 
             _viewModel = new MainWindowViewModel();
             DataContext = _viewModel;
@@ -627,6 +630,48 @@ namespace EveLens.Avalonia.Views
 
         #endregion
 
+        private void LocalizeUI()
+        {
+            // Top-level menus
+            FileMenu.Header = Loc.Get("Menu.File");
+            PlansMenu.Header = Loc.Get("Menu.Plans");
+            ToolsMenu.Header = Loc.Get("Menu.Tools");
+            HelpMenu.Header = Loc.Get("Menu.Help");
+
+            // File menu items
+            AddCharMenuItem.Header = Loc.Get("Menu.File.AddCharacter");
+            ManageGroupsMenuItem.Header = Loc.Get("Menu.File.ManageGroups");
+            SettingsMenuItem.Header = Loc.Get("Menu.File.Settings");
+            ExitMenuItem.Header = Loc.Get("Menu.File.Exit");
+
+            // Plans menu items
+            NewPlanMenuItem.Header = Loc.Get("Menu.Plans.NewPlan");
+            ManagePlansMenuItem.Header = Loc.Get("Menu.Plans.ManagePlans");
+            ImportPlanMenuItem.Header = Loc.Get("Menu.Plans.ImportPlan");
+            CreateFromQueueMenuItem.Header = Loc.Get("Menu.Plans.CreateFromQueue");
+
+            // Tools menu items
+            CharCompMenuItem.Header = Loc.Get("Menu.Tools.CharComparison");
+            SkillFarmMenuItem.Header = Loc.Get("Menu.Tools.SkillFarm");
+            GlobalPlanMenuItem.Header = Loc.Get("Menu.Tools.DoctrineDesigner");
+            SkillConstellationMenuItem.Header = Loc.Get("Menu.Tools.SkillVisualization");
+            ClearCacheMenuItem.Header = Loc.Get("Menu.Tools.ClearCache");
+
+            // Help menu items
+            AboutMenuItem.Header = Loc.Get("Menu.Help.About");
+            CheckUpdatesMenuItem.Header = Loc.Get("Menu.Help.CheckUpdates");
+            UserGuideMenuItem.Header = Loc.Get("Menu.Help.UserGuide");
+            ReportIssueMenuItem.Header = Loc.Get("Menu.Help.ReportIssue");
+            KeyboardShortcutsMenuItem.Header = Loc.Get("Menu.Help.Shortcuts");
+
+            // File menu — remaining items
+            CreateBlankCharMenuItem.Header = Loc.Get("Menu.File.CreateBlank");
+            ManageCharsMenuItem.Header = Loc.Get("Menu.File.ManageChars");
+            RestoreSettingsMenuItem.Header = Loc.Get("Menu.File.RestoreSettings");
+            SaveSettingsMenuItem.Header = Loc.Get("Menu.File.SaveSettings");
+            ResetSettingsMenuItem.Header = Loc.Get("Menu.File.ResetSettings");
+        }
+
         private void WireMenuItems()
         {
             // File menu
@@ -651,6 +696,7 @@ namespace EveLens.Avalonia.Views
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
             SkillFarmMenuItem.Click += OnSkillFarmClick;
+            GlobalPlanMenuItem.Click += OnGlobalPlanClick;
             SkillConstellationMenuItem.Click += OnSkillConstellationClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
 
@@ -987,7 +1033,7 @@ namespace EveLens.Avalonia.Views
                 // Left indicator: what's happening now
                 if (fetchingCount > 0)
                 {
-                    NextUpdateText.Text = $"ESI: {fetchingCount} fetching...";
+                    NextUpdateText.Text = $"ESI: {fetchingCount} {Loc.Get("ESI.Fetching")}";
                     NextUpdateText.Foreground = Brushes.LimeGreen;
                 }
                 else if (nextFetch.HasValue && nextFetch.Value > now)
@@ -996,18 +1042,18 @@ namespace EveLens.Avalonia.Views
                     string timeStr = remaining.TotalMinutes >= 1
                         ? $"{(int)remaining.TotalMinutes}m {remaining.Seconds}s"
                         : $"{remaining.Seconds}s";
-                    NextUpdateText.Text = $"Next refresh in {timeStr}";
+                    NextUpdateText.Text = $"{Loc.Get("ESI.NextRefresh")} {timeStr}";
                     NextUpdateText.Foreground = Brushes.Gold;
                 }
                 else if (nextFetch.HasValue)
                 {
                     // Next fetch is overdue (in the past) — scheduler will dispatch soon
-                    NextUpdateText.Text = "ESI: refreshing...";
+                    NextUpdateText.Text = Loc.Get("ESI.Refreshing");
                     NextUpdateText.Foreground = Brushes.LimeGreen;
                 }
                 else
                 {
-                    NextUpdateText.Text = "ESI: idle";
+                    NextUpdateText.Text = Loc.Get("ESI.Idle");
                     NextUpdateText.Foreground = Brushes.Gray;
                 }
 
@@ -1029,7 +1075,7 @@ namespace EveLens.Avalonia.Views
                     string agoStr = ago.TotalSeconds < 60 ? $"{(int)ago.TotalSeconds}s ago"
                         : ago.TotalMinutes < 60 ? $"{(int)ago.TotalMinutes}m ago"
                         : $"{(int)ago.TotalHours}h ago";
-                    EsiActivityText.Text = $"Last refresh: {agoStr}";
+                    EsiActivityText.Text = $"{Loc.Get("ESI.LastRefresh")}: {agoStr}";
                 }
                 else
                 {
@@ -1815,6 +1861,19 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        private async void OnGlobalPlanClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var window = new GlobalPlanDashboardWindow();
+                await window.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening Global Plan Dashboard: {ex}");
+            }
+        }
+
         private async void OnSkillConstellationClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -2356,7 +2415,8 @@ namespace EveLens.Avalonia.Views
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
-            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control)) return;
+            if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
+                !e.KeyModifiers.HasFlag(KeyModifiers.Meta)) return;
 
             bool shift = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
 
@@ -2380,6 +2440,10 @@ namespace EveLens.Avalonia.Views
                     break;
                 case Key.M:
                     OnManagePlansClick(this, e);
+                    e.Handled = true;
+                    break;
+                case Key.G:
+                    OnGlobalPlanClick(this, e);
                     e.Handled = true;
                     break;
             }

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Doctrine Designer** — Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools → Doctrine Designer, Ctrl+G)
+- **Chinese language support (简体中文)** — Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance. Auto-restart on language change.
+- **CSV export** — Export skills and training queue to CSV files from the Skills and Queue tabs
+- **Skill Farm Dashboard: sort by column** — Click any column header to sort ascending/descending. "Add All Eligible" button to batch-add characters with 5.5M+ SP.
+- **Plan editor: attribute group headers** — "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
+- **Plan editor: specific prereq error messages** — Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
+- **Plan editor: double-click hint tooltip** — Rows show "Drag to reorder · Double-click for details" on hover
+- **ESI timer tooltips** — Hover the status bar countdown for an explanation of what it means
+
+### Changed
+
+- **Plan editor: whole-row drag** — Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
+- **Release asset naming** — macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
+
+### Fixed
+
+- **Website download links 404** — macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
+- **Plan editor drag: scroll offset bug** — Dragging while scrolled down no longer maps to wrong row positions (#59)
+- **Plan editor: Alt+Up/Down keyboard shortcuts** — Now wired to actual queue selection instead of first/last item (#59)
+- **Attribute optimizer: "Reset to Current" showed 3 everywhere** — Now uses character's actual ESI attributes instead of default scratchpad values (#60)
+- **Attribute optimizer: inconsistent training times** — Manual point adjustments now compute duration directly, avoiding StartTime/BestScratchpad mismatch (#60)
+- **Group by attribute: button did nothing visible** — Now injects color-coded attribute group headers and shows active state on button (#61)
+- **Windows taskbar icon reverted to default** — Explicitly set after InitializeComponent to survive theme loading (#58)
+- **macOS: Cmd+W didn't close plan windows** — Added Meta modifier check alongside Control (#59)
+- **macOS: menu title showed "Avalonia Application"** — Set Application.Name="EveLens" in App.axaml
+- **macOS: Unicode character names broken** — Added cross-platform font fallback chain (Segoe UI → Helvetica Neue → Noto Sans → DejaVu Sans)
+
 ## [1.2.1] - 2026-04-09
 
 ### Fixed

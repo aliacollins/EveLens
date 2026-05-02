@@ -23,6 +23,7 @@ using EveLens.Avalonia.Converters;
 using EveLens.Common.Data;
 using EveLens.Common.Service;
 using EveLens.Common.Enumerations;
+using EveLens.Common.Enumerations.UISettings;
 using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Services;
@@ -95,6 +96,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanUnifiedView()
         {
             InitializeComponent();
+            LocalizeControls();
+        }
+
+        private void LocalizeControls()
+        {
+            AddSkillsBtn.Content = Loc.Get("PlanEditor.AddSkills");
+            CopyPlanBtn.Content = Loc.Get("PlanEditor.CopyPlan");
+            GroupByAttrBtn.Content = Loc.Get("Plan.GroupByAttr");
+            SidebarPlanTab.Content = Loc.Get("Sidebar.Plan");
+            SidebarAddTab.Content = Loc.Get("Sidebar.Add");
+            ToolTip.SetTip(CollapsedPlanBtn, Loc.Get("Sidebar.Plan"));
+            ToolTip.SetTip(CollapsedAddBtn, Loc.Get("Sidebar.AddSkills"));
         }
 
         public void SetViewModel(PlanEditorViewModel viewModel)
@@ -259,13 +272,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
                                 || DateTime.UtcNow >= charModel.LastReMapTimed.AddDays(365);
                             if (canRemap)
                             {
-                                availText = "Remap available";
+                                availText = Loc.Get("Plan.RemapAvailable");
                                 availBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
                             }
                             else
                             {
                                 int daysUntil = (int)(charModel.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
-                                availText = $"Remap in {daysUntil} days";
+                                availText = string.Format(Loc.Get("Plan.RemapInDays"), daysUntil);
                                 availBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
                             }
                         }
@@ -314,9 +327,47 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     AccentBrush = PlanSectionHeader.GetAccentBrush(priShort),
                 });
 
-                // Insert skill entries
+                // Insert skill entries (with attribute group headers when sorted by attribute)
+                bool groupByAttribute = _viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
+                    || _viewModel.SortCriteria == PlanEntrySort.SecondaryAttribute;
+                EveAttribute lastGroupAttr = EveAttribute.None;
+
                 foreach (var entry in segEntries)
                 {
+                    if (groupByAttribute)
+                    {
+                        var groupAttr = _viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
+                            ? entry.Skill.PrimaryAttribute
+                            : entry.Skill.SecondaryAttribute;
+
+                        if (groupAttr != lastGroupAttr)
+                        {
+                            lastGroupAttr = groupAttr;
+                            string attrName = GetAttributeFullName(groupAttr);
+                            int attrCount = segEntries.Count(e =>
+                                (_viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
+                                    ? e.Skill.PrimaryAttribute : e.Skill.SecondaryAttribute) == groupAttr);
+                            var attrTime = segEntries
+                                .Where(e => (_viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
+                                    ? e.Skill.PrimaryAttribute : e.Skill.SecondaryAttribute) == groupAttr)
+                                .Aggregate(TimeSpan.Zero, (sum, e) => sum + e.TrainingTime);
+
+                            string priShortAttr = GetAttributeShortName(groupAttr);
+                            displayItems.Add(new PlanSectionHeader
+                            {
+                                SegmentIndex = segIdx,
+                                FocusLabel = $"{attrName} ({attrCount} skills)",
+                                PrimaryShortName = priShortAttr,
+                                SecondaryShortName = "",
+                                SkillCount = attrCount,
+                                TrainingTimeText = FormatTime(attrTime),
+                                AvgSpPerHourText = "",
+                                BackgroundBrush = PlanSectionHeader.GetFocusBackground(priShortAttr),
+                                AccentBrush = PlanSectionHeader.GetAccentBrush(priShortAttr),
+                            });
+                        }
+                    }
+
                     PlanEntryStatus status = DetermineStatus(entry, character);
                     var item = new PlanEntryDisplayItem(entry, status)
                     {
@@ -779,7 +830,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Skill count
             var countText = new TextBlock
             {
-                Text = $"{header.SkillCount} skills",
+                Text = $"{header.SkillCount} {Loc.Get("PlanEditor.Skills")}",
                 FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -1285,8 +1336,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (sender is Button btn && btn.Tag is string tab)
             {
                 _activeSidebarTab = tab;
-                PlanTab.IsChecked = tab == "Plan";
-                AddTab.IsChecked = tab == "Add";
+                SidebarPlanTab.IsChecked = tab == "Plan";
+                SidebarAddTab.IsChecked = tab == "Add";
 
                 _isSidebarExpanded = true;
                 UpdateSidebarVisibility();
@@ -1306,13 +1357,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             _sidebarDetailSkill = null;
 
-            if (sender == PlanTab)
+            if (sender == SidebarPlanTab)
                 _activeSidebarTab = "Plan";
-            else if (sender == AddTab)
+            else if (sender == SidebarAddTab)
                 _activeSidebarTab = "Add";
 
-            PlanTab.IsChecked = _activeSidebarTab == "Plan";
-            AddTab.IsChecked = _activeSidebarTab == "Add";
+            SidebarPlanTab.IsChecked = _activeSidebarTab == "Plan";
+            SidebarAddTab.IsChecked = _activeSidebarTab == "Add";
 
             BuildSidebarContent();
         }
@@ -1368,8 +1419,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             _sidebarDetailSkill = skill;
             _activeSidebarTab = "SkillDetail";
-            PlanTab.IsChecked = false;
-            AddTab.IsChecked = false;
+            SidebarPlanTab.IsChecked = false;
+            SidebarAddTab.IsChecked = false;
             BuildSidebarContent();
         }
 
@@ -1390,7 +1441,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // ── Back button ──
             var backBtn = new Button
             {
-                Content = "\u2190 Back",
+                Content = "\u2190 " + Loc.Get("PlanEditor.Back"),
                 Background = Brushes.Transparent,
                 Foreground = secondaryBrush,
                 BorderThickness = new Thickness(0),
@@ -1402,8 +1453,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 _sidebarDetailSkill = null;
                 _activeSidebarTab = "Plan";
-                PlanTab.IsChecked = true;
-                AddTab.IsChecked = false;
+                SidebarPlanTab.IsChecked = true;
+                SidebarAddTab.IsChecked = false;
                 BuildSidebarContent();
             };
             SidebarContent.Children.Add(backBtn);
@@ -1506,7 +1557,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 {
                     btnRow.Children.Add(new TextBlock
                     {
-                        Text = "Plan to",
+                        Text = Loc.Get("PlanEditor.PlanTo"),
                         FontSize = FontScaleService.Small,
                         Foreground = secondaryBrush,
                         VerticalAlignment = VerticalAlignment.Center,
@@ -1797,8 +1848,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             heroStack.Children.Add(new TextBlock
             {
                 Text = trainedCount > 0
-                    ? $"{remaining} of {totalEntries} skills remaining"
-                    : $"{totalEntries} skills to train",
+                    ? $"{remaining} {Loc.Get("PlanEditor.Of")} {totalEntries} {Loc.Get("PlanEditor.SkillsRemaining")}"
+                    : $"{totalEntries} {Loc.Get("PlanEditor.SkillsToTrain")}",
                 FontSize = FontScaleService.Body,
                 Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
             });
@@ -1809,7 +1860,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var finishDate = DateTime.UtcNow + stats.TrainingTime;
                 heroStack.Children.Add(new TextBlock
                 {
-                    Text = $"Finishes {finishDate:MMM d, yyyy}",
+                    Text = $"{Loc.Get("PlanEditor.Finishes")} {finishDate:MMM d, yyyy}",
                     FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF808080")),
                 });
@@ -1823,10 +1874,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             long booksCost = stats.NotKnownBooksCost;
 
             var costParts = new List<string>();
-            costParts.Add(FormatSP(stats.TotalSkillPoints) + " SP");
+            costParts.Add(FormatSP(stats.TotalSkillPoints));
             if (booksNeeded > 0)
             {
-                costParts.Add($"{booksNeeded} books");
+                costParts.Add($"{booksNeeded} {Loc.Get("PlanEditor.Books")}");
                 costParts.Add(FormatISK(booksCost));
             }
 
@@ -1844,7 +1895,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // ── Remap line ──
             if (character != null)
             {
-                AddThinDivider("Remap");
+                AddThinDivider(Loc.Get("PlanEditor.Remap"));
 
                 int bonusRemaps = character.AvailableReMaps;
                 bool canRemapNow = bonusRemaps > 0
@@ -1861,7 +1912,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 {
                     remapLine.Children.Add(new TextBlock
                     {
-                        Text = "\u2713 Available now",
+                        Text = "\u2713 " + Loc.Get("PlanEditor.AvailableNow"),
                         FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FF81C784")),
                     });
@@ -1871,7 +1922,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     int daysUntil = (int)(character.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
                     remapLine.Children.Add(new TextBlock
                     {
-                        Text = $"\u23F0 Next in {daysUntil}d",
+                        Text = $"\u23F0 {Loc.Get("PlanEditor.NextIn")} {daysUntil}d",
                         FontSize = FontScaleService.Body,
                         Foreground = new SolidColorBrush(Color.Parse("#FFFFD54F")),
                     });
@@ -1887,7 +1938,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     });
                     remapLine.Children.Add(new TextBlock
                     {
-                        Text = $"{bonusRemaps} bonus",
+                        Text = $"{bonusRemaps} {Loc.Get("PlanEditor.Bonus")}",
                         FontSize = FontScaleService.Body,
                         Foreground = GoldBrush,
                     });
@@ -1904,7 +1955,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 SidebarContent.Children.Add(new TextBlock
                 {
-                    Text = "\u26A1 Analyzing\u2026",
+                    Text = "\u26A1 " + Loc.Get("Plan.Analyzing"),
                     FontSize = FontScaleService.Body,
                     Foreground = GoldBrush,
                     Margin = new Thickness(0, 4, 0, 0),
@@ -1985,7 +2036,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 {
                     resultLine.Children.Add(new TextBlock
                     {
-                        Text = "\u2713 Already optimal",
+                        Text = "\u2713 " + Loc.Get("Plan.AlreadyOptimal"),
                         FontSize = FontScaleService.Body,
                         Foreground = GoldBrush,
                         VerticalAlignment = VerticalAlignment.Center,
@@ -2003,7 +2054,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                     SidebarContent.Children.Add(new TextBlock
                     {
-                        Text = "Current: " + string.Join("  ", currentParts),
+                        Text = Loc.Get("Plan.Current") + " " + string.Join("  ", currentParts),
                         FontSize = FontScaleService.Small,
                         Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                         Margin = new Thickness(0, 6, 0, 0),
@@ -2013,8 +2064,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     SidebarContent.Children.Add(new TextBlock
                     {
                         Text = hasSavings
-                            ? $"To save {FormatTimeCompact(savings)}, remap to:"
-                            : "Change attributes to:",
+                            ? string.Format(Loc.Get("Plan.RemapTo"), FormatTimeCompact(savings))
+                            : Loc.Get("Plan.ChangeAttrsTo"),
                         FontSize = FontScaleService.Small,
                         Foreground = hasSavings
                             ? new SolidColorBrush(Color.Parse("#FF81C784"))
@@ -2544,7 +2595,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var addBtn = new Button
             {
-                Content = "+ Add Skills",
+                Content = Loc.Get("PlanEditor.AddSkills"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 4),
                 CornerRadius = new CornerRadius(12),
@@ -2565,14 +2616,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (_viewModel == null) return;
 
             var stats = _viewModel.PlanStats;
-            SkillCountText.Text = $"{_viewModel.EntryCount} skills \u00B7 {stats.UniqueSkillsCount} unique";
+            SkillCountText.Text = $"{_viewModel.EntryCount} {Loc.Get("PlanEditor.Skills")} \u00B7 {stats.UniqueSkillsCount} {Loc.Get("PlanEditor.Unique")}";
             TrainingTimeText.Text = FormatTime(stats.TrainingTime);
             TotalSpText.Text = FormatSP(stats.TotalSkillPoints);
 
             if (stats.TrainingTime > TimeSpan.Zero)
             {
                 var finishDate = DateTime.UtcNow + stats.TrainingTime;
-                FinishDateText.Text = $"Finishes {finishDate:yyyy-MM-dd}";
+                FinishDateText.Text = $"{Loc.Get("PlanEditor.Finishes")} {finishDate:yyyy-MM-dd}";
             }
             else
             {
@@ -2587,7 +2638,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 int spPerInjector = GetSpPerInjector(characterSP);
                 int injectorCount = (int)Math.Ceiling((double)missingSP / spPerInjector);
                 double costBillions = injectorCount * 0.9;
-                InjectorText.Text = $"~{injectorCount} injectors (~{costBillions:F1}B ISK)";
+                InjectorText.Text = $"~{injectorCount} {Loc.Get("PlanEditor.Injectors")} (~{costBillions:F1}B {Loc.Get("Eve.ISK")})";
             }
             else
             {
@@ -2722,6 +2773,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             if (_viewModel == null) return;
             _viewModel.ToggleSortColumn(PlanEntrySort.PrimaryAttribute);
+            if (sender is Button btn)
+            {
+                bool active = _viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
+                    && _viewModel.SortOrder != ThreeStateSortOrder.None;
+                btn.Content = active ? Loc.Get("Plan.GroupedByAttr") : Loc.Get("Plan.GroupByAttr");
+            }
             Refresh();
         }
 
@@ -2858,16 +2915,46 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         internal void MoveSelectionUp()
         {
-            // For keyboard shortcut — move the first visible entry item
+            // Queue mode: use the queue control's actual selection
+            if (QueueListControl.IsVisible && _queueVm != null)
+            {
+                var indices = QueueListControl.GetSelectedIndicesSorted();
+                if (indices.Count == 0 || indices[0] <= 0) return;
+
+                int insertBefore = indices[0] - 1;
+                if (_queueVm.CanMove(indices, insertBefore))
+                {
+                    var newIndices = _queueVm.PerformMove(indices, insertBefore);
+                    QueueListControl.SetSelection(newIndices);
+                    QueueListControl.Rebuild();
+                }
+                return;
+            }
+
             if (_currentEntryItems == null || _currentEntryItems.Count == 0) return;
-            // Simple: move first item that can move
-            // In the future, track selection state properly
             var item = _currentEntryItems.FirstOrDefault(e => e.CanMoveUp);
             if (item != null) MoveItemUp(item);
         }
 
         internal void MoveSelectionDown()
         {
+            if (QueueListControl.IsVisible && _queueVm != null)
+            {
+                var indices = QueueListControl.GetSelectedIndicesSorted();
+                if (indices.Count == 0) return;
+
+                int insertAfter = indices[indices.Count - 1] + 2;
+                if (insertAfter > _queueVm.Items.Count) return;
+
+                if (_queueVm.CanMove(indices, insertAfter))
+                {
+                    var newIndices = _queueVm.PerformMove(indices, insertAfter);
+                    QueueListControl.SetSelection(newIndices);
+                    QueueListControl.Rebuild();
+                }
+                return;
+            }
+
             if (_currentEntryItems == null || _currentEntryItems.Count == 0) return;
             var item = _currentEntryItems.LastOrDefault(e => e.CanMoveDown);
             if (item != null) MoveItemDown(item);
@@ -2894,7 +2981,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private static string FormatTime(TimeSpan time)
         {
-            if (time <= TimeSpan.Zero) return "Done";
+            if (time <= TimeSpan.Zero) return Loc.Get("PlanEditor.Done");
             if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
             if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
             return $"{(int)time.TotalMinutes}m";

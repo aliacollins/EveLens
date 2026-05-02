@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using Avalonia.Controls;
+using EveLens.Common.Services;
 
 namespace EveLens.Avalonia.Views
 {
@@ -12,6 +13,7 @@ namespace EveLens.Avalonia.Views
         public SplashWindow()
         {
             InitializeComponent();
+            TaglineText.Text = Loc.Get("Splash.Tagline");
         }
 
         public void UpdateStatus(string text)

@@ -3,9 +3,9 @@ set -e
 
 PUBLISH_DIR="/mnt/d/evemon-main/publish/linux-x64"
 OUTPUT_DIR="/mnt/d/evemon-main/releases"
-VERSION="${1:-1.0.0-alpha.1}"
+CHANNEL="${1:-stable}"
 
-echo "=== Creating AppImage for $VERSION ==="
+echo "=== Creating AppImage for $CHANNEL ==="
 
 WORK="/tmp/evelens-appimage"
 rm -rf "$WORK"
@@ -45,8 +45,8 @@ if [ ! -f "$TOOL" ]; then
 fi
 
 cd "$WORK"
-ARCH=x86_64 "$TOOL" --no-appstream AppDir "EveLens-${VERSION}-linux-x86_64.AppImage"
+ARCH=x86_64 "$TOOL" --no-appstream AppDir "EveLens-${CHANNEL}-linux-x86_64.AppImage"
 
-cp "EveLens-${VERSION}-linux-x86_64.AppImage" "$OUTPUT_DIR/"
-ls -lh "$OUTPUT_DIR/EveLens-${VERSION}-linux-x86_64.AppImage"
+cp "EveLens-${CHANNEL}-linux-x86_64.AppImage" "$OUTPUT_DIR/"
+ls -lh "$OUTPUT_DIR/EveLens-${CHANNEL}-linux-x86_64.AppImage"
 echo "=== AppImage created ==="

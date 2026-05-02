@@ -33,6 +33,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterClonesView()
         {
             InitializeComponent();
+            LocalizeUI();
+        }
+
+        private void LocalizeUI()
+        {
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            CollapseAllBtn.Content = Loc.Get("Action.CollapseAll");
+            ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

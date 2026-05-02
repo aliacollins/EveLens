@@ -68,6 +68,7 @@ namespace EveLens.Common.ViewModels
         private List<AttributeImpact> _attributeImpacts = new();
         private Dictionary<EveAttribute, int> _implantBonuses = new();
         private RemappingResult? _lastResult;
+        private BaseCharacter? _character;
         private string _errorMessage = "";
 
         // Interactive optimizer state
@@ -340,10 +341,9 @@ namespace EveLens.Common.ViewModels
                 manualScratchpad[attr].Base = remappable + EveConstants.CharacterBaseAttributePoints;
             }
 
-            var manualResult = new RemappingResult(activeResult, manualScratchpad);
-            manualResult.Update();
-
-            ManualDuration = manualResult.BestDuration;
+            // Compute duration directly to avoid StartTime mismatch in RemappingResult constructor
+            var afterTraining = manualScratchpad.After(activeResult.Skills);
+            ManualDuration = afterTraining.TrainingTime.Subtract(activeResult.StartTime);
 
             // Update optimal to reflect manual values
             var newOptimal = new Dictionary<EveAttribute, int>();
@@ -382,13 +382,22 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>
-        /// Resets to the character's current attributes.
+        /// Resets to the character's current attributes (from the actual character, not the optimizer scratchpad).
         /// </summary>
         public void ResetToCurrent()
         {
             if (_lastResult?.BaseScratchpad == null) return;
 
-            InitializeManualFromScratchpad(_lastResult.BaseScratchpad);
+            // Use the character's actual current attributes, not the optimizer's BaseScratchpad
+            // which may reflect default values rather than the player's real remap state.
+            var character = _lastResult.BaseScratchpad;
+            var charScratchpad = new CharacterScratchpad(character);
+
+            // If we have a reference to the real character (from the plan), prefer that
+            if (_character != null)
+                charScratchpad = new CharacterScratchpad(_character);
+
+            InitializeManualFromScratchpad(charScratchpad);
             IsManuallyEdited = true;
             RecalculateManual();
 
@@ -443,6 +452,7 @@ namespace EveLens.Common.ViewModels
             if (plan == null || character == null)
                 return;
 
+            _character = character;
             Strategy = strategy;
             IsCalculating = true;
             HasResults = false;

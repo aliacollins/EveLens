@@ -62,6 +62,24 @@ namespace EveLens.Common.Helpers
         public PortableEveInstallationsSettings? PortableEveInstallations { get; set; }
         public CloudStorageServiceProviderSettings? CloudStorageServiceProvider { get; set; }
         public SchedulerSettings? Scheduler { get; set; }
+        public List<JsonGlobalPlanTemplate>? GlobalPlanTemplates { get; set; }
+    }
+
+    public class JsonGlobalPlanTemplate
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime CreatedDate { get; set; }
+        public List<Guid> SubscribedCharacterGuids { get; set; } = new();
+        public List<JsonGlobalPlanTemplateEntry> Entries { get; set; } = new();
+    }
+
+    public class JsonGlobalPlanTemplateEntry
+    {
+        public int SkillID { get; set; }
+        public string SkillName { get; set; } = string.Empty;
+        public int Level { get; set; }
     }
 
     /// <summary>

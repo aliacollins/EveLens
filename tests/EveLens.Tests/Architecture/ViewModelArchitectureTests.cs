@@ -70,7 +70,8 @@ namespace EveLens.Tests.Architecture
             {
                 "ItemPropertiesViewModel",
                 "CharacterComparisonViewModel",
-                "SkillFarmDashboardViewModel"
+                "SkillFarmDashboardViewModel",
+                "GlobalPlanDashboardViewModel"
             };
 
             // Every concrete ViewModel in the ViewModels namespace should inherit from ViewModelBase

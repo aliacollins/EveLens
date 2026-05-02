@@ -29,7 +29,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterWalletTransactionsView()
         {
             InitializeComponent();
+            LocalizeUI();
         }
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableWalletTx");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableWalletTxBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+        }
+
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {

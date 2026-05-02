@@ -40,8 +40,8 @@ $Repo = "aliacollins/EveLens"
 
 $WinPlatform = @{ Rid = "win-x64"; Exe = "EveLens.exe"; Dir = "publish/win-x64"; Out = "releases/win" }
 $OtherPlatforms = @(
-    @{ Rid = "linux-x64";  Dir = "publish/linux-x64";  Zip = "releases/EveLens-$Version-linux-x64.zip" }
-    @{ Rid = "osx-arm64";  Dir = "publish/osx-arm64";  Zip = "releases/EveLens-$Version-osx-arm64.zip" }
+    @{ Rid = "linux-x64";  Dir = "publish/linux-x64";  Zip = "releases/EveLens-$Channel-linux-x64.zip" }
+    @{ Rid = "osx-arm64";  Dir = "publish/osx-arm64";  Zip = "releases/EveLens-$Channel-osx-arm64.zip" }
 )
 
 # ── Preflight ──
@@ -170,10 +170,10 @@ try {
     Compress-Archive -Path "$($OtherPlatforms[0].Dir)/*" -DestinationPath $linuxZip
     Write-Host "  Zipped linux-x64." -ForegroundColor Green
 
-    $appImagePath = "releases/EveLens-${Version}-linux-x86_64.AppImage"
+    $appImagePath = "releases/EveLens-${Channel}-linux-x86_64.AppImage"
     if (Test-Path $appImagePath) { Remove-Item $appImagePath -Force }
     $wslScript = "/mnt/d/evemon-main/scripts/make-appimage.sh"
-    wsl bash $wslScript $Version 2>&1 | ForEach-Object { $_ }
+    wsl bash $wslScript $Channel 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'
     if (Test-Path $appImagePath) {
         Write-Host "  AppImage created." -ForegroundColor Green
@@ -189,7 +189,7 @@ try {
     Write-Host "  Zipped osx-arm64." -ForegroundColor Green
 
     # Build .app bundle via WSL to preserve Unix permissions and executable bit
-    $appBundleZip = "releases/EveLens-${Version}-osx-arm64.app.zip"
+    $appBundleZip = "releases/EveLens-${Channel}-osx-arm64.app.zip"
     if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
 
     $wslPublishDir = "/mnt/d/evemon-main/publish/osx-arm64"
@@ -237,7 +237,7 @@ PLIST
 
 # Zip with Unix permissions preserved (use cd to get clean paths)
 cd /tmp
-zip -r -y "$wslReleasesDir/EveLens-${Version}-osx-arm64.app.zip" EveLens.app
+zip -r -y "$wslReleasesDir/EveLens-${Channel}-osx-arm64.app.zip" EveLens.app
 rm -rf "`$APP_DIR"
 echo "=== macOS .app bundle created ==="
 "@
@@ -279,7 +279,7 @@ Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
 $allFiles += $file.FullName
 
 # Linux AppImage (if created)
-$appImageFile = "releases/EveLens-${Version}-linux-x86_64.AppImage"
+$appImageFile = "releases/EveLens-${Channel}-linux-x86_64.AppImage"
 if (Test-Path $appImageFile) {
     $file = Get-Item $appImageFile
     $sizeMB = [math]::Round($file.Length / 1MB, 1)
@@ -294,7 +294,7 @@ Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
 $allFiles += $file.FullName
 
 # macOS .app bundle
-$appBundleZip = "releases/EveLens-${Version}-osx-arm64.app.zip"
+$appBundleZip = "releases/EveLens-${Channel}-osx-arm64.app.zip"
 if (Test-Path $appBundleZip) {
     $file = Get-Item $appBundleZip
     $sizeMB = [math]::Round($file.Length / 1MB, 1)

@@ -25,6 +25,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterSkillQueueView()
         {
             InitializeComponent();
+            ExportCsvBtn.Content = Loc.Get("Queue.ExportCsv");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -96,11 +97,11 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             if (isEmpty)
             {
-                StatusText.Text = "No skills in training";
+                StatusText.Text = Loc.Get("Queue.NoSkillsInTraining");
                 return;
             }
 
-            statusParts.Add($"Skills in queue: {_viewModel.QueueEntries.Count}");
+            statusParts.Add($"{Loc.Get("Queue.SkillsInQueue")}: {_viewModel.QueueEntries.Count}");
 
             if (_viewModel.TrainingCount > 0 && ccp?.SkillQueue != null && ccp.IsTraining)
             {
@@ -117,15 +118,52 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 else
                     countdown = $"{remaining.Minutes}m {remaining.Seconds}s";
 
-                statusParts.Add($"Ends in: {countdown}");
-                statusParts.Add($"Ends on: {endTime:ddd dd MMM HH:mm} EVE");
+                statusParts.Add($"{Loc.Get("Queue.EndsIn")}: {countdown}");
+                statusParts.Add($"{Loc.Get("Queue.EndsOn")}: {endTime:ddd dd MMM HH:mm} EVE");
             }
             else
             {
-                statusParts.Add("Paused");
+                statusParts.Add(Loc.Get("Status.Paused"));
             }
 
             StatusText.Text = string.Join("  |  ", statusParts);
+        }
+
+        private async void OnExportCsv(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (_viewModel == null || !_viewModel.HasEntries) return;
+
+            try
+            {
+                var topLevel = TopLevel.GetTopLevel(this);
+                if (topLevel == null) return;
+
+                var result = await topLevel.StorageProvider.SaveFilePickerAsync(
+                    new global::Avalonia.Platform.Storage.FilePickerSaveOptions
+                    {
+                        Title = "Export Queue to CSV",
+                        SuggestedFileName = "skill_queue.csv",
+                        FileTypeChoices = new[]
+                        {
+                            new global::Avalonia.Platform.Storage.FilePickerFileType("CSV Files")
+                                { Patterns = new[] { "*.csv" } },
+                        }
+                    });
+
+                if (result == null) return;
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("Skill,Rank,Status,Time,Progress %");
+
+                foreach (var entry in _viewModel.QueueEntries)
+                {
+                    string time = entry.TimeText.Replace(",", " ");
+                    sb.AppendLine($"\"{entry.SkillText}\",\"{entry.RankText}\",\"{entry.StatusText}\",\"{time}\",{entry.Progress:F1}");
+                }
+
+                await System.IO.File.WriteAllTextAsync(result.Path.LocalPath, sb.ToString());
+            }
+            catch { }
         }
     }
 

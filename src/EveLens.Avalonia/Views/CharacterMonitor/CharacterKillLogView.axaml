@@ -10,15 +10,15 @@
                 Background="{StaticResource EveBackgroundDarkBrush}"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-                <TextBlock Text="Kill Log is not enabled for this character."
+                <TextBlock x:Name="EnableTitle" Text="Kill Log is not enabled for this character."
                            FontSize="{DynamicResource EveFontSubheading}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Center" />
-                <TextBlock Text="Enable this to start fetching data from EVE Online."
+                <TextBlock x:Name="EnableSubtext" Text="Enable this to start fetching data from EVE Online."
                            FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            HorizontalAlignment="Center" />
-                <Button Content="Enable Kill Log"
+                <Button x:Name="EnableBtn" Content="Enable Kill Log"
                         FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
                         HorizontalAlignment="Center"
                         Click="OnEnableEndpoint" />
@@ -27,9 +27,9 @@
 
         <Border x:Name="ScopePrompt" IsVisible="False" Padding="20">
             <StackPanel Spacing="8" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="ESI scope not authorized" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
+                <TextBlock x:Name="ScopeTitle" Text="ESI scope not authorized" FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
-                <TextBlock TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
+                <TextBlock x:Name="ScopeSubtext" TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
                            Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
             </StackPanel>
@@ -44,7 +44,7 @@
                     <!-- Right side: group selector + collapse/expand -->
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
                                 VerticalAlignment="Center">
-                        <TextBlock Text="Group by:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
+                        <TextBlock x:Name="GroupByLabel" Text="Group by:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
                         <ComboBox x:Name="GroupByCombo" FontSize="{DynamicResource EveFontBody}" Padding="8,3"
                                   MinWidth="120" SelectedIndex="0"
@@ -54,9 +54,9 @@
                             <ComboBoxItem Content="Ship Type" />
                             <ComboBoxItem Content="Corporation" />
                         </ComboBox>
-                        <Button Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
+                        <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnCollapseAll" />
-                        <Button Content="Expand All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
+                        <Button x:Name="ExpandAllBtn" Content="Expand All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnExpandAll" />
                     </StackPanel>
 

@@ -551,7 +551,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             bool isOmega = character.EffectiveCharacterStatus == AccountStatus.Omega;
             var badgeText = new TextBlock
             {
-                Text = isOmega ? "\u03A9 Omega" : "\u03B1 Alpha",
+                Text = isOmega ? $"\u03A9 {Loc.Get("Eve.Omega")}" : $"\u03B1 {Loc.Get("Eve.Alpha")}",
                 FontSize = FontScaleService.Caption, FontWeight = FontWeight.SemiBold,
                 Foreground = isOmega
                     ? new SolidColorBrush(Color.Parse("#FF00C853"))
@@ -1000,7 +1000,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 return (null, "");
 
             if (!ccp.IsTraining || ccp.CurrentlyTrainingSkill == null)
-                return (new SolidColorBrush(Color.Parse("#707080")), "Paused");
+                return (new SolidColorBrush(Color.Parse("#707080")), Loc.Get("Status.Paused"));
 
             var remaining = ccp.SkillQueue.EndTime - DateTime.UtcNow;
 
@@ -1108,7 +1108,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             if (PrivacyHelper.IsTrainingHidden)
             {
-                textBlock.Text = $"Training: {PrivacyHelper.Mask}";
+                textBlock.Text = $"{Loc.Get("Status.Training")}: {PrivacyHelper.Mask}";
                 textBlock.Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow;
                 return;
             }
@@ -1122,12 +1122,12 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     : remaining.TotalHours >= 1
                         ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
                         : $"{remaining.Minutes}m {remaining.Seconds}s";
-                textBlock.Text = $"Training: {skill.SkillName} {skill.Level} ({timeStr})";
+                textBlock.Text = $"{Loc.Get("Status.Training")}: {skill.SkillName} {skill.Level} ({timeStr})";
                 textBlock.Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow;
             }
             else
             {
-                textBlock.Text = "Paused";
+                textBlock.Text = Loc.Get("Status.Paused");
                 textBlock.Foreground = Brushes.Gray;
             }
         }
