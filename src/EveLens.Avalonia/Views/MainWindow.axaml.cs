@@ -1941,12 +1941,59 @@ namespace EveLens.Avalonia.Views
                 string currentVersion = AppServices.VelopackUpdate?.CurrentVersion
                     ?? AppServices.FileVersionInfo.FileVersion ?? "Unknown";
 
-                bool hasUpdate = await (AppServices.VelopackUpdate?.CheckNowAsync() ?? Task.FromResult(false));
+                bool hasUpdate;
+                string pendingVersionFromGitHub = "";
+                string releaseUrl = "";
+
+                // Velopack handles Windows updates. For macOS/Linux, check GitHub API.
+                if (AppServices.VelopackUpdate?.IsInstalled == true)
+                {
+                    hasUpdate = await (AppServices.VelopackUpdate?.CheckNowAsync() ?? Task.FromResult(false));
+                }
+                else
+                {
+                    // Cross-platform: check GitHub releases API
+                    try
+                    {
+                        using var http = new System.Net.Http.HttpClient();
+                        http.DefaultRequestHeaders.UserAgent.ParseAdd("EveLens");
+                        var json = await http.GetStringAsync("https://api.github.com/repos/aliacollins/EveLens/releases");
+                        // Find first release matching our channel (or any if stable)
+                        string channel = currentVersion.Contains("-beta") ? "beta"
+                            : currentVersion.Contains("-alpha") ? "alpha" : "stable";
+
+                        foreach (System.Text.Json.JsonElement release in System.Text.Json.JsonDocument.Parse(json).RootElement.EnumerateArray())
+                        {
+                            string tag = release.GetProperty("tag_name").GetString() ?? "";
+                            bool prerelease = release.GetProperty("prerelease").GetBoolean();
+
+                            // For beta channel, check all prereleases. For stable, skip prereleases.
+                            if (channel == "stable" && prerelease) continue;
+                            if (channel == "beta" && !tag.Contains("beta")) continue;
+                            if (channel == "alpha" && !tag.Contains("alpha") && !tag.Contains("beta")) continue;
+
+                            string latestVer = tag.TrimStart('v');
+                            if (string.Compare(latestVer, currentVersion, StringComparison.OrdinalIgnoreCase) > 0)
+                            {
+                                pendingVersionFromGitHub = latestVer;
+                                releaseUrl = release.GetProperty("html_url").GetString() ?? "";
+                            }
+                            break;
+                        }
+                        hasUpdate = !string.IsNullOrEmpty(pendingVersionFromGitHub);
+                    }
+                    catch
+                    {
+                        hasUpdate = false;
+                    }
+                }
 
                 if (hasUpdate)
                 {
-                    string pendingVersion = AppServices.VelopackUpdate?.PendingVersion ?? "newer version";
+                    string pendingVersion = AppServices.VelopackUpdate?.PendingVersion
+                        ?? pendingVersionFromGitHub ?? "newer version";
                     string releaseNotes = AppServices.VelopackUpdate?.PendingReleaseNotes ?? "";
+                    bool isVelopack = AppServices.VelopackUpdate?.IsInstalled == true;
 
                     var updateDialog = new Window
                     {
@@ -1957,7 +2004,7 @@ namespace EveLens.Avalonia.Views
 
                     var downloadBtn = new Button
                     {
-                        Content = "Download & Restart",
+                        Content = isVelopack ? "Download & Restart" : "Open Download Page",
                         FontSize = FontScaleService.Body,
                         Padding = new Thickness(12, 5),
                         CornerRadius = new CornerRadius(12),
@@ -1971,10 +2018,17 @@ namespace EveLens.Avalonia.Views
                         CornerRadius = new CornerRadius(12),
                     };
 
+                    var capturedReleaseUrl = releaseUrl;
                     downloadBtn.Click += async (_, _) =>
                     {
                         try
                         {
+                            if (!isVelopack && !string.IsNullOrEmpty(capturedReleaseUrl))
+                            {
+                                Util.OpenURL(new Uri(capturedReleaseUrl));
+                                updateDialog.Close();
+                                return;
+                            }
                             downloadBtn.IsEnabled = false;
                             downloadBtn.Content = "Downloading...";
                             bool downloaded = await (AppServices.VelopackUpdate?.DownloadUpdateAsync() ?? Task.FromResult(false));
