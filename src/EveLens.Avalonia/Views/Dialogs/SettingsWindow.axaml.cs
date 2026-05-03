@@ -93,7 +93,6 @@ namespace EveLens.Avalonia.Views.Dialogs
             SafeForWorkDesc.Text = Loc.Get("Settings.SafeForWorkDesc");
             CustomBrowserLabel.Text = Loc.Get("Settings.CustomBrowser");
             CustomBrowserDesc.Text = Loc.Get("Settings.CustomBrowserDesc");
-            BrowseBrowserButton.Content = Loc.Get("Settings.Browse");
             OpenDataDirButton.Content = Loc.Get("Settings.OpenDataDir");
 
             // Window section
@@ -231,8 +230,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             // --- Appearance ---
             PopulateThemeCombo();
             SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
-            CustomBrowserPathBox.Text = _settings.UI.CustomBrowserPath;
-            BrowseBrowserButton.Click += OnBrowseBrowser;
+            PopulateBrowserCombo();
             FontScaleSlider.Value = _settings.UI.FontScalePercent;
             FontScaleLabel.Text = $"{_settings.UI.FontScalePercent}%";
             FontScaleSlider.PropertyChanged += (_, e) =>
@@ -760,27 +758,109 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
-        private async void OnBrowseBrowser(object? sender, RoutedEventArgs e)
+        private void PopulateBrowserCombo()
         {
-            try
-            {
-                var topLevel = TopLevel.GetTopLevel(this);
-                if (topLevel == null) return;
+            BrowserCombo.Items.Clear();
 
-                var files = await topLevel.StorageProvider.OpenFilePickerAsync(
-                    new FilePickerOpenOptions
+            var defaultItem = new ComboBoxItem { Content = Loc.Get("Settings.DefaultBrowser"), Tag = "" };
+            BrowserCombo.Items.Add(defaultItem);
+
+            var browsers = DetectBrowsers();
+            foreach (var (name, path) in browsers)
+                BrowserCombo.Items.Add(new ComboBoxItem { Content = name, Tag = path });
+
+            string current = _settings.UI.CustomBrowserPath;
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                BrowserCombo.SelectedIndex = 0;
+            }
+            else
+            {
+                bool found = false;
+                for (int i = 0; i < BrowserCombo.Items.Count; i++)
+                {
+                    if (BrowserCombo.Items[i] is ComboBoxItem item &&
+                        string.Equals(item.Tag?.ToString(), current, StringComparison.OrdinalIgnoreCase))
                     {
-                        Title = Loc.Get("Settings.SelectBrowser"),
-                        AllowMultiple = false,
-                    });
+                        BrowserCombo.SelectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    var customItem = new ComboBoxItem { Content = System.IO.Path.GetFileName(current), Tag = current };
+                    BrowserCombo.Items.Add(customItem);
+                    BrowserCombo.SelectedIndex = BrowserCombo.Items.Count - 1;
+                }
+            }
+        }
 
-                if (files != null && files.Count > 0)
-                    CustomBrowserPathBox.Text = files[0].Path.LocalPath;
-            }
-            catch (Exception ex)
+        private static List<(string Name, string Path)> DetectBrowsers()
+        {
+            var browsers = new List<(string, string)>();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Debug.WriteLine($"Browse browser failed: {ex.Message}");
+                var candidates = new[]
+                {
+                    ("Google Chrome", "/Applications/Google Chrome.app"),
+                    ("Firefox", "/Applications/Firefox.app"),
+                    ("Safari", "/Applications/Safari.app"),
+                    ("Microsoft Edge", "/Applications/Microsoft Edge.app"),
+                    ("Brave Browser", "/Applications/Brave Browser.app"),
+                    ("Opera", "/Applications/Opera.app"),
+                    ("Arc", "/Applications/Arc.app"),
+                    ("Vivaldi", "/Applications/Vivaldi.app"),
+                };
+                foreach (var (name, path) in candidates)
+                    if (System.IO.Directory.Exists(path))
+                        browsers.Add((name, path));
             }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var candidates = new[]
+                {
+                    ("Google Chrome", @"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+                    ("Firefox", @"C:\Program Files\Mozilla Firefox\firefox.exe"),
+                    ("Microsoft Edge", @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+                    ("Brave", @"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe"),
+                    ("Opera", @"C:\Program Files\Opera\opera.exe"),
+                    ("Vivaldi", @"C:\Program Files\Vivaldi\Application\vivaldi.exe"),
+                };
+                foreach (var (name, path) in candidates)
+                    if (System.IO.File.Exists(path))
+                        browsers.Add((name, path));
+            }
+            else
+            {
+                var candidates = new[]
+                {
+                    ("Google Chrome", "google-chrome"),
+                    ("Chromium", "chromium-browser"),
+                    ("Firefox", "firefox"),
+                    ("Brave", "brave-browser"),
+                    ("Vivaldi", "vivaldi"),
+                };
+                foreach (var (name, cmd) in candidates)
+                {
+                    try
+                    {
+                        var proc = Process.Start(new ProcessStartInfo("which", cmd)
+                        {
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                        });
+                        string? output = proc?.StandardOutput.ReadLine();
+                        proc?.WaitForExit();
+                        if (proc?.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                            browsers.Add((name, output.Trim()));
+                    }
+                    catch { }
+                }
+            }
+
+            return browsers;
         }
 
         private static void OnOpenDataDirClick(object? sender, RoutedEventArgs e)
@@ -934,7 +1014,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             // Appearance
             _settings.UI.SafeForWork = SafeForWorkToggle.IsChecked == true;
-            _settings.UI.CustomBrowserPath = CustomBrowserPathBox.Text?.Trim() ?? string.Empty;
+            if (BrowserCombo.SelectedItem is ComboBoxItem selectedBrowser)
+                _settings.UI.CustomBrowserPath = selectedBrowser.Tag?.ToString() ?? string.Empty;
+            else
+                _settings.UI.CustomBrowserPath = string.Empty;
 
             int selectedThemeIndex = Math.Max(0, ThemeCombo.SelectedIndex);
             if (selectedThemeIndex < ThemeManager.AvailableThemes.Count)

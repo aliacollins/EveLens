@@ -55,12 +55,24 @@ namespace EveLens.Common
                 string customBrowser = Settings.UI.CustomBrowserPath;
                 if (!string.IsNullOrWhiteSpace(customBrowser))
                 {
-                    Process.Start(new ProcessStartInfo
+                    if (customBrowser.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
                     {
-                        FileName = customBrowser,
-                        Arguments = url.AbsoluteUri,
-                        UseShellExecute = false
-                    });
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "open",
+                            Arguments = $"-a \"{customBrowser}\" \"{url.AbsoluteUri}\"",
+                            UseShellExecute = false
+                        });
+                    }
+                    else
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = customBrowser,
+                            Arguments = url.AbsoluteUri,
+                            UseShellExecute = false
+                        });
+                    }
                     return;
                 }
 
