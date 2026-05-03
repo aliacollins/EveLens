@@ -20,6 +20,7 @@ using EveLens.Common.Enumerations.UISettings;
 using EveLens.Common.MarketPricer;
 using EveLens.Common.Serialization.Settings;
 using EveLens.Common.Services;
+using Avalonia.Platform.Storage;
 using EveLens.Common.SettingsObjects;
 
 namespace EveLens.Avalonia.Views.Dialogs
@@ -767,13 +768,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 if (topLevel == null) return;
 
                 var files = await topLevel.StorageProvider.OpenFilePickerAsync(
-                    new Avalonia.Platform.Storage.FilePickerOpenOptions
+                    new FilePickerOpenOptions
                     {
                         Title = Loc.Get("Settings.SelectBrowser"),
                         AllowMultiple = false,
                     });
 
-                if (files.Count > 0)
+                if (files != null && files.Count > 0)
                     CustomBrowserPathBox.Text = files[0].Path.LocalPath;
             }
             catch (Exception ex)
