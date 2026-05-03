@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$TempDir = "C:\Users\arpan\AppData\Local\Temp\evelens-sde-may"
+$TempDir = "C:\Users\arpan\AppData\Local\Temp\evelens-sde-3328718"
 $OutputDir = "D:\evemon-main\src\EveLens.Common\Resources"
 
 Write-Host "Parsing types.yaml for zh translations..."
@@ -73,7 +73,7 @@ if (Test-Path $mgPath) {
             $inName = $false
             continue
         }
-        if ($null -ne $currentId -and $line -match '^\s{2}nameID:$') {
+        if ($null -ne $currentId -and ($line -match '^\s{2}nameID:$' -or $line -match '^\s{2}name:$')) {
             $inName = $true
             continue
         }
