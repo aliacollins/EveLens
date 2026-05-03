@@ -9,11 +9,11 @@
 
 ---
 
-## EveLens 1.2.0 Is Here
+## EveLens 1.3.0 Beta
 
 EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,843 tests, 14 architectural laws, and support for **100+ characters** out of the box.
+This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,857 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.2.0](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -129,10 +129,14 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 ### Smart ESI Error Handling
 Per-endpoint health state machine that tracks ESI reliability per character. Transient errors are silently retried. Persistent failures get one activity log entry, not a hundred. Recovery is automatic. No more error spam filling your notification bell.
 
-### SDE Updated for Catalyst Expansion (March 19, 2026)
-- 5 new skills: Capital Disintegrator Specialization, Amarr/Caldari/Gallente/Minmatar Fighter Specialization
-- 82 new types, 31 modified types, 127 typeDogma changes
-- All balance changes: carrier cargo bays, fighter stats, FAX cap booster bonuses, Black Ops tank nerfs
+### Doctrine Designer (NEW in 1.3.0)
+Create shared skill templates for fleet doctrines, assign multiple characters, and compare training times side-by-side. Import from existing plans, see who can fly what, and generate personal training plans for each character with one click. Perfect for FCs managing fleet comps across 30+ characters.
+
+### Chinese Language Support (NEW in 1.3.0)
+Full Simplified Chinese (简体中文) localization with 300+ translated UI strings and 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance with auto-restart. Game terms use CCP's official Chinese translations.
+
+### CSV Export (NEW in 1.3.0)
+Export your full skill list or training queue to CSV files for spreadsheets, fleet planning, or sharing with corpmates.
 
 ### Character Skill Comparison
 Compare up to 10 characters side-by-side. Skills are shown with color-coded level blocks so differences jump out immediately. Toggle to show only skills that differ across characters. Columns auto-size and show full character names.
@@ -192,19 +196,28 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.2.0
+## What's New in 1.3.0
+
+- **Doctrine Designer** -- create shared skill templates, assign characters, compare training times, generate personal plans (Ctrl+G)
+- **Chinese language (简体中文)** -- full UI + 50K SDE translations with CCP official game terms
+- **CSV export** -- export skills and queue from the Skills and Queue tabs
+- **Skill Farm sort** -- click column headers to sort, "Add All Eligible" for batch adding
+- **Plan editor overhaul** -- whole-row drag (no grip dots), scroll offset fix, attribute group headers, specific prereq error messages
+- **macOS fixes** -- Cmd+W closes plan windows, menu title fixed, Unicode font fallback
+- **Windows icon fix** -- taskbar icon no longer reverts to default
+- **Attribute optimizer** -- "Reset to Current" and manual adjustments now produce correct results
+- **Website download links** -- no longer 404 between releases
+
+Full details: [CHANGELOG.md](CHANGELOG.md)
+
+## What Was New in 1.2.0
 
 - **Drag-to-reorder in Plan Editor** -- grab, multi-select, drag groups with real-time prerequisite validation
 - **Skill Farm Dashboard** -- full economics for extraction characters: Jita pricing, tax, profit projections, Omega sustainability
-- **Plan import/export overhaul** -- supports .emp, .txt, and EVE game clipboard format. Copy plans directly into the EVE skill queue
-- **Skill detail sidebar** -- double-click any skill for description, unlocks, enabled items, and plan-to actions
+- **Plan import/export overhaul** -- supports .emp, .txt, and EVE game clipboard format
 - **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
-- **Chain ribbons + timeline minimap** -- visual skill grouping by training goal
-- **Queue health on overview cards** -- color-coded status dots at a glance
-- **Gmail-style mail** -- split view with inline reading pane
-- **Bug fixes** -- plan import creating empty plans ([#51](https://github.com/aliacollins/EveLens/issues/51)), Windows shutdown hang ([#53](https://github.com/aliacollins/EveLens/issues/53)), skill browser collapse ([#52](https://github.com/aliacollins/EveLens/issues/52)), and more
 
-Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0) | [CHANGELOG.md](CHANGELOG.md)
+Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)
 
 ---
 
@@ -212,6 +225,8 @@ Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/relea
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **1.3.0-beta.1** | May 3, 2026 | Doctrine Designer, Chinese language, CSV export, Skill Farm sort, plan editor overhaul, macOS fixes, attribute optimizer fixes |
+| **[1.2.1](https://github.com/aliacollins/EveLens/releases/tag/v1.2.1)** | April 9, 2026 | Fix plan training time calculation |
 | **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
 | **[1.1.0](https://github.com/aliacollins/EveLens/releases/tag/v1.1.0)** | March 29, 2026 | Character Skill Comparison, variable font scaling, queue health monitor, ESI token fix, add character UX, group management redesign |
 | **[1.0.0](https://github.com/aliacollins/EveLens/releases/tag/v1.0.0)** | March 23, 2026 | First stable release -- Velopack auto-updates, Windows code signing, cross-platform launch |
