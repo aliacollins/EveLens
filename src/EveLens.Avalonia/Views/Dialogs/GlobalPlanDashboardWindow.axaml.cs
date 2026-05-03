@@ -194,10 +194,9 @@ namespace EveLens.Avalonia.Views.Dialogs
                     FontSize = FontScaleService.Body,
                     Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 60),
+                    Margin = new Thickness(0, 8),
                     TextWrapping = TextWrapping.Wrap,
                 });
-                return;
             }
 
             BuildSummaryCards();

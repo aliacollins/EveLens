@@ -63,7 +63,7 @@ namespace EveLens.Common.ViewModels
         private void BuildComparisonRows()
         {
             _comparisonRows = new List<SkillComparisonRow>();
-            if (_selectedTemplate == null || _subscribedCharacters.Count == 0) return;
+            if (_selectedTemplate == null) return;
 
             foreach (var entry in _selectedTemplate.Entries)
             {

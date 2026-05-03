@@ -52,6 +52,18 @@ namespace EveLens.Common
 
             try
             {
+                string customBrowser = Settings.UI.CustomBrowserPath;
+                if (!string.IsNullOrWhiteSpace(customBrowser))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = customBrowser,
+                        Arguments = url.AbsoluteUri,
+                        UseShellExecute = false
+                    });
+                    return;
+                }
+
                 if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
                     System.Runtime.InteropServices.OSPlatform.Linux))
                 {
@@ -74,7 +86,6 @@ namespace EveLens.Common
                 }
                 else
                 {
-                    // Windows: UseShellExecute = true opens URLs via the default browser
                     Process.Start(new ProcessStartInfo
                     {
                         FileName = url.AbsoluteUri,

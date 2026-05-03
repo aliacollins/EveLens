@@ -234,6 +234,21 @@
                                           VerticalAlignment="Center" />
                         </Grid>
 
+                        <!-- Custom Browser -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock x:Name="CustomBrowserLabel" Text="Custom Browser" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="CustomBrowserDesc" Text="Path to a browser executable. Leave empty to use OS default."
+                                           FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBox x:Name="CustomBrowserPathBox" Width="200" FontSize="{DynamicResource EveFontBody}"
+                                         Watermark="/usr/bin/firefox" />
+                                <Button x:Name="BrowseBrowserButton" Content="Browse..."
+                                        CornerRadius="12" Padding="10,4" FontSize="{DynamicResource EveFontBody}" />
+                            </StackPanel>
+                        </Grid>
+
                         <!-- Open Data Directory -->
                         <Button x:Name="OpenDataDirButton" Content="Open Data Directory" Tag="OpenDataDir"
                                 CornerRadius="12" Padding="10,4" FontSize="{DynamicResource EveFontBody}"

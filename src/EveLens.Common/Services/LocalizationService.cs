@@ -203,6 +203,10 @@ namespace EveLens.Common.Services
                 ["Settings.LanguageNote"] = "Game terms use CCP's official translations. Community translation — help us improve!",
                 ["Settings.SafeForWork"] = "Safe for Work",
                 ["Settings.SafeForWorkDesc"] = "Hide character portraits and identifying colors.",
+                ["Settings.CustomBrowser"] = "Custom Browser",
+                ["Settings.CustomBrowserDesc"] = "Path to a browser executable. Leave empty to use OS default.",
+                ["Settings.Browse"] = "Browse...",
+                ["Settings.SelectBrowser"] = "Select Browser",
                 ["Settings.OpenDataDir"] = "Open Data Directory",
 
                 // Settings — Window section
@@ -755,6 +759,10 @@ namespace EveLens.Common.Services
                 ["Settings.LanguageNote"] = "游戏术语使用CCP官方中文翻译。社区翻译——欢迎帮助改进！",
                 ["Settings.SafeForWork"] = "安全工作模式",
                 ["Settings.SafeForWorkDesc"] = "隐藏角色头像和识别颜色。",
+                ["Settings.CustomBrowser"] = "自定义浏览器",
+                ["Settings.CustomBrowserDesc"] = "浏览器可执行文件路径。留空使用系统默认浏览器。",
+                ["Settings.Browse"] = "浏览...",
+                ["Settings.SelectBrowser"] = "选择浏览器",
                 ["Settings.OpenDataDir"] = "打开数据目录",
 
                 // Settings — 窗口行为

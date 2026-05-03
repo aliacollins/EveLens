@@ -79,6 +79,12 @@ namespace EveLens.Common.SettingsObjects
         public string Language { get; set; } = "en";
 
         /// <summary>
+        /// Path to a custom browser executable. When empty, uses the OS default browser.
+        /// </summary>
+        [XmlElement("customBrowserPath")]
+        public string CustomBrowserPath { get; set; } = string.Empty;
+
+        /// <summary>
         /// When true, removes images and colours to make EveLens looks like some boring business application.
         /// </summary>
         [XmlElement("safeForWork")]

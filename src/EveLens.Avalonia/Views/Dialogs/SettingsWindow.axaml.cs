@@ -90,6 +90,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             LanguageDesc.Text = Loc.Get("Settings.LanguageDesc");
             SafeForWorkLabel.Text = Loc.Get("Settings.SafeForWork");
             SafeForWorkDesc.Text = Loc.Get("Settings.SafeForWorkDesc");
+            CustomBrowserLabel.Text = Loc.Get("Settings.CustomBrowser");
+            CustomBrowserDesc.Text = Loc.Get("Settings.CustomBrowserDesc");
+            BrowseBrowserButton.Content = Loc.Get("Settings.Browse");
             OpenDataDirButton.Content = Loc.Get("Settings.OpenDataDir");
 
             // Window section
@@ -175,7 +178,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void BuildSectionMap()
         {
             AddSection("Appearance", AppearancePanel, NavAppearance,
-                new[] { "appearance", "theme", "safe for work", "compatibility", "wine", "data directory" });
+                new[] { "appearance", "theme", "safe for work", "compatibility", "wine", "data directory", "browser" });
             AddSection("Window", WindowPanel, NavWindow,
                 new[] { "window", "behavior", "behaviour", "tray", "icon", "close", "minimize",
                         "system tray" });
@@ -227,6 +230,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             // --- Appearance ---
             PopulateThemeCombo();
             SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
+            CustomBrowserPathBox.Text = _settings.UI.CustomBrowserPath;
+            BrowseBrowserButton.Click += OnBrowseBrowser;
             FontScaleSlider.Value = _settings.UI.FontScalePercent;
             FontScaleLabel.Text = $"{_settings.UI.FontScalePercent}%";
             FontScaleSlider.PropertyChanged += (_, e) =>
@@ -754,6 +759,29 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        private async void OnBrowseBrowser(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var topLevel = TopLevel.GetTopLevel(this);
+                if (topLevel == null) return;
+
+                var files = await topLevel.StorageProvider.OpenFilePickerAsync(
+                    new Avalonia.Platform.Storage.FilePickerOpenOptions
+                    {
+                        Title = Loc.Get("Settings.SelectBrowser"),
+                        AllowMultiple = false,
+                    });
+
+                if (files.Count > 0)
+                    CustomBrowserPathBox.Text = files[0].Path.LocalPath;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Browse browser failed: {ex.Message}");
+            }
+        }
+
         private static void OnOpenDataDirClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -905,6 +933,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             // Appearance
             _settings.UI.SafeForWork = SafeForWorkToggle.IsChecked == true;
+            _settings.UI.CustomBrowserPath = CustomBrowserPathBox.Text?.Trim() ?? string.Empty;
 
             int selectedThemeIndex = Math.Max(0, ThemeCombo.SelectedIndex);
             if (selectedThemeIndex < ThemeManager.AvailableThemes.Count)
