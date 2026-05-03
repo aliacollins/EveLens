@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 APP_DIR="/tmp/EveLens.app"
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
@@ -11,6 +14,9 @@ cp -r /mnt/d/evemon-main/publish/osx-arm64/* "$APP_DIR/Contents/MacOS/"
 
 # Set executable permission on the main binary
 chmod +x "$APP_DIR/Contents/MacOS/EveLens"
+
+# Copy icon into Resources
+cp "$PROJECT_ROOT/installer/icons/evelens.icns" "$APP_DIR/Contents/Resources/evelens.icns"
 
 # Create Info.plist
 cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
@@ -30,6 +36,8 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
   <string>1.2.1</string>
   <key>CFBundleExecutable</key>
   <string>EveLens</string>
+  <key>CFBundleIconFile</key>
+  <string>evelens</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>NSHighResolutionCapable</key>

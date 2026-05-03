@@ -41,6 +41,13 @@
     <AvaloniaResource Include="Properties\EveLens.png" />
   </ItemGroup>
 
+  <!-- Copy icon PNG to output for Linux/macOS desktop integration -->
+  <ItemGroup>
+    <None Include="..\..\installer\icons\evelens-256.png" Link="evelens.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <!-- Copy ESI credentials file to output if it exists -->
   <ItemGroup>
     <None Include="..\..\esi-credentials.json" Condition="Exists('..\..\esi-credentials.json')">

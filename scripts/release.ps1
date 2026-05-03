@@ -194,6 +194,7 @@ try {
 
     $wslPublishDir = "/mnt/d/evemon-main/publish/osx-arm64"
     $wslReleasesDir = "/mnt/d/evemon-main/releases"
+    $wslIconsDir = "/mnt/d/evemon-main/installer/icons"
     $wslScript = @"
 #!/bin/bash
 set -e
@@ -208,6 +209,9 @@ cp -r $wslPublishDir/* "`$APP_DIR/Contents/MacOS/"
 
 # Set executable permission on the main binary
 chmod +x "`$APP_DIR/Contents/MacOS/EveLens"
+
+# Copy icon into Resources
+cp "$wslIconsDir/evelens.icns" "`$APP_DIR/Contents/Resources/evelens.icns"
 
 # Create Info.plist
 cat > "`$APP_DIR/Contents/Info.plist" << 'PLIST'
@@ -227,6 +231,8 @@ cat > "`$APP_DIR/Contents/Info.plist" << 'PLIST'
   <string>$Version</string>
   <key>CFBundleExecutable</key>
   <string>EveLens</string>
+  <key>CFBundleIconFile</key>
+  <string>evelens</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>NSHighResolutionCapable</key>

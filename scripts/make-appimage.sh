@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 PUBLISH_DIR="/mnt/d/evemon-main/publish/linux-x64"
 OUTPUT_DIR="/mnt/d/evemon-main/releases"
 CHANNEL="${1:-stable}"
@@ -32,9 +35,9 @@ exec "$HERE/usr/bin/EveLens" "$@"
 EOF
 chmod +x "$WORK/AppDir/AppRun"
 
-# Minimal PNG icon placeholder
-printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB\x60\x82' > "$WORK/AppDir/evelens.png"
-cp "$WORK/AppDir/evelens.png" "$WORK/AppDir/usr/share/icons/hicolor/256x256/apps/"
+# Copy the real 256x256 icon
+cp "$PROJECT_ROOT/installer/icons/evelens-256.png" "$WORK/AppDir/evelens.png"
+cp "$PROJECT_ROOT/installer/icons/evelens-256.png" "$WORK/AppDir/usr/share/icons/hicolor/256x256/apps/evelens.png"
 
 # Download appimagetool if not cached
 TOOL="$WORK/appimagetool"

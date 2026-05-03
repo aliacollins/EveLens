@@ -53,7 +53,7 @@ $VersionFile = Join-Path $ResourcesDir "sde-version.json"
 
 # Default to the latest known SDE URL if none provided
 if (-not $Url -and -not $LocalZip -and -not $SkipDownload) {
-    $Url = "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3261822-yaml.zip"
+    $Url = "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3328718-yaml.zip"
 }
 
 function Write-Step($step, $message) {
