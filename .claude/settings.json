@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\":\"CLAUDE.MD CHECK: If you made code changes, verify CLAUDE.md is up to date -- test count (1857+), version number, new systems/features documented, architectural laws current.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

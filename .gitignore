@@ -241,6 +241,7 @@ publish/
 *-Setup.exe
 *.AppImage
 .claude
+!.claude/settings.json
 
 # Cached build tools (appimagetool, etc.)
 scripts/.tools/
