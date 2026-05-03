@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$TempDir = "C:\Users\arpan\AppData\Local\Temp\evelens-sde2"
+$TempDir = "C:\Users\arpan\AppData\Local\Temp\evelens-sde-may"
 $OutputDir = "D:\evemon-main\src\EveLens.Common\Resources"
 
 Write-Host "Parsing types.yaml for zh translations..."

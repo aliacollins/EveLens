@@ -20,6 +20,7 @@ These laws prevent regression to the old monolithic architecture. 1857 tests enf
 12. **Tests Prove Behavior** — No feature without a test. No bug fix without a regression test. Commit tests with code.
 13. **Serialization DTOs Are the Data Contract** — Changes to SerializableSettings/JsonConfig/etc. require round-trip tests.
 14. **No Direct EveLensClient Access from UI** — Use `AppServices.Characters` not `EveLensClient.Characters`. If AppServices lacks it, add a forwarding property.
+15. **No Fuzzwork** — Never use Fuzzwork (fuzzwork.co.uk) for SDE data, market data, or any EVE data. Always use CCP's official SDE from `https://developers.eveonline.com/static-data` and ESI API directly.
 
 ## Promotion System (CRITICAL)
 
