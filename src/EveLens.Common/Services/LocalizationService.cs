@@ -147,6 +147,7 @@ namespace EveLens.Common.Services
                 ["Plan.GroupedByAttr"] = "Grouped by Attr ✓",
                 ["Plan.QueueReordered"] = "Queue reordered",
                 ["Plan.DragToReorder"] = "Drag to reorder · Double-click for details",
+                ["Plan.DragCancelled"] = "Drag cancelled",
 
                 // Skill Farm
                 ["SkillFarm.Title"] = "Skill Farm Dashboard",
@@ -702,6 +703,7 @@ namespace EveLens.Common.Services
                 ["Plan.GroupedByAttr"] = "已按属性分组 ✓",
                 ["Plan.QueueReordered"] = "队列已重新排序",
                 ["Plan.DragToReorder"] = "拖动以重新排序 · 双击查看详情",
+                ["Plan.DragCancelled"] = "拖动已取消",
 
                 // Skill Farm — 技能农场
                 ["SkillFarm.Title"] = "技能农场面板",

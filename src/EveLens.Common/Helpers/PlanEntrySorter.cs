@@ -90,28 +90,35 @@ namespace EveLens.Common.Helpers
         /// <param name="list"></param>
         private static void FixPrerequisitesOrder(ICollection<PlanEntry> list)
         {
-            // Gather prerequisites/postrequisites relationships and use them to connect nodes - O(n�) operation
+            // Gather prerequisites/postrequisites relationships and use them to connect nodes
             Dictionary<PlanEntry, List<PlanEntry>> dependencies = new Dictionary<PlanEntry, List<PlanEntry>>();
             foreach (PlanEntry entry in list)
             {
                 dependencies[entry] = new List<PlanEntry>(list.Where(x => entry.IsDependentOf(x)));
             }
 
-
-            // Insert entries
+            // Insert entries, preferring same-attribute runs to keep grouping intact
             LinkedList<PlanEntry> entriesToAdd = new LinkedList<PlanEntry>(list);
             SkillLevelSet<PlanEntry> set = new SkillLevelSet<PlanEntry>();
             list.Clear();
 
+            EveAttribute lastAttr = EveAttribute.None;
+
             while (entriesToAdd.Count != 0)
             {
-                // Gets the first entry which has all its prerequisites satisfied.
-                PlanEntry item = entriesToAdd.First(x => dependencies[x].All(y => set[y.Skill, y.Level] != null));
+                // Find all entries whose prerequisites are satisfied
+                var ready = entriesToAdd
+                    .Where(x => dependencies[x].All(y => set[y.Skill, y.Level] != null))
+                    .ToList();
 
-                // Add it to the set and list, and remove it from the entries to add
+                // Prefer entries from the same primary attribute as the last added skill
+                PlanEntry item = ready.FirstOrDefault(x => x.Skill.PrimaryAttribute == lastAttr)
+                    ?? ready.First();
+
                 set[item.Skill, item.Level] = item;
                 entriesToAdd.Remove(item);
                 list.Add(item);
+                lastAttr = item.Skill.PrimaryAttribute;
             }
         }
 

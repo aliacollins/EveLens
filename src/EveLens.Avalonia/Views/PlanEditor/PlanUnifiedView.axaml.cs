@@ -511,7 +511,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (_viewModel?.Plan == null) return;
 
             _queueVm ??= new PlanQueueManager();
-            _queueVm.Initialize(_viewModel.Plan, _viewModel.Character as Character);
+            // Pass sorted display entries so the queue reflects attribute grouping
+            var sortedEntries = _viewModel.DisplayPlan?.ToArray();
+            _queueVm.Initialize(_viewModel.Plan, _viewModel.Character as Character, sortedEntries);
 
             QueueListControl.SetViewModel(_queueVm);
 
@@ -525,12 +527,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnQueueReordered()
         {
-            // The plan has been modified by drag-drop. Force everything to refresh.
+            // The plan has been modified by drag-drop. Clear sort so the manual order persists.
             if (_viewModel != null)
             {
+                _viewModel.ToggleSortColumn(PlanEntrySort.None);
                 _viewModel.Plan.UpdateStatistics();
                 _viewModel.UpdateDisplayPlan();
             }
+
+            // Reset group button state
+            QueueListControl.GroupByAttribute = false;
+            GroupByAttrBtn.Content = Loc.Get("Plan.GroupByAttr");
+
             UpdateStatsHeader();
             if (_activeSidebarTab == "Plan")
                 BuildSidebarContent();
@@ -2772,13 +2780,29 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private void OnGroupByAttribute(object? sender, RoutedEventArgs e)
         {
             if (_viewModel == null) return;
-            _viewModel.ToggleSortColumn(PlanEntrySort.PrimaryAttribute);
-            if (sender is Button btn)
+
+            bool wasActive = _viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
+                && _viewModel.SortOrder != ThreeStateSortOrder.None;
+
+            if (wasActive)
             {
-                bool active = _viewModel.SortCriteria == PlanEntrySort.PrimaryAttribute
-                    && _viewModel.SortOrder != ThreeStateSortOrder.None;
-                btn.Content = active ? Loc.Get("Plan.GroupedByAttr") : Loc.Get("Plan.GroupByAttr");
+                // Turn off — back to manual order
+                _viewModel.ToggleSortColumn(PlanEntrySort.None);
             }
+            else
+            {
+                // Turn on — group by attribute (ascending only)
+                _viewModel.SortCriteria = PlanEntrySort.PrimaryAttribute;
+                _viewModel.SortOrder = ThreeStateSortOrder.Ascending;
+                _viewModel.Plan.SortingPreferences.Criteria = PlanEntrySort.PrimaryAttribute;
+                _viewModel.Plan.SortingPreferences.Order = ThreeStateSortOrder.Ascending;
+                _viewModel.UpdateDisplayPlan();
+            }
+
+            bool active = !wasActive;
+            if (sender is Button btn)
+                btn.Content = active ? Loc.Get("Plan.GroupedByAttr") : Loc.Get("Plan.GroupByAttr");
+            QueueListControl.GroupByAttribute = active;
             Refresh();
         }
 

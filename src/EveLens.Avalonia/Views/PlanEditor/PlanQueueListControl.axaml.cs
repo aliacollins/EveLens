@@ -29,6 +29,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private readonly HashSet<int> _selected = new();
         private int _lastClickIndex = -1;
         private const double RowHeight = 36;
+        private bool _groupByAttribute;
 
         // Drag state
         private bool _isDragging;
@@ -72,6 +73,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
             HeaderLevel.Text = Loc.Get("Plan.Level");
         }
 
+        public bool GroupByAttribute
+        {
+            get => _groupByAttribute;
+            set { _groupByAttribute = value; Rebuild(); }
+        }
+
         public void SetViewModel(PlanQueueManager viewModel)
         {
             _viewModel = viewModel;
@@ -93,11 +100,27 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private void BuildRows()
         {
             _rowControls.Clear();
+            EveAttribute lastAttr = EveAttribute.None;
 
             for (int i = 0; i < _viewModel!.Items.Count; i++)
             {
                 var item = _viewModel.Items[i];
                 var row = BuildRow(item, i);
+
+                // When grouped by attribute, add a visible separator on rows
+                // where the primary attribute changes — no extra rows, no broken indices
+                if (_groupByAttribute && item.PrimaryAttribute != lastAttr && i > 0)
+                {
+                    var (_, fg) = GetAttrColors(item.PrimaryAttribute);
+                    if (row is Border b)
+                    {
+                        b.BorderThickness = new Thickness(0, 3, 0, 0);
+                        b.BorderBrush = new SolidColorBrush(Color.FromArgb(80, fg.R, fg.G, fg.B));
+                        b.Margin = new Thickness(0, 2, 0, 0);
+                    }
+                }
+                lastAttr = item.PrimaryAttribute;
+
                 _rowControls.Add(row);
             }
 
@@ -335,6 +358,45 @@ namespace EveLens.Avalonia.Views.PlanEditor
             return container;
         }
 
+        private static (Color bg, Color fg) GetAttrColors(EveAttribute attr) => attr switch
+        {
+            EveAttribute.Memory => (Color.FromArgb(30, 74, 148, 240), Color.Parse("#6AAEF0")),
+            EveAttribute.Perception => (Color.FromArgb(30, 68, 195, 106), Color.Parse("#54D878")),
+            EveAttribute.Charisma => (Color.FromArgb(30, 230, 166, 50), Color.Parse("#E6A632")),
+            EveAttribute.Willpower => (Color.FromArgb(30, 170, 136, 250), Color.Parse("#AA88FA")),
+            EveAttribute.Intelligence => (Color.FromArgb(30, 240, 240, 240), Color.Parse("#DCDCDC")),
+            _ => (Color.FromArgb(30, 128, 128, 128), Color.Parse("#808080")),
+        };
+
+        private static Control BuildAttributeGroupHeader(EveAttribute attr)
+        {
+            var (bg, fg) = attr switch
+            {
+                EveAttribute.Memory => (Color.FromArgb(40, 74, 148, 240), Color.Parse("#6AAEF0")),
+                EveAttribute.Perception => (Color.FromArgb(40, 68, 195, 106), Color.Parse("#54D878")),
+                EveAttribute.Charisma => (Color.FromArgb(40, 230, 166, 50), Color.Parse("#E6A632")),
+                EveAttribute.Willpower => (Color.FromArgb(40, 170, 136, 250), Color.Parse("#AA88FA")),
+                EveAttribute.Intelligence => (Color.FromArgb(40, 240, 240, 240), Color.Parse("#DCDCDC")),
+                _ => (Color.FromArgb(40, 128, 128, 128), Color.Parse("#808080")),
+            };
+
+            return new Border
+            {
+                Height = 28,
+                Background = new SolidColorBrush(bg),
+                Padding = new Thickness(18, 4),
+                Margin = new Thickness(0, 4, 0, 0),
+                Child = new TextBlock
+                {
+                    Text = Loc.Get($"Eve.{attr}"),
+                    FontSize = FontScaleService.Body,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = new SolidColorBrush(fg),
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            };
+        }
+
         private static Border BuildFullAttrPill(EveAttribute attr)
         {
             string text = attr.ToString();
@@ -536,6 +598,21 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (_dragGhost != null)
                 Canvas.SetTop(_dragGhost, viewportY - 16);
 
+            // Auto-scroll when dragging near edges
+            double scrollZone = 40;
+            double viewportHeight = QueueScroller.Bounds.Height;
+            if (viewportY < scrollZone)
+            {
+                double speed = (scrollZone - viewportY) / scrollZone * 8;
+                QueueScroller.Offset = new Vector(0, Math.Max(0, QueueScroller.Offset.Y - speed));
+            }
+            else if (viewportY > viewportHeight - scrollZone)
+            {
+                double speed = (viewportY - (viewportHeight - scrollZone)) / scrollZone * 8;
+                double maxScroll = QueueScroller.Extent.Height - viewportHeight;
+                QueueScroller.Offset = new Vector(0, Math.Min(maxScroll, QueueScroller.Offset.Y + speed));
+            }
+
             int slot = (int)Math.Round(absoluteY / RowHeight);
             slot = Math.Max(0, Math.Min(totalItems, slot));
 
@@ -555,9 +632,54 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 : new SolidColorBrush(Color.Parse("#E84A4A"));
         }
 
+        private void CancelDrag()
+        {
+            if (!_isDragging) return;
+
+            QueueScroller.PointerMoved -= OnDragPointerMoved;
+            QueueScroller.PointerReleased -= OnDragPointerReleased;
+
+            if (_dragGhost != null)
+            {
+                DragCanvas.Children.Remove(_dragGhost);
+                _dragGhost = null;
+            }
+
+            foreach (var row in _rowControls)
+            {
+                row.Opacity = 1.0;
+                row.RenderTransform = null;
+            }
+
+            InsertIndicator.IsVisible = false;
+            _isDragging = false;
+            _dragStartIndex = -1;
+            _currentInsertSlot = -1;
+
+            ShowToast(Loc.Get("Plan.DragCancelled"), false);
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (e.Key == Key.Escape && _isDragging)
+            {
+                CancelDrag();
+                e.Handled = true;
+            }
+        }
+
         private void OnDragPointerReleased(object? sender, PointerReleasedEventArgs e)
         {
             if (!_isDragging || _viewModel == null) return;
+
+            // Right-click cancels drag
+            if (e.InitialPressMouseButton == MouseButton.Right)
+            {
+                e.Pointer.Capture(null);
+                CancelDrag();
+                return;
+            }
 
             QueueScroller.PointerMoved -= OnDragPointerMoved;
             QueueScroller.PointerReleased -= OnDragPointerReleased;

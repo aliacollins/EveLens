@@ -29,8 +29,19 @@ namespace EveLens.Common.ViewModels
         {
             _plan = plan;
             _character = character;
+            _overrideEntries = null;
             Rebuild();
         }
+
+        public void Initialize(Plan? plan, Character? character, IEnumerable<PlanEntry>? sortedEntries)
+        {
+            _plan = plan;
+            _character = character;
+            _overrideEntries = sortedEntries?.ToList();
+            Rebuild();
+        }
+
+        private List<PlanEntry>? _overrideEntries;
 
         /// <summary>
         /// Full rebuild from the plan's current entries.
@@ -47,8 +58,8 @@ namespace EveLens.Common.ViewModels
             // Ensure training times are computed
             _plan.UpdateStatistics();
 
-            // Build item VMs from plan entries
-            var entries = _plan.ToList();
+            // Use sorted display entries if provided, otherwise plan order
+            var entries = _overrideEntries ?? _plan.ToList();
             Items = entries.Select(e => new PlanQueueItem(e, _character)).ToList();
 
             // Infer chains
@@ -113,13 +124,15 @@ namespace EveLens.Common.ViewModels
         public bool CanMove(IReadOnlyList<int> selectedIndices, int insertBefore)
         {
             if (_plan == null) return false;
-            return PlanReorderService.CanMove(_plan.ToList(), selectedIndices, insertBefore);
+            var entries = _overrideEntries ?? _plan.ToList();
+            return PlanReorderService.CanMove(entries, selectedIndices, insertBefore);
         }
 
         public string? GetBlockingReason(IReadOnlyList<int> selectedIndices, int insertBefore)
         {
             if (_plan == null) return null;
-            return PlanReorderService.GetBlockingReason(_plan.ToList(), selectedIndices, insertBefore);
+            var entries = _overrideEntries ?? _plan.ToList();
+            return PlanReorderService.GetBlockingReason(entries, selectedIndices, insertBefore);
         }
 
         /// <summary>
@@ -130,7 +143,7 @@ namespace EveLens.Common.ViewModels
         {
             if (_plan == null) return new List<int>();
 
-            var entries = _plan.ToList();
+            var entries = _overrideEntries ?? _plan.ToList();
 
             // Track by (skillId, level) pair — NOT just skillId, since multiple
             // levels of the same skill have the same ID
@@ -143,8 +156,10 @@ namespace EveLens.Common.ViewModels
 
             var newOrder = PlanReorderService.PerformMove(entries, selectedIndices, insertBefore);
 
-            // Apply the new order to the plan
+            // Apply the new order to the plan and clear sort override
             _plan.RebuildPlanFrom(newOrder);
+            _plan.SortingPreferences.Order = Enumerations.UISettings.ThreeStateSortOrder.None;
+            _overrideEntries = null;
 
             // Read back the ACTUAL order after plan enforcement
             var actualOrder = _plan.ToList();
