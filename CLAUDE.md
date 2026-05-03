@@ -574,5 +574,6 @@ This project was formerly known as EVEMon. It was rebranded to EveLens in Februa
 - **.NET 8 Avalonia** cross-platform application (Windows, Linux, macOS)
 - **ESI API** for EVE Online data (OAuth2)
 - Settings location: `%APPDATA%\EveLens\`
-- **Version:** 1.3.0-beta.1
+- **Version:** 1.3.0-beta.3
 - **Tests:** 1857 passing
+- **SDE:** Build 3328718 (51,551 types, 2,697 groups)

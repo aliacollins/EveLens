@@ -225,7 +225,7 @@ Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/relea
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **1.3.0-beta.1** | May 3, 2026 | Doctrine Designer, Chinese language, CSV export, Skill Farm sort, plan editor overhaul, macOS fixes, attribute optimizer fixes |
+| **1.3.0-beta.3** | May 3, 2026 | Doctrine Designer, Chinese language, CSV export, Skill Farm sort, plan editor overhaul, EveLens branded icons, custom browser setting, SDE build 3328718, macOS/Linux icon fixes |
 | **[1.2.1](https://github.com/aliacollins/EveLens/releases/tag/v1.2.1)** | April 9, 2026 | Fix plan training time calculation |
 | **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
 | **[1.1.0](https://github.com/aliacollins/EveLens/releases/tag/v1.1.0)** | March 29, 2026 | Character Skill Comparison, variable font scaling, queue health monitor, ESI token fix, add character UX, group management redesign |

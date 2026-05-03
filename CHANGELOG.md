@@ -17,11 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plan editor: specific prereq error messages** — Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
 - **Plan editor: double-click hint tooltip** — Rows show "Drag to reorder · Double-click for details" on hover
 - **ESI timer tooltips** — Hover the status bar countdown for an explanation of what it means
+- **Custom browser setting** — Choose which browser opens for ESI authentication (auto-detect or specific browser)
+- **SDE updated to build 3328718** — 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
 
 ### Changed
 
 - **Plan editor: whole-row drag** — Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
 - **Release asset naming** — macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
+- **EveLens branded icons** — All platform icons (Windows, macOS, Linux) replaced with proper EveLens logo at all resolutions
 
 ### Fixed
 
@@ -34,7 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Windows taskbar icon reverted to default** — Explicitly set after InitializeComponent to survive theme loading (#58)
 - **macOS: Cmd+W didn't close plan windows** — Added Meta modifier check alongside Control (#59)
 - **macOS: menu title showed "Avalonia Application"** — Set Application.Name="EveLens" in App.axaml
-- **macOS: Unicode character names broken** — Added cross-platform font fallback chain (Segoe UI → Helvetica Neue → Noto Sans → DejaVu Sans)
+- **macOS: Unicode character names broken** — Added cross-platform font fallback chain (Segoe UI, Helvetica Neue, Noto Sans, DejaVu Sans)
+- **macOS: dock icon showed generic app icon** — Proper hi-res .icns now embedded in .app bundle
+- **Linux: AppImage had 1px placeholder icon** — Now uses real 256px EveLens icon
+- **Doctrine Designer crash without characters** — No longer crashes when opened before any characters are loaded
 
 ## [1.2.1] - 2026-04-09
 
