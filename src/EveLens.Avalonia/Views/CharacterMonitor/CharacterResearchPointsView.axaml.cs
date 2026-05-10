@@ -27,7 +27,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterResearchPointsView()
         {
             InitializeComponent();
+            LocalizeUI();
         }
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableResearch");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableResearchBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            FilterLabel.Text = Loc.Get("ListView.Filter");
+        }
+
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {

@@ -109,11 +109,12 @@ namespace EveLens.Avalonia
             Settings.Initialize();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Settings.Initialize done", printMethod: false);
 
-            // Apply font scale from settings (before any views are created)
+            // Apply font scale and language from settings (before any views are created)
             FontScaleService.Apply(Settings.UI.FontScalePercent);
+            Loc.Language = Settings.UI.Language ?? "en";
 
             // Phase 6: Load static datafiles
-            splash.UpdateStatus("Loading game data...");
+            splash.UpdateStatus(Loc.Get("Splash.LoadingGameData"));
             Dispatcher.UIThread.RunJobs();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Loading game data", printMethod: false);
             Task.Run(() => GlobalDatafileCollection.LoadAsync()).Wait();
@@ -183,6 +184,13 @@ namespace EveLens.Avalonia
             SetupTrayIcon(desktop);
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - tray icon configured", printMethod: false);
 
+            // Phase 11.5: Show "What's New" dialog once per version
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                try { ShowWhatsNewIfNeeded(); }
+                catch { }
+            }, global::Avalonia.Threading.DispatcherPriority.Background);
+
             // Phase 12: Register shutdown handler
             desktop.ShutdownRequested += (_, _) =>
             {
@@ -217,6 +225,33 @@ namespace EveLens.Avalonia
                     AppServices.Shutdown();
                 }
             };
+        }
+
+        private void ShowWhatsNewIfNeeded()
+        {
+            var currentVersion = AppServices.FileVersionInfo?.ProductVersion ?? "";
+            if (string.IsNullOrEmpty(currentVersion)) return;
+
+            var lastShown = Settings.Updates.LastShownWhatsNewVersion;
+
+#if DEBUG
+            // Always show in debug builds for testing
+            bool shouldShow = true;
+#else
+            bool shouldShow = lastShown != currentVersion;
+#endif
+            if (!shouldShow) return;
+
+            // Mark as shown before opening (prevents double-show on crash)
+            Settings.Updates.LastShownWhatsNewVersion = currentVersion;
+            Settings.Save();
+
+            var window = new Views.Dialogs.WhatsNewWindow();
+            var mainWindow = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (mainWindow != null)
+                window.ShowDialog(mainWindow);
+            else
+                window.Show();
         }
 
         private void SetupTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)

@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/codegraph.ps1 -Quiet && echo '{\"systemMessage\":\"Code graph regenerated. Read .codegraph/quick-ref.md before making structural changes.\"}'",
+            "timeout": 60,
+            "statusMessage": "Regenerating code graph..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\":\"CLAUDE.MD CHECK: If you made code changes, verify CLAUDE.md is up to date -- test count (1857+), version number, new systems/features documented, architectural laws current.\"}'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\":\"CODE GRAPH: If you added/removed events, services, or interface implementations, run /codegraph generate to keep the graph current.\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

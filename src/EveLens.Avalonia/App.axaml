@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              x:Class="EveLens.Avalonia.App"
+             Name="EveLens"
              RequestedThemeVariant="Dark">
     <Application.Resources>
         <converters:PrivacyMaskConverter x:Key="PrivacyMask" />

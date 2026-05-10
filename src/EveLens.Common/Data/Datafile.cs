@@ -72,6 +72,15 @@ namespace EveLens.Common.Data
         /// If both exist, compares MD5 to ensure cached version is up to date.
         /// This ensures that when EveLens is updated, new datafiles replace old cached ones.
         /// </remarks>
+        public static string GetDatafilesDirectory()
+        {
+            string installDir = $"{AppDomain.CurrentDomain.BaseDirectory}Resources";
+            if (Directory.Exists(installDir)) return installDir;
+
+            return AppServices.ApplicationPaths.DataDirectory ??
+                   Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EveLens");
+        }
+
         internal static string GetFullPath(string filename)
         {
             string evelensDataDir = AppServices.ApplicationPaths.DataDirectory ??

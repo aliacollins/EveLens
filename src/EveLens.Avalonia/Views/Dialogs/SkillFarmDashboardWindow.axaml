@@ -36,6 +36,9 @@
                 <Button x:Name="AddCharBtn" Content="+ Add Character"
                         FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                         CornerRadius="12" Click="OnAddCharacterClick" />
+                <Button x:Name="AddAllBtn" Content="+ Add All Eligible"
+                        FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
+                        CornerRadius="12" Click="OnAddAllEligibleClick" />
                 <Button x:Name="RefreshBtn" Content="Refresh"
                         FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                         CornerRadius="12" Click="OnRefreshClick" />

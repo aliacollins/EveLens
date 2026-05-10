@@ -34,7 +34,20 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterKillLogView()
         {
             InitializeComponent();
+            LocalizeUI();
         }
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableKillLog");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableKillLogBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            GroupByLabel.Text = Loc.Get("ListView.GroupBy");
+            CollapseAllBtn.Content = Loc.Get("Action.CollapseAll");
+            ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
+        }
+
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {

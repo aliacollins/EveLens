@@ -186,7 +186,7 @@ namespace EveLens.Common.ViewModels
         {
             long currentSP = character.SkillPoints;
             long threshold = Math.Max(settings.ExtractionThreshold, MinimumSPForExtraction);
-            long extractableSP = Math.Max(0, currentSP - MinimumSPForExtraction);
+            long extractableSP = Math.Max(0, currentSP - threshold);
             int largeExtractions = (int)(extractableSP / SpPerLargeExtraction);
 
             // SP/hour from current training
@@ -204,7 +204,7 @@ namespace EveLens.Common.ViewModels
             TimeSpan timeToNext = TimeSpan.Zero;
             if (largeExtractions == 0 && spPerHour > 0)
             {
-                long spNeeded = MinimumSPForExtraction + SpPerLargeExtraction - currentSP;
+                long spNeeded = threshold + SpPerLargeExtraction - currentSP;
                 if (spNeeded > 0)
                     timeToNext = TimeSpan.FromHours(spNeeded / spPerHour);
             }
@@ -231,6 +231,7 @@ namespace EveLens.Common.ViewModels
             {
                 Character = character,
                 CurrentSP = currentSP,
+                ExtractionThreshold = threshold,
                 SpPerHour = spPerHour,
                 IsTraining = isTraining,
                 ImplantLevel = implantLevel,
@@ -267,6 +268,52 @@ namespace EveLens.Common.ViewModels
             }
         }
 
+        public void SortBy(string column, bool descending)
+        {
+            _entries.Sort((a, b) =>
+            {
+                int cmp = column switch
+                {
+                    "Character" => string.Compare(a.Character.Name, b.Character.Name, StringComparison.OrdinalIgnoreCase),
+                    "SP" => a.CurrentSP.CompareTo(b.CurrentSP),
+                    "Base" => a.ExtractionThreshold.CompareTo(b.ExtractionThreshold),
+                    "Injectors" => a.ExtractionsAvailable.CompareTo(b.ExtractionsAvailable),
+                    "Extractor Cost" => a.ExtractorCost.CompareTo(b.ExtractorCost),
+                    "Revenue" => a.GrossRevenuePerExtraction.CompareTo(b.GrossRevenuePerExtraction),
+                    "Net Profit" => a.NetProfitPerExtraction.CompareTo(b.NetProfitPerExtraction),
+                    "SP/hr" => a.SpPerHour.CompareTo(b.SpPerHour),
+                    "Status" => string.Compare(a.StatusText, b.StatusText, StringComparison.OrdinalIgnoreCase),
+                    _ => 0,
+                };
+                return descending ? -cmp : cmp;
+            });
+        }
+
+        public int AddAllEligible()
+        {
+            var settings = Settings.UI.SkillFarm;
+            var allChars = AppServices.Characters?.Cast<Character>().ToList() ?? new List<Character>();
+            int added = 0;
+
+            foreach (var character in allChars)
+            {
+                if (character.SkillPoints < MinimumSPForExtraction) continue;
+                if (settings.FarmCharacters.Any(f => f.CharacterGuid == character.Guid)) continue;
+
+                settings.FarmCharacters.Add(new SkillFarmCharacterSettings
+                {
+                    CharacterGuid = character.Guid,
+                    ExtractionThreshold = settings.DefaultExtractionThreshold
+                });
+                added++;
+            }
+
+            if (added > 0)
+                Settings.Save();
+
+            return added;
+        }
+
         public void AddFarmCharacter(Character character)
         {
             var settings = Settings.UI.SkillFarm;
@@ -292,6 +339,16 @@ namespace EveLens.Common.ViewModels
             }
         }
 
+        public void SetExtractionThreshold(Character character, long thresholdSP)
+        {
+            var settings = Settings.UI.SkillFarm;
+            var charSettings = settings.FarmCharacters.FirstOrDefault(f => f.CharacterGuid == character.Guid);
+            if (charSettings == null) return;
+
+            charSettings.ExtractionThreshold = Math.Max(thresholdSP, MinimumSPForExtraction);
+            Settings.Save();
+        }
+
         public void Dispose() { }
     }
 
@@ -300,6 +357,7 @@ namespace EveLens.Common.ViewModels
     {
         public Character Character { get; init; } = null!;
         public long CurrentSP { get; init; }
+        public long ExtractionThreshold { get; init; }
         public double SpPerHour { get; init; }
         public bool IsTraining { get; init; }
         public int ImplantLevel { get; init; }

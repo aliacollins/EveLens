@@ -63,6 +63,18 @@ namespace EveLens.Common.Data
         public string Name { get; }
 
         /// <summary>
+        /// Gets the localized group name, falling back to English if no translation exists.
+        /// </summary>
+        public string LocalizedName
+        {
+            get
+            {
+                string translated = StaticTranslations.GetGroupName(ID);
+                return string.IsNullOrEmpty(translated) ? Name : translated;
+            }
+        }
+
+        /// <summary>
         /// Gets the unknown static skill group.
         /// </summary>
         /// <value>

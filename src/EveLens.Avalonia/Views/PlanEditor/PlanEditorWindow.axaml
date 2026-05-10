@@ -70,11 +70,11 @@
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                    <Button Content="Clear Plan" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="ClearPlanBtn" Content="Clear Plan" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnClearPlan" />
-                    <Button Content="Import Fit ▾" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="ImportFitBtn" Content="Import Fit ▾" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnImportFitMenu" />
-                    <Button Content="Export ▾" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="ExportBtn" Content="Export ▾" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnExportMenu" />
                 </StackPanel>
                 <TextBlock x:Name="StatusText" FontSize="{DynamicResource EveFontBody}"

@@ -241,6 +241,7 @@ publish/
 *-Setup.exe
 *.AppImage
 .claude
+!.claude/settings.json
 
 # Cached build tools (appimagetool, etc.)
 scripts/.tools/
@@ -251,3 +252,6 @@ docs/
 !README.md
 !CHANGELOG.md
 !CONTRIBUTING.md
+
+# Generated code graph (regenerate with scripts/codegraph.ps1)
+.codegraph/

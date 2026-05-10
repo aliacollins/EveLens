@@ -44,6 +44,20 @@ namespace EveLens.Common.Helpers
                 }).ToList(),
                 SSOClientID = settings.SSOClientID,
                 SSOClientSecret = settings.SSOClientSecret,
+                GlobalPlanTemplates = settings.GlobalPlanTemplates.Select(t => new JsonGlobalPlanTemplate
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Description = t.Description,
+                    CreatedDate = t.CreatedDate,
+                    SubscribedCharacterGuids = new List<Guid>(t.SubscribedCharacterGuids),
+                    Entries = t.Entries.Select(e => new JsonGlobalPlanTemplateEntry
+                    {
+                        SkillID = e.SkillID,
+                        SkillName = e.SkillName,
+                        Level = e.Level
+                    }).ToList()
+                }).ToList(),
                 UI = settings.UI,
                 G15 = settings.G15,
                 Proxy = settings.Proxy,

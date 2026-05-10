@@ -18,6 +18,7 @@ using EveLens.Avalonia.ViewModels;
 
 using EveLens.Avalonia.ViewModels;
 using EveLens.Avalonia.Services;
+using EveLens.Common.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanSkillBrowserView : UserControl
@@ -29,6 +30,23 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanSkillBrowserView()
         {
             InitializeComponent();
+            LocalizeControls();
+        }
+
+        private void LocalizeControls()
+        {
+            FilterAllBtn.Content = Loc.Get("PlanEditor.AllSkills");
+            FilterTrainedBtn.Content = Loc.Get("PlanEditor.Trained");
+            FilterPrereqBtn.Content = Loc.Get("PlanEditor.HavePrereqs");
+            FilterUntrainedBtn.Content = Loc.Get("PlanEditor.Untrained");
+            CollapseBtn.Content = Loc.Get("PlanEditor.Collapse");
+            ExpandBtn.Content = Loc.Get("PlanEditor.Expand");
+            FilterBox.Watermark = Loc.Get("PlanEditor.SearchSkills");
+            RankLabel.Text = Loc.Get("PlanEditor.Rank");
+            PrimaryLabel.Text = Loc.Get("PlanEditor.Primary");
+            SecondaryLabel.Text = Loc.Get("PlanEditor.Secondary");
+            TrainingTimeLabel.Text = Loc.Get("PlanEditor.TrainingTimeLabel");
+            PrereqsLabel.Text = Loc.Get("PlanEditor.Prerequisites");
         }
 
         public void SetViewModel(PlanEditorViewModel planEditor)
@@ -48,7 +66,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var detected = _viewModel.DetectedRemap;
             var items = new List<AttributeFilterItem>
             {
-                new("All Attributes", false)
+                new(Loc.Get("PlanEditor.AllAttributes"), false)
             };
             int detectedIndex = 0; // default to "All Attributes"
             for (int i = 0; i < _viewModel.AvailableAttributeCombos.Count; i++)
@@ -185,8 +203,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             DetailPanel.IsVisible = true;
             DetailName.Text = detail.Name;
             DetailRank.Text = detail.Rank.ToString();
-            DetailPrimary.Text = detail.PrimaryAttribute.ToString();
-            DetailSecondary.Text = detail.SecondaryAttribute.ToString();
+            DetailPrimary.Text = Loc.Get($"Eve.{detail.PrimaryAttribute}");
+            DetailSecondary.Text = Loc.Get($"Eve.{detail.SecondaryAttribute}");
             DetailDescription.Text = detail.Description;
 
             // Build level rows

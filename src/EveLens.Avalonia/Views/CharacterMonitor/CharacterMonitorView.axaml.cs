@@ -81,6 +81,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterMonitorView()
         {
             InitializeComponent();
+            LocalizeTabs();
 
             // Populate endpoint toggles when the flyout opens
             var gearBtn = this.FindControl<Button>("EndpointGearBtn");
@@ -88,6 +89,32 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             {
                 flyout.Opened += OnFlyoutOpened;
             }
+        }
+
+        private void LocalizeTabs()
+        {
+            TabSkills.Header = Loc.Get("Tab.Skills");
+            TabQueue.Header = Loc.Get("Tab.Queue");
+            TabClones.Header = Loc.Get("Tab.Clones");
+            TabEmployment.Header = Loc.Get("Tab.Employment");
+            TabStandings.Header = Loc.Get("Tab.Standings");
+            TabContacts.Header = Loc.Get("Tab.Contacts");
+            TabMedals.Header = Loc.Get("Tab.Medals");
+            TabLP.Header = Loc.Get("Tab.LP");
+            TabAssets.Header = Loc.Get("Tab.Assets");
+            TabOrders.Header = Loc.Get("Tab.MarketOrders");
+            TabContracts.Header = Loc.Get("Tab.Contracts");
+            TabIndustry.Header = Loc.Get("Tab.IndustryJobs");
+            TabJournal.Header = Loc.Get("Tab.Wallet");
+            TabTransactions.Header = Loc.Get("Tab.Transactions");
+            TabMail.Header = Loc.Get("Tab.Mail");
+            TabNotify.Header = Loc.Get("Tab.Notifications");
+            TabKills.Header = Loc.Get("Tab.KillLog");
+
+            EndpointsTitle.Text = Loc.Get("Endpoints.Title");
+            EndpointsDesc.Text = Loc.Get("Endpoints.Description");
+            EnableAllBtn.Content = Loc.Get("Endpoints.EnableAll");
+            DisableAllBtn.Content = Loc.Get("Endpoints.DisableAll");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

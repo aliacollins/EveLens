@@ -74,6 +74,8 @@ namespace EveLens.Common.Collections.Global
 
             await Task.WhenAll(skills, properties);
 
+            StaticTranslations.Load();
+
             // Must always run synchronously as blueprints, reprocessing and certificates depend on it
             await TaskHelper.RunIOBoundTaskAsync(() => StaticItems.Load());
 

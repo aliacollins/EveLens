@@ -22,9 +22,9 @@
                         <ToggleButton x:Name="FilterUntrainedBtn" Content="Untrained"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                       Click="OnFilterModeClick" />
-                        <Button Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                        <Button x:Name="CollapseBtn" Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                        <Button x:Name="ExpandBtn" Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </WrapPanel>
                     <!-- Attribute filter -->
@@ -143,19 +143,19 @@
                                Foreground="{StaticResource EveAccentPrimaryBrush}" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="Rank:" FontSize="{DynamicResource EveFontBody}"
+                            <TextBlock x:Name="RankLabel" Text="Rank:" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
                             <TextBlock x:Name="DetailRank" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="Primary:" FontSize="{DynamicResource EveFontBody}"
+                            <TextBlock x:Name="PrimaryLabel" Text="Primary:" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
                             <TextBlock x:Name="DetailPrimary" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="Secondary:" FontSize="{DynamicResource EveFontBody}"
+                            <TextBlock x:Name="SecondaryLabel" Text="Secondary:" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
                             <TextBlock x:Name="DetailSecondary" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
@@ -165,11 +165,11 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="80" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock Text="Training Time:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="TrainingTimeLabel" Text="Training Time:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="LevelsList" Spacing="4" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock Text="Prerequisites:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="PrereqsLabel" Text="Prerequisites:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
                 </StackPanel>

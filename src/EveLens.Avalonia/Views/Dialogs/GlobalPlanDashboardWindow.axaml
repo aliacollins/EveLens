@@ -1,0 +1,90 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="EveLens.Avalonia.Views.Dialogs.GlobalPlanDashboardWindow"
+        Title="Doctrine Designer"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        Width="1100" Height="700" MinWidth="800" MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource EveBackgroundDarkBrush}">
+
+    <DockPanel Margin="0">
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Height="32"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <DockPanel Margin="12,0">
+                <TextBlock x:Name="StatusText" Text="Select or create a template to get started"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
+        <!-- Main content: sidebar + grid -->
+        <Grid ColumnDefinitions="220,1,*">
+            <!-- Left sidebar -->
+            <Border Grid.Column="0" Background="{StaticResource EveBackgroundDarkBrush}">
+                <DockPanel>
+                    <!-- Sidebar header -->
+                    <StackPanel DockPanel.Dock="Top" Margin="12,10,12,6" Spacing="8">
+                        <TextBlock x:Name="DoctrinesSidebarLabel" Text="Doctrines" FontSize="{DynamicResource EveFontSubheading}"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                        <Button x:Name="NewTemplateBtn" Content="+ New Doctrine"
+                                HorizontalAlignment="Stretch" Padding="8,5"
+                                CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
+                        <Button x:Name="ImportFromPlanBtn" Content="Import from Plan"
+                                HorizontalAlignment="Stretch" Padding="8,5"
+                                CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
+                    </StackPanel>
+
+                    <!-- Template list -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="TemplateList" Spacing="2" Margin="8,4" />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Divider -->
+            <Border Grid.Column="1" Background="{StaticResource EveBorderBrush}" />
+
+            <!-- Right panel -->
+            <Border Grid.Column="2" Background="{StaticResource EveBackgroundDarkBrush}">
+                <DockPanel>
+                    <!-- Toolbar -->
+                    <Border DockPanel.Dock="Top" Padding="12,8"
+                            Background="{StaticResource EveBackgroundMediumBrush}">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                                <Button x:Name="AddSkillBtn" Content="+ Add Skill"
+                                        Padding="10,4" CornerRadius="12"
+                                        FontSize="{DynamicResource EveFontBody}" />
+                                <Button x:Name="AddCharBtn" Content="+ Add Character"
+                                        Padding="10,4" CornerRadius="12"
+                                        FontSize="{DynamicResource EveFontBody}" />
+                                <Button x:Name="ApplyAllBtn" Content="Create Plans for All"
+                                        Padding="10,4" CornerRadius="12"
+                                        FontSize="{DynamicResource EveFontBody}" />
+                            </StackPanel>
+                            <TextBlock x:Name="TemplateTitle" Text="No template selected"
+                                       FontSize="{DynamicResource EveFontHeading}"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Summary cards -->
+                    <WrapPanel x:Name="SummaryCards" DockPanel.Dock="Top"
+                               Orientation="Horizontal" Margin="12,8,12,4" />
+
+                    <!-- Comparison grid -->
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="ComparisonGrid" Margin="12,4" Spacing="1" />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

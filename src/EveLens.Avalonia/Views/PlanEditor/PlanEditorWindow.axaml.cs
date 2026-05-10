@@ -35,6 +35,21 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanEditorWindow()
         {
             InitializeComponent();
+            LocalizeControls();
+        }
+
+        private void LocalizeControls()
+        {
+            Title = Loc.Get("PlanEditor.Title");
+            PlanTab.Content = Loc.Get("PlanEditor.PlanTab");
+            SkillsTab.Content = Loc.Get("PlanEditor.SkillsTab");
+            ShipsTab.Content = Loc.Get("PlanEditor.ShipsTab");
+            ItemsTab.Content = Loc.Get("PlanEditor.ItemsTab");
+            BlueprintsTab.Content = Loc.Get("PlanEditor.BlueprintsTab");
+            SearchBox.Watermark = Loc.Get("PlanEditor.SearchSkills");
+            ClearPlanBtn.Content = Loc.Get("PlanEditor.ClearPlan");
+            ImportFitBtn.Content = Loc.Get("PlanEditor.ImportFit") + " ▾";
+            ExportBtn.Content = Loc.Get("PlanEditor.Export") + " ▾";
         }
 
         public void Initialize(Plan plan, Character character)
@@ -151,7 +166,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var menu = new ContextMenu();
 
-            var copyItem = new MenuItem { Header = "Copy to Clipboard" };
+            var copyItem = new MenuItem { Header = Loc.Get("PlanEditor.CopyToClipboard") };
             copyItem.Click += async (_, _) =>
             {
                 try
@@ -174,7 +189,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             menu.Items.Add(copyItem);
 
-            var saveItem = new MenuItem { Header = "Save to File..." };
+            var saveItem = new MenuItem { Header = Loc.Get("PlanEditor.SaveToFile") };
             saveItem.Click += async (_, _) =>
             {
                 try
@@ -235,7 +250,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var menu = new ContextMenu();
 
-            var clipItem = new MenuItem { Header = "From Clipboard (EFT/XML/DNA)" };
+            var clipItem = new MenuItem { Header = Loc.Get("PlanEditor.FromClipboard") };
             clipItem.Click += async (_, _) =>
             {
                 try
@@ -262,7 +277,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             menu.Items.Add(clipItem);
 
-            var fileItem = new MenuItem { Header = "From File..." };
+            var fileItem = new MenuItem { Header = Loc.Get("PlanEditor.FromFile") };
             fileItem.Click += async (_, _) =>
             {
                 try
@@ -590,14 +605,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             if (_viewModel == null) return;
             var stats = _viewModel.PlanStats;
-            StatusText.Text = $"Training time: {FormatTime(stats.TrainingTime)} | " +
-                              $"Skills: {_viewModel.EntryCount} | " +
-                              $"SP: {stats.TotalSkillPoints:N0}";
+            StatusText.Text = $"{Loc.Get("PlanEditor.TrainingTime")}: {FormatTime(stats.TrainingTime)} | " +
+                              $"{Loc.Get("PlanEditor.Skills")}: {_viewModel.EntryCount} | " +
+                              $"{Loc.Get("Eve.SP")}: {stats.TotalSkillPoints:N0}";
         }
 
         private static string FormatTime(TimeSpan time)
         {
-            if (time <= TimeSpan.Zero) return "Done";
+            if (time <= TimeSpan.Zero) return Loc.Get("PlanEditor.Done");
             if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
             if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
             return $"{(int)time.TotalMinutes}m";
@@ -607,8 +622,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             base.OnKeyDown(e);
 
-            // Ctrl+W closes the plan editor window
-            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && e.Key == Key.W)
+            // Ctrl+W / Cmd+W closes the plan editor window
+            if ((e.KeyModifiers.HasFlag(KeyModifiers.Control) ||
+                 e.KeyModifiers.HasFlag(KeyModifiers.Meta)) && e.Key == Key.W)
             {
                 Close();
                 e.Handled = true;

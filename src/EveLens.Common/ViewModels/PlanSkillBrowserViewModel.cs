@@ -11,6 +11,7 @@ using EveLens.Common.Enumerations;
 using EveLens.Common.Events;
 using EveLens.Common.Helpers;
 using EveLens.Common.Models;
+using EveLens.Common.Services;
 using EveLens.Core.Interfaces;
 
 namespace EveLens.Common.ViewModels
@@ -214,7 +215,7 @@ namespace EveLens.Common.ViewModels
 
             _allGroups = StaticSkills.AllGroups
                 .Where(g => g.Any())
-                .OrderBy(g => g.Name)
+                .OrderBy(g => g.LocalizedName)
                 .Select(g => new PlanSkillGroupEntry(g, character, _planEditor?.Plan))
                 .Where(g => g.TotalCount > 0)
                 .ToList();
@@ -328,10 +329,10 @@ namespace EveLens.Common.ViewModels
 
         public PlanSkillGroupEntry(StaticSkillGroup group, Character? character, Plan? plan)
         {
-            Name = group.Name;
+            Name = group.LocalizedName;
             _allSkills = group
                 .Where(s => s.IsPublic)
-                .OrderBy(s => s.Name)
+                .OrderBy(s => s.LocalizedName)
                 .Select(s => new PlanSkillEntry(s, character, plan))
                 .ToList();
             TotalCount = _allSkills.Count;
@@ -369,7 +370,8 @@ namespace EveLens.Common.ViewModels
             if (!string.IsNullOrEmpty(filter))
             {
                 filtered = filtered.Where(s =>
-                    s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+                    s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    s.StaticSkill.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
             }
 
             if (attributeFilter != null)
@@ -403,13 +405,13 @@ namespace EveLens.Common.ViewModels
         public bool IsKnown { get; private set; }
         public long Rank { get; }
 
-        public string RankText => $"(Rank {Rank})";
-        public string LevelText => IsKnown ? $"Level {Skill.GetRomanFromInt(CharacterLevel)}" : "Not trained";
+        public string RankText => $"({Loc.Get("Eve.Rank")} {Rank})";
+        public string LevelText => IsKnown ? $"{Loc.Get("Eve.Level")} {Skill.GetRomanFromInt(CharacterLevel)}" : Loc.Get("PlanEditor.NotTrained");
 
         public PlanSkillEntry(StaticSkill staticSkill, Character? character, Plan? plan)
         {
             StaticSkill = staticSkill;
-            Name = staticSkill.Name;
+            Name = staticSkill.LocalizedName;
             Rank = staticSkill.Rank;
             UpdatePlannedLevel(character, plan);
         }
@@ -437,7 +439,7 @@ namespace EveLens.Common.ViewModels
 
         public SkillDetailInfo(StaticSkill skill, Character? character, Plan? plan)
         {
-            Name = skill.Name;
+            Name = skill.LocalizedName;
             Description = skill.Description;
             Rank = skill.Rank;
             PrimaryAttribute = skill.PrimaryAttribute;
@@ -489,7 +491,7 @@ namespace EveLens.Common.ViewModels
             // Build prerequisites
             Prerequisites = skill.Prerequisites
                 .Select(p => new SkillPrerequisiteInfo(
-                    p.Skill.Name,
+                    p.Skill.LocalizedName,
                     p.Level,
                     character?.GetSkillLevel(p.Skill) ?? 0))
                 .ToList();
@@ -562,8 +564,18 @@ namespace EveLens.Common.ViewModels
         {
             Primary = primary;
             Secondary = secondary;
-            DisplayText = $"{primary} / {secondary}";
+            DisplayText = $"{GetLocalizedAttribute(primary)} / {GetLocalizedAttribute(secondary)}";
         }
+
+        private static string GetLocalizedAttribute(EveAttribute attr) => attr switch
+        {
+            EveAttribute.Intelligence => Loc.Get("Eve.Intelligence"),
+            EveAttribute.Memory => Loc.Get("Eve.Memory"),
+            EveAttribute.Perception => Loc.Get("Eve.Perception"),
+            EveAttribute.Willpower => Loc.Get("Eve.Willpower"),
+            EveAttribute.Charisma => Loc.Get("Eve.Charisma"),
+            _ => attr.ToString(),
+        };
 
         public bool Equals(AttributeCombo? other)
             => other != null && Primary == other.Primary && Secondary == other.Secondary;

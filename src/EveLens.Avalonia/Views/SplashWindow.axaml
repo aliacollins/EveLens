@@ -25,7 +25,7 @@
                            FontWeight="Bold"
                            Foreground="{StaticResource EveAccentPrimaryBrush}"
                            HorizontalAlignment="Center" />
-                <TextBlock Text="Character Intelligence for EVE Online"
+                <TextBlock x:Name="TaglineText" Text="Character Intelligence for EVE Online"
                            FontSize="{DynamicResource EveFontSubheading}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Center" />

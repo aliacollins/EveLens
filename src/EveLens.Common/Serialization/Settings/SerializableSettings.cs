@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
 using EveLens.Common.Enumerations.UISettings;
@@ -23,6 +24,7 @@ namespace EveLens.Common.Serialization.Settings
 
         private readonly Collection<string> m_esiCustomScopes;
         private readonly Collection<CharacterGroupSettings> m_characterGroups;
+        private readonly List<GlobalPlanTemplate> m_globalPlanTemplates;
 
         public SerializableSettings()
         {
@@ -32,6 +34,7 @@ namespace EveLens.Common.Serialization.Settings
             m_monitoredCharacters = new Collection<MonitoredCharacterSettings>();
             m_esiCustomScopes = new Collection<string>();
             m_characterGroups = new Collection<CharacterGroupSettings>();
+            m_globalPlanTemplates = new List<GlobalPlanTemplate>();
             SSOClientID = string.Empty;
             SSOClientSecret = string.Empty;
             CloudStorageServiceProvider = new CloudStorageServiceProviderSettings();
@@ -135,5 +138,9 @@ namespace EveLens.Common.Serialization.Settings
         [XmlArray("characterGroups")]
         [XmlArrayItem("group")]
         public Collection<CharacterGroupSettings> CharacterGroups => m_characterGroups;
+
+        [XmlArray("globalPlanTemplates")]
+        [XmlArrayItem("template")]
+        public List<GlobalPlanTemplate> GlobalPlanTemplates => m_globalPlanTemplates;
     }
 }

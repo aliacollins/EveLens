@@ -14,30 +14,29 @@
             <WrapPanel x:Name="LegendPanel" Orientation="Horizontal" Margin="0,4,0,0" />
         </StackPanel>
 
-        <!-- Column headers matching old design: SKILL | TIME | R | PRI | SEC | SP/HR | LEVEL -->
+        <!-- Column headers: SKILL | TIME | R | PRI | SEC | SP/HR | LEVEL -->
         <Grid x:Name="HeaderRow" DockPanel.Dock="Top"
-              ColumnDefinitions="24,*,100,40,75,75,55,60"
+              ColumnDefinitions="*,100,40,75,75,55,60"
               Margin="18,0,8,0" Height="24">
-            <TextBlock Grid.Column="0" Text="" />
-            <TextBlock Grid.Column="1" Text="SKILL" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderSkill" Grid.Column="0" Text="SKILL" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        VerticalAlignment="Center" />
-            <TextBlock Grid.Column="2" Text="TIME" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderTime" Grid.Column="1" Text="TIME" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Right" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="3" Text="R" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderRank" Grid.Column="2" Text="R" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="4" Text="PRI" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderPri" Grid.Column="3" Text="PRI" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="5" Text="SEC" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderSec" Grid.Column="4" Text="SEC" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="6" Text="SP/HR" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderSphr" Grid.Column="5" Text="SP/HR" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Grid.Column="7" Text="LEVEL" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderLevel" Grid.Column="6" Text="LEVEL" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Right" VerticalAlignment="Center" />
         </Grid>

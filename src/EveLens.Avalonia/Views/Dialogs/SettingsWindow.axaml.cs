@@ -20,6 +20,7 @@ using EveLens.Common.Enumerations.UISettings;
 using EveLens.Common.MarketPricer;
 using EveLens.Common.Serialization.Settings;
 using EveLens.Common.Services;
+using Avalonia.Platform.Storage;
 using EveLens.Common.SettingsObjects;
 
 namespace EveLens.Avalonia.Views.Dialogs
@@ -42,6 +43,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             // Work on a copy of settings (same pattern as WinForms SettingsForm)
             _settings = Settings.Export();
 
+            LocalizeSettingsUI();
             BuildSectionMap();
             LoadSettings();
             WireEvents();
@@ -50,10 +52,133 @@ namespace EveLens.Avalonia.Views.Dialogs
             SelectSection("Appearance");
         }
 
+        private void LocalizeSettingsUI()
+        {
+            // Window title
+            Title = Loc.Get("Settings.WindowTitle");
+
+            // Bottom buttons
+            CancelButton.Content = Loc.Get("Action.Cancel");
+            SaveButton.Content = Loc.Get("Action.Save");
+
+            // Search watermark
+            SearchBox.Watermark = Loc.Get("Settings.SearchWatermark");
+
+            // Sidebar categories
+            NavAppearanceTitle.Text = Loc.Get("Settings.Appearance");
+            NavAppearanceSub.Text = Loc.Get("Settings.AppearanceSub");
+            NavWindowTitle.Text = Loc.Get("Settings.Window");
+            NavWindowSub.Text = Loc.Get("Settings.WindowSub");
+            NavNotificationsTitle.Text = Loc.Get("Settings.Notifications");
+            NavNotificationsSub.Text = Loc.Get("Settings.NotificationsSub");
+            NavDataTitle.Text = Loc.Get("Settings.Data");
+            NavDataSub.Text = Loc.Get("Settings.DataSub");
+            NavNetworkTitle.Text = Loc.Get("Settings.Network");
+            NavNetworkSub.Text = Loc.Get("Settings.NetworkSub");
+            NavEsiTitle.Text = Loc.Get("Settings.ESI");
+            NavEsiSub.Text = Loc.Get("Settings.ESISub");
+
+            // Appearance section
+            AppearanceTitle.Text = Loc.Get("Settings.Appearance");
+            AppearanceDesc.Text = Loc.Get("Settings.AppearanceDesc");
+            ThemeLabel.Text = Loc.Get("Settings.Theme");
+            ThemeDesc.Text = Loc.Get("Settings.ThemeDesc");
+            ThemeRestartText.Text = Loc.Get("Settings.RestartRequired");
+            RestartNowButton.Content = Loc.Get("Settings.RestartNow");
+            FontSizeLabel.Text = Loc.Get("Settings.FontSize");
+            FontSizeDesc.Text = Loc.Get("Settings.FontSizeDesc");
+            LanguageLabel.Text = Loc.Get("Settings.Language");
+            LanguageDesc.Text = Loc.Get("Settings.LanguageDesc");
+            SafeForWorkLabel.Text = Loc.Get("Settings.SafeForWork");
+            SafeForWorkDesc.Text = Loc.Get("Settings.SafeForWorkDesc");
+            CustomBrowserLabel.Text = Loc.Get("Settings.CustomBrowser");
+            CustomBrowserDesc.Text = Loc.Get("Settings.CustomBrowserDesc");
+            OpenDataDirButton.Content = Loc.Get("Settings.OpenDataDir");
+
+            // Window section
+            WindowTitle.Text = Loc.Get("Settings.WindowBehavior");
+            WindowDesc.Text = Loc.Get("Settings.WindowBehaviorDesc");
+            MinToTrayLabel.Text = Loc.Get("Settings.MinimizeToTray");
+            MinToTrayDesc.Text = Loc.Get("Settings.MinimizeToTrayDesc");
+            TrayTooltipLabel.Text = Loc.Get("Settings.TrayTooltipDisplay");
+            TrayTooltipDesc.Text = Loc.Get("Settings.TrayTooltipDesc");
+
+            // Notifications section
+            NotificationsTitle.Text = Loc.Get("Settings.Notifications");
+            NotificationsDesc.Text = Loc.Get("Settings.NotificationsDesc");
+            OsNotifyLabel.Text = Loc.Get("Settings.OsNotifications");
+            OsNotifyDesc.Text = Loc.Get("Settings.OsNotificationsDesc");
+            PlaySoundLabel.Text = Loc.Get("Settings.PlaySound");
+            PlaySoundDesc.Text = Loc.Get("Settings.PlaySoundDesc");
+            EmailAlertsLabel.Text = Loc.Get("Settings.EmailAlerts");
+            EmailAlertsDesc.Text = Loc.Get("Settings.EmailAlertsDesc");
+            EmailProviderLabel.Text = Loc.Get("Settings.Provider");
+            SmtpServerLabel.Text = Loc.Get("Settings.SmtpServer");
+            EmailPortLabel.Text = Loc.Get("Settings.Port");
+            SslLabel.Text = Loc.Get("Settings.SslTls");
+            SslDesc.Text = Loc.Get("Settings.SslTlsDesc");
+            AuthLabel.Text = Loc.Get("Settings.Authentication");
+            AuthDesc.Text = Loc.Get("Settings.AuthenticationDesc");
+            UsernameLabel.Text = Loc.Get("Settings.Username");
+            PasswordLabel.Text = Loc.Get("Settings.Password");
+            EmailFromLabel.Text = Loc.Get("Settings.From");
+            EmailToLabel.Text = Loc.Get("Settings.To");
+            ShortFormatLabel.Text = Loc.Get("Settings.ShortFormat");
+            ShortFormatDesc.Text = Loc.Get("Settings.ShortFormatDesc");
+            CalendarLabel.Text = Loc.Get("Settings.ExternalCalendar");
+            CalendarDesc.Text = Loc.Get("Settings.ExternalCalendarDesc");
+            GoogleCalendarRadio.Content = Loc.Get("Settings.GoogleCalendar");
+            OutlookCalendarRadio.Content = Loc.Get("Settings.MicrosoftOutlook");
+            CalNameLabel.Text = Loc.Get("Settings.CalendarName");
+            ReminderLabel.Text = Loc.Get("Settings.Reminder");
+            OutlookDefaultCalCheckBox.Content = Loc.Get("Settings.UseDefaultCalendar");
+            CalPathLabel.Text = Loc.Get("Settings.CalendarPath");
+            CalendarRemindingCheckBox.Content = Loc.Get("Settings.EnableReminders");
+            CalIntervalLabel.Text = Loc.Get("Settings.IntervalMin");
+            CalendarAltRemindingCheckBox.Content = Loc.Get("Settings.AltRemindingTimes");
+            CalEarlyLabel.Text = Loc.Get("Settings.Early");
+            CalLateLabel.Text = Loc.Get("Settings.Late");
+            CalendarLastQueuedOnlyCheckBox.Content = Loc.Get("Settings.LastQueuedOnly");
+
+            // Data section
+            DataTitle.Text = Loc.Get("Settings.DataUpdates");
+            DataDesc.Text = Loc.Get("Settings.DataUpdatesDesc");
+            CheckUpdatesLabel.Text = Loc.Get("Settings.CheckForUpdates");
+            CheckUpdatesDesc.Text = Loc.Get("Settings.CheckForUpdatesDesc");
+            ClockSyncLabel.Text = Loc.Get("Settings.ClockSync");
+            ClockSyncDesc.Text = Loc.Get("Settings.ClockSyncDesc");
+            MarketPriceLabel.Text = Loc.Get("Settings.MarketPriceProvider");
+            MarketPriceDesc.Text = Loc.Get("Settings.MarketPriceProviderDesc");
+
+            // Network section
+            NetworkTitle.Text = Loc.Get("Settings.Network");
+            NetworkDesc.Text = Loc.Get("Settings.NetworkDesc");
+            HttpProxyLabel.Text = Loc.Get("Settings.HttpProxy");
+            HttpProxyDesc.Text = Loc.Get("Settings.HttpProxyDesc");
+            ProxyHostLabel.Text = Loc.Get("Settings.Host");
+            ProxyPortLabel.Text = Loc.Get("Settings.Port");
+            SsoLabel.Text = Loc.Get("Settings.SsoCredentials");
+            SsoDesc.Text = Loc.Get("Settings.SsoCredentialsDesc");
+            ClientIdLabel.Text = Loc.Get("Settings.ClientId");
+            ClientSecretLabel.Text = Loc.Get("Settings.ClientSecret");
+            UseDefaultCredentialsButton.Content = Loc.Get("Settings.UseDefault");
+
+            // ESI section
+            EsiTitle.Text = Loc.Get("Settings.EsiScopes");
+            EsiDesc.Text = Loc.Get("Settings.EsiScopesDesc");
+            ScopePresetLabel.Text = Loc.Get("Settings.ScopePreset");
+            ScopePresetDesc.Text = Loc.Get("Settings.ScopePresetDesc");
+            CustomizeScopesButton.Content = Loc.Get("Settings.CustomizeScopes");
+            EsiChangesNote.Text = Loc.Get("Settings.EsiChangesNote");
+            CharScopesLabel.Text = Loc.Get("Settings.CharacterScopes");
+            NoCharactersLabel.Text = Loc.Get("Settings.NoCharsAuthenticated");
+            EsiReauthNote.Text = Loc.Get("Settings.EsiReauthNote");
+        }
+
         private void BuildSectionMap()
         {
             AddSection("Appearance", AppearancePanel, NavAppearance,
-                new[] { "appearance", "theme", "safe for work", "compatibility", "wine", "data directory" });
+                new[] { "appearance", "theme", "safe for work", "compatibility", "wine", "data directory", "browser" });
             AddSection("Window", WindowPanel, NavWindow,
                 new[] { "window", "behavior", "behaviour", "tray", "icon", "close", "minimize",
                         "system tray" });
@@ -105,6 +230,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             // --- Appearance ---
             PopulateThemeCombo();
             SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
+            PopulateBrowserCombo();
             FontScaleSlider.Value = _settings.UI.FontScalePercent;
             FontScaleLabel.Text = $"{_settings.UI.FontScalePercent}%";
             FontScaleSlider.PropertyChanged += (_, e) =>
@@ -116,6 +242,9 @@ namespace EveLens.Avalonia.Views.Dialogs
                 FontScaleService.Apply(pct);
                 Settings.Save();
             };
+
+            // --- Language ---
+            PopulateLanguageCombo();
 
             // --- Window Behavior ---
             LoadTraySettings();
@@ -152,15 +281,47 @@ namespace EveLens.Avalonia.Views.Dialogs
             ThemeCombo.SelectedIndex = themeIndex;
         }
 
+        private void PopulateLanguageCombo()
+        {
+            string currentLang = _settings.UI.Language ?? "en";
+            int selectedIdx = 0;
+
+            for (int i = 0; i < Loc.AvailableLanguages.Length; i++)
+            {
+                var code = Loc.AvailableLanguages[i];
+                LanguageCombo.Items.Add(new ComboBoxItem
+                {
+                    Content = Loc.GetLanguageDisplayName(code),
+                    Tag = code,
+                });
+                if (code == currentLang)
+                    selectedIdx = i;
+            }
+
+            LanguageCombo.SelectedIndex = selectedIdx;
+            LanguageCombo.SelectionChanged += (_, _) =>
+            {
+                if (_isUpdating) return;
+                if (LanguageCombo.SelectedItem is ComboBoxItem item && item.Tag is string code)
+                {
+                    if (code == (_settings.UI.Language ?? "en")) return;
+                    _settings.UI.Language = code;
+                    Loc.Language = code;
+                    Settings.Save();
+                    AppServices.ApplicationLifecycle?.Restart();
+                }
+            };
+        }
+
         private void LoadTraySettings()
         {
             MinimizeToTrayToggle.IsChecked = _settings.UI.MinimizeToTray;
 
             TrayTooltipDisplayCombo.ItemsSource = new[]
             {
-                "Training Count + Next Finisher",
-                "Training Count Only",
-                "Next Finisher Only"
+                Loc.Get("Settings.TrayCountAndNext"),
+                Loc.Get("Settings.TrayCountOnly"),
+                Loc.Get("Settings.TrayNextOnly")
             };
             TrayTooltipDisplayCombo.SelectedIndex = (int)_settings.UI.SystemTrayTooltip.Display;
         }
@@ -420,7 +581,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     {
                         var reauthBtn = new Button
                         {
-                            Content = "Re-authenticate",
+                            Content = Loc.Get("Settings.Reauthenticate"),
                             FontSize = FontScaleService.Small,
                             Padding = new Thickness(8, 2),
                             CornerRadius = new CornerRadius(10),
@@ -597,6 +758,111 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        private void PopulateBrowserCombo()
+        {
+            BrowserCombo.Items.Clear();
+
+            var defaultItem = new ComboBoxItem { Content = Loc.Get("Settings.DefaultBrowser"), Tag = "" };
+            BrowserCombo.Items.Add(defaultItem);
+
+            var browsers = DetectBrowsers();
+            foreach (var (name, path) in browsers)
+                BrowserCombo.Items.Add(new ComboBoxItem { Content = name, Tag = path });
+
+            string current = _settings.UI.CustomBrowserPath;
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                BrowserCombo.SelectedIndex = 0;
+            }
+            else
+            {
+                bool found = false;
+                for (int i = 0; i < BrowserCombo.Items.Count; i++)
+                {
+                    if (BrowserCombo.Items[i] is ComboBoxItem item &&
+                        string.Equals(item.Tag?.ToString(), current, StringComparison.OrdinalIgnoreCase))
+                    {
+                        BrowserCombo.SelectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    var customItem = new ComboBoxItem { Content = System.IO.Path.GetFileName(current), Tag = current };
+                    BrowserCombo.Items.Add(customItem);
+                    BrowserCombo.SelectedIndex = BrowserCombo.Items.Count - 1;
+                }
+            }
+        }
+
+        private static List<(string Name, string Path)> DetectBrowsers()
+        {
+            var browsers = new List<(string, string)>();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                var candidates = new[]
+                {
+                    ("Google Chrome", "/Applications/Google Chrome.app"),
+                    ("Firefox", "/Applications/Firefox.app"),
+                    ("Safari", "/Applications/Safari.app"),
+                    ("Microsoft Edge", "/Applications/Microsoft Edge.app"),
+                    ("Brave Browser", "/Applications/Brave Browser.app"),
+                    ("Opera", "/Applications/Opera.app"),
+                    ("Arc", "/Applications/Arc.app"),
+                    ("Vivaldi", "/Applications/Vivaldi.app"),
+                };
+                foreach (var (name, path) in candidates)
+                    if (System.IO.Directory.Exists(path))
+                        browsers.Add((name, path));
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var candidates = new[]
+                {
+                    ("Google Chrome", @"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+                    ("Firefox", @"C:\Program Files\Mozilla Firefox\firefox.exe"),
+                    ("Microsoft Edge", @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+                    ("Brave", @"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe"),
+                    ("Opera", @"C:\Program Files\Opera\opera.exe"),
+                    ("Vivaldi", @"C:\Program Files\Vivaldi\Application\vivaldi.exe"),
+                };
+                foreach (var (name, path) in candidates)
+                    if (System.IO.File.Exists(path))
+                        browsers.Add((name, path));
+            }
+            else
+            {
+                var candidates = new[]
+                {
+                    ("Google Chrome", "google-chrome"),
+                    ("Chromium", "chromium-browser"),
+                    ("Firefox", "firefox"),
+                    ("Brave", "brave-browser"),
+                    ("Vivaldi", "vivaldi"),
+                };
+                foreach (var (name, cmd) in candidates)
+                {
+                    try
+                    {
+                        var proc = Process.Start(new ProcessStartInfo("which", cmd)
+                        {
+                            RedirectStandardOutput = true,
+                            UseShellExecute = false,
+                        });
+                        string? output = proc?.StandardOutput.ReadLine();
+                        proc?.WaitForExit();
+                        if (proc?.ExitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                            browsers.Add((name, output.Trim()));
+                    }
+                    catch { }
+                }
+            }
+
+            return browsers;
+        }
+
         private static void OnOpenDataDirClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -748,6 +1014,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             // Appearance
             _settings.UI.SafeForWork = SafeForWorkToggle.IsChecked == true;
+            if (BrowserCombo.SelectedItem is ComboBoxItem selectedBrowser)
+                _settings.UI.CustomBrowserPath = selectedBrowser.Tag?.ToString() ?? string.Empty;
+            else
+                _settings.UI.CustomBrowserPath = string.Empty;
 
             int selectedThemeIndex = Math.Max(0, ThemeCombo.SelectedIndex);
             if (selectedThemeIndex < ThemeManager.AvailableThemes.Count)
@@ -852,14 +1122,14 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             var restartBtn = new Button
             {
-                Content = "Restart",
+                Content = Loc.Get("Settings.Restart"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
             };
             var cancelBtn = new Button
             {
-                Content = "Cancel",
+                Content = Loc.Get("Action.Cancel"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(12, 5),
                 CornerRadius = new CornerRadius(12)
@@ -867,7 +1137,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             var dialog = new Window
             {
-                Title = "Restart EveLens",
+                Title = Loc.Get("Settings.RestartEveLens"),
                 Width = 420, Height = 170,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 CanResize = false,
@@ -887,7 +1157,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         },
                         new TextBlock
                         {
-                            Text = "EveLens will restart to apply the new theme.\nPlease save any work in progress (e.g., skill plans being edited).",
+                            Text = Loc.Get("Settings.RestartMessage"),
                             TextWrapping = TextWrapping.Wrap,
                             FontSize = FontScaleService.Subheading,
                             VerticalAlignment = VerticalAlignment.Center

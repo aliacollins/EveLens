@@ -32,6 +32,8 @@ namespace EveLens.Avalonia.Views.Dialogs
         private readonly SkillFarmDashboardViewModel _vm = new();
         private string _filter = string.Empty;
         private bool _readyOnly;
+        private string _sortColumn = string.Empty;
+        private bool _sortDescending;
 
         public SkillFarmDashboardWindow()
         {
@@ -417,16 +419,17 @@ namespace EveLens.Avalonia.Views.Dialogs
         private Border BuildHeaderRow()
         {
             var grid = MakeGrid();
-            AddToGrid(grid, "Character", 0, HorizontalAlignment.Left, true);
-            AddToGrid(grid, "SP", 1, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Injectors", 2, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Extractor Cost", 3, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Revenue", 4, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Net Profit", 5, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "SP/hr", 6, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Impl", 7, HorizontalAlignment.Center, true);
-            AddToGrid(grid, "Tax", 8, HorizontalAlignment.Right, true);
-            AddToGrid(grid, "Status", 9, HorizontalAlignment.Right, true);
+            AddSortableHeader(grid, "Character", 0, HorizontalAlignment.Left);
+            AddSortableHeader(grid, "SP", 1, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Base", 2, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Injectors", 3, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Extractor Cost", 4, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Revenue", 5, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "Net Profit", 6, HorizontalAlignment.Right);
+            AddSortableHeader(grid, "SP/hr", 7, HorizontalAlignment.Right);
+            AddToGrid(grid, "Impl", 8, HorizontalAlignment.Center, true);
+            AddToGrid(grid, "Tax", 9, HorizontalAlignment.Right, true);
+            AddSortableHeader(grid, "Status", 10, HorizontalAlignment.Right);
 
             return new Border
             {
@@ -436,6 +439,41 @@ namespace EveLens.Avalonia.Views.Dialogs
                 BorderThickness = new Thickness(0, 0, 0, 1),
                 Child = grid
             };
+        }
+
+        private void AddSortableHeader(Grid grid, string label, int col, HorizontalAlignment align)
+        {
+            string arrow = _sortColumn == label ? (_sortDescending ? " ▼" : " ▲") : "";
+            var btn = new Button
+            {
+                Content = label + arrow,
+                FontSize = FontScaleService.Caption,
+                Foreground = _sortColumn == label
+                    ? (FindBrush("EveAccentPrimaryBrush") ?? Brushes.Gold)
+                    : (FindBrush("EveTextDisabledBrush") ?? Brushes.Gray),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0),
+                Margin = new Thickness(4, 0),
+                HorizontalAlignment = align,
+                HorizontalContentAlignment = align,
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+            };
+            var capturedLabel = label;
+            btn.Click += (_, _) =>
+            {
+                if (_sortColumn == capturedLabel)
+                    _sortDescending = !_sortDescending;
+                else
+                {
+                    _sortColumn = capturedLabel;
+                    _sortDescending = true;
+                }
+                _vm.SortBy(_sortColumn, _sortDescending);
+                BuildCharacterTable();
+            };
+            Grid.SetColumn(btn, col);
+            grid.Children.Add(btn);
         }
 
         private Border BuildRow(FarmCharacterEntry entry)
@@ -478,38 +516,64 @@ namespace EveLens.Avalonia.Views.Dialogs
             // SP
             AddCell(grid, $"{entry.CurrentSP:N0}", 1, FindBrush("EveTextPrimaryBrush"));
 
+            // Base SP — clickable to edit threshold
+            string baseText = entry.ExtractionThreshold >= 1_000_000
+                ? $"{entry.ExtractionThreshold / 1_000_000.0:N1}M"
+                : $"{entry.ExtractionThreshold / 1_000.0:N0}K";
+            bool isCustomBase = entry.ExtractionThreshold > 5_000_000;
+            var baseBtn = new Button
+            {
+                Content = baseText,
+                FontSize = FontScaleService.Small,
+                Foreground = isCustomBase
+                    ? FindBrush("EveWarningYellowBrush")
+                    : FindBrush("EveTextDisabledBrush"),
+                Background = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(0),
+                Margin = new Thickness(4, 0),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                HorizontalContentAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            ToolTip.SetTip(baseBtn, "Click to set SP floor.\nSP below this won't count as extractable.");
+            baseBtn.Click += (_, _) => ShowBaseSpEditor(baseBtn, capturedEntry);
+            Grid.SetColumn(baseBtn, 2);
+            grid.Children.Add(baseBtn);
+
             // Injectors available
             string injText = entry.ExtractionsAvailable > 0 ? $"{entry.ExtractionsAvailable}×" : "—";
-            AddCell(grid, injText, 2, entry.ExtractionsAvailable > 0
+            AddCell(grid, injText, 3, entry.ExtractionsAvailable > 0
                 ? FindBrush("EveSuccessGreenBrush") : FindBrush("EveTextDisabledBrush"));
 
             // Extractor cost (how much you spend)
             double extractorCost = entry.ExtractionsAvailable * entry.ExtractorCost;
-            AddCell(grid, extractorCost > 0 ? FormatIsk(extractorCost) : "—", 3,
+            AddCell(grid, extractorCost > 0 ? FormatIsk(extractorCost) : "—", 4,
                 FindBrush("EveErrorRedBrush"));
 
             // Revenue (what you get from selling injectors)
             double grossRev = entry.ExtractionsAvailable * entry.GrossRevenuePerExtraction;
-            AddCell(grid, grossRev > 0 ? FormatIsk(grossRev) : "—", 4,
+            AddCell(grid, grossRev > 0 ? FormatIsk(grossRev) : "—", 5,
                 FindBrush("EveSuccessGreenBrush"));
 
             // Net profit
             double netProfit = entry.ExtractionsAvailable * entry.NetProfitPerExtraction;
-            AddCell(grid, netProfit != 0 ? FormatIsk(netProfit) : "—", 5,
+            AddCell(grid, netProfit != 0 ? FormatIsk(netProfit) : "—", 6,
                 netProfit > 0 ? FindBrush("EveSuccessGreenBrush") : FindBrush("EveErrorRedBrush"));
 
             // SP/hr
-            AddCell(grid, entry.SpPerHour > 0 ? $"{entry.SpPerHour:N0}" : "0", 6,
+            AddCell(grid, entry.SpPerHour > 0 ? $"{entry.SpPerHour:N0}" : "0", 7,
                 entry.SpPerHour > 0 ? FindBrush("EveTextSecondaryBrush") : FindBrush("EveErrorRedBrush"));
 
             // Implants
-            AddCell(grid, entry.ImplantText, 7,
+            AddCell(grid, entry.ImplantText, 8,
                 entry.ImplantLevel >= 5 ? FindBrush("EveSuccessGreenBrush")
                 : entry.ImplantLevel > 0 ? FindBrush("EveWarningYellowBrush")
                 : FindBrush("EveTextDisabledBrush"), HorizontalAlignment.Center);
 
             // Tax
-            AddCell(grid, $"{entry.SalesTaxPercent:F1}%", 8, FindBrush("EveTextDisabledBrush"));
+            AddCell(grid, $"{entry.SalesTaxPercent:F1}%", 9, FindBrush("EveTextDisabledBrush"));
 
             // Status
             IBrush statusColor;
@@ -522,7 +586,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             else
                 statusColor = FindBrush("EveErrorRedBrush") ?? Brushes.Red;
 
-            AddCell(grid, entry.StatusText, 9, statusColor);
+            AddCell(grid, entry.StatusText, 10, statusColor);
 
             LoadPortraitAsync(portraitImage, entry.Character.CharacterID);
 
@@ -536,12 +600,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             };
         }
 
-        // Grid with 10 columns: name(*), SP, injectors, cost, revenue, net, sp/hr, impl, tax, status
+        // Grid with 11 proportional columns: name, SP, base, injectors, cost, revenue, net, sp/hr, impl, tax, status
         private static Grid MakeGrid()
         {
             return new Grid
             {
-                ColumnDefinitions = ColumnDefinitions.Parse("*,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"),
+                ColumnDefinitions = ColumnDefinitions.Parse("3*,1.2*,0.8*,0.8*,1.2*,1.2*,1.2*,0.8*,0.6*,0.6*,1.2*"),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
         }
@@ -556,8 +620,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Foreground = FindBrush("EveTextSecondaryBrush"),
                 HorizontalAlignment = align,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0),
-                MinWidth = col == 0 ? 0 : 70,
+                Margin = new Thickness(4, 0),
                 [Grid.ColumnProperty] = col
             });
         }
@@ -572,8 +635,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Foreground = foreground ?? FindBrush("EveTextPrimaryBrush"),
                 HorizontalAlignment = align,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0),
-                MinWidth = 70,
+                Margin = new Thickness(4, 0),
                 [Grid.ColumnProperty] = col
             });
         }
@@ -619,7 +681,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 foreach (var character in available.OrderByDescending(c => c.SkillPoints))
                 {
                     var capturedChar = character;
-                    bool extractable = character.SkillPoints >= 5_000_000;
+                    bool extractable = character.SkillPoints >= 5_000_000; // CCP hard minimum
                     string spText = character.SkillPoints >= 1_000_000
                         ? $"{character.SkillPoints / 1_000_000.0:N1}M SP"
                         : $"{character.SkillPoints / 1_000.0:N0}K SP";
@@ -684,6 +746,16 @@ namespace EveLens.Avalonia.Views.Dialogs
             FetchPricesAndRebuild();
         }
 
+        private void OnAddAllEligibleClick(object? sender, RoutedEventArgs e)
+        {
+            int added = _vm.AddAllEligible();
+            if (added > 0)
+            {
+                _vm.Refresh();
+                RebuildUI();
+            }
+        }
+
         private void OnFilterChanged(object? sender, TextChangedEventArgs e)
         {
             _filter = FilterBox.Text?.Trim() ?? "";
@@ -696,6 +768,99 @@ namespace EveLens.Avalonia.Views.Dialogs
             _readyOnly = ReadyOnlyToggle.IsChecked == true;
             BuildCharacterTable();
             UpdateStatus();
+        }
+
+        private void ShowBaseSpEditor(Button anchor, FarmCharacterEntry entry)
+        {
+            var flyout = new Flyout { Placement = PlacementMode.BottomEdgeAlignedRight };
+            var panel = new StackPanel { Spacing = 8, MinWidth = 200, Margin = new Thickness(4) };
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = $"SP Floor for {CharName(entry.Character)}",
+                FontSize = FontScaleService.Body,
+                Foreground = FindBrush("EveAccentPrimaryBrush"),
+                FontWeight = FontWeight.SemiBold
+            });
+
+            panel.Children.Add(new TextBlock
+            {
+                Text = "SP below this won't count as extractable.\nMinimum: 5,000,000 (CCP limit)",
+                FontSize = FontScaleService.Small,
+                Foreground = FindBrush("EveTextSecondaryBrush"),
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            var inputPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            var textBox = new TextBox
+            {
+                Text = (entry.ExtractionThreshold / 1_000_000.0).ToString("N1"),
+                Width = 80,
+                FontSize = FontScaleService.Body,
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+            inputPanel.Children.Add(textBox);
+            inputPanel.Children.Add(new TextBlock
+            {
+                Text = "M SP",
+                FontSize = FontScaleService.Body,
+                Foreground = FindBrush("EveTextSecondaryBrush"),
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            panel.Children.Add(inputPanel);
+
+            // Quick-set buttons for common values
+            var quickPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+            foreach (var msp in new[] { 5.0, 7.5, 10.0, 15.0, 20.0 })
+            {
+                var capturedMsp = msp;
+                var qBtn = new Button
+                {
+                    Content = $"{msp:N1}M",
+                    FontSize = FontScaleService.Small,
+                    Padding = new Thickness(6, 2),
+                    Background = msp * 1_000_000 == entry.ExtractionThreshold
+                        ? FindBrush("EveAccentPrimaryBrush")
+                        : FindBrush("EveBackgroundMediumBrush"),
+                    Foreground = msp * 1_000_000 == entry.ExtractionThreshold
+                        ? FindBrush("EveBackgroundDarkestBrush")
+                        : FindBrush("EveTextPrimaryBrush"),
+                    CornerRadius = new CornerRadius(10),
+                    MinWidth = 0,
+                    Cursor = new Cursor(StandardCursorType.Hand)
+                };
+                qBtn.Click += (_, _) => { textBox.Text = capturedMsp.ToString("N1"); };
+                quickPanel.Children.Add(qBtn);
+            }
+            panel.Children.Add(quickPanel);
+
+            // Apply button
+            var applyBtn = new Button
+            {
+                Content = "Apply",
+                FontSize = FontScaleService.Body,
+                Padding = new Thickness(12, 4),
+                Background = FindBrush("EveAccentPrimaryBrush"),
+                Foreground = FindBrush("EveBackgroundDarkestBrush"),
+                CornerRadius = new CornerRadius(12),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Cursor = new Cursor(StandardCursorType.Hand)
+            };
+            applyBtn.Click += (_, _) =>
+            {
+                if (double.TryParse(textBox.Text, out double msp))
+                {
+                    long threshold = (long)(msp * 1_000_000);
+                    _vm.SetExtractionThreshold(entry.Character, threshold);
+                    _vm.Refresh();
+                    flyout.Hide();
+                    RebuildUI();
+                }
+            };
+            panel.Children.Add(applyBtn);
+
+            flyout.Content = panel;
+            flyout.ShowAt(anchor);
         }
 
         #endregion

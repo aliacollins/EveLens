@@ -14,6 +14,7 @@ using EveLens.Common.ViewModels;
 
 using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Services;
+using EveLens.Common.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanBlueprintBrowserView : UserControl
@@ -24,6 +25,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanBlueprintBrowserView()
         {
             InitializeComponent();
+            LocalizeControls();
+        }
+
+        private void LocalizeControls()
+        {
+            CanBuildToggle.Content = Loc.Get("BlueprintBrowser.CanBuildOnly");
+            CollapseBtn.Content = Loc.Get("PlanEditor.Collapse");
+            ExpandBtn.Content = Loc.Get("PlanEditor.Expand");
+            FilterBox.Watermark = Loc.Get("BlueprintBrowser.SearchBlueprints");
+            RequiredSkillsLabel.Text = Loc.Get("BlueprintBrowser.RequiredSkills");
+            MaterialsLabel.Text = Loc.Get("BlueprintBrowser.Materials");
+            PlanSkillsBtn.Content = Loc.Get("BlueprintBrowser.PlanSkills");
         }
 
         public void SetViewModel(PlanEditorViewModel planEditor)
@@ -124,8 +137,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             DetailPanel.IsVisible = true;
             DetailName.Text = detail.Name;
-            DetailProduces.Text = $"Produces: {detail.ProducesItemName}";
-            DetailTime.Text = $"Production Time: {detail.ProductionTimeText}";
+            DetailProduces.Text = $"{Loc.Get("BlueprintBrowser.Produces")} {detail.ProducesItemName}";
+            DetailTime.Text = $"{Loc.Get("BlueprintBrowser.ProductionTime")} {detail.ProductionTimeText}";
             DetailDescription.Text = detail.Description;
             PlanSkillsBtn.IsVisible = !detail.CanBuild;
 

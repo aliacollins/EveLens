@@ -83,7 +83,7 @@
                 </StackPanel>
 
                 <!-- Corporation -->
-                <TextBlock Text="{Binding CorporationName, StringFormat='Corporation: {0}'}"
+                <TextBlock x:Name="CorporationText"
                            FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}" />
 
                 <!-- Alliance (always shown to prevent layout shift) -->

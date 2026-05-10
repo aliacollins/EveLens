@@ -81,22 +81,22 @@ namespace EveLens.Common.ViewModels
         {
             var children = new List<BrowserTreeNode>();
 
-            // Add sub-groups first (sorted by name)
-            foreach (var subGroup in group.SubGroups.OrderBy(g => g.Name))
+            // Add sub-groups first (sorted by localized name)
+            foreach (var subGroup in group.SubGroups.OrderBy(g => g.LocalizedName))
             {
                 var child = FromMarketGroup(subGroup, depth + 1, character);
                 if (child.TotalLeafCount > 0)
                     children.Add(child);
             }
 
-            // Add items as leaf nodes (sorted by name)
-            foreach (var item in group.Items.OrderBy(i => i.Name))
+            // Add items as leaf nodes (sorted by localized name)
+            foreach (var item in group.Items.OrderBy(i => i.LocalizedName))
             {
                 bool canUse = CanCharacterUse(item, character);
-                children.Add(new BrowserTreeNode(item.Name, depth + 1, item, canUse));
+                children.Add(new BrowserTreeNode(item.LocalizedName, depth + 1, item, canUse));
             }
 
-            return new BrowserTreeNode(group.Name, depth, group, children);
+            return new BrowserTreeNode(group.LocalizedName, depth, group, children);
         }
 
         /// <summary>

@@ -46,6 +46,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         public CharacterContractsView()
         {
             InitializeComponent();
+            LocalizeUI();
+        }
+
+        private void LocalizeUI()
+        {
+            EnableTitle.Text = Loc.Get("ListView.EnableContracts");
+            EnableSubtext.Text = Loc.Get("ListView.EnableToFetch");
+            EnableBtn.Content = Loc.Get("ListView.EnableContractBtn");
+            ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
+            ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
+            HideInactiveToggle.Content = Loc.Get("ListView.HideInactive");
+            FilterBox.Watermark = Loc.Get("ListView.SearchContracts");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

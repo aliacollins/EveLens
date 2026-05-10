@@ -11,6 +11,7 @@ using EveLens.Common.Constants;
 using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Events;
 using EveLens.Common.Helpers;
+using EveLens.Common.Services;
 using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Core.Events;
@@ -142,17 +143,17 @@ namespace EveLens.Common.ViewModels
 
         public string BalanceText => PrivacyHelper.IsBalanceHidden
             ? $"{PrivacyHelper.Mask} ISK" : $"{FormatISK(Balance)} ISK";
-        public string SecurityStatusText => $"Security Status: {SecurityStatus.ToString("N2", CultureInfo.InvariantCulture)}";
+        public string SecurityStatusText => $"{Loc.Get("Header.SecurityStatus")}: {SecurityStatus.ToString("N2", CultureInfo.InvariantCulture)}";
         public string SkillPointsText => PrivacyHelper.IsSkillPointsHidden
-            ? $"Total SP: {PrivacyHelper.Mask}" : $"Total SP: {FormatLargeNumber(SkillPoints)}";
+            ? $"{Loc.Get("Header.TotalSP")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.TotalSP")}: {FormatLargeNumber(SkillPoints)}";
         public string FreeSkillPointsText => PrivacyHelper.IsSkillPointsHidden
-            ? $"Free SP: {PrivacyHelper.Mask}" : $"Free SP: {FormatLargeNumber(FreeSkillPoints)}";
+            ? $"{Loc.Get("Header.FreeSP")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.FreeSP")}: {FormatLargeNumber(FreeSkillPoints)}";
         public string KnownSkillCountText => PrivacyHelper.IsSkillPointsHidden
-            ? $"Known Skills: {PrivacyHelper.Mask}" : $"Known Skills: {KnownSkillCount.ToString("N0", CultureInfo.InvariantCulture)}";
+            ? $"{Loc.Get("Header.KnownSkills")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.KnownSkills")}: {KnownSkillCount.ToString("N0", CultureInfo.InvariantCulture)}";
         public string AvailableRemapsText => PrivacyHelper.IsRemapsHidden
-            ? $"Bonus Remaps: {PrivacyHelper.Mask}" : $"Bonus Remaps: {AvailableRemaps}";
+            ? $"{Loc.Get("Header.BonusRemaps")}: {PrivacyHelper.Mask}" : $"{Loc.Get("Header.BonusRemaps")}: {AvailableRemaps}";
         public string ShipText => !string.IsNullOrEmpty(ShipTypeName) && !string.IsNullOrEmpty(ShipName)
-            ? $"Active Ship: {ShipTypeName} [{ShipName}]" : "Active Ship: Unknown";
+            ? $"{Loc.Get("Header.ActiveShip")}: {ShipTypeName} [{ShipName}]" : $"{Loc.Get("Header.ActiveShip")}: {Loc.Get("Header.Unknown")}";
 
         // ═══════════════════════════════════════════════════════
         // Formatting helpers — compact notation for large numbers

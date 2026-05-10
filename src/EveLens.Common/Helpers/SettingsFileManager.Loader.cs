@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EveLens.Common.CloudStorageServices;
@@ -195,6 +196,25 @@ namespace EveLens.Common.Helpers
                     foreach (var guid in group.CharacterGuids)
                         cgs.CharacterGuids.Add(guid);
                     settings.CharacterGroups.Add(cgs);
+                }
+
+                // Restore global plan templates
+                foreach (var jt in config.GlobalPlanTemplates ?? new List<JsonGlobalPlanTemplate>())
+                {
+                    settings.GlobalPlanTemplates.Add(new GlobalPlanTemplate
+                    {
+                        Id = jt.Id,
+                        Name = jt.Name,
+                        Description = jt.Description,
+                        CreatedDate = jt.CreatedDate,
+                        SubscribedCharacterGuids = new List<Guid>(jt.SubscribedCharacterGuids),
+                        Entries = jt.Entries.Select(e => new GlobalPlanTemplateEntry
+                        {
+                            SkillID = e.SkillID,
+                            SkillName = e.SkillName,
+                            Level = e.Level
+                        }).ToList()
+                    });
                 }
 
                 // Convert ESI keys

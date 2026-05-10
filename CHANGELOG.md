@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-10
+
+### Added
+
+- **Skill Farm: configurable SP base per character** -- Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
+- **"What's New" dialog on update** -- Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
+- **Doctrine Designer** -- Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools > Doctrine Designer, Ctrl+G)
+- **Chinese language support (简体中文)** -- Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings > Appearance. Auto-restart on language change.
+- **CSV export** -- Export skills and training queue to CSV files from the Skills and Queue tabs
+- **Skill Farm Dashboard: sort by column** -- Click any column header to sort ascending/descending. "Add All Eligible" button to batch-add characters with 5.5M+ SP.
+- **Plan editor: attribute group headers** -- "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
+- **Plan editor: specific prereq error messages** -- Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
+- **Plan editor: double-click hint tooltip** -- Rows show "Drag to reorder · Double-click for details" on hover
+- **ESI timer tooltips** -- Hover the status bar countdown for an explanation of what it means
+- **Custom browser setting** -- Choose which browser opens for ESI authentication (auto-detect or specific browser)
+- **SDE updated to build 3328718** -- 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
+
+### Changed
+
+- **Plan editor: whole-row drag** -- Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
+- **Release asset naming** -- macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
+- **EveLens branded icons** -- All platform icons (Windows, macOS, Linux) replaced with proper EveLens logo at all resolutions
+
+### Fixed
+
+- **Website download links 404** -- macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
+- **Plan editor drag: scroll offset bug** -- Dragging while scrolled down no longer maps to wrong row positions (#59)
+- **Plan editor: Alt+Up/Down keyboard shortcuts** -- Now wired to actual queue selection instead of first/last item (#59)
+- **Attribute optimizer: "Reset to Current" showed 3 everywhere** -- Now uses character's actual ESI attributes instead of default scratchpad values (#60)
+- **Attribute optimizer: inconsistent training times** -- Manual point adjustments now compute duration directly, avoiding StartTime/BestScratchpad mismatch (#60)
+- **Group by attribute: button did nothing visible** -- Now injects color-coded attribute group headers and shows active state on button (#61)
+- **Windows taskbar icon reverted to default** -- Explicitly set after InitializeComponent to survive theme loading (#58)
+- **macOS: Cmd+W didn't close plan windows** -- Added Meta modifier check alongside Control (#59)
+- **macOS: menu title showed "Avalonia Application"** -- Set Application.Name="EveLens" in App.axaml
+- **macOS: Unicode character names broken** -- Added cross-platform font fallback chain (Segoe UI, Helvetica Neue, Noto Sans, DejaVu Sans)
+- **macOS: dock icon showed generic app icon** -- Proper hi-res .icns now embedded in .app bundle
+- **Linux: AppImage had 1px placeholder icon** -- Now uses real 256px EveLens icon
+- **Doctrine Designer crash without characters** -- No longer crashes when opened before any characters are loaded
+
+### Contributors
+
+Thanks to the community members whose feedback shaped this release:
+- **MaccaNZ97** -- Skill Farm configurable base SP feature request (Discussion #44)
+- **AnszaKalltiern** -- stress testing with 30+ characters, UI issue reports
+- **BritishDragonAdmin** -- Skill Farm UX feedback (#41, #42, #43)
+- **NotmoGit** -- bug reports (#37, #39)
+
 ## [1.2.1] - 2026-04-09
 
 ### Fixed
@@ -54,8 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plan import gzip error** -- .emp files exported by EveLens are plain XML, but import assumed gzip. Now auto-detects format
 - **Skill browser collapsed after Plan To ([#52])** -- adding a skill from the browser no longer resets expand/collapse state of categories. Reported by [@NotmoGit](https://github.com/NotmoGit)
 - **Windows shutdown hang ([#53])** -- settings save now runs with a 3-second timeout. If disk I/O is slow, the app exits cleanly instead of blocking Windows shutdown. Reported by [@Kickunio](https://github.com/Kickunio)
-- **Market transaction item names** -- item names were blank because the ESI→model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
-- **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" → "Player Trading")
+- **Market transaction item names** -- item names were blank because the ESI>model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
+- **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" > "Player Trading")
 - **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
 - **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
 - **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
@@ -109,22 +156,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Auto-updates** via Velopack with delta downloads across Windows, Linux, and macOS
-- **Windows code signing** — eliminates SmartScreen warnings and false-positive antivirus detections
+- **Windows code signing** -- eliminates SmartScreen warnings and false-positive antivirus detections
 - "Check for Updates" in the Help menu with release notes in the update dialog
 
 ### Changed
 
-- Update system completely replaced — Velopack handles all packaging and delivery
+- Update system completely replaced -- Velopack handles all packaging and delivery
 - Build and release pipeline moved to GitHub Actions
 
 ## [1.0.0-beta.2] - 2026-03-19
 
 ### Added
 
-- **ESI health tracking** — smart per-endpoint health states replace noisy error notifications. You'll see one clear message when something breaks, and a recovery message when it's fixed — no more walls of error spam ([#34])
-- **Health indicators** on the character overview — green (healthy), yellow (degraded), red (failing)
-- **Live diagnostic viewer** in the Debug menu — real-time log with filters for ESI, events, warnings, and scheduler activity
-- **SDE update to Catalyst expansion** (March 18, 2026) — 5 new skills, 82 new item types, carrier/fighter/FAX/Black Ops balance changes
+- **ESI health tracking** -- smart per-endpoint health states replace noisy error notifications. You'll see one clear message when something breaks, and a recovery message when it's fixed -- no more walls of error spam ([#34])
+- **Health indicators** on the character overview -- green (healthy), yellow (degraded), red (failing)
+- **Live diagnostic viewer** in the Debug menu -- real-time log with filters for ESI, events, warnings, and scheduler activity
+- **SDE update to Catalyst expansion** (March 18, 2026) -- 5 new skills, 82 new item types, carrier/fighter/FAX/Black Ops balance changes
 
 ### Fixed
 
@@ -142,18 +189,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Cross-platform support** — Windows x64, Linux x64, macOS Apple Silicon
+- **Cross-platform support** -- Windows x64, Linux x64, macOS Apple Silicon
 - **Modern dark UI** built on Avalonia, replacing the legacy WinForms interface
 - **Smart ESI scheduler** with priority queue, per-character rate limiting, and phased cold start
-- **19 character tabs** — Skills, Assets, Market Orders, Contracts, Mail, Industry Jobs, Wallet, Notifications, Kill Log, Planetary, and more
+- **19 character tabs** -- Skills, Assets, Market Orders, Contracts, Mail, Industry Jobs, Wallet, Notifications, Kill Log, Planetary, and more
 - **Plan Editor** with skill browser, training time calculator, and attribute optimizer
-- **Settings migration** — existing EVEMon settings imported automatically on first launch
+- **Settings migration** -- existing EVEMon settings imported automatically on first launch
 - **TCP diagnostic stream** on port 5555 for real-time structured debugging
 
 ### Changed
 
 - Complete rewrite from monolithic EVEMon to modular EveLens architecture
-- Rebranded from EVEMon to EveLens — Character Intelligence for EVE Online
+- Rebranded from EVEMon to EveLens -- Character Intelligence for EVE Online
 
 [#33]: https://github.com/aliacollins/EveLens/discussions/33
 [#34]: https://github.com/aliacollins/EveLens/issues/34

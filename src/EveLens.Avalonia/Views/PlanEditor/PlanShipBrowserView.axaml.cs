@@ -24,6 +24,7 @@ using EveLens.Common.ViewModels;
 
 using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Services;
+using EveLens.Common.Services;
 namespace EveLens.Avalonia.Views.PlanEditor
 {
     public partial class PlanShipBrowserView : UserControl
@@ -36,6 +37,22 @@ namespace EveLens.Avalonia.Views.PlanEditor
         public PlanShipBrowserView()
         {
             InitializeComponent();
+            LocalizeControls();
+        }
+
+        private void LocalizeControls()
+        {
+            CanFlyToggle.Content = Loc.Get("ShipBrowser.CanFlyOnly");
+            CollapseBtn.Content = Loc.Get("PlanEditor.Collapse");
+            ExpandBtn.Content = Loc.Get("PlanEditor.Expand");
+            FilterBox.Watermark = Loc.Get("ShipBrowser.SearchShips");
+            AmarrToggle.Content = Loc.Get("ShipBrowser.Amarr");
+            CaldariToggle.Content = Loc.Get("ShipBrowser.Caldari");
+            GallenteToggle.Content = Loc.Get("ShipBrowser.Gallente");
+            MinmatarToggle.Content = Loc.Get("ShipBrowser.Minmatar");
+            RequiredSkillsLabel.Text = Loc.Get("ShipBrowser.RequiredSkills");
+            PlanToFlyBtn.Content = Loc.Get("ShipBrowser.PlanToFly");
+            PropertiesHeader.Text = Loc.Get("ShipBrowser.Properties");
         }
 
         public void SetViewModel(PlanEditorViewModel planEditor)
@@ -174,7 +191,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             DetailPanel.IsVisible = true;
             DetailName.Text = detail.Name;
-            DetailRace.Text = $"Race: {detail.Race}";
+            DetailRace.Text = $"{Loc.Get("ShipBrowser.Race")} {detail.Race}";
             DetailGroupPath.Text = detail.GroupPath;
             DetailGroupPath.IsVisible = !string.IsNullOrEmpty(detail.GroupPath);
             DetailDescription.Text = detail.Description;
