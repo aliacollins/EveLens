@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Skill Farm configurable base SP, What's New dialog, Code Graph system
+- Skill Farm configurable base SP, What's New dialog, Code Graph system
 
 ### Added
 
