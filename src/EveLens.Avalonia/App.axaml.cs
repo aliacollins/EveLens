@@ -184,6 +184,13 @@ namespace EveLens.Avalonia
             SetupTrayIcon(desktop);
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - tray icon configured", printMethod: false);
 
+            // Phase 11.5: Show "What's New" dialog once per version
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                try { ShowWhatsNewIfNeeded(); }
+                catch { }
+            }, global::Avalonia.Threading.DispatcherPriority.Background);
+
             // Phase 12: Register shutdown handler
             desktop.ShutdownRequested += (_, _) =>
             {
@@ -218,6 +225,33 @@ namespace EveLens.Avalonia
                     AppServices.Shutdown();
                 }
             };
+        }
+
+        private void ShowWhatsNewIfNeeded()
+        {
+            var currentVersion = AppServices.FileVersionInfo?.ProductVersion ?? "";
+            if (string.IsNullOrEmpty(currentVersion)) return;
+
+            var lastShown = Settings.Updates.LastShownWhatsNewVersion;
+
+#if DEBUG
+            // Always show in debug builds for testing
+            bool shouldShow = true;
+#else
+            bool shouldShow = lastShown != currentVersion;
+#endif
+            if (!shouldShow) return;
+
+            // Mark as shown before opening (prevents double-show on crash)
+            Settings.Updates.LastShownWhatsNewVersion = currentVersion;
+            Settings.Save();
+
+            var window = new Views.Dialogs.WhatsNewWindow();
+            var mainWindow = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (mainWindow != null)
+                window.ShowDialog(mainWindow);
+            else
+                window.Show();
         }
 
         private void SetupTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)

@@ -167,9 +167,9 @@ A clock icon in the status bar shows how many of your characters need training a
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| **Stable** | Recommended for daily use(you are here) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| Stable | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
 | Beta | Pre-release testing | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
-| Alpha | Bleeding edge, experimental features | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
+| **Alpha** | Bleeding edge, experimental features(you are here) | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
 
 ---
 
@@ -218,6 +218,20 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 - **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
 
 Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)
+
+---
+
+## Features Being Tested
+
+- Skill Farm: configurable SP base per character
+- "What's New" dialog on update
+- Code Graph system for AI-assisted development
+
+## Alpha Changelog (Cumulative)
+
+- Skill Farm Dashboard: per-character configurable SP floor (click Base column)
+- What's New dialog: shown once per version after update, reads from CHANGELOG.md
+- Code Graph: living dependency map with validation and Claude skill integration
 
 ---
 

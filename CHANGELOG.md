@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Skill Farm configurable base SP, What's New dialog, Code Graph system
 
 ### Added
 
+- **Skill Farm: configurable SP base per character** — Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
+- **"What's New" dialog on update** — Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
 - **Doctrine Designer** — Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools → Doctrine Designer, Ctrl+G)
 - **Chinese language support (简体中文)** — Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance. Auto-restart on language change.
 - **CSV export** — Export skills and training queue to CSV files from the Skills and Queue tabs
