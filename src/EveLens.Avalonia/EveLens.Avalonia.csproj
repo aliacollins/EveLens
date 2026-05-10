@@ -55,4 +55,11 @@
     </None>
   </ItemGroup>
 
+  <!-- Copy CHANGELOG for What's New dialog -->
+  <ItemGroup>
+    <None Include="..\..\CHANGELOG.md" Link="CHANGELOG.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

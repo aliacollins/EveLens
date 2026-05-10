@@ -221,6 +221,20 @@ Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/relea
 
 ---
 
+## Features Being Tested
+
+- Skill Farm: configurable SP base per character
+- "What's New" dialog on update
+- Code Graph system for AI-assisted development
+
+## Alpha Changelog (Cumulative)
+
+- Skill Farm Dashboard: per-character configurable SP floor (click Base column)
+- What's New dialog: shown once per version after update, reads from CHANGELOG.md
+- Code Graph: living dependency map with validation and Claude skill integration
+
+---
+
 ## Release History
 
 | Version | Date | Highlights |
