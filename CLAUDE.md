@@ -398,6 +398,21 @@ Shared skill templates that can be applied across multiple characters. Persisted
 
 The `release.ps1` script extracts changelog entries for GitHub release notes. Use ASCII-safe characters (`--` not `—`, `>` not `→`) in CHANGELOG.md to avoid encoding issues with `gh release create`. The script writes `release-notes.md` with UTF-8 BOM which `gh` may misinterpret.
 
+## Development Workflow (MANDATORY)
+
+Before writing any code, follow this sequence:
+
+1. **Load the code graph** — Read `.codegraph/quick-ref.md` to understand current connection counts. If graph is missing or stale, run `/codegraph generate`.
+2. **Check blast radius** — For the files you're about to touch, read `.codegraph/index.md` to see their connection count. High-connection files (10+) need extra care.
+3. **Trace impact** — If touching events or services, read the relevant section of `.codegraph/events.md` or `.codegraph/services.md` to identify all affected consumers/subscribers.
+4. **Do the work** — Make your changes with full knowledge of the ripple effects.
+5. **Regenerate if structural** — If you added/removed events, services, interfaces, or assembly references, run `/codegraph generate` before finishing.
+6. **Validate** — Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/validate-codegraph.ps1"` to confirm graph is in sync.
+
+**When to skip:** Pure UI changes (AXAML layout/styling), documentation updates, test-only changes. These don't affect the dependency graph.
+
+**When it's critical:** Any change to AppServices.cs, EventAggregator subscriptions, interface contracts, or cross-assembly references. The graph tells you exactly what will break.
+
 ## How to Add a Feature (End-to-End)
 
 Follow this sequence for any new feature. Skip steps that don't apply.
@@ -566,6 +581,43 @@ This project was formerly known as EVEMon. It was rebranded to EveLens in Februa
 **Named mutex:** `EveLensInstanceSignal`
 **Env vars:** `EVELENS_DIAG_PORT`
 **Icon:** `src/EveLens.Avalonia/Properties/EveLens.ico` (used on all windows, tray, About page)
+
+## Code Graph (Living Dependency Map)
+
+The `.codegraph/` directory contains a machine-readable dependency graph generated from source patterns. It tracks event pub/sub flow, service consumers, interface implementations, assembly dependencies, and settings access. Designed for AI agent consumption during impact analysis.
+
+**Commands:**
+```bash
+# Generate/regenerate the full graph
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/codegraph.ps1"
+
+# Validate graph is in sync with code (exit 1 if drifted)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/validate-codegraph.ps1"
+
+# Validate and auto-fix drift
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/validate-codegraph.ps1" -Fix
+
+# Install git post-commit hook for auto-regeneration
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/install-hooks.ps1"
+```
+
+**Claude Code skill:** `/codegraph [generate|validate|query <term>|impact <file>|blast <name>]`
+
+**Graph files (in `.codegraph/`):**
+
+| File | Purpose | When to read |
+|------|---------|--------------|
+| `quick-ref.md` | One-line counts per entity | Fast overview before any change |
+| `index.md` | Blast radius rankings, orphan detection | "What's riskiest to touch?" |
+| `events.md` | Full event pub/sub with file:line | "What subscribes to X?" |
+| `services.md` | Service registry + all consumers | "What uses this service?" |
+| `interfaces.md` | Interface→implementation map | "What implements this?" |
+| `settings.md` | Settings property access map | "What reads this setting?" |
+| `assemblies.md` | Assembly dependency DAG | "What depends on this assembly?" |
+
+**Accuracy:** Pattern-based (~95% coverage). May miss indirect dispatch, reflection, or factory patterns. Always regenerate before major impact analysis.
+
+**Staleness detection:** The Stop hook reminds to regenerate after structural changes. Validation script detects count mismatches between graph and live code.
 
 ## Project Context
 

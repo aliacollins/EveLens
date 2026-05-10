@@ -91,5 +91,11 @@ namespace EveLens.Common.SettingsObjects
         /// <value>The periods.</value>
         [XmlElement("periods")]
         public ModifiedSerializableDictionary<string, UpdatePeriod> Periods { get; set; }
+
+        /// <summary>
+        /// The version for which "What's New" was last shown. Prevents re-showing on every launch.
+        /// </summary>
+        [XmlElement("lastShownWhatsNewVersion")]
+        public string LastShownWhatsNewVersion { get; set; } = string.Empty;
     }
 }
