@@ -196,42 +196,39 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.3.0
+## Features (as of 1.3.0)
 
-- **Doctrine Designer** -- create shared skill templates, assign characters, compare training times, generate personal plans (Ctrl+G)
-- **Chinese language (简体中文)** -- full UI + 50K SDE translations with CCP official game terms
-- **CSV export** -- export skills and queue from the Skills and Queue tabs
-- **Skill Farm sort** -- click column headers to sort, "Add All Eligible" for batch adding
-- **Plan editor overhaul** -- whole-row drag (no grip dots), scroll offset fix, attribute group headers, specific prereq error messages
-- **macOS fixes** -- Cmd+W closes plan windows, menu title fixed, Unicode font fallback
-- **Windows icon fix** -- taskbar icon no longer reverts to default
-- **Attribute optimizer** -- "Reset to Current" and manual adjustments now produce correct results
-- **Website download links** -- no longer 404 between releases
+### Planning & Training
+- **Skill Planning** -- Multi-tab plan editor with drag-to-reorder, attribute group headers, prerequisite validation, and specific error messages
+- **Doctrine Designer** -- Shared skill templates, multi-character comparison, one-click personal plan generation (Ctrl+G)
+- **Attribute Optimizer** -- Find optimal attribute remaps for any plan with accurate training time calculations
+- **Plan import/export** -- Supports .emp, .txt, EVE game clipboard, and CSV export
 
-Full details: [CHANGELOG.md](CHANGELOG.md)
+### Monitoring & Intelligence
+- **Skill Farm Dashboard** -- Full economics for extraction characters: Jita pricing, per-character tax, configurable SP base per character, monthly profit projections, Omega sustainability analysis
+- **Queue Health Monitor** -- Status bar clock icon showing training urgency across all characters
+- **Character Skill Comparison** -- Compare up to 10 characters side-by-side with level blocks
+- **20+ data tabs** -- Skills, Queue, Clones, Assets, Market Orders, Contracts, Industry, Wallet, Mail, Notifications, Kills, PI, Research, Standings, and more
+- **Skill Constellation** -- GPU-accelerated interactive visualization of EVE's skill tree
 
-## What Was New in 1.2.0
+### Quality of Life
+- **"What's New" dialog** -- Shows release notes on first launch after update
+- **Chinese language (简体中文)** -- Full UI + 50K SDE translations
+- **Variable font scaling** -- 80-150% with live preview
+- **6 dark themes** -- Dark Space, Caldari Blue, Amarr Gold, Minmatar Rust, Gallente Green, Midnight
+- **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+G, and more
+- **CSV export** -- Export skills and training queue
+- **Privacy mode** -- For streamers and screenshots
+- **Custom browser setting** -- Choose which browser opens for ESI auth
 
-- **Drag-to-reorder in Plan Editor** -- grab, multi-select, drag groups with real-time prerequisite validation
-- **Skill Farm Dashboard** -- full economics for extraction characters: Jita pricing, tax, profit projections, Omega sustainability
-- **Plan import/export overhaul** -- supports .emp, .txt, and EVE game clipboard format
-- **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
+### Infrastructure
+- **100+ character support** -- Smart batch scheduling, per-character circuit breakers, staggered ESI polling
+- **Cross-platform** -- Windows (signed installer), Linux (AppImage), macOS (Apple Silicon .app)
+- **Auto-update** -- Velopack delta downloads, background checks
+- **ESI scope control** -- Choose what data EveLens can access (Full, Standard, Skill Planner Only, or custom)
+- **Smart ESI error handling** -- Per-endpoint health state machine, automatic recovery, no error spam
 
-Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)
-
----
-
-## Features Being Tested
-
-- Skill Farm: configurable SP base per character
-- "What's New" dialog on update
-- Code Graph system for AI-assisted development
-
-## Alpha Changelog (Cumulative)
-
-- Skill Farm Dashboard: per-character configurable SP floor (click Base column)
-- What's New dialog: shown once per version after update, reads from CHANGELOG.md
-- Code Graph: living dependency map with validation and Claude skill integration
+Full changelog: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
