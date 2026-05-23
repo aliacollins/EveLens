@@ -30,8 +30,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private static readonly EveAttribute[] AllAttrs =
         {
-            EveAttribute.Intelligence, EveAttribute.Perception,
-            EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+            EveAttribute.Perception, EveAttribute.Memory,
+            EveAttribute.Willpower, EveAttribute.Intelligence, EveAttribute.Charisma
         };
 
         private static readonly IBrush GoldBrush = new SolidColorBrush(Color.Parse("#FFE6A817"));

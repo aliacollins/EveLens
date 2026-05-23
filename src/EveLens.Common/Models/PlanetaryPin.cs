@@ -229,9 +229,14 @@ namespace EveLens.Common.Models
         public string GroupName { get; }
 
         /// <summary>
-        /// Gets true if we have notified the user.
+        /// Gets true if we have notified the user (post-expiry).
         /// </summary>
         public bool NotificationSend { get; set; }
+
+        /// <summary>
+        /// Gets true if we have sent the pre-expiry warning.
+        /// </summary>
+        public bool PreExpiryAlertSent { get; set; }
 
         #endregion
 

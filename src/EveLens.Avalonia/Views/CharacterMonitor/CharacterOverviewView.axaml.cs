@@ -492,12 +492,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
 
             // Grid overlays the dot on the portrait
-            var portraitContainer = new Grid
+            var portraitGrid = new Grid
             {
                 Width = 56, Height = 56,
+                Children = { portraitBorder, esiDot }
+            };
+
+            var portraitContainer = new StackPanel
+            {
+                Spacing = 0,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 0, 12, 0),
-                Children = { portraitBorder, esiDot }
+                Children = { portraitGrid }
             };
 
             // Info panel
@@ -547,7 +553,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             infoPanel.Children.Add(spText);
 
-            // Account status badge
+            // Location + Ship line
+            string locationName = character.LastKnownSolarSystem?.Name ?? "";
+            string shipType = character.ShipTypeName ?? "";
+            if (!string.IsNullOrEmpty(locationName) || !string.IsNullOrEmpty(shipType))
+            {
+                string locShipText = !string.IsNullOrEmpty(locationName) && !string.IsNullOrEmpty(shipType)
+                    ? $"{locationName} \u2022 {shipType}"
+                    : !string.IsNullOrEmpty(locationName) ? locationName : shipType;
+
+                infoPanel.Children.Add(new TextBlock
+                {
+                    Text = locShipText,
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    Tag = "LocationShipText"
+                });
+            }
+
+            // Account status badge \u2014 built here, added below portrait later
             bool isOmega = character.EffectiveCharacterStatus == AccountStatus.Omega;
             var badgeText = new TextBlock
             {
@@ -555,20 +580,20 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 FontSize = FontScaleService.Caption, FontWeight = FontWeight.SemiBold,
                 Foreground = isOmega
                     ? new SolidColorBrush(Color.Parse("#FF00C853"))
-                    : new SolidColorBrush(Color.Parse("#FFFF6D00"))
+                    : new SolidColorBrush(Color.Parse("#FFFF6D00")),
+                HorizontalAlignment = HorizontalAlignment.Center
             };
             var badge = new Border
             {
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(6, 1),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 1, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 3, 0, 0),
                 Background = isOmega
                     ? new SolidColorBrush(Color.Parse("#2200C853"))
                     : new SolidColorBrush(Color.Parse("#22FF6D00")),
                 Child = badgeText
             };
-            infoPanel.Children.Add(badge);
 
             // Training status
             var trainingText = new TextBlock
@@ -580,6 +605,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             UpdateTrainingText(trainingText, character);
             infoPanel.Children.Add(trainingText);
+
+            // Add Omega/Alpha badge below portrait
+            portraitContainer.Children.Add(badge);
 
             var cardGrid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("68,*") };
             Grid.SetColumn(portraitContainer, 0);
@@ -831,6 +859,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         if (!PrivacyHelper.IsSkillPointsHidden) FlashTextBlock(spBlock);
                     }
                     _prevSkillPoints[character.CharacterID] = character.SkillPoints;
+                }
+
+                // Update location + ship
+                var locShipBlock = FindTaggedDescendant<TextBlock>(card, "LocationShipText");
+                if (locShipBlock != null)
+                {
+                    string locationName = character.LastKnownSolarSystem?.Name ?? "";
+                    string shipType = character.ShipTypeName ?? "";
+                    string locShipText = !string.IsNullOrEmpty(locationName) && !string.IsNullOrEmpty(shipType)
+                        ? $"{locationName} • {shipType}"
+                        : !string.IsNullOrEmpty(locationName) ? locationName : shipType;
+                    if (locShipBlock.Text != locShipText)
+                        locShipBlock.Text = locShipText;
                 }
 
                 // Update training text

@@ -239,8 +239,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         var deltas = new List<AttributeDelta>();
                         var allAttrs = new[]
                         {
-                            EveAttribute.Intelligence, EveAttribute.Perception,
-                            EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+                            EveAttribute.Perception, EveAttribute.Memory,
+                            EveAttribute.Willpower, EveAttribute.Intelligence, EveAttribute.Charisma
                         };
                         foreach (var attr in allAttrs)
                         {
@@ -552,9 +552,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private static string FormatRemapAttributes(RemappingPoint rp)
         {
-            return $"INT {rp[EveAttribute.Intelligence]}  PER {rp[EveAttribute.Perception]}  " +
-                   $"WIL {rp[EveAttribute.Willpower]}  CHA {rp[EveAttribute.Charisma]}  " +
-                   $"MEM {rp[EveAttribute.Memory]}";
+            return $"PER {rp[EveAttribute.Perception]}  MEM {rp[EveAttribute.Memory]}  " +
+                   $"WIL {rp[EveAttribute.Willpower]}  INT {rp[EveAttribute.Intelligence]}  " +
+                   $"CHA {rp[EveAttribute.Charisma]}";
         }
 
         #endregion
@@ -624,7 +624,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // No changes — show all attributes
                 line.Children.Add(new TextBlock
                 {
-                    Text = $"INT\u2192{divider.Intelligence}  PER\u2192{divider.Perception}  WIL\u2192{divider.Willpower}  CHA\u2192{divider.Charisma}  MEM\u2192{divider.Memory}",
+                    Text = $"PER\u2192{divider.Perception}  MEM\u2192{divider.Memory}  WIL\u2192{divider.Willpower}  INT\u2192{divider.Intelligence}  CHA\u2192{divider.Charisma}",
                     FontSize = FontScaleService.Caption,
                     Foreground = new SolidColorBrush(Color.Parse("#FFD0D0D0")),
                     VerticalAlignment = VerticalAlignment.Center,
@@ -666,8 +666,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             border.Child = line;
 
             // Tooltip with full attribute breakdown
-            var tooltipText = $"Remap to: INT {divider.Intelligence}  PER {divider.Perception}  " +
-                              $"WIL {divider.Willpower}  CHA {divider.Charisma}  MEM {divider.Memory}";
+            var tooltipText = $"Remap to: PER {divider.Perception}  MEM {divider.Memory}  " +
+                              $"WIL {divider.Willpower}  INT {divider.Intelligence}  CHA {divider.Charisma}";
             if (!string.IsNullOrEmpty(divider.AvailabilityText))
                 tooltipText += $"\n{divider.AvailabilityText}";
             if (divider.Deltas.Count > 0)
@@ -1979,8 +1979,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                 var attrs = new[]
                 {
-                    EveAttribute.Intelligence, EveAttribute.Perception,
-                    EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+                    EveAttribute.Perception, EveAttribute.Memory,
+                    EveAttribute.Willpower, EveAttribute.Intelligence, EveAttribute.Charisma
                 };
 
                 // Compact result line: ⚡ 47d → 38d  ✓ -9d 4h
@@ -2269,8 +2269,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var attrs = new[]
             {
-                EveAttribute.Intelligence, EveAttribute.Perception,
-                EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+                EveAttribute.Perception, EveAttribute.Memory,
+                EveAttribute.Willpower, EveAttribute.Intelligence, EveAttribute.Charisma
             };
 
             AddThinDivider("Manual adjustment");

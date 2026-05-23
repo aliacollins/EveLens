@@ -55,6 +55,9 @@ namespace EveLens.Avalonia
                 return;
             }
 
+            // Initialize native OS notification manager
+            NativeNotificationService.Initialize();
+
             // Force Western number formatting (XXX,XXX.XX) regardless of system locale
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;

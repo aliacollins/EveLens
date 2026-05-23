@@ -29,64 +29,113 @@
                            Foreground="{DynamicResource EveTextSecondaryBrush}" HorizontalAlignment="Center" />
                 <TextBlock x:Name="ScopeSubtext" TextWrapping="Wrap" TextAlignment="Center" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{DynamicResource EveTextDisabledBrush}" HorizontalAlignment="Center"
-                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File → Manage Characters to enable this feature." />
+                           Text="This character was authenticated without the required scope.&#x0a;Re-authenticate from File > Manage Characters to enable this feature." />
             </StackPanel>
         </Border>
 
         <DockPanel x:Name="DataContent">
-        <!-- Filter bar -->
-        <Border DockPanel.Dock="Top" Padding="8,4"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-            <DockPanel>
-                <TextBlock x:Name="FilterLabel" Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <TextBox x:Name="FilterBox"
-                         Text="{Binding TextFilter, Mode=TwoWay}"
-                         Watermark="Search planetary..."
-                         MinWidth="200" />
+            <!-- Toolbar -->
+            <Border DockPanel.Dock="Top" Padding="10,7"
+                    Background="{DynamicResource EveBackgroundMediumBrush}">
+                <DockPanel>
+                    <!-- View toggle buttons -->
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="DashboardToggle" Content="Dashboard"
+                                FontSize="{DynamicResource EveFontBody}" Padding="10,4" CornerRadius="12"
+                                Click="OnToggleDashboard" />
+                        <Button x:Name="DataToggle" Content="Data"
+                                FontSize="{DynamicResource EveFontBody}" Padding="10,4" CornerRadius="12"
+                                Click="OnToggleData" />
+                    </StackPanel>
+
+                    <!-- Filter -->
+                    <Border DockPanel.Dock="Right" CornerRadius="14" Padding="8,3"
+                            Background="{DynamicResource EveBackgroundDarkBrush}" MinWidth="200">
+                        <DockPanel>
+                            <Button x:Name="ClearFilterBtn" DockPanel.Dock="Right" Content="x"
+                                    FontSize="{DynamicResource EveFontSmall}" Padding="4,2" Background="Transparent"
+                                    BorderThickness="0" IsVisible="False"
+                                    Click="OnClearFilter" />
+                            <TextBox x:Name="FilterBox" Watermark="Search planets..."
+                                     Background="Transparent" BorderThickness="0"
+                                     FontSize="{DynamicResource EveFontBody}"
+                                     TextChanged="OnFilterChanged" />
+                        </DockPanel>
+                    </Border>
+
+                    <Panel /> <!-- spacer -->
+                </DockPanel>
+            </Border>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Padding="10,4"
+                    Background="{DynamicResource EveBackgroundMediumBrush}"
+                    BorderThickness="0,1,0,0"
+                    BorderBrush="{DynamicResource EveBackgroundDarkBrush}">
+                <TextBlock x:Name="StatusBar"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}" />
+            </Border>
+
+            <!-- Dashboard view: cards grid (default) -->
+            <ScrollViewer x:Name="DashboardPanel">
+                <WrapPanel x:Name="CardsPanel" Orientation="Horizontal" Margin="10,8" />
+            </ScrollViewer>
+
+            <!-- Detail view: replaces cards when a colony is clicked -->
+            <DockPanel x:Name="DetailPanel" IsVisible="False">
+                <!-- Detail header with back button -->
+                <Border DockPanel.Dock="Top" Padding="10,6"
+                        Background="{DynamicResource EveBackgroundMediumBrush}">
+                    <DockPanel>
+                        <Button x:Name="BackBtn" DockPanel.Dock="Left" Content="Back"
+                                FontSize="{DynamicResource EveFontBody}" Padding="10,4" CornerRadius="12"
+                                Click="OnBackToCards" Margin="0,0,12,0" />
+                        <TextBlock x:Name="DetailTitle" Text=""
+                                   FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource EveAccentPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                    </DockPanel>
+                </Border>
+
+                <!-- Detail content: economics summary + flow canvas -->
+                <ScrollViewer>
+                    <StackPanel Margin="10,8" Spacing="12">
+                        <!-- Timer hero + economics summary row -->
+                        <Border Background="{DynamicResource EveBackgroundMediumBrush}"
+                                CornerRadius="6" Padding="12,10">
+                            <WrapPanel x:Name="DetailStatsPanel" Orientation="Horizontal" />
+                        </Border>
+
+                        <!-- Production chain canvas -->
+                        <Border Background="{DynamicResource EveBackgroundDarkBrush}"
+                                CornerRadius="6" MinHeight="280" Padding="0">
+                            <ContentControl x:Name="FlowCanvasHost" />
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </DockPanel>
-        </Border>
 
-        <!-- Status bar -->
-        <Border DockPanel.Dock="Bottom" Padding="8,4"
-                Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}">
-            <TextBlock>
-                <TextBlock.Text>
-                    <MultiBinding StringFormat="Items: {0}">
-                        <Binding Path="TotalItemCount" />
-                    </MultiBinding>
-                </TextBlock.Text>
-            </TextBlock>
-        </Border>
-
-        <!-- Data grid -->
-        <DataGrid x:Name="ItemsGrid"
-                  ItemsSource="{Binding Items}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserReorderColumns="True"
-                  CanUserResizeColumns="True"
-                  CanUserSortColumns="True"
-                  GridLinesVisibility="Horizontal"
-                  BorderThickness="0">
-            <DataGrid.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="Copy Planet" />
-                    <MenuItem Header="Copy Solar System" />
-                    <Separator />
-                    <MenuItem Header="Export to CSV..." />
-                </ContextMenu>
-            </DataGrid.ContextMenu>
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Planet" Binding="{Binding Colony.PlanetName}" Width="150" />
-                <DataGridTextColumn Header="Planet Type" Binding="{Binding Colony.PlanetTypeName}" Width="100" />
-                <DataGridTextColumn Header="Pin Type" Binding="{Binding TypeName}" Width="200" />
-                <DataGridTextColumn Header="Content" Binding="{Binding ContentTypeName}" Width="150" />
-                <DataGridTextColumn Header="Quantity" Binding="{Binding ContentQuantity}" Width="80" />
-                <DataGridTextColumn Header="State" Binding="{Binding State}" Width="80" />
-                <DataGridTextColumn Header="Expiry" Binding="{Binding ExpiryTime, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
-                <DataGridTextColumn Header="Solar System" Binding="{Binding Colony.SolarSystem.Name}" Width="120" />
-            </DataGrid.Columns>
-        </DataGrid>
+            <!-- Data view (grid) -->
+            <DataGrid x:Name="ItemsGrid" IsVisible="False"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserReorderColumns="True"
+                      CanUserResizeColumns="True"
+                      CanUserSortColumns="True"
+                      GridLinesVisibility="Horizontal"
+                      BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Planet" Binding="{Binding Colony.PlanetName}" Width="150" />
+                    <DataGridTextColumn Header="Planet Type" Binding="{Binding Colony.PlanetTypeName}" Width="100" />
+                    <DataGridTextColumn Header="Pin Type" Binding="{Binding TypeName}" Width="200" />
+                    <DataGridTextColumn Header="Content" Binding="{Binding ContentTypeName}" Width="150" />
+                    <DataGridTextColumn Header="Quantity" Binding="{Binding ContentQuantity}" Width="80" />
+                    <DataGridTextColumn Header="State" Binding="{Binding State}" Width="80" />
+                    <DataGridTextColumn Header="Expiry" Binding="{Binding ExpiryTime, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
+                    <DataGridTextColumn Header="Solar System" Binding="{Binding Colony.SolarSystem.Name}" Width="120" />
+                </DataGrid.Columns>
+            </DataGrid>
         </DockPanel>
     </Panel>
 </UserControl>
