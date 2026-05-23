@@ -44,6 +44,7 @@ namespace EveLens.Common.Helpers
         public string? EsiScopePreset { get; set; }
         public List<string>? EsiCustomScopes { get; set; }
         public List<JsonCharacterGroupSettings>? CharacterGroups { get; set; }
+        public List<Guid>? UngroupedCharacterOrder { get; set; }
 
         // SSO credentials (custom overrides persisted from user settings)
         public string? SSOClientID { get; set; }

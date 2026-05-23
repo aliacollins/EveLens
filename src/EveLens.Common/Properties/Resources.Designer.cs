@@ -607,8 +607,7 @@ namespace EveLens.Common.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error logging in to EVE SSO.
-        ///If you changed your password, you must log in again using File &gt; Add Character..
+        ///   Looks up a localized string similar to EVE SSO login failed. Re-authenticate via File &gt; Add Character..
         /// </summary>
         public static string ErrorSSO {
             get {

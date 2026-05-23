@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -410,6 +411,23 @@ namespace EveLens.Common.Events
             : base(character)
         {
             CompletedPins = completedPins.ToList().AsReadOnly();
+        }
+    }
+
+    /// <summary>
+    /// Fired when extractor pins are approaching expiry (within the configured lead time).
+    /// Allows UI to show pre-expiry warnings so players can plan to log in.
+    /// </summary>
+    public sealed class CharacterPlanetaryPinsExpiringEvent : CharacterEventBase
+    {
+        public ReadOnlyCollection<PlanetaryPin> ExpiringPins { get; }
+        public TimeSpan LeadTime { get; }
+
+        public CharacterPlanetaryPinsExpiringEvent(Character character, IEnumerable<PlanetaryPin> expiringPins, TimeSpan leadTime)
+            : base(character)
+        {
+            ExpiringPins = expiringPins.ToList().AsReadOnly();
+            LeadTime = leadTime;
         }
     }
 

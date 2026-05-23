@@ -79,7 +79,7 @@ namespace EveLens.Common.Models
             m_attributes[(int)EveAttribute.Willpower] = willpower;
             m_attributes[(int)EveAttribute.Memory] = memory;
             Status = RemappingPointStatus.UpToDate;
-            m_description = $"INT {intelligence}  PER {perception}  CHA {charisma}  WIL {willpower}  MEM {memory}";
+            m_description = $"PER {perception}  MEM {memory}  WIL {willpower}  INT {intelligence}  CHA {charisma}";
         }
 
         /// <summary>

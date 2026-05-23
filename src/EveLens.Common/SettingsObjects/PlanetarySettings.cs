@@ -60,6 +60,19 @@ namespace EveLens.Common.SettingsObjects
         public bool ShowEcuOnly { get; set; }
 
         /// <summary>
+        /// Gets or sets the alert lead time in minutes before an extractor expires.
+        /// Set to 0 to disable pre-expiry alerts. Default: 120 (2 hours).
+        /// </summary>
+        [XmlElement("alertLeadTimeMinutes")]
+        public int AlertLeadTimeMinutes { get; set; } = 120;
+
+        /// <summary>
+        /// Gets or sets whether pre-expiry alerts are enabled.
+        /// </summary>
+        [XmlElement("alertsEnabled")]
+        public bool AlertsEnabled { get; set; } = true;
+
+        /// <summary>
         /// Gets the default columns.
         /// </summary>
         /// <value>The default columns.</value>

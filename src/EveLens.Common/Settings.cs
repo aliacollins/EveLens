@@ -176,6 +176,12 @@ namespace EveLens.Common
         /// </summary>
         public static IList<CharacterGroupSettings> CharacterGroups { get; private set; } = new List<CharacterGroupSettings>();
 
+        /// <summary>
+        /// Gets or sets the display order of ungrouped characters on the overview.
+        /// Characters not in this list appear after those that are, in their natural order.
+        /// </summary>
+        public static List<Guid> UngroupedCharacterOrder { get; set; } = new List<Guid>();
+
         public static IList<GlobalPlanTemplate> GlobalPlanTemplates { get; set; } = new List<GlobalPlanTemplate>();
 
         #endregion
@@ -228,6 +234,9 @@ namespace EveLens.Common
 
                 // Character groups
                 CharacterGroups = new List<CharacterGroupSettings>(s_settings.CharacterGroups);
+
+                // Ungrouped character order
+                UngroupedCharacterOrder = new List<Guid>(s_settings.UngroupedCharacterOrder ?? new List<Guid>());
 
                 // Global plan templates
                 GlobalPlanTemplates = new List<GlobalPlanTemplate>(s_settings.GlobalPlanTemplates);

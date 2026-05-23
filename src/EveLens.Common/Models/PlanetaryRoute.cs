@@ -23,6 +23,8 @@ namespace EveLens.Common.Models
             ID = src.RouteID;
             SourcePinID = src.SourcePinID;
             DestinationPinID = src.DestinationPinID;
+            ContentTypeID = (int)src.ContentTypeID;
+            Quantity = src.Quantity;
         }
 
         #endregion
@@ -61,6 +63,16 @@ namespace EveLens.Common.Models
         /// The destination pin identifier.
         /// </value>
         public long DestinationPinID { get; private set; }
+
+        /// <summary>
+        /// Gets the type ID of the material being routed.
+        /// </summary>
+        public int ContentTypeID { get; private set; }
+
+        /// <summary>
+        /// Gets the quantity of material per route cycle.
+        /// </summary>
+        public int Quantity { get; private set; }
 
         #endregion
 
