@@ -230,8 +230,17 @@ namespace EveLens.Avalonia.Views
                         needsGap = true;
                     }
 
-                    // Ungrouped at the end
+                    // Ungrouped at the end — respect saved order
                     var ungrouped = allChars.Where(c => !placed.Contains(c.Guid)).ToList();
+                    var ungroupedOrder = Settings.UngroupedCharacterOrder;
+                    if (ungroupedOrder.Count > 0)
+                    {
+                        ungrouped = ungroupedOrder
+                            .Select(guid => ungrouped.FirstOrDefault(c => c.Guid == guid))
+                            .Where(c => c != null).Select(c => c!)
+                            .Concat(ungrouped.Where(c => !ungroupedOrder.Contains(c.Guid)))
+                            .ToList();
+                    }
                     if (ungrouped.Count > 0)
                     {
                         if (needsGap)
@@ -251,6 +260,16 @@ namespace EveLens.Avalonia.Views
                 }
                 else
                 {
+                    // Respect ungrouped order
+                    var savedOrder = Settings.UngroupedCharacterOrder;
+                    if (savedOrder.Count > 0)
+                    {
+                        allChars = savedOrder
+                            .Select(guid => allChars.FirstOrDefault(c => c.Guid == guid))
+                            .Where(c => c != null).Select(c => c!)
+                            .Concat(allChars.Where(c => !savedOrder.Contains(c.Guid)))
+                            .ToList();
+                    }
                     foreach (Character character in allChars)
                     {
                         _observableCharacters.Add(new ObservableCharacter(character));
