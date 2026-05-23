@@ -53,8 +53,8 @@ namespace EveLens.Common.ViewModels
     {
         private static readonly EveAttribute[] AllAttributes =
         {
-            EveAttribute.Intelligence, EveAttribute.Perception,
-            EveAttribute.Charisma, EveAttribute.Willpower, EveAttribute.Memory
+            EveAttribute.Perception, EveAttribute.Memory,
+            EveAttribute.Willpower, EveAttribute.Intelligence, EveAttribute.Charisma
         };
 
         private Dictionary<EveAttribute, int> _currentAttributes = new();

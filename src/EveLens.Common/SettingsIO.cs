@@ -238,6 +238,8 @@ namespace EveLens.Common
             foreach (var group in CharacterGroups)
                 serial.CharacterGroups.Add(group);
 
+            serial.UngroupedCharacterOrder = new List<Guid>(UngroupedCharacterOrder);
+
             foreach (var template in GlobalPlanTemplates)
                 serial.GlobalPlanTemplates.Add(template);
 
