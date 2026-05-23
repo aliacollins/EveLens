@@ -32,7 +32,7 @@ using System.Runtime.InteropServices;
 //
 [assembly: AssemblyVersion("1.4.0.1")]
 [assembly: AssemblyFileVersion("1.4.0.1")]
-[assembly: AssemblyInformationalVersion("1.4.0-alpha.1")]
+[assembly: AssemblyInformationalVersion("1.4.0-beta.1")]
 
 // Neutral Language
 [assembly: NeutralResourcesLanguage("en-US")]
