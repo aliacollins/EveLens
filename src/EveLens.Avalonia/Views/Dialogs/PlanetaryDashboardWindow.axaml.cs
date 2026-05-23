@@ -13,6 +13,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using EveLens.Avalonia.Services;
+using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Common.Services.Planetary;
@@ -435,16 +436,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                              $"{_vm.TotalColonies} colonies, {_vm.ActiveExtractors + _vm.IdleExtractors} extractors";
         }
 
-        private static string FormatIsk(double isk)
-        {
-            if (Math.Abs(isk) >= 1_000_000_000)
-                return $"{isk / 1_000_000_000:F1}B";
-            if (Math.Abs(isk) >= 1_000_000)
-                return $"{isk / 1_000_000:F1}M";
-            if (Math.Abs(isk) >= 1_000)
-                return $"{isk / 1_000:F1}K";
-            return $"{isk:F0}";
-        }
+        private static string FormatIsk(double isk) => FormattingHelper.FormatIsk(isk);
 
         // ── Event handlers ──
 

@@ -16,8 +16,6 @@ using Avalonia.Media;
 using Avalonia.Themes.Fluent;
 using EveLens.Common;
 using Velopack;
-
-using Velopack;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia
 {

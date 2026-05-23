@@ -37,13 +37,15 @@ namespace EveLens.Common.Services.Planetary
             var storage = ClassifyStorage(pins);
             var bottlenecks = DetectBottlenecks(extractors, factories, routes);
 
+            var alertMinutes = Settings.UI?.MainWindow?.Planetary?.AlertLeadTimeMinutes ?? 120;
+
             return new ColonyAnalysis(
                 colony,
                 extractors,
                 factories,
                 storage,
                 bottlenecks,
-                CalculateOverallHealth(extractors, bottlenecks));
+                CalculateOverallHealth(extractors, bottlenecks, alertMinutes));
         }
 
         private static List<ExtractorInfo> ClassifyExtractors(List<PlanetaryPin> pins)
@@ -237,7 +239,7 @@ namespace EveLens.Common.Services.Planetary
             return $"Type {typeId}";
         }
 
-        private static ColonyHealthStatus CalculateOverallHealth(List<ExtractorInfo> extractors, List<Bottleneck> bottlenecks)
+        private static ColonyHealthStatus CalculateOverallHealth(List<ExtractorInfo> extractors, List<Bottleneck> bottlenecks, int alertMinutes)
         {
             if (extractors.Count == 0)
                 return ColonyHealthStatus.NoExtractors;
@@ -250,7 +252,6 @@ namespace EveLens.Common.Services.Planetary
             if (anyIdle)
                 return ColonyHealthStatus.Idle;
 
-            var alertMinutes = Settings.UI?.MainWindow?.Planetary?.AlertLeadTimeMinutes ?? 120;
             var leadTime = TimeSpan.FromMinutes(alertMinutes);
             var now = DateTime.UtcNow;
             bool anyExpiringSoon = extractors.Any(e =>

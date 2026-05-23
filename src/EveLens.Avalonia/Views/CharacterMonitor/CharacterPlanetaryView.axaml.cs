@@ -11,6 +11,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using Avalonia.Interactivity;
+using EveLens.Common.Helpers;
 using EveLens.Common.Models;
 using EveLens.Common.ViewModels;
 using EveLens.Common.ViewModels.Lists;
@@ -464,16 +465,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
         }
 
-        private static string FormatIsk(double isk)
-        {
-            if (Math.Abs(isk) >= 1_000_000_000)
-                return $"{isk / 1_000_000_000:F1}B";
-            if (Math.Abs(isk) >= 1_000_000)
-                return $"{isk / 1_000_000:F1}M";
-            if (Math.Abs(isk) >= 1_000)
-                return $"{isk / 1_000:F1}K";
-            return $"{isk:F0}";
-        }
+        private static string FormatIsk(double isk) => FormattingHelper.FormatIsk(isk);
 
         // ── Event handlers ──
 
