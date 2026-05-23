@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0-beta.1] - 2026-05-24
+
+### Added
+
+- **Planetary Interaction overhaul (Beta)** -- Timer-based health model (Optimal/Expiring/Idle), conditional economics only shown when ESI provides yield data, alert timeline, colony flow canvas visualization
+- **PI alert notifications** -- In-app toasts when extractors expire, activity log entries, debounced OS notification ("PI needs attention")
+- **Character drag-reorder on overview** -- "Reorder" mode toggle, drag cards within groups, persists across restarts, portrait strip syncs
+- **Overview cards: location + ship** -- Shows solar system and active ship type, updates live as ESI fetches complete
+- **Overview cards: Omega/Alpha badge below portrait** -- Frees horizontal space for location info
+- **Manage Groups button** -- Accessible directly from overview toolbar
+- **Branch protection** -- main/alpha/beta require PRs, promote.ps1 updated to use PR workflow
+- **FormattingHelper utility** -- Shared ISK formatting extracted from duplicate implementations
+
+### Fixed
+
+- **Plan Editor attribute ordering** -- Now matches in-game: Perception, Memory, Willpower, Intelligence, Charisma. All 7 display locations corrected (#74)
+- **Activity log popup clipping** -- Replaced Flyout with properly anchored Popup that respects screen bounds. Buttons always accessible (#68)
+- **SSO error message** -- Shortened to single line to prevent layout overflow
+- **Upper portrait strip** -- Now respects ungrouped character order after drag-reorder
+
+### Changed
+
+- **PI health model** -- Removed throughput-based statuses (Inefficient/Critical), replaced with time-based (Expiring). Economics hidden when ESI data unreliable
+- **ProductionChainAnalyzer** -- Alert lead time passed as parameter instead of reading static Settings internally
+- **NativeNotificationService** -- Rebuilt using DesktopNotifications package for cross-platform support
+
 ## [1.3.0] - 2026-05-10
 
 ### Added
