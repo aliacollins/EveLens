@@ -11,6 +11,7 @@ using Avalonia;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -29,8 +30,6 @@ using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
 using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Views.Dialogs;
-using EveLens.Core.Events;
-
 using EveLens.Core.Events;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.CharacterMonitor
@@ -57,12 +56,30 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         // Toggle for fetching dot pulse (alternates each second tick)
         private bool _fetchingDotBright;
 
+        // Reorder mode — when active, cards are draggable instead of clickable
+        private bool _reorderMode;
+        private Button? _reorderToggleBtn;
+
         // Only animate the staggered fade-in on first application load
         private bool _initialLoadDone;
 
         // Track collapsed groups for expand/collapse persistence
         private const string OverviewCollapseKey = "OverviewGroups";
         private HashSet<string> _collapsedGroups = new(StringComparer.Ordinal);
+
+        // Drag-to-reorder state
+        private bool _isDragging;
+        private bool _dragPending;
+        private double _dragStartX, _dragStartY;
+        private int _dragStartIndex = -1;
+        private WrapPanel? _dragSourcePanel;
+        private Button? _draggedCard;
+        private Border? _dragGhost;
+        private Border? _insertIndicator;
+        private int _currentInsertIndex = -1;
+        private string? _dragGroupName;
+        private const double DragThreshold = 8.0;
+        private const double CardWidth = 308.0; // 300 + 8 margin
 
 
         public CharacterOverviewView()
@@ -137,6 +154,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
                 OverviewPanel.Children.Clear();
 
+                // Reorder mode toolbar
+                BuildReorderToolbar();
+
                 // Load persisted collapse state — we store collapsed group names
                 _collapsedGroups = CollapseStateHelper.LoadExpandState(0, OverviewCollapseKey);
                 _prevBalances.Clear();
@@ -179,6 +199,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     var ungrouped = characters.Where(c => !assignedGuids.Contains(c.Guid)).ToList();
                     if (ungrouped.Count > 0)
                     {
+                        ungrouped = SortByUngroupedOrder(ungrouped);
                         BuildGroupSection("Ungrouped", ungrouped, ref cardIndex);
                     }
 
@@ -189,7 +210,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 }
                 else
                 {
-                    var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true);
+                    characters = SortByUngroupedOrder(characters);
+                    var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true, groupName: "Ungrouped");
                     OverviewPanel.Children.Add(wrap);
                 }
 
@@ -266,7 +288,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             divider.Children.Add(count);
             divider.Children.Add(line);
 
-            var wrap = BuildCardWrapPanel(characters, ref cardIndex);
+            var wrap = BuildCardWrapPanel(characters, ref cardIndex, groupName: groupName);
             wrap.IsVisible = !isCollapsed;
 
             // Click header to toggle collapse
@@ -288,13 +310,14 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         }
 
         private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
-            bool includeGhostCard = false)
+            bool includeGhostCard = false, string? groupName = null)
         {
-            var wrap = new WrapPanel { Orientation = Orientation.Horizontal };
+            var wrap = new WrapPanel { Orientation = Orientation.Horizontal, Tag = groupName };
 
             foreach (var character in characters)
             {
                 var card = BuildCharacterCard(character, cardIndex);
+                card.AddHandler(PointerPressedEvent, OnCardPointerPressed, global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
                 wrap.Children.Add(card);
                 cardIndex++;
             }
@@ -492,12 +515,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
 
             // Grid overlays the dot on the portrait
-            var portraitContainer = new Grid
+            var portraitGrid = new Grid
             {
                 Width = 56, Height = 56,
+                Children = { portraitBorder, esiDot }
+            };
+
+            var portraitContainer = new StackPanel
+            {
+                Spacing = 0,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(0, 0, 12, 0),
-                Children = { portraitBorder, esiDot }
+                Children = { portraitGrid }
             };
 
             // Info panel
@@ -547,7 +576,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             infoPanel.Children.Add(spText);
 
-            // Account status badge
+            // Location + Ship line
+            string locationName = character.LastKnownSolarSystem?.Name ?? "";
+            string shipType = character.ShipTypeName ?? "";
+            if (!string.IsNullOrEmpty(locationName) || !string.IsNullOrEmpty(shipType))
+            {
+                string locShipText = !string.IsNullOrEmpty(locationName) && !string.IsNullOrEmpty(shipType)
+                    ? $"{locationName} \u2022 {shipType}"
+                    : !string.IsNullOrEmpty(locationName) ? locationName : shipType;
+
+                infoPanel.Children.Add(new TextBlock
+                {
+                    Text = locShipText,
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    Tag = "LocationShipText"
+                });
+            }
+
+            // Account status badge \u2014 built here, added below portrait later
             bool isOmega = character.EffectiveCharacterStatus == AccountStatus.Omega;
             var badgeText = new TextBlock
             {
@@ -555,20 +603,20 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 FontSize = FontScaleService.Caption, FontWeight = FontWeight.SemiBold,
                 Foreground = isOmega
                     ? new SolidColorBrush(Color.Parse("#FF00C853"))
-                    : new SolidColorBrush(Color.Parse("#FFFF6D00"))
+                    : new SolidColorBrush(Color.Parse("#FFFF6D00")),
+                HorizontalAlignment = HorizontalAlignment.Center
             };
             var badge = new Border
             {
                 CornerRadius = new CornerRadius(8),
                 Padding = new Thickness(6, 1),
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 1, 0, 0),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 3, 0, 0),
                 Background = isOmega
                     ? new SolidColorBrush(Color.Parse("#2200C853"))
                     : new SolidColorBrush(Color.Parse("#22FF6D00")),
                 Child = badgeText
             };
-            infoPanel.Children.Add(badge);
 
             // Training status
             var trainingText = new TextBlock
@@ -580,6 +628,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             UpdateTrainingText(trainingText, character);
             infoPanel.Children.Add(trainingText);
+
+            // Add Omega/Alpha badge below portrait
+            portraitContainer.Children.Add(badge);
 
             var cardGrid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("68,*") };
             Grid.SetColumn(portraitContainer, 0);
@@ -831,6 +882,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         if (!PrivacyHelper.IsSkillPointsHidden) FlashTextBlock(spBlock);
                     }
                     _prevSkillPoints[character.CharacterID] = character.SkillPoints;
+                }
+
+                // Update location + ship
+                var locShipBlock = FindTaggedDescendant<TextBlock>(card, "LocationShipText");
+                if (locShipBlock != null)
+                {
+                    string locationName = character.LastKnownSolarSystem?.Name ?? "";
+                    string shipType = character.ShipTypeName ?? "";
+                    string locShipText = !string.IsNullOrEmpty(locationName) && !string.IsNullOrEmpty(shipType)
+                        ? $"{locationName} • {shipType}"
+                        : !string.IsNullOrEmpty(locationName) ? locationName : shipType;
+                    if (locShipBlock.Text != locShipText)
+                        locShipBlock.Text = locShipText;
                 }
 
                 // Update training text
@@ -1293,6 +1357,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             try
             {
+                if (_reorderMode) return;
+
                 if (sender is Button btn && btn.DataContext is Character character)
                 {
                     var mainWindow = this.FindAncestorOfType<MainWindow>();
@@ -1303,6 +1369,525 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             {
                 System.Diagnostics.Debug.WriteLine($"Card click error: {ex}");
             }
+        }
+
+        #endregion
+
+        #region Drag-to-Reorder
+
+        private void BuildReorderToolbar()
+        {
+            var characters = AppServices.Characters.Where(c => c.Monitored).ToList();
+            if (characters.Count < 2) return;
+
+            _reorderToggleBtn = new Button
+            {
+                Content = _reorderMode ? "Done" : "Reorder",
+                FontSize = FontScaleService.Small,
+                Padding = new Thickness(10, 3),
+                CornerRadius = new CornerRadius(12),
+                Background = _reorderMode
+                    ? FindBrush("EveAccentPrimaryBrush", Brushes.Gold)
+                    : Brushes.Transparent,
+                Foreground = _reorderMode
+                    ? Brushes.Black
+                    : FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand)
+            };
+            _reorderToggleBtn.Click += OnReorderToggle;
+
+            var manageGroupsBtn = new Button
+            {
+                Content = "Manage Groups",
+                FontSize = FontScaleService.Small,
+                Padding = new Thickness(10, 3),
+                CornerRadius = new CornerRadius(12),
+                Background = Brushes.Transparent,
+                Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 0, 6, 0),
+                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand)
+            };
+            manageGroupsBtn.Click += OnManageGroupsClick;
+
+            var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+            if (_reorderMode)
+            {
+                toolbar.Children.Add(new TextBlock
+                {
+                    Text = "Drag cards to reorder, then click Done",
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontStyle = FontStyle.Italic
+                });
+            }
+
+            var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            btnPanel.Children.Add(manageGroupsBtn);
+            btnPanel.Children.Add(_reorderToggleBtn);
+            DockPanel.SetDock(btnPanel, Dock.Right);
+            toolbar.Children.Insert(0, btnPanel);
+
+            OverviewPanel.Children.Add(toolbar);
+        }
+
+        private void OnManageGroupsClick(object? sender, RoutedEventArgs e)
+        {
+            var mainWindow = this.FindAncestorOfType<MainWindow>();
+            if (mainWindow == null) return;
+
+            var dialog = new ManageGroupsWindow { };
+            dialog.ShowDialog(mainWindow);
+        }
+
+        private void OnReorderToggle(object? sender, RoutedEventArgs e)
+        {
+            _reorderMode = !_reorderMode;
+            LoadData();
+        }
+
+        private static List<Character> SortByUngroupedOrder(List<Character> characters)
+        {
+            var order = Settings.UngroupedCharacterOrder;
+            if (order == null || order.Count == 0)
+                return characters;
+
+            var orderMap = new Dictionary<Guid, int>();
+            for (int i = 0; i < order.Count; i++)
+                orderMap[order[i]] = i;
+
+            return characters
+                .OrderBy(c => orderMap.TryGetValue(c.Guid, out int idx) ? idx : int.MaxValue)
+                .ThenBy(c => c.Name)
+                .ToList();
+        }
+
+        private void OnCardPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            try
+            {
+                if (!_reorderMode) return;
+
+                if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed == false)
+                    return;
+
+                if (sender is not Button card || card.DataContext is not Character)
+                    return;
+
+                var wrap = card.Parent as WrapPanel;
+                if (wrap == null) return;
+
+                var pos = e.GetPosition(OverviewScroller);
+                _dragPending = true;
+                _dragStartX = pos.X;
+                _dragStartY = pos.Y;
+                _draggedCard = card;
+                _dragSourcePanel = wrap;
+                _dragGroupName = wrap.Tag as string;
+                _dragStartIndex = GetCardIndex(wrap, card);
+
+                e.Pointer.Capture(OverviewScroller);
+                e.Handled = true;
+
+                OverviewScroller.PointerMoved += OnPendingDragPointerMoved;
+                OverviewScroller.PointerReleased += OnPendingDragPointerReleased;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Drag press error: {ex}");
+            }
+        }
+
+        private void OnPendingDragPointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_dragPending) return;
+
+            var pos = e.GetPosition(OverviewScroller);
+            double dx = Math.Abs(pos.X - _dragStartX);
+            double dy = Math.Abs(pos.Y - _dragStartY);
+
+            if (dx < DragThreshold && dy < DragThreshold) return;
+
+            // Promote to real drag
+            _dragPending = false;
+            OverviewScroller.PointerMoved -= OnPendingDragPointerMoved;
+            OverviewScroller.PointerReleased -= OnPendingDragPointerReleased;
+
+            PromoteToDrag(e);
+        }
+
+        private void OnPendingDragPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            // Did not exceed threshold — not a drag, allow click to proceed
+            _dragPending = false;
+            OverviewScroller.PointerMoved -= OnPendingDragPointerMoved;
+            OverviewScroller.PointerReleased -= OnPendingDragPointerReleased;
+            e.Pointer.Capture(null);
+            _draggedCard = null;
+            _dragSourcePanel = null;
+            _dragStartIndex = -1;
+        }
+
+        private void PromoteToDrag(PointerEventArgs e)
+        {
+            _isDragging = true;
+
+            // Ghost the dragged card — smooth fade out
+            if (_draggedCard != null)
+            {
+                _draggedCard.Opacity = 0.2;
+                _draggedCard.RenderTransform = global::Avalonia.Media.Transformation.TransformOperations.Parse("scale(0.95)");
+            }
+
+            // Create ghost badge with character name
+            string label = (_draggedCard?.DataContext as Character)?.Name ?? "Character";
+            _dragGhost = new Border
+            {
+                Background = new SolidColorBrush(Color.Parse("#E81A1F2E")),
+                BorderBrush = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                BorderThickness = new Thickness(1.5),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(14, 8),
+                IsHitTestVisible = false,
+                BoxShadow = new BoxShadows(new BoxShadow { Blur = 12, Color = Color.Parse("#60000000") }),
+                Child = new TextBlock
+                {
+                    Text = label,
+                    FontSize = FontScaleService.Body,
+                    Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                    FontWeight = FontWeight.SemiBold,
+                },
+            };
+
+            var viewPos = e.GetPosition(OverviewScroller);
+            Canvas.SetLeft(_dragGhost, viewPos.X + 16);
+            Canvas.SetTop(_dragGhost, viewPos.Y - 12);
+            DragCanvas.Children.Add(_dragGhost);
+
+            // Create insert indicator (vertical line between cards)
+            _insertIndicator = new Border
+            {
+                Width = 3,
+                Height = 90,
+                Background = new SolidColorBrush(Color.Parse("#4A94F0")),
+                CornerRadius = new CornerRadius(2),
+                IsHitTestVisible = false,
+                IsVisible = false
+            };
+            DragCanvas.Children.Add(_insertIndicator);
+
+            // Capture pointer on the scroller
+            e.Pointer.Capture(OverviewScroller);
+            OverviewScroller.PointerMoved += OnDragPointerMoved;
+            OverviewScroller.PointerReleased += OnDragPointerReleased;
+        }
+
+        private void OnDragPointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (!_isDragging || _dragSourcePanel == null) return;
+
+            try
+            {
+                var viewPos = e.GetPosition(OverviewScroller);
+
+                // Move ghost
+                if (_dragGhost != null)
+                {
+                    Canvas.SetLeft(_dragGhost, viewPos.X + 16);
+                    Canvas.SetTop(_dragGhost, viewPos.Y - 12);
+                }
+
+                // Auto-scroll near edges
+                double scrollZone = 40;
+                double viewportHeight = OverviewScroller.Bounds.Height;
+                if (viewPos.Y < scrollZone)
+                {
+                    double speed = (scrollZone - viewPos.Y) / scrollZone * 6;
+                    OverviewScroller.Offset = new Vector(0, Math.Max(0, OverviewScroller.Offset.Y - speed));
+                }
+                else if (viewPos.Y > viewportHeight - scrollZone)
+                {
+                    double speed = (viewPos.Y - (viewportHeight - scrollZone)) / scrollZone * 6;
+                    double maxScroll = OverviewScroller.Extent.Height - viewportHeight;
+                    OverviewScroller.Offset = new Vector(0, Math.Min(maxScroll, OverviewScroller.Offset.Y + speed));
+                }
+
+                // Calculate insert position within the source WrapPanel
+                var panelPos = e.GetPosition(_dragSourcePanel);
+                int insertIndex = CalculateInsertIndex(_dragSourcePanel, panelPos);
+
+                if (insertIndex == _currentInsertIndex) return;
+                _currentInsertIndex = insertIndex;
+
+                // Position the insert indicator
+                UpdateInsertIndicator(insertIndex);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Drag move error: {ex}");
+            }
+        }
+
+        private void OnDragPointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            if (!_isDragging) return;
+
+            try
+            {
+                // Right-click cancels
+                if (e.InitialPressMouseButton == MouseButton.Right)
+                {
+                    CancelDrag(e.Pointer);
+                    return;
+                }
+
+                // Cleanup event subscriptions
+                OverviewScroller.PointerMoved -= OnDragPointerMoved;
+                OverviewScroller.PointerReleased -= OnDragPointerReleased;
+                e.Pointer.Capture(null);
+
+                // Remove ghost and indicator
+                CleanupDragVisuals();
+
+                // Restore card opacity
+                if (_draggedCard != null)
+                {
+                    _draggedCard.Opacity = 1.0;
+                    _draggedCard.RenderTransform = null;
+                }
+
+                // Perform the reorder if we have a valid drop position
+                if (_currentInsertIndex >= 0 && _dragSourcePanel != null && _dragStartIndex >= 0)
+                {
+                    int fromIndex = _dragStartIndex;
+                    int toIndex = _currentInsertIndex;
+
+                    // Adjust target: if moving forward, account for the removal of the source
+                    if (toIndex > fromIndex)
+                        toIndex--;
+
+                    if (toIndex != fromIndex)
+                    {
+                        PerformReorder(fromIndex, toIndex);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Drag release error: {ex}");
+            }
+            finally
+            {
+                ResetDragState();
+            }
+        }
+
+        private void CancelDrag(IPointer pointer)
+        {
+            OverviewScroller.PointerMoved -= OnDragPointerMoved;
+            OverviewScroller.PointerReleased -= OnDragPointerReleased;
+            pointer.Capture(null);
+            CleanupDragVisuals();
+
+            if (_draggedCard != null)
+                _draggedCard.Opacity = 1.0;
+
+            ResetDragState();
+        }
+
+        private void CleanupDragVisuals()
+        {
+            if (_dragGhost != null)
+            {
+                DragCanvas.Children.Remove(_dragGhost);
+                _dragGhost = null;
+            }
+            if (_insertIndicator != null)
+            {
+                DragCanvas.Children.Remove(_insertIndicator);
+                _insertIndicator = null;
+            }
+        }
+
+        private void ResetDragState()
+        {
+            _isDragging = false;
+            _dragPending = false;
+            _draggedCard = null;
+            _dragSourcePanel = null;
+            _dragStartIndex = -1;
+            _currentInsertIndex = -1;
+            _dragGroupName = null;
+        }
+
+        private int CalculateInsertIndex(WrapPanel panel, Point posInPanel)
+        {
+            // Count only character cards (exclude ghost card)
+            int cardCount = 0;
+            for (int i = 0; i < panel.Children.Count; i++)
+            {
+                if (panel.Children[i] is Button btn && btn.DataContext is Character)
+                    cardCount++;
+            }
+
+            if (cardCount == 0) return 0;
+
+            // Use actual card bounds for accurate hit detection
+            for (int i = 0; i < panel.Children.Count; i++)
+            {
+                if (panel.Children[i] is not Button btn || btn.DataContext is not Character)
+                    continue;
+
+                var bounds = btn.Bounds;
+                double cardMidX = bounds.X + bounds.Width / 2;
+
+                // Check if pointer is within this card's vertical band
+                if (posInPanel.Y >= bounds.Y && posInPanel.Y < bounds.Y + bounds.Height)
+                {
+                    if (posInPanel.X < cardMidX)
+                        return i;
+                }
+            }
+
+            // If pointer is below or to the right of all cards, insert at end
+            return cardCount;
+        }
+
+        private void UpdateInsertIndicator(int insertIndex)
+        {
+            if (_insertIndicator == null || _dragSourcePanel == null) return;
+
+            // Get the position of the insert point in scroller coordinates
+            int charCardIndex = 0;
+            Button? targetCard = null;
+            bool insertAtEnd = true;
+
+            for (int i = 0; i < _dragSourcePanel.Children.Count; i++)
+            {
+                if (_dragSourcePanel.Children[i] is not Button btn || btn.DataContext is not Character)
+                    continue;
+
+                if (charCardIndex == insertIndex)
+                {
+                    targetCard = btn;
+                    insertAtEnd = false;
+                    break;
+                }
+                charCardIndex++;
+            }
+
+            Point indicatorPos;
+            if (targetCard != null)
+            {
+                // Position to the left of this card
+                var cardTopLeft = targetCard.TranslatePoint(new Point(0, 0), OverviewScroller);
+                if (cardTopLeft == null)
+                {
+                    _insertIndicator.IsVisible = false;
+                    return;
+                }
+                indicatorPos = cardTopLeft.Value;
+            }
+            else if (insertAtEnd)
+            {
+                // Position to the right of the last card
+                Button? lastCard = null;
+                for (int i = _dragSourcePanel.Children.Count - 1; i >= 0; i--)
+                {
+                    if (_dragSourcePanel.Children[i] is Button btn && btn.DataContext is Character)
+                    {
+                        lastCard = btn;
+                        break;
+                    }
+                }
+                if (lastCard == null)
+                {
+                    _insertIndicator.IsVisible = false;
+                    return;
+                }
+                var lastTopLeft = lastCard.TranslatePoint(new Point(lastCard.Bounds.Width, 0), OverviewScroller);
+                if (lastTopLeft == null)
+                {
+                    _insertIndicator.IsVisible = false;
+                    return;
+                }
+                indicatorPos = lastTopLeft.Value;
+            }
+            else
+            {
+                _insertIndicator.IsVisible = false;
+                return;
+            }
+
+            _insertIndicator.Height = 90;
+            Canvas.SetLeft(_insertIndicator, indicatorPos.X - 1);
+            Canvas.SetTop(_insertIndicator, indicatorPos.Y);
+            _insertIndicator.IsVisible = true;
+        }
+
+        private void PerformReorder(int fromIndex, int toIndex)
+        {
+            if (_dragGroupName == null || _dragSourcePanel == null) return;
+
+            if (_dragGroupName == "Ungrouped")
+            {
+                // Reorder in UngroupedCharacterOrder
+                var characters = GetCharactersFromPanel(_dragSourcePanel);
+                if (fromIndex >= characters.Count) return;
+
+                var movedChar = characters[fromIndex];
+                characters.RemoveAt(fromIndex);
+                if (toIndex > characters.Count) toIndex = characters.Count;
+                characters.Insert(toIndex, movedChar);
+
+                // Update the settings list
+                Settings.UngroupedCharacterOrder = characters.Select(c => c.Guid).ToList();
+            }
+            else
+            {
+                // Reorder within a named group's CharacterGuids
+                var group = Settings.CharacterGroups.FirstOrDefault(g => g.Name == _dragGroupName);
+                if (group == null) return;
+
+                var guids = group.CharacterGuids;
+                if (fromIndex >= guids.Count) return;
+
+                var movedGuid = guids[fromIndex];
+                guids.RemoveAt(fromIndex);
+                if (toIndex > guids.Count) toIndex = guids.Count;
+                guids.Insert(toIndex, movedGuid);
+            }
+
+            // Persist and notify
+            Settings.Save();
+            AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
+        }
+
+        private static List<Character> GetCharactersFromPanel(WrapPanel panel)
+        {
+            var result = new List<Character>();
+            foreach (var child in panel.Children)
+            {
+                if (child is Button btn && btn.DataContext is Character ch)
+                    result.Add(ch);
+            }
+            return result;
+        }
+
+        private static int GetCardIndex(WrapPanel panel, Button card)
+        {
+            int index = 0;
+            foreach (var child in panel.Children)
+            {
+                if (child is Button btn && btn.DataContext is Character)
+                {
+                    if (btn == card) return index;
+                    index++;
+                }
+            }
+            return -1;
         }
 
         #endregion

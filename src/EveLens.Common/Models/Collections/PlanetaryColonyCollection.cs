@@ -88,28 +88,54 @@ namespace EveLens.Common.Models.Collections
         #region Helper Methods
 
         /// <summary>
-        /// Notify the user on a pin completion.
+        /// Notify the user on a pin completion and check for approaching expiry.
         /// </summary>
         private void UpdateOnTimerTick()
         {
-            // We exit if there are no pins
             if (!Items.Any())
                 return;
 
-            // Add the not notified idle pins to the completed list
-            var pinsCompleted = Items.SelectMany(x => x.Pins).Where(pin => pin.State !=
+            var allPins = Items.SelectMany(x => x.Pins).ToList();
+
+            // Check for completed pins (post-expiry notification)
+            var pinsCompleted = allPins.Where(pin => pin.State !=
                 PlanetaryPinState.None && pin.TTC.Length == 0 && !pin.NotificationSend).ToList();
 
             pinsCompleted.ForEach(pin => pin.NotificationSend = true);
 
-            // We exit if no pins have finished
-            if (!pinsCompleted.Any())
+            if (pinsCompleted.Any())
+            {
+                AppServices.TraceService?.Trace(m_ccpCharacter.Name);
+                m_ccpCharacter.OnPlanetaryPinsCompleted(pinsCompleted);
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryPinsCompletedEvent(m_ccpCharacter, pinsCompleted));
+            }
+
+            // Check for approaching expiry (pre-expiry alert)
+            CheckPreExpiryAlerts(allPins);
+        }
+
+        private void CheckPreExpiryAlerts(List<PlanetaryPin> allPins)
+        {
+            var settings = Settings.UI?.MainWindow?.Planetary;
+            if (settings == null || !settings.AlertsEnabled || settings.AlertLeadTimeMinutes <= 0)
                 return;
 
-            // Fires the event regarding the character's pins finished
-            AppServices.TraceService?.Trace(m_ccpCharacter.Name);
-            m_ccpCharacter.OnPlanetaryPinsCompleted(pinsCompleted);
-            AppServices.EventAggregator?.Publish(new CommonEvents.CharacterPlanetaryPinsCompletedEvent(m_ccpCharacter, pinsCompleted));
+            var leadTime = TimeSpan.FromMinutes(settings.AlertLeadTimeMinutes);
+            var now = DateTime.UtcNow;
+
+            var pinsExpiring = allPins.Where(pin =>
+                pin.State == PlanetaryPinState.Extracting &&
+                !pin.PreExpiryAlertSent &&
+                pin.ExpiryTime > now &&
+                (pin.ExpiryTime - now) <= leadTime).ToList();
+
+            if (!pinsExpiring.Any())
+                return;
+
+            pinsExpiring.ForEach(pin => pin.PreExpiryAlertSent = true);
+            AppServices.EventAggregator?.Publish(
+                new CommonEvents.CharacterPlanetaryPinsExpiringEvent(m_ccpCharacter, pinsExpiring, leadTime));
+            AppServices.Notifications.NotifyCharacterPlanetaryPinsExpiring(m_ccpCharacter, pinsExpiring, leadTime);
         }
 
         #endregion

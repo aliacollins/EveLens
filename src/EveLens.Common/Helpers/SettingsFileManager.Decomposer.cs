@@ -42,6 +42,9 @@ namespace EveLens.Common.Helpers
                     Name = g.Name,
                     CharacterGuids = g.CharacterGuids.ToList()
                 }).ToList(),
+                UngroupedCharacterOrder = settings.UngroupedCharacterOrder?.Count > 0
+                    ? new List<Guid>(settings.UngroupedCharacterOrder)
+                    : null,
                 SSOClientID = settings.SSOClientID,
                 SSOClientSecret = settings.SSOClientSecret,
                 GlobalPlanTemplates = settings.GlobalPlanTemplates.Select(t => new JsonGlobalPlanTemplate

@@ -16,8 +16,6 @@ using Avalonia.Media;
 using Avalonia.Themes.Fluent;
 using EveLens.Common;
 using Velopack;
-
-using Velopack;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia
 {
@@ -54,6 +52,9 @@ namespace EveLens.Avalonia
                 ShowAlreadyRunningDialog();
                 return;
             }
+
+            // Initialize native OS notification manager
+            NativeNotificationService.Initialize();
 
             // Force Western number formatting (XXX,XXX.XX) regardless of system locale
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;

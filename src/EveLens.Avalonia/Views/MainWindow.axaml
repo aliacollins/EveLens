@@ -34,6 +34,7 @@
             <MenuItem x:Name="ToolsMenu" Header="_Tools">
                 <MenuItem x:Name="CharCompMenuItem" Header="_Character Comparison" />
                 <MenuItem x:Name="SkillFarmMenuItem" Header="Skill _Farm Dashboard" />
+                <MenuItem x:Name="PlanetaryDashMenuItem" Header="_Planetary Dashboard" />
                 <MenuItem x:Name="GlobalPlanMenuItem" Header="_Doctrine Designer" InputGesture="Ctrl+G" />
                 <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
                 <Separator />
@@ -128,93 +129,104 @@
                     </Panel>
                 </Button>
 
-                <!-- Notification bell with flyout -->
-                <Button x:Name="NotificationBellBtn" DockPanel.Dock="Right"
-                        Background="Transparent" BorderThickness="0"
-                        Padding="8,0" VerticalAlignment="Center"
-                        ClipToBounds="False"
-                        Cursor="Hand" ToolTip.Tip="Activity Log">
-                    <Button.Flyout>
-                        <Flyout Placement="TopEdgeAlignedRight">
-                            <Border Background="{StaticResource EveBackgroundMediumBrush}"
-                                    BorderBrush="{StaticResource EveBorderBrush}"
-                                    BorderThickness="1" CornerRadius="6"
-                                    Padding="0" MinWidth="360" MaxHeight="480">
-                                <DockPanel>
-                                    <!-- Header -->
-                                    <Border DockPanel.Dock="Top" Padding="12,8"
-                                            BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
-                                        <DockPanel>
-                                            <TextBlock Text="Activity Log" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
-                                                       Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
-                                                        HorizontalAlignment="Right" Spacing="6">
-                                                <Button x:Name="MarkReadBtn" Content="Mark Read"
-                                                        FontSize="{DynamicResource EveFontSmall}" Padding="8,2" CornerRadius="10"
-                                                        Background="Transparent"
-                                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
-                                                <Button x:Name="ClearAllBtn" Content="Clear"
-                                                        FontSize="{DynamicResource EveFontSmall}" Padding="8,2" CornerRadius="10"
-                                                        Background="Transparent"
-                                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
-                                            </StackPanel>
-                                        </DockPanel>
-                                    </Border>
-                                    <!-- Empty state -->
-                                    <TextBlock x:Name="EmptyActivityText"
-                                               Text="No recent activity"
-                                               FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextDisabledBrush}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                                               Margin="0,40" IsVisible="False" />
-                                    <!-- Activity list -->
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                        <ItemsControl x:Name="ActivityItems">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Padding="12,6"
-                                                            BorderBrush="{StaticResource EveBorderBrush}"
-                                                            BorderThickness="0,0,0,1">
-                                                        <Grid ColumnDefinitions="*,Auto">
-                                                            <StackPanel Spacing="2">
-                                                                <TextBlock Text="{Binding Description}" FontSize="{DynamicResource EveFontBody}"
-                                                                           Foreground="{Binding DescriptionBrush}"
-                                                                           TextTrimming="CharacterEllipsis"
-                                                                           ToolTip.Tip="{Binding Description}" />
-                                                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                    <TextBlock Text="{Binding CharacterName}" FontSize="{DynamicResource EveFontSmall}"
-                                                                               Foreground="{StaticResource EveAccentPrimaryBrush}"
-                                                                               IsVisible="{Binding HasCharacter}" />
-                                                                    <TextBlock Text="{Binding CategoryDisplay}" FontSize="{DynamicResource EveFontSmall}"
-                                                                               Foreground="{StaticResource EveTextDisabledBrush}" />
-                                                                </StackPanel>
-                                                            </StackPanel>
-                                                            <TextBlock Grid.Column="1" Text="{Binding TimeAgo}" FontSize="{DynamicResource EveFontSmall}"
-                                                                       Foreground="{StaticResource EveTextDisabledBrush}"
-                                                                       VerticalAlignment="Top" Margin="8,0,0,0" />
-                                                        </Grid>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </ScrollViewer>
-                                </DockPanel>
+                <!-- Notification bell -->
+                <Panel DockPanel.Dock="Right" ClipToBounds="False">
+                    <Button x:Name="NotificationBellBtn"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="8,0" VerticalAlignment="Center"
+                            ClipToBounds="False"
+                            Cursor="Hand" ToolTip.Tip="Activity Log"
+                            Click="OnBellClick">
+                        <Panel ClipToBounds="False">
+                            <TextBlock Text="&#x1F514;" FontSize="{DynamicResource EveFontTitle}" VerticalAlignment="Center" />
+                            <Border x:Name="UnreadBadge" IsVisible="False"
+                                    Background="{StaticResource EveErrorRedBrush}"
+                                    CornerRadius="7" MinWidth="14" Height="14"
+                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                    Margin="8,-4,-6,0" Padding="3,0">
+                                <TextBlock x:Name="UnreadCountText" Text="0" FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="White" HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
                             </Border>
-                        </Flyout>
-                    </Button.Flyout>
-                    <!-- Bell icon with badge -->
-                    <Panel ClipToBounds="False">
-                        <TextBlock Text="&#x1F514;" FontSize="{DynamicResource EveFontTitle}" VerticalAlignment="Center" />
-                        <Border x:Name="UnreadBadge" IsVisible="False"
-                                Background="{StaticResource EveErrorRedBrush}"
-                                CornerRadius="7" MinWidth="14" Height="14"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                Margin="8,-4,-6,0" Padding="3,0">
-                            <TextBlock x:Name="UnreadCountText" Text="0" FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="White" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" />
+                        </Panel>
+                    </Button>
+                    <Popup x:Name="ActivityPopup" IsOpen="False"
+                           PlacementMode="AnchorAndGravity"
+                           PlacementAnchor="TopRight"
+                           PlacementGravity="TopLeft"
+                           PlacementTarget="{Binding #NotificationBellBtn}"
+                           IsLightDismissEnabled="True"
+                           WindowManagerAddShadowHint="True">
+                        <Border x:Name="ActivityFlyoutPanel"
+                                Background="{StaticResource EveBackgroundMediumBrush}"
+                                BorderBrush="{StaticResource EveBorderBrush}"
+                                BorderThickness="1" CornerRadius="6"
+                                Padding="0,0,0,8" Width="380" MaxHeight="500">
+                            <DockPanel>
+                                <!-- Header -->
+                                <Border DockPanel.Dock="Top" Padding="12,8"
+                                        BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+                                    <DockPanel>
+                                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                                            <Button x:Name="MarkReadBtn" Content="Mark Read"
+                                                    FontSize="{DynamicResource EveFontSmall}" Padding="8,2" CornerRadius="10"
+                                                    Background="Transparent"
+                                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
+                                            <Button x:Name="ClearAllBtn" Content="Clear"
+                                                    FontSize="{DynamicResource EveFontSmall}" Padding="8,2" CornerRadius="10"
+                                                    Background="Transparent"
+                                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
+                                        </StackPanel>
+                                        <TextBlock Text="Activity Log" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                                <!-- Empty state -->
+                                <TextBlock x:Name="EmptyActivityText"
+                                           Text="No recent activity"
+                                           FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextDisabledBrush}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           Margin="0,40" IsVisible="False" />
+                                <!-- Activity list -->
+                                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled">
+                                    <ItemsControl x:Name="ActivityItems" Margin="0,0,0,8"
+                                                  HorizontalAlignment="Stretch">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="12,6"
+                                                        BorderBrush="{StaticResource EveBorderBrush}"
+                                                        BorderThickness="0,0,0,1">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Spacing="2">
+                                                            <TextBlock Text="{Binding Description}" FontSize="{DynamicResource EveFontBody}"
+                                                                       Foreground="{Binding DescriptionBrush}"
+                                                                       TextWrapping="Wrap"
+                                                                       MaxLines="2"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       ToolTip.Tip="{Binding Description}" />
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <TextBlock Text="{Binding CharacterName}" FontSize="{DynamicResource EveFontSmall}"
+                                                                           Foreground="{StaticResource EveAccentPrimaryBrush}"
+                                                                           IsVisible="{Binding HasCharacter}" />
+                                                                <TextBlock Text="{Binding CategoryDisplay}" FontSize="{DynamicResource EveFontSmall}"
+                                                                           Foreground="{StaticResource EveTextDisabledBrush}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" Text="{Binding TimeAgo}" FontSize="{DynamicResource EveFontSmall}"
+                                                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                                                   VerticalAlignment="Top" Margin="8,0,0,0" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </DockPanel>
                         </Border>
-                    </Panel>
-                </Button>
+                    </Popup>
+                </Panel>
 
                 <!-- Remaining space: next update countdown -->
                 <TextBlock x:Name="NextUpdateText" Text="" FontSize="{DynamicResource EveFontBody}"

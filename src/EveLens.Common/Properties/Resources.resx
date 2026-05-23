@@ -363,8 +363,7 @@ If you changed your password, you must log in again using File &gt; Add Characte
     <value>Error querying the known skills of {0}.</value>
   </data>
   <data name="ErrorSSO" xml:space="preserve">
-    <value>Error logging in to EVE SSO.
-If you changed your password, you must log in again using File &gt; Add Character.</value>
+    <value>EVE SSO login failed. Re-authenticate via File &gt; Add Character.</value>
   </data>
   <data name="ErrorStandings" xml:space="preserve">
     <value>Error querying the standings of {0}.</value>

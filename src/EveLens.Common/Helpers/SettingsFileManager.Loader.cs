@@ -198,6 +198,10 @@ namespace EveLens.Common.Helpers
                     settings.CharacterGroups.Add(cgs);
                 }
 
+                // Restore ungrouped character order
+                if (config.UngroupedCharacterOrder != null)
+                    settings.UngroupedCharacterOrder = new List<Guid>(config.UngroupedCharacterOrder);
+
                 // Restore global plan templates
                 foreach (var jt in config.GlobalPlanTemplates ?? new List<JsonGlobalPlanTemplate>())
                 {
