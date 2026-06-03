@@ -2877,6 +2877,30 @@ namespace EveLens.Avalonia.Views.PlanEditor
             UpdateParentStatusBar();
         }
 
+        private void RemoveEntries(IReadOnlyList<PlanEntry> entries)
+        {
+            if (_viewModel?.Plan == null || entries.Count == 0) return;
+
+            var plan = _viewModel.Plan;
+            // Re-resolve against the live plan by (skill, level) identity — the selected entries come
+            // from the queue VM's snapshot, which may not be the same instances the plan holds.
+            var planEntries = entries
+                .Select(e => plan.GetEntry(e.Skill, e.Level))
+                .Where(e => e != null)
+                .ToList();
+
+            if (planEntries.Count > 0)
+            {
+                var op = plan.TryRemoveSet(planEntries);
+                op.Perform();
+            }
+
+            _viewModel.UpdateDisplayPlan();
+            Refresh();
+            BuildSidebarContent();
+            UpdateParentStatusBar();
+        }
+
         #endregion
 
         #region Move Operations
@@ -2986,8 +3010,24 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         internal void DeleteSelected()
         {
-            // Delete first visible entry (keyboard shortcut)
-            // Full multi-select would need selection tracking on ItemsControl
+            // Queue mode: delete the entries the user actually selected, mirroring MoveSelectionUp/Down.
+            // Previously this deleted _currentEntryItems.FirstOrDefault() — always the top row — which
+            // removed the wrong skill (and its dependents via the cascade). (Issue #80)
+            if (QueueListControl.IsVisible && _queueVm != null)
+            {
+                var indices = QueueListControl.GetSelectedIndicesSorted();
+                if (indices.Count == 0) return;
+
+                var entries = indices
+                    .Where(i => i >= 0 && i < _queueVm.Items.Count)
+                    .Select(i => _queueVm.Items[i].Entry)
+                    .Where(entry => entry != null)
+                    .ToList();
+                if (entries.Count > 0) RemoveEntries(entries);
+                return;
+            }
+
+            // Legacy display path (no queue selection model): fall back to the first entry.
             if (_currentEntryItems == null || _currentEntryItems.Count == 0) return;
             var item = _currentEntryItems.FirstOrDefault();
             if (item != null) RemoveItem(item);

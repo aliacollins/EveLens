@@ -129,11 +129,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (sender == FilterTrainedBtn) mode = SkillFilterMode.Trained;
             else if (sender == FilterPrereqBtn) mode = SkillFilterMode.HavePrerequisites;
             else if (sender == FilterUntrainedBtn) mode = SkillFilterMode.Untrained;
+            else if (sender == FilterHideMaxedBtn) mode = SkillFilterMode.HideMaxed;
 
             FilterAllBtn.IsChecked = mode == SkillFilterMode.AllSkills;
             FilterTrainedBtn.IsChecked = mode == SkillFilterMode.Trained;
             FilterPrereqBtn.IsChecked = mode == SkillFilterMode.HavePrerequisites;
             FilterUntrainedBtn.IsChecked = mode == SkillFilterMode.Untrained;
+            FilterHideMaxedBtn.IsChecked = mode == SkillFilterMode.HideMaxed;
 
             _viewModel.FilterMode = mode;
             RefreshGroupsList();

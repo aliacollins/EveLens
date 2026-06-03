@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 These laws prevent regression to the old monolithic architecture. 1857 tests enforce them.
 
+**Law 0 — Root Cause, Never Bandaid.** Every fix must address the true origin of the problem, designed for long-term scalability and architecture. Never apply a surface patch that hides a symptom — it becomes a bigger problem later down the line. Trace a bug to where the data/behavior actually originates (model/service layer) and fix it there, so all consumers are corrected at once, rather than patching each UI call site. *Example:* the PI idle-indicator bug (#66) was fixed by making `PlanetaryPin.State` a computed property off `ExpiryTime` (immutable ground truth) at the model root — correcting analyzer, flow canvas, DataGrid, card VM, and list sort simultaneously — not by re-poking each reader. If a quick patch is truly the only option, say so explicitly and file the real fix as follow-up; never pass a bandaid off as a solution.
+
 1. **No Static State** — Never create static mutable state. Use AppServices + interfaces.
 2. **No God Objects** — No class >500 lines or referenced by >30 files. Split early.
 3. **Dependencies Flow Down** — `Core→Data→Serialization→Models→Infrastructure→Common→EveLens`. Never reverse. `AssemblyBoundaryTests` enforces this.
