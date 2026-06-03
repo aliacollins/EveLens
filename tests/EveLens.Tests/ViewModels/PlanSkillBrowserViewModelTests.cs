@@ -239,5 +239,50 @@ namespace EveLens.Tests.ViewModels
             restoredCount.Should().Be(allCount);
             vm.Dispose();
         }
+
+        // ── Issue #71: "Hide Maxed" filter (hide skills already trained to Level V) ──
+
+        [Fact]
+        public void HideMaxed_FilterMode_Exists()
+        {
+            // The legacy SkillFilter enum had a "NoLv5" mode that was dropped in the rewrite.
+            System.Enum.IsDefined(typeof(SkillFilterMode), SkillFilterMode.HideMaxed)
+                .Should().BeTrue("Issue #71 reintroduces a hide-maxed filter mode");
+        }
+
+        [Fact]
+        public void HideMaxed_NeverShowsLevelVSkills()
+        {
+            var vm = new PlanSkillBrowserViewModel(CreateAggregator());
+            vm.Refresh();
+
+            vm.FilterMode = SkillFilterMode.HideMaxed;
+            vm.Refresh();
+
+            // A fresh test character has no skills, so all of them survive the L5 filter,
+            // and crucially none of the visible skills are at character level 5.
+            var visible = vm.Groups.SelectMany(g => g.VisibleSkills).ToList();
+            visible.Should().NotBeEmpty("nothing is maxed on a blank character, so skills remain visible");
+            visible.Should().OnlyContain(s => s.CharacterLevel < 5,
+                "Hide Maxed must exclude any skill already trained to Level V");
+            vm.Dispose();
+        }
+
+        [Fact]
+        public void HideMaxed_DoesNotThrow_AndIsReversible()
+        {
+            var vm = new PlanSkillBrowserViewModel(CreateAggregator());
+            vm.Refresh();
+            int allCount = vm.Groups.SelectMany(g => g.VisibleSkills).Count();
+
+            var act = () => { vm.FilterMode = SkillFilterMode.HideMaxed; vm.Refresh(); };
+            act.Should().NotThrow();
+
+            vm.FilterMode = SkillFilterMode.AllSkills;
+            vm.Refresh();
+            int restoredCount = vm.Groups.SelectMany(g => g.VisibleSkills).Count();
+            restoredCount.Should().Be(allCount, "switching back to All Skills restores the full list");
+            vm.Dispose();
+        }
     }
 }
