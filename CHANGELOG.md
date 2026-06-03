@@ -7,9 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
-- Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
-- Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
-- Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
 - Skill Farm configurable base SP, What's New dialog, Code Graph system
 
 ### Added
