@@ -34,6 +34,17 @@ Push-Location $ProjectRoot
 # ── Configuration ──
 $CertThumbprint = "790D3430F3154FC6ACE68E0F5701D165BFFD3BC9"
 $TimestampUrl = "http://time.certum.pl"
+
+# Locate signtool.exe (latest Windows SDK). Used by the serial signing template below.
+# Resolve to its 8.3 short path: the full path contains spaces ("Program Files (x86)"),
+# and vpk's --signTemplate splits the command on whitespace, so a quoted long path is
+# mis-parsed ("Unrecognized command or argument 'Files'"). The short path has no spaces.
+$SignTool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue |
+    Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+if ($SignTool) {
+    $fso = New-Object -ComObject Scripting.FileSystemObject
+    $SignTool = $fso.GetFile($SignTool).ShortPath
+}
 $MainProject = "src/EveLens.Avalonia/EveLens.Avalonia.csproj"
 $AppName = "EveLens"
 $Repo = "aliacollins/EveLens"
@@ -150,11 +161,16 @@ try {
     if (Test-Path $WinPlatform.Out) { Remove-Item $WinPlatform.Out -Recurse -Force }
 
     $ErrorActionPreference = 'Continue'
+    # Use --signTemplate (one signtool invocation per file) instead of --signParams.
+    # --signParams signs with parallelism 10, which exhausts the cloud-based SimplySign
+    # virtual token and fails partway ("No certificates were found that met all the given
+    # criteria"). Serial signing via the template is reliable against the cloud token.
+    $signCmd = "$SignTool sign /sha1 $CertThumbprint /fd SHA256 /tr $TimestampUrl /td SHA256 {{file}}"
     & $vpkPath pack `
         -u $AppName -v $Version `
         -p $WinPlatform.Dir -e $WinPlatform.Exe `
         --channel $Channel `
-        --signParams "/sha1 $CertThumbprint /fd SHA256 /tr $TimestampUrl /td SHA256" `
+        --signTemplate $signCmd `
         -o $WinPlatform.Out 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'
     if ($LASTEXITCODE -ne 0) { throw "Pack failed for win-x64." }
