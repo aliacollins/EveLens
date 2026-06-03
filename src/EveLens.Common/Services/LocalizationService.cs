@@ -16,6 +16,7 @@ namespace EveLens.Common.Services
         {
             RegisterEnglish();
             RegisterChineseSimplified();
+            RegisterKorean();
         }
 
         public static string Language
@@ -38,12 +39,13 @@ namespace EveLens.Common.Services
             return key;
         }
 
-        public static string[] AvailableLanguages => new[] { "en", "zh-CN" };
+        public static string[] AvailableLanguages => new[] { "en", "zh-CN", "ko" };
 
         public static string GetLanguageDisplayName(string code) => code switch
         {
             "en" => "English",
             "zh-CN" => "简体中文 (Simplified Chinese)",
+            "ko" => "한국어 (Korean)",
             _ => code,
         };
 
@@ -51,6 +53,13 @@ namespace EveLens.Common.Services
         {
             s_translations[lang] = strings;
         }
+
+        /// <summary>
+        /// Exposes the registered key/value table for a language. For tests and tooling that
+        /// validate translation parity; returns null if the language is not registered.
+        /// </summary>
+        internal static IReadOnlyDictionary<string, string>? GetTable(string lang)
+            => s_translations.TryGetValue(lang, out var table) ? table : null;
 
         private static void RegisterEnglish()
         {
@@ -1161,6 +1170,562 @@ namespace EveLens.Common.Services
                 ["Plan.ChangeAttrsTo"] = "将属性更改为：",
                 ["Plan.RemapAvailable"] = "可重映射",
                 ["Plan.RemapInDays"] = "{0}天后可重映射",
+            });
+        }
+
+        private static void RegisterKorean()
+        {
+            Register("ko", new Dictionary<string, string>
+            {
+                // Main Window
+                ["Menu.File"] = "파일",
+                ["Menu.Plans"] = "플랜",
+                ["Menu.Tools"] = "도구",
+                ["Menu.Help"] = "도움말",
+                ["Menu.File.AddCharacter"] = "캐릭터 추가",
+                ["Menu.File.ManageGroups"] = "그룹 관리",
+                ["Menu.File.Settings"] = "설정",
+                ["Menu.File.Exit"] = "종료",
+                ["Menu.Plans.NewPlan"] = "새 스킬 계획",
+                ["Menu.Plans.ManagePlans"] = "스킬 계획 관리",
+                ["Menu.Plans.ImportPlan"] = "파일에서 스킬 계획 가져오기",
+                ["Menu.Plans.CreateFromQueue"] = "대기열에서 스킬 계획 생성",
+                ["Menu.Tools.CharComparison"] = "캐릭터 비교",
+                ["Menu.Tools.SkillFarm"] = "스킬 팜 대시보드",
+                ["Menu.Tools.DoctrineDesigner"] = "독트린 디자이너",
+                ["Menu.Tools.SkillVisualization"] = "스킬 시각화",
+                ["Menu.Tools.ClearCache"] = "캐시 지우기",
+                ["Menu.Help.About"] = "EveLens 정보",
+                ["Menu.Help.KnownProblems"] = "알려진 문제",
+                ["Menu.Help.CheckUpdates"] = "업데이트 확인",
+                ["Menu.Help.UserGuide"] = "사용자 가이드",
+                ["Menu.Help.ReportIssue"] = "문제 신고",
+                ["Menu.Help.Shortcuts"] = "단축키",
+                ["Menu.File.CreateBlank"] = "빈 캐릭터 생성",
+                ["Menu.File.ManageChars"] = "캐릭터 관리",
+                ["Menu.File.RestoreSettings"] = "설정 복원",
+                ["Menu.File.SaveSettings"] = "설정 저장",
+                ["Menu.File.ResetSettings"] = "설정 초기화",
+
+                // Tabs
+                ["Tab.Skills"] = "스킬",
+                ["Tab.Queue"] = "대기열",
+                ["Tab.Clones"] = "클론",
+                ["Tab.Employment"] = "고용",
+                ["Tab.Assets"] = "자산",
+                ["Tab.MarketOrders"] = "거래소 주문",
+                ["Tab.Contracts"] = "계약",
+                ["Tab.IndustryJobs"] = "산업 작업",
+                ["Tab.Wallet"] = "지갑",
+                ["Tab.Mail"] = "메일",
+                ["Tab.Notifications"] = "알림",
+                ["Tab.KillLog"] = "킬 로그",
+                ["Tab.Planetary"] = "행성개발 (PI)",
+                ["Tab.Research"] = "연구",
+
+                // Common Actions
+                ["Action.CollapseAll"] = "모두 접기",
+                ["Action.ExpandAll"] = "모두 펴기",
+                ["Action.TrainedOnly"] = "훈련 완료만",
+                ["Action.ExportCsv"] = "CSV로 내보내기",
+                ["Action.AllSkills"] = "모든 스킬",
+                ["Action.Search"] = "검색...",
+                ["Action.Save"] = "저장",
+                ["Action.Cancel"] = "취소",
+                ["Action.Close"] = "닫기",
+                ["Action.Apply"] = "적용",
+                ["Action.Create"] = "생성",
+                ["Action.Delete"] = "삭제",
+                ["Action.Refresh"] = "새로고침",
+                ["Action.AddCharacter"] = "+ 캐릭터 추가",
+                ["Action.AddSkill"] = "+ 스킬 추가",
+
+                // EVE Game Terms
+                ["Eve.SkillPoints"] = "스킬 포인트",
+                ["Eve.SP"] = "SP",
+                ["Eve.SPPerHour"] = "SP/시간",
+                ["Eve.ISK"] = "ISK",
+                ["Eve.Omega"] = "오메가",
+                ["Eve.Alpha"] = "알파",
+                ["Eve.Intelligence"] = "지능",
+                ["Eve.Memory"] = "기억력",
+                ["Eve.Perception"] = "지각력",
+                ["Eve.Willpower"] = "정신력",
+                ["Eve.Charisma"] = "카리스마",
+                ["Eve.Rank"] = "랭크",
+                ["Eve.Level"] = "레벨",
+                ["Eve.Training"] = "훈련 중",
+                ["Eve.Queued"] = "대기 중",
+                ["Eve.Completed"] = "완료됨",
+                ["Eve.AlreadyTrained"] = "이미 훈련됨",
+
+                // Plan Editor
+                ["Plan.Skill"] = "스킬",
+                ["Plan.Time"] = "시간",
+                ["Plan.Primary"] = "주 능력치",
+                ["Plan.Secondary"] = "부 능력치",
+                ["Plan.GroupByAttr"] = "능력치별 그룹화",
+                ["Plan.GroupedByAttr"] = "능력치별 그룹화 ✓",
+                ["Plan.QueueReordered"] = "대기열 재정렬됨",
+                ["Plan.DragToReorder"] = "드래그하여 재정렬 · 더블 클릭하여 세부 정보 확인",
+                ["Plan.DragCancelled"] = "드래그 취소됨",
+
+                // Skill Farm
+                ["SkillFarm.Title"] = "스킬 팜 대시보드",
+                ["SkillFarm.AddAll"] = "+ 조건 충족 모두 추가",
+                ["SkillFarm.Character"] = "캐릭터",
+                ["SkillFarm.Injectors"] = "주입기",
+                ["SkillFarm.ExtractorCost"] = "추출기 비용",
+                ["SkillFarm.Revenue"] = "수익",
+                ["SkillFarm.NetProfit"] = "순이익",
+                ["SkillFarm.Status"] = "상태",
+
+                // Doctrine Designer
+                ["Doctrine.Title"] = "독트린 디자이너",
+                ["Doctrine.Doctrines"] = "독트린",
+                ["Doctrine.NewDoctrine"] = "+ 새 독트린",
+                ["Doctrine.ImportFromPlan"] = "플랜에서 가져오기",
+                ["Doctrine.CreatePlan"] = "플랜 생성",
+                ["Doctrine.PlanCreated"] = "플랜 생성됨!",
+                ["Doctrine.CreatePlansForAll"] = "모두를 위한 플랜 생성",
+                ["Doctrine.NoDoctrines"] = "아직 독트린이 없습니다.\n'+ 새 독트린'을 클릭하여 생성하거나,\n'플랜에서 가져오기'를 통해 기존 플랜을 사용하세요.",
+                ["Doctrine.SelectDoctrine"] = "측면 메뉴에서 독트린을 선택하여 스킬 비교를 확인하세요.",
+                ["Doctrine.NoCharacters"] = "할당된 캐릭터가 없습니다.\n'+ 캐릭터 추가'를 클릭하여 이 독트린에 캐릭터를 할당하세요.",
+                ["Doctrine.AllTrained"] = "모두 훈련 완료!",
+
+                // Settings — Window
+                ["Settings.Title"] = "설정",
+                ["Settings.WindowTitle"] = "EveLens 설정",
+                ["Settings.SearchWatermark"] = "설정 검색...",
+
+                // Settings — Sidebar
+                ["Settings.Appearance"] = "외관",
+                ["Settings.AppearanceSub"] = "테마, 색상, 호환성",
+                ["Settings.Window"] = "창",
+                ["Settings.WindowSub"] = "트레이 아이콘, 닫기 동작",
+                ["Settings.Notifications"] = "알림",
+                ["Settings.NotificationsSub"] = "경고, 이메일, 캘린더",
+                ["Settings.Data"] = "데이터",
+                ["Settings.DataSub"] = "업데이트, 거래소 가격",
+                ["Settings.Network"] = "네트워크",
+                ["Settings.NetworkSub"] = "프록시, SSO 자격 증명",
+                ["Settings.ESI"] = "ESI",
+                ["Settings.ESISub"] = "API 권한 범위, 허가",
+
+                // Settings — Appearance section
+                ["Settings.AppearanceDesc"] = "EveLens의 시각적 요소를 사용자 지정합니다.",
+                ["Settings.Theme"] = "테마",
+                ["Settings.ThemeDesc"] = "애플리케이션의 시각적 테마를 선택합니다.",
+                ["Settings.RestartRequired"] = "적용하려면 다시 시작해야 합니다.",
+                ["Settings.RestartNow"] = "지금 다시 시작",
+                ["Settings.FontSize"] = "글꼴 크기",
+                ["Settings.FontSizeDesc"] = "애플리케이션의 모든 텍스트 크기를 조절합니다 (80%-150%).",
+                ["Settings.Language"] = "언어",
+                ["Settings.LanguageDesc"] = "게임 용어는 CCP의 공식 번역을 사용합니다.",
+                ["Settings.LanguageNote"] = "게임 용어는 CCP 공식 번역을 사용합니다. 커뮤니티 번역 — 개선에 동참해 주세요!",
+                ["Settings.SafeForWork"] = "직장인 모드 (초상화 숨김)",
+                ["Settings.SafeForWorkDesc"] = "캐릭터 초상화 및 식별 색상을 숨깁니다.",
+                ["Settings.CustomBrowser"] = "브라우저",
+                ["Settings.CustomBrowserDesc"] = "링크를 열 브라우저를 선택합니다. 기본값은 OS 설정을 따릅니다.",
+                ["Settings.DefaultBrowser"] = "시스템 기본값",
+                ["Settings.OpenDataDir"] = "데이터 디렉토리 열기",
+
+                // Settings — Window section
+                ["Settings.WindowBehavior"] = "창 동작",
+                ["Settings.WindowBehaviorDesc"] = "메인 창과 시스템 트레이의 동작 방식을 구성합니다.",
+                ["Settings.MinimizeToTray"] = "트레이로 최소화",
+                ["Settings.MinimizeToTrayDesc"] = "활성화 시, 창을 닫으면 종료되는 대신 시스템 트레이로 최소화됩니다. 복원하려면 트레이 아이콘을 클릭하세요.",
+                ["Settings.TrayTooltipDisplay"] = "트레이 툴팁 표시",
+                ["Settings.TrayTooltipDesc"] = "시스템 트레이 아이콘에 마우스를 올렸을 때 표시할 정보를 선택합니다.",
+                ["Settings.TrayCountAndNext"] = "훈련 횟수 + 다음 완료 항목",
+                ["Settings.TrayCountOnly"] = "훈련 횟수만",
+                ["Settings.TrayNextOnly"] = "다음 완료 항목만",
+
+                // Settings — Notifications section
+                ["Settings.NotificationsDesc"] = "스킬 훈련 및 이벤트에 대한 알림과 경고를 구성합니다.",
+                ["Settings.OsNotifications"] = "OS 알림",
+                ["Settings.OsNotificationsDesc"] = "스킬 완료 및 경고에 대한 Windows 팝업 알림을 표시합니다.",
+                ["Settings.PlaySound"] = "소리 재생",
+                ["Settings.PlaySoundDesc"] = "스킬 훈련이 완료되면 소리를 재생합니다.",
+                ["Settings.EmailAlerts"] = "이메일 알림",
+                ["Settings.EmailAlertsDesc"] = "스킬 훈련이 완료되면 이메일을 보냅니다.",
+                ["Settings.Provider"] = "사용할 메일",
+                ["Settings.SmtpServer"] = "SMTP 서버",
+                ["Settings.Port"] = "포트",
+                ["Settings.SslTls"] = "SSL/TLS",
+                ["Settings.SslTlsDesc"] = "암호화된 연결이 필요합니다.",
+                ["Settings.Authentication"] = "인증",
+                ["Settings.AuthenticationDesc"] = "서버에 사용자 이름과 비밀번호가 필요합니다.",
+                ["Settings.Username"] = "사용자 이름",
+                ["Settings.Password"] = "비밀번호",
+                ["Settings.From"] = "발신자",
+                ["Settings.To"] = "수신자",
+                ["Settings.ShortFormat"] = "간결한 형식",
+                ["Settings.ShortFormatDesc"] = "간결한 이메일 형식을 사용합니다.",
+                ["Settings.ExternalCalendar"] = "외부 캘린더",
+                ["Settings.ExternalCalendarDesc"] = "스킬 훈련 일정을 외부 캘린더와 동기화합니다.",
+                ["Settings.GoogleCalendar"] = "Google 캘린더",
+                ["Settings.MicrosoftOutlook"] = "Microsoft Outlook",
+                ["Settings.CalendarName"] = "캘린더 이름",
+                ["Settings.Reminder"] = "리마인더",
+                ["Settings.UseDefaultCalendar"] = "기본 캘린더 사용",
+                ["Settings.CalendarPath"] = "캘린더 경로",
+                ["Settings.EnableReminders"] = "리마인더 활성화",
+                ["Settings.IntervalMin"] = "간격 (분)",
+                ["Settings.AltRemindingTimes"] = "알림을 받을 시간을 선택합니다.",
+                ["Settings.Early"] = "부터",
+                ["Settings.Late"] = "까지",
+                ["Settings.LastQueuedOnly"] = "마지막으로 대기열에 추가된 스킬만 내보내기",
+
+                // Settings — Data section
+                ["Settings.DataUpdates"] = "데이터 및 업데이트",
+                ["Settings.DataUpdatesDesc"] = "자동 업데이트 및 거래소 데이터 제공자를 관리합니다.",
+                ["Settings.CheckForUpdates"] = "업데이트 확인",
+                ["Settings.CheckForUpdatesDesc"] = "시작 시 새로운 EveLens 버전이 있는지 자동으로 확인합니다.",
+                ["Settings.ClockSync"] = "시계 동기화",
+                ["Settings.ClockSyncDesc"] = "시작 시 시스템 시계가 동기화되어 있는지 확인합니다.",
+                ["Settings.MarketPriceProvider"] = "거래소 가격 제공자",
+                ["Settings.MarketPriceProviderDesc"] = "거래소 가격 조회를 위한 출처입니다.",
+
+                // Settings — Network section
+                ["Settings.NetworkDesc"] = "프록시 및 SSO 자격 증명을 구성합니다.",
+                ["Settings.HttpProxy"] = "HTTP 프록시",
+                ["Settings.HttpProxyDesc"] = "사용자 지정 프록시 서버를 통해 트래픽을 라우팅합니다.",
+                ["Settings.Host"] = "호스트",
+                ["Settings.SsoCredentials"] = "SSO 자격 증명",
+                ["Settings.SsoCredentialsDesc"] = "내장된 EveLens SSO 클라이언트 자격 증명을 덮어씁니다.",
+                ["Settings.ClientId"] = "클라이언트 ID",
+                ["Settings.ClientSecret"] = "클라이언트 암호",
+                ["Settings.UseDefault"] = "기본값 사용",
+
+                // Settings — ESI section
+                ["Settings.EsiScopes"] = "ESI 권한(Scopes)",
+                ["Settings.EsiScopesDesc"] = "인증 시 EveLens가 요청할 API 권한을 제어합니다.",
+                ["Settings.ScopePreset"] = "권한 사전 설정",
+                ["Settings.ScopePresetDesc"] = "미리 정의된 API 권한 세트를 선택합니다.",
+                ["Settings.CustomizeScopes"] = "권한 사용자 지정...",
+                ["Settings.EsiChangesNote"] = "변경 사항은 다음에 캐릭터를 인증할 때 적용됩니다.",
+                ["Settings.CharacterScopes"] = "캐릭터 권한",
+                ["Settings.NoCharsAuthenticated"] = "아직 인증된 캐릭터가 없습니다.",
+                ["Settings.EsiReauthNote"] = "선택한 사전 설정과 일치하지 않는 캐릭터는 재인증을 통해 권한을 업데이트할 수 있습니다.",
+                ["Settings.Reauthenticate"] = "재인증",
+                ["Settings.Restart"] = "다시 시작",
+                ["Settings.RestartEveLens"] = "EveLens 다시 시작",
+                ["Settings.RestartMessage"] = "새 테마를 적용하기 위해 EveLens를 다시 시작합니다.\n진행 중인 작업(예: 편집 중인 스킬 플랜)을 저장해 주세요.",
+
+                // Status / Empty States
+                ["Status.Paused"] = "일시 정지됨",
+                ["Status.Training"] = "훈련 중",
+                ["Status.Online"] = "온라인",
+                ["Status.SkillsInQueue"] = "대기열의 스킬",
+                ["Status.Trained"] = "훈련 완료",
+                ["Status.Of"] = "/",
+                ["Status.Skills"] = "스킬",
+                ["Status.TotalSP"] = "총 SP",
+                ["Status.Remaining"] = "남은 SP",
+
+                // Character Header
+                ["Header.Corporation"] = "코퍼레이션",
+                ["Header.Alliance"] = "얼라이언스",
+                ["Header.LocatedIn"] = "현재 위치",
+                ["Header.DockedAt"] = "정박 중",
+                ["Header.InSpace"] = "우주 공간",
+                ["Header.Skills"] = "스킬",
+                ["Header.SP"] = "SP",
+                ["Header.FreeSP"] = "미분배 SP",
+                ["Header.TotalSP"] = "총 SP",
+                ["Header.Remaps"] = "신경망 재배열",
+                ["Header.AutoDetect"] = "자동 감지",
+                ["Header.AlphaOverride"] = "알파 강제 적용",
+                ["Header.OmegaOverride"] = "오메가 강제 적용",
+
+                // ESI
+                ["ESI.NextRefresh"] = "다음 갱신까지",
+                ["ESI.Fetching"] = "불러오는 중...",
+                ["ESI.Idle"] = "ESI: 대기 중",
+                ["ESI.Refreshing"] = "ESI: 갱신 중...",
+                ["ESI.LastRefresh"] = "마지막 갱신",
+
+                // Splash
+                ["Splash.Tagline"] = "EVE 온라인을 위한 캐릭터 인텔리전스",
+                ["Splash.LoadingGameData"] = "게임 데이터를 불러오는 중...",
+
+                // Skills level filter strip
+                ["Skills.AllSkills"] = "모든 스킬",
+                ["Skills.AllTrained"] = "모든 훈련 완료 스킬",
+                ["Skills.LevelV"] = "레벨 V",
+                ["Skills.LevelIV"] = "레벨 IV",
+                ["Skills.LevelIII"] = "레벨 III",
+                ["Skills.LevelII"] = "레벨 II",
+                ["Skills.LevelI"] = "레벨 I",
+                ["Skills.Injected"] = "주입됨",
+                ["Skills.Untrained"] = "훈련 안 됨",
+
+                // Character header labels
+                ["Header.SecurityStatus"] = "시큐리티 상태",
+                ["Header.ActiveShip"] = "활성 함선",
+                ["Header.Unknown"] = "알 수 없음",
+                ["Header.KnownSkills"] = "보유 스킬",
+                ["Header.BonusRemaps"] = "보너스 신경망 재배열",
+
+                // Missing character monitor tabs
+                ["Tab.Standings"] = "평판",
+                ["Tab.Contacts"] = "연락처",
+                ["Tab.Medals"] = "훈장",
+                ["Tab.LP"] = "LP (로열티 포인트)",
+                ["Tab.Transactions"] = "거래 내역",
+
+                // Plan Editor Window
+                ["PlanEditor.Title"] = "플랜 에디터",
+                ["PlanEditor.PlanTab"] = "플랜",
+                ["PlanEditor.SkillsTab"] = "스킬",
+                ["PlanEditor.ShipsTab"] = "함선",
+                ["PlanEditor.ItemsTab"] = "아이템",
+                ["PlanEditor.BlueprintsTab"] = "블루프린트",
+                ["PlanEditor.SearchSkills"] = "스킬 검색...",
+                ["PlanEditor.ClearPlan"] = "플랜 지우기",
+                ["PlanEditor.ImportFit"] = "피팅 가져오기",
+                ["PlanEditor.Export"] = "내보내기",
+                ["PlanEditor.AddSkills"] = "+ 스킬 추가",
+                ["PlanEditor.CopyPlan"] = "스킬 플랜 복사",
+                ["PlanEditor.Done"] = "완료",
+                ["PlanEditor.SkillsToTrain"] = "훈련할 스킬",
+                ["PlanEditor.SkillsRemaining"] = "남은 스킬",
+                ["PlanEditor.OptimizePlan"] = "플랜 최적화",
+                ["PlanEditor.Remap"] = "신경망 재배열",
+                ["PlanEditor.AvailableNow"] = "즉시 사용 가능",
+                ["PlanEditor.Bonus"] = "보너스 재배열 횟수",
+                ["PlanEditor.TrainingTime"] = "훈련 시간",
+                ["PlanEditor.Unique"] = "고유",
+                ["PlanEditor.Finishes"] = "완료 시간",
+                ["PlanEditor.Books"] = "스킬북",
+                ["PlanEditor.Skills"] = "스킬",
+                ["PlanEditor.Of"] = "/",
+                ["PlanEditor.Remaining"] = "남음",
+                ["PlanEditor.NextIn"] = "다음 완료까지",
+                ["PlanEditor.Injectors"] = "주입기",
+                ["PlanEditor.CopyToClipboard"] = "클립보드에 복사",
+                ["PlanEditor.SaveToFile"] = "파일로 저장...",
+                ["PlanEditor.FromClipboard"] = "클립보드에서 (EFT/XML/DNA)",
+                ["PlanEditor.FromFile"] = "파일에서...",
+                ["PlanEditor.PlanTo"] = "목표:",
+                ["PlanEditor.Back"] = "뒤로",
+
+                // Skill Browser
+                ["PlanEditor.AllAttributes"] = "모든 능력치",
+                ["PlanEditor.AllSkills"] = "모든 스킬",
+                ["PlanEditor.Trained"] = "훈련됨",
+                ["PlanEditor.HavePrereqs"] = "선행 조건 충족",
+                ["PlanEditor.Untrained"] = "훈련 안 됨",
+                ["PlanEditor.Collapse"] = "모두 접기",
+                ["PlanEditor.Expand"] = "모두 펴기",
+                ["PlanEditor.NotTrained"] = "훈련 안 됨",
+                ["PlanEditor.Rank"] = "랭크:",
+                ["PlanEditor.Primary"] = "주 능력치:",
+                ["PlanEditor.Secondary"] = "부 능력치:",
+                ["PlanEditor.TrainingTimeLabel"] = "훈련 시간:",
+                ["PlanEditor.Prerequisites"] = "선행 조건:",
+
+                // Ship Browser
+                ["ShipBrowser.SearchShips"] = "함선 검색...",
+                ["ShipBrowser.CanFlyOnly"] = "탑승 가능만",
+                ["ShipBrowser.RequiredSkills"] = "필요 스킬:",
+                ["ShipBrowser.Properties"] = "세부 정보:",
+                ["ShipBrowser.PlanToFly"] = "탑승 목표로 플랜 짜기",
+                ["ShipBrowser.Race"] = "국가:",
+                ["ShipBrowser.Amarr"] = "아마르",
+                ["ShipBrowser.Caldari"] = "칼다리",
+                ["ShipBrowser.Gallente"] = "갈렌테",
+                ["ShipBrowser.Minmatar"] = "민마타",
+
+                // Item Browser
+                ["ItemBrowser.SearchItems"] = "아이템 검색...",
+                ["ItemBrowser.CanUseOnly"] = "사용 가능만",
+                ["ItemBrowser.CollapseAll"] = "모두 접기",
+                ["ItemBrowser.Slot"] = "슬롯:",
+                ["ItemBrowser.RequiredSkills"] = "필요 스킬:",
+                ["ItemBrowser.Properties"] = "세부 정보:",
+                ["ItemBrowser.PlanToUse"] = "사용 목표로 플랜 짜기",
+
+                // Blueprint Browser
+                ["BlueprintBrowser.SearchBlueprints"] = "블루프린트 검색...",
+                ["BlueprintBrowser.CanBuildOnly"] = "제작 가능만",
+                ["BlueprintBrowser.Produces"] = "결과물:",
+                ["BlueprintBrowser.ProductionTime"] = "생산 시간:",
+                ["BlueprintBrowser.Materials"] = "재료:",
+                ["BlueprintBrowser.RequiredSkills"] = "필요 스킬:",
+                ["BlueprintBrowser.PlanSkills"] = "스킬 플랜 짜기",
+
+                // Plan Queue Headers
+                ["Plan.Rank"] = "랭크",
+                ["Plan.SPPerHour"] = "SP/시간",
+                ["Plan.Level"] = "레벨",
+
+                // Queue view
+                ["Queue.NoSkillsInTraining"] = "훈련 중인 스킬 없음",
+                ["Queue.SkillsInQueue"] = "대기열의 스킬",
+                ["Queue.EndsIn"] = "종료까지",
+                ["Queue.EndsOn"] = "종료 일시",
+                ["Queue.ExportCsv"] = "CSV 내보내기",
+
+                // ESI Endpoints
+                ["Endpoints.Title"] = "ESI 엔드포인트",
+                ["Endpoints.Description"] = "이 캐릭터에 대해 불러올 데이터를 선택하세요.",
+                ["Endpoints.EnableAll"] = "모두 활성화",
+                ["Endpoints.DisableAll"] = "모두 비활성화",
+
+                // Sidebar
+                ["Sidebar.Add"] = "추가",
+                ["Sidebar.AddSkills"] = "스킬 추가",
+                ["Sidebar.Plan"] = "스킬 계획",
+
+                // List Views — Common toolbar/UI strings
+                ["ListView.GroupBy"] = "그룹화 기준:",
+                ["ListView.Filter"] = "필터:",
+                ["ListView.SearchAssets"] = "자산 검색...",
+                ["ListView.SearchContracts"] = "계약 검색...",
+                ["ListView.SearchMarketOrders"] = "거래소 주문 검색...",
+                ["ListView.SearchContacts"] = "연락처 검색...",
+                ["ListView.SearchMail"] = "메일 검색...",
+                ["ListView.SearchKills"] = "킬 검색...",
+                ["ListView.SearchStandings"] = "평판 검색...",
+                ["ListView.SearchWalletJournal"] = "입출금 내역 검색...",
+                ["ListView.SearchNotifications"] = "알림 검색...",
+
+                // List Views — Enable prompts
+                ["ListView.EnableToFetch"] = "EVE 온라인에서 데이터를 불러오려면 이것을 활성화하세요.",
+                ["ListView.ScopeNotAuthorized"] = "ESI 권한이 없음",
+                ["ListView.ScopeNotAuthorizedDesc"] = "이 캐릭터는 필요한 권한 없이 인증되었습니다.\n파일 → 캐릭터 관리에서 재인증하여 이 기능을 활성화하세요.",
+                ["ListView.EnableAssets"] = "이 캐릭터의 자산 모니터링이 활성화되지 않았습니다.",
+                ["ListView.EnableAssetBtn"] = "자산 모니터링 활성화",
+                ["ListView.EnableMarketOrders"] = "이 캐릭터의 거래소 주문 추적이 활성화되지 않았습니다.",
+                ["ListView.EnableMarketOrderBtn"] = "거래소 주문 추적 활성화",
+                ["ListView.EnableContracts"] = "이 캐릭터의 계약 추적이 활성화되지 않았습니다.",
+                ["ListView.EnableContractBtn"] = "계약 추적 활성화",
+                ["ListView.EnableIndustry"] = "이 캐릭터의 산업 작업 추적이 활성화되지 않았습니다.",
+                ["ListView.EnableIndustryBtn"] = "산업 작업 추적 활성화",
+                ["ListView.EnableMail"] = "이 캐릭터의 메일 메시지가 활성화되지 않았습니다.",
+                ["ListView.EnableMailBtn"] = "메일 메시지 활성화",
+                ["ListView.EnableNotifications"] = "이 캐릭터의 알림이 활성화되지 않았습니다.",
+                ["ListView.EnableNotificationsBtn"] = "알림 활성화",
+                ["ListView.EnableKillLog"] = "이 캐릭터의 킬 로그가 활성화되지 않았습니다.",
+                ["ListView.EnableKillLogBtn"] = "킬 로그 활성화",
+                ["ListView.EnablePlanetary"] = "이 캐릭터의 행성 개발(PI)이 활성화되지 않았습니다.",
+                ["ListView.EnablePlanetaryBtn"] = "행성 개발 활성화",
+                ["ListView.EnableResearch"] = "이 캐릭터의 연구 포인트가 활성화되지 않았습니다.",
+                ["ListView.EnableResearchBtn"] = "연구 포인트 활성화",
+                ["ListView.EnableContacts"] = "이 캐릭터의 연락처가 활성화되지 않았습니다.",
+                ["ListView.EnableContactsBtn"] = "연락처 활성화",
+                ["ListView.EnableStandings"] = "이 캐릭터의 평판이 활성화되지 않았습니다.",
+                ["ListView.EnableStandingsBtn"] = "평판 활성화",
+                ["ListView.EnableMedals"] = "이 캐릭터의 훈장이 활성화되지 않았습니다.",
+                ["ListView.EnableMedalsBtn"] = "훈장 활성화",
+                ["ListView.EnableLP"] = "이 캐릭터의 로열티 포인트(LP)가 활성화되지 않았습니다.",
+                ["ListView.EnableLPBtn"] = "로열티 포인트 활성화",
+                ["ListView.EnableEmployment"] = "이 캐릭터의 코퍼레이션 소속 기록이 활성화되지 않았습니다.",
+                ["ListView.EnableEmploymentBtn"] = "코퍼레이션 소속 기록 활성화",
+                ["ListView.EnableFW"] = "이 캐릭터의 팩션 전쟁(FW)이 활성화되지 않았습니다.",
+                ["ListView.EnableFWBtn"] = "팩션 전쟁 활성화",
+                ["ListView.EnableWalletJournal"] = "이 캐릭터의 입출금 내역이 활성화되지 않았습니다.",
+                ["ListView.EnableWalletJournalBtn"] = "입출금 내역 활성화",
+                ["ListView.EnableWalletTx"] = "이 캐릭터의 지갑 거래 내역이 활성화되지 않았습니다.",
+                ["ListView.EnableWalletTxBtn"] = "지갑 거래 내역 활성화",
+
+                // List Views — Empty states
+                ["ListView.NoAssets"] = "자산을 찾을 수 없음",
+                ["ListView.NoAssetsDesc"] = "데이터를 불러오면 자산이 여기에 표시됩니다.",
+                ["ListView.NoContracts"] = "계약 없음",
+                ["ListView.NoContractsDesc"] = "현재 필터와 일치하는 계약이 없습니다. 검색이나 필터 설정을 조정해 보세요.",
+
+                // List Views — Grouping options
+                ["ListView.Location"] = "위치",
+                ["ListView.Region"] = "지역",
+                ["ListView.Category"] = "카테고리",
+                ["ListView.Container"] = "컨테이너",
+                ["ListView.NoGrouping"] = "그룹화 없음",
+                ["ListView.Status"] = "상태",
+                ["ListView.ContractType"] = "계약 유형",
+                ["ListView.IssueDate"] = "발행일",
+                ["ListView.StartLocation"] = "시작 위치",
+                ["ListView.HideInactive"] = "비활성 숨기기",
+                ["ListView.All"] = "모두",
+                ["ListView.Character"] = "캐릭터",
+                ["ListView.Corporation"] = "코퍼레이션",
+
+                // DataGrid column headers — Market Orders
+                ["Column.Item"] = "아이템",
+                ["Column.Station"] = "정거장",
+                ["Column.UnitPrice"] = "단가",
+                ["Column.TotalPrice"] = "총 가격",
+                ["Column.InitialVol"] = "초기 수량",
+                ["Column.Remaining"] = "남은 수량",
+                ["Column.Duration"] = "기간",
+                ["Column.Issued"] = "생성 일자",
+                ["Column.Expires"] = "만료 일자",
+
+                // DataGrid column headers — Contracts
+                ["Column.Contract"] = "계약",
+                ["Column.Type"] = "유형",
+                ["Column.Status"] = "상태",
+                ["Column.Issuer"] = "생성자",
+                ["Column.Assignee"] = "계약자",
+                ["Column.Price"] = "가격",
+
+                // DataGrid column headers — Industry Jobs
+                ["Column.Activity"] = "활동",
+                ["Column.State"] = "상태",
+                ["Column.Blueprint"] = "블루프린트",
+                ["Column.Output"] = "결과물",
+                ["Column.Location"] = "위치",
+                ["Column.Runs"] = "횟수 (Runs)",
+                ["Column.Cost"] = "비용",
+                ["Column.InstallDate"] = "시작일자",
+                ["Column.EndDate"] = "종료일자",
+
+                // DataGrid column headers — Research Points
+                ["Column.Agent"] = "에이전트",
+                ["Column.Level"] = "레벨",
+                ["Column.Field"] = "분야",
+                ["Column.CurrentRP"] = "현재 RP",
+                ["Column.PointsPerDay"] = "일일 포인트",
+                ["Column.StartDate"] = "시작일",
+
+                // DataGrid column headers — Planetary
+                ["Column.Planet"] = "행성",
+                ["Column.PlanetType"] = "행성 유형",
+                ["Column.PinType"] = "시설 유형",
+                ["Column.Content"] = "내용물",
+                ["Column.Quantity"] = "수량",
+                ["Column.Expiry"] = "만료일",
+                ["Column.SolarSystem"] = "항성계",
+
+                // DataGrid column headers — Wallet Transactions
+                ["Column.Date"] = "날짜",
+                ["Column.Credit"] = "입출금 내역",
+                ["Column.Client"] = "클라이언트",
+
+                // Context menu items
+                ["ContextMenu.CopyItemName"] = "아이템 이름 복사",
+                ["ContextMenu.CopyStation"] = "정거장 복사",
+                ["ContextMenu.ExportCsv"] = "CSV로 내보내기...",
+                ["ContextMenu.CopyContractInfo"] = "계약 정보 복사",
+                ["ContextMenu.CopyIssuer"] = "생성자 복사",
+                ["ContextMenu.CopyBlueprintName"] = "블루프린트 이름 복사",
+                ["ContextMenu.CopyOutput"] = "결과물 복사",
+                ["ContextMenu.CopyAgent"] = "에이전트 복사",
+                ["ContextMenu.CopyField"] = "연구 분야 복사",
+                ["ContextMenu.CopyPlanet"] = "행성 이름 복사",
+                ["ContextMenu.CopySolarSystem"] = "항성계 복사",
+                ["ContextMenu.CopyClient"] = "클라이언트 복사",
+
+                // Plan Sidebar strings
+                ["Plan.AlreadyOptimal"] = "이미 최적화됨",
+                ["Plan.Analyzing"] = "분석 중…",
+                ["Plan.Current"] = "현재:",
+                ["Plan.RemapTo"] = "{0}을(를) 절약하려면 다음으로 신경망 재배열:",
+                ["Plan.ChangeAttrsTo"] = "속성을 다음으로 변경:",
+                ["Plan.RemapAvailable"] = "신경망 재배열 가능",
+                ["Plan.RemapInDays"] = "{0}일 후 신경망 재배열",
             });
         }
     }
