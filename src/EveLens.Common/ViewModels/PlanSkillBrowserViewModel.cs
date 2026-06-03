@@ -365,6 +365,10 @@ namespace EveLens.Common.ViewModels
                 case SkillFilterMode.Untrained:
                     filtered = filtered.Where(s => !s.IsKnown);
                     break;
+                case SkillFilterMode.HideMaxed:
+                    // Show everything except skills already at Level V — hides what you can't train further.
+                    filtered = filtered.Where(s => s.CharacterLevel < 5);
+                    break;
             }
 
             if (!string.IsNullOrEmpty(filter))
@@ -593,6 +597,11 @@ namespace EveLens.Common.ViewModels
         AllSkills,
         Trained,
         HavePrerequisites,
-        Untrained
+        Untrained,
+
+        /// <summary>
+        /// Hides skills already trained to Level V (maxed), so only skills with training left remain.
+        /// </summary>
+        HideMaxed
     }
 }
