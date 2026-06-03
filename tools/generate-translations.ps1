@@ -1,22 +1,36 @@
 <#
 .SYNOPSIS
-    Downloads EVE SDE and generates Chinese translation datafiles for EveLens.
+    Downloads EVE SDE and generates a localized translation datafile for EveLens.
 
 .DESCRIPTION
-    Downloads the EVE Online Static Data Export (SDE), extracts typeIDs.yaml
-    and groupIDs.yaml, parses Chinese (zh) translations, and generates
-    eve-translations-zh-CN.xml.gzip for use by StaticTranslations.
+    Downloads the EVE Online Static Data Export (SDE), extracts types.yaml
+    and groups.yaml, parses the requested language's name translations, and
+    generates eve-translations-{OutputCode}.xml.gzip for use by StaticTranslations.
+
+.PARAMETER Language
+    SDE language key to extract (e.g. "zh", "ko", "ja", "ru", "fr", "de", "es").
+
+.PARAMETER OutputCode
+    Output file/locale code (e.g. "zh-CN", "ko"). Defaults to the SDE Language
+    code, except "zh" maps to "zh-CN" to match the EveLens locale convention.
 
 .PARAMETER SdeUrl
     URL to the SDE zip. Defaults to latest Tranquility export.
 
 .EXAMPLE
-    .\tools\generate-translations.ps1
+    .\tools\generate-translations.ps1 -Language ko
+    .\tools\generate-translations.ps1 -Language zh -OutputCode zh-CN
 #>
 
 param(
+    [string]$Language = "zh",
+    [string]$OutputCode = "",
     [string]$SdeUrl = "https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/sde.zip"
 )
+
+if ([string]::IsNullOrEmpty($OutputCode)) {
+    $OutputCode = if ($Language -eq "zh") { "zh-CN" } else { $Language }
+}
 
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
@@ -98,24 +112,26 @@ function Parse-SdeYaml {
             continue
         }
 
-        # Name section start
-        if ($currentId -and $line -match "^\s{2,4}${NameField}:") {
+        # Name section start (exactly 2-space indent under the top-level ID)
+        if ($currentId -and $line -match "^\s{2}${NameField}:\s*$") {
             $inName = $true
             continue
         }
 
-        # Chinese translation within name section
-        if ($inName -and $line -match '^\s{4,8}zh:\s*(.+)') {
-            $zhName = $Matches[1].Trim().Trim('"').Trim("'")
-            if ($zhName -and $zhName.Length -gt 0) {
-                $translations[$currentId] = $zhName
+        # Target-language translation within name section (language keys are 4-space indented).
+        # Note: language lines (de/en/.../ko/.../zh) are children of name:, so we must NOT treat
+        # them as "exit" fields — only a 2-space sibling field or a new top-level ID ends the section.
+        if ($inName -and $line -match "^\s{4}${Language}:\s*(.+)") {
+            $locName = $Matches[1].Trim().Trim('"').Trim("'")
+            if ($locName -and $locName.Length -gt 0) {
+                $translations[$currentId] = $locName
             }
             $inName = $false
             continue
         }
 
-        # Any other field at the same or higher level exits the name section
-        if ($inName -and $line -match '^\s{2,4}\w+:') {
+        # A sibling field of name: (exactly 2-space indent) exits the name section
+        if ($inName -and $line -match '^\s{2}\w+:') {
             $inName = $false
         }
 
@@ -151,11 +167,11 @@ if (Test-Path $groupIdsPath) {
 Write-Host "  Total: $($typeTranslations.Count) types, $($groupTranslations.Count) groups" -ForegroundColor Green
 
 # Generate XML
-Write-Host "`n  Generating eve-translations-zh-CN.xml.gzip..." -ForegroundColor Yellow
+Write-Host "`n  Generating eve-translations-$OutputCode.xml.gzip..." -ForegroundColor Yellow
 
 $xml = [System.Text.StringBuilder]::new()
 [void]$xml.AppendLine('<?xml version="1.0" encoding="utf-8"?>')
-[void]$xml.AppendLine('<translations language="zh-CN">')
+[void]$xml.AppendLine("<translations language=`"$OutputCode`">")
 [void]$xml.AppendLine('  <skills>')
 
 # Skills are types in category 16, but we include all types for ships/items too
@@ -173,7 +189,7 @@ foreach ($kvp in $groupTranslations.GetEnumerator() | Sort-Object Key) {
 [void]$xml.AppendLine('</translations>')
 
 # Write gzipped
-$outputPath = Join-Path $OutputDir "eve-translations-zh-CN.xml.gzip"
+$outputPath = Join-Path $OutputDir "eve-translations-$OutputCode.xml.gzip"
 $xmlBytes = [System.Text.Encoding]::UTF8.GetBytes($xml.ToString())
 
 $fileStream = [System.IO.File]::Create($outputPath)
@@ -189,4 +205,4 @@ Write-Host "  Types: $($typeTranslations.Count), Groups: $($groupTranslations.Co
 # Cleanup
 Remove-Item $TempDir -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host "`n=== Done ===" -ForegroundColor Cyan
-Write-Host "  Translation file ready. Restart EveLens to see Chinese names." -ForegroundColor Green
+Write-Host "  Translation file ready ($OutputCode). Restart EveLens to see localized names." -ForegroundColor Green
