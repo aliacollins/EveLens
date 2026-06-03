@@ -805,7 +805,7 @@ namespace EveLens.Common.Models
         internal void Import(EsiAPIShip ship)
         {
             ShipName = ship.ShipName;
-            ShipTypeName = StaticItems.GetItemName(ship.ShipTypeID);
+            ShipTypeName = StaticItems.GetLocalizedItemName(ship.ShipTypeID);
         }
 
         /// <summary>

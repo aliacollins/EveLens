@@ -51,15 +51,12 @@ namespace EveLens.Common.Data
             return string.Empty;
         }
 
-        // Non-English languages that ship a bundled SDE translation datafile
-        // (eve-translations-{lang}.xml.gzip). English needs no datafile (it is the base).
-        private static readonly string[] s_translatedLanguages = { "zh-CN", "ko" };
-
         private static void TryLoadExternalTranslations()
         {
-            // Load every available bundled translation datafile, not just one language,
-            // so all languages are ready and GetSkillName/GetGroupName resolve by Loc.Language.
-            foreach (string lang in s_translatedLanguages)
+            // Load every bundled SDE-name datafile (driven by the single LanguageRegistry), so all
+            // languages are ready and GetSkillName/GetGroupName resolve by Loc.Language. Adding a
+            // language to LanguageRegistry with HasSdeNames=true is all that's needed here.
+            foreach (string lang in EveLens.Common.Services.LanguageRegistry.SdeLanguages)
                 TryLoadTranslationFile(lang);
         }
 

@@ -79,8 +79,8 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="120" />
                 <DataGridTextColumn Header="State" Binding="{Binding State}" Width="80" />
-                <DataGridTextColumn Header="Blueprint" Binding="{Binding InstalledItem.Name}" Width="200" />
-                <DataGridTextColumn Header="Output" Binding="{Binding OutputItem.Name}" Width="200" />
+                <DataGridTextColumn Header="Blueprint" Binding="{Binding InstalledItem.LocalizedName}" Width="200" />
+                <DataGridTextColumn Header="Output" Binding="{Binding OutputItem.LocalizedName}" Width="200" />
                 <DataGridTextColumn Header="Location" Binding="{Binding Installation}" Width="180" />
                 <DataGridTextColumn Header="Runs" Binding="{Binding Runs}" Width="60" />
                 <DataGridTextColumn Header="Cost" Binding="{Binding Cost, StringFormat=\{0:N2\} ISK}" Width="120" />

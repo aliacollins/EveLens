@@ -406,7 +406,7 @@ namespace EveLens.Common.ViewModels
 
         public AssetBrowserItemEntry(Asset asset)
         {
-            ItemName = asset.Item?.Name ?? "Unknown";
+            ItemName = asset.Item?.LocalizedName ?? "Unknown";
             QuantityText = asset.Quantity > 1 ? $"x{asset.Quantity:N0}" : "";
             LocationShort = !string.IsNullOrEmpty(asset.Container) ? asset.Container : "";
             ValueText = asset.Cost > 0 ? $"{asset.Cost:N0} ISK" : "";

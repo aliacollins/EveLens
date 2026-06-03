@@ -287,7 +287,7 @@ namespace EveLens.Common.ViewModels
             {
                 long charLevel = character?.GetSkillLevel(prereq.Skill) ?? 0;
                 prereqs.Add(new PrerequisiteInfo(
-                    prereq.Skill.Name,
+                    prereq.Skill.LocalizedName,
                     prereq.Level,
                     charLevel,
                     charLevel >= prereq.Level));
@@ -304,7 +304,7 @@ namespace EveLens.Common.ViewModels
             };
 
             SelectedItemDetail = new ItemDetailInfo(
-                item.Name,
+                item.LocalizedName,
                 item.Description,
                 slotText,
                 prereqs,

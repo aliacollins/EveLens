@@ -100,7 +100,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     var color = GroupColors[groupIndex % GroupColors.Length];
                     var groupInfo = new SkillGroupInfo
                     {
-                        Name = sg.Name,
+                        Name = sg.LocalizedName,
                         Color = color,
                         Index = groupIndex
                     };
@@ -134,8 +134,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                         var node = new SkillNode
                         {
                             Id = $"skill_{skill.ID}",
-                            Name = skill.Name,
-                            GroupName = sg.Name,
+                            Name = skill.LocalizedName,
+                            GroupName = sg.LocalizedName,
                             GroupIndex = groupIndex,
                             Level = (int)skill.Level,
                             Rank = (int)skill.Rank,

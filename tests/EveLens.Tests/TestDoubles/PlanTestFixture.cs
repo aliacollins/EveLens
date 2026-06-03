@@ -107,6 +107,8 @@ namespace EveLens.Tests.TestDoubles
 
                 StaticProperties.Load();
                 StaticItems.Load();
+                // Load bundled translation datafiles (zh-CN, ko) so LocalizedName resolves in tests.
+                StaticTranslations.Load();
 
                 s_gameDataInitialized = true;
             }

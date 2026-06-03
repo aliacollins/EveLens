@@ -1,0 +1,551 @@
+# Main Window — 主窗口
+Menu.File = 文件
+Menu.Plans = 训练计划
+Menu.Tools = 工具
+Menu.Help = 帮助
+Menu.File.AddCharacter = 添加角色
+Menu.File.ManageGroups = 管理分组
+Menu.File.Settings = 设置
+Menu.File.Exit = 退出
+Menu.Plans.NewPlan = 新建计划
+Menu.Plans.ManagePlans = 管理计划
+Menu.Plans.ImportPlan = 从文件导入计划
+Menu.Plans.CreateFromQueue = 从训练队列创建计划
+Menu.Tools.CharComparison = 角色对比
+Menu.Tools.SkillFarm = 技能农场面板
+Menu.Tools.DoctrineDesigner = 教义设计器
+Menu.Tools.SkillVisualization = 技能可视化
+Menu.Tools.ClearCache = 清除缓存
+Menu.Help.About = 关于EveLens
+Menu.Help.KnownProblems = 已知问题
+Menu.Help.CheckUpdates = 检查更新
+Menu.Help.UserGuide = 用户指南
+Menu.Help.ReportIssue = 报告问题
+Menu.Help.Shortcuts = 键盘快捷键
+Menu.File.CreateBlank = 创建空白角色
+Menu.File.ManageChars = 管理角色
+Menu.File.RestoreSettings = 恢复设置
+Menu.File.SaveSettings = 保存设置
+Menu.File.ResetSettings = 重置设置
+
+# Tabs — 标签页
+Tab.Skills = 技能
+Tab.Queue = 训练队列
+Tab.Clones = 克隆体
+Tab.Employment = 雇佣记录
+Tab.Assets = 资产
+Tab.MarketOrders = 市场订单
+Tab.Contracts = 合同
+Tab.IndustryJobs = 工业作业
+Tab.Wallet = 钱包
+Tab.Mail = 邮件
+Tab.Notifications = 通知
+Tab.KillLog = 击毁记录
+Tab.Planetary = 行星开发
+Tab.Research = 研究
+
+# Common Actions — 常用操作
+Action.CollapseAll = 全部收起
+Action.ExpandAll = 全部展开
+Action.TrainedOnly = 仅已训练
+Action.ExportCsv = 导出CSV
+Action.AllSkills = 全部技能
+Action.Search = 搜索…
+Action.Save = 保存
+Action.Cancel = 取消
+Action.Close = 关闭
+Action.Apply = 应用
+Action.Create = 创建
+Action.Delete = 删除
+Action.Refresh = 刷新
+Action.AddCharacter = + 添加角色
+Action.AddSkill = + 添加技能
+
+# EVE Game Terms — EVE游戏术语（CCP官方中文翻译）
+Eve.SkillPoints = 技能点
+Eve.SP = 技能点
+Eve.SPPerHour = 技能点/时
+Eve.ISK = 星币
+Eve.Omega = 欧米伽
+Eve.Alpha = 阿尔法
+Eve.Intelligence = 智力
+Eve.Memory = 记忆
+Eve.Perception = 感知
+Eve.Willpower = 毅力
+Eve.Charisma = 魅力
+Eve.Rank = 等级
+Eve.Level = 级
+Eve.Training = 训练中
+Eve.Queued = 排队中
+Eve.Completed = 已完成
+Eve.AlreadyTrained = 已训练
+
+# Plan Editor — 计划编辑器
+Plan.Skill = 技能
+Plan.Time = 时间
+Plan.Primary = 主属性
+Plan.Secondary = 副属性
+Plan.GroupByAttr = 按属性分组
+Plan.GroupedByAttr = 已按属性分组 ✓
+Plan.QueueReordered = 队列已重新排序
+Plan.DragToReorder = 拖动以重新排序 · 双击查看详情
+Plan.DragCancelled = 拖动已取消
+
+# Skill Farm — 技能农场
+SkillFarm.Title = 技能农场面板
+SkillFarm.AddAll = + 添加全部符合条件
+SkillFarm.Character = 角色
+SkillFarm.Injectors = 注入器
+SkillFarm.ExtractorCost = 提取器成本
+SkillFarm.Revenue = 收入
+SkillFarm.NetProfit = 净利润
+SkillFarm.Status = 状态
+
+# Doctrine Designer — 教义设计器
+Doctrine.Title = 教义设计器
+Doctrine.Doctrines = 教义
+Doctrine.NewDoctrine = + 新建教义
+Doctrine.ImportFromPlan = 从计划导入
+Doctrine.CreatePlan = 生成计划
+Doctrine.PlanCreated = 计划已创建！
+Doctrine.CreatePlansForAll = 为所有角色生成计划
+Doctrine.NoDoctrines = 暂无教义。\n点击「+ 新建教义」创建，\n或「从计划导入」使用现有计划。
+Doctrine.SelectDoctrine = 从侧边栏选择一个教义以查看技能对比。
+Doctrine.NoCharacters = 暂无分配角色。\n点击「+ 添加角色」将角色分配到此教义。
+Doctrine.AllTrained = 全部已训练！
+
+# Settings — 设置窗口
+Settings.Title = 设置
+Settings.WindowTitle = EveLens 设置
+Settings.SearchWatermark = 搜索设置…
+
+# Settings — 侧边栏
+Settings.Appearance = 外观
+Settings.AppearanceSub = 主题、颜色、兼容性
+Settings.Window = 窗口
+Settings.WindowSub = 托盘图标、关闭行为
+Settings.Notifications = 通知
+Settings.NotificationsSub = 提醒、邮件、日历
+Settings.Data = 数据
+Settings.DataSub = 更新、市场价格
+Settings.Network = 网络
+Settings.NetworkSub = 代理、SSO凭据
+Settings.ESI = ESI
+Settings.ESISub = API权限范围
+
+# Settings — 外观
+Settings.AppearanceDesc = 自定义EveLens的外观和风格。
+Settings.Theme = 主题
+Settings.ThemeDesc = 选择应用程序的视觉主题。
+Settings.RestartRequired = 需要重启以应用
+Settings.RestartNow = 立即重启
+Settings.FontSize = 字体大小
+Settings.FontSizeDesc = 缩放应用程序中的所有文本（80%-150%）。
+Settings.Language = 语言
+Settings.LanguageDesc = 游戏术语使用CCP官方中文翻译。
+Settings.LanguageNote = 游戏术语使用CCP官方中文翻译。社区翻译——欢迎帮助改进！
+Settings.SafeForWork = 安全工作模式
+Settings.SafeForWorkDesc = 隐藏角色头像和识别颜色。
+Settings.CustomBrowser = 浏览器
+Settings.CustomBrowserDesc = 选择用于打开链接的浏览器。默认使用系统设置。
+Settings.DefaultBrowser = 系统默认
+Settings.OpenDataDir = 打开数据目录
+
+# Settings — 窗口行为
+Settings.WindowBehavior = 窗口行为
+Settings.WindowBehaviorDesc = 配置主窗口和系统托盘的行为。
+Settings.MinimizeToTray = 最小化到托盘
+Settings.MinimizeToTrayDesc = 启用后，关闭窗口将最小化到系统托盘而不是退出。点击托盘图标恢复。
+Settings.TrayTooltipDisplay = 托盘提示显示
+Settings.TrayTooltipDesc = 选择悬停在系统托盘图标上时显示的信息。
+Settings.TrayCountAndNext = 训练数量 + 下一个完成
+Settings.TrayCountOnly = 仅训练数量
+Settings.TrayNextOnly = 仅下一个完成
+
+# Settings — 通知
+Settings.NotificationsDesc = 配置技能训练和事件的提醒和通知。
+Settings.OsNotifications = 系统通知
+Settings.OsNotificationsDesc = 显示技能完成和提醒的系统通知。
+Settings.PlaySound = 播放声音
+Settings.PlaySoundDesc = 技能训练完成时播放声音。
+Settings.EmailAlerts = 邮件提醒
+Settings.EmailAlertsDesc = 技能训练完成时发送邮件。
+Settings.Provider = 提供商
+Settings.SmtpServer = SMTP服务器
+Settings.Port = 端口
+Settings.SslTls = SSL/TLS
+Settings.SslTlsDesc = 要求加密连接。
+Settings.Authentication = 认证
+Settings.AuthenticationDesc = 服务器需要用户名和密码。
+Settings.Username = 用户名
+Settings.Password = 密码
+Settings.From = 发件人
+Settings.To = 收件人
+Settings.ShortFormat = 简短格式
+Settings.ShortFormatDesc = 使用紧凑的邮件格式。
+Settings.ExternalCalendar = 外部日历
+Settings.ExternalCalendarDesc = 将技能训练计划同步到外部日历。
+Settings.GoogleCalendar = Google日历
+Settings.MicrosoftOutlook = Microsoft Outlook
+Settings.CalendarName = 日历名称
+Settings.Reminder = 提醒
+Settings.UseDefaultCalendar = 使用默认日历
+Settings.CalendarPath = 日历路径
+Settings.EnableReminders = 启用提醒
+Settings.IntervalMin = 间隔（分钟）
+Settings.AltRemindingTimes = 使用替代提醒时间
+Settings.Early = 早
+Settings.Late = 晚
+Settings.LastQueuedOnly = 仅导出最后排队的技能
+
+# Settings — 数据
+Settings.DataUpdates = 数据与更新
+Settings.DataUpdatesDesc = 管理自动更新和市场数据来源。
+Settings.CheckForUpdates = 检查更新
+Settings.CheckForUpdatesDesc = 启动时自动检查新版本。
+Settings.ClockSync = 时钟同步
+Settings.ClockSyncDesc = 启动时验证系统时钟是否同步。
+Settings.MarketPriceProvider = 市场价格来源
+Settings.MarketPriceProviderDesc = 市场价格查询来源。
+
+# Settings — 网络
+Settings.NetworkDesc = 配置代理和SSO凭据。
+Settings.HttpProxy = HTTP代理
+Settings.HttpProxyDesc = 通过自定义代理服务器路由流量。
+Settings.Host = 主机
+Settings.SsoCredentials = SSO凭据
+Settings.SsoCredentialsDesc = 覆盖内置的EveLens SSO客户端凭据。
+Settings.ClientId = 客户端ID
+Settings.ClientSecret = 客户端密钥
+Settings.UseDefault = 使用默认
+
+# Settings — ESI
+Settings.EsiScopes = ESI权限范围
+Settings.EsiScopesDesc = 控制认证时EveLens请求的API权限范围。
+Settings.ScopePreset = 权限预设
+Settings.ScopePresetDesc = 选择预定义的API权限集。
+Settings.CustomizeScopes = 自定义权限范围…
+Settings.EsiChangesNote = 更改在下次认证角色时生效。
+Settings.CharacterScopes = 角色权限范围
+Settings.NoCharsAuthenticated = 尚未认证任何角色。
+Settings.EsiReauthNote = 与所选预设不匹配的角色可以重新认证以更新其权限范围。
+Settings.Reauthenticate = 重新认证
+Settings.Restart = 重启
+Settings.RestartEveLens = 重启EveLens
+Settings.RestartMessage = EveLens将重启以应用新主题。\n请保存正在进行的工作（如正在编辑的技能计划）。
+
+# Status / Empty States — 状态
+Status.Paused = 已暂停
+Status.Training = 训练中
+Status.Online = 在线
+Status.SkillsInQueue = 队列中的技能
+Status.Trained = 已训练
+Status.Of = /
+Status.Skills = 个技能
+Status.TotalSP = 总技能点
+Status.Remaining = 剩余
+
+# Character Header — 角色头部
+Header.Corporation = 军团
+Header.Alliance = 联盟
+Header.LocatedIn = 位于
+Header.DockedAt = 停靠在
+Header.InSpace = 在太空中
+Header.Skills = 技能
+Header.SP = 技能点
+Header.FreeSP = 未分配技能点
+Header.TotalSP = 总技能点
+Header.Remaps = 重映射
+Header.AutoDetect = 自动检测
+Header.AlphaOverride = Alpha覆盖
+Header.OmegaOverride = Omega覆盖
+
+# ESI
+ESI.NextRefresh = 下次刷新
+ESI.Fetching = 获取中…
+ESI.Idle = ESI：空闲
+ESI.Refreshing = ESI：刷新中…
+ESI.LastRefresh = 上次刷新
+
+# Splash — 启动画面
+Splash.Tagline = EVE Online 角色情报工具
+Splash.LoadingGameData = 正在加载游戏数据…
+
+# Skills level filter strip — 技能等级筛选
+Skills.AllSkills = 所有技能
+Skills.AllTrained = 全部已训练
+Skills.LevelV = V级
+Skills.LevelIV = IV级
+Skills.LevelIII = III级
+Skills.LevelII = II级
+Skills.LevelI = I级
+Skills.Injected = 已注入
+Skills.Untrained = 未训练
+
+# Character header labels — 角色头部标签
+Header.SecurityStatus = 安全等级
+Header.ActiveShip = 当前舰船
+Header.Unknown = 未知
+Header.KnownSkills = 已知技能
+Header.BonusRemaps = 奖励重置次数
+
+# Missing character monitor tabs — 缺失的角色监控标签
+Tab.Standings = 声望
+Tab.Contacts = 联系人
+Tab.Medals = 勋章
+Tab.LP = 忠诚点
+Tab.Transactions = 交易记录
+
+# Plan Editor Window — 计划编辑器窗口
+PlanEditor.Title = 计划编辑器
+PlanEditor.PlanTab = 计划
+PlanEditor.SkillsTab = 技能
+PlanEditor.ShipsTab = 舰船
+PlanEditor.ItemsTab = 物品
+PlanEditor.BlueprintsTab = 蓝图
+PlanEditor.SearchSkills = 搜索技能…
+PlanEditor.ClearPlan = 清除计划
+PlanEditor.ImportFit = 导入配装
+PlanEditor.Export = 导出
+PlanEditor.AddSkills = + 添加技能
+PlanEditor.CopyPlan = 复制技能计划
+PlanEditor.Done = 已完成
+PlanEditor.SkillsToTrain = 个技能待训练
+PlanEditor.SkillsRemaining = 个技能剩余
+PlanEditor.OptimizePlan = 优化计划
+PlanEditor.Remap = 重置属性
+PlanEditor.AvailableNow = 现在可用
+PlanEditor.Bonus = 奖励
+PlanEditor.TrainingTime = 训练时间
+PlanEditor.Unique = 唯一
+PlanEditor.Finishes = 完成于
+PlanEditor.Books = 技能书
+PlanEditor.Skills = 个技能
+PlanEditor.Of = /
+PlanEditor.Remaining = 剩余
+PlanEditor.NextIn = 下次于
+PlanEditor.Injectors = 注入器
+PlanEditor.CopyToClipboard = 复制到剪贴板
+PlanEditor.SaveToFile = 保存到文件…
+PlanEditor.FromClipboard = 从剪贴板（EFT/XML/DNA）
+PlanEditor.FromFile = 从文件…
+PlanEditor.PlanTo = 训练到
+PlanEditor.Back = 返回
+
+# Skill Browser — 技能浏览器
+PlanEditor.AllAttributes = 所有属性
+PlanEditor.AllSkills = 所有技能
+PlanEditor.Trained = 已训练
+PlanEditor.HavePrereqs = 有前置技能
+PlanEditor.HideMaxed = 隐藏已精通
+PlanEditor.HideMaxedTip = 隐藏已训练到 V 级的技能
+PlanEditor.Untrained = 未训练
+PlanEditor.Collapse = 收起
+PlanEditor.Expand = 展开
+PlanEditor.NotTrained = 未训练
+PlanEditor.Rank = 等级：
+PlanEditor.Primary = 主属性：
+PlanEditor.Secondary = 副属性：
+PlanEditor.TrainingTimeLabel = 训练时间：
+PlanEditor.Prerequisites = 前置技能：
+
+# Ship Browser — 舰船浏览器
+ShipBrowser.SearchShips = 搜索舰船…
+ShipBrowser.CanFlyOnly = 仅可驾驶
+ShipBrowser.RequiredSkills = 所需技能：
+ShipBrowser.Properties = 属性：
+ShipBrowser.PlanToFly = 添加到训练计划
+ShipBrowser.Race = 种族：
+ShipBrowser.Amarr = 艾玛
+ShipBrowser.Caldari = 加达里
+ShipBrowser.Gallente = 盖伦特
+ShipBrowser.Minmatar = 米玛塔尔
+
+# Item Browser — 物品浏览器
+ItemBrowser.SearchItems = 搜索物品…
+ItemBrowser.CanUseOnly = 仅可使用
+ItemBrowser.CollapseAll = 全部收起
+ItemBrowser.Slot = 槽位：
+ItemBrowser.RequiredSkills = 所需技能：
+ItemBrowser.Properties = 属性：
+ItemBrowser.PlanToUse = 添加到训练计划
+
+# Blueprint Browser — 蓝图浏览器
+BlueprintBrowser.SearchBlueprints = 搜索蓝图…
+BlueprintBrowser.CanBuildOnly = 仅可制造
+BlueprintBrowser.Produces = 产出：
+BlueprintBrowser.ProductionTime = 制造时间：
+BlueprintBrowser.Materials = 材料：
+BlueprintBrowser.RequiredSkills = 所需技能：
+BlueprintBrowser.PlanSkills = 添加到训练计划
+
+# Plan Queue Headers — 计划队列表头
+Plan.Rank = 等级
+Plan.SPPerHour = 技能点/时
+Plan.Level = 级别
+
+# Queue view — 训练队列
+Queue.NoSkillsInTraining = 没有正在训练的技能
+Queue.SkillsInQueue = 队列中的技能
+Queue.EndsIn = 结束于
+Queue.EndsOn = 结束日期
+Queue.ExportCsv = 导出CSV
+
+# ESI Endpoints — ESI端点
+Endpoints.Title = ESI端点
+Endpoints.Description = 选择要为此角色获取的数据。
+Endpoints.EnableAll = 全部启用
+Endpoints.DisableAll = 全部禁用
+
+# Sidebar — 侧边栏
+Sidebar.Add = 添加
+Sidebar.AddSkills = 添加技能
+Sidebar.Plan = 计划
+
+# List Views — 列表视图通用工具栏
+ListView.GroupBy = 分组方式：
+ListView.Filter = 筛选：
+ListView.SearchAssets = 搜索资产…
+ListView.SearchContracts = 搜索合同…
+ListView.SearchMarketOrders = 搜索市场订单…
+ListView.SearchContacts = 搜索联系人…
+ListView.SearchMail = 搜索邮件…
+ListView.SearchKills = 搜索击毁记录…
+ListView.SearchStandings = 搜索声望…
+ListView.SearchWalletJournal = 搜索日志…
+ListView.SearchNotifications = 搜索通知…
+
+# List Views — 启用提示
+ListView.EnableToFetch = 启用后即可从EVE Online获取数据。
+ListView.ScopeNotAuthorized = ESI权限未授权
+ListView.ScopeNotAuthorizedDesc = 此角色认证时未包含所需权限范围。\n从 文件 → 管理角色 重新认证以启用此功能。
+ListView.EnableAssets = 此角色未启用资产监控。
+ListView.EnableAssetBtn = 启用资产监控
+ListView.EnableMarketOrders = 此角色未启用市场订单追踪。
+ListView.EnableMarketOrderBtn = 启用市场订单追踪
+ListView.EnableContracts = 此角色未启用合同追踪。
+ListView.EnableContractBtn = 启用合同追踪
+ListView.EnableIndustry = 此角色未启用工业作业追踪。
+ListView.EnableIndustryBtn = 启用工业作业追踪
+ListView.EnableMail = 此角色未启用邮件。
+ListView.EnableMailBtn = 启用邮件
+ListView.EnableNotifications = 此角色未启用通知。
+ListView.EnableNotificationsBtn = 启用通知
+ListView.EnableKillLog = 此角色未启用击毁记录。
+ListView.EnableKillLogBtn = 启用击毁记录
+ListView.EnablePlanetary = 此角色未启用行星开发。
+ListView.EnablePlanetaryBtn = 启用行星开发
+ListView.EnableResearch = 此角色未启用研究点数。
+ListView.EnableResearchBtn = 启用研究点数
+ListView.EnableContacts = 此角色未启用联系人。
+ListView.EnableContactsBtn = 启用联系人
+ListView.EnableStandings = 此角色未启用声望。
+ListView.EnableStandingsBtn = 启用声望
+ListView.EnableMedals = 此角色未启用勋章。
+ListView.EnableMedalsBtn = 启用勋章
+ListView.EnableLP = 此角色未启用忠诚点。
+ListView.EnableLPBtn = 启用忠诚点
+ListView.EnableEmployment = 此角色未启用雇佣记录。
+ListView.EnableEmploymentBtn = 启用雇佣记录
+ListView.EnableFW = 此角色未启用势力战争。
+ListView.EnableFWBtn = 启用势力战争
+ListView.EnableWalletJournal = 此角色未启用钱包日志。
+ListView.EnableWalletJournalBtn = 启用钱包日志
+ListView.EnableWalletTx = 此角色未启用钱包交易。
+ListView.EnableWalletTxBtn = 启用钱包交易
+
+# List Views — 空状态
+ListView.NoAssets = 未找到资产
+ListView.NoAssetsDesc = 数据获取后资产将显示在此处。
+ListView.NoContracts = 无合同
+ListView.NoContractsDesc = 没有合同匹配当前筛选条件。请尝试调整搜索或筛选设置。
+
+# List Views — 分组选项
+ListView.Location = 位置
+ListView.Region = 星域
+ListView.Category = 分类
+ListView.Container = 容器
+ListView.NoGrouping = 不分组
+ListView.Status = 状态
+ListView.ContractType = 合同类型
+ListView.IssueDate = 签发日期
+ListView.StartLocation = 起始位置
+ListView.HideInactive = 隐藏非活跃
+ListView.All = 全部
+ListView.Character = 角色
+ListView.Corporation = 军团
+
+# DataGrid列标题 — 市场订单
+Column.Item = 物品
+Column.Station = 空间站
+Column.UnitPrice = 单价
+Column.TotalPrice = 总价
+Column.InitialVol = 初始数量
+Column.Remaining = 剩余
+Column.Duration = 持续时间
+Column.Issued = 签发
+Column.Expires = 到期
+
+# DataGrid列标题 — 合同
+Column.Contract = 合同
+Column.Type = 类型
+Column.Status = 状态
+Column.Issuer = 签发人
+Column.Assignee = 受让人
+Column.Price = 价格
+
+# DataGrid列标题 — 工业作业
+Column.Activity = 活动
+Column.State = 状态
+Column.Blueprint = 蓝图
+Column.Output = 产出
+Column.Location = 位置
+Column.Runs = 次数
+Column.Cost = 费用
+Column.InstallDate = 安装日期
+Column.EndDate = 结束日期
+
+# DataGrid列标题 — 研究点数
+Column.Agent = 代理人
+Column.Level = 等级
+Column.Field = 领域
+Column.CurrentRP = 当前研究点
+Column.PointsPerDay = 每日点数
+Column.StartDate = 开始日期
+
+# DataGrid列标题 — 行星开发
+Column.Planet = 行星
+Column.PlanetType = 行星类型
+Column.PinType = 设施类型
+Column.Content = 内容
+Column.Quantity = 数量
+Column.Expiry = 到期
+Column.SolarSystem = 星系
+
+# DataGrid列标题 — 钱包交易
+Column.Date = 日期
+Column.Credit = 金额
+Column.Client = 客户
+
+# 右键菜单
+ContextMenu.CopyItemName = 复制物品名称
+ContextMenu.CopyStation = 复制空间站
+ContextMenu.ExportCsv = 导出CSV…
+ContextMenu.CopyContractInfo = 复制合同信息
+ContextMenu.CopyIssuer = 复制签发人
+ContextMenu.CopyBlueprintName = 复制蓝图名称
+ContextMenu.CopyOutput = 复制产出
+ContextMenu.CopyAgent = 复制代理人
+ContextMenu.CopyField = 复制领域
+ContextMenu.CopyPlanet = 复制行星
+ContextMenu.CopySolarSystem = 复制星系
+ContextMenu.CopyClient = 复制客户
+
+# Plan Sidebar strings — 计划侧边栏
+Plan.AlreadyOptimal = 已经是最优
+Plan.Analyzing = 分析中…
+Plan.Current = 当前：
+Plan.RemapTo = 重映射后可节省 {0}：
+Plan.ChangeAttrsTo = 将属性更改为：
+Plan.RemapAvailable = 可重映射
+Plan.RemapInDays = {0}天后可重映射

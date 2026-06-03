@@ -214,6 +214,13 @@ namespace EveLens.Common.Models
         public string Name => StaticData.Name;
 
         /// <summary>
+        /// Gets this skill's name in the current UI language (falls back to English).
+        /// Use this for anything shown to the user; use <see cref="Name"/> only for
+        /// language-stable purposes (export, lookups, persistence).
+        /// </summary>
+        public string LocalizedName => StaticData.LocalizedName;
+
+        /// <summary>
         /// Gets this skill's description.
         /// </summary>
         public string Description => StaticData.Description;

@@ -118,7 +118,7 @@ namespace EveLens.Common.ViewModels
             }
 
             HasSelection = true;
-            SkillName = $"{_selectedEntry.Skill.Name} {Skill.GetRomanFromInt(_selectedEntry.Level)}";
+            SkillName = $"{_selectedEntry.Skill.LocalizedName} {Skill.GetRomanFromInt(_selectedEntry.Level)}";
             SkillDescription = _selectedEntry.Skill.Description;
             PrimaryAttribute = _selectedEntry.Skill.PrimaryAttribute.ToString();
             SecondaryAttribute = _selectedEntry.Skill.SecondaryAttribute.ToString();
@@ -138,7 +138,7 @@ namespace EveLens.Common.ViewModels
                     }
 
                     return new PrerequisiteInfo(
-                        $"{p.Skill.Name} {Skill.GetRomanFromInt(p.Level)}",
+                        $"{p.Skill.LocalizedName} {Skill.GetRomanFromInt(p.Level)}",
                         p.Level,
                         isMet);
                 })

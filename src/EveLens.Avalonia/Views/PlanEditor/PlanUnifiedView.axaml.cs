@@ -1477,7 +1477,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var heroStack = new StackPanel { Spacing = 4 };
             heroStack.Children.Add(new TextBlock
             {
-                Text = skill.Name,
+                Text = skill.LocalizedName,
                 FontSize = FontScaleService.Subheading,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = accentBrush,
@@ -1647,12 +1647,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 });
 
                 var skillsWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-                foreach (var dep in dependents.OrderBy(d => d.Skill.Name))
+                foreach (var dep in dependents.OrderBy(d => d.Skill.LocalizedName))
                 {
                     var capturedSkill = dep.Skill;
                     var chip = new Button
                     {
-                        Content = dep.Skill.Name,
+                        Content = dep.Skill.LocalizedName,
                         Background = new SolidColorBrush(Color.Parse("#18FFFFFF")),
                         Foreground = accentBrush,
                         BorderThickness = new Thickness(0),
@@ -1709,7 +1709,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                         row.Children.Add(new TextBlock
                         {
-                            Text = x.Item.Name,
+                            Text = x.Item.LocalizedName,
                             FontSize = FontScaleService.Small,
                             Foreground = secondaryBrush,
                             VerticalAlignment = VerticalAlignment.Center,
@@ -1740,8 +1740,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (parentWindow == null) return false;
 
             string message = targetLevel == 0
-                ? $"Remove {skill.Name} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
-                : $"Downgrade {skill.Name} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
+                ? $"Remove {skill.LocalizedName} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
+                : $"Downgrade {skill.LocalizedName} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
 
             var result = false;
             var dialog = new Window

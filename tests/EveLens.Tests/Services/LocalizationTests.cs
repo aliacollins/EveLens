@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EveLens.Common.Services;
+using EveLens.Tests.TestDoubles;
 using FluentAssertions;
 using Xunit;
 
@@ -25,6 +26,26 @@ namespace EveLens.Tests.Services
         {
             Loc.AvailableLanguages.Should().Contain("ko");
             Loc.GetLanguageDisplayName("ko").Should().Contain("Korean");
+        }
+
+        [Fact]
+        public void EveryRegisteredLanguage_HasAUiStringsTableLoaded()
+        {
+            // Contract: every code in LanguageRegistry must resolve to a loaded ui-strings table.
+            // Guards the "add a language = drop a file + one registry line" promise: a registry
+            // entry without its ui-strings-<code>.txt (or a typo'd code) fails here.
+            foreach (var code in EveLens.Common.Services.LanguageRegistry.Codes)
+            {
+                Loc.GetTable(code).Should().NotBeNull(
+                    $"language '{code}' is in LanguageRegistry but its ui-strings-{code}.txt did not load");
+            }
+        }
+
+        [Fact]
+        public void AvailableLanguages_MatchesRegistry()
+        {
+            Loc.AvailableLanguages.Should().BeEquivalentTo(EveLens.Common.Services.LanguageRegistry.Codes,
+                "the language picker must derive from the single LanguageRegistry source of truth");
         }
 
         [Theory]
@@ -114,6 +135,99 @@ namespace EveLens.Tests.Services
             {
                 Loc.Language = prev;
             }
+        }
+    }
+
+    /// <summary>
+    /// End-to-end regression tests proving that entity names (skills, items) flow through
+    /// <c>LocalizedName</c> to the UI view models when a non-English language is active. This is the
+    /// behavioural complement to <see cref="EveLens.Tests.Architecture.LocalizationArchitectureTests"/>:
+    /// it catches the bug the screenshots surfaced — the Plan editor showing English skill names to
+    /// Korean/Chinese users because a VM read <c>.Name</c> instead of <c>.LocalizedName</c>.
+    /// Requires loaded SDE skill/item data + translation datafiles.
+    /// </summary>
+    [Collection("StaticData")]
+    public class LocalizedNameFlowTests
+    {
+        public LocalizedNameFlowTests()
+        {
+            PlanTestFixture.EnsureGameDataLoaded();
+        }
+
+        [Theory]
+        [InlineData("ko")]
+        [InlineData("zh-CN")]
+        public void StaticSkill_LocalizedName_DiffersFromEnglish_WhenLanguageSet(string lang)
+        {
+            var prev = Loc.Language;
+            try
+            {
+                Loc.Language = lang;
+                // Navigation is a core skill present in every SDE language.
+                var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+                skill.Should().NotBeNull();
+                skill!.LocalizedName.Should().NotBeNullOrEmpty();
+                skill.LocalizedName.Should().NotBe(skill.Name,
+                    $"{lang} should translate 'Navigation' away from the English name");
+            }
+            finally { Loc.Language = prev; }
+        }
+
+        [Fact]
+        public void StaticSkill_LocalizedName_IsEnglish_WhenLanguageEnglish()
+        {
+            var prev = Loc.Language;
+            try
+            {
+                Loc.Language = "en";
+                var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+                skill!.LocalizedName.Should().Be(skill.Name, "English keeps the base name");
+            }
+            finally { Loc.Language = prev; }
+        }
+
+        [Theory]
+        [InlineData("ko")]
+        [InlineData("zh-CN")]
+        public void PlanQueueItem_DisplayName_UsesLocalizedSkillName(string lang)
+        {
+            var prev = Loc.Language;
+            try
+            {
+                var character = PlanTestFixture.CreateTestCharacter();
+                var plan = PlanTestFixture.CreateTestPlan(character);
+                var skill = PlanTestFixture.GetSkill("Navigation");
+                plan.PlanTo(skill, 1);
+                var entry = plan.First(e => e.Skill == skill && e.Level == 1);
+
+                var item = new EveLens.Common.ViewModels.PlanQueueItem(entry, character);
+
+                Loc.Language = lang;
+                // The queue row label must carry the localized skill name, not English.
+                item.DisplayName.Should().Contain(skill.LocalizedName,
+                    $"the plan queue row must display the {lang} skill name");
+                item.DisplayName.Should().NotBe($"{skill.Name} I",
+                    $"the plan queue row must not show the raw English name in {lang}");
+            }
+            finally { Loc.Language = prev; }
+        }
+
+        [Theory]
+        [InlineData("ko")]
+        [InlineData("zh-CN")]
+        public void GetLocalizedItemName_ReturnsLocalized_WhenLanguageSet(string lang)
+        {
+            var prev = Loc.Language;
+            try
+            {
+                Loc.Language = lang;
+                // Tritanium (type 34) — a universal item present in every SDE language.
+                string localized = EveLens.Common.Data.StaticItems.GetLocalizedItemName(34);
+                string english = EveLens.Common.Data.StaticItems.GetItemName(34);
+                localized.Should().NotBeNullOrEmpty();
+                localized.Should().NotBe(english, $"{lang} should translate the item name");
+            }
+            finally { Loc.Language = prev; }
         }
     }
 }
