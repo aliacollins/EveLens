@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
 - Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
 - Skill Farm configurable base SP, What's New dialog, Code Graph system
 
