@@ -51,22 +51,35 @@ namespace EveLens.Common.Data
             return string.Empty;
         }
 
+        // Non-English languages that ship a bundled SDE translation datafile
+        // (eve-translations-{lang}.xml.gzip). English needs no datafile (it is the base).
+        private static readonly string[] s_translatedLanguages = { "zh-CN", "ko" };
+
         private static void TryLoadExternalTranslations()
         {
+            // Load every available bundled translation datafile, not just one language,
+            // so all languages are ready and GetSkillName/GetGroupName resolve by Loc.Language.
+            foreach (string lang in s_translatedLanguages)
+                TryLoadTranslationFile(lang);
+        }
+
+        private static void TryLoadTranslationFile(string lang)
+        {
+            string fileName = $"eve-translations-{lang}.xml.gzip";
+
             // Try multiple paths: install Resources dir, AppData, and bin directory
             var candidates = new List<string>();
 
-            try { candidates.Add(Path.Combine(Datafile.GetDatafilesDirectory(), "eve-translations-zh-CN.xml.gzip")); }
+            try { candidates.Add(Path.Combine(Datafile.GetDatafilesDirectory(), fileName)); }
             catch { }
 
-            candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "eve-translations-zh-CN.xml.gzip"));
+            candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", fileName));
 
-            string? appData = null;
             try
             {
-                appData = AppServices.ApplicationPaths?.DataDirectory;
+                string? appData = AppServices.ApplicationPaths?.DataDirectory;
                 if (appData != null)
-                    candidates.Add(Path.Combine(appData, "eve-translations-zh-CN.xml.gzip"));
+                    candidates.Add(Path.Combine(appData, fileName));
             }
             catch { }
 
@@ -90,8 +103,10 @@ namespace EveLens.Common.Data
                     foreach (var entry in data.Groups)
                         groups[entry.Id] = entry.Name;
 
-                    s_skillNames[data.Language] = skills;
-                    s_groupNames[data.Language] = groups;
+                    // Key by the language the datafile declares (falls back to the requested code).
+                    string key = string.IsNullOrEmpty(data.Language) ? lang : data.Language;
+                    s_skillNames[key] = skills;
+                    s_groupNames[key] = groups;
 
                     AppServices.TraceService?.Trace(
                         $"Loaded {skills.Count} type + {groups.Count} group translations from {path}");
