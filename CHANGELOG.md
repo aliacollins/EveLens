@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plan editor: attribute group headers** — "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
 - **Plan editor: specific prereq error messages** — Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
 - **Plan editor: double-click hint tooltip** — Rows show "Drag to reorder · Double-click for details" on hover
+- **Plan editor: "Hide Maxed" skill filter** -- New filter button in the skill browser hides skills you've already trained to Level V, so you only see what's left to train (#71)
 - **ESI timer tooltips** — Hover the status bar countdown for an explanation of what it means
 - **Custom browser setting** — Choose which browser opens for ESI authentication (auto-detect or specific browser)
 - **SDE updated to build 3328718** — 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
@@ -31,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Plan editor: Delete key removed the wrong skill** -- Pressing Delete deleted the top skill in the queue (and its dependents) instead of the skill you had selected. Delete now acts on your actual selection, and supports multi-select (#80)
+- **Planetary Interaction: idle colonies stopped showing red** -- Colony health was frozen at the moment data first loaded, so a colony that went idle while EveLens was open never turned red until restart. Extractor state is now computed live and the dashboard repaints when colony data refreshes or an extractor finishes (#66)
+- **Planetary Interaction: final product showed "Unknown"** -- Actively-extracting colonies route material onward immediately, leaving the extractor's contents empty, so EveLens couldn't name the product. It now reads the extractor's declared output type, resolving the correct product (#66)
+- **Planetary Interaction: stray horizontal scrollbar and right-side gap** -- The colony detail view showed an unwanted horizontal scrollbar with empty space to the right of the production chain until you resized the window. The layout now fills the available width correctly (#66)
 - **Website download links 404** — macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
 - **Plan editor drag: scroll offset bug** — Dragging while scrolled down no longer maps to wrong row positions (#59)
 - **Plan editor: Alt+Up/Down keyboard shortcuts** — Now wired to actual queue selection instead of first/last item (#59)

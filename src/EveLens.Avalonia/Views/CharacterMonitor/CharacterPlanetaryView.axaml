@@ -78,7 +78,7 @@
             </Border>
 
             <!-- Dashboard view: cards grid (default) -->
-            <ScrollViewer x:Name="DashboardPanel">
+            <ScrollViewer x:Name="DashboardPanel" HorizontalScrollBarVisibility="Disabled">
                 <WrapPanel x:Name="CardsPanel" Orientation="Horizontal" Margin="10,8" />
             </ScrollViewer>
 
@@ -99,7 +99,7 @@
                 </Border>
 
                 <!-- Detail content: economics summary + flow canvas -->
-                <ScrollViewer>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="10,8" Spacing="12">
                         <!-- Timer hero + economics summary row -->
                         <Border Background="{DynamicResource EveBackgroundMediumBrush}"
