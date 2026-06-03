@@ -246,7 +246,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             ToggleLabelsBtn.Click += (_, _) =>
             {
                 Canvas.ShowAllLabels = !Canvas.ShowAllLabels;
-                ToggleLabelsBtn.Content = Canvas.ShowAllLabels ? "Hide Labels" : "Show All Labels";
+                ToggleLabelsBtn.Content = Canvas.ShowAllLabels ? Loc.Get("Constellation.HideLabels") : Loc.Get("Constellation.ShowAllLabels");
             };
 
             Opened += (_, _) => SearchBox.Focus();

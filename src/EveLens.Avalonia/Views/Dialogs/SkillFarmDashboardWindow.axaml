@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.SkillFarmDashboardWindow"
-        Title="Skill Farm Dashboard"
+        Title="{loc:T SkillFarm.Title}"
         Width="1150" Height="750"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterOwner"
@@ -21,11 +22,11 @@
         <!-- Top: Title + actions -->
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock Text="Skill Farm Dashboard" FontSize="{DynamicResource EveFontTitle}"
+                <TextBlock Text="{loc:T SkillFarm.Title}" FontSize="{DynamicResource EveFontTitle}"
                            FontWeight="Bold" Foreground="{StaticResource EveAccentPrimaryBrush}" />
                 <Border CornerRadius="8" Background="{StaticResource EveBackgroundMediumBrush}"
                         Padding="6,2" VerticalAlignment="Center"
-                        ToolTip.Tip="How this works:&#10;&#10;• Designate characters as skill farms using + Add Character&#10;• Characters with 5M+ SP can extract 500K SP into a Large Skill Injector&#10;• Extractors are bought, injectors are sold — the spread is your profit&#10;• Monthly economics assume characters are training with current implants&#10;• 'Sell via' shows optimal tax if all injectors sold through one character&#10;• Omega cost = 500 PLEX × accounts per month&#10;• Prices are live from Jita (ESI)">
+                        ToolTip.Tip="{loc:T SkillFarm.HelpTip}">
                     <TextBlock Text="?" FontSize="{DynamicResource EveFontSmall}"
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                HorizontalAlignment="Center" />
@@ -33,13 +34,13 @@
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
                         HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Button x:Name="AddCharBtn" Content="+ Add Character"
+                <Button x:Name="AddCharBtn" Content="{loc:T Action.AddCharacter}"
                         FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                         CornerRadius="12" Click="OnAddCharacterClick" />
-                <Button x:Name="AddAllBtn" Content="+ Add All Eligible"
+                <Button x:Name="AddAllBtn" Content="{loc:T SkillFarm.AddAll}"
                         FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                         CornerRadius="12" Click="OnAddAllEligibleClick" />
-                <Button x:Name="RefreshBtn" Content="Refresh"
+                <Button x:Name="RefreshBtn" Content="{loc:T Action.Refresh}"
                         FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                         CornerRadius="12" Click="OnRefreshClick" />
             </StackPanel>
@@ -66,13 +67,13 @@
         <!-- Toolbar -->
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                <ToggleButton x:Name="ReadyOnlyToggle" Content="Ready Only"
+                <ToggleButton x:Name="ReadyOnlyToggle" Content="{loc:T SkillFarm.ReadyOnly}"
                               FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                               CornerRadius="10" Click="OnReadyOnlyToggled" />
             </StackPanel>
             <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1" MaxWidth="300">
-                <TextBox x:Name="FilterBox" Watermark="Search characters..."
+                <TextBox x:Name="FilterBox" Watermark="{loc:T SkillFarm.SearchCharacters}"
                          FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                          Background="Transparent" BorderThickness="0"
                          TextChanged="OnFilterChanged" />
@@ -82,11 +83,11 @@
         <!-- Empty state -->
         <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center"
                     Spacing="8" IsVisible="True">
-            <TextBlock Text="No farm characters designated"
+            <TextBlock Text="{loc:T SkillFarm.NoFarmChars}"
                        FontSize="{DynamicResource EveFontSubheading}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" />
-            <TextBlock Text="Click '+ Add Character' to designate characters as skill farms"
+            <TextBlock Text="{loc:T SkillFarm.NoFarmCharsDesc}"
                        FontSize="{DynamicResource EveFontSmall}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" />

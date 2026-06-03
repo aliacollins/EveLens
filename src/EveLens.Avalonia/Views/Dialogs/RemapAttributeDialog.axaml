@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.RemapAttributeDialog"
-        Title="Set Remap Attributes"
+        Title="{loc:T Remap.Title}"
         Width="340" Height="360"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -9,7 +10,7 @@
 
     <DockPanel Margin="16">
         <!-- Title -->
-        <TextBlock DockPanel.Dock="Top" Text="Neural Remap"
+        <TextBlock DockPanel.Dock="Top" Text="{loc:T Remap.NeuralRemap}"
                    FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                    Margin="0,0,0,4" />
@@ -23,9 +24,9 @@
                     HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
             <Button x:Name="MatchBtn" FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                     CornerRadius="12" Click="OnMatchClick" />
-            <Button Content="Cancel" FontSize="{DynamicResource EveFontBody}" Padding="10,5"
+            <Button Content="{loc:T Action.Cancel}" FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                     CornerRadius="12" Click="OnCancelClick" />
-            <Button x:Name="ApplyBtn" Content="Apply" FontSize="{DynamicResource EveFontBody}" Padding="10,5"
+            <Button x:Name="ApplyBtn" Content="{loc:T Action.Apply}" FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                     CornerRadius="12" Click="OnApplyClick" />
         </StackPanel>
 

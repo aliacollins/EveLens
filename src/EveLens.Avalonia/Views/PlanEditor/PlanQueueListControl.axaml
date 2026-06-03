@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanQueueListControl">
 
     <!-- Timeline minimap -->
@@ -18,25 +19,25 @@
         <Grid x:Name="HeaderRow" DockPanel.Dock="Top"
               ColumnDefinitions="*,100,40,75,75,55,60"
               Margin="18,0,8,0" Height="24">
-            <TextBlock x:Name="HeaderSkill" Grid.Column="0" Text="SKILL" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderSkill" Grid.Column="0" Text="{loc:T Plan.Skill}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderTime" Grid.Column="1" Text="TIME" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderTime" Grid.Column="1" Text="{loc:T Plan.Time}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Right" VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderRank" Grid.Column="2" Text="R" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderRank" Grid.Column="2" Text="{loc:T Plan.Rank}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderPri" Grid.Column="3" Text="PRI" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderPri" Grid.Column="3" Text="{loc:T Plan.Primary}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderSec" Grid.Column="4" Text="SEC" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderSec" Grid.Column="4" Text="{loc:T Plan.Secondary}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderSphr" Grid.Column="5" Text="SP/HR" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderSphr" Grid.Column="5" Text="{loc:T Plan.SPPerHour}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderLevel" Grid.Column="6" Text="LEVEL" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderLevel" Grid.Column="6" Text="{loc:T Plan.Level}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Right" VerticalAlignment="Center" />
         </Grid>

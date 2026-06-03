@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanEntryDetailPanel">
     <Border x:Name="DetailBorder" Background="{StaticResource EveBackgroundMediumBrush}"
             CornerRadius="6" Padding="12" IsVisible="False">
@@ -13,26 +14,26 @@
             <Border Height="1" Background="{StaticResource EveBorderBrush}" />
 
             <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4">
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Primary:" FontSize="{DynamicResource EveFontBody}"
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="{loc:T PlanEditor.Primary}" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
                 <TextBlock x:Name="DetailPrimary" Grid.Row="0" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Secondary:" FontSize="{DynamicResource EveFontBody}"
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="{loc:T PlanEditor.Secondary}" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
                 <TextBlock x:Name="DetailSecondary" Grid.Row="1" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Training:" FontSize="{DynamicResource EveFontBody}"
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="{loc:T PlanEditor.TrainingLabel}" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
                 <TextBlock x:Name="DetailTrainingTime" Grid.Row="2" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="SP/hr:" FontSize="{DynamicResource EveFontBody}"
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="{loc:T PlanEditor.SpHrLabel}" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextDisabledBrush}" Margin="0,0,12,4" />
                 <TextBlock x:Name="DetailSpPerHour" Grid.Row="3" Grid.Column="1" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextPrimaryBrush}" />
             </Grid>
 
             <!-- Prerequisites -->
-            <TextBlock Text="Prerequisites" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+            <TextBlock Text="{loc:T PlanEditor.PrerequisitesNoColon}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}" Margin="0,4,0,2" />
             <ItemsControl x:Name="PrereqList">
                 <ItemsControl.ItemTemplate>
@@ -48,12 +49,12 @@
 
             <!-- Notes -->
             <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4,0,0" />
-            <TextBlock Text="Notes" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+            <TextBlock Text="{loc:T PlanEditor.Notes}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}" Margin="0,4,0,2" />
             <TextBox x:Name="NotesTextBox"
                      AcceptsReturn="True" TextWrapping="Wrap"
                      MinHeight="60" MaxHeight="120"
-                     Watermark="Add a note..."
+                     Watermark="{loc:T PlanEditor.AddNote}"
                      FontSize="{DynamicResource EveFontBody}"
                      Background="{StaticResource EveBackgroundDarkestBrush}"
                      Foreground="{StaticResource EveTextPrimaryBrush}"

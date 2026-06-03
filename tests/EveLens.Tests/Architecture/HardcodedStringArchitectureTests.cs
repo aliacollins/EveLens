@@ -101,9 +101,10 @@ namespace EveLens.Tests.Architecture
 
             // Ceiling = the measured baseline when this guardrail was added. As migration proceeds,
             // lower this number; it must never rise. Goal: drive it to 0 and delete this test.
-            total.Should().BeLessThanOrEqualTo(621,
+            total.Should().BeLessThanOrEqualTo(330,
                 $"the hardcoded-UI-string backlog must shrink, not grow (current: {total}). " +
-                "Migrate views to {loc:T} and lower this ceiling — do not add new hardcoded strings.");
+                "Migrate views to {loc:T} and lower this ceiling — do not add new hardcoded strings. " +
+                "Most remaining literals are design-time placeholders that code-behind overrides via Loc.Get.");
         }
 
         private static string FindProjectRoot()

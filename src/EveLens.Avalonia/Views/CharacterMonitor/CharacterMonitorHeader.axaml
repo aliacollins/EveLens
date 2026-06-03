@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMonitorHeader">
 
     <Border Background="{StaticResource EveBackgroundMediumBrush}"
@@ -27,7 +28,7 @@
                         Background="Transparent" BorderThickness="0"
                         HorizontalAlignment="Center"
                         Padding="6,3" Cursor="Hand"
-                        ToolTip.Tip="Click to change account status">
+                        ToolTip.Tip="{loc:T Header.ChangeStatusTip}">
                     <StackPanel Spacing="0" HorizontalAlignment="Center">
                         <TextBlock x:Name="AccountStatusLabel"
                                    FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
@@ -44,10 +45,10 @@
                     </StackPanel>
                     <Button.Flyout>
                         <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                            <MenuItem x:Name="AutoDetectItem" Header="Auto-detect" />
+                            <MenuItem x:Name="AutoDetectItem" Header="{loc:T Header.AutoDetect}" />
                             <Separator />
-                            <MenuItem x:Name="EmulateAlphaItem" Header="Emulate Alpha" />
-                            <MenuItem x:Name="EmulateOmegaItem" Header="Emulate Omega" />
+                            <MenuItem x:Name="EmulateAlphaItem" Header="{loc:T Header.EmulateAlpha}" />
+                            <MenuItem x:Name="EmulateOmegaItem" Header="{loc:T Header.EmulateOmega}" />
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>

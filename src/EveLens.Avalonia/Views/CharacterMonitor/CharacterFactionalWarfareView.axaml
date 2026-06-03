@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterFactionalWarfareView">
 
     <Panel>
@@ -35,7 +36,7 @@
 
         <Border x:Name="DataContent" Padding="20">
         <StackPanel DataContext="{Binding FactionalWarfareStats}" Spacing="8">
-            <TextBlock Text="Factional Warfare Statistics" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+            <TextBlock Text="{loc:T FW.Statistics}" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                        Foreground="{DynamicResource EveAccentPrimaryBrush}" />
             <TextBlock Text="{Binding FactionName, StringFormat='Faction: {0}'}"
                        FontSize="{DynamicResource EveFontSubheading}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
@@ -46,7 +47,7 @@
             <TextBlock Text="{Binding HighestRank, StringFormat='Highest Rank: {0}'}"
                        FontSize="{DynamicResource EveFontSubheading}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
             <Separator Margin="0,4" />
-            <TextBlock Text="Kills" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+            <TextBlock Text="{loc:T FW.Kills}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{DynamicResource EveTextPrimaryBrush}" />
             <TextBlock Text="{Binding KillsYesterday, StringFormat='Yesterday: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
@@ -55,7 +56,7 @@
             <TextBlock Text="{Binding KillsTotal, StringFormat='Total: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
             <Separator Margin="0,4" />
-            <TextBlock Text="Victory Points" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+            <TextBlock Text="{loc:T FW.VictoryPoints}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{DynamicResource EveTextPrimaryBrush}" />
             <TextBlock Text="{Binding VictoryPointsYesterday, StringFormat='Yesterday: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />

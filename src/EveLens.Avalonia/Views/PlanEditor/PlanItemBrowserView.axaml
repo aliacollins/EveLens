@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanItemBrowserView">
     <Grid ColumnDefinitions="300,*">
         <!-- Left panel: Item hierarchy as flat list with depth-based indentation -->
@@ -9,10 +10,10 @@
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                        <ToggleButton x:Name="CanUseToggle" Content="Can Use Only"
+                        <ToggleButton x:Name="CanUseToggle" Content="{loc:T ItemBrowser.CanUseOnly}"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                       Click="OnCanUseToggled" />
-                        <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="CollapseAllBtn" Content="{loc:T ItemBrowser.CollapseAll}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
                     </StackPanel>
                     <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
@@ -23,7 +24,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="Search items..."
+                            <TextBox x:Name="FilterBox" Watermark="{loc:T ItemBrowser.SearchItems}"
                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
@@ -100,16 +101,16 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="100" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock x:Name="RequiredSkillsLabel" Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="RequiredSkillsLabel" Text="{loc:T ItemBrowser.RequiredSkills}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
-                    <Button x:Name="PlanToUseBtn" Content="Plan to Use" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="PlanToUseBtn" Content="{loc:T ItemBrowser.PlanToUse}" FontSize="{DynamicResource EveFontBody}"
                             Padding="12,5" CornerRadius="12" Margin="0,8,0,0"
                             Click="OnPlanToUse" IsVisible="False" />
                     <!-- Properties section -->
                     <Border x:Name="PropertiesDivider" Height="1" Background="{StaticResource EveBorderBrush}"
                             Margin="0,4" IsVisible="False" />
-                    <TextBlock x:Name="PropertiesHeader" Text="Properties:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="PropertiesHeader" Text="{loc:T ItemBrowser.Properties}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" IsVisible="False" />
                     <StackPanel x:Name="PropertiesList" Spacing="8" />
                 </StackPanel>
