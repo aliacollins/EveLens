@@ -6,79 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
-## [1.4.0-beta.1] - 2026-05-24
-
-### Added
-
-- **Planetary Interaction overhaul (Beta)** -- Timer-based health model (Optimal/Expiring/Idle), conditional economics only shown when ESI provides yield data, alert timeline, colony flow canvas visualization
-- **PI alert notifications** -- In-app toasts when extractors expire, activity log entries, debounced OS notification ("PI needs attention")
-- **Character drag-reorder on overview** -- "Reorder" mode toggle, drag cards within groups, persists across restarts, portrait strip syncs
-- **Overview cards: location + ship** -- Shows solar system and active ship type, updates live as ESI fetches complete
-- **Overview cards: Omega/Alpha badge below portrait** -- Frees horizontal space for location info
-- **Manage Groups button** -- Accessible directly from overview toolbar
-- **Branch protection** -- main/alpha/beta require PRs, promote.ps1 updated to use PR workflow
-- **FormattingHelper utility** -- Shared ISK formatting extracted from duplicate implementations
-
-### Fixed
-
-- **Plan Editor attribute ordering** -- Now matches in-game: Perception, Memory, Willpower, Intelligence, Charisma. All 7 display locations corrected (#74)
-- **Activity log popup clipping** -- Replaced Flyout with properly anchored Popup that respects screen bounds. Buttons always accessible (#68)
-- **SSO error message** -- Shortened to single line to prevent layout overflow
-- **Upper portrait strip** -- Now respects ungrouped character order after drag-reorder
-
-### Changed
-
-- **PI health model** -- Removed throughput-based statuses (Inefficient/Critical), replaced with time-based (Expiring). Economics hidden when ESI data unreliable
-- **ProductionChainAnalyzer** -- Alert lead time passed as parameter instead of reading static Settings internally
-- **NativeNotificationService** -- Rebuilt using DesktopNotifications package for cross-platform support
-
-## [1.3.0] - 2026-05-10
+- Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
+- Skill Farm configurable base SP, What's New dialog, Code Graph system
 
 ### Added
 
-- **Skill Farm: configurable SP base per character** -- Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
-- **"What's New" dialog on update** -- Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
-- **Doctrine Designer** -- Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools > Doctrine Designer, Ctrl+G)
-- **Chinese language support (简体中文)** -- Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings > Appearance. Auto-restart on language change.
-- **CSV export** -- Export skills and training queue to CSV files from the Skills and Queue tabs
-- **Skill Farm Dashboard: sort by column** -- Click any column header to sort ascending/descending. "Add All Eligible" button to batch-add characters with 5.5M+ SP.
-- **Plan editor: attribute group headers** -- "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
-- **Plan editor: specific prereq error messages** -- Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
-- **Plan editor: double-click hint tooltip** -- Rows show "Drag to reorder · Double-click for details" on hover
-- **ESI timer tooltips** -- Hover the status bar countdown for an explanation of what it means
-- **Custom browser setting** -- Choose which browser opens for ESI authentication (auto-detect or specific browser)
-- **SDE updated to build 3328718** -- 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
+- **Skill Farm: configurable SP base per character** — Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
+- **"What's New" dialog on update** — Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
+- **Doctrine Designer** — Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools → Doctrine Designer, Ctrl+G)
+- **Chinese language support (简体中文)** — Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance. Auto-restart on language change.
+- **CSV export** — Export skills and training queue to CSV files from the Skills and Queue tabs
+- **Skill Farm Dashboard: sort by column** — Click any column header to sort ascending/descending. "Add All Eligible" button to batch-add characters with 5.5M+ SP.
+- **Plan editor: attribute group headers** — "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
+- **Plan editor: specific prereq error messages** — Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
+- **Plan editor: double-click hint tooltip** — Rows show "Drag to reorder · Double-click for details" on hover
+- **Plan editor: "Hide Maxed" skill filter** -- New filter button in the skill browser hides skills you've already trained to Level V, so you only see what's left to train (#71)
+- **ESI timer tooltips** — Hover the status bar countdown for an explanation of what it means
+- **Custom browser setting** — Choose which browser opens for ESI authentication (auto-detect or specific browser)
+- **SDE updated to build 3328718** — 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
 
 ### Changed
 
-- **Plan editor: whole-row drag** -- Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
-- **Release asset naming** -- macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
-- **EveLens branded icons** -- All platform icons (Windows, macOS, Linux) replaced with proper EveLens logo at all resolutions
+- **Plan editor: whole-row drag** — Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
+- **Release asset naming** — macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
+- **EveLens branded icons** — All platform icons (Windows, macOS, Linux) replaced with proper EveLens logo at all resolutions
 
 ### Fixed
 
-- **Website download links 404** -- macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
-- **Plan editor drag: scroll offset bug** -- Dragging while scrolled down no longer maps to wrong row positions (#59)
-- **Plan editor: Alt+Up/Down keyboard shortcuts** -- Now wired to actual queue selection instead of first/last item (#59)
-- **Attribute optimizer: "Reset to Current" showed 3 everywhere** -- Now uses character's actual ESI attributes instead of default scratchpad values (#60)
-- **Attribute optimizer: inconsistent training times** -- Manual point adjustments now compute duration directly, avoiding StartTime/BestScratchpad mismatch (#60)
-- **Group by attribute: button did nothing visible** -- Now injects color-coded attribute group headers and shows active state on button (#61)
-- **Windows taskbar icon reverted to default** -- Explicitly set after InitializeComponent to survive theme loading (#58)
-- **macOS: Cmd+W didn't close plan windows** -- Added Meta modifier check alongside Control (#59)
-- **macOS: menu title showed "Avalonia Application"** -- Set Application.Name="EveLens" in App.axaml
-- **macOS: Unicode character names broken** -- Added cross-platform font fallback chain (Segoe UI, Helvetica Neue, Noto Sans, DejaVu Sans)
-- **macOS: dock icon showed generic app icon** -- Proper hi-res .icns now embedded in .app bundle
-- **Linux: AppImage had 1px placeholder icon** -- Now uses real 256px EveLens icon
-- **Doctrine Designer crash without characters** -- No longer crashes when opened before any characters are loaded
-
-### Contributors
-
-Thanks to the community members whose feedback shaped this release:
-- **MaccaNZ97** -- Skill Farm configurable base SP feature request (Discussion #44)
-- **AnszaKalltiern** -- stress testing with 30+ characters, UI issue reports
-- **BritishDragonAdmin** -- Skill Farm UX feedback (#41, #42, #43)
-- **NotmoGit** -- bug reports (#37, #39)
+- **Plan editor: Delete key removed the wrong skill** -- Pressing Delete deleted the top skill in the queue (and its dependents) instead of the skill you had selected. Delete now acts on your actual selection, and supports multi-select (#80)
+- **Planetary Interaction: idle colonies stopped showing red** -- Colony health was frozen at the moment data first loaded, so a colony that went idle while EveLens was open never turned red until restart. Extractor state is now computed live and the dashboard repaints when colony data refreshes or an extractor finishes (#66)
+- **Planetary Interaction: final product showed "Unknown"** -- Actively-extracting colonies route material onward immediately, leaving the extractor's contents empty, so EveLens couldn't name the product. It now reads the extractor's declared output type, resolving the correct product (#66)
+- **Planetary Interaction: stray horizontal scrollbar and right-side gap** -- The colony detail view showed an unwanted horizontal scrollbar with empty space to the right of the production chain until you resized the window. The layout now fills the available width correctly (#66)
+- **Website download links 404** — macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
+- **Plan editor drag: scroll offset bug** — Dragging while scrolled down no longer maps to wrong row positions (#59)
+- **Plan editor: Alt+Up/Down keyboard shortcuts** — Now wired to actual queue selection instead of first/last item (#59)
+- **Attribute optimizer: "Reset to Current" showed 3 everywhere** — Now uses character's actual ESI attributes instead of default scratchpad values (#60)
+- **Attribute optimizer: inconsistent training times** — Manual point adjustments now compute duration directly, avoiding StartTime/BestScratchpad mismatch (#60)
+- **Group by attribute: button did nothing visible** — Now injects color-coded attribute group headers and shows active state on button (#61)
+- **Windows taskbar icon reverted to default** — Explicitly set after InitializeComponent to survive theme loading (#58)
+- **macOS: Cmd+W didn't close plan windows** — Added Meta modifier check alongside Control (#59)
+- **macOS: menu title showed "Avalonia Application"** — Set Application.Name="EveLens" in App.axaml
+- **macOS: Unicode character names broken** — Added cross-platform font fallback chain (Segoe UI, Helvetica Neue, Noto Sans, DejaVu Sans)
+- **macOS: dock icon showed generic app icon** — Proper hi-res .icns now embedded in .app bundle
+- **Linux: AppImage had 1px placeholder icon** — Now uses real 256px EveLens icon
+- **Doctrine Designer crash without characters** — No longer crashes when opened before any characters are loaded
 
 ## [1.2.1] - 2026-04-09
 

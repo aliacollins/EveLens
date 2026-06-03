@@ -39,7 +39,11 @@ namespace EveLens.Avalonia.Controls
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            double w = double.IsInfinity(availableSize.Width) ? 900 : availableSize.Width;
+            // Under infinite width (a vertical ScrollViewer offers unbounded width), claim 0 rather
+            // than a magic 900px. The control is Stretch-aligned, so it takes the parent's real width
+            // and draws against Bounds — claiming 900 left a gap to the right until a resize forced
+            // a relayout. Height still grows with the tallest column. (Issue #66)
+            double w = double.IsInfinity(availableSize.Width) ? 0 : availableSize.Width;
             int nodeCount = Math.Max(_nodes.Count(n => n.Column == 0), Math.Max(_nodes.Count(n => n.Column == 1), _nodes.Count(n => n.Column == 2)));
             double h = Math.Max(280, 60 + nodeCount * 52);
             return new Size(w, h);
