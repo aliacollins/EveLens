@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
+- Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
 - Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
 - Skill Farm configurable base SP, What's New dialog, Code Graph system
 
 ### Added
 
+- **Korean language support (한국어)** -- Full UI translation (464 strings) plus 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Select "한국어 (Korean)" in Settings > Appearance. Community translation contributed by a Korean EVE player. (Discussion #79)
 - **Skill Farm: configurable SP base per character** — Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
 - **"What's New" dialog on update** — Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
 - **Doctrine Designer** — Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools → Doctrine Designer, Ctrl+G)
