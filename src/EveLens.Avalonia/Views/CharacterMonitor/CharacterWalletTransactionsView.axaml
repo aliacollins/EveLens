@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterWalletTransactionsView">
 
     <UserControl.Resources>
@@ -57,7 +58,7 @@
                                     IsVisible="False"
                                     Click="OnClearFilter" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="Search transactions..."
+                                     Watermark="{loc:T ListView.SearchTransactions}"
                                      Background="Transparent" BorderThickness="0"
                                      FontSize="{DynamicResource EveFontBody}" Padding="8,5"
                                      TextChanged="OnFilterTextChanged" />
@@ -65,7 +66,7 @@
                     </Border>
 
                     <!-- Grouping -->
-                    <TextBlock Text="Group:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
+                    <TextBlock Text="{loc:T ListView.GroupLabel}" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                Foreground="{StaticResource EveTextSecondaryBrush}" />
                     <ComboBox x:Name="GroupingCombo" FontSize="{DynamicResource EveFontBody}"
                               MinWidth="140" Padding="8,4"
@@ -84,8 +85,8 @@
             <Grid>
                 <!-- Empty state -->
                 <shared:EmptyState x:Name="EmptyState" IsVisible="False"
-                                   Title="No transactions"
-                                   Subtitle="Wallet transactions will appear here when available" />
+                                   Title="{loc:T ListView.NoTransactions}"
+                                   Subtitle="{loc:T ListView.NoTransactionsDesc}" />
 
                 <!-- Data grid -->
                 <DataGrid x:Name="ItemsGrid"
@@ -101,15 +102,15 @@
                       FontSize="{DynamicResource EveFontBody}">
                 <DataGrid.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Copy Item Name" />
-                        <MenuItem Header="Copy Client" />
+                        <MenuItem Header="{loc:T ContextMenu.CopyItemName}" />
+                        <MenuItem Header="{loc:T ContextMenu.CopyClient}" />
                         <Separator />
-                        <MenuItem Header="Export to CSV..." />
+                        <MenuItem Header="{loc:T ContextMenu.ExportCsv}" />
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
-                    <DataGridTemplateColumn Header="Type" Width="80">
+                    <DataGridTextColumn Header="{loc:T Column.Date}" Binding="{Binding Date, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
+                    <DataGridTemplateColumn Header="{loc:T Column.Type}" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding TransactionType}"
@@ -118,10 +119,10 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Item" Binding="{Binding ItemName}" Width="200" />
-                    <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" Width="80" />
-                    <DataGridTextColumn Header="Price" Binding="{Binding Price, StringFormat=\{0:N2\} ISK}" Width="120" />
-                    <DataGridTemplateColumn Header="Credit" Width="130">
+                    <DataGridTextColumn Header="{loc:T Column.Item}" Binding="{Binding ItemName}" Width="200" />
+                    <DataGridTextColumn Header="{loc:T Column.Quantity}" Binding="{Binding Quantity}" Width="80" />
+                    <DataGridTextColumn Header="{loc:T Column.Price}" Binding="{Binding Price, StringFormat=\{0:N2\} ISK}" Width="120" />
+                    <DataGridTemplateColumn Header="{loc:T Column.Credit}" Width="130">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Credit, StringFormat=\{0:N2\} ISK}"
@@ -130,8 +131,8 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Client" Binding="{Binding ClientName}" Width="130" />
-                    <DataGridTextColumn Header="Station" Binding="{Binding Station.Name}" Width="200" />
+                    <DataGridTextColumn Header="{loc:T Column.Client}" Binding="{Binding ClientName}" Width="130" />
+                    <DataGridTextColumn Header="{loc:T Column.Station}" Binding="{Binding Station.Name}" Width="200" />
                 </DataGrid.Columns>
                 </DataGrid>
             </Grid>

@@ -545,7 +545,7 @@ namespace EveLens.Common.ViewModels
                     : currentTime;
                 skillImpacts.Add(new SkillTimeImpact
                 {
-                    SkillName = skillLevel.Skill.Name,
+                    SkillName = skillLevel.Skill.LocalizedName,
                     Level = (int)skillLevel.Level,
                     CurrentTime = currentTime,
                     OptimalTime = optimalTime,

@@ -77,7 +77,7 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Item" Binding="{Binding Item.Name}" Width="200" />
+                <DataGridTextColumn Header="Item" Binding="{Binding Item.LocalizedName}" Width="200" />
                 <DataGridTextColumn Header="Station" Binding="{Binding Station.Name}" Width="200" />
                 <DataGridTextColumn Header="Unit Price" Binding="{Binding UnitaryPrice, StringFormat=\{0:N2\} ISK}" Width="120" />
                 <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=\{0:N2\} ISK}" Width="120" />

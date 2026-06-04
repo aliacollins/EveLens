@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMedalsView">
 
     <Panel>
@@ -46,8 +47,8 @@
             <!-- Grid for EmptyState + content overlap -->
             <Grid>
                 <shared:EmptyState x:Name="EmptyState" IsVisible="False"
-                                   Title="No medals"
-                                   Subtitle="This character has not been awarded any medals" />
+                                   Title="{loc:T ListView.NoMedals}"
+                                   Subtitle="{loc:T ListView.NoMedalsDesc}" />
                 <ScrollViewer x:Name="MedalScroller" HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto">
                     <ItemsControl x:Name="MedalsList" Margin="4">

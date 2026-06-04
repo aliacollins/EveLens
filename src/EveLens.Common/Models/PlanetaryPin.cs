@@ -37,7 +37,7 @@ namespace EveLens.Common.Models
             Colony = colony;
             ID = src.PinID;
             TypeID = src.TypeID;
-            TypeName = type.Name;
+            TypeName = type.LocalizedName;
             SchematicID = src.SchematicID;
             InstallTime = src.InstallTime;
             ExpiryTime = src.ExpiryTime;
@@ -56,7 +56,7 @@ namespace EveLens.Common.Models
                 int typeID = firstItem.TypeID;
                 ContentQuantity = firstItem.Amount;
                 ContentTypeID = typeID;
-                ContentTypeName = StaticItems.GetItemName(typeID);
+                ContentTypeName = StaticItems.GetLocalizedItemName(typeID);
             }
             else if (extractor != null && extractor.ProductTypeID > 0)
             {
@@ -65,7 +65,7 @@ namespace EveLens.Common.Models
                 // product so the colony's final product resolves instead of showing "Unknown".
                 ContentQuantity = 0;
                 ContentTypeID = extractor.ProductTypeID;
-                ContentTypeName = StaticItems.GetItemName(extractor.ProductTypeID);
+                ContentTypeName = StaticItems.GetLocalizedItemName(extractor.ProductTypeID);
             }
             else
             {

@@ -241,7 +241,7 @@ namespace EveLens.Common.ViewModels
 
         public SkillBrowserSkillEntry(Skill skill)
         {
-            Name = skill.Name;
+            Name = skill.LocalizedName;
             Level = skill.LastConfirmedLvl;
             SkillPoints = skill.SkillPoints;
             Rank = skill.Rank;

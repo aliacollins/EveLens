@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterKillLogView">
 
     <Panel>
@@ -49,10 +50,10 @@
                         <ComboBox x:Name="GroupByCombo" FontSize="{DynamicResource EveFontBody}" Padding="8,3"
                                   MinWidth="120" SelectedIndex="0"
                                   SelectionChanged="OnGroupByChanged">
-                            <ComboBoxItem Content="Kills / Losses" />
-                            <ComboBoxItem Content="Date" />
-                            <ComboBoxItem Content="Ship Type" />
-                            <ComboBoxItem Content="Corporation" />
+                            <ComboBoxItem Content="{loc:T ListView.KillsLosses}" />
+                            <ComboBoxItem Content="{loc:T ListView.Date}" />
+                            <ComboBoxItem Content="{loc:T ListView.ShipType}" />
+                            <ComboBoxItem Content="{loc:T ListView.Corporation}" />
                         </ComboBox>
                         <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnCollapseAll" />
@@ -74,7 +75,7 @@
                                     Click="OnClearFilter"
                                     IsVisible="False" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="Search kill log..."
+                                     Watermark="{loc:T ListView.SearchKillLog}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -95,8 +96,8 @@
             <!-- Empty state + scrollable content overlap in Grid -->
             <Grid>
                 <shared:EmptyState x:Name="EmptyState"
-                                   Title="No Kill Log Entries"
-                                   Subtitle="Kill and loss data will appear here once available from the ESI API."
+                                   Title="{loc:T ListView.NoKillLog}"
+                                   Subtitle="{loc:T ListView.NoKillLogDesc}"
                                    IsVisible="False" />
 
                 <!-- Grouped kill log list -->

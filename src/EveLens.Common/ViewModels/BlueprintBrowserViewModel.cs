@@ -159,14 +159,14 @@ namespace EveLens.Common.ViewModels
                 }
 
                 prerequisites.Add(new BlueprintPrerequisiteInfo(
-                    prereq.Skill.Name,
+                    prereq.Skill.LocalizedName,
                     prereq.Level,
                     characterLevel));
             }
 
             var materials = blueprint.MaterialRequirements
                 .Where(m => m.Activity == BlueprintActivity.Manufacturing)
-                .Select(m => new MaterialInfo(m.Name, m.Quantity))
+                .Select(m => new MaterialInfo(m.LocalizedName, m.Quantity))
                 .ToList();
 
             string productionTimeText = FormatProductionTime(blueprint.ProductionTime);
@@ -174,9 +174,9 @@ namespace EveLens.Common.ViewModels
             bool canBuild = prerequisites.Count == 0 || prerequisites.All(p => p.IsMet);
 
             SelectedBlueprintDetail = new BlueprintDetailInfo(
-                blueprint.Name,
+                blueprint.LocalizedName,
                 blueprint.Description,
-                blueprint.ProducesItem?.Name ?? string.Empty,
+                blueprint.ProducesItem?.LocalizedName ?? string.Empty,
                 productionTimeText,
                 prerequisites,
                 materials,

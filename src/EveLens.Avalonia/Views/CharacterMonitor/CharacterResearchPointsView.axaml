@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterResearchPointsView">
 
     <Panel>
@@ -41,7 +42,7 @@
                 <TextBlock x:Name="FilterLabel" Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBox x:Name="FilterBox"
                          Text="{Binding TextFilter, Mode=TwoWay}"
-                         Watermark="Search research points..."
+                         Watermark="{loc:T ListView.SearchResearch}"
                          MinWidth="200" />
             </DockPanel>
         </Border>
@@ -70,20 +71,20 @@
                   BorderThickness="0">
             <DataGrid.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Copy Agent" />
-                    <MenuItem Header="Copy Field" />
+                    <MenuItem Header="{loc:T ContextMenu.CopyAgent}" />
+                    <MenuItem Header="{loc:T ContextMenu.CopyField}" />
                     <Separator />
-                    <MenuItem Header="Export to CSV..." />
+                    <MenuItem Header="{loc:T ContextMenu.ExportCsv}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Agent" Binding="{Binding AgentName}" Width="150" />
-                <DataGridTextColumn Header="Level" Binding="{Binding AgentLevel}" Width="60" />
-                <DataGridTextColumn Header="Field" Binding="{Binding Field}" Width="200" />
-                <DataGridTextColumn Header="Current RP" Binding="{Binding CurrentRP, StringFormat=\{0:N2\}}" Width="120" />
-                <DataGridTextColumn Header="Points/Day" Binding="{Binding PointsPerDay, StringFormat=\{0:N2\}}" Width="100" />
-                <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
-                <DataGridTextColumn Header="Station" Binding="{Binding Station.Name}" Width="200" />
+                <DataGridTextColumn Header="{loc:T Column.Agent}" Binding="{Binding AgentName}" Width="150" />
+                <DataGridTextColumn Header="{loc:T Column.Level}" Binding="{Binding AgentLevel}" Width="60" />
+                <DataGridTextColumn Header="{loc:T Column.Field}" Binding="{Binding Field}" Width="200" />
+                <DataGridTextColumn Header="{loc:T Column.CurrentRP}" Binding="{Binding CurrentRP, StringFormat=\{0:N2\}}" Width="120" />
+                <DataGridTextColumn Header="{loc:T Column.PointsPerDay}" Binding="{Binding PointsPerDay, StringFormat=\{0:N2\}}" Width="100" />
+                <DataGridTextColumn Header="{loc:T Column.StartDate}" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="{loc:T Column.Station}" Binding="{Binding Station.Name}" Width="200" />
             </DataGrid.Columns>
         </DataGrid>
         </DockPanel>

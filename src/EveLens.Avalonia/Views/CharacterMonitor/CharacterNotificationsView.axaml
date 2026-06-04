@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterNotificationsView">
 
     <Panel>
@@ -63,7 +64,7 @@
                                         IsVisible="False"
                                         Click="OnClearFilter" />
                                 <TextBox x:Name="FilterBox"
-                                         Watermark="Search notifications..."
+                                         Watermark="{loc:T ListView.SearchNotifications}"
                                          Background="Transparent" BorderThickness="0"
                                          FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                          TextChanged="OnFilterTextChanged" />
@@ -71,7 +72,7 @@
                         </Border>
 
                         <!-- Grouping -->
-                        <TextBlock Text="Group:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
+                        <TextBlock Text="{loc:T ListView.GroupLabel}" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
                         <ComboBox x:Name="GroupingCombo" FontSize="{DynamicResource EveFontBody}"
                                   MinWidth="140" Padding="8,4"
@@ -91,7 +92,7 @@
             <Grid>
                 <!-- Empty state -->
                 <TextBlock x:Name="EmptyState" IsVisible="False"
-                           Text="No notifications"
+                           Text="{loc:T ListView.NoNotifications}"
                            FontSize="{DynamicResource EveFontSubheading}" Foreground="{StaticResource EveTextDisabledBrush}"
                            HorizontalAlignment="Center" VerticalAlignment="Center" />
 

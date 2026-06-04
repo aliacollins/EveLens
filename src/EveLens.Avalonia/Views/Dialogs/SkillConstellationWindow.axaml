@@ -1,8 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:EveLens.Avalonia.Controls"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.SkillConstellationWindow"
-        Title="Skill Constellation"
+        Title="{loc:T Constellation.Title}"
         Width="1200" Height="800"
         Icon="avares://EveLens/Properties/EveLens.ico"
         Background="#06080D">
@@ -14,7 +15,7 @@
         <!-- HUD: Top left — title + character info + search -->
         <StackPanel Margin="24,20" VerticalAlignment="Top" HorizontalAlignment="Left" Spacing="8">
             <StackPanel Spacing="4">
-                <TextBlock x:Name="TitleText" Text="SKILL CONSTELLATION"
+                <TextBlock x:Name="TitleText" Text="{loc:T Constellation.Heading}"
                            FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                            Foreground="#E8A817" LetterSpacing="2" />
                 <TextBlock x:Name="CharInfoText" Text=""
@@ -31,7 +32,7 @@
                     <Button x:Name="ClearSearchBtn" DockPanel.Dock="Right" Classes="ghost"
                             Content="&#x2715;" FontSize="{DynamicResource EveFontSmall}" Padding="8,4" IsVisible="False"
                             Foreground="#484F58" />
-                    <TextBox x:Name="SearchBox" Watermark="Search skills..."
+                    <TextBox x:Name="SearchBox" Watermark="{loc:T PlanEditor.SearchSkills}"
                              FontSize="{DynamicResource EveFontBody}" Background="Transparent" BorderThickness="0"
                              Foreground="#C9D1D9" Padding="2,6" />
                 </DockPanel>
@@ -52,20 +53,20 @@
                     Orientation="Horizontal" Spacing="16">
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Border Width="8" Height="8" CornerRadius="4" Background="#E8A44A" />
-                <TextBlock Text="Trained" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
+                <TextBlock Text="{loc:T Constellation.Trained}" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Border Width="6" Height="6" CornerRadius="3"
                         Background="Transparent" BorderBrush="#30FFFFFF" BorderThickness="1" />
-                <TextBlock Text="Untrained" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
+                <TextBlock Text="{loc:T Constellation.Untrained}" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
             </StackPanel>
             <StackPanel Orientation="Horizontal" Spacing="5">
                 <Border Width="8" Height="8" CornerRadius="4" Background="#E8A44A"
                         BoxShadow="0 0 8 0 #E8A44A" />
-                <TextBlock Text="Training" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
+                <TextBlock Text="{loc:T Constellation.Training}" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58" />
             </StackPanel>
             <Button x:Name="ToggleLabelsBtn" Classes="ghost"
-                    Content="Show All Labels" FontSize="{DynamicResource EveFontSmall}" Padding="4,2" />
+                    Content="{loc:T Constellation.ShowAllLabels}" FontSize="{DynamicResource EveFontSmall}" Padding="4,2" />
         </StackPanel>
 
         <!-- HUD: Bottom center — group chips -->
@@ -80,7 +81,7 @@
         </ItemsControl>
 
         <!-- HUD: Bottom right — controls hint -->
-        <TextBlock Text="Scroll to zoom  ·  Drag to pan  ·  Click stars to inspect"
+        <TextBlock Text="{loc:T Constellation.ControlsHint}"
                    FontSize="{DynamicResource EveFontCaption}" Foreground="#2D333B"
                    VerticalAlignment="Bottom" HorizontalAlignment="Right"
                    Margin="0,0,24,60" />
@@ -105,7 +106,7 @@
 
                 <!-- Level bar -->
                 <StackPanel Spacing="5">
-                    <TextBlock Text="LEVEL" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58"
+                    <TextBlock Text="{loc:T Constellation.Level}" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58"
                                LetterSpacing="1" />
                     <StackPanel x:Name="LevelPips" Orientation="Horizontal" Spacing="3" />
                     <TextBlock x:Name="LevelStatus" FontSize="{DynamicResource EveFontBody}" Foreground="#8B949E" />
@@ -113,7 +114,7 @@
 
                 <!-- Prerequisites -->
                 <StackPanel x:Name="PrereqSection" Spacing="5">
-                    <TextBlock Text="PREREQUISITES" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58"
+                    <TextBlock Text="{loc:T Constellation.Prerequisites}" FontSize="{DynamicResource EveFontSmall}" Foreground="#484F58"
                                LetterSpacing="1" />
                     <StackPanel x:Name="PrereqList" Spacing="2" />
                 </StackPanel>

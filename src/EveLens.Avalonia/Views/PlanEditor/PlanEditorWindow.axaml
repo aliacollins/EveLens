@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.PlanEditor.PlanEditorWindow"
-        Title="Plan Editor"
+        Title="{loc:T PlanEditor.Title}"
         Width="1100" Height="750"
         MinWidth="800" MinHeight="500"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -24,7 +25,7 @@
                                 Background="Transparent" BorderThickness="0"
                                 Padding="8,4" CornerRadius="0,14,14,0"
                                 IsVisible="False" Click="OnClearSearch" />
-                        <TextBox x:Name="SearchBox" Watermark="Search skills..."
+                        <TextBox x:Name="SearchBox" Watermark="{loc:T PlanEditor.SearchSkills}"
                                  FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                  Background="Transparent" BorderThickness="0"
                                  TextChanged="OnSearchChanged" />
@@ -46,19 +47,19 @@
         <Border DockPanel.Dock="Top" Padding="10,4"
                 Background="{StaticResource EveBackgroundMediumBrush}">
             <StackPanel Orientation="Horizontal" Spacing="6">
-                <ToggleButton x:Name="PlanTab" Content="Plan" IsChecked="True"
+                <ToggleButton x:Name="PlanTab" Content="{loc:T PlanEditor.PlanTab}" IsChecked="True"
                               FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
-                <ToggleButton x:Name="SkillsTab" Content="Skills"
+                <ToggleButton x:Name="SkillsTab" Content="{loc:T PlanEditor.SkillsTab}"
                               FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
-                <ToggleButton x:Name="ShipsTab" Content="Ships"
+                <ToggleButton x:Name="ShipsTab" Content="{loc:T PlanEditor.ShipsTab}"
                               FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
-                <ToggleButton x:Name="ItemsTab" Content="Items"
+                <ToggleButton x:Name="ItemsTab" Content="{loc:T PlanEditor.ItemsTab}"
                               FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
-                <ToggleButton x:Name="BlueprintsTab" Content="Blueprints"
+                <ToggleButton x:Name="BlueprintsTab" Content="{loc:T PlanEditor.BlueprintsTab}"
                               FontSize="{DynamicResource EveFontBody}" Padding="12,5" CornerRadius="12"
                               Click="OnTabClicked" />
             </StackPanel>
@@ -70,11 +71,11 @@
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                    <Button x:Name="ClearPlanBtn" Content="Clear Plan" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="ClearPlanBtn" Content="{loc:T PlanEditor.ClearPlan}" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnClearPlan" />
-                    <Button x:Name="ImportFitBtn" Content="Import Fit ▾" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="ImportFitBtn" Content="{loc:T PlanEditor.ImportFitMenu}" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnImportFitMenu" />
-                    <Button x:Name="ExportBtn" Content="Export ▾" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="ExportBtn" Content="{loc:T PlanEditor.ExportMenu}" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnExportMenu" />
                 </StackPanel>
                 <TextBlock x:Name="StatusText" FontSize="{DynamicResource EveFontBody}"
