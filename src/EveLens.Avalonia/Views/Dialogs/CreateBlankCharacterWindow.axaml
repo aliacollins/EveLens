@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.CreateBlankCharacterWindow"
-        Title="Create Blank Character"
+        Title="{loc:T CreateBlank.Title}"
         Width="460" Height="520"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -10,22 +11,22 @@
     <DockPanel Margin="20">
         <!-- Header -->
         <TextBlock DockPanel.Dock="Top"
-                   Text="Create a local character for planning"
+                   Text="{loc:T CreateBlank.Header}"
                    FontSize="{DynamicResource EveFontBody}"
                    Foreground="{StaticResource EveTextSecondaryBrush}"
                    Margin="0,0,0,12" />
 
         <!-- Name -->
-        <TextBlock DockPanel.Dock="Top" Text="Name" FontSize="{DynamicResource EveFontBody}"
+        <TextBlock DockPanel.Dock="Top" Text="{loc:T CreateBlank.Name}" FontSize="{DynamicResource EveFontBody}"
                    Foreground="{StaticResource EveTextPrimaryBrush}"
                    Margin="0,0,0,4" />
         <TextBox x:Name="CharacterNameTextBox" DockPanel.Dock="Top"
-                 Watermark="Enter character name..."
+                 Watermark="{loc:T CreateBlank.NameWatermark}"
                  FontSize="{DynamicResource EveFontBody}"
                  Margin="0,0,0,12" />
 
         <!-- Race -->
-        <TextBlock DockPanel.Dock="Top" Text="Race" FontSize="{DynamicResource EveFontBody}"
+        <TextBlock DockPanel.Dock="Top" Text="{loc:T CreateBlank.Race}" FontSize="{DynamicResource EveFontBody}"
                    Foreground="{StaticResource EveTextPrimaryBrush}"
                    Margin="0,0,0,4" />
         <ComboBox x:Name="RaceCombo" DockPanel.Dock="Top"
@@ -34,7 +35,7 @@
 
         <!-- Skill summary header -->
         <TextBlock x:Name="SkillSummaryHeader" DockPanel.Dock="Top"
-                   Text="Starting Skills"
+                   Text="{loc:T CreateBlank.StartingSkills}"
                    FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                    Margin="0,0,0,6" />
@@ -47,11 +48,11 @@
                        VerticalAlignment="Center" />
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
                         Spacing="8" HorizontalAlignment="Right">
-                <Button x:Name="CreateBtn" Content="Create"
+                <Button x:Name="CreateBtn" Content="{loc:T Action.Create}"
                         FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                         CornerRadius="12"
                         Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                <Button x:Name="CancelBtn" Content="Cancel"
+                <Button x:Name="CancelBtn" Content="{loc:T Action.Cancel}"
                         FontSize="{DynamicResource EveFontBody}" Padding="14,6"
                         CornerRadius="12" />
             </StackPanel>

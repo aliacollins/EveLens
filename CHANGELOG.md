@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes, market-group SDE names
+- Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
 - Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
 - Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
 - Skill Farm configurable base SP, What's New dialog, Code Graph system
@@ -100,8 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plan import gzip error** -- .emp files exported by EveLens are plain XML, but import assumed gzip. Now auto-detects format
 - **Skill browser collapsed after Plan To ([#52])** -- adding a skill from the browser no longer resets expand/collapse state of categories. Reported by [@NotmoGit](https://github.com/NotmoGit)
 - **Windows shutdown hang ([#53])** -- settings save now runs with a 3-second timeout. If disk I/O is slow, the app exits cleanly instead of blocking Windows shutdown. Reported by [@Kickunio](https://github.com/Kickunio)
-- **Market transaction item names** -- item names were blank because the ESI→model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
-- **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" → "Player Trading")
+- **Market transaction item names** -- item names were blank because the ESI>model layer never resolved TypeID to TypeName (Phoenix refactoring regression). Now falls back to StaticItems lookup
+- **Wallet journal "Undefined"** -- new ESI ref types not in the 2018 RefTypes.xml mapping showed as "Undefined". Now preserves the raw ESI string and humanizes it (e.g. "player_trading" > "Player Trading")
 - **Unicode ship names** -- ship names with non-ASCII characters (e.g. ♪ ♥ ♪) were displayed as literal \uNNNN escape sequences instead of rendered glyphs. All JSON serialization paths now preserve unicode as-is
 - **App hangs on quit with child windows open** -- closing the app while a Plan Editor or other child window was open caused the process to hang and become a zombie (macOS). Child windows are now tracked and closed before shutdown
 - **Plan window blocks main window** -- child windows no longer force themselves above the main window on macOS. All windows are independent and freely switchable via Alt+Tab / Cmd+`
@@ -155,22 +157,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Auto-updates** via Velopack with delta downloads across Windows, Linux, and macOS
-- **Windows code signing** — eliminates SmartScreen warnings and false-positive antivirus detections
+- **Windows code signing** -- eliminates SmartScreen warnings and false-positive antivirus detections
 - "Check for Updates" in the Help menu with release notes in the update dialog
 
 ### Changed
 
-- Update system completely replaced — Velopack handles all packaging and delivery
+- Update system completely replaced -- Velopack handles all packaging and delivery
 - Build and release pipeline moved to GitHub Actions
 
 ## [1.0.0-beta.2] - 2026-03-19
 
 ### Added
 
-- **ESI health tracking** — smart per-endpoint health states replace noisy error notifications. You'll see one clear message when something breaks, and a recovery message when it's fixed — no more walls of error spam ([#34])
-- **Health indicators** on the character overview — green (healthy), yellow (degraded), red (failing)
-- **Live diagnostic viewer** in the Debug menu — real-time log with filters for ESI, events, warnings, and scheduler activity
-- **SDE update to Catalyst expansion** (March 18, 2026) — 5 new skills, 82 new item types, carrier/fighter/FAX/Black Ops balance changes
+- **ESI health tracking** -- smart per-endpoint health states replace noisy error notifications. You'll see one clear message when something breaks, and a recovery message when it's fixed -- no more walls of error spam ([#34])
+- **Health indicators** on the character overview -- green (healthy), yellow (degraded), red (failing)
+- **Live diagnostic viewer** in the Debug menu -- real-time log with filters for ESI, events, warnings, and scheduler activity
+- **SDE update to Catalyst expansion** (March 18, 2026) -- 5 new skills, 82 new item types, carrier/fighter/FAX/Black Ops balance changes
 
 ### Fixed
 
@@ -188,18 +190,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Cross-platform support** — Windows x64, Linux x64, macOS Apple Silicon
+- **Cross-platform support** -- Windows x64, Linux x64, macOS Apple Silicon
 - **Modern dark UI** built on Avalonia, replacing the legacy WinForms interface
 - **Smart ESI scheduler** with priority queue, per-character rate limiting, and phased cold start
-- **19 character tabs** — Skills, Assets, Market Orders, Contracts, Mail, Industry Jobs, Wallet, Notifications, Kill Log, Planetary, and more
+- **19 character tabs** -- Skills, Assets, Market Orders, Contracts, Mail, Industry Jobs, Wallet, Notifications, Kill Log, Planetary, and more
 - **Plan Editor** with skill browser, training time calculator, and attribute optimizer
-- **Settings migration** — existing EVEMon settings imported automatically on first launch
+- **Settings migration** -- existing EVEMon settings imported automatically on first launch
 - **TCP diagnostic stream** on port 5555 for real-time structured debugging
 
 ### Changed
 
 - Complete rewrite from monolithic EVEMon to modular EveLens architecture
-- Rebranded from EVEMon to EveLens — Character Intelligence for EVE Online
+- Rebranded from EVEMon to EveLens -- Character Intelligence for EVE Online
 
 [#33]: https://github.com/aliacollins/EveLens/discussions/33
 [#34]: https://github.com/aliacollins/EveLens/issues/34

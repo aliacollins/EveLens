@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.AboutWindow"
-        Title="About EveLens"
+        Title="{loc:T About.Title}"
         Width="720" Height="680"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -34,7 +35,7 @@
                         <TextBlock Text=".NET 8 . Avalonia" FontSize="{DynamicResource EveFontBody}"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
                     </StackPanel>
-                    <TextBlock Text="Character intelligence for EVE Online. Built on 20 years of community work."
+                    <TextBlock Text="{loc:T About.Subtitle}"
                                FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextSecondaryBrush}"
                                Margin="0,6,0,0" TextWrapping="Wrap" />
                 </StackPanel>
@@ -52,10 +53,10 @@
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0"
                 Background="{StaticResource EveBackgroundMediumBrush}">
             <DockPanel>
-                <TextBlock Text="EVE Online and all related logos are trademarks of CCP hf."
+                <TextBlock Text="{loc:T About.Trademark}"
                            FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}"
                            VerticalAlignment="Center" />
-                <TextBlock Text="Fly safe. o7" FontSize="{DynamicResource EveFontSmall}"
+                <TextBlock Text="{loc:T About.FlySafe}" FontSize="{DynamicResource EveFontSmall}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            HorizontalAlignment="Right" DockPanel.Dock="Right"
                            VerticalAlignment="Center" />
@@ -64,7 +65,7 @@
 
         <!-- Close button -->
         <Border DockPanel.Dock="Bottom" Padding="24,10">
-            <Button x:Name="OkButton" Content="Close"
+            <Button x:Name="OkButton" Content="{loc:T Action.Close}"
                     FontSize="{DynamicResource EveFontBody}" Padding="20,6" CornerRadius="12"
                     HorizontalAlignment="Right" />
         </Border>

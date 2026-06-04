@@ -37,9 +37,13 @@ namespace EveLens.Common.Models
             ID = src.ID;
             JournalID = src.JournalTransactionID;
             Date = src.TransactionDate;
-            ItemName = !string.IsNullOrEmpty(src.TypeName)
-                ? src.TypeName
-                : StaticItems.GetItemName(src.TypeID);
+            // Prefer the localized SDE name so non-English UIs show translated item names.
+            // Fall back to the ESI-provided (English) TypeName when the item is not in the SDE,
+            // and finally to the unknown-safe localized lookup if ESI provided no name either.
+            ItemName = StaticItems.GetItemByID(src.TypeID)?.LocalizedName
+                ?? (!string.IsNullOrEmpty(src.TypeName)
+                    ? src.TypeName
+                    : StaticItems.GetLocalizedItemName(src.TypeID));
             Quantity = src.Quantity;
             Price = src.Price;
             m_clientID = src.ClientID;

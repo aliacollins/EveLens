@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.DiagnosticStreamWindow"
-        Title="Diagnostic Stream"
+        Title="{loc:T Diag.Title}"
         Width="800" Height="500"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource EveBackgroundDarkBrush}">
@@ -12,20 +13,20 @@
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <TextBlock Text="Filter:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
+                <TextBlock Text="{loc:T ListView.Filter}" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                            Foreground="{StaticResource EveTextSecondaryBrush}" />
                 <ComboBox x:Name="FilterCombo" FontSize="{DynamicResource EveFontBody}" MinWidth="120"
                           SelectedIndex="0">
-                    <ComboBoxItem Content="All" />
-                    <ComboBoxItem Content="ESI Requests" />
-                    <ComboBoxItem Content="Events" />
-                    <ComboBoxItem Content="Warnings/Errors" />
-                    <ComboBoxItem Content="Health" />
-                    <ComboBoxItem Content="Scheduler" />
+                    <ComboBoxItem Content="{loc:T Diag.FilterAll}" />
+                    <ComboBoxItem Content="{loc:T Diag.FilterEsi}" />
+                    <ComboBoxItem Content="{loc:T Diag.FilterEvents}" />
+                    <ComboBoxItem Content="{loc:T Diag.FilterWarnings}" />
+                    <ComboBoxItem Content="{loc:T Diag.FilterHealth}" />
+                    <ComboBoxItem Content="{loc:T Diag.FilterScheduler}" />
                 </ComboBox>
-                <Button x:Name="ClearBtn" Content="Clear" FontSize="{DynamicResource EveFontBody}"
+                <Button x:Name="ClearBtn" Content="{loc:T Diag.Clear}" FontSize="{DynamicResource EveFontBody}"
                         Padding="10,3" CornerRadius="10" />
-                <CheckBox x:Name="AutoScrollCheck" Content="Auto-scroll"
+                <CheckBox x:Name="AutoScrollCheck" Content="{loc:T Diag.AutoScroll}"
                           FontSize="{DynamicResource EveFontBody}" IsChecked="True"
                           Foreground="{StaticResource EveTextSecondaryBrush}" />
                 <TextBlock x:Name="LineCountText" Text="0 lines" FontSize="{DynamicResource EveFontBody}"
@@ -38,7 +39,7 @@
         <Border DockPanel.Dock="Bottom" Padding="8,3"
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="StatusText" Text="Listening..." FontSize="{DynamicResource EveFontSmall}"
+            <TextBlock x:Name="StatusText" Text="{loc:T Diag.Listening}" FontSize="{DynamicResource EveFontSmall}"
                        Foreground="{StaticResource EveTextDisabledBrush}" />
         </Border>
 

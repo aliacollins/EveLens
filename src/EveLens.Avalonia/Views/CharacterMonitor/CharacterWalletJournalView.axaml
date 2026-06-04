@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterWalletJournalView">
 
     <UserControl.Resources>
@@ -69,7 +70,7 @@
                                         IsVisible="False"
                                         Click="OnClearFilter" />
                                 <TextBox x:Name="FilterBox"
-                                         Watermark="Search journal..."
+                                         Watermark="{loc:T ListView.SearchWalletJournal}"
                                          Background="Transparent" BorderThickness="0"
                                          FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                          TextChanged="OnFilterTextChanged" />
@@ -77,14 +78,14 @@
                         </Border>
 
                         <!-- Type filter -->
-                        <TextBlock Text="Type:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
+                        <TextBlock Text="{loc:T ListView.TypeLabel}" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
                         <ComboBox x:Name="TypeFilterCombo" FontSize="{DynamicResource EveFontBody}"
                                   MinWidth="140" Padding="8,4"
                                   SelectionChanged="OnTypeFilterChanged" />
 
                         <!-- Grouping -->
-                        <TextBlock Text="Group:" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
+                        <TextBlock Text="{loc:T ListView.GroupLabel}" FontSize="{DynamicResource EveFontBody}" VerticalAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
                         <ComboBox x:Name="GroupingCombo" FontSize="{DynamicResource EveFontBody}"
                                   MinWidth="140" Padding="8,4"
@@ -104,8 +105,8 @@
             <Grid>
                 <!-- Empty state -->
                 <shared:EmptyState x:Name="EmptyState" IsVisible="False"
-                                   Title="No journal entries"
-                                   Subtitle="Wallet journal entries will appear here when available" />
+                                   Title="{loc:T ListView.NoJournal}"
+                                   Subtitle="{loc:T ListView.NoJournalDesc}" />
 
                 <!-- Grouped journal list with chevron headers -->
                 <ScrollViewer x:Name="GroupedList" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
