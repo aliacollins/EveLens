@@ -108,7 +108,7 @@ namespace EveLens.Common.ViewModels
 
         public SkillQueueEntry(QueuedSkill q)
         {
-            SkillText = $"{q.SkillName} {ToRoman(q.Level)}";
+            SkillText = $"{q.Skill.LocalizedName} {ToRoman(q.Level)}";
             RankText = $"×{q.Rank}";
             IsTraining = q.IsTraining;
             IsCompleted = q.IsCompleted;

@@ -108,20 +108,20 @@ namespace EveLens.Common.ViewModels
         {
             var children = new List<BrowserTreeNode>();
 
-            foreach (var subGroup in group.SubGroups.OrderBy(g => g.Name))
+            foreach (var subGroup in group.SubGroups.OrderBy(g => g.LocalizedName))
             {
                 var child = FromBlueprintMarketGroup(subGroup, depth + 1, character);
                 if (child.TotalLeafCount > 0)
                     children.Add(child);
             }
 
-            foreach (var bp in group.Blueprints.OrderBy(b => b.Name))
+            foreach (var bp in group.Blueprints.OrderBy(b => b.LocalizedName))
             {
                 bool canBuild = CanCharacterUse(bp, character);
-                children.Add(new BrowserTreeNode(bp.Name, depth + 1, bp, canBuild));
+                children.Add(new BrowserTreeNode(bp.LocalizedName, depth + 1, bp, canBuild));
             }
 
-            return new BrowserTreeNode(group.Name, depth, group, children);
+            return new BrowserTreeNode(group.LocalizedName, depth, group, children);
         }
 
         /// <summary>

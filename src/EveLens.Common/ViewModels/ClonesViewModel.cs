@@ -127,7 +127,7 @@ namespace EveLens.Common.ViewModels
                     ImplantSlots.Memory => "Mem",
                     _ => $"Slot {(int)implant.Slot + 1}"
                 };
-                implants.Add(new ImplantDisplayEntry(implant.ID, implant.Name, slotLabel, implant.Bonus));
+                implants.Add(new ImplantDisplayEntry(implant.ID, implant.LocalizedName, slotLabel, implant.Bonus));
             }
 
             // Build compact summary: "+5 Int, +5 Per, ..." for attribute implants

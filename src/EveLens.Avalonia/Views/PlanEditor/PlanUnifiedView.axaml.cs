@@ -579,7 +579,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // Uncomputed: compact one-liner with hint
                 border.Child = new TextBlock
                 {
-                    Text = "\u25C7 Remap point \u2014 right-click to configure",
+                    Text = "\u25C7 " + Loc.Get("PlanEditor.RemapPointHint"),
                     FontSize = FontScaleService.Caption,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = new SolidColorBrush(Color.Parse("#99E6A817")),
@@ -597,7 +597,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             line.Children.Add(new TextBlock
             {
-                Text = "\u25C6 Remap \u2014",
+                Text = "\u25C6 " + Loc.Get("PlanEditor.RemapPrefix"),
                 FontSize = FontScaleService.Caption,
                 FontWeight = FontWeight.Bold,
                 Foreground = GoldBrush,
@@ -739,7 +739,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             menu.Items.Add(matchItem);
 
             // Set manually (opens dialog)
-            var manualItem = new MenuItem { Header = "Set attributes manually\u2026" };
+            var manualItem = new MenuItem { Header = Loc.Get("PlanEditor.SetAttrsManually") };
             manualItem.Click += async (_, _) =>
             {
                 try
@@ -756,7 +756,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             menu.Items.Add(new Separator());
 
             // Remove remap point
-            var removeItem = new MenuItem { Header = "Remove remap point" };
+            var removeItem = new MenuItem { Header = Loc.Get("PlanEditor.RemoveRemapPointLower") };
             removeItem.Click += (_, _) =>
             {
                 if (_viewModel?.Plan == null || divider.SourceEntry == null) return;
@@ -1177,7 +1177,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             var menu = new ContextMenu();
 
-            var planToMenu = new MenuItem { Header = "Plan to Level" };
+            var planToMenu = new MenuItem { Header = Loc.Get("PlanEditor.PlanToLevel") };
             int currentLevel = (int)item.Entry.Level;
             for (int lvl = 1; lvl <= 5; lvl++)
             {
@@ -1225,25 +1225,25 @@ namespace EveLens.Avalonia.Views.PlanEditor
             menu.Items.Add(planToMenu);
             menu.Items.Add(new Separator());
 
-            var moveUp = new MenuItem { Header = "Move Up", IsEnabled = item.CanMoveUp };
+            var moveUp = new MenuItem { Header = Loc.Get("PlanEditor.MoveUp"), IsEnabled = item.CanMoveUp };
             moveUp.Click += (_, _) => MoveItemUp(item);
             menu.Items.Add(moveUp);
 
-            var moveDown = new MenuItem { Header = "Move Down", IsEnabled = item.CanMoveDown };
+            var moveDown = new MenuItem { Header = Loc.Get("PlanEditor.MoveDown"), IsEnabled = item.CanMoveDown };
             moveDown.Click += (_, _) => MoveItemDown(item);
             menu.Items.Add(moveDown);
 
-            var moveTop = new MenuItem { Header = "Move to Top" };
+            var moveTop = new MenuItem { Header = Loc.Get("PlanEditor.MoveToTop") };
             moveTop.Click += (_, _) => OnMoveToTopItem(item);
             menu.Items.Add(moveTop);
 
-            var priority = new MenuItem { Header = "Change Priority..." };
+            var priority = new MenuItem { Header = Loc.Get("PlanEditor.ChangePriority") };
             priority.Click += (_, _) => OnChangePriorityItem(item);
             menu.Items.Add(priority);
 
             menu.Items.Add(new Separator());
 
-            var copy = new MenuItem { Header = "Copy to Clipboard" };
+            var copy = new MenuItem { Header = Loc.Get("PlanEditor.CopyToClipboard") };
             copy.Click += (_, _) => CopyPlanToClipboard();
             menu.Items.Add(copy);
 
@@ -1265,7 +1265,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var remapItem = new MenuItem
             {
-                Header = hasRemap ? "Remove Remap Point" : "Insert Remap Point",
+                Header = hasRemap ? Loc.Get("PlanEditor.RemoveRemapPoint") : Loc.Get("PlanEditor.InsertRemapPoint"),
                 IsEnabled = canInsertRemap,
             };
             if (!canInsertRemap)
@@ -1290,7 +1290,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             menu.Items.Add(new Separator());
 
-            var remove = new MenuItem { Header = "Remove from Plan" };
+            var remove = new MenuItem { Header = Loc.Get("PlanEditor.RemoveFromPlan") };
             remove.Click += (_, _) => RemoveItem(item);
             menu.Items.Add(remove);
 
@@ -1477,7 +1477,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var heroStack = new StackPanel { Spacing = 4 };
             heroStack.Children.Add(new TextBlock
             {
-                Text = skill.Name,
+                Text = skill.LocalizedName,
                 FontSize = FontScaleService.Subheading,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = accentBrush,
@@ -1608,7 +1608,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 {
                     var removeBtn = new Button
                     {
-                        Content = "Remove",
+                        Content = Loc.Get("PlanEditor.Remove"),
                         Background = Brushes.Transparent,
                         Foreground = errorBrush,
                         BorderThickness = new Thickness(0),
@@ -1647,12 +1647,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 });
 
                 var skillsWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-                foreach (var dep in dependents.OrderBy(d => d.Skill.Name))
+                foreach (var dep in dependents.OrderBy(d => d.Skill.LocalizedName))
                 {
                     var capturedSkill = dep.Skill;
                     var chip = new Button
                     {
-                        Content = dep.Skill.Name,
+                        Content = dep.Skill.LocalizedName,
                         Background = new SolidColorBrush(Color.Parse("#18FFFFFF")),
                         Foreground = accentBrush,
                         BorderThickness = new Thickness(0),
@@ -1709,7 +1709,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                         row.Children.Add(new TextBlock
                         {
-                            Text = x.Item.Name,
+                            Text = x.Item.LocalizedName,
                             FontSize = FontScaleService.Small,
                             Foreground = secondaryBrush,
                             VerticalAlignment = VerticalAlignment.Center,
@@ -1740,13 +1740,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (parentWindow == null) return false;
 
             string message = targetLevel == 0
-                ? $"Remove {skill.Name} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
-                : $"Downgrade {skill.Name} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
+                ? $"Remove {skill.LocalizedName} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
+                : $"Downgrade {skill.LocalizedName} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
 
             var result = false;
             var dialog = new Window
             {
-                Title = "Confirm Change",
+                Title = Loc.Get("PlanEditor.ConfirmChange"),
                 Width = 380, Height = 180,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Background = (IBrush)Application.Current!.FindResource("EveBackgroundDarkBrush")!,
@@ -1777,7 +1777,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var cancelBtn = new Button
             {
-                Content = "Cancel",
+                Content = Loc.Get("Action.Cancel"),
                 MinWidth = 80,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
             };
@@ -1785,7 +1785,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var confirmBtn = new Button
             {
-                Content = targetLevel == 0 ? "Remove" : "Downgrade",
+                Content = targetLevel == 0 ? Loc.Get("PlanEditor.Remove") : Loc.Get("PlanEditor.Downgrade"),
                 MinWidth = 80,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 Foreground = (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!,
@@ -2167,7 +2167,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         {
                             SidebarContent.Children.Add(new TextBlock
                             {
-                                Text = "Top improved:",
+                                Text = Loc.Get("PlanEditor.TopImproved"),
                                 FontSize = FontScaleService.Small,
                                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                                 Margin = new Thickness(0, 4, 0, 2),
@@ -2191,7 +2191,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // Re-analyze button
                 var rerunBtn = new Button
                 {
-                    Content = "\u21BB Re-analyze",
+                    Content = "\u21BB " + Loc.Get("PlanEditor.Reanalyze"),
                     FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
@@ -2204,8 +2204,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var advToggle = new Button
                 {
                     Content = _showAdvanced
-                        ? "Hide manual adjustment \u25B4"
-                        : "Adjust manually \u25BE",
+                        ? Loc.Get("PlanEditor.HideManualAdjust") + " \u25B4"
+                        : Loc.Get("PlanEditor.AdjustManually") + " \u25BE",
                     FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
@@ -2240,7 +2240,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                 var retryBtn = new Button
                 {
-                    Content = "Try Again",
+                    Content = Loc.Get("AddChar.TryAgain"),
                     FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
@@ -2253,7 +2253,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // ── State: Not yet run ──
             var optimizeBtn = new Button
             {
-                Content = "\u26A1 Optimize Plan",
+                Content = "\u26A1 " + Loc.Get("PlanEditor.OptimizePlan"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(12),
@@ -2338,7 +2338,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 durationLine.Children.Add(new TextBlock
                 {
-                    Text = "Drag to see time impact",
+                    Text = Loc.Get("PlanEditor.DragTimeImpact"),
                     FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                 });
@@ -2483,7 +2483,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var resetOptBtn = new Button
             {
-                Content = "Reset to optimal",
+                Content = Loc.Get("PlanEditor.ResetToOptimal"),
                 FontSize = FontScaleService.Caption,
                 Padding = new Thickness(6, 2),
                 CornerRadius = new CornerRadius(10),
@@ -2497,7 +2497,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var resetCurBtn = new Button
             {
-                Content = "Reset to current",
+                Content = Loc.Get("PlanEditor.ResetToCurrent"),
                 FontSize = FontScaleService.Caption,
                 Padding = new Thickness(6, 2),
                 CornerRadius = new CornerRadius(10),
@@ -2585,7 +2585,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             SidebarContent.Children.Add(new TextBlock
             {
-                Text = "Browse and add skills to your training plan.",
+                Text = Loc.Get("PlanEditor.BrowseAddSkills"),
                 FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                 TextWrapping = TextWrapping.Wrap,
@@ -2594,7 +2594,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             SidebarContent.Children.Add(new TextBlock
             {
-                Text = "Use the Skills, Ships, Items, or Blueprints tabs to add skills to your plan.",
+                Text = Loc.Get("PlanEditor.UseTabsToAdd"),
                 FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 TextWrapping = TextWrapping.Wrap,

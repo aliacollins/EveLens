@@ -162,6 +162,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             ClientIdLabel.Text = Loc.Get("Settings.ClientId");
             ClientSecretLabel.Text = Loc.Get("Settings.ClientSecret");
             UseDefaultCredentialsButton.Content = Loc.Get("Settings.UseDefault");
+            ToolTip.SetTip(UseDefaultCredentialsButton, Loc.Get("Settings.UseDefaultTip"));
 
             // ESI section
             EsiTitle.Text = Loc.Get("Settings.EsiScopes");

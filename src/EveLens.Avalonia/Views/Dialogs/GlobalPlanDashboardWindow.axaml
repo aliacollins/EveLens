@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.GlobalPlanDashboardWindow"
-        Title="Doctrine Designer"
+        Title="{loc:T Doctrine.Title}"
         Icon="avares://EveLens/Properties/EveLens.ico"
         Width="1100" Height="700" MinWidth="800" MinHeight="500"
         WindowStartupLocation="CenterOwner"
@@ -13,7 +14,7 @@
                 Background="{StaticResource EveBackgroundMediumBrush}"
                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel Margin="12,0">
-                <TextBlock x:Name="StatusText" Text="Select or create a template to get started"
+                <TextBlock x:Name="StatusText" Text="{loc:T Doctrine.StatusStart}"
                            FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
                            VerticalAlignment="Center" />
@@ -27,13 +28,13 @@
                 <DockPanel>
                     <!-- Sidebar header -->
                     <StackPanel DockPanel.Dock="Top" Margin="12,10,12,6" Spacing="8">
-                        <TextBlock x:Name="DoctrinesSidebarLabel" Text="Doctrines" FontSize="{DynamicResource EveFontSubheading}"
+                        <TextBlock x:Name="DoctrinesSidebarLabel" Text="{loc:T Doctrine.Doctrines}" FontSize="{DynamicResource EveFontSubheading}"
                                    FontWeight="SemiBold"
                                    Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                        <Button x:Name="NewTemplateBtn" Content="+ New Doctrine"
+                        <Button x:Name="NewTemplateBtn" Content="{loc:T Doctrine.NewDoctrine}"
                                 HorizontalAlignment="Stretch" Padding="8,5"
                                 CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
-                        <Button x:Name="ImportFromPlanBtn" Content="Import from Plan"
+                        <Button x:Name="ImportFromPlanBtn" Content="{loc:T Doctrine.ImportFromPlan}"
                                 HorizontalAlignment="Stretch" Padding="8,5"
                                 CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
                     </StackPanel>
@@ -56,17 +57,17 @@
                             Background="{StaticResource EveBackgroundMediumBrush}">
                         <DockPanel>
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                                <Button x:Name="AddSkillBtn" Content="+ Add Skill"
+                                <Button x:Name="AddSkillBtn" Content="{loc:T Action.AddSkill}"
                                         Padding="10,4" CornerRadius="12"
                                         FontSize="{DynamicResource EveFontBody}" />
-                                <Button x:Name="AddCharBtn" Content="+ Add Character"
+                                <Button x:Name="AddCharBtn" Content="{loc:T Action.AddCharacter}"
                                         Padding="10,4" CornerRadius="12"
                                         FontSize="{DynamicResource EveFontBody}" />
-                                <Button x:Name="ApplyAllBtn" Content="Create Plans for All"
+                                <Button x:Name="ApplyAllBtn" Content="{loc:T Doctrine.CreatePlansForAll}"
                                         Padding="10,4" CornerRadius="12"
                                         FontSize="{DynamicResource EveFontBody}" />
                             </StackPanel>
-                            <TextBlock x:Name="TemplateTitle" Text="No template selected"
+                            <TextBlock x:Name="TemplateTitle" Text="{loc:T Doctrine.NoTemplateSelected}"
                                        FontSize="{DynamicResource EveFontHeading}"
                                        FontWeight="SemiBold"
                                        Foreground="{StaticResource EveAccentPrimaryBrush}"

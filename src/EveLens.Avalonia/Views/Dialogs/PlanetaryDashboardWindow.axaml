@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.PlanetaryDashboardWindow"
-        Title="Planetary Dashboard (Beta)"
+        Title="{loc:T Planetary.WindowTitle}"
         Width="1100" Height="700"
         MinWidth="850" MinHeight="500"
         WindowStartupLocation="CenterOwner"
@@ -20,7 +21,7 @@
         <Border DockPanel.Dock="Top" Padding="16,12"
                 Background="{DynamicResource EveBackgroundMediumBrush}">
             <DockPanel>
-                <TextBlock Text="Planetary Dashboard" FontSize="{DynamicResource EveFontTitle}"
+                <TextBlock Text="{loc:T Planetary.Title}" FontSize="{DynamicResource EveFontTitle}"
                            FontWeight="Bold" Foreground="{DynamicResource EveAccentPrimaryBrush}"
                            VerticalAlignment="Center" DockPanel.Dock="Left" />
                 <StackPanel x:Name="SummaryCards" Orientation="Horizontal" Spacing="12"
@@ -34,9 +35,9 @@
                 BorderThickness="0,0,0,1" BorderBrush="{DynamicResource EveBackgroundDarkBrush}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Spacing="8">
-                    <Button x:Name="RefreshBtn" Content="Refresh" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="RefreshBtn" Content="{loc:T Action.Refresh}" FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnRefresh" />
-                    <Button x:Name="AttentionOnlyBtn" Content="Needs Attention"
+                    <Button x:Name="AttentionOnlyBtn" Content="{loc:T Planetary.NeedsAttention}"
                             FontSize="{DynamicResource EveFontBody}"
                             Padding="10,4" CornerRadius="12" Click="OnToggleAttentionOnly" />
                 </StackPanel>
@@ -44,7 +45,7 @@
                 <!-- Search -->
                 <Border DockPanel.Dock="Right" CornerRadius="14" Padding="8,3"
                         Background="{DynamicResource EveBackgroundDarkBrush}" MinWidth="180">
-                    <TextBox x:Name="FilterBox" Watermark="Search characters..."
+                    <TextBox x:Name="FilterBox" Watermark="{loc:T Planetary.SearchCharacters}"
                              Background="Transparent" BorderThickness="0"
                              FontSize="{DynamicResource EveFontBody}"
                              TextChanged="OnFilterChanged" />

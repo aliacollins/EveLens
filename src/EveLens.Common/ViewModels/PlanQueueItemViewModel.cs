@@ -19,8 +19,8 @@ namespace EveLens.Common.ViewModels
     {
         public PlanEntry Entry { get; }
         public StaticSkill Skill => Entry.Skill;
-        public string Name => Skill.Name;
-        public string DisplayName => $"{Skill.Name} {Models.Skill.GetRomanFromInt(Entry.Level)}";
+        public string Name => Skill.LocalizedName;
+        public string DisplayName => $"{Skill.LocalizedName} {Models.Skill.GetRomanFromInt(Entry.Level)}";
         public long Level => Entry.Level;
         public long Rank => Skill.Rank;
         public EveAttribute PrimaryAttribute => Skill.PrimaryAttribute;

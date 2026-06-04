@@ -158,10 +158,11 @@ namespace EveLens.Common.ViewModels
                         charLevel = Character.GetSkillLevel(p.Skill);
 
                     return new ShipPrerequisiteInfo(
-                        p.Skill.Name,
+                        p.Skill.LocalizedName,
                         p.Level,
                         charLevel,
-                        charLevel >= p.Level);
+                        charLevel >= p.Level,
+                        p.Skill.ID);
                 })
                 .ToList();
 
@@ -171,7 +172,7 @@ namespace EveLens.Common.ViewModels
             string groupPath = BuildGroupPath(ship);
 
             SelectedShipDetail = new ShipDetailInfo(
-                ship.Name,
+                ship.LocalizedName,
                 ship.Description,
                 ship.Race.ToString(),
                 prereqs,
@@ -238,7 +239,7 @@ namespace EveLens.Common.ViewModels
             var group = ship.MarketGroup;
             while (group != null)
             {
-                parts.Add(group.Name);
+                parts.Add(group.LocalizedName);
                 group = group.ParentGroup;
             }
             parts.Reverse();
@@ -428,14 +429,16 @@ namespace EveLens.Common.ViewModels
         public long RequiredLevel { get; }
         public long CharacterLevel { get; }
         public bool IsMet { get; }
+        public int SkillId { get; }
         public string DisplayText => $"{Name} {Skill.GetRomanFromInt(RequiredLevel)}";
 
-        public ShipPrerequisiteInfo(string name, long requiredLevel, long characterLevel, bool isMet)
+        public ShipPrerequisiteInfo(string name, long requiredLevel, long characterLevel, bool isMet, int skillId = 0)
         {
             Name = name;
             RequiredLevel = requiredLevel;
             CharacterLevel = characterLevel;
             IsMet = isMet;
+            SkillId = skillId;
         }
     }
 }

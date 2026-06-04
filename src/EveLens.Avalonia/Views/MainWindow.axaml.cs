@@ -598,12 +598,15 @@ namespace EveLens.Avalonia.Views
         {
             var parts = new List<string>();
             parts.Add(PrivacyHelper.IsNameHidden ? PrivacyHelper.Mask : character.Name);
-            parts.Add(PrivacyHelper.IsBalanceHidden ? $"ISK: {PrivacyHelper.Mask}" : $"ISK: {character.Balance:N2}");
-            parts.Add(PrivacyHelper.IsSkillPointsHidden ? $"SP: {PrivacyHelper.Mask}" : $"SP: {character.SkillPoints:N0}");
+            string iskLabel = Loc.Get("Eve.ISK");
+            string spLabel = Loc.Get("Eve.SP");
+            string trainingLabel = Loc.Get("Eve.Training");
+            parts.Add(PrivacyHelper.IsBalanceHidden ? $"{iskLabel}: {PrivacyHelper.Mask}" : $"{iskLabel}: {character.Balance:N2}");
+            parts.Add(PrivacyHelper.IsSkillPointsHidden ? $"{spLabel}: {PrivacyHelper.Mask}" : $"{spLabel}: {character.SkillPoints:N0}");
 
             if (PrivacyHelper.IsTrainingHidden)
             {
-                parts.Add($"Training: {PrivacyHelper.Mask}");
+                parts.Add($"{trainingLabel}: {PrivacyHelper.Mask}");
             }
             else if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
             {
@@ -614,11 +617,11 @@ namespace EveLens.Avalonia.Views
                     : remaining.TotalHours >= 1
                         ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
                         : $"{remaining.Minutes}m {remaining.Seconds}s";
-                parts.Add($"Training: {skill.SkillName} {skill.Level} ({timeStr})");
+                parts.Add($"{trainingLabel}: {skill.SkillName} {skill.Level} ({timeStr})");
             }
             else
             {
-                parts.Add("Training: Paused");
+                parts.Add($"{trainingLabel}: {Loc.Get("Status.Paused")}");
             }
 
             return string.Join("\n", parts);
@@ -695,6 +698,7 @@ namespace EveLens.Avalonia.Views
             // Tools menu items
             CharCompMenuItem.Header = Loc.Get("Menu.Tools.CharComparison");
             SkillFarmMenuItem.Header = Loc.Get("Menu.Tools.SkillFarm");
+            PlanetaryDashMenuItem.Header = Loc.Get("Menu.Tools.PlanetaryDash");
             GlobalPlanMenuItem.Header = Loc.Get("Menu.Tools.DoctrineDesigner");
             SkillConstellationMenuItem.Header = Loc.Get("Menu.Tools.SkillVisualization");
             ClearCacheMenuItem.Header = Loc.Get("Menu.Tools.ClearCache");
@@ -1069,9 +1073,9 @@ namespace EveLens.Avalonia.Views
         {
             try
             {
-                EveTimeText.Text = $"EVE Time: {DateTime.UtcNow:HH:mm}";
+                EveTimeText.Text = $"{Loc.Get("Status.EveTime")}: {DateTime.UtcNow:HH:mm}";
                 var server = AppServices.EVEServer;
-                ServerStatusText.Text = server?.IsOnline == true ? "Server: Online" : "Server: Offline";
+                ServerStatusText.Text = $"{Loc.Get("Status.Server")}: " + (server?.IsOnline == true ? Loc.Get("Status.ServerOnline") : Loc.Get("Status.ServerOffline"));
                 UpdateEsiCountdown();
             }
             catch (Exception ex)

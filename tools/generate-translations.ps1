@@ -146,25 +146,41 @@ function Parse-SdeYaml {
 
 $typeIdsPath = Join-Path $TempDir "types.yaml"
 $groupIdsPath = Join-Path $TempDir "groups.yaml"
+$marketGroupsPath = Join-Path $TempDir "marketGroups.yaml"
 
 $typeTranslations = @{}
 $groupTranslations = @{}
 
 if (Test-Path $typeIdsPath) {
-    Write-Host "  Parsing typeIDs.yaml..." -ForegroundColor Gray
+    Write-Host "  Parsing types.yaml..." -ForegroundColor Gray
     $typeTranslations = Parse-SdeYaml -FilePath $typeIdsPath
     Write-Host "  Found $($typeTranslations.Count) type translations" -ForegroundColor Green
 }
 
 if (Test-Path $groupIdsPath) {
-    Write-Host "  Parsing groupIDs.yaml..." -ForegroundColor Gray
+    Write-Host "  Parsing groups.yaml (inventory groups)..." -ForegroundColor Gray
     $groupTranslations = Parse-SdeYaml -FilePath $groupIdsPath
-    Write-Host "  Found $($groupTranslations.Count) group translations" -ForegroundColor Green
+    Write-Host "  Found $($groupTranslations.Count) inventory-group translations" -ForegroundColor Green
 }
 
-# Filter to only skills and skill groups (category 16 = Skills)
-# We include ALL types since items, ships, blueprints also need translation
-Write-Host "  Total: $($typeTranslations.Count) types, $($groupTranslations.Count) groups" -ForegroundColor Green
+# Market groups drive the ship/item/blueprint browser TREES (MarketGroup.LocalizedName ->
+# StaticTranslations.GetGroupName). They use a separate ID space from inventory groups, so we
+# merge both into the same <groups> dictionary. Without this the browser tree headers
+# (Battleships, Cruisers, ...) stay English even when the language is set.
+if (Test-Path $marketGroupsPath) {
+    Write-Host "  Parsing marketGroups.yaml..." -ForegroundColor Gray
+    $marketGroupTranslations = Parse-SdeYaml -FilePath $marketGroupsPath -NameField "nameID"
+    # marketGroups use 'nameID:' (with a 'name:' sub-key) in newer SDE; try 'name' too if empty.
+    if ($marketGroupTranslations.Count -eq 0) {
+        $marketGroupTranslations = Parse-SdeYaml -FilePath $marketGroupsPath -NameField "name"
+    }
+    Write-Host "  Found $($marketGroupTranslations.Count) market-group translations" -ForegroundColor Green
+    foreach ($kvp in $marketGroupTranslations.GetEnumerator()) {
+        $groupTranslations[$kvp.Key] = $kvp.Value
+    }
+}
+
+Write-Host "  Total: $($typeTranslations.Count) types, $($groupTranslations.Count) groups (inventory + market)" -ForegroundColor Green
 
 # Generate XML
 Write-Host "`n  Generating eve-translations-$OutputCode.xml.gzip..." -ForegroundColor Yellow

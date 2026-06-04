@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterIndustryJobsView">
 
     <Panel>
@@ -41,7 +42,7 @@
                 <TextBlock x:Name="FilterLabel" Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBox x:Name="FilterBox"
                          Text="{Binding TextFilter, Mode=TwoWay}"
-                         Watermark="Search industry jobs..."
+                         Watermark="{loc:T ListView.SearchIndustryJobs}"
                          MinWidth="200" />
             </DockPanel>
         </Border>
@@ -70,22 +71,22 @@
                   BorderThickness="0">
             <DataGrid.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="Copy Blueprint Name" />
-                    <MenuItem Header="Copy Output" />
+                    <MenuItem Header="{loc:T ContextMenu.CopyBlueprintName}" />
+                    <MenuItem Header="{loc:T ContextMenu.CopyOutput}" />
                     <Separator />
-                    <MenuItem Header="Export to CSV..." />
+                    <MenuItem Header="{loc:T ContextMenu.ExportCsv}" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Activity" Binding="{Binding Activity}" Width="120" />
-                <DataGridTextColumn Header="State" Binding="{Binding State}" Width="80" />
-                <DataGridTextColumn Header="Blueprint" Binding="{Binding InstalledItem.Name}" Width="200" />
-                <DataGridTextColumn Header="Output" Binding="{Binding OutputItem.Name}" Width="200" />
-                <DataGridTextColumn Header="Location" Binding="{Binding Installation}" Width="180" />
-                <DataGridTextColumn Header="Runs" Binding="{Binding Runs}" Width="60" />
-                <DataGridTextColumn Header="Cost" Binding="{Binding Cost, StringFormat=\{0:N2\} ISK}" Width="120" />
-                <DataGridTextColumn Header="Install Date" Binding="{Binding InstalledTime, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
-                <DataGridTextColumn Header="End Date" Binding="{Binding EndDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="{loc:T Column.Activity}" Binding="{Binding Activity}" Width="120" />
+                <DataGridTextColumn Header="{loc:T Column.State}" Binding="{Binding State}" Width="80" />
+                <DataGridTextColumn Header="{loc:T Column.Blueprint}" Binding="{Binding InstalledItem.LocalizedName}" Width="200" />
+                <DataGridTextColumn Header="{loc:T Column.Output}" Binding="{Binding OutputItem.LocalizedName}" Width="200" />
+                <DataGridTextColumn Header="{loc:T Column.Location}" Binding="{Binding Installation}" Width="180" />
+                <DataGridTextColumn Header="{loc:T Column.Runs}" Binding="{Binding Runs}" Width="60" />
+                <DataGridTextColumn Header="{loc:T Column.Cost}" Binding="{Binding Cost, StringFormat=\{0:N2\} ISK}" Width="120" />
+                <DataGridTextColumn Header="{loc:T Column.InstallDate}" Binding="{Binding InstalledTime, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="{loc:T Column.EndDate}" Binding="{Binding EndDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
             </DataGrid.Columns>
         </DataGrid>
         </DockPanel>
