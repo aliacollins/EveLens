@@ -39,7 +39,7 @@ namespace EveLens.Common.Models
             SolarSystem = StaticGeography.GetSolarSystemByID(src.SolarSystemID);
             PlanetID = src.PlanetID;
             PlanetTypeID = src.PlanetType;
-            PlanetTypeName = StaticItems.GetItemName(PlanetTypeID);
+            PlanetTypeName = StaticItems.GetLocalizedItemName(PlanetTypeID);
             PlanetName = SolarSystem.FindPlanetByID(PlanetID)?.Name ?? EveLensConstants.
                 UnknownText;
             LastUpdate = src.LastUpdate;

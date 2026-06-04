@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.EsiScopeEditorWindow"
-        Title="ESI Scope Editor"
+        Title="{loc:T EsiScope.Title}"
         Width="520" Height="580"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -10,25 +11,25 @@
     <DockPanel Margin="12">
         <!-- Header -->
         <TextBlock DockPanel.Dock="Top"
-                   Text="Select ESI Scopes"
+                   Text="{loc:T EsiScope.Header}"
                    FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
                    Margin="0,0,0,8" />
 
         <TextBlock DockPanel.Dock="Top"
-                   Text="Check the feature groups and individual scopes to request. Skills &amp; Training Queue is always required."
+                   Text="{loc:T EsiScope.Description}"
                    TextWrapping="Wrap" FontSize="{DynamicResource EveFontSubheading}" Foreground="Gray"
                    Margin="0,0,0,8" />
 
         <!-- Buttons at bottom -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
                     HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
-            <Button x:Name="SelectAllButton" Content="Select All"
+            <Button x:Name="SelectAllButton" Content="{loc:T EsiScope.SelectAll}"
                     Padding="10,4" CornerRadius="12" />
-            <Button x:Name="ClearAllButton" Content="Clear All"
+            <Button x:Name="ClearAllButton" Content="{loc:T EsiScope.ClearAll}"
                     Padding="10,4" CornerRadius="12" />
-            <Button x:Name="OkButton" Content="OK"
+            <Button x:Name="OkButton" Content="{loc:T EsiScope.Ok}"
                     Padding="10,4" CornerRadius="12" FontWeight="SemiBold" />
-            <Button x:Name="CancelButton" Content="Cancel"
+            <Button x:Name="CancelButton" Content="{loc:T Action.Cancel}"
                     Padding="10,4" CornerRadius="12" />
         </StackPanel>
 

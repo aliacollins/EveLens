@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:EveLens.Avalonia.Views.PlanEditor"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanUnifiedView">
     <DockPanel>
         <!-- Compact stats header -->
@@ -28,14 +29,14 @@
                 <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                     <ToggleButton x:Name="SidebarToggle" Content="☰" IsChecked="True"
                                   FontSize="{DynamicResource EveFontSmall}" Padding="6,2" CornerRadius="8"
-                                  Click="OnSidebarToggle" ToolTip.Tip="Toggle sidebar" />
-                    <Button x:Name="AddSkillsBtn" Content="+ Add Skills" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                                  Click="OnSidebarToggle" ToolTip.Tip="{loc:T PlanEditor.ToggleSidebar}" />
+                    <Button x:Name="AddSkillsBtn" Content="{loc:T PlanEditor.AddSkills}" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
                             CornerRadius="8" Click="OnAddSkills" />
-                    <Button x:Name="CopyPlanBtn" Content="Copy Skill Plan" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="CopyPlanBtn" Content="{loc:T PlanEditor.CopyPlan}" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
                             CornerRadius="8" Click="OnCopyClick" />
-                    <Button x:Name="GroupByAttrBtn" Content="Group by Attr" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="GroupByAttrBtn" Content="{loc:T Plan.GroupByAttr}" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
                             CornerRadius="8" Click="OnGroupByAttribute"
-                            ToolTip.Tip="Reorder plan by primary attribute for optimal remapping" />
+                            ToolTip.Tip="{loc:T PlanEditor.GroupByAttrTip}" />
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -69,10 +70,10 @@
                         <Border DockPanel.Dock="Top" Padding="8,6"
                                 BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                             <StackPanel Orientation="Horizontal" Spacing="4">
-                                <ToggleButton x:Name="SidebarPlanTab" Content="Plan" IsChecked="True"
+                                <ToggleButton x:Name="SidebarPlanTab" Content="{loc:T Sidebar.Plan}" IsChecked="True"
                                               FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                               Click="OnSidebarTabClick" />
-                                <ToggleButton x:Name="SidebarAddTab" Content="Add"
+                                <ToggleButton x:Name="SidebarAddTab" Content="{loc:T Sidebar.Add}"
                                               FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                               Click="OnSidebarTabClick" />
                             </StackPanel>
@@ -91,12 +92,12 @@
                                 Width="32" Height="32" Padding="0"
                                 CornerRadius="6" HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center"
-                                ToolTip.Tip="Plan" Click="OnCollapsedSidebarClick" Tag="Plan" />
+                                ToolTip.Tip="{loc:T Sidebar.Plan}" Click="OnCollapsedSidebarClick" Tag="Plan" />
                         <Button x:Name="CollapsedAddBtn" Content="+" FontSize="{DynamicResource EveFontTitle}"
                                 Width="32" Height="32" Padding="0"
                                 CornerRadius="6" HorizontalContentAlignment="Center"
                                 VerticalContentAlignment="Center"
-                                ToolTip.Tip="Add Skills" Click="OnCollapsedSidebarClick" Tag="Add" />
+                                ToolTip.Tip="{loc:T Sidebar.AddSkills}" Click="OnCollapsedSidebarClick" Tag="Add" />
                     </StackPanel>
                 </Panel>
             </Border>

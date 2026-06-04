@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.ImplantSetEditorWindow"
-        Title="Implant Set Editor"
+        Title="{loc:T ImplantSet.Title}"
         Width="700" Height="550"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -10,17 +11,17 @@
     <Grid ColumnDefinitions="200,*" Margin="12">
         <!-- Left: Implant set list -->
         <DockPanel Grid.Column="0" Margin="0,0,8,0">
-            <TextBlock DockPanel.Dock="Top" Text="Implant Sets" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+            <TextBlock DockPanel.Dock="Top" Text="{loc:T ImplantSet.ImplantSets}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}"
                        Margin="0,0,0,6" />
 
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6"
                         Margin="0,6,0,0">
-                <Button x:Name="NewCustomBtn" Content="New Custom" FontSize="{DynamicResource EveFontSmall}"
+                <Button x:Name="NewCustomBtn" Content="{loc:T ImplantSet.NewCustom}" FontSize="{DynamicResource EveFontSmall}"
                         Padding="8,3" CornerRadius="12" Click="OnNewCustomClick" />
-                <Button x:Name="RenameSetBtn" Content="Rename" FontSize="{DynamicResource EveFontSmall}"
+                <Button x:Name="RenameSetBtn" Content="{loc:T ImplantSet.Rename}" FontSize="{DynamicResource EveFontSmall}"
                         Padding="8,3" CornerRadius="12" Click="OnRenameClick" />
-                <Button x:Name="DeleteSetBtn" Content="Delete" FontSize="{DynamicResource EveFontSmall}"
+                <Button x:Name="DeleteSetBtn" Content="{loc:T Action.Delete}" FontSize="{DynamicResource EveFontSmall}"
                         Padding="8,3" CornerRadius="12"
                         Foreground="{StaticResource EveErrorRedBrush}"
                         Click="OnDeleteClick" />
@@ -33,7 +34,7 @@
 
         <!-- Right: Implant slots + summary -->
         <DockPanel Grid.Column="1" Margin="8,0,0,0">
-            <TextBlock DockPanel.Dock="Top" x:Name="SlotHeader" Text="Select an implant set"
+            <TextBlock DockPanel.Dock="Top" x:Name="SlotHeader" Text="{loc:T ImplantSet.SelectSet}"
                        FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}"
                        Margin="0,0,0,6" />

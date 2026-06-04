@@ -1,10 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanGoalCard">
     <Border Background="{StaticResource EveBackgroundMediumBrush}"
             CornerRadius="6" Padding="12,10" Margin="4">
         <StackPanel Spacing="6">
-            <TextBlock Text="Goal" FontSize="{DynamicResource EveFontSmall}"
+            <TextBlock Text="{loc:T PlanEditor.Goal}" FontSize="{DynamicResource EveFontSmall}"
                        Foreground="{StaticResource EveTextDisabledBrush}" />
             <TextBlock x:Name="PlanNameText" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{StaticResource EveAccentPrimaryBrush}"

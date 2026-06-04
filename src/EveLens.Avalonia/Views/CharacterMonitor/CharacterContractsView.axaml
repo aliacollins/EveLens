@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterContractsView">
 
     <UserControl.Resources>
@@ -57,19 +58,19 @@
                                   FontSize="{DynamicResource EveFontBody}" MinWidth="110" Padding="8,4"
                                   SelectedIndex="0"
                                   SelectionChanged="OnIssuedForChanged">
-                            <ComboBoxItem Content="All" />
-                            <ComboBoxItem Content="Character" />
-                            <ComboBoxItem Content="Corporation" />
+                            <ComboBoxItem Content="{loc:T ListView.All}" />
+                            <ComboBoxItem Content="{loc:T ListView.Character}" />
+                            <ComboBoxItem Content="{loc:T ListView.Corporation}" />
                         </ComboBox>
                         <ComboBox x:Name="GroupingCombo"
                                   FontSize="{DynamicResource EveFontBody}" MinWidth="130" Padding="8,4"
                                   SelectedIndex="0"
                                   SelectionChanged="OnGroupingChanged">
-                            <ComboBoxItem Content="No Grouping" />
-                            <ComboBoxItem Content="Status" />
-                            <ComboBoxItem Content="Contract Type" />
-                            <ComboBoxItem Content="Issue Date" />
-                            <ComboBoxItem Content="Start Location" />
+                            <ComboBoxItem Content="{loc:T ListView.NoGrouping}" />
+                            <ComboBoxItem Content="{loc:T ListView.Status}" />
+                            <ComboBoxItem Content="{loc:T ListView.ContractType}" />
+                            <ComboBoxItem Content="{loc:T ListView.IssueDate}" />
+                            <ComboBoxItem Content="{loc:T ListView.StartLocation}" />
                         </ComboBox>
                     </StackPanel>
 
@@ -111,8 +112,8 @@
                 <!-- Empty state -->
                 <shared:EmptyState x:Name="EmptyState"
                                    IsVisible="False"
-                                   Title="No Contracts"
-                                   Subtitle="No contracts match the current filters. Try adjusting your search or filter settings." />
+                                   Title="{loc:T ListView.NoContracts}"
+                                   Subtitle="{loc:T ListView.NoContractsDesc}" />
 
                 <!-- Data grid -->
                 <DataGrid x:Name="ItemsGrid"
@@ -127,24 +128,24 @@
                       FontSize="{DynamicResource EveFontBody}">
                 <DataGrid.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Copy Contract Info" />
-                        <MenuItem Header="Copy Issuer" />
+                        <MenuItem Header="{loc:T ContextMenu.CopyContractInfo}" />
+                        <MenuItem Header="{loc:T ContextMenu.CopyIssuer}" />
                         <Separator />
-                        <MenuItem Header="Export to CSV..." />
+                        <MenuItem Header="{loc:T ContextMenu.ExportCsv}" />
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Contract" Width="200">
+                    <DataGridTextColumn Header="{loc:T Column.Contract}" Width="200">
                         <DataGridTextColumn.Binding>
                             <Binding Path="ContractText" />
                         </DataGridTextColumn.Binding>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="Type" Width="100">
+                    <DataGridTextColumn Header="{loc:T Column.Type}" Width="100">
                         <DataGridTextColumn.Binding>
                             <Binding Path="ContractType" />
                         </DataGridTextColumn.Binding>
                     </DataGridTextColumn>
-                    <DataGridTemplateColumn Header="Status" Width="110">
+                    <DataGridTemplateColumn Header="{loc:T Column.Status}" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding State}"
@@ -154,17 +155,17 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Issuer" Width="120">
+                    <DataGridTextColumn Header="{loc:T Column.Issuer}" Width="120">
                         <DataGridTextColumn.Binding>
                             <Binding Path="Issuer" />
                         </DataGridTextColumn.Binding>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="Assignee" Width="120">
+                    <DataGridTextColumn Header="{loc:T Column.Assignee}" Width="120">
                         <DataGridTextColumn.Binding>
                             <Binding Path="Assignee" />
                         </DataGridTextColumn.Binding>
                     </DataGridTextColumn>
-                    <DataGridTemplateColumn Header="Price" Width="120">
+                    <DataGridTemplateColumn Header="{loc:T Column.Price}" Width="120">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Price, Converter={StaticResource ISKConverter}}"
@@ -173,12 +174,12 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Issued" Width="100">
+                    <DataGridTextColumn Header="{loc:T Column.Issued}" Width="100">
                         <DataGridTextColumn.Binding>
                             <Binding Path="Issued" StringFormat="{}{0:yyyy-MM-dd}" />
                         </DataGridTextColumn.Binding>
                     </DataGridTextColumn>
-                    <DataGridTemplateColumn Header="Expires" Width="110">
+                    <DataGridTemplateColumn Header="{loc:T Column.Expires}" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Expiration, StringFormat=\{0:yyyy-MM-dd\}}"

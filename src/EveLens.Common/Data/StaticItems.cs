@@ -138,6 +138,19 @@ namespace EveLens.Common.Data
         }
 
         /// <summary>
+        /// Localized counterpart of <see cref="GetItemName"/>: returns the item name in the current
+        /// UI language (falling back to English), or "unknown" if the item is not in the database.
+        /// Use this for any name shown to the user; use <see cref="GetItemName"/> only for
+        /// language-stable purposes (CSV/EFT export, lookups, persistence).
+        /// </summary>
+        /// <param name="itemId">The id of the item to find.</param>
+        /// <returns>The localized item name, EveLensConstants.UnknownText if no such item is found.</returns>
+        public static string GetLocalizedItemName(int itemId)
+        {
+            return GetItemByID(itemId)?.LocalizedName ?? EveLensConstants.UnknownText;
+        }
+
+        /// <summary>
         /// Recursively searches the root category and all underlying categories for the first item with a 
         /// name that exactly matches the given itemName.
         /// </summary>

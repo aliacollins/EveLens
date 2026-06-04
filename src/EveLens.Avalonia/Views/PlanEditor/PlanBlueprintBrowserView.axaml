@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanBlueprintBrowserView">
     <Grid ColumnDefinitions="300,*">
         <!-- Left panel: Blueprint hierarchy as flat list with depth-based indentation -->
@@ -9,12 +10,12 @@
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                        <ToggleButton x:Name="CanBuildToggle" Content="Can Build Only"
+                        <ToggleButton x:Name="CanBuildToggle" Content="{loc:T BlueprintBrowser.CanBuildOnly}"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                       Click="OnCanBuildToggled" />
-                        <Button x:Name="CollapseBtn" Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="CollapseBtn" Content="{loc:T PlanEditor.Collapse}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button x:Name="ExpandBtn" Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="ExpandBtn" Content="{loc:T PlanEditor.Expand}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </StackPanel>
                     <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
@@ -25,7 +26,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="Search blueprints..."
+                            <TextBox x:Name="FilterBox" Watermark="{loc:T BlueprintBrowser.SearchBlueprints}"
                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
@@ -104,14 +105,14 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="80" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock x:Name="RequiredSkillsLabel" Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="RequiredSkillsLabel" Text="{loc:T BlueprintBrowser.RequiredSkills}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock x:Name="MaterialsLabel" Text="Materials:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="MaterialsLabel" Text="{loc:T BlueprintBrowser.Materials}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="MaterialsList" Spacing="2" />
-                    <Button x:Name="PlanSkillsBtn" Content="Plan Skills" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="PlanSkillsBtn" Content="{loc:T BlueprintBrowser.PlanSkills}" FontSize="{DynamicResource EveFontBody}"
                             Padding="12,5" CornerRadius="12" Margin="0,8,0,0"
                             Click="OnPlanSkills" IsVisible="False" />
                 </StackPanel>
