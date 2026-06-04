@@ -7,11 +7,11 @@
   <releases>
     <release>
       <date>2026-06-04</date>
-      <version>1.4.0.1</version>
+      <version>1.4.0.4</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.4.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-alpha.1
+      <message><![CDATA[EveLens 1.4.0-alpha.4
 
 i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes, market-group SDE names]]></message>
     </release>
