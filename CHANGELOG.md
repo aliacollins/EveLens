@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes everywhere, market-group SDE names; ~300 strings migrated
 - i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes, market-group SDE names
 - Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
 - Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
