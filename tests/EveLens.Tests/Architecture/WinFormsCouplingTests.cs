@@ -158,6 +158,61 @@ namespace EveLens.Tests.Architecture
                 $"Violations: {string.Join("; ", violations)}");
         }
 
+        /// <summary>
+        /// Regression guard (non-Windows crash): no source file in EveLens.Common may read a
+        /// GDI+ image resource from <c>Properties.Resources</c>. Those getters are typed
+        /// <see cref="System.Drawing.Bitmap"/> and throw <see cref="PlatformNotSupportedException"/>
+        /// on Linux/macOS via the GDI+ type initializer the instant they are accessed. All default
+        /// images must go through <c>EveLens.Common.Service.DefaultImages</c> (SkiaSharp).
+        /// </summary>
+        [Fact]
+        public void CommonSource_DoesNotReadGdiPlusImageResources()
+        {
+            string? commonDir = FindProjectDirectory("src/EveLens.Common");
+            if (commonDir == null)
+                return; // Skip if source not present (some CI environments)
+
+            // The GDI+ (System.Drawing.Bitmap/Icon) members of Properties.Resources. String
+            // resources (e.g. ErrorStandings) are safe and intentionally excluded.
+            var forbiddenResourceReads = new[]
+            {
+                "Resources.DefaultCharacterImage32",
+                "Resources.DefaultCorporationImage32",
+                "Resources.DefaultAllianceImage32",
+                "Resources.DefaultCorporationImage64",
+                "Resources.DefaultAllianceImage64",
+                "Resources.BadStanding",
+                "Resources.GoodStanding",
+                "Resources.NeutralStanding",
+                "Resources.ExcellentStanding",
+                "Resources.TerribleStanding",
+            };
+
+            var csFiles = Directory.GetFiles(commonDir, "*.cs", SearchOption.AllDirectories);
+            var violations = new List<string>();
+
+            foreach (var file in csFiles)
+            {
+                // The auto-generated designer file legitimately declares these members.
+                if (file.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                string content = File.ReadAllText(file);
+                foreach (var forbidden in forbiddenResourceReads)
+                {
+                    if (content.Contains(forbidden, StringComparison.Ordinal))
+                    {
+                        string relativePath = file.Substring(file.IndexOf("EveLens.Common"));
+                        violations.Add($"{relativePath} reads {forbidden}");
+                    }
+                }
+            }
+
+            violations.Should().BeEmpty(
+                "GDI+ image resources crash on Linux/macOS — use DefaultImages (SkiaSharp) instead. " +
+                $"Violations: {string.Join("; ", violations)}");
+        }
+
         private static string? FindProjectDirectory(string relativePath)
         {
             // Walk up from the test assembly location to find the repo root
