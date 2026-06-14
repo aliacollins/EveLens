@@ -95,8 +95,16 @@ namespace EveLens.Common.Net
                     // Throw for 404, 500, etc.
                     if (response.StatusCode != HttpStatusCode.Redirect && response.
                             StatusCode != HttpStatusCode.MovedPermanently)
-                        throw HttpWebClientServiceException.HttpWebClientException(url, ex,
-                            response.StatusCode);
+                    {
+                        var wrapped = HttpWebClientServiceException.HttpWebClientException(url,
+                            ex, response.StatusCode);
+                        // Capture the error response body for diagnostics. CCP's SSO endpoint
+                        // returns the real reason here (e.g. invalid_grant) which the default
+                        // EnsureSuccessStatusCode throw discards — the difference between a
+                        // useful log and "Error logging in to EVE SSO" (Issue #94).
+                        wrapped.ResponseBody = TryReadErrorBody(response);
+                        throw wrapped;
+                    }
                 }
                 catch (TaskCanceledException ex)
                 {
@@ -121,6 +129,29 @@ namespace EveLens.Common.Net
                 m_referrer = m_url;
                 m_url = new Uri(m_url, target);
                 url = m_url;
+            }
+        }
+
+        /// <summary>
+        /// Best-effort read of an error response body for diagnostics. Returns an empty string
+        /// on any failure — this runs inside an exception path and must never throw or hang.
+        /// The body is truncated to keep logs and the diagnostic stream readable.
+        /// </summary>
+        private static string TryReadErrorBody(HttpResponseMessage response)
+        {
+            const int maxLength = 2048;
+            try
+            {
+                // The content is small (an OAuth error JSON); reading synchronously here is
+                // acceptable on the error path and avoids restructuring the catch into async.
+                string body = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                if (string.IsNullOrEmpty(body))
+                    return string.Empty;
+                return body.Length > maxLength ? body.Substring(0, maxLength) + "…" : body;
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
 

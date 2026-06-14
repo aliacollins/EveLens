@@ -129,7 +129,16 @@ namespace EveLens.Common.Service
                 {
                     // Log HTTP error if it occurred
                     if (taskResult.Error != null)
+                    {
+                        // Surface CCP's actual rejection reason (e.g. invalid_grant /
+                        // invalid_client) instead of a bare status code, so users and the
+                        // diagnostic stream can see WHY SSO failed (Issue #94).
+                        string body = taskResult.Error.ResponseBody;
+                        AppServices.TraceService?.Trace(
+                            "SSO token request failed: " + taskResult.Error.Message +
+                            (string.IsNullOrEmpty(body) ? string.Empty : " — server response: " + body));
                         ExceptionHandler.LogException(taskResult.Error, true);
+                    }
                     else if (!string.IsNullOrEmpty(encodedToken = taskResult.Result))
                         // For some reason the JWT token is not returned according to the ESI
                         // spec
