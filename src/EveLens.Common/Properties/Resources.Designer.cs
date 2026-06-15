@@ -614,7 +614,34 @@ namespace EveLens.Common.Properties {
                 return ResourceManager.GetString("ErrorSSO", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to An EVE SSO session expired. Re-authenticate the character via File &gt; Add Character..
+        /// </summary>
+        public static string ErrorSSOReauth {
+            get {
+                return ResourceManager.GetString("ErrorSSOReauth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0}'s EVE SSO session expired. Re-authenticate via File &gt; Add Character..
+        /// </summary>
+        public static string ErrorSSOReauthNamed {
+            get {
+                return ResourceManager.GetString("ErrorSSOReauthNamed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to EVE SSO rejected the application credentials. Check your ESI client ID and secret in Settings..
+        /// </summary>
+        public static string ErrorSSOClient {
+            get {
+                return ResourceManager.GetString("ErrorSSOClient", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Error querying the standings of {0}..
         /// </summary>

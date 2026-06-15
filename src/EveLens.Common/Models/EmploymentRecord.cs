@@ -6,6 +6,7 @@
 using EveLens.Common.Extensions;
 using EveLens.Common.Helpers;
 using EveLens.Common.Serialization.Eve;
+using EveLens.Common.Service;
 using EveLens.Core;
 using System;
 using System.Threading.Tasks;
@@ -94,7 +95,7 @@ namespace EveLens.Common.Models
 
                 GetImageAsync().ConfigureAwait(false);
 
-                return m_image ?? (m_image = Properties.Resources.DefaultCorporationImage32);
+                return m_image ?? (m_image = DefaultImages.Corporation);
             }
         }
 

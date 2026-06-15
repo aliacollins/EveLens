@@ -159,7 +159,22 @@ namespace EveLens.Common.Collections.Global
         }
 
         /// <summary>
-        /// Notifies an SSO sign-in error.
+        /// Invalidates the key-scoped SSO error notification raised by
+        /// <see cref="NotifySSOError(ESIKey, SsoTokenError)"/> once that key's token refresh
+        /// succeeds, so a stale "re-authenticate" banner clears after re-auth (Issue #94).
+        /// </summary>
+        /// <param name="key">The ESI key whose error should be cleared.</param>
+        internal void InvalidateSSOError(ESIKey key)
+        {
+            if (key == null)
+                return;
+            Invalidate(new NotificationInvalidationEventArgs(key, NotificationCategory.
+                QueryingError));
+        }
+
+        /// <summary>
+        /// Notifies a generic SSO sign-in error. Retained for callers without a classified
+        /// reason; prefer <see cref="NotifySSOError(ESIKey, SsoTokenError)"/>.
         /// </summary>
         internal void NotifySSOError()
         {
@@ -167,6 +182,56 @@ namespace EveLens.Common.Collections.Global
                 QueryingError)
             {
                 Description = Properties.Resources.ErrorSSO,
+                Behaviour = NotificationBehaviour.Overwrite,
+                Priority = NotificationPriority.Error
+            };
+            Notify(notification);
+        }
+
+        /// <summary>
+        /// Notifies an SSO token error with a cause-specific, actionable message (Issue #94).
+        /// Different failure modes that previously all read "Error logging in to EVE SSO" now
+        /// tell the user what actually happened and what to do about it.
+        /// </summary>
+        /// <param name="key">The ESI key whose token refresh failed.</param>
+        /// <param name="error">The classified failure reason.</param>
+        internal void NotifySSOError(ESIKey key, SsoTokenError error)
+        {
+            // Transient failures are silent — they recover on their own and must not raise an
+            // alarm (this is what made the old banner cry wolf during brief outages, Issue #68).
+            if (error == SsoTokenError.Transient)
+                return;
+
+            // Resolve the character name so the message names who needs attention.
+            string charName = null;
+            if (key != null)
+            {
+                var id = AppServices.CharacterIdentities.FirstOrDefault(
+                    (charID) => charID.ESIKeys.Contains(key));
+                charName = id?.CharacterName;
+            }
+
+            string description;
+            switch (error)
+            {
+                case SsoTokenError.InvalidGrant:
+                    description = string.IsNullOrEmpty(charName)
+                        ? Properties.Resources.ErrorSSOReauth
+                        : string.Format(Properties.Resources.ErrorSSOReauthNamed, charName);
+                    break;
+                case SsoTokenError.InvalidClient:
+                    description = Properties.Resources.ErrorSSOClient;
+                    break;
+                default:
+                    description = Properties.Resources.ErrorSSO;
+                    break;
+            }
+
+            // Scope the notification to the key so each character's error is distinct and can be
+            // invalidated independently when its token is refreshed.
+            var notification = new NotificationEventArgs(key, NotificationCategory.QueryingError)
+            {
+                Description = description,
                 Behaviour = NotificationBehaviour.Overwrite,
                 Priority = NotificationPriority.Error
             };

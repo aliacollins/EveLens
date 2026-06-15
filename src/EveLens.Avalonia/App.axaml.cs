@@ -57,6 +57,16 @@ namespace EveLens.Avalonia
 
         public override void OnFrameworkInitializationCompleted()
         {
+            // Keep the UI thread alive when an exception escapes an event handler, binding,
+            // converter, or synchronous control lifecycle override. Without this, such an
+            // exception terminates the whole process. Marking it Handled lets EveLens log and
+            // continue instead of dying.
+            Dispatcher.UIThread.UnhandledException += (_, e) =>
+            {
+                GlobalExceptionHandler.HandleDispatcherException(e.Exception);
+                e.Handled = true;
+            };
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 try

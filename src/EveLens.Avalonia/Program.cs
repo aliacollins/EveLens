@@ -31,6 +31,12 @@ namespace EveLens.Avalonia
             // Must be the FIRST thing in Main() before any other code runs.
             VelopackApp.Build().Run();
 
+            // Install the process-wide exception backstop as early as possible, so any
+            // exception on a background thread or unobserved Task is logged instead of
+            // silently terminating the process. The UI dispatcher hook is added later in
+            // App.OnFrameworkInitializationCompleted (once the dispatcher exists).
+            GlobalExceptionHandler.Install();
+
             // Set taskbar identity so Windows groups the window as "EveLens"
             // instead of using the executable name "EveLens.Avalonia.exe"
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
