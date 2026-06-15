@@ -365,6 +365,15 @@ If you changed your password, you must log in again using File &gt; Add Characte
   <data name="ErrorSSO" xml:space="preserve">
     <value>EVE SSO login failed. Re-authenticate via File &gt; Add Character.</value>
   </data>
+  <data name="ErrorSSOReauth" xml:space="preserve">
+    <value>An EVE SSO session expired. Re-authenticate the character via File &gt; Add Character.</value>
+  </data>
+  <data name="ErrorSSOReauthNamed" xml:space="preserve">
+    <value>{0}'s EVE SSO session expired. Re-authenticate via File &gt; Add Character.</value>
+  </data>
+  <data name="ErrorSSOClient" xml:space="preserve">
+    <value>EVE SSO rejected the application credentials. Check your ESI client ID and secret in Settings.</value>
+  </data>
   <data name="ErrorStandings" xml:space="preserve">
     <value>Error querying the standings of {0}.</value>
   </data>
