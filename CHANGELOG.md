@@ -6,12 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes everywhere, market-group SDE names; ~300 strings migrated
-- i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes, market-group SDE names
-- Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
-- Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)
-- Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)
-- Skill Farm configurable base SP, What's New dialog, Code Graph system
+- Non-Windows stability: crash backstop, GDI+ default-image fix, SSO token error classification (#94), MailKit CVE
+
+### Security
+
+- **Updated MailKit to 4.16.0** -- Clears two moderate-severity advisories in the email/MimeKit stack (STARTTLS response injection CVE-2026-41319 and CRLF/SMTP injection CVE-2026-30227). Email skill-completion alerts are unaffected. Also removed an unused MailKit dependency from EveLens.Infrastructure.
+
+### Fixed
+
+- **Linux/macOS: hard crash opening Standings, Contacts, Employment History, and Loyalty tabs** -- Default/placeholder images were loaded through a Windows-only graphics library (System.Drawing/GDI+), which throws on Linux and macOS the instant it runs. Opening any of those tabs terminated the whole app with no error. Default images now use the same cross-platform image pipeline (SkiaSharp) as the rest of EveLens, so the tabs work on every platform.
+- **Crashes no longer kill the app silently** -- EveLens now installs a process-wide safety net (unhandled exception, unobserved background task, and UI-thread handlers). An unexpected error is logged and, where possible, the app keeps running instead of vanishing without a trace.
+- **"Error logging in to EVE SSO" now explains itself and stops spamming** -- This generic banner appeared for every kind of token failure, and an expired refresh token retried every few seconds forever -- so an idle character could flood you with a login error it could never clear. EveLens now reads CCP's actual reason and reacts accordingly: an expired session names the specific character to re-authenticate (and stops retrying a token that can't work), bad ESI app credentials point you to Settings, and brief network/server hiccups retry quietly without raising a scary alarm. The banner also clears itself automatically once a character re-authenticates. CCP's raw response is still written to the log and diagnostic stream for deeper diagnosis (Issue #94).
+
+## [1.4.0-beta.4] - 2026-06-04
 
 ### Added
 

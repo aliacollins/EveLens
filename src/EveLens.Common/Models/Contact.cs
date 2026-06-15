@@ -11,6 +11,7 @@ using EveLens.Common.Enumerations;
 using EveLens.Common.Extensions;
 using EveLens.Common.Helpers;
 using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Service;
 using EveLens.Core;
 
 namespace EveLens.Common.Models
@@ -131,11 +132,11 @@ namespace EveLens.Common.Models
             switch (m_contactType)
             {
                 case ContactType.Character:
-                    return Properties.Resources.DefaultCharacterImage32;
+                    return DefaultImages.Character;
                 case ContactType.Corporation:
-                    return Properties.Resources.DefaultCorporationImage32;
+                    return DefaultImages.Corporation;
                 case ContactType.Alliance:
-                    return Properties.Resources.DefaultAllianceImage32;
+                    return DefaultImages.Alliance;
             }
             return null;
         }
