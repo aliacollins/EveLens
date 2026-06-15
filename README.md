@@ -196,7 +196,7 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.3.0
+## What's New in 1.4.0
 
 - **Doctrine Designer** -- create shared skill templates, assign characters, compare training times, generate personal plans (Ctrl+G)
 - **Chinese language (简体中文)** -- full UI + 50K SDE translations with CCP official game terms
