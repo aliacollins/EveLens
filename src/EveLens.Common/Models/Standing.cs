@@ -10,6 +10,7 @@ using EveLens.Common.Enumerations;
 using EveLens.Common.Extensions;
 using EveLens.Common.Helpers;
 using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Service;
 using EveLens.Core;
 
 namespace EveLens.Common.Models
@@ -127,15 +128,17 @@ namespace EveLens.Common.Models
         public static object? GetStandingImage(int standing)
         {
             if (standing <= -5.5)
-                return Properties.Resources.TerribleStanding;
+                return DefaultImages.Load("standingIconTerrible.png");
 
             if (standing <= -0.5)
-                return Properties.Resources.BadStanding;
+                return DefaultImages.Load("standingIconBad.png");
 
             if (standing < 0.5)
-                return Properties.Resources.NeutralStanding;
+                return DefaultImages.Load("standingIconNeutral.png");
 
-            return standing < 5.5 ? Properties.Resources.GoodStanding : Properties.Resources.ExcellentStanding;
+            return standing < 5.5
+                ? DefaultImages.Load("standingIconGood.png")
+                : DefaultImages.Load("standingIconExcelent.png");
         }
 
         #endregion
@@ -167,11 +170,11 @@ namespace EveLens.Common.Models
             switch (Group)
             {
                 case StandingGroup.Agents:
-                    return Properties.Resources.DefaultCharacterImage32;
+                    return DefaultImages.Character;
                 case StandingGroup.NPCCorporations:
-                    return Properties.Resources.DefaultCorporationImage32;
+                    return DefaultImages.Corporation;
                 case StandingGroup.Factions:
-                    return Properties.Resources.DefaultAllianceImage32;
+                    return DefaultImages.Alliance;
             }
             return null;
         }

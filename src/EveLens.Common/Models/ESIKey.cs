@@ -6,6 +6,7 @@
 using EveLens.Common.Attributes;
 using EveLens.Common.Constants;
 using EveLens.Common.CustomEventArgs;
+using EveLens.Common.Enumerations;
 using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Extensions;
 using EveLens.Common.Helpers;
@@ -268,17 +269,51 @@ namespace EveLens.Common.Models
         /// obtained.
         /// </summary>
         /// <param name="response">The token response received from the server.</param>
-        private void OnAccessToken(AccessResponse response)
+        /// <param name="error">The classified failure reason when <paramref name="response"/>
+        /// is null, so the user gets an accurate, actionable message (Issue #94).</param>
+        private void OnAccessToken(AccessResponse response, SsoTokenError error)
         {
             m_queried = true;
 
             if (response == null)
             {
-                // If it errors out, avoid checking again for another 5 minutes
-                m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
-                AppServices.Notifications.NotifySSOError();
-                HasError = true;
                 m_queryPending = false;
+
+                switch (error)
+                {
+                    case SsoTokenError.Transient:
+                        // Network/timeout/5xx — not the token's fault. Don't alarm the user or
+                        // set HasError; just back off briefly and let the next tick retry. A
+                        // short delay (not 5 min) so recovery is quick once connectivity returns.
+                        m_keyExpires = DateTime.UtcNow.AddSeconds(30.0);
+                        AppServices.TraceService?.Trace(
+                            "Transient SSO token refresh failure for key " + ID + " — will retry.");
+                        break;
+
+                    case SsoTokenError.InvalidGrant:
+                        // The refresh token is dead (rotated/expired/revoked). Retrying can never
+                        // succeed, so clear it to STOP the every-5s retry spam, and tell the user
+                        // exactly which character to re-authenticate (Issue #94).
+                        RefreshToken = string.Empty;
+                        m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
+                        HasError = true;
+                        AppServices.Notifications.NotifySSOError(this, error);
+                        break;
+
+                    case SsoTokenError.InvalidClient:
+                        m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
+                        HasError = true;
+                        AppServices.Notifications.NotifySSOError(this, error);
+                        break;
+
+                    default:
+                        // Unknown — keep the previous conservative behaviour.
+                        m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
+                        HasError = true;
+                        AppServices.Notifications.NotifySSOError(this, error);
+                        break;
+                }
+
                 AppServices.TraceService?.Trace(ToString());
                 AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
             }
@@ -310,6 +345,9 @@ namespace EveLens.Common.Models
                 HasError = false;
                 ImportIdentities(tokenInfo);
                 AppServices.Notifications.InvalidateAPIError();
+                // Clear this key's own SSO error banner (it is scoped to the key) now that the
+                // refresh succeeded (Issue #94).
+                AppServices.Notifications.InvalidateSSOError(this);
 
                 // Notify health tracker that token refresh succeeded — resets Suspended state
                 foreach (var identity in CharacterIdentities)
