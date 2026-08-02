@@ -1,0 +1,19 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/EveLens.Avalonia/EveLens.Avalonia.csproj" />
+    <Project Path="src/EveLens.Common/EveLens.Common.csproj" />
+    <Project Path="src/EveLens.Core/EveLens.Core.csproj" />
+    <Project Path="src/EveLens.Data/EveLens.Data.csproj" />
+    <Project Path="src/EveLens.Infrastructure/EveLens.Infrastructure.csproj" />
+    <Project Path="src/EveLens.Models/EveLens.Models.csproj" />
+    <Project Path="src/EveLens.Serialization/EveLens.Serialization.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/EveLens.Tests/EveLens.Tests.csproj" />
+  </Folder>
+</Solution>
