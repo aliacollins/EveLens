@@ -4,14 +4,14 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/aliacollins/evelens?label=latest)](https://github.com/aliacollins/evelens/releases)
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)]()
 [![Cross-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-brightgreen.svg)]()
 
 ---
 
 ## EveLens 1.3.0 Beta
 
-EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
+EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 10** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
 This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,857 tests, 14 architectural laws, and support for **100+ characters** out of the box.
 
@@ -25,12 +25,12 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
-| **Windows (Installer)** | `EveLens-stable-Setup.exe` | None -- installs .NET 8 automatically |
-| **Windows (Portable)** | `EveLens-stable-Portable.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Windows (Installer)** | `EveLens-stable-Setup.exe` | None -- installs .NET 10 automatically |
+| **Windows (Portable)** | `EveLens-stable-Portable.zip` | [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
 | **Linux (AppImage)** | `EveLens-*-linux-x86_64.AppImage` | None -- single file, just run |
-| **Linux (Portable)** | `EveLens-*-linux-x64.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux (Portable)** | `EveLens-*-linux-x64.zip` | [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
 | **macOS (App)** | `EveLens-*-osx-arm64.app.zip` | None -- extract and run |
-| **macOS (Portable)** | `EveLens-*-osx-arm64.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS (Portable)** | `EveLens-*-osx-arm64.zip` | [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
 
 The Windows installer is **code-signed** by a verified Certum certificate.
 
@@ -60,7 +60,7 @@ chmod +x evelens/EveLens
 ./evelens/EveLens
 ```
 
-Requires [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) installed.
+Requires [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) installed.
 
 ### macOS (Apple Silicon)
 

@@ -185,7 +185,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // Build Tools
             AddSectionHeader(stack, "BUILD TOOLS", 16);
-            foreach (var tool in new[] { ".NET 8.0 - Runtime", "Avalonia UI - Cross-platform", "Claude Code - AI Tool (Anthropic)" })
+            foreach (var tool in new[] { ".NET 10.0 - Runtime", "Avalonia UI - Cross-platform", "Claude Code - AI Tool (Anthropic)" })
             {
                 stack.Children.Add(new TextBlock
                 {

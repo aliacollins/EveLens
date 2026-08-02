@@ -677,7 +677,7 @@ Settings.UseDefaultTip = Clear custom credentials and use the built-in EveLens d
 # --- Untranslated (English placeholder; pending translation) ---
 About.Title = About EveLens
 About.Subtitle = Character intelligence for EVE Online. Built on 20 years of community work.
-About.Dotnet = .NET 8 . Avalonia
+About.Dotnet = .NET 10 . Avalonia
 About.Trademark = EVE Online and all related logos are trademarks of CCP hf.
 About.FlySafe = Fly safe. o7
 AddChar.Title = Add Character

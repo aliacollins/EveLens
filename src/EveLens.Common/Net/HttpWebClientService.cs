@@ -17,7 +17,7 @@ namespace EveLens.Common.Net
     /// <remarks>
     /// <para>Architecture Decision: HttpClient Management</para>
     /// <para>
-    /// This implementation uses a singleton HttpClient with SocketsHttpHandler for .NET 8+.
+    /// This implementation uses a singleton HttpClient with SocketsHttpHandler for .NET 10+.
     /// While IHttpClientFactory is the recommended pattern for ASP.NET Core services, it was
     /// evaluated and determined to be unnecessary for this desktop application because:
     /// </para>
@@ -35,7 +35,7 @@ namespace EveLens.Common.Net
     /// </remarks>
     public static partial class HttpWebClientService
     {
-        // Shared HttpClient instance to prevent socket exhaustion in .NET 8
+        // Shared HttpClient instance to prevent socket exhaustion in .NET 10
         // See: https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines
         private static HttpClient s_sharedClient;
         private static readonly object s_clientLock = new object();
@@ -96,14 +96,14 @@ namespace EveLens.Common.Net
         /// Initializes the <see cref="HttpWebClientService"/> class.
         /// </summary>
         /// <remarks>
-        /// In .NET 8, ServicePointManager is ignored when using SocketsHttpHandler.
+        /// In .NET 10, ServicePointManager is ignored when using SocketsHttpHandler.
         /// Connection limits and 100-Continue behavior are now configured directly on
         /// the SocketsHttpHandler in CreateHttpClient().
         /// </remarks>
         static HttpWebClientService()
         {
             // Note: ServicePointManager settings removed as they have no effect with SocketsHttpHandler
-            // in .NET 8. Connection pooling is now configured in CreateHttpClient().
+            // in .NET 10. Connection pooling is now configured in CreateHttpClient().
         }
 
         /// <summary>
@@ -111,7 +111,7 @@ namespace EveLens.Common.Net
         /// </summary>
         /// <returns></returns>
         /// <remarks>
-        /// WebClient is deprecated in .NET 8 (SYSLIB0014) but still functional.
+        /// WebClient is deprecated in .NET 10 (SYSLIB0014) but still functional.
         /// Used for download progress reporting in UpdateDownloadForm and DataUpdateDownloadForm.
         /// TODO: Migrate to HttpClient with IProgress&lt;T&gt; for download progress reporting.
         /// </remarks>

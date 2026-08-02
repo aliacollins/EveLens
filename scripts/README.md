@@ -49,7 +49,7 @@ Options:
 The installer (`EveLens-install-{version}.exe`) includes:
 - Install location selection
 - Desktop and Start Menu shortcuts
-- Automatic .NET 8 Desktop Runtime download/install
+- Automatic .NET 10 Desktop Runtime download/install
 - Uninstaller (via Windows Settings)
 - Non-admin installation option
 
@@ -71,6 +71,6 @@ git push
 
 ## Requirements
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) - for building
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) - for building
 - [Inno Setup 6](https://jrsoftware.org/isdl.php) - for creating installers
 - [GitHub CLI](https://cli.github.com/) - for uploading releases

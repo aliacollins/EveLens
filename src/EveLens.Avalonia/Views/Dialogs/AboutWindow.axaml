@@ -32,7 +32,7 @@
                         <TextBlock Text="." FontSize="{DynamicResource EveFontSmall}"
                                    Foreground="{StaticResource EveTextDisabledBrush}"
                                    VerticalAlignment="Center" />
-                        <TextBlock Text=".NET 8 . Avalonia" FontSize="{DynamicResource EveFontBody}"
+                        <TextBlock Text=".NET 10 . Avalonia" FontSize="{DynamicResource EveFontBody}"
                                    Foreground="{StaticResource EveTextSecondaryBrush}" />
                     </StackPanel>
                     <TextBlock Text="{loc:T About.Subtitle}"
