@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-10</date>
+      <version>1.4.0.6</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.4.0-alpha.6
+
+promote.ps1: unambiguous refs/heads merges + post-merge content verification]]></message>
+    </release>
+    <release>
+      <date>2026-08-10</date>
       <version>1.4.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.4.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Consistent skill counts: filter unpublished skills uniformly (#37, #33)]]></mess
       <message><![CDATA[EveLens 1.1.0-alpha.7
 
 Show full character names in Skill Comparison (#45)]]></message>
-    </release>
-    <release>
-      <date>2026-03-29</date>
-      <version>1.1.0.6</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.1.0-alpha.6
-
-Fix live font scaling in code-behind windows (#42 feedback)]]></message>
     </release>
   </releases>
   <datafiles>
