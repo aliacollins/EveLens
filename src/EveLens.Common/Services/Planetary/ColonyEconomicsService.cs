@@ -133,15 +133,16 @@ namespace EveLens.Common.Services.Planetary
 
         private static double DefaultPriceProvider(int typeId)
         {
-            // Use first available pricer
+            // Use first available pricer. Always call GetPriceByTypeID — it is what lazily
+            // enqueues the price fetch. The old `if (provider.Queried)` gate meant that when
+            // no other feature had loaded prices yet, PI never even REQUESTED them, so every
+            // colony showed 0 ISK/day forever (Issue #66). The first call may return 0 (fetch
+            // in flight); the ItemPricesUpdatedEvent refresh repaints once prices land.
             var providers = ItemPricer.Providers;
             foreach (var provider in providers)
             {
-                if (provider.Queried)
-                {
-                    double price = provider.GetPriceByTypeID(typeId);
-                    if (price > 0) return price;
-                }
+                double price = provider.GetPriceByTypeID(typeId);
+                if (price > 0) return price;
             }
             return 0;
         }

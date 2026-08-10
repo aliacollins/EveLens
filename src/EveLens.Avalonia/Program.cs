@@ -50,6 +50,14 @@ namespace EveLens.Avalonia
                 args = args.Where(a => a != "--restart-delay").ToArray();
             }
 
+            // OS-login autostart launches with --start-minimized: boot quietly to the
+            // tray without flashing the main window or splash (Issue #72).
+            if (args.Contains("--start-minimized"))
+            {
+                App.StartMinimized = true;
+                args = args.Where(a => a != "--start-minimized").ToArray();
+            }
+
             // Single-instance check — prevent multiple EveLens sessions
             var instance = InstanceManager.Instance;
             if (!instance.CreatedNew)

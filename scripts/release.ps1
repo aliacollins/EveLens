@@ -166,10 +166,14 @@ try {
     # virtual token and fails partway ("No certificates were found that met all the given
     # criteria"). Serial signing via the template is reliable against the cloud token.
     $signCmd = "$SignTool sign /sha1 $CertThumbprint /fd SHA256 /tr $TimestampUrl /td SHA256 {{file}}"
+    # --shortcuts Desktop: without this, vpk defaults to Desktop,StartMenuRoot and Update.exe
+    # re-creates the Start Menu shortcut on EVERY update — even after the user deleted it
+    # (Issue #72). Desktop-only respects the user's Start Menu choices.
     & $vpkPath pack `
         -u $AppName -v $Version `
         -p $WinPlatform.Dir -e $WinPlatform.Exe `
         --channel $Channel `
+        --shortcuts Desktop `
         --signTemplate $signCmd `
         -o $WinPlatform.Out 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'

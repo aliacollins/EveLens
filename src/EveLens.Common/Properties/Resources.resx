@@ -369,7 +369,7 @@ If you changed your password, you must log in again using File &gt; Add Characte
     <value>An EVE SSO session expired. Re-authenticate the character via File &gt; Add Character.</value>
   </data>
   <data name="ErrorSSOReauthNamed" xml:space="preserve">
-    <value>{0}'s EVE SSO session expired. Re-authenticate via File &gt; Add Character.</value>
+    <value>{0}'s EVE SSO session expired. Re-authenticate via File &gt; Add Character. If this character is no longer on your account, delete it from EveLens to dismiss this.</value>
   </data>
   <data name="ErrorSSOClient" xml:space="preserve">
     <value>EVE SSO rejected the application credentials. Check your ESI client ID and secret in Settings.</value>

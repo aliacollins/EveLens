@@ -89,6 +89,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             FontSizeDesc.Text = Loc.Get("Settings.FontSizeDesc");
             LanguageLabel.Text = Loc.Get("Settings.Language");
             LanguageDesc.Text = Loc.Get("Settings.LanguageDesc");
+            GameNamesLabel.Text = Loc.Get("Settings.GameNames");
+            GameNamesDesc.Text = Loc.Get("Settings.GameNamesDesc");
             SafeForWorkLabel.Text = Loc.Get("Settings.SafeForWork");
             SafeForWorkDesc.Text = Loc.Get("Settings.SafeForWorkDesc");
             CustomBrowserLabel.Text = Loc.Get("Settings.CustomBrowser");
@@ -100,6 +102,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             WindowDesc.Text = Loc.Get("Settings.WindowBehaviorDesc");
             MinToTrayLabel.Text = Loc.Get("Settings.MinimizeToTray");
             MinToTrayDesc.Text = Loc.Get("Settings.MinimizeToTrayDesc");
+            RunAtStartupLabel.Text = Loc.Get("Settings.RunAtStartup");
+            RunAtStartupDesc.Text = Loc.Get("Settings.RunAtStartupDesc");
             TrayTooltipLabel.Text = Loc.Get("Settings.TrayTooltipDisplay");
             TrayTooltipDesc.Text = Loc.Get("Settings.TrayTooltipDesc");
 
@@ -145,6 +149,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             DataDesc.Text = Loc.Get("Settings.DataUpdatesDesc");
             CheckUpdatesLabel.Text = Loc.Get("Settings.CheckForUpdates");
             CheckUpdatesDesc.Text = Loc.Get("Settings.CheckForUpdatesDesc");
+            AutoInstallLabel.Text = Loc.Get("Settings.AutoInstall");
+            AutoInstallDesc.Text = Loc.Get("Settings.AutoInstallDesc");
             ClockSyncLabel.Text = Loc.Get("Settings.ClockSync");
             ClockSyncDesc.Text = Loc.Get("Settings.ClockSyncDesc");
             MarketPriceLabel.Text = Loc.Get("Settings.MarketPriceProvider");
@@ -246,6 +252,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // --- Language ---
             PopulateLanguageCombo();
+            PopulateGameNamesCombo();
 
             // --- Window Behavior ---
             LoadTraySettings();
@@ -258,6 +265,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // --- Data & Updates ---
             CheckForUpdatesToggle.IsChecked = _settings.Updates.CheckEveLensVersion;
+            AutoInstallToggle.IsChecked =
+                _settings.Updates.AutoInstallUpdates == AutoInstallUpdates.Automatic;
             CheckTimeToggle.IsChecked = _settings.Updates.CheckTimeOnStartup;
             PopulateMarketPriceProviders();
 
@@ -314,9 +323,63 @@ namespace EveLens.Avalonia.Views.Dialogs
             };
         }
 
+        private void PopulateGameNamesCombo()
+        {
+            // Only meaningful for languages that ship translated SDE names.
+            string currentLang = _settings.UI.Language ?? "en";
+            GameNamesRow.IsVisible = LanguageRegistry.SdeLanguages.Contains(currentLang);
+            if (!GameNamesRow.IsVisible) return;
+
+            var options = new (GameNameMode Mode, string LabelKey)[]
+            {
+                (GameNameMode.Auto, "Settings.GameNamesAuto"),
+                (GameNameMode.Localized, "Settings.GameNamesLocalized"),
+                (GameNameMode.English, "Settings.GameNamesEnglish"),
+            };
+
+            foreach (var (mode, labelKey) in options)
+            {
+                GameNamesCombo.Items.Add(new ComboBoxItem
+                {
+                    Content = Loc.Get(labelKey),
+                    Tag = mode,
+                });
+            }
+
+            GameNamesCombo.SelectedIndex = Array.FindIndex(options,
+                o => o.Mode == _settings.UI.GameNameMode);
+
+            GameNamesCombo.SelectionChanged += (_, _) =>
+            {
+                if (_isUpdating) return;
+                if (GameNamesCombo.SelectedItem is ComboBoxItem item && item.Tag is GameNameMode mode)
+                {
+                    if (mode == _settings.UI.GameNameMode) return;
+                    _settings.UI.GameNameMode = mode;
+                    Settings.Save();
+                    // Names cached at import time (ship types, wallet items, PI products)
+                    // only re-resolve on reload — same restart contract as the language picker.
+                    AppServices.ApplicationLifecycle?.Restart();
+                }
+            };
+        }
+
         private void LoadTraySettings()
         {
             MinimizeToTrayToggle.IsChecked = _settings.UI.MinimizeToTray;
+
+            // Run at Startup — only where OS registration is implemented (Windows/Linux)
+            RunAtStartupRow.IsVisible = StartupRegistrationService.IsSupported;
+            RunAtStartupToggle.IsChecked = _settings.UI.RunAtStartup;
+            RunAtStartupToggle.IsCheckedChanged += (_, _) =>
+            {
+                if (_isUpdating) return;
+                bool enabled = RunAtStartupToggle.IsChecked == true;
+                if (enabled == _settings.UI.RunAtStartup) return;
+                _settings.UI.RunAtStartup = enabled;
+                StartupRegistrationService.Sync(enabled);
+                Settings.Save();
+            };
 
             TrayTooltipDisplayCombo.ItemsSource = new[]
             {
@@ -1077,6 +1140,10 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // Data & Updates
             _settings.Updates.CheckEveLensVersion = CheckForUpdatesToggle.IsChecked == true;
+            // A saved value is also a recorded answer — the startup opt-in ask never repeats
+            _settings.Updates.AutoInstallUpdates = AutoInstallToggle.IsChecked == true
+                ? AutoInstallUpdates.Automatic
+                : AutoInstallUpdates.NotifyOnly;
             _settings.Updates.CheckTimeOnStartup = CheckTimeToggle.IsChecked == true;
 
             if (MarketPriceProviderCombo.SelectedItem is string provName)

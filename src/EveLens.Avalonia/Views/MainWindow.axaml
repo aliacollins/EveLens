@@ -48,6 +48,7 @@
                 <MenuItem x:Name="ReportIssueMenuItem" Header="_Report Issue" />
                 <Separator />
                 <MenuItem x:Name="KeyboardShortcutsMenuItem" Header="_Keyboard Shortcuts" />
+                <MenuItem x:Name="WhatsNewMenuItem" Header="What's _New" />
                 <MenuItem x:Name="AboutMenuItem" Header="_About EveLens" />
             </MenuItem>
         </Menu>

@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-10</date>
+      <version>1.4.0.5</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.4.0-alpha.5
+
+beta.5 train: community fixes, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in]]></message>
+    </release>
+    <release>
       <date>2026-06-04</date>
       <version>1.4.0.4</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -94,16 +104,6 @@ Show full character names in Skill Comparison (#45)]]></message>
       <message><![CDATA[EveLens 1.1.0-alpha.6
 
 Fix live font scaling in code-behind windows (#42 feedback)]]></message>
-    </release>
-    <release>
-      <date>2026-03-28</date>
-      <version>1.1.0.5</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.1.0-alpha.5
-
-Character Skill Comparison, theme-aware level blocks]]></message>
     </release>
   </releases>
   <datafiles>

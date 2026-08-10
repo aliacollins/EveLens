@@ -34,11 +34,20 @@ namespace EveLens.Common.Services
         /// exists so item/skill/group names render in this language. English needs none (it is the base).</summary>
         public bool HasSdeNames { get; }
 
-        public LanguageInfo(string code, string displayName, bool hasSdeNames)
+        /// <summary>Whether game names (ships, items, skills) default to the translated SDE names
+        /// or to English for this language. This reflects each community's convention — Korean
+        /// players navigate by the English names they know from the client, killboards, and fitting
+        /// tools (Discussion #79), while Chinese players expect the translated names. Users can
+        /// override via <c>Settings.UI.UseLocalizedGameNames</c>; this is only the default.</summary>
+        public bool LocalizedGameNamesDefault { get; }
+
+        public LanguageInfo(string code, string displayName, bool hasSdeNames,
+            bool localizedGameNamesDefault = true)
         {
             Code = code;
             DisplayName = displayName;
             HasSdeNames = hasSdeNames;
+            LocalizedGameNamesDefault = hasSdeNames && localizedGameNamesDefault;
         }
     }
 
@@ -52,7 +61,8 @@ namespace EveLens.Common.Services
         {
             new LanguageInfo("en",    "English",                       hasSdeNames: false),
             new LanguageInfo("zh-CN", "简体中文 (Simplified Chinese)", hasSdeNames: true),
-            new LanguageInfo("ko",    "한국어 (Korean)",                hasSdeNames: true),
+            new LanguageInfo("ko",    "한국어 (Korean)",                hasSdeNames: true,
+                localizedGameNamesDefault: false),
         };
 
         /// <summary>Locale codes of every supported language, in display order.</summary>
@@ -64,5 +74,10 @@ namespace EveLens.Common.Services
         /// <summary>Native display name for a code, or the code itself if unknown.</summary>
         public static string DisplayName(string code)
             => All.FirstOrDefault(l => l.Code == code)?.DisplayName ?? code;
+
+        /// <summary>Whether game names (ships/items/skills) should use the translated SDE names
+        /// by default for this language. False for unknown codes and for English.</summary>
+        public static bool LocalizedGameNamesDefault(string code)
+            => All.FirstOrDefault(l => l.Code == code)?.LocalizedGameNamesDefault ?? false;
     }
 }

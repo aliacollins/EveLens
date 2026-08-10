@@ -709,6 +709,7 @@ namespace EveLens.Avalonia.Views
             UserGuideMenuItem.Header = Loc.Get("Menu.Help.UserGuide");
             ReportIssueMenuItem.Header = Loc.Get("Menu.Help.ReportIssue");
             KeyboardShortcutsMenuItem.Header = Loc.Get("Menu.Help.Shortcuts");
+            WhatsNewMenuItem.Header = Loc.Get("Menu.Help.WhatsNew");
 
             // File menu — remaining items
             CreateBlankCharMenuItem.Header = Loc.Get("Menu.File.CreateBlank");
@@ -752,6 +753,7 @@ namespace EveLens.Avalonia.Views
             UserGuideMenuItem.Click += OnUserGuideClick;
             ReportIssueMenuItem.Click += OnReportIssueClick;
             KeyboardShortcutsMenuItem.Click += OnKeyboardShortcutsClick;
+            WhatsNewMenuItem.Click += OnWhatsNewClick;
             AboutMenuItem.Click += OnAboutClick;
 
             // Debug menu (only in debug builds)
@@ -1340,6 +1342,20 @@ namespace EveLens.Avalonia.Views
                     await errDialog.ShowDialog(this);
                 }
                 catch { }
+            }
+        }
+
+        private async void OnWhatsNewClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Same window the once-per-version startup flow shows — revisitable on demand
+                var window = new Views.Dialogs.WhatsNewWindow();
+                await window.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"What's New failed: {ex.Message}", printMethod: false);
             }
         }
 
