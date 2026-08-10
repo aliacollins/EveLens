@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-10</date>
+      <version>1.4.0.6</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.4.0-beta.6
+
+1.4.0-beta.5: community fix train, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in]]></message>
+    </release>
+    <release>
       <date>2026-06-15</date>
       <version>1.4.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
