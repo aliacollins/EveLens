@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-10
+- 1.4.0: Korean language, Attribute Optimizer, community fix train, SDE 3458726, EVE Accuracy Suite, auto-update opt-in
 ## [1.3.0] - 2026-05-10
 
 ### Added
