@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Attribute Optimizer window** -- Remap planning got a proper home (Tools in the plan editor sidebar, or right-click any skill). Pick a strategy -- one remap for the whole plan, or auto-placed remaps at attribute-focus boundaries (the old EVEMon behavior, requested in #71) -- preview exactly where each remap goes and what your attributes should be, then apply atomically. A Clone what-if toggle (As-is/Omega/Alpha) shows plan durations under either clone state without touching your character. The optimizer's numbers now always match the plan editor's total: same order, same implants, same applied remaps.
+- **Applied remaps visible in the plan sidebar** -- The Remap section lists every applied remap point with its position and full attribute spread, plus a one-click "Remove All Remaps" to return the plan to your current attributes. Hovering a gold remap band in the queue shows the target attributes.
+- **Plan editor right-click menu actually works** -- The context menu (Plan to Level, View Details, Change Priority, Optimize Attributes, Remove) was lost in the queue-list migration and silently did nothing (Issue #71). Move Up/Down menu items were dropped -- drag-and-drop and the hover arrows own reordering.
+- **EVE Accuracy Suite** -- A visible, separately-runnable test suite (`dotnet test --filter "Suite=EveAccuracy"`) of golden scenarios where EveLens output must match known in-game values: SP thresholds, SP/hour formula, training durations, Alpha/Omega rates, implant math, remap rules, prerequisites, and queue totals. New features can no longer break these calculations unnoticed.
 - **Run at Startup** -- New option in Settings > Window launches EveLens automatically when you log in to your computer, starting quietly in the system tray with no window or splash screen. Available on Windows and Linux (Issue #72).
 
 ### Changed
