@@ -40,6 +40,12 @@ namespace EveLens.Avalonia
         /// </summary>
         internal static bool IsExiting { get; set; }
 
+        /// <summary>
+        /// True when launched with --start-minimized (OS-login autostart): boot quietly
+        /// to the tray without showing the splash or main window (Issue #72).
+        /// </summary>
+        internal static bool StartMinimized { get; set; }
+
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -108,12 +114,13 @@ namespace EveLens.Avalonia
 
             // Show splash screen before the slow phases begin.
             // Prevent app shutdown when the splash closes (it's the only window at that point).
+            // Quiet autostart (--start-minimized) skips the splash entirely (Issue #72).
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            var splash = new SplashWindow();
-            splash.Show();
+            SplashWindow? splash = StartMinimized ? null : new SplashWindow();
+            splash?.Show();
 
             // Phase 5: Load settings (sync-over-async OK in bootstrap per Law #7 exception)
-            splash.UpdateStatus("Loading settings...");
+            splash?.UpdateStatus("Loading settings...");
             Dispatcher.UIThread.RunJobs();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Settings.Initialize begin", printMethod: false);
             Settings.Initialize();
@@ -124,13 +131,13 @@ namespace EveLens.Avalonia
             Loc.Language = Settings.UI.Language ?? "en";
 
             // Phase 6: Load static datafiles
-            splash.UpdateStatus(Loc.Get("Splash.LoadingGameData"));
+            splash?.UpdateStatus(Loc.Get("Splash.LoadingGameData"));
             Dispatcher.UIThread.RunJobs();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - Loading game data", printMethod: false);
             Task.Run(() => GlobalDatafileCollection.LoadAsync()).Wait();
 
             // Phase 7: Load ID-to-name caches
-            splash.UpdateStatus("Loading name caches...");
+            splash?.UpdateStatus("Loading name caches...");
             Dispatcher.UIThread.RunJobs();
             Task.Run(() => TaskHelper.RunIOBoundTaskAsync(() =>
             {
@@ -139,7 +146,7 @@ namespace EveLens.Avalonia
             })).Wait();
 
             // Phase 8: Import character data
-            splash.UpdateStatus("Loading characters...");
+            splash?.UpdateStatus("Loading characters...");
             Dispatcher.UIThread.RunJobs();
             Task.Run(() => Settings.ImportDataAsync()).Wait();
             AppServices.SetDataLoaded(true);
@@ -149,7 +156,7 @@ namespace EveLens.Avalonia
             // On startup, all access tokens are expired. Without this, the scheduler
             // fires hundreds of requests with expired tokens, burning CCP's error budget
             // and triggering the 420 cascade (Issue #34).
-            splash.UpdateStatus("Refreshing ESI tokens...");
+            splash?.UpdateStatus("Refreshing ESI tokens...");
             Dispatcher.UIThread.RunJobs();
             foreach (var key in EveLensClient.ESIKeys)
                 key.ForceUpdate();
@@ -158,7 +165,7 @@ namespace EveLens.Avalonia
             Task.Delay(TimeSpan.FromSeconds(3)).Wait();
 
             // Close splash and restore normal shutdown behavior before creating the main window
-            splash.Close();
+            splash?.Close();
 
             // Always use explicit shutdown — the Closing handler decides whether
             // to hide (tray) or trigger desktop.Shutdown() (exit). This avoids a
@@ -175,9 +182,18 @@ namespace EveLens.Avalonia
             timer.Start();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - tick timer started", printMethod: false);
 
-            // Phase 10: Create and show main window
-            desktop.MainWindow = new MainWindow();
-            AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - MainWindow created", printMethod: false);
+            // Phase 10: Create and show main window.
+            // Quiet autostart: the desktop lifetime auto-shows MainWindow right after this
+            // method returns, so we defer the assignment to a posted job (which runs after
+            // lifetime start) — the window exists for the tray to Show() later but never
+            // flashes on login (Issue #72).
+            var mainWindow = new MainWindow();
+            if (StartMinimized)
+                Dispatcher.UIThread.Post(() => desktop.MainWindow = mainWindow);
+            else
+                desktop.MainWindow = mainWindow;
+            AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - MainWindow created" +
+                (StartMinimized ? " (quiet start, hidden)" : ""), printMethod: false);
 
             // Phase 10.5: Linux desktop integration (icon + .desktop file)
             if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
@@ -191,15 +207,39 @@ namespace EveLens.Avalonia
             }
 
             // Phase 11: Set up system tray icon
-            SetupTrayIcon(desktop);
+            SetupTrayIcon(desktop, mainWindow);
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - tray icon configured", printMethod: false);
 
-            // Phase 11.5: Show "What's New" dialog once per version
-            global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                try { ShowWhatsNewIfNeeded(); }
-                catch { }
-            }, global::Avalonia.Threading.DispatcherPriority.Background);
+            // Phase 11.2: Sync OS-login registration with the setting (repairs stale
+            // paths after app updates) and keep it synced on settings changes (Issue #72).
+            StartupRegistrationService.Sync(Settings.UI.RunAtStartup);
+
+            // Phase 11.5: Show "What's New" dialog once per version (skip on quiet start —
+            // it will show on the first manual open instead of stealing focus at login).
+            // ShowDialog is ASYNC in Avalonia — the dialogs must be awaited sequentially, or
+            // the second one tries to open while the first still owns the main window and
+            // dies silently (which is why the auto-update ask never appeared).
+            // Startup dialogs must wait for the main window to actually OPEN — a dispatcher
+            // post at bootstrap time runs before the lifetime shows the window, so ShowDialog
+            // has no visible owner and both dialogs silently no-op'd.
+            if (!StartMinimized)
+                mainWindow.Opened += async (_, _) =>
+                {
+                    try
+                    {
+                        AppServices.TraceService?.Trace("Startup dialogs: begin", printMethod: false);
+                        await ShowWhatsNewIfNeededAsync();
+                        // One-time auto-update opt-in ask (Discussion #100) — after What's New
+                        // closes; the stored answer prevents any repeat ask.
+                        await ShowAutoUpdateOptInIfNeededAsync();
+                        AppServices.TraceService?.Trace("Startup dialogs: done", printMethod: false);
+                    }
+                    catch (Exception ex)
+                    {
+                        AppServices.TraceService?.Trace(
+                            $"Startup dialogs failed: {ex}", printMethod: false);
+                    }
+                };
 
             // Phase 12: Register shutdown handler
             desktop.ShutdownRequested += (_, _) =>
@@ -237,19 +277,21 @@ namespace EveLens.Avalonia
             };
         }
 
-        private void ShowWhatsNewIfNeeded()
+        private async Task ShowWhatsNewIfNeededAsync()
         {
             var currentVersion = AppServices.FileVersionInfo?.ProductVersion ?? "";
+            AppServices.TraceService?.Trace(
+                $"WhatsNew: version='{currentVersion}' lastShown='{Settings.Updates.LastShownWhatsNewVersion}'",
+                printMethod: false);
             if (string.IsNullOrEmpty(currentVersion)) return;
 
             var lastShown = Settings.Updates.LastShownWhatsNewVersion;
 
-#if DEBUG
-            // Always show in debug builds for testing
-            bool shouldShow = true;
-#else
+            // Once per version everywhere — including DEBUG. The old always-show-in-debug
+            // shortcut meant the changelog greeted every single dev-build launch, and it
+            // masked once-per-version bugs (the flag is stored in the debug data dir, so it
+            // still shows on the first launch after any version bump).
             bool shouldShow = lastShown != currentVersion;
-#endif
             if (!shouldShow) return;
 
             // Mark as shown before opening (prevents double-show on crash)
@@ -259,60 +301,82 @@ namespace EveLens.Avalonia
             var window = new Views.Dialogs.WhatsNewWindow();
             var mainWindow = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
             if (mainWindow != null)
-                window.ShowDialog(mainWindow);
+                await window.ShowDialog(mainWindow);
             else
                 window.Show();
         }
 
-        private void SetupTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
+        private async Task ShowAutoUpdateOptInIfNeededAsync()
+        {
+            // Only ask once, only for installed (updatable) builds, and never mid-quiet-start
+            if (Settings.Updates.AutoInstallUpdates != Common.Enumerations.UISettings.AutoInstallUpdates.NotAsked)
+                return;
+#if !DEBUG
+            // Dev builds are not Velopack-installed — skip in release logic, but always
+            // allow in DEBUG so the dialog is testable.
+            if (AppServices.VelopackUpdate?.IsInstalled != true)
+                return;
+#endif
+
+            var window = new Views.Dialogs.AutoUpdateOptInWindow();
+            var mainWindow = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            AppServices.TraceService?.Trace(
+                $"OptIn: mainWindow={(mainWindow == null ? "null" : "set")} visible={mainWindow?.IsVisible}",
+                printMethod: false);
+            if (mainWindow != null && mainWindow.IsVisible)
+                await window.ShowDialog(mainWindow);
+            // No visible owner (quiet start) — skip; the ask happens on the next normal launch.
+        }
+
+        private void SetupTrayIcon(IClassicDesktopStyleApplicationLifetime desktop, Window mainWindow)
         {
             try
             {
-                // Handle window close → minimize-to-tray or explicit exit
-                if (desktop.MainWindow != null)
+                // Handle window close → minimize-to-tray or explicit exit.
+                // mainWindow is passed explicitly: on quiet start desktop.MainWindow is
+                // assigned via a posted job and is still null here (Issue #72).
+                mainWindow.Closing += (_, e) =>
                 {
-                    desktop.MainWindow.Closing += (_, e) =>
+                    if (IsExiting)
+                        return;
+
+                    // Save window position/size before anything else —
+                    // must happen before Settings.SaveSynchronousForShutdown()
+                    if (mainWindow is MainWindow mw)
+                        mw.SaveWindowLocationNow();
+
+                    if (Settings.UI.MinimizeToTray)
                     {
-                        if (IsExiting)
-                            return;
+                        e.Cancel = true;
+                        mainWindow.Hide();
+                    }
+                    else
+                    {
+                        // Save settings NOW, before the window closes.
+                        // On Linux/X11 the process can exit before Post() runs,
+                        // so ShutdownRequested never fires and settings are lost.
+                        IsExiting = true;
 
-                        // Save window position/size before anything else —
-                        // must happen before Settings.SaveSynchronousForShutdown()
-                        if (desktop.MainWindow is MainWindow mw)
-                            mw.SaveWindowLocationNow();
+                        // Close all modeless child windows first to prevent zombie
+                        // processes on macOS where owned windows block shutdown.
+                        if (mainWindow is MainWindow mw2)
+                            mw2.CloseChildWindows();
 
-                        if (Settings.UI.MinimizeToTray)
+                        try
                         {
-                            e.Cancel = true;
-                            desktop.MainWindow.Hide();
+                            Settings.SaveSynchronousForShutdown();
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            // Save settings NOW, before the window closes.
-                            // On Linux/X11 the process can exit before Post() runs,
-                            // so ShutdownRequested never fires and settings are lost.
-                            IsExiting = true;
-
-                            // Close all modeless child windows first to prevent zombie
-                            // processes on macOS where owned windows block shutdown.
-                            if (desktop.MainWindow is MainWindow mw2)
-                                mw2.CloseChildWindows();
-
-                            try
-                            {
-                                Settings.SaveSynchronousForShutdown();
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.WriteLine($"Pre-close save failed: {ex.Message}");
-                            }
-                            Dispatcher.UIThread.Post(() => desktop.Shutdown());
+                            Debug.WriteLine($"Pre-close save failed: {ex.Message}");
                         }
-                    };
-                }
+                        Dispatcher.UIThread.Post(() => desktop.Shutdown());
+                    }
+                };
 
-                // Only create the tray icon if the setting is on
-                if (Settings.UI.MinimizeToTray)
+                // Create the tray icon if the setting is on — or unconditionally on quiet
+                // start: with no visible window, the tray is the only way to reach the app.
+                if (Settings.UI.MinimizeToTray || StartMinimized)
                     CreateTrayIcon(desktop);
 
                 // When settings change, create or destroy tray icon dynamically
@@ -327,12 +391,15 @@ namespace EveLens.Avalonia
                             if (IsExiting)
                                 return;
 
-                            bool enabled = Settings.UI.MinimizeToTray;
+                            bool enabled = Settings.UI.MinimizeToTray || StartMinimized;
 
                             if (enabled && _trayIcon == null)
                                 CreateTrayIcon(desktop);
                             else if (!enabled && _trayIcon != null)
                                 DestroyTrayIcon();
+
+                            // Keep the OS-login registration in sync with the setting
+                            StartupRegistrationService.Sync(Settings.UI.RunAtStartup);
                         }
                         catch (Exception ex)
                         {

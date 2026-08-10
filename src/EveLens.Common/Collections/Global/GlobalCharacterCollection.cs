@@ -75,6 +75,15 @@ namespace EveLens.Common.Collections.Global
                 // Clear all the keys so that we do not get into an infinite loop
                 keys.Clear();
                 oldKeys.ForEach(esiKey => AppServices.ESIKeys.Remove(esiKey));
+
+                // Also sweep keys whose identity link was never rebuilt this session (a dead
+                // grant never refreshes, so Identity.ESIKeys stays empty after a restart) but
+                // whose persisted CharacterID says they belong to this character. Without this,
+                // deleting the character leaked the key into settings forever (Issue #94).
+                var orphanedKeys = AppServices.ESIKeys
+                    .Where(k => k.CharacterID == character.CharacterID)
+                    .ToList();
+                orphanedKeys.ForEach(esiKey => AppServices.ESIKeys.Remove(esiKey));
             }
 
             // Clear cached ESI data for this character

@@ -25,7 +25,8 @@
 param(
     [string]$Language = "zh",
     [string]$OutputCode = "",
-    [string]$SdeUrl = "https://eve-static-data-export.s3-eu-west-1.amazonaws.com/tranquility/sde.zip"
+    [string]$SdeUrl = "",
+    [string]$LocalZip = ""
 )
 
 if ([string]::IsNullOrEmpty($OutputCode)) {
@@ -43,21 +44,34 @@ Write-Host "`n=== EveLens SDE Translation Generator ===" -ForegroundColor Cyan
 if (Test-Path $TempDir) { Remove-Item $TempDir -Recurse -Force }
 New-Item -ItemType Directory -Path $TempDir | Out-Null
 
-# Download SDE
-$sdeZip = Join-Path $TempDir "sde.zip"
-Write-Host "  Downloading SDE..." -ForegroundColor Yellow
-Write-Host "  URL: $SdeUrl" -ForegroundColor Gray
-
-try {
-    $ProgressPreference = 'SilentlyContinue'
-    Invoke-WebRequest -Uri $SdeUrl -OutFile $sdeZip -UseBasicParsing
-    $ProgressPreference = 'Continue'
-    $sizeMB = [math]::Round((Get-Item $sdeZip).Length / 1MB, 1)
-    Write-Host "  Downloaded: $sizeMB MB" -ForegroundColor Green
+# Resolve the SDE zip: use -LocalZip if given, else download from CCP's official
+# distribution (Law 15: developers.eveonline.com/static-data, never Fuzzwork/S3 mirrors).
+if (-not [string]::IsNullOrEmpty($LocalZip)) {
+    $sdeZip = $LocalZip
+    Write-Host "  Using local SDE zip: $sdeZip" -ForegroundColor Green
 }
-catch {
-    Write-Error "Failed to download SDE: $_"
-    exit 1
+else {
+    if ([string]::IsNullOrEmpty($SdeUrl)) {
+        Write-Host "  Resolving latest SDE build..." -ForegroundColor Yellow
+        $latest = Invoke-RestMethod -Uri "https://developers.eveonline.com/static-data/tranquility/latest.jsonl" -UseBasicParsing
+        $build = $latest.buildNumber
+        $SdeUrl = "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-$build-yaml.zip"
+        Write-Host "  Latest build: $build" -ForegroundColor Green
+    }
+    $sdeZip = Join-Path $TempDir "sde.zip"
+    Write-Host "  Downloading SDE..." -ForegroundColor Yellow
+    Write-Host "  URL: $SdeUrl" -ForegroundColor Gray
+    try {
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $SdeUrl -OutFile $sdeZip -UseBasicParsing
+        $ProgressPreference = 'Continue'
+        $sizeMB = [math]::Round((Get-Item $sdeZip).Length / 1MB, 1)
+        Write-Host "  Downloaded: $sizeMB MB" -ForegroundColor Green
+    }
+    catch {
+        Write-Error "Failed to download SDE: $_"
+        exit 1
+    }
 }
 
 # Extract only the files we need
@@ -66,10 +80,11 @@ Write-Host "  Extracting typeIDs.yaml and groupIDs.yaml..." -ForegroundColor Yel
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($sdeZip)
 
+# August 2026+ SDE zips use flat paths; older ones prefixed with fsd/
 $targetFiles = @(
-    "fsd/types.yaml",
-    "fsd/groups.yaml",
-    "fsd/marketGroups.yaml"
+    "fsd/types.yaml", "types.yaml",
+    "fsd/groups.yaml", "groups.yaml",
+    "fsd/marketGroups.yaml", "marketGroups.yaml"
 )
 
 foreach ($entry in $zip.Entries) {

@@ -79,6 +79,14 @@ namespace EveLens.Common.SettingsObjects
         public string Language { get; set; } = "en";
 
         /// <summary>
+        /// Whether game names (ships, items, skills) use the translated SDE names or English.
+        /// Auto follows the language's community convention (English for Korean, translated
+        /// for Chinese — see LanguageRegistry). Evaluate via StaticTranslations, not directly.
+        /// </summary>
+        [XmlElement("gameNameMode")]
+        public GameNameMode GameNameMode { get; set; } = GameNameMode.Auto;
+
+        /// <summary>
         /// Path to a custom browser executable. When empty, uses the OS default browser.
         /// </summary>
         [XmlElement("customBrowserPath")]
@@ -96,6 +104,15 @@ namespace EveLens.Common.SettingsObjects
         /// </summary>
         [XmlElement("minimizeToTray")]
         public bool MinimizeToTray { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether EveLens registers itself to launch at OS login,
+        /// starting quietly in the system tray (Issue #72). The OS-level registration
+        /// (registry Run key / autostart entry) is applied by StartupRegistrationService;
+        /// this setting is the source of truth it syncs from.
+        /// </summary>
+        [XmlElement("runAtStartup")]
+        public bool RunAtStartup { get; set; }
 
         /// <summary>
         /// Gets or sets the main window close behaviour.

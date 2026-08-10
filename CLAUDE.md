@@ -631,4 +631,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/install-hooks.p
 - Settings location: `%APPDATA%\EveLens\`
 - **Version:** 1.3.0-beta.3
 - **Tests:** 1857 passing
-- **SDE:** Build 3328718 (51,551 types, 2,697 groups)
+- **SDE:** Build 3458726, Aug 2026 (52,539 types, 2,723 groups, 68,407 planets)

@@ -69,7 +69,12 @@ namespace EveLens.Common.ViewModels
 
                 if (_plan != null)
                 {
-                    _displayPlan = new PlanScratchpad(_plan.Character);
+                    _displayPlan = new PlanScratchpad(_plan.Character)
+                    {
+                        // Keep implants in sync from creation — statistics (and the
+                        // optimizer, which analyzes the display plan) depend on it
+                        ChosenImplantSet = _plan.ChosenImplantSet,
+                    };
                     _sortCriteria = _plan.SortingPreferences.Criteria;
                     _sortOrder = _plan.SortingPreferences.Order;
                     _groupByPriority = _plan.SortingPreferences.GroupByPriority;
@@ -280,12 +285,24 @@ namespace EveLens.Common.ViewModels
 
             _displayPlan.RebuildPlanFrom(_plan, true);
 
-            // Share remapping points
+            // Share remapping points — matched by skill+level, NOT by index. The display
+            // plan can be in a different order than the plan (sort active, preserved old
+            // entries), and index mapping silently moved remap points onto the wrong rows
+            // or dropped them — the "remap band vanishes when I click" bug (Issue #71).
             PlanEntry[] srcEntries = _plan.ToArray();
             PlanEntry[] destEntries = _displayPlan.ToArray();
-            for (int i = 0; i < srcEntries.Length && i < destEntries.Length; i++)
+            foreach (PlanEntry dest in destEntries)
             {
-                destEntries[i].Remapping = srcEntries[i].Remapping;
+                PlanEntry? src = null;
+                foreach (PlanEntry candidate in srcEntries)
+                {
+                    if (candidate.Skill == dest.Skill && candidate.Level == dest.Level)
+                    {
+                        src = candidate;
+                        break;
+                    }
+                }
+                dest.Remapping = src?.Remapping!;
             }
 
             // Apply sort

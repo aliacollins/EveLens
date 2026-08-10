@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+        x:Class="EveLens.Avalonia.Views.Dialogs.AutoUpdateOptInWindow"
+        Title="{loc:T AutoUpdate.Title}"
+        Width="480" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        CanResize="False">
+
+    <StackPanel Margin="24,20" Spacing="14">
+
+        <TextBlock Text="{loc:T AutoUpdate.Heading}"
+                   FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
+                   Foreground="{StaticResource EveAccentPrimaryBrush}" />
+
+        <TextBlock Text="{loc:T AutoUpdate.Body}"
+                   FontSize="{DynamicResource EveFontBody}"
+                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                   TextWrapping="Wrap" LineHeight="20" />
+
+        <TextBlock Text="{loc:T AutoUpdate.ChangeAnytime}"
+                   FontSize="{DynamicResource EveFontSmall}"
+                   Foreground="{StaticResource EveTextDisabledBrush}"
+                   TextWrapping="Wrap" />
+
+        <StackPanel Orientation="Horizontal" Spacing="8"
+                    HorizontalAlignment="Right" Margin="0,6,0,0">
+            <Button x:Name="NotifyOnlyButton" Content="{loc:T AutoUpdate.NotifyOnly}"
+                    FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12" />
+            <Button x:Name="OptInButton" Content="{loc:T AutoUpdate.OptIn}"
+                    FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
+                    Background="{StaticResource EveAccentPrimaryBrush}"
+                    Foreground="#FF1A1A2E" FontWeight="SemiBold" />
+        </StackPanel>
+
+    </StackPanel>
+</Window>

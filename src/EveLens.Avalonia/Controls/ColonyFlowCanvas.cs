@@ -52,9 +52,14 @@ namespace EveLens.Avalonia.Controls
         protected override void OnSizeChanged(SizeChangedEventArgs e)
         {
             base.OnSizeChanged(e);
-            if (_nodes.Count > 0)
+            if (_nodes.Count > 0 && e.NewSize.Width > 100)
             {
-                _needsRelayout = true;
+                // Relayout NOW, synchronously with the size change, so node positions are
+                // always computed from the same bounds the next frame draws with. Deferring
+                // to Render (the old _needsRelayout pattern) drew one frame with stale node
+                // positions during interactive resize — the transient right-side gap (#66).
+                _needsRelayout = false;
+                RelayoutWithWidth((float)e.NewSize.Width);
                 InvalidateVisual();
             }
         }
