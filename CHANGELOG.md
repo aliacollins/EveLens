@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 1.4.1 corrective: full 1.4.0 content train plus promote-script content verification
-- promote.ps1: unambiguous refs/heads merges + post-merge content verification
-- beta.5 train: community fixes, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in
+
+## [1.4.1] - 2026-08-10
+
+### Fixed
+
+- **v1.4.0 installer shipped without the 1.4.0 features** -- A release-pipeline bug merged a stale snapshot into the build (a git tag and branch shared the name "beta", and the wrong one won). 1.4.1 is the release 1.4.0 was supposed to be; everything below is included. The pipeline now verifies merged content before any release.
 
 ### Added
 
