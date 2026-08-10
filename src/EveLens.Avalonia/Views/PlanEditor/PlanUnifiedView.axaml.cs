@@ -521,6 +521,17 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 QueueListControl.Reordered += OnQueueReordered;
                 QueueListControl.SkillDoubleClicked += OnQueueSkillDoubleClicked;
+                // Right-click menu on queue rows: reuse the full skill context menu (Plan to
+                // level, move, priority, Insert Remap Point). The menu was previously only
+                // attached in the legacy row builder that no longer renders, leaving the
+                // advertised remap flow unreachable (Issue #71).
+                QueueListControl.ContextMenuFactory = queueItem =>
+                {
+                    var displayItem = FindDisplayItemForQueueItem(queueItem);
+                    return displayItem != null
+                        ? BuildSkillContextMenu(displayItem)
+                        : new ContextMenu();
+                };
                 _queueEventsWired = true;
             }
         }
@@ -579,7 +590,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // Uncomputed: compact one-liner with hint
                 border.Child = new TextBlock
                 {
-                    Text = "\u25C7 Remap point \u2014 right-click to configure",
+                    Text = "\u25C7 " + Loc.Get("PlanEditor.RemapPointHint"),
                     FontSize = FontScaleService.Caption,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = new SolidColorBrush(Color.Parse("#99E6A817")),
@@ -597,7 +608,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             line.Children.Add(new TextBlock
             {
-                Text = "\u25C6 Remap \u2014",
+                Text = "\u25C6 " + Loc.Get("PlanEditor.RemapPrefix"),
                 FontSize = FontScaleService.Caption,
                 FontWeight = FontWeight.Bold,
                 Foreground = GoldBrush,
@@ -739,7 +750,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             menu.Items.Add(matchItem);
 
             // Set manually (opens dialog)
-            var manualItem = new MenuItem { Header = "Set attributes manually\u2026" };
+            var manualItem = new MenuItem { Header = Loc.Get("PlanEditor.SetAttrsManually") };
             manualItem.Click += async (_, _) =>
             {
                 try
@@ -756,7 +767,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             menu.Items.Add(new Separator());
 
             // Remove remap point
-            var removeItem = new MenuItem { Header = "Remove remap point" };
+            var removeItem = new MenuItem { Header = Loc.Get("PlanEditor.RemoveRemapPointLower") };
             removeItem.Click += (_, _) =>
             {
                 if (_viewModel?.Plan == null || divider.SourceEntry == null) return;
@@ -1173,11 +1184,24 @@ namespace EveLens.Avalonia.Views.PlanEditor
             return panel;
         }
 
+        /// <summary>
+        /// Maps a queue-row item back to its display item so the context menu operates on
+        /// the same object graph as the rest of the editor (move state, remap flags, etc).
+        /// Matches by skill ID + level — entries are unique per (skill, level) in a plan.
+        /// </summary>
+        private PlanEntryDisplayItem? FindDisplayItemForQueueItem(PlanQueueItem queueItem)
+        {
+            return _currentDisplayItems?
+                .OfType<PlanEntryDisplayItem>()
+                .FirstOrDefault(d => d.Entry.Skill.ID == queueItem.Entry.Skill.ID
+                    && d.Entry.Level == queueItem.Entry.Level);
+        }
+
         private ContextMenu BuildSkillContextMenu(PlanEntryDisplayItem item)
         {
             var menu = new ContextMenu();
 
-            var planToMenu = new MenuItem { Header = "Plan to Level" };
+            var planToMenu = new MenuItem { Header = Loc.Get("PlanEditor.PlanToLevel") };
             int currentLevel = (int)item.Entry.Level;
             for (int lvl = 1; lvl <= 5; lvl++)
             {
@@ -1223,74 +1247,47 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 planToMenu.Items.Add(mi);
             }
             menu.Items.Add(planToMenu);
-            menu.Items.Add(new Separator());
 
-            var moveUp = new MenuItem { Header = "Move Up", IsEnabled = item.CanMoveUp };
-            moveUp.Click += (_, _) => MoveItemUp(item);
-            menu.Items.Add(moveUp);
+            // View Details — same as double-clicking the row (opens the sidebar detail pane).
+            // Deliberately NO Move Up/Down/Top here: drag-and-drop owns reordering, and the
+            // duplicated menu items operated on a stale index model (Issue #71 feedback).
+            var details = new MenuItem { Header = Loc.Get("PlanEditor.ViewDetails") };
+            details.Click += (_, _) => ShowSkillDetail(item.Entry.Skill);
+            menu.Items.Add(details);
 
-            var moveDown = new MenuItem { Header = "Move Down", IsEnabled = item.CanMoveDown };
-            moveDown.Click += (_, _) => MoveItemDown(item);
-            menu.Items.Add(moveDown);
-
-            var moveTop = new MenuItem { Header = "Move to Top" };
-            moveTop.Click += (_, _) => OnMoveToTopItem(item);
-            menu.Items.Add(moveTop);
-
-            var priority = new MenuItem { Header = "Change Priority..." };
+            var priority = new MenuItem { Header = Loc.Get("PlanEditor.ChangePriority") };
             priority.Click += (_, _) => OnChangePriorityItem(item);
             menu.Items.Add(priority);
 
             menu.Items.Add(new Separator());
 
-            var copy = new MenuItem { Header = "Copy to Clipboard" };
-            copy.Click += (_, _) => CopyPlanToClipboard();
-            menu.Items.Add(copy);
-
-            menu.Items.Add(new Separator());
-
             bool hasRemap = item.Entry.Remapping != null;
-            // Count existing remap points in the plan and check against available remaps
-            int existingRemapCount = _viewModel?.Plan?.Count(e => e.Remapping != null) ?? 0;
-            int availableRemaps = 0;
-            bool canRemapTimed = false;
-            if (_viewModel?.Character is Character charForRemap)
-            {
-                availableRemaps = charForRemap.AvailableReMaps;
-                canRemapTimed = charForRemap.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= charForRemap.LastReMapTimed.AddDays(365);
-            }
-            int totalRemapsAllowed = availableRemaps + (canRemapTimed ? 1 : 0);
-            bool canInsertRemap = hasRemap || existingRemapCount < totalRemapsAllowed;
 
-            var remapItem = new MenuItem
-            {
-                Header = hasRemap ? "Remove Remap Point" : "Insert Remap Point",
-                IsEnabled = canInsertRemap,
-            };
-            if (!canInsertRemap)
-                ToolTip.SetTip(remapItem, $"No remaps available ({existingRemapCount} used of {totalRemapsAllowed})");
-            remapItem.Click += (_, _) =>
-            {
-                if (_viewModel?.Plan == null) return;
-                // Set on the ORIGINAL plan entry, not the display copy
-                var planEntry = _viewModel.Plan.GetEntry(item.Entry.Skill, item.Entry.Level);
-                if (planEntry == null) return;
+            // Attribute remapping lives in its own window now — inline plan-table mutation
+            // proved fragile and undiscoverable (Issue #71). One entry point, atomic apply.
+            var optimizeItem = new MenuItem { Header = "⚡ " + Loc.Get("PlanEditor.OptimizeAttributes") };
+            optimizeItem.Click += (_, _) => OpenOptimizeWindow();
+            menu.Items.Add(optimizeItem);
 
-                if (hasRemap)
+            if (hasRemap)
+            {
+                var removeRemap = new MenuItem { Header = Loc.Get("PlanEditor.RemoveRemapPoint") };
+                removeRemap.Click += (_, _) =>
+                {
+                    if (_viewModel?.Plan == null) return;
+                    var planEntry = _viewModel.Plan.GetEntry(item.Entry.Skill, item.Entry.Level);
+                    if (planEntry == null) return;
                     planEntry.Remapping = null!;
-                else
-                    planEntry.Remapping = new RemappingPoint();
-
-                _viewModel.UpdateDisplayPlan();
-                Refresh();
-                BuildSidebarContent();
-            };
-            menu.Items.Add(remapItem);
+                    _viewModel.UpdateDisplayPlan();
+                    Refresh();
+                    BuildSidebarContent();
+                };
+                menu.Items.Add(removeRemap);
+            }
 
             menu.Items.Add(new Separator());
 
-            var remove = new MenuItem { Header = "Remove from Plan" };
+            var remove = new MenuItem { Header = Loc.Get("PlanEditor.RemoveFromPlan") };
             remove.Click += (_, _) => RemoveItem(item);
             menu.Items.Add(remove);
 
@@ -1477,7 +1474,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var heroStack = new StackPanel { Spacing = 4 };
             heroStack.Children.Add(new TextBlock
             {
-                Text = skill.Name,
+                Text = skill.LocalizedName,
                 FontSize = FontScaleService.Subheading,
                 FontWeight = FontWeight.SemiBold,
                 Foreground = accentBrush,
@@ -1608,7 +1605,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 {
                     var removeBtn = new Button
                     {
-                        Content = "Remove",
+                        Content = Loc.Get("PlanEditor.Remove"),
                         Background = Brushes.Transparent,
                         Foreground = errorBrush,
                         BorderThickness = new Thickness(0),
@@ -1647,12 +1644,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 });
 
                 var skillsWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-                foreach (var dep in dependents.OrderBy(d => d.Skill.Name))
+                foreach (var dep in dependents.OrderBy(d => d.Skill.LocalizedName))
                 {
                     var capturedSkill = dep.Skill;
                     var chip = new Button
                     {
-                        Content = dep.Skill.Name,
+                        Content = dep.Skill.LocalizedName,
                         Background = new SolidColorBrush(Color.Parse("#18FFFFFF")),
                         Foreground = accentBrush,
                         BorderThickness = new Thickness(0),
@@ -1709,7 +1706,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                         row.Children.Add(new TextBlock
                         {
-                            Text = x.Item.Name,
+                            Text = x.Item.LocalizedName,
                             FontSize = FontScaleService.Small,
                             Foreground = secondaryBrush,
                             VerticalAlignment = VerticalAlignment.Center,
@@ -1740,13 +1737,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (parentWindow == null) return false;
 
             string message = targetLevel == 0
-                ? $"Remove {skill.Name} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
-                : $"Downgrade {skill.Name} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
+                ? $"Remove {skill.LocalizedName} from this plan?\n\nThis will also remove any skills in the plan that depend on it."
+                : $"Downgrade {skill.LocalizedName} to level {targetLevel}?\n\nSkills in the plan that require a higher level will also be removed.";
 
             var result = false;
             var dialog = new Window
             {
-                Title = "Confirm Change",
+                Title = Loc.Get("PlanEditor.ConfirmChange"),
                 Width = 380, Height = 180,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Background = (IBrush)Application.Current!.FindResource("EveBackgroundDarkBrush")!,
@@ -1777,7 +1774,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var cancelBtn = new Button
             {
-                Content = "Cancel",
+                Content = Loc.Get("Action.Cancel"),
                 MinWidth = 80,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
             };
@@ -1785,7 +1782,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var confirmBtn = new Button
             {
-                Content = targetLevel == 0 ? "Remove" : "Downgrade",
+                Content = targetLevel == 0 ? Loc.Get("PlanEditor.Remove") : Loc.Get("PlanEditor.Downgrade"),
                 MinWidth = 80,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 Foreground = (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!,
@@ -1953,7 +1950,69 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 }
 
                 SidebarContent.Children.Add(remapLine);
+
+                // \u2500\u2500 Applied remap points: where each one sits + its attribute spread, and
+                // the remove action. Lives HERE (state that is in effect) rather than in the
+                // optimizer modal (which is for deciding).
+                BuildAppliedRemapsSection();
             }
+        }
+
+        private void BuildAppliedRemapsSection()
+        {
+            var applied = _viewModel?.Plan?
+                .Where(e => e.Remapping != null)
+                .ToList();
+            if (applied == null || applied.Count == 0)
+                return;
+
+            foreach (var entry in applied)
+            {
+                var rp = entry.Remapping;
+                var block = new StackPanel { Spacing = 1, Margin = new Thickness(0, 6, 0, 0) };
+
+                block.Children.Add(new TextBlock
+                {
+                    Text = "\u25C6 " + string.Format(Loc.Get("PlanEditor.RemapAt"),
+                        $"{entry.Skill.LocalizedName} {Common.Models.Skill.GetRomanFromInt(entry.Level)}"),
+                    FontSize = FontScaleService.Small,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = GoldBrush,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                });
+                if (rp.Status == RemappingPointStatus.UpToDate)
+                {
+                    block.Children.Add(new TextBlock
+                    {
+                        Text = $"PER {rp[EveAttribute.Perception]}  WIL {rp[EveAttribute.Willpower]}  " +
+                               $"INT {rp[EveAttribute.Intelligence]}  MEM {rp[EveAttribute.Memory]}  " +
+                               $"CHA {rp[EveAttribute.Charisma]}",
+                        FontSize = FontScaleService.Small,
+                        Foreground = new SolidColorBrush(Color.Parse("#FFB0B0B0")),
+                    });
+                }
+                SidebarContent.Children.Add(block);
+            }
+
+            var removeBtn = new Button
+            {
+                Content = Loc.Get("Optimizer.ResetRemaps"),
+                FontSize = FontScaleService.Small,
+                Padding = new Thickness(10, 4),
+                CornerRadius = new CornerRadius(12),
+                Margin = new Thickness(0, 6, 0, 0),
+            };
+            ToolTip.SetTip(removeBtn, Loc.Get("Optimizer.ResetRemapsTip"));
+            removeBtn.Click += (_, _) =>
+            {
+                if (_viewModel?.Plan == null) return;
+                Common.Services.RemapPlanningService.ClearRemaps(_viewModel.Plan);
+                _viewModel.UpdateDisplayPlan();
+                Refresh();
+                BuildSidebarContent();
+                UpdateParentStatusBar();
+            };
+            SidebarContent.Children.Add(removeBtn);
         }
 
         private void BuildOptimizeSection(Character? character)
@@ -2167,7 +2226,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         {
                             SidebarContent.Children.Add(new TextBlock
                             {
-                                Text = "Top improved:",
+                                Text = Loc.Get("PlanEditor.TopImproved"),
                                 FontSize = FontScaleService.Small,
                                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                                 Margin = new Thickness(0, 4, 0, 2),
@@ -2191,7 +2250,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // Re-analyze button
                 var rerunBtn = new Button
                 {
-                    Content = "\u21BB Re-analyze",
+                    Content = "\u21BB " + Loc.Get("PlanEditor.Reanalyze"),
                     FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
@@ -2204,8 +2263,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var advToggle = new Button
                 {
                     Content = _showAdvanced
-                        ? "Hide manual adjustment \u25B4"
-                        : "Adjust manually \u25BE",
+                        ? Loc.Get("PlanEditor.HideManualAdjust") + " \u25B4"
+                        : Loc.Get("PlanEditor.AdjustManually") + " \u25BE",
                     FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
@@ -2240,7 +2299,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                 var retryBtn = new Button
                 {
-                    Content = "Try Again",
+                    Content = Loc.Get("AddChar.TryAgain"),
                     FontSize = FontScaleService.Small,
                     Padding = new Thickness(8, 3),
                     CornerRadius = new CornerRadius(12),
@@ -2253,14 +2312,51 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // ── State: Not yet run ──
             var optimizeBtn = new Button
             {
-                Content = "\u26A1 Optimize Plan",
+                Content = "\u26A1 " + Loc.Get("PlanEditor.OptimizePlan"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(12),
                 Margin = new Thickness(0, 2, 0, 0),
             };
-            optimizeBtn.Click += (_, _) => EnsureOptimizationRun();
+            optimizeBtn.Click += (_, _) => OpenOptimizeWindow();
             SidebarContent.Children.Add(optimizeBtn);
+        }
+
+        /// <summary>
+        /// Opens the dedicated Optimize Attributes window (Issue #71). All remap analysis
+        /// and application happens there atomically; the editor refreshes once on Apply.
+        /// </summary>
+        private async void OpenOptimizeWindow()
+        {
+            try
+            {
+                if (_viewModel?.Plan == null || _viewModel.Character is not Character character)
+                    return;
+
+                var window = new Dialogs.OptimizeAttributesWindow();
+                // Analyze the DISPLAY plan (the sorted order shown in the panel — training
+                // order changes total time), apply to the REAL plan.
+                BasePlan analysisPlan = _viewModel.DisplayPlan != null
+                    ? _viewModel.DisplayPlan : _viewModel.Plan;
+                window.Initialize(analysisPlan, _viewModel.Plan, character);
+                window.Applied += () =>
+                {
+                    _viewModel.UpdateDisplayPlan();
+                    Refresh();
+                    BuildSidebarContent();
+                    UpdateParentStatusBar();
+                };
+
+                var owner = TopLevel.GetTopLevel(this) as Window;
+                if (owner != null)
+                    await window.ShowDialog(owner);
+                else
+                    window.Show();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening optimizer window: {ex}");
+            }
         }
 
         private void BuildAdvancedAttributeSection()
@@ -2338,7 +2434,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 durationLine.Children.Add(new TextBlock
                 {
-                    Text = "Drag to see time impact",
+                    Text = Loc.Get("PlanEditor.DragTimeImpact"),
                     FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF606060")),
                 });
@@ -2483,7 +2579,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var resetOptBtn = new Button
             {
-                Content = "Reset to optimal",
+                Content = Loc.Get("PlanEditor.ResetToOptimal"),
                 FontSize = FontScaleService.Caption,
                 Padding = new Thickness(6, 2),
                 CornerRadius = new CornerRadius(10),
@@ -2497,7 +2593,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var resetCurBtn = new Button
             {
-                Content = "Reset to current",
+                Content = Loc.Get("PlanEditor.ResetToCurrent"),
                 FontSize = FontScaleService.Caption,
                 Padding = new Thickness(6, 2),
                 CornerRadius = new CornerRadius(10),
@@ -2585,7 +2681,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             SidebarContent.Children.Add(new TextBlock
             {
-                Text = "Browse and add skills to your training plan.",
+                Text = Loc.Get("PlanEditor.BrowseAddSkills"),
                 FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF707070")),
                 TextWrapping = TextWrapping.Wrap,
@@ -2594,7 +2690,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             SidebarContent.Children.Add(new TextBlock
             {
-                Text = "Use the Skills, Ships, Items, or Blueprints tabs to add skills to your plan.",
+                Text = Loc.Get("PlanEditor.UseTabsToAdd"),
                 FontSize = FontScaleService.Small,
                 Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 TextWrapping = TextWrapping.Wrap,
@@ -2877,6 +2973,30 @@ namespace EveLens.Avalonia.Views.PlanEditor
             UpdateParentStatusBar();
         }
 
+        private void RemoveEntries(IReadOnlyList<PlanEntry> entries)
+        {
+            if (_viewModel?.Plan == null || entries.Count == 0) return;
+
+            var plan = _viewModel.Plan;
+            // Re-resolve against the live plan by (skill, level) identity — the selected entries come
+            // from the queue VM's snapshot, which may not be the same instances the plan holds.
+            var planEntries = entries
+                .Select(e => plan.GetEntry(e.Skill, e.Level))
+                .Where(e => e != null)
+                .ToList();
+
+            if (planEntries.Count > 0)
+            {
+                var op = plan.TryRemoveSet(planEntries);
+                op.Perform();
+            }
+
+            _viewModel.UpdateDisplayPlan();
+            Refresh();
+            BuildSidebarContent();
+            UpdateParentStatusBar();
+        }
+
         #endregion
 
         #region Move Operations
@@ -2986,8 +3106,24 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         internal void DeleteSelected()
         {
-            // Delete first visible entry (keyboard shortcut)
-            // Full multi-select would need selection tracking on ItemsControl
+            // Queue mode: delete the entries the user actually selected, mirroring MoveSelectionUp/Down.
+            // Previously this deleted _currentEntryItems.FirstOrDefault() — always the top row — which
+            // removed the wrong skill (and its dependents via the cascade). (Issue #80)
+            if (QueueListControl.IsVisible && _queueVm != null)
+            {
+                var indices = QueueListControl.GetSelectedIndicesSorted();
+                if (indices.Count == 0) return;
+
+                var entries = indices
+                    .Where(i => i >= 0 && i < _queueVm.Items.Count)
+                    .Select(i => _queueVm.Items[i].Entry)
+                    .Where(entry => entry != null)
+                    .ToList();
+                if (entries.Count > 0) RemoveEntries(entries);
+                return;
+            }
+
+            // Legacy display path (no queue selection model): fall back to the first entry.
             if (_currentEntryItems == null || _currentEntryItems.Count == 0) return;
             var item = _currentEntryItems.FirstOrDefault();
             if (item != null) RemoveItem(item);

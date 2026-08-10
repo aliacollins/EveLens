@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMailMessagesView">
 
     <Panel>
@@ -48,12 +49,12 @@
                         <ComboBox x:Name="GroupByCombo" FontSize="{DynamicResource EveFontBody}" Padding="8,3"
                                   MinWidth="100" SelectedIndex="0"
                                   SelectionChanged="OnGroupByChanged">
-                            <ComboBoxItem Content="State" />
-                            <ComboBoxItem Content="Sent Date" />
-                            <ComboBoxItem Content="Sender" />
-                            <ComboBoxItem Content="Subject" />
-                            <ComboBoxItem Content="Recipient" />
-                            <ComboBoxItem Content="Corp/Alliance" />
+                            <ComboBoxItem Content="{loc:T Column.State}" />
+                            <ComboBoxItem Content="{loc:T ListView.SentDate}" />
+                            <ComboBoxItem Content="{loc:T ListView.Sender}" />
+                            <ComboBoxItem Content="{loc:T ListView.Subject}" />
+                            <ComboBoxItem Content="{loc:T ListView.Recipient}" />
+                            <ComboBoxItem Content="{loc:T ListView.CorpAlliance}" />
                         </ComboBox>
                         <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnCollapseAll" />
@@ -75,7 +76,7 @@
                                     Click="OnClearFilter"
                                     IsVisible="False" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="Search mail..."
+                                     Watermark="{loc:T ListView.SearchMail}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -95,8 +96,8 @@
 
             <!-- Empty state -->
             <shared:EmptyState x:Name="EmptyState" IsVisible="False"
-                               Title="No mail messages"
-                               Subtitle="Mail messages from EVE Online will appear here" />
+                               Title="{loc:T ListView.NoMail}"
+                               Subtitle="{loc:T ListView.NoMailDesc}" />
 
             <!-- Gmail-style split: mail list (left) + reading pane (right) -->
             <Grid ColumnDefinitions="*,8,*">
@@ -215,7 +216,7 @@
                     <Panel>
                         <!-- No mail selected state -->
                         <TextBlock x:Name="ReadingPanePlaceholder"
-                                   Text="Select a mail to read"
+                                   Text="{loc:T ListView.SelectMail}"
                                    FontSize="{DynamicResource EveFontBody}"
                                    Foreground="{StaticResource EveTextDisabledBrush}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -228,7 +229,7 @@
                                     BorderBrush="{StaticResource EveBorderBrush}"
                                     BorderThickness="0,0,0,1">
                                 <StackPanel Spacing="4">
-                                    <Button Content="&#x2190; Back to list"
+                                    <Button Content="{loc:T ListView.BackToList}"
                                             Background="Transparent" BorderThickness="0"
                                             Foreground="{StaticResource EveTextSecondaryBrush}"
                                             FontSize="{DynamicResource EveFontSmall}"

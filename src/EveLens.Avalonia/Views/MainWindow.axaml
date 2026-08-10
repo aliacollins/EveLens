@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:EveLens.Avalonia.Views.CharacterMonitor"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.MainWindow"
         Title="EveLens"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -47,6 +48,7 @@
                 <MenuItem x:Name="ReportIssueMenuItem" Header="_Report Issue" />
                 <Separator />
                 <MenuItem x:Name="KeyboardShortcutsMenuItem" Header="_Keyboard Shortcuts" />
+                <MenuItem x:Name="WhatsNewMenuItem" Header="What's _New" />
                 <MenuItem x:Name="AboutMenuItem" Header="_About EveLens" />
             </MenuItem>
         </Menu>
@@ -67,11 +69,11 @@
                 <TextBlock DockPanel.Dock="Right" x:Name="EsiActivityText"
                            Text="" FontSize="{DynamicResource EveFontBody}" HorizontalAlignment="Right"
                            Foreground="{StaticResource EveTextSecondaryBrush}"
-                           ToolTip.Tip="Time since the last ESI endpoint returned data" />
+                           ToolTip.Tip="{loc:T Status.EsiActivityTip}" />
 
                 <!-- Privacy mode flyout -->
                 <Button x:Name="PrivacyBtn" DockPanel.Dock="Right"
-                        ToolTip.Tip="Privacy mode — hide sensitive values for screenshots"
+                        ToolTip.Tip="{loc:T Privacy.ButtonTip}"
                         Padding="6,3" CornerRadius="12"
                         Background="Transparent" BorderThickness="0"
                         VerticalAlignment="Center" Cursor="Hand">
@@ -85,28 +87,28 @@
                                     <!-- Header -->
                                     <Border Padding="12,8"
                                             BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
-                                        <TextBlock Text="Privacy Mode" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:T Privacy.Mode}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                                    Foreground="{StaticResource EveAccentPrimaryBrush}" />
                                     </Border>
                                     <!-- Category checkboxes -->
                                     <StackPanel Margin="12,6,12,4" Spacing="4">
-                                        <CheckBox x:Name="PrivacyNameCb" Content="Character Name" FontSize="{DynamicResource EveFontBody}"
+                                        <CheckBox x:Name="PrivacyNameCb" Content="{loc:T Privacy.CharacterName}" FontSize="{DynamicResource EveFontBody}"
                                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                                        <CheckBox x:Name="PrivacyCorpCb" Content="Corp / Alliance" FontSize="{DynamicResource EveFontBody}"
+                                        <CheckBox x:Name="PrivacyCorpCb" Content="{loc:T Privacy.CorpAlliance}" FontSize="{DynamicResource EveFontBody}"
                                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                                        <CheckBox x:Name="PrivacyBalanceCb" Content="ISK Balance" FontSize="{DynamicResource EveFontBody}"
+                                        <CheckBox x:Name="PrivacyBalanceCb" Content="{loc:T Privacy.IskBalance}" FontSize="{DynamicResource EveFontBody}"
                                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                                        <CheckBox x:Name="PrivacySkillPointsCb" Content="Skill Points" FontSize="{DynamicResource EveFontBody}"
+                                        <CheckBox x:Name="PrivacySkillPointsCb" Content="{loc:T Privacy.SkillPoints}" FontSize="{DynamicResource EveFontBody}"
                                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                                        <CheckBox x:Name="PrivacyTrainingCb" Content="Training Queue" FontSize="{DynamicResource EveFontBody}"
+                                        <CheckBox x:Name="PrivacyTrainingCb" Content="{loc:T Privacy.TrainingQueue}" FontSize="{DynamicResource EveFontBody}"
                                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
-                                        <CheckBox x:Name="PrivacyRemapsCb" Content="Remaps" FontSize="{DynamicResource EveFontBody}"
+                                        <CheckBox x:Name="PrivacyRemapsCb" Content="{loc:T Privacy.Remaps}" FontSize="{DynamicResource EveFontBody}"
                                                   Foreground="{StaticResource EveTextPrimaryBrush}" />
                                     </StackPanel>
                                     <!-- Toggle All button -->
                                     <Border Padding="12,4,12,8"
                                             BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
-                                        <Button x:Name="PrivacyToggleAllBtn" Content="Toggle All"
+                                        <Button x:Name="PrivacyToggleAllBtn" Content="{loc:T Privacy.ToggleAll}"
                                                 FontSize="{DynamicResource EveFontSmall}" Padding="10,4" CornerRadius="12"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Center"
@@ -135,7 +137,7 @@
                             Background="Transparent" BorderThickness="0"
                             Padding="8,0" VerticalAlignment="Center"
                             ClipToBounds="False"
-                            Cursor="Hand" ToolTip.Tip="Activity Log"
+                            Cursor="Hand" ToolTip.Tip="{loc:T Activity.Title}"
                             Click="OnBellClick">
                         <Panel ClipToBounds="False">
                             <TextBlock Text="&#x1F514;" FontSize="{DynamicResource EveFontTitle}" VerticalAlignment="Center" />
@@ -168,23 +170,23 @@
                                         BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                                     <DockPanel>
                                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
-                                            <Button x:Name="MarkReadBtn" Content="Mark Read"
+                                            <Button x:Name="MarkReadBtn" Content="{loc:T Activity.MarkRead}"
                                                     FontSize="{DynamicResource EveFontSmall}" Padding="8,2" CornerRadius="10"
                                                     Background="Transparent"
                                                     Foreground="{StaticResource EveTextSecondaryBrush}" />
-                                            <Button x:Name="ClearAllBtn" Content="Clear"
+                                            <Button x:Name="ClearAllBtn" Content="{loc:T Activity.Clear}"
                                                     FontSize="{DynamicResource EveFontSmall}" Padding="8,2" CornerRadius="10"
                                                     Background="Transparent"
                                                     Foreground="{StaticResource EveTextSecondaryBrush}" />
                                         </StackPanel>
-                                        <TextBlock Text="Activity Log" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:T Activity.Title}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                                    Foreground="{StaticResource EveAccentPrimaryBrush}"
                                                    VerticalAlignment="Center" />
                                     </DockPanel>
                                 </Border>
                                 <!-- Empty state -->
                                 <TextBlock x:Name="EmptyActivityText"
-                                           Text="No recent activity"
+                                           Text="{loc:T Activity.Empty}"
                                            FontSize="{DynamicResource EveFontBody}" Foreground="{StaticResource EveTextDisabledBrush}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                            Margin="0,40" IsVisible="False" />
@@ -231,7 +233,7 @@
                 <!-- Remaining space: next update countdown -->
                 <TextBlock x:Name="NextUpdateText" Text="" FontSize="{DynamicResource EveFontBody}"
                            Foreground="{StaticResource EveWarningYellowBrush}"
-                           ToolTip.Tip="Countdown to the next scheduled ESI data fetch. ESI endpoints have their own cache timers (typically 5-60 min) — this is not a polling rate." />
+                           ToolTip.Tip="{loc:T Status.NextUpdateTip}" />
             </DockPanel>
         </Border>
 
@@ -246,7 +248,7 @@
                 <Button x:Name="OverviewBtn" DockPanel.Dock="Left"
                         Classes="char-slot"
                         Width="56" Margin="4,0,2,0"
-                        ToolTip.Tip="Character Overview">
+                        ToolTip.Tip="{loc:T Strip.OverviewTip}">
                     <StackPanel Spacing="2" HorizontalAlignment="Center">
                         <Border Width="36" Height="36"
                                 Background="{StaticResource EveBackgroundMediumBrush}"
@@ -255,7 +257,7 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Foreground="{StaticResource EveAccentPrimaryBrush}" />
                         </Border>
-                        <TextBlock Text="Ovr" FontSize="{DynamicResource EveFontCaption}" MaxWidth="50"
+                        <TextBlock Text="{loc:T Strip.Overview}" FontSize="{DynamicResource EveFontCaption}" MaxWidth="50"
                                    TextAlignment="Center"
                                    Foreground="{StaticResource EveTextSecondaryBrush}"
                                    HorizontalAlignment="Center" Tag="SlotName" />
@@ -265,7 +267,7 @@
                 <!-- Scroll left -->
                 <Button x:Name="ScrollLeftBtn" DockPanel.Dock="Left"
                         Classes="strip-arrow"
-                        ToolTip.Tip="Scroll left">
+                        ToolTip.Tip="{loc:T Strip.ScrollLeft}">
                     <TextBlock Text="&#x2039;" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                VerticalAlignment="Center" HorizontalAlignment="Center" />
@@ -274,7 +276,7 @@
                 <!-- Scroll right -->
                 <Button x:Name="ScrollRightBtn" DockPanel.Dock="Right"
                         Classes="strip-arrow"
-                        ToolTip.Tip="Scroll right">
+                        ToolTip.Tip="{loc:T Strip.ScrollRight}">
                     <TextBlock Text="&#x203A;" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                VerticalAlignment="Center" HorizontalAlignment="Center" />
@@ -284,7 +286,7 @@
                 <Button x:Name="AddCharStripBtn" DockPanel.Dock="Right"
                         Classes="char-slot"
                         Width="56" Margin="2,0,4,0"
-                        ToolTip.Tip="Add Character">
+                        ToolTip.Tip="{loc:T Strip.AddTip}">
                     <StackPanel Spacing="2" HorizontalAlignment="Center">
                         <Border Width="36" Height="36"
                                 CornerRadius="4"
@@ -295,7 +297,7 @@
                                        HorizontalAlignment="Center" VerticalAlignment="Center"
                                        Foreground="{StaticResource EveAccentPrimaryBrush}" />
                         </Border>
-                        <TextBlock Text="Add" FontSize="{DynamicResource EveFontCaption}" MaxWidth="50"
+                        <TextBlock Text="{loc:T Strip.Add}" FontSize="{DynamicResource EveFontCaption}" MaxWidth="50"
                                    TextAlignment="Center"
                                    Foreground="{StaticResource EveTextDisabledBrush}"
                                    HorizontalAlignment="Center" Tag="SlotName" />

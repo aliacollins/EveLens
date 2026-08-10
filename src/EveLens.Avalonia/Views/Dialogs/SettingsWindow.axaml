@@ -223,6 +223,18 @@
                                       VerticalAlignment="Center" MinWidth="200" />
                         </Grid>
 
+                        <!-- Game names (only shown for languages with SDE translations) -->
+                        <Grid x:Name="GameNamesRow" ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock x:Name="GameNamesLabel" Text="Game Names" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="GameNamesDesc" Text="Show ship, item, and skill names translated or in English."
+                                           FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ComboBox x:Name="GameNamesCombo" Grid.Column="1"
+                                      FontSize="{DynamicResource EveFontBody}"
+                                      VerticalAlignment="Center" MinWidth="200" />
+                        </Grid>
+
                         <!-- Safe for Work -->
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel>
@@ -268,6 +280,18 @@
                                            Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="MinimizeToTrayToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Run at Startup (Windows/Linux only; row hidden elsewhere) -->
+                        <Grid x:Name="RunAtStartupRow" ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock x:Name="RunAtStartupLabel" Text="Run at Startup" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="RunAtStartupDesc" Text="Launch EveLens quietly in the system tray when you log in."
+                                           TextWrapping="Wrap" FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="RunAtStartupToggle" Grid.Column="1"
                                           VerticalAlignment="Center" />
                         </Grid>
 
@@ -498,6 +522,18 @@
                                            FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
                             </StackPanel>
                             <ToggleSwitch x:Name="CheckForUpdatesToggle" Grid.Column="1"
+                                          VerticalAlignment="Center" />
+                        </Grid>
+
+                        <!-- Auto-install updates -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel>
+                                <TextBlock x:Name="AutoInstallLabel" Text="Install Updates Automatically" FontSize="{DynamicResource EveFontBody}" />
+                                <TextBlock x:Name="AutoInstallDesc" Text="Downloaded updates install silently when you close EveLens. When off, you'll get a notification and update manually."
+                                           TextWrapping="Wrap" FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{DynamicResource EveTextSecondaryBrush}" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="AutoInstallToggle" Grid.Column="1"
                                           VerticalAlignment="Center" />
                         </Grid>
 

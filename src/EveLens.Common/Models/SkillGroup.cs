@@ -83,6 +83,12 @@ namespace EveLens.Common.Models
         public string Name => StaticData.Name;
 
         /// <summary>
+        /// Gets the group's name in the current UI language (falls back to English).
+        /// Use this for anything shown to the user.
+        /// </summary>
+        public string LocalizedName => StaticData.LocalizedName;
+
+        /// <summary>
         /// Gets the skill with the provided name
         /// </summary>
         /// <param name="name"></param>

@@ -37,11 +37,10 @@ namespace EveLens.Common.Models
             Colony = colony;
             ID = src.PinID;
             TypeID = src.TypeID;
-            TypeName = type.Name;
+            TypeName = type.LocalizedName;
             SchematicID = src.SchematicID;
             InstallTime = src.InstallTime;
             ExpiryTime = src.ExpiryTime;
-            State = GetState();
 
             if (extractor != null)
             {
@@ -49,14 +48,24 @@ namespace EveLens.Common.Models
                 QuantityPerCycle = extractor.QuantityPerCycle;
             }
 
-            // Old EveLens could only handle one item in contents
+            // Determine the pin's content/output type.
+            // Old EveLens could only handle one item in contents.
             if (contents != null && contents.Count > 0)
             {
                 var firstItem = contents[0];
                 int typeID = firstItem.TypeID;
                 ContentQuantity = firstItem.Amount;
                 ContentTypeID = typeID;
-                ContentTypeName = StaticItems.GetItemName(typeID);
+                ContentTypeName = StaticItems.GetLocalizedItemName(typeID);
+            }
+            else if (extractor != null && extractor.ProductTypeID > 0)
+            {
+                // An actively-extracting ECU routes material downstream immediately, so its
+                // `contents` array is empty. Fall back to the extractor's declared output
+                // product so the colony's final product resolves instead of showing "Unknown".
+                ContentQuantity = 0;
+                ContentTypeID = extractor.ProductTypeID;
+                ContentTypeName = StaticItems.GetLocalizedItemName(extractor.ProductTypeID);
             }
             else
             {
@@ -188,9 +197,15 @@ namespace EveLens.Common.Models
         public DateTime ExpiryTime { get; }
 
         /// <summary>
-        /// Gets or sets the jobs state.
+        /// Gets the pin's current state.
         /// </summary>
-        public PlanetaryPinState State { get; set; }
+        /// <remarks>
+        /// Computed live from <see cref="ExpiryTime"/> on every access rather than cached at
+        /// construction. An extractor that was running when its layout was fetched will correctly
+        /// report <see cref="PlanetaryPinState.Idle"/> once its expiry passes mid-session, instead
+        /// of remaining frozen as <see cref="PlanetaryPinState.Extracting"/> until the next refresh.
+        /// </remarks>
+        public PlanetaryPinState State => GetState();
 
         /// <summary>
         /// Gets the estimated time to completion.

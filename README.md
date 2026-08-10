@@ -196,7 +196,7 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## Features (as of 1.3.0)
+## What's New in 1.4.0
 
 ### Planning & Training
 - **Skill Planning** -- Multi-tab plan editor with drag-to-reorder, attribute group headers, prerequisite validation, and specific error messages

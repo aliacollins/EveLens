@@ -6,6 +6,7 @@
 using EveLens.Common.Attributes;
 using EveLens.Common.Constants;
 using EveLens.Common.CustomEventArgs;
+using EveLens.Common.Enumerations;
 using EveLens.Common.Enumerations.CCPAPI;
 using EveLens.Common.Extensions;
 using EveLens.Common.Helpers;
@@ -186,6 +187,36 @@ namespace EveLens.Common.Models
         /// </summary>
         public IEnumerable<CharacterIdentity> CharacterIdentities => EveLensClient.
             CharacterIdentities.Where(characterID => characterID.ESIKeys.Contains(this));
+
+        /// <summary>
+        /// Gets the ID of the character this key authenticates, captured from the last
+        /// successful token-info call and persisted with the key. Unlike
+        /// <see cref="CharacterIdentities"/> (which is only linked after a successful refresh),
+        /// this survives restarts even when the token is permanently dead, keeping the
+        /// key↔character association available for notifications and cleanup (Issue #94).
+        /// Zero for keys saved before this was persisted.
+        /// </summary>
+        [XmlIgnore]
+        public long CharacterID { get; private set; }
+
+        /// <summary>
+        /// Gets the name of the character this key authenticates (see <see cref="CharacterID"/>).
+        /// </summary>
+        [XmlIgnore]
+        public string CharacterName { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Restores the persisted key↔character association after deserialization. Pure field
+        /// restore — the identity re-link happens in
+        /// <see cref="Collections.Global.GlobalAPIKeyCollection"/>.Import, which only runs inside
+        /// an initialized client. Kept out of the deserialization constructor by design — that
+        /// constructor must stay minimal.
+        /// </summary>
+        internal void RestoreCharacterLink(long characterId, string characterName)
+        {
+            CharacterID = characterId;
+            CharacterName = characterName ?? string.Empty;
+        }
         
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="ESIKey"/> is monitored.
@@ -222,9 +253,14 @@ namespace EveLens.Common.Models
         public bool HasCharacterInTraining => TrainingCharacter != null;
         
         /// <summary>
-        /// Gets true if this API key got queried or is not monitored.
+        /// Gets true if this API key got queried, is not monitored, or can never be queried.
+        /// A key with an empty refresh token (dead grant cleared by the InvalidGrant handler,
+        /// or a never-authenticated key) will never complete a token query — treating it as
+        /// unprocessed made <c>AnyESIKeyUnprocessed()</c> true forever, which blocked the
+        /// query orchestrators for EVERY character: one dead key froze all ESI fetching
+        /// ("ESI: idle" with a freshly authenticated character, Issue #94 follow-up).
         /// </summary>
-        public bool IsProcessed => m_queried || !m_monitored;
+        public bool IsProcessed => m_queried || !m_monitored || string.IsNullOrEmpty(RefreshToken);
 
         #endregion
 
@@ -268,17 +304,51 @@ namespace EveLens.Common.Models
         /// obtained.
         /// </summary>
         /// <param name="response">The token response received from the server.</param>
-        private void OnAccessToken(AccessResponse response)
+        /// <param name="error">The classified failure reason when <paramref name="response"/>
+        /// is null, so the user gets an accurate, actionable message (Issue #94).</param>
+        private void OnAccessToken(AccessResponse response, SsoTokenError error)
         {
             m_queried = true;
 
             if (response == null)
             {
-                // If it errors out, avoid checking again for another 5 minutes
-                m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
-                AppServices.Notifications.NotifySSOError();
-                HasError = true;
                 m_queryPending = false;
+
+                switch (error)
+                {
+                    case SsoTokenError.Transient:
+                        // Network/timeout/5xx — not the token's fault. Don't alarm the user or
+                        // set HasError; just back off briefly and let the next tick retry. A
+                        // short delay (not 5 min) so recovery is quick once connectivity returns.
+                        m_keyExpires = DateTime.UtcNow.AddSeconds(30.0);
+                        AppServices.TraceService?.Trace(
+                            "Transient SSO token refresh failure for key " + ID + " — will retry.");
+                        break;
+
+                    case SsoTokenError.InvalidGrant:
+                        // The refresh token is dead (rotated/expired/revoked). Retrying can never
+                        // succeed, so clear it to STOP the every-5s retry spam, and tell the user
+                        // exactly which character to re-authenticate (Issue #94).
+                        RefreshToken = string.Empty;
+                        m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
+                        HasError = true;
+                        AppServices.Notifications.NotifySSOError(this, error);
+                        break;
+
+                    case SsoTokenError.InvalidClient:
+                        m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
+                        HasError = true;
+                        AppServices.Notifications.NotifySSOError(this, error);
+                        break;
+
+                    default:
+                        // Unknown — keep the previous conservative behaviour.
+                        m_keyExpires = DateTime.UtcNow.AddMinutes(5.0);
+                        HasError = true;
+                        AppServices.Notifications.NotifySSOError(this, error);
+                        break;
+                }
+
                 AppServices.TraceService?.Trace(ToString());
                 AppServices.EventAggregator?.Publish(CommonEvents.ESIKeyInfoUpdatedEvent.Instance);
             }
@@ -310,6 +380,9 @@ namespace EveLens.Common.Models
                 HasError = false;
                 ImportIdentities(tokenInfo);
                 AppServices.Notifications.InvalidateAPIError();
+                // Clear this key's own SSO error banner (it is scoped to the key) now that the
+                // refresh succeeded (Issue #94).
+                AppServices.Notifications.InvalidateSSOError(this);
 
                 // Notify health tracker that token refresh succeeded — resets Suspended state
                 foreach (var identity in CharacterIdentities)
@@ -490,6 +563,9 @@ namespace EveLens.Common.Models
         {
             var chars = AppServices.CharacterIdentities.Where(id => id.ESIKeys.Contains(this));
             long charID = tokenInfo.CharacterID;
+            // Record the association so it persists across restarts (Issue #94)
+            CharacterID = charID;
+            CharacterName = tokenInfo.CharacterName ?? string.Empty;
             // Clear the API key on this character
             foreach (CharacterIdentity id in chars)
                 id.ESIKeys.Remove(this);
@@ -527,6 +603,8 @@ namespace EveLens.Common.Models
                 RefreshToken = RefreshToken,
                 Monitored = m_monitored,
                 AuthorizedScopes = new List<string>(_authorizedScopes),
+                CharacterID = CharacterID,
+                CharacterName = CharacterName,
             };
 
             return serial;
@@ -576,6 +654,9 @@ namespace EveLens.Common.Models
             // Assign this API key to the new identities and create CCP characters
             var cid = e.Identity;
             cid.ESIKeys.Add(this);
+            // Record the association so it persists across restarts (Issue #94)
+            CharacterID = cid.CharacterID;
+            CharacterName = cid.CharacterName ?? string.Empty;
 
             // Clear stale data for any scopes that were revoked
             if (revokedScopes.Count > 0 && cid.CCPCharacter != null)

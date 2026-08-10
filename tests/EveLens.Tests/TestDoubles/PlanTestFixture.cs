@@ -84,6 +84,36 @@ namespace EveLens.Tests.TestDoubles
             }
         }
 
+        private static readonly object s_gameDataLock = new object();
+        private static bool s_gameDataInitialized;
+
+        /// <summary>
+        /// Ensures item and property static data is loaded (in addition to skills), so models that
+        /// resolve type IDs to names — e.g. <see cref="PlanetaryPin"/> — can be exercised with real
+        /// game data. Safe to call repeatedly; the underlying loaders are idempotent.
+        /// </summary>
+        public static void EnsureGameDataLoaded()
+        {
+            if (s_gameDataInitialized)
+                return;
+
+            // Reuse the skills fixture's AppServices/ResourceProvider wiring.
+            EnsureStaticSkillsLoaded();
+
+            lock (s_gameDataLock)
+            {
+                if (s_gameDataInitialized)
+                    return;
+
+                StaticProperties.Load();
+                StaticItems.Load();
+                // Load bundled translation datafiles (zh-CN, ko) so LocalizedName resolves in tests.
+                StaticTranslations.Load();
+
+                s_gameDataInitialized = true;
+            }
+        }
+
         /// <summary>
         /// Gets a <see cref="StaticSkill"/> by name. Throws if not found.
         /// </summary>

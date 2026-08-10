@@ -7,54 +7,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.4.0] - 2026-08-10
-- 1.4.0: Korean language, Attribute Optimizer, community fix train, SDE 3458726, EVE Accuracy Suite, auto-update opt-in
-## [1.3.0] - 2026-05-10
-
-### Added
-
-- **Skill Farm: configurable SP base per character** -- Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
-- **"What's New" dialog on update** -- Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
-- **Doctrine Designer** -- Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools > Doctrine Designer, Ctrl+G)
-- **Chinese language support (简体中文)** -- Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings > Appearance. Auto-restart on language change.
-- **CSV export** -- Export skills and training queue to CSV files from the Skills and Queue tabs
-- **Skill Farm Dashboard: sort by column** -- Click any column header to sort ascending/descending. "Add All Eligible" button to batch-add characters with 5.5M+ SP.
-- **Plan editor: attribute group headers** -- "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
-- **Plan editor: specific prereq error messages** -- Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
-- **Plan editor: double-click hint tooltip** -- Rows show "Drag to reorder · Double-click for details" on hover
-- **ESI timer tooltips** -- Hover the status bar countdown for an explanation of what it means
-- **Custom browser setting** -- Choose which browser opens for ESI authentication (auto-detect or specific browser)
-- **SDE updated to build 3328718** -- 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
-
-### Changed
-
-- **Plan editor: whole-row drag** -- Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
-- **Release asset naming** -- macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
-- **EveLens branded icons** -- All platform icons (Windows, macOS, Linux) replaced with proper EveLens logo at all resolutions
+## [1.4.1] - 2026-08-10
 
 ### Fixed
 
-- **Website download links 404** -- macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
-- **Plan editor drag: scroll offset bug** -- Dragging while scrolled down no longer maps to wrong row positions (#59)
-- **Plan editor: Alt+Up/Down keyboard shortcuts** -- Now wired to actual queue selection instead of first/last item (#59)
-- **Attribute optimizer: "Reset to Current" showed 3 everywhere** -- Now uses character's actual ESI attributes instead of default scratchpad values (#60)
-- **Attribute optimizer: inconsistent training times** -- Manual point adjustments now compute duration directly, avoiding StartTime/BestScratchpad mismatch (#60)
-- **Group by attribute: button did nothing visible** -- Now injects color-coded attribute group headers and shows active state on button (#61)
-- **Windows taskbar icon reverted to default** -- Explicitly set after InitializeComponent to survive theme loading (#58)
-- **macOS: Cmd+W didn't close plan windows** -- Added Meta modifier check alongside Control (#59)
-- **macOS: menu title showed "Avalonia Application"** -- Set Application.Name="EveLens" in App.axaml
-- **macOS: Unicode character names broken** -- Added cross-platform font fallback chain (Segoe UI, Helvetica Neue, Noto Sans, DejaVu Sans)
-- **macOS: dock icon showed generic app icon** -- Proper hi-res .icns now embedded in .app bundle
-- **Linux: AppImage had 1px placeholder icon** -- Now uses real 256px EveLens icon
-- **Doctrine Designer crash without characters** -- No longer crashes when opened before any characters are loaded
+- **v1.4.0 installer shipped without the 1.4.0 features** -- A release-pipeline bug merged a stale snapshot into the build (a git tag and branch shared the name "beta", and the wrong one won). 1.4.1 is the release 1.4.0 was supposed to be; everything below is included. The pipeline now verifies merged content before any release.
 
-### Contributors
+### Added
 
-Thanks to the community members whose feedback shaped this release:
-- **MaccaNZ97** -- Skill Farm configurable base SP feature request (Discussion #44)
-- **AnszaKalltiern** -- stress testing with 30+ characters, UI issue reports
-- **BritishDragonAdmin** -- Skill Farm UX feedback (#41, #42, #43)
-- **NotmoGit** -- bug reports (#37, #39)
+- **Game Names setting -- show ship/item/skill names in English or translated** -- Korean players told us they navigate by the English item names they know from the game client and killboards, so a fully-translated item list actually made EveLens harder to use (Discussion #79). A new "Game Names" option in Settings > Appearance now controls whether game terms use CCP's translated SDE names or stay in English. The default follows each community's convention: English names for Korean, translated names for Chinese. UI text stays in your chosen language either way. Thanks to Last Bin for the feedback!
+- **Korean translation credit** -- Last Bin, the community translator behind EveLens's Korean localization, is now credited in the About page.
+
+### Security
+
+- **Updated MailKit to 4.16.0** -- Clears two moderate-severity advisories in the email/MimeKit stack (STARTTLS response injection CVE-2026-41319 and CRLF/SMTP injection CVE-2026-30227). Email skill-completion alerts are unaffected. Also removed an unused MailKit dependency from EveLens.Infrastructure.
+
+### Added
+
+- **Attribute Optimizer window** -- Remap planning got a proper home (Tools in the plan editor sidebar, or right-click any skill). Pick a strategy -- one remap for the whole plan, or auto-placed remaps at attribute-focus boundaries (the old EVEMon behavior, requested in #71) -- preview exactly where each remap goes and what your attributes should be, then apply atomically. A Clone what-if toggle (As-is/Omega/Alpha) shows plan durations under either clone state without touching your character. The optimizer's numbers now always match the plan editor's total: same order, same implants, same applied remaps.
+- **Applied remaps visible in the plan sidebar** -- The Remap section lists every applied remap point with its position and full attribute spread, plus a one-click "Remove All Remaps" to return the plan to your current attributes. Hovering a gold remap band in the queue shows the target attributes.
+- **Plan editor right-click menu actually works** -- The context menu (Plan to Level, View Details, Change Priority, Optimize Attributes, Remove) was lost in the queue-list migration and silently did nothing (Issue #71). Move Up/Down menu items were dropped -- drag-and-drop and the hover arrows own reordering.
+- **EVE Accuracy Suite** -- A visible, separately-runnable test suite (`dotnet test --filter "Suite=EveAccuracy"`) of golden scenarios where EveLens output must match known in-game values: SP thresholds, SP/hour formula, training durations, Alpha/Omega rates, implant math, remap rules, prerequisites, and queue totals. New features can no longer break these calculations unnoticed.
+- **Run at Startup** -- New option in Settings > Window launches EveLens automatically when you log in to your computer, starting quietly in the system tray with no window or splash screen. Available on Windows and Linux (Issue #72).
+
+### Changed
+
+- **SDE updated to build 3458726 (August 2026)** -- All game data regenerated from CCP's latest Static Data Export. Fixes outdated skill prerequisites -- e.g. Capital Jump Portal Generation now correctly requires Jump Portal Generation III, not V (Issue #99).
+- **Start Menu shortcut no longer reappears after every update** -- The updater used to re-create the Start Menu shortcut each time a new version installed, even if you had deleted it. New installs create a Desktop shortcut only (Issue #72).
+
+### Fixed
+
+- **Linux: importing a non-XML file as a plan no longer freezes the app** -- Picking a .txt file in Plans > Import Plan from File hit a misleading "unsupported format" dialog whose sync-over-async plumbing deadlocked the UI thread on Linux/macOS (reported on Reddit). Dialogs shown from synchronous code now pump a proper nested message loop, and plan import explains up front that it expects .emp/.xml -- pointing plain-text skill lists at the plan editor's Import menu, which handles them.
+- **Linux: clipboard import now works when the plan editor is the active window** -- The clipboard was always read through the main window, which fails on X11/Wayland when the main window is hidden to tray or a dialog is focused. The clipboard now comes from the active visible window.
+- **Planetary colonies no longer show "Unknown" as the planet name** -- The bundled map data was missing planets entirely, so every colony card and detail header read "Unknown". Planet names (like "Jita IV") are now included for all 68,000+ planets (Issue #66).
+- **Planetary ISK/day estimates now actually populate** -- The dashboard never requested market prices unless another feature (like Assets) had already loaded them, so most colonies showed 0 ISK/day forever. PI now triggers its own price lookups and repaints as soon as prices arrive (Issue #66).
+- **Planetary flow diagram no longer shows a gap while resizing the window** -- Node positions were recomputed one frame behind the window size during a resize drag (Issue #66).
+- **SSO error for a character that no longer exists can now be cleared** -- If a character was biomassed or transferred off your account, its dead login token kept raising an unnamed "EVE SSO session expired" banner on every startup, and deleting the character didn't remove the underlying key -- so the error could never be dismissed. EveLens now remembers which character each ESI key belongs to (even across restarts), names that character in the error message, and deleting the character properly removes its stale key (Issue #94).
+- **Queue tab: wrong progress bars when the same skill is queued to multiple levels** -- With a skill queued to two or more levels (say Cruiser IV training and Cruiser V waiting), every row of that skill showed the same live progress bar and "Training" status. Each queue entry now computes progress from its own level's SP window, so the training level shows real progress and later levels correctly sit at 0% until they start (Issue #103).
+- **Linux/macOS: hard crash opening Standings, Contacts, Employment History, and Loyalty tabs** -- Default/placeholder images were loaded through a Windows-only graphics library (System.Drawing/GDI+), which throws on Linux and macOS the instant it runs. Opening any of those tabs terminated the whole app with no error. Default images now use the same cross-platform image pipeline (SkiaSharp) as the rest of EveLens, so the tabs work on every platform.
+- **Crashes no longer kill the app silently** -- EveLens now installs a process-wide safety net (unhandled exception, unobserved background task, and UI-thread handlers). An unexpected error is logged and, where possible, the app keeps running instead of vanishing without a trace.
+- **"Error logging in to EVE SSO" now explains itself and stops spamming** -- This generic banner appeared for every kind of token failure, and an expired refresh token retried every few seconds forever -- so an idle character could flood you with a login error it could never clear. EveLens now reads CCP's actual reason and reacts accordingly: an expired session names the specific character to re-authenticate (and stops retrying a token that can't work), bad ESI app credentials point you to Settings, and brief network/server hiccups retry quietly without raising a scary alarm. The banner also clears itself automatically once a character re-authenticates. CCP's raw response is still written to the log and diagnostic stream for deeper diagnosis (Issue #94).
+
+## [1.4.0-beta.4] - 2026-06-04
+
+### Added
+
+- **Korean language support (한국어)** -- Full UI translation (464 strings) plus 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Select "한국어 (Korean)" in Settings > Appearance. Community translation contributed by a Korean EVE player. (Discussion #79)
+- **Skill Farm: configurable SP base per character** — Set a custom SP floor for each farm character (click the "Base" column). Characters with PI, mining, or other utility skills won't count that SP as extractable. Defaults to 5M (CCP minimum), saves per-character and persists across sessions.
+- **"What's New" dialog on update** — Shows release notes the first time you open EveLens after installing a new version. Grouped by category (Added, Changed, Fixed) with color coding. Only shows once per version.
+- **Doctrine Designer** — Create shared skill templates, assign multiple characters, compare training times side-by-side. Import from existing plans, generate personal plans for each character with one click. (Tools → Doctrine Designer, Ctrl+G)
+- **Chinese language support (简体中文)** — Full UI translation with 300+ localized strings, 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance. Auto-restart on language change.
+- **CSV export** — Export skills and training queue to CSV files from the Skills and Queue tabs
+- **Skill Farm Dashboard: sort by column** — Click any column header to sort ascending/descending. "Add All Eligible" button to batch-add characters with 5.5M+ SP.
+- **Plan editor: attribute group headers** — "Group by Attr" now shows color-coded section headers with skill count and training time per attribute group
+- **Plan editor: specific prereq error messages** — Blocked drag now shows "Cruiser IV needs Cruiser III first" instead of generic error
+- **Plan editor: double-click hint tooltip** — Rows show "Drag to reorder · Double-click for details" on hover
+- **Plan editor: "Hide Maxed" skill filter** -- New filter button in the skill browser hides skills you've already trained to Level V, so you only see what's left to train (#71)
+- **ESI timer tooltips** — Hover the status bar countdown for an explanation of what it means
+- **Custom browser setting** — Choose which browser opens for ESI authentication (auto-detect or specific browser)
+- **SDE updated to build 3328718** — 51,551 types (+1,378 new), 2,697 groups (+95 new) with full Chinese translations
+
+### Changed
+
+- **Plan editor: whole-row drag** — Entire row is now draggable with a 5px movement threshold (grip dots column removed). Click-to-select and drag-to-reorder coexist naturally.
+- **Release asset naming** — macOS and Linux release assets now use channel-based names (e.g. `EveLens-stable-linux-x86_64.AppImage`) so download links never go stale between versions
+- **EveLens branded icons** — All platform icons (Windows, macOS, Linux) replaced with proper EveLens logo at all resolutions
+
+### Fixed
+
+- **Plan editor: Delete key removed the wrong skill** -- Pressing Delete deleted the top skill in the queue (and its dependents) instead of the skill you had selected. Delete now acts on your actual selection, and supports multi-select (#80)
+- **Planetary Interaction: idle colonies stopped showing red** -- Colony health was frozen at the moment data first loaded, so a colony that went idle while EveLens was open never turned red until restart. Extractor state is now computed live and the dashboard repaints when colony data refreshes or an extractor finishes (#66)
+- **Planetary Interaction: final product showed "Unknown"** -- Actively-extracting colonies route material onward immediately, leaving the extractor's contents empty, so EveLens couldn't name the product. It now reads the extractor's declared output type, resolving the correct product (#66)
+- **Planetary Interaction: stray horizontal scrollbar and right-side gap** -- The colony detail view showed an unwanted horizontal scrollbar with empty space to the right of the production chain until you resized the window. The layout now fills the available width correctly (#66)
+- **Website download links 404** — macOS and Linux download links on evelens.dev now point to stable channel-named assets that persist across releases (#64)
+- **Plan editor drag: scroll offset bug** — Dragging while scrolled down no longer maps to wrong row positions (#59)
+- **Plan editor: Alt+Up/Down keyboard shortcuts** — Now wired to actual queue selection instead of first/last item (#59)
+- **Attribute optimizer: "Reset to Current" showed 3 everywhere** — Now uses character's actual ESI attributes instead of default scratchpad values (#60)
+- **Attribute optimizer: inconsistent training times** — Manual point adjustments now compute duration directly, avoiding StartTime/BestScratchpad mismatch (#60)
+- **Group by attribute: button did nothing visible** — Now injects color-coded attribute group headers and shows active state on button (#61)
+- **Windows taskbar icon reverted to default** — Explicitly set after InitializeComponent to survive theme loading (#58)
+- **macOS: Cmd+W didn't close plan windows** — Added Meta modifier check alongside Control (#59)
+- **macOS: menu title showed "Avalonia Application"** — Set Application.Name="EveLens" in App.axaml
+- **macOS: Unicode character names broken** — Added cross-platform font fallback chain (Segoe UI, Helvetica Neue, Noto Sans, DejaVu Sans)
+- **macOS: dock icon showed generic app icon** — Proper hi-res .icns now embedded in .app bundle
+- **Linux: AppImage had 1px placeholder icon** — Now uses real 256px EveLens icon
+- **Doctrine Designer crash without characters** — No longer crashes when opened before any characters are loaded
 
 ## [1.2.1] - 2026-04-09
 

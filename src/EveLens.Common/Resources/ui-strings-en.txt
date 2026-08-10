@@ -1,0 +1,846 @@
+# Main Window
+Menu.File = File
+Menu.Plans = Plans
+Menu.Tools = Tools
+Menu.Help = Help
+Menu.File.AddCharacter = Add Character
+Menu.File.ManageGroups = Manage Groups
+Menu.File.Settings = Settings
+Menu.File.Exit = Exit
+Menu.Plans.NewPlan = New Plan
+Menu.Plans.ManagePlans = Manage Plans
+Menu.Plans.ImportPlan = Import Plan from File
+Menu.Plans.CreateFromQueue = Create Plan from Queue
+Menu.Tools.CharComparison = Character Comparison
+Menu.Tools.SkillFarm = Skill Farm Dashboard
+Menu.Tools.DoctrineDesigner = Doctrine Designer
+Menu.Tools.SkillVisualization = Skill Visualization
+Menu.Tools.ClearCache = Clear Cache
+Menu.Help.About = About EveLens
+Menu.Help.KnownProblems = Known Problems
+Menu.Help.CheckUpdates = Check for Updates
+Menu.Help.UserGuide = User Guide
+Menu.Help.ReportIssue = Report Issue
+Menu.Help.Shortcuts = Keyboard Shortcuts
+Menu.Help.WhatsNew = What's New
+Menu.File.CreateBlank = Create Blank Character
+Menu.File.ManageChars = Manage Characters
+Menu.File.RestoreSettings = Restore Settings
+Menu.File.SaveSettings = Save Settings
+Menu.File.ResetSettings = Reset Settings
+
+# Tabs
+Tab.Skills = Skills
+Tab.Queue = Queue
+Tab.Clones = Clones
+Tab.Employment = Employment
+Tab.Assets = Assets
+Tab.MarketOrders = Market Orders
+Tab.Contracts = Contracts
+Tab.IndustryJobs = Industry Jobs
+Tab.Wallet = Wallet
+Tab.Mail = Mail
+Tab.Notifications = Notifications
+Tab.KillLog = Kill Log
+Tab.Planetary = Planetary
+Tab.Research = Research
+
+# Common Actions
+Action.CollapseAll = Collapse All
+Action.ExpandAll = Expand All
+Action.TrainedOnly = Trained Only
+Action.ExportCsv = Export CSV
+Action.AllSkills = All Skills
+Action.Search = Search...
+Action.Save = Save
+Action.Cancel = Cancel
+Action.Close = Close
+Action.Apply = Apply
+Action.Create = Create
+Action.Delete = Delete
+Action.Refresh = Refresh
+Action.AddCharacter = + Add Character
+Action.AddSkill = + Add Skill
+
+# EVE Game Terms
+Eve.SkillPoints = Skill Points
+Eve.SP = SP
+Eve.SPPerHour = SP/hr
+Eve.ISK = ISK
+Eve.Omega = Omega
+Eve.Alpha = Alpha
+Eve.Intelligence = Intelligence
+Eve.Memory = Memory
+Eve.Perception = Perception
+Eve.Willpower = Willpower
+Eve.Charisma = Charisma
+Eve.Rank = Rank
+Eve.Level = Level
+Eve.Training = Training
+Eve.Queued = Queued
+Eve.Completed = Completed
+Eve.AlreadyTrained = Already Trained
+
+# Plan Editor
+Plan.Skill = SKILL
+Plan.Time = TIME
+Plan.Primary = PRI
+Plan.Secondary = SEC
+Plan.GroupByAttr = Group by Attr
+Plan.GroupedByAttr = Grouped by Attr ✓
+Plan.QueueReordered = Queue reordered
+Plan.DragToReorder = Drag to reorder · Double-click for details
+Plan.DragCancelled = Drag cancelled
+
+# Skill Farm
+SkillFarm.Title = Skill Farm Dashboard
+SkillFarm.AddAll = + Add All Eligible
+SkillFarm.Character = Character
+SkillFarm.Injectors = Injectors
+SkillFarm.ExtractorCost = Extractor Cost
+SkillFarm.Revenue = Revenue
+SkillFarm.NetProfit = Net Profit
+SkillFarm.Status = Status
+
+# Doctrine Designer
+Doctrine.Title = Doctrine Designer
+Doctrine.Doctrines = Doctrines
+Doctrine.NewDoctrine = + New Doctrine
+Doctrine.ImportFromPlan = Import from Plan
+Doctrine.CreatePlan = Create Plan
+Doctrine.PlanCreated = Plan Created!
+Doctrine.CreatePlansForAll = Create Plans for All
+Doctrine.NoDoctrines = No doctrines yet.\nClick '+ New Doctrine' to create one,\nor 'Import from Plan' to use an existing plan.
+Doctrine.SelectDoctrine = Select a doctrine from the sidebar to view skill comparisons.
+Doctrine.NoCharacters = No characters assigned.\nClick '+ Add Character' to assign characters to this doctrine.
+Doctrine.AllTrained = All trained!
+
+# Settings — Window
+Settings.Title = Settings
+Settings.WindowTitle = EveLens Settings
+Settings.SearchWatermark = Search settings...
+
+# Settings — Sidebar
+Settings.Appearance = Appearance
+Settings.AppearanceSub = Theme, colors, compatibility
+Settings.Window = Window
+Settings.WindowSub = Tray icon, close behavior
+Settings.Notifications = Notifications
+Settings.NotificationsSub = Alerts, email, calendar
+Settings.Data = Data
+Settings.DataSub = Updates, market prices
+Settings.Network = Network
+Settings.NetworkSub = Proxy, SSO credentials
+Settings.ESI = ESI
+Settings.ESISub = API scopes, permissions
+
+# Settings — Appearance section
+Settings.AppearanceDesc = Customize the look and feel of EveLens.
+Settings.Theme = Theme
+Settings.ThemeDesc = Choose the visual theme for the application.
+Settings.RestartRequired = Restart required to apply
+Settings.RestartNow = Restart Now
+Settings.FontSize = Font Size
+Settings.FontSizeDesc = Scale all text in the application (80%-150%).
+Settings.Language = Language
+Settings.LanguageDesc = Game terms use CCP's official translations.
+Settings.LanguageNote = Game terms use CCP's official translations. Community translation — help us improve!
+Settings.GameNames = Game Names
+Settings.GameNamesDesc = Show ship, item, and skill names translated or in English.
+Settings.GameNamesAuto = Auto (community default)
+Settings.GameNamesLocalized = Translated
+Settings.GameNamesEnglish = English
+Settings.SafeForWork = Safe for Work
+Settings.SafeForWorkDesc = Hide character portraits and identifying colors.
+Settings.CustomBrowser = Browser
+Settings.CustomBrowserDesc = Choose a browser for opening links. Default uses your OS setting.
+Settings.DefaultBrowser = System Default
+Settings.OpenDataDir = Open Data Directory
+
+# Settings — Window section
+Settings.WindowBehavior = Window Behavior
+Settings.WindowBehaviorDesc = Configure how the main window and system tray behave.
+Settings.MinimizeToTray = Minimize to Tray
+Settings.MinimizeToTrayDesc = When enabled, closing the window minimizes EveLens to the system tray instead of exiting. Click the tray icon to restore.
+Settings.RunAtStartup = Run at Startup
+Settings.RunAtStartupDesc = Launch EveLens quietly in the system tray when you log in.
+Settings.TrayTooltipDisplay = Tray Tooltip Display
+Settings.TrayTooltipDesc = Choose what information shows when hovering the system tray icon.
+Settings.TrayCountAndNext = Training Count + Next Finisher
+Settings.TrayCountOnly = Training Count Only
+Settings.TrayNextOnly = Next Finisher Only
+
+# Settings — Notifications section
+Settings.NotificationsDesc = Configure alerts and notifications for skill training and events.
+Settings.OsNotifications = OS Notifications
+Settings.OsNotificationsDesc = Show Windows toast notifications for skill completions and alerts.
+Settings.PlaySound = Play Sound
+Settings.PlaySoundDesc = Play a sound when skill training completes.
+Settings.EmailAlerts = Email Alerts
+Settings.EmailAlertsDesc = Send an email when skill training completes.
+Settings.Provider = Provider
+Settings.SmtpServer = SMTP Server
+Settings.Port = Port
+Settings.SslTls = SSL/TLS
+Settings.SslTlsDesc = Require encrypted connection.
+Settings.Authentication = Authentication
+Settings.AuthenticationDesc = Server requires username and password.
+Settings.Username = Username
+Settings.Password = Password
+Settings.From = From
+Settings.To = To
+Settings.ShortFormat = Short Format
+Settings.ShortFormatDesc = Use a compact email format.
+Settings.ExternalCalendar = External Calendar
+Settings.ExternalCalendarDesc = Sync skill training schedules to an external calendar.
+Settings.GoogleCalendar = Google Calendar
+Settings.MicrosoftOutlook = Microsoft Outlook
+Settings.CalendarName = Calendar Name
+Settings.Reminder = Reminder
+Settings.UseDefaultCalendar = Use default calendar
+Settings.CalendarPath = Calendar Path
+Settings.EnableReminders = Enable reminders
+Settings.IntervalMin = Interval (min)
+Settings.AltRemindingTimes = Use alternate reminding times
+Settings.Early = Early
+Settings.Late = Late
+Settings.LastQueuedOnly = Export last queued skill only
+
+# Settings — Data section
+Settings.DataUpdates = Data & Updates
+Settings.DataUpdatesDesc = Manage automatic updates and market data providers.
+Settings.CheckForUpdates = Check for Updates
+Settings.CheckForUpdatesDesc = Automatically check for new EveLens versions on startup.
+Settings.AutoInstall = Install Updates Automatically
+Settings.AutoInstallDesc = Downloaded updates install silently when you close EveLens. When off, you'll get a notification and update manually.
+Settings.ClockSync = Clock Sync
+Settings.ClockSyncDesc = Verify system clock is synchronized on startup.
+Settings.MarketPriceProvider = Market Price Provider
+Settings.MarketPriceProviderDesc = Source for market price lookups.
+
+# Settings — Network section
+Settings.NetworkDesc = Configure proxy and SSO credentials.
+Settings.HttpProxy = HTTP Proxy
+Settings.HttpProxyDesc = Route traffic through a custom proxy server.
+Settings.Host = Host
+Settings.SsoCredentials = SSO Credentials
+Settings.SsoCredentialsDesc = Override built-in EveLens SSO client credentials.
+Settings.ClientId = Client ID
+Settings.ClientSecret = Client Secret
+Settings.UseDefault = Use Default
+
+# Settings — ESI section
+Settings.EsiScopes = ESI Scopes
+Settings.EsiScopesDesc = Controls which API scopes EveLens requests when authenticating.
+Settings.ScopePreset = Scope Preset
+Settings.ScopePresetDesc = Choose a predefined set of API permissions.
+Settings.CustomizeScopes = Customize Scopes...
+Settings.EsiChangesNote = Changes take effect the next time you authenticate a character.
+Settings.CharacterScopes = Character Scopes
+Settings.NoCharsAuthenticated = No characters authenticated yet.
+Settings.EsiReauthNote = Characters not matching the selected preset can be re-authenticated to update their scopes.
+Settings.Reauthenticate = Re-authenticate
+Settings.Restart = Restart
+Settings.RestartEveLens = Restart EveLens
+Settings.RestartMessage = EveLens will restart to apply the new theme.\nPlease save any work in progress (e.g., skill plans being edited).
+
+# Status / Empty States
+Status.Paused = Paused
+Status.Training = Training
+Status.Online = Online
+Status.SkillsInQueue = Skills in queue
+Status.Trained = Trained
+Status.Of = of
+Status.Skills = skills
+Status.TotalSP = Total SP
+Status.Remaining = remaining
+
+# Character Header
+Header.Corporation = Corporation
+Header.Alliance = Alliance
+Header.LocatedIn = Located in
+Header.DockedAt = Docked at
+Header.InSpace = In space
+Header.Skills = Skills
+Header.SP = SP
+Header.FreeSP = Free SP
+Header.TotalSP = Total SP
+Header.Remaps = Remaps
+Header.AutoDetect = Auto-detect
+Header.AlphaOverride = Alpha override
+Header.OmegaOverride = Omega override
+
+# ESI
+ESI.NextRefresh = Next refresh in
+ESI.Fetching = fetching...
+ESI.Idle = ESI: idle
+ESI.Refreshing = ESI: refreshing...
+ESI.LastRefresh = Last refresh
+
+# Splash
+Splash.Tagline = Character Intelligence for EVE Online
+Splash.LoadingGameData = Loading game data...
+
+# Skills level filter strip
+Skills.AllSkills = All Skills
+Skills.AllTrained = All Trained
+Skills.LevelV = Level V
+Skills.LevelIV = Level IV
+Skills.LevelIII = Level III
+Skills.LevelII = Level II
+Skills.LevelI = Level I
+Skills.Injected = Injected
+Skills.Untrained = Untrained
+
+# Character header labels
+Header.SecurityStatus = Security Status
+Header.ActiveShip = Active Ship
+Header.Unknown = Unknown
+Header.KnownSkills = Known Skills
+Header.BonusRemaps = Bonus Remaps
+
+# Missing character monitor tabs
+Tab.Standings = Standings
+Tab.Contacts = Contacts
+Tab.Medals = Medals
+Tab.LP = LP
+Tab.Transactions = Transactions
+
+# Plan Editor Window
+PlanEditor.Title = Plan Editor
+PlanEditor.PlanTab = Plan
+PlanEditor.SkillsTab = Skills
+PlanEditor.ShipsTab = Ships
+PlanEditor.ItemsTab = Items
+PlanEditor.BlueprintsTab = Blueprints
+PlanEditor.SearchSkills = Search skills...
+PlanEditor.ClearPlan = Clear Plan
+PlanEditor.ImportFit = Import Fit
+PlanEditor.Export = Export
+PlanEditor.AddSkills = + Add Skills
+PlanEditor.CopyPlan = Copy Skill Plan
+PlanEditor.Done = Done
+PlanEditor.SkillsToTrain = skills to train
+PlanEditor.SkillsRemaining = skills remaining
+PlanEditor.OptimizePlan = Optimize Plan
+PlanEditor.Remap = Remap
+PlanEditor.AvailableNow = Available now
+PlanEditor.Bonus = bonus
+PlanEditor.TrainingTime = Training time
+PlanEditor.Unique = unique
+PlanEditor.Finishes = Finishes
+PlanEditor.Books = books
+PlanEditor.Skills = skills
+PlanEditor.Of = of
+PlanEditor.Remaining = remaining
+PlanEditor.NextIn = Next in
+PlanEditor.Injectors = injectors
+PlanEditor.CopyToClipboard = Copy to Clipboard
+PlanEditor.SaveToFile = Save to File...
+PlanEditor.FromClipboard = From Clipboard (EFT/XML/DNA)
+PlanEditor.FromFile = From File...
+PlanEditor.PlanTo = Plan to
+PlanEditor.Back = Back
+
+# Skill Browser
+PlanEditor.AllAttributes = All Attributes
+PlanEditor.AllSkills = All Skills
+PlanEditor.Trained = Trained
+PlanEditor.HavePrereqs = Have Prerequisites
+PlanEditor.HideMaxed = Hide Maxed
+PlanEditor.HideMaxedTip = Hide skills already trained to Level V
+PlanEditor.Untrained = Untrained
+PlanEditor.Collapse = Collapse
+PlanEditor.Expand = Expand
+PlanEditor.NotTrained = Not trained
+PlanEditor.Rank = Rank:
+PlanEditor.Primary = Primary:
+PlanEditor.Secondary = Secondary:
+PlanEditor.TrainingTimeLabel = Training Time:
+PlanEditor.Prerequisites = Prerequisites:
+
+# Ship Browser
+ShipBrowser.SearchShips = Search ships...
+ShipBrowser.CanFlyOnly = Can Fly Only
+ShipBrowser.RequiredSkills = Required Skills:
+ShipBrowser.Properties = Properties:
+ShipBrowser.PlanToFly = Plan to Fly
+ShipBrowser.Race = Race:
+ShipBrowser.Amarr = Amarr
+ShipBrowser.Caldari = Caldari
+ShipBrowser.Gallente = Gallente
+ShipBrowser.Minmatar = Minmatar
+
+# Item Browser
+ItemBrowser.SearchItems = Search items...
+ItemBrowser.CanUseOnly = Can Use Only
+ItemBrowser.CollapseAll = Collapse All
+ItemBrowser.Slot = Slot:
+ItemBrowser.RequiredSkills = Required Skills:
+ItemBrowser.Properties = Properties:
+ItemBrowser.PlanToUse = Plan to Use
+
+# Blueprint Browser
+BlueprintBrowser.SearchBlueprints = Search blueprints...
+BlueprintBrowser.CanBuildOnly = Can Build Only
+BlueprintBrowser.Produces = Produces:
+BlueprintBrowser.ProductionTime = Production Time:
+BlueprintBrowser.Materials = Materials:
+BlueprintBrowser.RequiredSkills = Required Skills:
+BlueprintBrowser.PlanSkills = Plan Skills
+
+# Plan Queue Headers
+Plan.Rank = R
+Plan.SPPerHour = SP/HR
+Plan.Level = LEVEL
+
+# Queue view
+Queue.NoSkillsInTraining = No skills in training
+Queue.SkillsInQueue = Skills in queue
+Queue.EndsIn = Ends in
+Queue.EndsOn = Ends on
+Queue.ExportCsv = Export CSV
+
+# ESI Endpoints
+Endpoints.Title = ESI Endpoints
+Endpoints.Description = Choose which data to fetch for this character.
+Endpoints.EnableAll = Enable All
+Endpoints.DisableAll = Disable All
+
+# Sidebar
+Sidebar.Add = Add
+Sidebar.AddSkills = Add Skills
+Sidebar.Plan = Plan
+
+# List Views — Common toolbar/UI strings
+ListView.GroupBy = Group by:
+ListView.Filter = Filter:
+ListView.SearchAssets = Search assets...
+ListView.SearchContracts = Search contracts...
+ListView.SearchMarketOrders = Search market orders...
+ListView.SearchContacts = Search contacts...
+ListView.SearchMail = Search mail...
+ListView.SearchKills = Search kills...
+ListView.SearchStandings = Search standings...
+ListView.SearchWalletJournal = Search journal...
+ListView.SearchNotifications = Search notifications...
+ListView.SearchKillLog = Search kill log...
+ListView.SearchTransactions = Search transactions...
+ListView.SearchIndustryJobs = Search industry jobs...
+ListView.SearchResearch = Search research points...
+
+# List Views — Enable prompts
+ListView.EnableToFetch = Enable this to start fetching data from EVE Online.
+ListView.ScopeNotAuthorized = ESI scope not authorized
+ListView.ScopeNotAuthorizedDesc = This character was authenticated without the required scope.\nRe-authenticate from File → Manage Characters to enable this feature.
+ListView.EnableAssets = Asset Monitoring is not enabled for this character.
+ListView.EnableAssetBtn = Enable Asset Monitoring
+ListView.EnableMarketOrders = Market Order Tracking is not enabled for this character.
+ListView.EnableMarketOrderBtn = Enable Market Order Tracking
+ListView.EnableContracts = Contract Tracking is not enabled for this character.
+ListView.EnableContractBtn = Enable Contract Tracking
+ListView.EnableIndustry = Industry Job Tracking is not enabled for this character.
+ListView.EnableIndustryBtn = Enable Industry Job Tracking
+ListView.EnableMail = Mail Messages is not enabled for this character.
+ListView.EnableMailBtn = Enable Mail Messages
+ListView.EnableNotifications = Notifications is not enabled for this character.
+ListView.EnableNotificationsBtn = Enable Notifications
+ListView.EnableKillLog = Kill Log is not enabled for this character.
+ListView.EnableKillLogBtn = Enable Kill Log
+ListView.EnablePlanetary = Planetary Interaction is not enabled for this character.
+ListView.EnablePlanetaryBtn = Enable Planetary Interaction
+ListView.EnableResearch = Research Points is not enabled for this character.
+ListView.EnableResearchBtn = Enable Research Points
+ListView.EnableContacts = Contacts is not enabled for this character.
+ListView.EnableContactsBtn = Enable Contacts
+ListView.EnableStandings = Standings is not enabled for this character.
+ListView.EnableStandingsBtn = Enable Standings
+ListView.EnableMedals = Medals is not enabled for this character.
+ListView.EnableMedalsBtn = Enable Medals
+ListView.EnableLP = Loyalty Points is not enabled for this character.
+ListView.EnableLPBtn = Enable Loyalty Points
+ListView.EnableEmployment = Employment History is not enabled for this character.
+ListView.EnableEmploymentBtn = Enable Employment History
+ListView.EnableFW = Factional Warfare is not enabled for this character.
+ListView.EnableFWBtn = Enable Factional Warfare
+ListView.EnableWalletJournal = Wallet Journal is not enabled for this character.
+ListView.EnableWalletJournalBtn = Enable Wallet Journal
+ListView.EnableWalletTx = Wallet Transactions is not enabled for this character.
+ListView.EnableWalletTxBtn = Enable Wallet Transactions
+
+# List Views — Empty states
+ListView.NoAssets = No assets found
+ListView.NoAssetsDesc = Assets will appear here once data is fetched.
+ListView.NoContracts = No Contracts
+ListView.NoContractsDesc = No contracts match the current filters. Try adjusting your search or filter settings.
+ListView.NoKillLog = No Kill Log Entries
+ListView.NoKillLogDesc = Kill and loss data will appear here once available from the ESI API.
+ListView.NoLoyalty = No loyalty points
+ListView.NoLoyaltyDesc = Loyalty points from NPC corporations will appear here
+ListView.NoMail = No mail messages
+ListView.NoMailDesc = Mail messages from EVE Online will appear here
+ListView.NoMedals = No medals
+ListView.NoMedalsDesc = This character has not been awarded any medals
+ListView.NoStandings = No standings found
+ListView.NoStandingsDesc = This character has no standings, or none match the current filter
+ListView.NoJournal = No journal entries
+ListView.NoJournalDesc = Wallet journal entries will appear here when available
+ListView.NoTransactions = No transactions
+ListView.NoTransactionsDesc = Wallet transactions will appear here when available
+ListView.NoNotifications = No notifications
+ListView.SelectMail = Select a mail to read
+ListView.BackToList = ← Back to list
+
+# List Views — Grouping options
+ListView.Location = Location
+ListView.Region = Region
+ListView.Category = Category
+ListView.Container = Container
+ListView.NoGrouping = No Grouping
+ListView.Status = Status
+ListView.ContractType = Contract Type
+ListView.IssueDate = Issue Date
+ListView.StartLocation = Start Location
+ListView.HideInactive = Hide Inactive
+ListView.All = All
+ListView.Character = Character
+ListView.Corporation = Corporation
+ListView.NoGroup = No group
+ListView.Group = Group
+ListView.ContactGroup = Contact Group
+ListView.StandingBracket = Standing Bracket
+ListView.KillsLosses = Kills / Losses
+ListView.Date = Date
+ListView.ShipType = Ship Type
+ListView.SentDate = Sent Date
+ListView.Sender = Sender
+ListView.Subject = Subject
+ListView.Recipient = Recipient
+ListView.CorpAlliance = Corp/Alliance
+ListView.GroupLabel = Group:
+ListView.TypeLabel = Type:
+
+# DataGrid column headers — Market Orders
+Column.Item = Item
+Column.Station = Station
+Column.UnitPrice = Unit Price
+Column.TotalPrice = Total Price
+Column.InitialVol = Initial Vol
+Column.Remaining = Remaining
+Column.Duration = Duration
+Column.Issued = Issued
+Column.Expires = Expires
+
+# DataGrid column headers — Contracts
+Column.Contract = Contract
+Column.Type = Type
+Column.Status = Status
+Column.Issuer = Issuer
+Column.Assignee = Assignee
+Column.Price = Price
+
+# DataGrid column headers — Industry Jobs
+Column.Activity = Activity
+Column.State = State
+Column.Blueprint = Blueprint
+Column.Output = Output
+Column.Location = Location
+Column.Runs = Runs
+Column.Cost = Cost
+Column.InstallDate = Install Date
+Column.EndDate = End Date
+
+# DataGrid column headers — Research Points
+Column.Agent = Agent
+Column.Level = Level
+Column.Field = Field
+Column.CurrentRP = Current RP
+Column.PointsPerDay = Points/Day
+Column.StartDate = Start Date
+
+# DataGrid column headers — Planetary
+Column.Planet = Planet
+Column.PlanetType = Planet Type
+Column.PinType = Pin Type
+Column.Content = Content
+Column.Quantity = Quantity
+Column.Expiry = Expiry
+Column.SolarSystem = Solar System
+
+# DataGrid column headers — Wallet Transactions
+Column.Date = Date
+Column.Credit = Credit
+Column.Client = Client
+
+# Context menu items
+ContextMenu.CopyItemName = Copy Item Name
+ContextMenu.CopyStation = Copy Station
+ContextMenu.ExportCsv = Export to CSV...
+ContextMenu.CopyContractInfo = Copy Contract Info
+ContextMenu.CopyIssuer = Copy Issuer
+ContextMenu.CopyBlueprintName = Copy Blueprint Name
+ContextMenu.CopyOutput = Copy Output
+ContextMenu.CopyAgent = Copy Agent
+ContextMenu.CopyField = Copy Field
+ContextMenu.CopyPlanet = Copy Planet
+ContextMenu.CopySolarSystem = Copy Solar System
+ContextMenu.CopyClient = Copy Client
+
+# Plan Sidebar strings
+Plan.AlreadyOptimal = Already optimal
+Plan.Analyzing = Analyzing…
+Plan.Current = Current:
+Plan.RemapTo = To save {0}, remap to:
+Plan.ChangeAttrsTo = Change attributes to:
+Plan.RemapAvailable = Remap available
+Plan.RemapInDays = Remap in {0} days
+
+# About dialog
+About.Title = About EveLens
+About.Subtitle = Character intelligence for EVE Online. Built on 20 years of community work.
+About.Dotnet = .NET 8 . Avalonia
+About.Trademark = EVE Online and all related logos are trademarks of CCP hf.
+About.FlySafe = Fly safe. o7
+
+# Add Character dialog
+AddChar.Title = Add Character
+AddChar.SignIn = Sign in with EVE Online
+AddChar.SignInDesc = Your browser will open to CCP's secure login page. EveLens never sees your password.
+AddChar.SignInBtn = Sign in with EVE
+AddChar.Waiting = Waiting for login...
+AddChar.WaitingDesc = Complete the sign-in in your browser, then return here.
+AddChar.CharacterName = Character Name
+AddChar.AddedSuccessfully = Added successfully
+AddChar.AddedEarlier = Added earlier this session:
+AddChar.AddAnother = + Add Another
+AddChar.AuthFailed = Authentication failed
+AddChar.ErrorOccurred = An error occurred.
+AddChar.TryAgain = Try Again
+
+# Character Comparison dialog
+CharCompare.Title = Character Skill Comparison
+CharCompare.SelectCharacters = Select Characters to Compare
+CharCompare.DifferencesOnly = Differences Only
+CharCompare.EmptyTitle = Select at least 2 characters to compare
+CharCompare.EmptyDesc = Click the + button above to add characters
+
+# Create Blank Character dialog
+CreateBlank.Title = Create Blank Character
+CreateBlank.Header = Create a local character for planning
+CreateBlank.Name = Name
+CreateBlank.NameWatermark = Enter character name...
+CreateBlank.Race = Race
+CreateBlank.StartingSkills = Starting Skills
+
+# Diagnostic Stream dialog
+Diag.Title = Diagnostic Stream
+Diag.Filter = Filter:
+Diag.FilterAll = All
+Diag.FilterEsi = ESI Requests
+Diag.FilterEvents = Events
+Diag.FilterWarnings = Warnings/Errors
+Diag.FilterHealth = Health
+Diag.FilterScheduler = Scheduler
+Diag.Clear = Clear
+Diag.AutoScroll = Auto-scroll
+Diag.Listening = Listening...
+
+# ESI Scope Editor dialog
+EsiScope.Title = ESI Scope Editor
+EsiScope.Header = Select ESI Scopes
+EsiScope.Description = Check the feature groups and individual scopes to request. Skills & Training Queue is always required.
+EsiScope.SelectAll = Select All
+EsiScope.ClearAll = Clear All
+EsiScope.Ok = OK
+
+# Doctrine Designer dialog (additional)
+Doctrine.StatusStart = Select or create a template to get started
+Doctrine.NoTemplateSelected = No template selected
+
+# Implant Set Editor dialog
+ImplantSet.Title = Implant Set Editor
+ImplantSet.ImplantSets = Implant Sets
+ImplantSet.NewCustom = New Custom
+ImplantSet.Rename = Rename
+ImplantSet.SelectSet = Select an implant set
+
+# Manage Groups dialog
+ManageGroups.Title = Manage Character Groups
+ManageGroups.Groups = Groups
+ManageGroups.GroupsHint = Click a group to reorder its members. Use ◀ ▶ to change group order. ✏ to rename, ✕ to delete.
+ManageGroups.MoveLeft = Move group left
+ManageGroups.MoveRight = Move group right
+ManageGroups.NewGroup = + New Group
+ManageGroups.CharactersHint = Click ⇄ to assign a character to a group. Click ✕ on a tag to remove. Each character can be in one group.
+
+# Manage Plans dialog
+ManagePlans.Title = Manage Plans
+ManagePlans.Open = Open
+ManagePlans.New = New
+ManagePlans.Duplicate = Duplicate
+ManagePlans.Rename = Rename
+ManagePlans.Import = Import...
+ManagePlans.FromQueue = From Queue
+ManagePlans.ColName = Name
+ManagePlans.ColSkills = Skills
+ManagePlans.ColTrainingTime = Training Time
+
+# Planetary Dashboard dialog
+Planetary.WindowTitle = Planetary Dashboard (Beta)
+Planetary.Title = Planetary Dashboard
+Planetary.NeedsAttention = Needs Attention
+Planetary.SearchCharacters = Search characters...
+
+# Remap Attribute dialog
+Remap.Title = Set Remap Attributes
+Remap.NeuralRemap = Neural Remap
+
+# Skill Constellation dialog
+Constellation.Title = Skill Constellation
+Constellation.Heading = SKILL CONSTELLATION
+Constellation.Trained = Trained
+Constellation.Untrained = Untrained
+Constellation.Training = Training
+Constellation.ShowAllLabels = Show All Labels
+Constellation.HideLabels = Hide Labels
+Constellation.Level = LEVEL
+Constellation.Prerequisites = PREREQUISITES
+Constellation.ControlsHint = Scroll to zoom  ·  Drag to pan  ·  Click stars to inspect
+
+# Skill Farm Dashboard dialog (additional)
+SkillFarm.HelpTip = How this works:\n\n• Designate characters as skill farms using + Add Character\n• Characters with 5M+ SP can extract 500K SP into a Large Skill Injector\n• Extractors are bought, injectors are sold — the spread is your profit\n• Monthly economics assume characters are training with current implants\n• 'Sell via' shows optimal tax if all injectors sold through one character\n• Omega cost = 500 PLEX × accounts per month\n• Prices are live from Jita (ESI)
+SkillFarm.ReadyOnly = Ready Only
+SkillFarm.SearchCharacters = Search characters...
+SkillFarm.NoFarmChars = No farm characters designated
+SkillFarm.NoFarmCharsDesc = Click '+ Add Character' to designate characters as skill farms
+
+# What's New dialog
+WhatsNew.Title = What's New in EveLens
+
+# Clones view
+Clones.JumpClones = Jump Clones
+
+# Employment History view
+Employment.Timeline = Timeline
+Employment.List = List
+Employment.Current = Current
+
+# Factional Warfare view
+FW.Statistics = Factional Warfare Statistics
+FW.Kills = Kills
+FW.VictoryPoints = Victory Points
+
+# Character header (account status flyout)
+Header.ChangeStatusTip = Click to change account status
+Header.EmulateAlpha = Emulate Alpha
+Header.EmulateOmega = Emulate Omega
+
+# Main Window — status bar
+Status.EveTime = EVE Time
+Status.Server = Server
+Status.ServerOnline = Online
+Status.ServerOffline = Offline
+Status.ServerUnknown = Unknown
+Status.EsiActivityTip = Time since the last ESI endpoint returned data
+Status.NextUpdateTip = Countdown to the next scheduled ESI data fetch. ESI endpoints have their own cache timers (typically 5-60 min) — this is not a polling rate.
+
+# Main Window — character strip
+Strip.Overview = Ovr
+Strip.OverviewTip = Character Overview
+Strip.ScrollLeft = Scroll left
+Strip.ScrollRight = Scroll right
+Strip.Add = Add
+Strip.AddTip = Add Character
+
+# Main Window — privacy flyout
+Privacy.ButtonTip = Privacy mode — hide sensitive values for screenshots
+Privacy.Mode = Privacy Mode
+Privacy.CharacterName = Character Name
+Privacy.CorpAlliance = Corp / Alliance
+Privacy.IskBalance = ISK Balance
+Privacy.SkillPoints = Skill Points
+Privacy.TrainingQueue = Training Queue
+Privacy.Remaps = Remaps
+Privacy.ToggleAll = Toggle All
+
+# Main Window — activity log
+Activity.Title = Activity Log
+Activity.MarkRead = Mark Read
+Activity.Clear = Clear
+Activity.Empty = No recent activity
+
+# Tools menu (additional)
+Menu.Tools.PlanetaryDash = Planetary Dashboard
+
+# Plan Editor — cards, detail panel, menus, optimizer sidebar
+PlanEditor.Cost = Cost
+PlanEditor.Goal = Goal
+PlanEditor.ImportFitMenu = Import Fit ▾
+PlanEditor.ExportMenu = Export ▾
+PlanEditor.TrainingLabel = Training:
+PlanEditor.SpHrLabel = SP/hr:
+PlanEditor.PrerequisitesNoColon = Prerequisites
+PlanEditor.Notes = Notes
+PlanEditor.AddNote = Add a note...
+PlanEditor.TrainingTimeCard = Training Time
+PlanEditor.ToggleSidebar = Toggle sidebar
+PlanEditor.GroupByAttrTip = Reorder plan by primary attribute for optimal remapping
+PlanEditor.RemapPointHint = Remap point — right-click to configure
+PlanEditor.RemapBandTip = Neural remap here. Set your attributes to: {0}
+PlanEditor.RemapAt = Remap at {0}
+PlanEditor.AutoOptimizeRemaps = Auto-optimize all remap points
+PlanEditor.ViewDetails = View Details
+PlanEditor.RemapHere = Remap Attributes Here
+PlanEditor.RemapHereTip = Insert a neural remap before this skill. Attributes are optimized automatically; right-click again to adjust or remove.
+PlanEditor.OptimizeAttributes = Optimize Attributes...
+Optimizer.Title = Optimize Attributes
+Optimizer.Heading = Attribute Optimizer
+Optimizer.Subtitle = Finds the best neural remap for this plan. Nothing changes until you click Apply.
+Optimizer.Strategy = Strategy
+Optimizer.StrategyWholePlan = One remap for the whole plan
+Optimizer.StrategyAutoPlace = Auto-place remaps at attribute boundaries
+Optimizer.ApplyToPlan = Apply to Plan
+Optimizer.RemapBudget = Remaps available: {0}
+Optimizer.Saves = saves {0}
+Optimizer.AlreadyOptimal = Your current setup already matches or beats this strategy. Nothing to gain here.
+Optimizer.CurrentWithRemaps = {0} (with your applied remaps)
+Optimizer.ResetRemaps = Remove All Remaps
+Optimizer.ResetRemapsTip = Remove every remap point from this plan and train on your current attributes only.
+Optimizer.CloneState = Clone
+Optimizer.CloneAuto = As-is
+Optimizer.SegmentStart = Remap now (plan start)
+Optimizer.SegmentBefore = Remap before {0}
+Optimizer.Failed = Optimization failed: {0}
+PlanEditor.RemapPrefix = Remap —
+PlanEditor.PlanToLevel = Plan to Level
+PlanEditor.MoveUp = Move Up
+PlanEditor.MoveDown = Move Down
+PlanEditor.MoveToTop = Move to Top
+PlanEditor.ChangePriority = Change Priority...
+PlanEditor.RemoveRemapPoint = Remove Remap Point
+PlanEditor.InsertRemapPoint = Insert Remap Point
+PlanEditor.RemoveFromPlan = Remove from Plan
+PlanEditor.SetAttrsManually = Set attributes manually…
+PlanEditor.RemoveRemapPointLower = Remove remap point
+PlanEditor.Remove = Remove
+PlanEditor.Downgrade = Downgrade
+PlanEditor.ConfirmChange = Confirm Change
+PlanEditor.TopImproved = Top improved:
+PlanEditor.Reanalyze = Re-analyze
+PlanEditor.HideManualAdjust = Hide manual adjustment
+PlanEditor.AdjustManually = Adjust manually
+PlanEditor.DragTimeImpact = Drag to see time impact
+PlanEditor.ResetToOptimal = Reset to optimal
+PlanEditor.ResetToCurrent = Reset to current
+PlanEditor.BrowseAddSkills = Browse and add skills to your training plan.
+PlanEditor.UseTabsToAdd = Use the Skills, Ships, Items, or Blueprints tabs to add skills to your plan.
+Splash.Starting = Starting...
+Settings.UseDefaultTip = Clear custom credentials and use the built-in EveLens defaults
+
+# Auto-update opt-in (Discussion #100)
+AutoUpdate.Title = Automatic Updates
+AutoUpdate.Heading = Keep EveLens up to date automatically?
+AutoUpdate.Body = EveLens already checks for new versions and downloads them in the background. With automatic updates, a downloaded update installs silently when you close the app, and the next launch simply runs the new version. If you prefer, EveLens will only notify you and let you update manually.
+AutoUpdate.ChangeAnytime = You can change this anytime in Settings > Data. We'll only ask once.
+AutoUpdate.OptIn = Update automatically
+AutoUpdate.NotifyOnly = Just notify me

@@ -37,6 +37,23 @@ namespace EveLens.Common.Serialization.Settings
         public bool Monitored { get; set; }
 
         /// <summary>
+        /// The character this key authenticates, captured from the last successful token-info
+        /// call. Persisting it keeps the key↔character link across restarts even when the
+        /// refresh token can no longer be used (e.g. the character was biomassed/transferred),
+        /// so notifications stay named and character deletion can find the key (Issue #94).
+        /// Zero for keys saved before this field existed.
+        /// </summary>
+        [XmlAttribute("characterID")]
+        public long CharacterID { get; set; }
+
+        /// <summary>
+        /// The character name matching <see cref="CharacterID"/> (display fallback when the
+        /// identity is no longer in the character list).
+        /// </summary>
+        [XmlAttribute("characterName")]
+        public string? CharacterName { get; set; }
+
+        /// <summary>
         /// ESI scope strings that were granted when this key was authenticated.
         /// </summary>
         [XmlArray("authorizedScopes")]

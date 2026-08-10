@@ -26,12 +26,29 @@ namespace EveLens.Avalonia.Views.Dialogs
         private readonly PlanetaryOverviewViewModel _vm = new();
         private bool _attentionOnly;
         private string _filter = "";
+        private IDisposable? _pricesSub;
 
         public PlanetaryDashboardWindow()
         {
             InitializeComponent();
             _vm.Refresh();
             RebuildUI();
+
+            // Market prices load asynchronously after the first request; without a repaint
+            // the ISK/day column stays 0 until the window is reopened (Issue #66).
+            _pricesSub = AppServices.EventAggregator?.Subscribe<Common.Events.ItemPricesUpdatedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    _vm.Refresh();
+                    RebuildUI();
+                }));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _pricesSub?.Dispose();
+            _pricesSub = null;
+            base.OnClosed(e);
         }
 
         private void RebuildUI()

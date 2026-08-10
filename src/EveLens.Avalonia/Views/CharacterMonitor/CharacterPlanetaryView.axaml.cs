@@ -28,6 +28,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
     public partial class CharacterPlanetaryView : UserControl
     {
         private IDisposable? _dataUpdatedSub;
+        private IDisposable? _layoutUpdatedSub;
+        private IDisposable? _pinsCompletedSub;
         private long _characterId;
         private PlanetaryListViewModel? _listViewModel;
         private PlanetaryDashboardViewModel? _dashboardViewModel;
@@ -52,7 +54,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
+            // Colonies-updated fires on the periodic list refresh (before async pin layout arrives);
+            // layout-updated fires when the pins/routes for a colony actually load; pins-completed
+            // fires the moment an extractor transitions to idle. Repaint on all three so the health
+            // indicators stay live instead of only reflecting the first load. (Issue #66)
             _dataUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterPlanetaryColoniesUpdatedEvent>(OnDataUpdated);
+            _layoutUpdatedSub ??= AppServices.EventAggregator?.Subscribe<CharacterPlanetaryLayoutUpdatedEvent>(OnLayoutUpdated);
+            _pinsCompletedSub ??= AppServices.EventAggregator?.Subscribe<CharacterPlanetaryPinsCompletedEvent>(OnPinsCompleted);
             LoadData();
         }
 
@@ -617,11 +625,27 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
         }
 
+        private void OnLayoutUpdated(CharacterPlanetaryLayoutUpdatedEvent evt)
+        {
+            if (evt.Character?.CharacterID == _characterId)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
+        }
+
+        private void OnPinsCompleted(CharacterPlanetaryPinsCompletedEvent evt)
+        {
+            if (evt.Character?.CharacterID == _characterId)
+                global::Avalonia.Threading.Dispatcher.UIThread.Post(LoadData);
+        }
+
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
             _dataUpdatedSub?.Dispose();
             _dataUpdatedSub = null;
+            _layoutUpdatedSub?.Dispose();
+            _layoutUpdatedSub = null;
+            _pinsCompletedSub?.Dispose();
+            _pinsCompletedSub = null;
             _dashboardViewModel?.Dispose();
             _dashboardViewModel = null;
             _listViewModel?.Dispose();

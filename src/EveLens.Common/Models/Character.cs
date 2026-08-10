@@ -383,6 +383,12 @@ namespace EveLens.Common.Models
         public string ShipTypeName { get; private set; }
 
         /// <summary>
+        /// Gets the character's ship type ID. Persisted alongside the display name so the
+        /// name can be re-resolved in the current UI language on load.
+        /// </summary>
+        public int ShipTypeID { get; private set; }
+
+        /// <summary>
         /// Gets the character's last known location.
         /// </summary>
         public SerializableLocation LastKnownLocation { get; private set; }
@@ -694,6 +700,7 @@ namespace EveLens.Common.Models
             serial.Label = m_label;
             serial.ShipName = ShipName;
             serial.ShipTypeName = ShipTypeName;
+            serial.ShipTypeID = ShipTypeID;
             serial.SecurityStatus = SecurityStatus;
             serial.LastKnownLocation = LastKnownLocation;
 
@@ -805,7 +812,8 @@ namespace EveLens.Common.Models
         internal void Import(EsiAPIShip ship)
         {
             ShipName = ship.ShipName;
-            ShipTypeName = StaticItems.GetItemName(ship.ShipTypeID);
+            ShipTypeID = ship.ShipTypeID;
+            ShipTypeName = StaticItems.GetLocalizedItemName(ship.ShipTypeID);
         }
 
         /// <summary>
@@ -995,7 +1003,15 @@ namespace EveLens.Common.Models
                 // Info
                 m_label = settingsChar.Label ?? string.Empty;
                 ShipName = settingsChar.ShipName;
-                ShipTypeName = settingsChar.ShipTypeName;
+                ShipTypeID = settingsChar.ShipTypeID;
+                // Re-resolve the display name in the CURRENT language when we have the ID.
+                // The persisted name string is frozen in whatever language was active when
+                // ESI data was imported — restoring it verbatim left Korean ship names on
+                // screen after switching back to English. Old files (ID == 0) keep the string.
+                ShipTypeName = settingsChar.ShipTypeID > 0
+                    ? StaticItems.GetItemByID(settingsChar.ShipTypeID)?.LocalizedName
+                        ?? settingsChar.ShipTypeName
+                    : settingsChar.ShipTypeName;
                 SecurityStatus = settingsChar.SecurityStatus;
                 LastKnownLocation = settingsChar.LastKnownLocation;
 

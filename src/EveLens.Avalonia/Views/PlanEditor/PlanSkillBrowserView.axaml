@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanSkillBrowserView">
     <Grid ColumnDefinitions="300,*">
         <!-- Left panel: Skill groups as lightweight tree -->
@@ -10,21 +11,25 @@
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <WrapPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,4,0,0">
-                        <ToggleButton x:Name="FilterAllBtn" Content="All Skills" IsChecked="True"
+                        <ToggleButton x:Name="FilterAllBtn" Content="{loc:T Action.AllSkills}" IsChecked="True"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                       Click="OnFilterModeClick" />
-                        <ToggleButton x:Name="FilterTrainedBtn" Content="Trained"
+                        <ToggleButton x:Name="FilterTrainedBtn" Content="{loc:T Status.Trained}"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                       Click="OnFilterModeClick" />
-                        <ToggleButton x:Name="FilterPrereqBtn" Content="Have Prerequisites"
+                        <ToggleButton x:Name="FilterPrereqBtn" Content="{loc:T PlanEditor.HavePrereqs}"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                       Click="OnFilterModeClick" />
-                        <ToggleButton x:Name="FilterUntrainedBtn" Content="Untrained"
+                        <ToggleButton x:Name="FilterUntrainedBtn" Content="{loc:T Skills.Untrained}"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                       Click="OnFilterModeClick" />
-                        <Button x:Name="CollapseBtn" Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                        <ToggleButton x:Name="FilterHideMaxedBtn" Content="{loc:T PlanEditor.HideMaxed}"
+                                      ToolTip.Tip="{loc:T PlanEditor.HideMaxedTip}"
+                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                                      Click="OnFilterModeClick" />
+                        <Button x:Name="CollapseBtn" Content="{loc:T PlanEditor.Collapse}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button x:Name="ExpandBtn" Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
+                        <Button x:Name="ExpandBtn" Content="{loc:T PlanEditor.Expand}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" Margin="0,0,4,4" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </WrapPanel>
                     <!-- Attribute filter -->
@@ -53,7 +58,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="Search skills..."
+                            <TextBox x:Name="FilterBox" Watermark="{loc:T PlanEditor.SearchSkills}"
                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
@@ -143,19 +148,19 @@
                                Foreground="{StaticResource EveAccentPrimaryBrush}" />
                     <StackPanel Orientation="Horizontal" Spacing="16">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock x:Name="RankLabel" Text="Rank:" FontSize="{DynamicResource EveFontBody}"
+                            <TextBlock x:Name="RankLabel" Text="{loc:T PlanEditor.Rank}" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
                             <TextBlock x:Name="DetailRank" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock x:Name="PrimaryLabel" Text="Primary:" FontSize="{DynamicResource EveFontBody}"
+                            <TextBlock x:Name="PrimaryLabel" Text="{loc:T PlanEditor.Primary}" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
                             <TextBlock x:Name="DetailPrimary" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock x:Name="SecondaryLabel" Text="Secondary:" FontSize="{DynamicResource EveFontBody}"
+                            <TextBlock x:Name="SecondaryLabel" Text="{loc:T PlanEditor.Secondary}" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextSecondaryBrush}" />
                             <TextBlock x:Name="DetailSecondary" FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource EveTextPrimaryBrush}" />
@@ -165,11 +170,11 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="80" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock x:Name="TrainingTimeLabel" Text="Training Time:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="TrainingTimeLabel" Text="{loc:T PlanEditor.TrainingTimeLabel}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="LevelsList" Spacing="4" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock x:Name="PrereqsLabel" Text="Prerequisites:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="PrereqsLabel" Text="{loc:T PlanEditor.Prerequisites}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
                 </StackPanel>

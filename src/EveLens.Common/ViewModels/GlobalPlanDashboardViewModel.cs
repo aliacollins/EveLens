@@ -72,8 +72,8 @@ namespace EveLens.Common.ViewModels
 
                 var row = new SkillComparisonRow
                 {
-                    SkillName = skill.Name,
-                    SkillGroup = skill.Group?.Name ?? "Unknown",
+                    SkillName = skill.LocalizedName,
+                    SkillGroup = skill.Group?.LocalizedName ?? "Unknown",
                     TargetLevel = entry.Level,
                     Rank = (int)skill.Rank,
                     PrimaryAttribute = skill.PrimaryAttribute.ToString(),

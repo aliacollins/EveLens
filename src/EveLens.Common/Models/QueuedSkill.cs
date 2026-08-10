@@ -94,27 +94,45 @@ namespace EveLens.Common.Models
         public int EndSP { get; }
 
         /// <summary>
+        /// Gets the number of SP the skill has at the start of this entry's level
+        /// (the "0%" floor of this entry's progress bar). Derived from static data,
+        /// matching ESI's level_start_sp. Zero when the skill is not in our datafiles.
+        /// </summary>
+        public long LevelStartSP => Skill == null || Skill == Skill.UnknownSkill
+            ? 0 : Skill.StaticData.GetPointsRequiredForLevel(Level - 1);
+
+        /// <summary>
         /// Gets the fraction completed, between 0 and 1.
+        /// Computed per queue entry from this entry's own SP window (LevelStartSP→EndSP),
+        /// NOT from the shared Skill's progress — when the same skill is queued to multiple
+        /// levels, each entry gets its own fraction: the actively-training level shows live
+        /// progress while later levels of the same skill correctly show 0 (Issue #103).
         /// </summary>
         public float FractionCompleted
         {
             get
             {
-                float fraction = 0.0f;
-                if (Skill != null)
+                if (Skill == null)
+                    return 0.0f;
+
+                if (Skill == Skill.UnknownSkill)
                 {
-                    if (Skill == Skill.UnknownSkill)
-                    {
-                        // Based on estimated end time - start time
-                        double time = EndTime.Subtract(StartTime).TotalMilliseconds;
-                        if (time > 0.0)
-                            fraction = (float)(1.0 - EndTime.Subtract(DateTime.UtcNow).
-                                TotalMilliseconds / time);
-                    }
-                    else
-                        fraction = Skill.FractionCompleted;
+                    // Based on estimated end time - start time
+                    double time = EndTime.Subtract(StartTime).TotalMilliseconds;
+                    if (time <= 0.0)
+                        return 0.0f;
+                    return (float)Math.Clamp(1.0 - EndTime.Subtract(DateTime.UtcNow).
+                        TotalMilliseconds / time, 0.0, 1.0);
                 }
-                return fraction;
+
+                if (IsCompleted)
+                    return 1.0f;
+
+                float window = EndSP - LevelStartSP;
+                if (window <= 0.0f)
+                    return 0.0f;
+
+                return Math.Clamp((CurrentSP - LevelStartSP) / window, 0.0f, 1.0f);
             }
         }
 
@@ -203,7 +221,12 @@ namespace EveLens.Common.Models
         }
 
         /// <summary>
-        /// Gets true if the skill is currently in training.
+        /// Gets true if THIS queue entry is currently in training — i.e. it matches the head of
+        /// an active queue by skill AND level. Deliberately not delegated to
+        /// <c>Skill.IsTraining</c>: that matches by skill identity only, so with the same skill
+        /// queued to multiple levels every entry would report training at once (Issue #103).
+        /// Matching by skill+level (not reference) keeps detached instances working, e.g. the
+        /// temporary QueuedSkill built during skill import.
         /// </summary>
         /// <value>
         ///   <c>true</c> if the skill is training; otherwise, <c>false</c>.
@@ -213,8 +236,11 @@ namespace EveLens.Common.Models
             get
             {
                 var ccpCharacter = Owner as CCPCharacter;
-                return Skill.IsTraining || (ccpCharacter != null && ccpCharacter.SkillQueue.
-                    IsTraining && ccpCharacter.SkillQueue.First() == this);
+                if (ccpCharacter == null || !ccpCharacter.SkillQueue.IsTraining)
+                    return false;
+
+                var head = ccpCharacter.SkillQueue.FirstOrDefault();
+                return head != null && head.Skill?.ID == Skill?.ID && head.Level == Level;
             }
         }
 

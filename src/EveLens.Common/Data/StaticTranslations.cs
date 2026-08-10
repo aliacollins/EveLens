@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Xml.Serialization;
+using EveLens.Common.Enumerations.UISettings;
 using EveLens.Common.Services;
 
 namespace EveLens.Common.Data
@@ -27,9 +28,41 @@ namespace EveLens.Common.Data
             TryLoadExternalTranslations();
         }
 
+        /// <summary>
+        /// Whether game names (ships, items, skills, market groups) should currently resolve to
+        /// the translated SDE names. Combines the user's <see cref="UISettings.GameNameMode"/>
+        /// override with the language's community default (Korean players prefer English game
+        /// names — Discussion #79 — while Chinese players prefer translated ones).
+        /// This is THE policy gate: every <c>LocalizedName</c> property funnels through
+        /// <see cref="GetSkillName"/>/<see cref="GetGroupName"/>, which consult it.
+        /// </summary>
+        public static bool UseLocalizedGameNames
+        {
+            get
+            {
+                var mode = Settings.UI?.GameNameMode ?? GameNameMode.Auto;
+                return mode switch
+                {
+                    GameNameMode.Localized => true,
+                    GameNameMode.English => false,
+                    _ => LanguageRegistry.LocalizedGameNamesDefault(Loc.Language),
+                };
+            }
+        }
+
+        /// <summary>
+        /// Returns the translated skill/item name, or empty when English should be shown.
+        /// With no explicit <paramref name="language"/>, the current UI language and the
+        /// <see cref="UseLocalizedGameNames"/> policy apply; an explicit language is a raw
+        /// table lookup (tests/tooling).
+        /// </summary>
         public static string GetSkillName(int skillId, string? language = null)
         {
-            language ??= Loc.Language;
+            if (language == null)
+            {
+                if (!UseLocalizedGameNames) return string.Empty;
+                language = Loc.Language;
+            }
             if (language == "en") return string.Empty;
 
             if (s_skillNames.TryGetValue(language, out var table) &&
@@ -39,9 +72,17 @@ namespace EveLens.Common.Data
             return string.Empty;
         }
 
+        /// <summary>
+        /// Returns the translated group name, or empty when English should be shown.
+        /// Same policy semantics as <see cref="GetSkillName"/>.
+        /// </summary>
         public static string GetGroupName(int groupId, string? language = null)
         {
-            language ??= Loc.Language;
+            if (language == null)
+            {
+                if (!UseLocalizedGameNames) return string.Empty;
+                language = Loc.Language;
+            }
             if (language == "en") return string.Empty;
 
             if (s_groupNames.TryGetValue(language, out var table) &&
@@ -53,20 +94,30 @@ namespace EveLens.Common.Data
 
         private static void TryLoadExternalTranslations()
         {
+            // Load every bundled SDE-name datafile (driven by the single LanguageRegistry), so all
+            // languages are ready and GetSkillName/GetGroupName resolve by Loc.Language. Adding a
+            // language to LanguageRegistry with HasSdeNames=true is all that's needed here.
+            foreach (string lang in EveLens.Common.Services.LanguageRegistry.SdeLanguages)
+                TryLoadTranslationFile(lang);
+        }
+
+        private static void TryLoadTranslationFile(string lang)
+        {
+            string fileName = $"eve-translations-{lang}.xml.gzip";
+
             // Try multiple paths: install Resources dir, AppData, and bin directory
             var candidates = new List<string>();
 
-            try { candidates.Add(Path.Combine(Datafile.GetDatafilesDirectory(), "eve-translations-zh-CN.xml.gzip")); }
+            try { candidates.Add(Path.Combine(Datafile.GetDatafilesDirectory(), fileName)); }
             catch { }
 
-            candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "eve-translations-zh-CN.xml.gzip"));
+            candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", fileName));
 
-            string? appData = null;
             try
             {
-                appData = AppServices.ApplicationPaths?.DataDirectory;
+                string? appData = AppServices.ApplicationPaths?.DataDirectory;
                 if (appData != null)
-                    candidates.Add(Path.Combine(appData, "eve-translations-zh-CN.xml.gzip"));
+                    candidates.Add(Path.Combine(appData, fileName));
             }
             catch { }
 
@@ -90,8 +141,10 @@ namespace EveLens.Common.Data
                     foreach (var entry in data.Groups)
                         groups[entry.Id] = entry.Name;
 
-                    s_skillNames[data.Language] = skills;
-                    s_groupNames[data.Language] = groups;
+                    // Key by the language the datafile declares (falls back to the requested code).
+                    string key = string.IsNullOrEmpty(data.Language) ? lang : data.Language;
+                    s_skillNames[key] = skills;
+                    s_groupNames[key] = groups;
 
                     AppServices.TraceService?.Trace(
                         $"Loaded {skills.Count} type + {groups.Count} group translations from {path}");

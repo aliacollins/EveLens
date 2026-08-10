@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterStandingsView">
 
     <Panel>
@@ -48,9 +49,9 @@
                         <ComboBox x:Name="GroupByCombo" FontSize="{DynamicResource EveFontBody}" Padding="8,3"
                                   MinWidth="120" SelectedIndex="0"
                                   SelectionChanged="OnGroupByChanged">
-                            <ComboBoxItem Content="No group" />
-                            <ComboBoxItem Content="Group" />
-                            <ComboBoxItem Content="Status" />
+                            <ComboBoxItem Content="{loc:T ListView.NoGroup}" />
+                            <ComboBoxItem Content="{loc:T ListView.Group}" />
+                            <ComboBoxItem Content="{loc:T ListView.Status}" />
                         </ComboBox>
                         <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnCollapseAll" />
@@ -72,7 +73,7 @@
                                     Click="OnClearFilter"
                                     IsVisible="False" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="Search standings..."
+                                     Watermark="{loc:T ListView.SearchStandings}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -93,8 +94,8 @@
             <!-- Empty state + scrollable content overlap in Grid -->
             <Grid>
                 <shared:EmptyState x:Name="EmptyState" IsVisible="False"
-                                   Title="No standings found"
-                                   Subtitle="This character has no standings, or none match the current filter" />
+                                   Title="{loc:T ListView.NoStandings}"
+                                   Subtitle="{loc:T ListView.NoStandingsDesc}" />
 
                 <!-- Virtualized flat tree with VirtualizingStackPanel -->
                 <ScrollViewer x:Name="MainScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">

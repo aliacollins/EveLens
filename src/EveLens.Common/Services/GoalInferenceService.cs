@@ -98,7 +98,7 @@ namespace EveLens.Common.Services
                 int stableColorIndex = Math.Abs(goalId) % Palette.Length;
                 var chainAssignment = new ChainAssignment(
                     goalId,
-                    goalEntry.Skill.Name,
+                    goalEntry.Skill.LocalizedName,
                     Palette[stableColorIndex],
                     stableColorIndex);
 
@@ -117,7 +117,7 @@ namespace EveLens.Common.Services
                 if (!assignments.ContainsKey(sid))
                 {
                     int ci = Math.Abs(sid) % Palette.Length;
-                    assignments[sid] = new ChainAssignment(sid, entry.Skill.Name, Palette[ci], ci);
+                    assignments[sid] = new ChainAssignment(sid, entry.Skill.LocalizedName, Palette[ci], ci);
                 }
             }
 

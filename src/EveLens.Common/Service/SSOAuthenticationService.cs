@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using EveLens.Common.Constants;
+using EveLens.Common.Enumerations;
 using EveLens.Common.Extensions;
 using EveLens.Common.Helpers;
 using EveLens.Common.Net;
@@ -103,9 +104,10 @@ namespace EveLens.Common.Service
         /// Retrieves a token from the server with the specified authentication data.
         /// </summary>
         /// <param name="data">The POST data, either an auth code or a refresh token.</param>
-        /// <param name="callback">A callback to receive the new token.</param>
+        /// <param name="callback">A callback to receive the new token and, on failure, the
+        /// classified reason so the caller can react appropriately (Issue #94).</param>
         /// <param name="isJWT">true if a JWT response is expected, or false if a straight JSON response is expected.</param>
-        private void FetchToken(string data, Action<AccessResponse> callback, bool isJWT)
+        private void FetchToken(string data, Action<AccessResponse, SsoTokenError> callback, bool isJWT)
         {
             var obtained = DateTime.UtcNow;
             var url = new Uri(NetworkConstants.SSOBaseV2 + NetworkConstants.SSOToken);
@@ -120,6 +122,9 @@ namespace EveLens.Common.Service
             HttpWebClientService.DownloadStringAsync(url, rp).ContinueWith((result) =>
             {
                 AccessResponse response = null;
+                // Default to Transient: a faulted task means we never got an HTTP response
+                // (DNS/TLS/connection), which is safe to retry and should not alarm the user.
+                SsoTokenError error = SsoTokenError.Transient;
                 DownloadResult<string> taskResult;
                 string encodedToken;
                 // It must be completed or failed if ContinueWith is reached
@@ -129,14 +134,77 @@ namespace EveLens.Common.Service
                 {
                     // Log HTTP error if it occurred
                     if (taskResult.Error != null)
+                    {
+                        // Surface CCP's actual rejection reason (e.g. invalid_grant /
+                        // invalid_client) instead of a bare status code, so users and the
+                        // diagnostic stream can see WHY SSO failed (Issue #94).
+                        string body = taskResult.Error.ResponseBody;
+                        error = ClassifyTokenError(taskResult.Error);
+                        AppServices.TraceService?.Trace(
+                            "SSO token request failed (" + error + "): " + taskResult.Error.Message +
+                            (string.IsNullOrEmpty(body) ? string.Empty : " — server response: " + body));
                         ExceptionHandler.LogException(taskResult.Error, true);
+                    }
                     else if (!string.IsNullOrEmpty(encodedToken = taskResult.Result))
+                    {
                         // For some reason the JWT token is not returned according to the ESI
                         // spec
                         response = TokenFromString(encodedToken, false, obtained);
+                        // A 200 whose body we couldn't parse into a token is not transient —
+                        // retrying won't help, so flag it as Unknown rather than masking it.
+                        error = response != null ? SsoTokenError.None : SsoTokenError.Unknown;
+                    }
+                    else
+                        // Empty 200 body — nothing to parse, not safe to treat as a token.
+                        error = SsoTokenError.Unknown;
                 }
-                AppServices.Dispatcher?.Invoke(() => callback?.Invoke(response));
+                AppServices.Dispatcher?.Invoke(() => callback?.Invoke(response, error));
             });
+        }
+
+        /// <summary>
+        /// Maps a failed token-request exception to a <see cref="SsoTokenError"/> using CCP's
+        /// OAuth error code (from the response body) first, then the HTTP status as a fallback.
+        /// CCP returns <c>400 Bad Request</c> for both <c>invalid_grant</c> (dead refresh token)
+        /// and <c>invalid_client</c> (bad app credentials), so the status alone is ambiguous —
+        /// the body is authoritative.
+        /// </summary>
+        internal static SsoTokenError ClassifyTokenError(HttpWebClientServiceException ex)
+        {
+            string body = ex?.ResponseBody;
+            if (!string.IsNullOrEmpty(body))
+            {
+                var parsed = Util.DeserializeJson<EsiAPIError>(body);
+                string code = parsed?.Error;
+                if (!string.IsNullOrEmpty(code))
+                {
+                    if (code.Equals("invalid_grant", StringComparison.OrdinalIgnoreCase) ||
+                        code.Equals("unauthorized_client", StringComparison.OrdinalIgnoreCase))
+                        return SsoTokenError.InvalidGrant;
+                    if (code.Equals("invalid_client", StringComparison.OrdinalIgnoreCase) ||
+                        code.Equals("invalid_request", StringComparison.OrdinalIgnoreCase) ||
+                        code.Equals("invalid_scope", StringComparison.OrdinalIgnoreCase))
+                        return SsoTokenError.InvalidClient;
+                }
+            }
+            // No usable body — fall back to the HTTP status.
+            switch (ex?.StatusCode)
+            {
+                case HttpStatusCode.BadRequest:
+                case HttpStatusCode.Unauthorized:
+                case HttpStatusCode.Forbidden:
+                    // A 4xx with no readable error code: the token/credentials were rejected.
+                    // Treat as InvalidGrant so we stop retrying a request that can't succeed.
+                    return SsoTokenError.InvalidGrant;
+                case HttpStatusCode.RequestTimeout:
+                case HttpStatusCode.InternalServerError:
+                case HttpStatusCode.BadGateway:
+                case HttpStatusCode.ServiceUnavailable:
+                case HttpStatusCode.GatewayTimeout:
+                    return SsoTokenError.Transient;
+                default:
+                    return SsoTokenError.Transient;
+            }
         }
 
         /// <summary>
@@ -176,8 +244,9 @@ namespace EveLens.Common.Service
         /// Starts obtaining a new access token from the refresh token.
         /// </summary>
         /// <param name="refreshToken">The refresh token.</param>
-        /// <param name="callback">A callback to receive the new token.</param>
-        public void GetNewToken(string refreshToken, Action<AccessResponse> callback)
+        /// <param name="callback">A callback to receive the new token and, on failure, the
+        /// classified reason (Issue #94).</param>
+        public void GetNewToken(string refreshToken, Action<AccessResponse, SsoTokenError> callback)
         {
             refreshToken.ThrowIfNull(nameof(refreshToken));
             string data;
@@ -195,8 +264,9 @@ namespace EveLens.Common.Service
         /// Starts verifying the authentication code.
         /// </summary>
         /// <param name="authCode">The code to verify.</param>
-        /// <param name="callback">A callback to receive the tokens.</param>
-        public void VerifyAuthCode(string authCode, Action<AccessResponse> callback)
+        /// <param name="callback">A callback to receive the tokens and, on failure, the
+        /// classified reason (Issue #94).</param>
+        public void VerifyAuthCode(string authCode, Action<AccessResponse, SsoTokenError> callback)
         {
             authCode.ThrowIfNull(nameof(authCode));
             bool isPKCE = string.IsNullOrEmpty(m_secret);

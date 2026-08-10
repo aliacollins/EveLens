@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterContactsView">
 
     <Panel>
@@ -42,9 +43,9 @@
                         <ComboBox x:Name="GroupByCombo" FontSize="{DynamicResource EveFontBody}" Padding="8,3"
                                   MinWidth="140" SelectedIndex="0"
                                   SelectionChanged="OnGroupByChanged">
-                            <ComboBoxItem Content="No group" />
-                            <ComboBoxItem Content="Contact Group" />
-                            <ComboBoxItem Content="Standing Bracket" />
+                            <ComboBoxItem Content="{loc:T ListView.NoGroup}" />
+                            <ComboBoxItem Content="{loc:T ListView.ContactGroup}" />
+                            <ComboBoxItem Content="{loc:T ListView.StandingBracket}" />
                         </ComboBox>
                         <Button x:Name="CollapseAllBtn" Content="Collapse All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                                 CornerRadius="12" Click="OnCollapseAll" />
@@ -63,7 +64,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="8,4" CornerRadius="0,14,14,0"
                                     Click="OnClearFilter" IsVisible="False" />
-                            <TextBox x:Name="FilterBox" Watermark="Search contacts..."
+                            <TextBox x:Name="FilterBox" Watermark="{loc:T ListView.SearchContacts}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
