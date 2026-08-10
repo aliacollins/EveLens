@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- 1.4.0-beta.5: community fix train, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in
+- promote.ps1: unambiguous refs/heads merges + post-merge content verification
 - beta.5 train: community fixes, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in
 
 ### Added
