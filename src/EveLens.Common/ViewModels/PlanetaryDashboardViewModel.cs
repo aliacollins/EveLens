@@ -30,12 +30,17 @@ namespace EveLens.Common.ViewModels
         {
             SubscribeForCharacter<CharacterPlanetaryColoniesUpdatedEvent>(e => Refresh());
             SubscribeForCharacter<CharacterPlanetaryLayoutUpdatedEvent>(e => Refresh());
+            // ISK/day depends on market prices, which load asynchronously after the first
+            // request — repaint when they land, else economics stay 0 until the next
+            // colony ESI refresh (Issue #66).
+            Subscribe<ItemPricesUpdatedEvent>(e => Refresh());
         }
 
         public PlanetaryDashboardViewModel() : base()
         {
             SubscribeForCharacter<CharacterPlanetaryColoniesUpdatedEvent>(e => Refresh());
             SubscribeForCharacter<CharacterPlanetaryLayoutUpdatedEvent>(e => Refresh());
+            Subscribe<ItemPricesUpdatedEvent>(e => Refresh());
         }
 
         public IReadOnlyList<ColonyCardData> Colonies => _colonies;

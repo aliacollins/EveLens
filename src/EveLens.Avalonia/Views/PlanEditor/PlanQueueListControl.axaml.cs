@@ -56,6 +56,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
         /// </summary>
         public event Action<PlanQueueItem>? SkillDoubleClicked;
 
+        /// <summary>
+        /// Supplies the right-click context menu for a queue row (Plan to level, move,
+        /// priority, Insert Remap Point...). Owned by the parent view, which has the
+        /// plan/viewmodel context this control deliberately lacks. Without this the rows
+        /// had NO context menu at all — the menu only existed on the legacy row builder
+        /// that no longer renders (Issue #71).
+        /// </summary>
+        public Func<PlanQueueItem, ContextMenu>? ContextMenuFactory { get; set; }
+
+
         public PlanQueueListControl()
         {
             InitializeComponent();
@@ -106,6 +116,28 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 var item = _viewModel.Items[i];
                 var row = BuildRow(item, i);
+
+                // Gold top band marks a remap point on this row. Deliberately NOT a separate
+                // list row: drag/selection logic indexes _rowControls 1:1 with Items, so
+                // injected rows would corrupt reorder indices. The remap actions live in the
+                // row's right-click menu instead (Issue #71).
+                if (item.Entry.Remapping != null && row is Border remapBorder)
+                {
+                    remapBorder.BorderThickness = new Thickness(0, 3, 0, 0);
+                    remapBorder.BorderBrush = new SolidColorBrush(Color.Parse("#CCE6A817"));
+                    // Show the actual target attributes — a marker whose meaning you can't
+                    // see is what confused users in #71 ("what should my attributes be?")
+                    var remap = item.Entry.Remapping;
+                    string tip = remap.Status == RemappingPointStatus.UpToDate
+                        ? string.Format(Loc.Get("PlanEditor.RemapBandTip"),
+                            $"PER {remap[EveAttribute.Perception]}  " +
+                            $"WIL {remap[EveAttribute.Willpower]}  " +
+                            $"INT {remap[EveAttribute.Intelligence]}  " +
+                            $"MEM {remap[EveAttribute.Memory]}  " +
+                            $"CHA {remap[EveAttribute.Charisma]}")
+                        : Loc.Get("PlanEditor.RemapPointHint");
+                    ToolTip.SetTip(remapBorder, tip);
+                }
 
                 // When grouped by attribute, add a visible separator on rows
                 // where the primary attribute changes — no extra rows, no broken indices
@@ -201,6 +233,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Double-click for skill detail
             var capturedItem = item;
             container.DoubleTapped += (_, _) => SkillDoubleClicked?.Invoke(capturedItem);
+
+            // Right-click context menu. Assigned as a property (not opened manually from
+            // ContextRequested) — Avalonia's native open/close/click handling only works
+            // reliably through the ContextMenu property. Rows are rebuilt on every refresh,
+            // so menu state (remap flags, planned levels) stays current.
+            if (ContextMenuFactory != null)
+                container.ContextMenu = ContextMenuFactory(capturedItem);
 
             // 7-column grid: skill | time | R | PRI | SEC | SP/HR | LEVEL
             var grid = new Grid

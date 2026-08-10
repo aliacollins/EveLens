@@ -145,45 +145,112 @@ namespace EveLens.Tests.Services
     /// it catches the bug the screenshots surfaced — the Plan editor showing English skill names to
     /// Korean/Chinese users because a VM read <c>.Name</c> instead of <c>.LocalizedName</c>.
     /// Requires loaded SDE skill/item data + translation datafiles.
+    ///
+    /// Game-name policy (Discussion #79): whether <c>LocalizedName</c> actually returns a
+    /// translation is governed by <c>UISettings.GameNameMode</c> + the language's community
+    /// default in <c>LanguageRegistry</c> — Korean defaults to ENGLISH game names, Chinese to
+    /// translated ones. Tests that assert translated output pin the mode explicitly.
     /// </summary>
     [Collection("StaticData")]
-    public class LocalizedNameFlowTests
+    public class LocalizedNameFlowTests : System.IDisposable
     {
+        private readonly string _prevLanguage;
+        private readonly EveLens.Common.Enumerations.UISettings.GameNameMode _prevMode;
+
         public LocalizedNameFlowTests()
         {
             PlanTestFixture.EnsureGameDataLoaded();
+            _prevLanguage = Loc.Language;
+            _prevMode = EveLens.Common.Settings.UI.GameNameMode;
         }
+
+        public void Dispose()
+        {
+            Loc.Language = _prevLanguage;
+            EveLens.Common.Settings.UI.GameNameMode = _prevMode;
+        }
+
+        private static void SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode mode)
+            => EveLens.Common.Settings.UI.GameNameMode = mode;
 
         [Theory]
         [InlineData("ko")]
         [InlineData("zh-CN")]
-        public void StaticSkill_LocalizedName_DiffersFromEnglish_WhenLanguageSet(string lang)
+        public void StaticSkill_LocalizedName_DiffersFromEnglish_WhenLocalizedModeSet(string lang)
         {
-            var prev = Loc.Language;
-            try
-            {
-                Loc.Language = lang;
-                // Navigation is a core skill present in every SDE language.
-                var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
-                skill.Should().NotBeNull();
-                skill!.LocalizedName.Should().NotBeNullOrEmpty();
-                skill.LocalizedName.Should().NotBe(skill.Name,
-                    $"{lang} should translate 'Navigation' away from the English name");
-            }
-            finally { Loc.Language = prev; }
+            Loc.Language = lang;
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Localized);
+            // Navigation is a core skill present in every SDE language.
+            var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+            skill.Should().NotBeNull();
+            skill!.LocalizedName.Should().NotBeNullOrEmpty();
+            skill.LocalizedName.Should().NotBe(skill.Name,
+                $"{lang} should translate 'Navigation' away from the English name");
         }
 
         [Fact]
         public void StaticSkill_LocalizedName_IsEnglish_WhenLanguageEnglish()
         {
-            var prev = Loc.Language;
-            try
-            {
-                Loc.Language = "en";
-                var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
-                skill!.LocalizedName.Should().Be(skill.Name, "English keeps the base name");
-            }
-            finally { Loc.Language = prev; }
+            Loc.Language = "en";
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Auto);
+            var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+            skill!.LocalizedName.Should().Be(skill.Name, "English keeps the base name");
+        }
+
+        [Fact]
+        public void Korean_Auto_ShowsEnglishGameNames()
+        {
+            // Discussion #79: Korean players navigate by English item names — the community
+            // default for ko is English game names even though the UI itself is Korean.
+            Loc.Language = "ko";
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Auto);
+            var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+            skill!.LocalizedName.Should().Be(skill.Name,
+                "Korean defaults to English game names (community convention, Discussion #79)");
+            EveLens.Common.Data.StaticItems.GetLocalizedItemName(34)
+                .Should().Be(EveLens.Common.Data.StaticItems.GetItemName(34),
+                    "Tritanium must show its English name under the Korean default");
+        }
+
+        [Fact]
+        public void Chinese_Auto_ShowsTranslatedGameNames()
+        {
+            // The zh-CN community expects translated names — Auto must keep them translated.
+            Loc.Language = "zh-CN";
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Auto);
+            var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+            skill!.LocalizedName.Should().NotBe(skill.Name,
+                "Chinese defaults to translated game names");
+        }
+
+        [Fact]
+        public void EnglishOverride_ForcesEnglishGameNames_EvenForChinese()
+        {
+            Loc.Language = "zh-CN";
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.English);
+            var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+            skill!.LocalizedName.Should().Be(skill.Name,
+                "the English override wins over the language default");
+        }
+
+        [Fact]
+        public void LocalizedOverride_ForcesTranslatedGameNames_EvenForKorean()
+        {
+            Loc.Language = "ko";
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Localized);
+            var skill = EveLens.Common.Data.StaticSkills.GetSkillByName("Navigation");
+            skill!.LocalizedName.Should().NotBe(skill.Name,
+                "the Localized override wins over the Korean English-names default");
+        }
+
+        [Fact]
+        public void GameNamePolicy_DoesNotAffectUiStrings()
+        {
+            // The policy gates GAME names only — UI chrome stays in the UI language.
+            Loc.Language = "ko";
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.English);
+            Loc.Get("Menu.File").Should().Be("파일",
+                "UI strings must remain Korean regardless of the game-name mode");
         }
 
         [Theory]
@@ -191,43 +258,35 @@ namespace EveLens.Tests.Services
         [InlineData("zh-CN")]
         public void PlanQueueItem_DisplayName_UsesLocalizedSkillName(string lang)
         {
-            var prev = Loc.Language;
-            try
-            {
-                var character = PlanTestFixture.CreateTestCharacter();
-                var plan = PlanTestFixture.CreateTestPlan(character);
-                var skill = PlanTestFixture.GetSkill("Navigation");
-                plan.PlanTo(skill, 1);
-                var entry = plan.First(e => e.Skill == skill && e.Level == 1);
+            var character = PlanTestFixture.CreateTestCharacter();
+            var plan = PlanTestFixture.CreateTestPlan(character);
+            var skill = PlanTestFixture.GetSkill("Navigation");
+            plan.PlanTo(skill, 1);
+            var entry = plan.First(e => e.Skill == skill && e.Level == 1);
 
-                var item = new EveLens.Common.ViewModels.PlanQueueItem(entry, character);
+            var item = new EveLens.Common.ViewModels.PlanQueueItem(entry, character);
 
-                Loc.Language = lang;
-                // The queue row label must carry the localized skill name, not English.
-                item.DisplayName.Should().Contain(skill.LocalizedName,
-                    $"the plan queue row must display the {lang} skill name");
-                item.DisplayName.Should().NotBe($"{skill.Name} I",
-                    $"the plan queue row must not show the raw English name in {lang}");
-            }
-            finally { Loc.Language = prev; }
+            Loc.Language = lang;
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Localized);
+            // The queue row label must carry the localized skill name, not English.
+            item.DisplayName.Should().Contain(skill.LocalizedName,
+                $"the plan queue row must display the {lang} skill name");
+            item.DisplayName.Should().NotBe($"{skill.Name} I",
+                $"the plan queue row must not show the raw English name in {lang}");
         }
 
         [Theory]
         [InlineData("ko")]
         [InlineData("zh-CN")]
-        public void GetLocalizedItemName_ReturnsLocalized_WhenLanguageSet(string lang)
+        public void GetLocalizedItemName_ReturnsLocalized_WhenLocalizedModeSet(string lang)
         {
-            var prev = Loc.Language;
-            try
-            {
-                Loc.Language = lang;
-                // Tritanium (type 34) — a universal item present in every SDE language.
-                string localized = EveLens.Common.Data.StaticItems.GetLocalizedItemName(34);
-                string english = EveLens.Common.Data.StaticItems.GetItemName(34);
-                localized.Should().NotBeNullOrEmpty();
-                localized.Should().NotBe(english, $"{lang} should translate the item name");
-            }
-            finally { Loc.Language = prev; }
+            Loc.Language = lang;
+            SetMode(EveLens.Common.Enumerations.UISettings.GameNameMode.Localized);
+            // Tritanium (type 34) — a universal item present in every SDE language.
+            string localized = EveLens.Common.Data.StaticItems.GetLocalizedItemName(34);
+            string english = EveLens.Common.Data.StaticItems.GetItemName(34);
+            localized.Should().NotBeNullOrEmpty();
+            localized.Should().NotBe(english, $"{lang} should translate the item name");
         }
     }
 }
