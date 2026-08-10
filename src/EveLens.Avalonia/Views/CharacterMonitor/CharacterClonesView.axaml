@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterClonesView">
 
     <Grid>
@@ -27,7 +28,7 @@
                     <Button x:Name="ExpandAllBtn" Content="Expand All" FontSize="{DynamicResource EveFontBody}" Padding="10,4"
                             CornerRadius="12" Click="OnExpandAll" />
                 </StackPanel>
-                <TextBlock Text="Jump Clones" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                <TextBlock Text="{loc:T Clones.JumpClones}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                            Foreground="{StaticResource EveAccentPrimaryBrush}"
                            VerticalAlignment="Center" />
             </DockPanel>

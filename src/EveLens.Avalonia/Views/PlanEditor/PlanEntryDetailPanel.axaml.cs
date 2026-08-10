@@ -83,7 +83,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             return skill.Prerequisites.Select(prereq =>
             {
                 bool isTrained = character != null && character.GetSkillLevel(prereq.Skill) >= prereq.Level;
-                string text = $"{prereq.Skill.Name} {Skill.GetRomanFromInt(prereq.Level)}";
+                string text = $"{prereq.Skill.LocalizedName} {Skill.GetRomanFromInt(prereq.Level)}";
                 return new PrereqDisplayItem(text, isTrained);
             }).ToList();
         }

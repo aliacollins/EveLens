@@ -183,7 +183,19 @@ namespace EveLens.Common.Services
                     // If update found and downloaded, auto-download in background
                     if (_pendingUpdate != null)
                     {
-                        await DownloadUpdateAsync().ConfigureAwait(false);
+                        bool downloaded = await DownloadUpdateAsync().ConfigureAwait(false);
+
+                        // Auto-install only when the user explicitly opted in (Discussion #100).
+                        // The opt-in is asked once at startup and editable in Settings > Data —
+                        // transparency first, EveLens never silently decides this.
+                        if (downloaded &&
+                            Settings.Updates.AutoInstallUpdates ==
+                                Enumerations.UISettings.AutoInstallUpdates.Automatic)
+                        {
+                            AppServices.TraceService?.Trace(
+                                "VelopackUpdate: auto-install opted in — will apply on exit");
+                            ApplyOnExit();
+                        }
                     }
 
                     await Task.Delay(CheckInterval, ct).ConfigureAwait(false);
@@ -202,10 +214,15 @@ namespace EveLens.Common.Services
         private void PublishUpdateAvailable(VelopackUpdateInfo info)
         {
             var version = info.TargetFullRelease?.Version?.ToString() ?? "unknown";
+            bool autoInstall = Settings.Updates.AutoInstallUpdates ==
+                Enumerations.UISettings.AutoInstallUpdates.Automatic;
             var notification = new Notifications.NotificationEventArgs(
                 null, Notifications.NotificationCategory.QueryingError)
             {
-                Description = $"EveLens {version} is available. Restart to update.",
+                // Wording matches what will actually happen — silent-on-exit vs manual restart
+                Description = autoInstall
+                    ? $"EveLens {version} downloaded. It installs when you close the app."
+                    : $"EveLens {version} is available. Restart to update.",
                 Behaviour = Notifications.NotificationBehaviour.Overwrite,
                 Priority = Notifications.NotificationPriority.Information
             };

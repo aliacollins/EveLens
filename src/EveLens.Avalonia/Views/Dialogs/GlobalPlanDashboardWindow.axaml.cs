@@ -172,7 +172,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             if (_vm.SelectedTemplate == null)
             {
-                TemplateTitle.Text = "No template selected";
+                TemplateTitle.Text = Loc.Get("Doctrine.NoTemplateSelected");
                 ComparisonGrid.Children.Add(new TextBlock
                 {
                     Text = Loc.Get("Doctrine.SelectDoctrine"),
@@ -582,7 +582,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         var capturedSkill = skill;
                         var btn = new Button
                         {
-                            Content = $"{skill.Name}  (R{skill.Rank} · {skill.Group?.Name})",
+                            Content = $"{skill.LocalizedName}  (R{skill.Rank} · {skill.Group?.LocalizedName})",
                             FontSize = FontScaleService.Body,
                             HorizontalAlignment = HorizontalAlignment.Stretch,
                             HorizontalContentAlignment = HorizontalAlignment.Left,

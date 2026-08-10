@@ -220,9 +220,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                 foreach (var prereq in detail.Prerequisites)
                 {
-                    // Find the matching StaticSkillLevel for this prereq
+                    // Find the matching StaticSkillLevel for this prereq.
+                    // Match on skill ID (not name) so localized prereq names don't break the lookup.
                     var staticPrereq = shipPrereqs?.FirstOrDefault(
-                        p => p.Skill.Name == prereq.Name && p.Level == prereq.RequiredLevel);
+                        p => p.Skill.ID == prereq.SkillId && p.Level == prereq.RequiredLevel);
 
                     string? trainingTimeText = null;
                     bool isPlanned = false;

@@ -56,7 +56,7 @@ namespace EveLens.Avalonia.ViewModels
         public PlanEntry Entry { get; }
         public PlanEntryStatus Status { get; }
 
-        public string SkillName => $"{Entry.Skill.Name} {Skill.GetRomanFromInt(Entry.Level)}";
+        public string SkillName => $"{Entry.Skill.LocalizedName} {Skill.GetRomanFromInt(Entry.Level)}";
         public long Level => Entry.Level;
         public string TrainingTimeText => FormatTime(Entry.TrainingTime);
         public string SpPerHourText => $"{Entry.SpPerHour:N0}";
@@ -66,7 +66,7 @@ namespace EveLens.Avalonia.ViewModels
         public bool IsOmegaRequired => Entry.OmegaRequired;
         public string PriorityText => $"Priority {Entry.Priority}";
         public int Priority => Entry.Priority;
-        public string GroupName => Entry.Skill.Group.Name;
+        public string GroupName => Entry.Skill.Group.LocalizedName;
 
         // Enriched properties
         public string LevelBadge => Skill.GetRomanFromInt(Entry.Level);

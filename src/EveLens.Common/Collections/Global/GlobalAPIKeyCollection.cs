@@ -108,7 +108,18 @@ namespace EveLens.Common.Collections.Global
             {
                 try
                 {
-                    Items.Add(apikey.ID, new ESIKey(apikey));
+                    var esiKey = new ESIKey(apikey);
+                    // Restore the persisted key↔character link immediately, instead of waiting
+                    // for a token refresh that may never succeed for a dead grant (Issue #94).
+                    // Characters are imported before keys, so identities already exist.
+                    esiKey.RestoreCharacterLink(apikey.CharacterID, apikey.CharacterName);
+                    if (apikey.CharacterID != 0)
+                    {
+                        var identity = AppServices.CharacterIdentities[apikey.CharacterID];
+                        if (identity != null && !identity.ESIKeys.Contains(esiKey))
+                            identity.ESIKeys.Add(esiKey);
+                    }
+                    Items.Add(apikey.ID, esiKey);
                 }
                 catch (ArgumentException ex)
                 {

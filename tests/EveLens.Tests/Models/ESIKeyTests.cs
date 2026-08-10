@@ -231,12 +231,56 @@ namespace EveLens.Tests.Models
             var serial = new SerializableESIKey
             {
                 ID = 1,
-                Monitored = true
+                Monitored = true,
+                // A usable token is what makes the key genuinely "pending a query" —
+                // without one there is nothing to process (see the dead-key tests below).
+                RefreshToken = "rt_valid_pending"
             };
 
             var key = new Common.Models.ESIKey(serial);
-            // Monitored but not yet queried => not processed
+            // Monitored, queryable, but not yet queried => not processed
             key.IsProcessed.Should().BeFalse();
+        }
+
+        [Fact]
+        public void ESIKey_EmptyRefreshToken_IsProcessed()
+        {
+            // Regression (Issue #94 follow-up): a key whose refresh token was cleared by the
+            // InvalidGrant handler can never complete a token query. If it counted as
+            // "unprocessed", AnyESIKeyUnprocessed() stayed true forever and BLOCKED the query
+            // orchestrators for every character — one dead key froze all ESI fetching, even
+            // for freshly authenticated characters ("ESI: idle" bug).
+            var serial = new SerializableESIKey
+            {
+                ID = 1,
+                Monitored = true,
+                RefreshToken = ""
+            };
+
+            var key = new Common.Models.ESIKey(serial);
+            key.IsProcessed.Should().BeTrue(
+                "a key that can never be queried must not hold the ESI pipeline hostage");
+        }
+
+        [Fact]
+        public void ESIKey_ClearedRefreshToken_BecomesProcessed()
+        {
+            // The live transition: a valid pending key goes dead (invalid_grant clears the
+            // token, e.g. biomassed character). It must flip to processed so remaining
+            // characters keep fetching.
+            var serial = new SerializableESIKey
+            {
+                ID = 1,
+                Monitored = true,
+                RefreshToken = "rt_about_to_die"
+            };
+            var key = new Common.Models.ESIKey(serial);
+            key.IsProcessed.Should().BeFalse("a queryable key starts out pending");
+
+            key.ClearRefreshToken();
+
+            key.IsProcessed.Should().BeTrue(
+                "clearing the dead token must release the pipeline gate (Issue #94)");
         }
 
         #endregion

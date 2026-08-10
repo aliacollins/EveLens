@@ -31,6 +31,12 @@ namespace EveLens.Avalonia
             // Must be the FIRST thing in Main() before any other code runs.
             VelopackApp.Build().Run();
 
+            // Install the process-wide exception backstop as early as possible, so any
+            // exception on a background thread or unobserved Task is logged instead of
+            // silently terminating the process. The UI dispatcher hook is added later in
+            // App.OnFrameworkInitializationCompleted (once the dispatcher exists).
+            GlobalExceptionHandler.Install();
+
             // Set taskbar identity so Windows groups the window as "EveLens"
             // instead of using the executable name "EveLens.Avalonia.exe"
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -42,6 +48,14 @@ namespace EveLens.Avalonia
             {
                 Thread.Sleep(2000);
                 args = args.Where(a => a != "--restart-delay").ToArray();
+            }
+
+            // OS-login autostart launches with --start-minimized: boot quietly to the
+            // tray without flashing the main window or splash (Issue #72).
+            if (args.Contains("--start-minimized"))
+            {
+                App.StartMinimized = true;
+                args = args.Where(a => a != "--start-minimized").ToArray();
             }
 
             // Single-instance check — prevent multiple EveLens sessions

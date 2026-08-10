@@ -119,11 +119,11 @@ namespace EveLens.Common.ViewModels
                     }
 
                     skills.Add(new ComparisonSkillEntry(
-                        skill.Name, skill.ID, levels, isKnown, isDifferent));
+                        skill.LocalizedName, skill.ID, levels, isKnown, isDifferent));
                 }
 
                 if (skills.Count > 0)
-                    groups.Add(new ComparisonGroupEntry(skillGroup.Name, skills));
+                    groups.Add(new ComparisonGroupEntry(skillGroup.LocalizedName, skills));
             }
 
             _groups = groups;

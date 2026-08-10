@@ -11,10 +11,10 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using EveLens.Common.CustomEventArgs;
+using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
 
-using EveLens.Common.Service;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia.Views.Dialogs
 {
@@ -116,7 +116,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
-        private void OnTokenReceived(AccessResponse? response)
+        private void OnTokenReceived(AccessResponse? response, SsoTokenError error)
         {
             try
             {
@@ -124,7 +124,19 @@ namespace EveLens.Avalonia.Views.Dialogs
                     string.IsNullOrEmpty(response.AccessToken) ||
                     string.IsNullOrEmpty(response.RefreshToken))
                 {
-                    ShowError("Failed to receive a valid token from CCP. Please try again.");
+                    // Give the user CCP's actual reason rather than a blanket "try again"
+                    // (Issue #94).
+                    string message = error switch
+                    {
+                        SsoTokenError.InvalidClient =>
+                            "EVE SSO rejected the application credentials. Check your ESI client ID and secret in Settings.",
+                        SsoTokenError.InvalidGrant =>
+                            "EVE SSO rejected the authorization. Please start the login again.",
+                        SsoTokenError.Transient =>
+                            "Couldn't reach EVE SSO. Check your connection and try again.",
+                        _ => "Failed to receive a valid token from CCP. Please try again.",
+                    };
+                    ShowError(message);
                     return;
                 }
 

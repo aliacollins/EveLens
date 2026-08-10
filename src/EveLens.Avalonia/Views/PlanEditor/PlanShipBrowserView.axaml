@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanShipBrowserView">
     <Grid ColumnDefinitions="300,*">
         <!-- Left panel: Ship hierarchy as flat list with depth-based indentation -->
@@ -9,26 +10,26 @@
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
-                        <ToggleButton x:Name="CanFlyToggle" Content="Can Fly Only"
+                        <ToggleButton x:Name="CanFlyToggle" Content="{loc:T ShipBrowser.CanFlyOnly}"
                                       FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                       Click="OnCanFlyToggled" />
-                        <Button x:Name="CollapseBtn" Content="Collapse" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="CollapseBtn" Content="{loc:T PlanEditor.Collapse}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnCollapseAll" />
-                        <Button x:Name="ExpandBtn" Content="Expand" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                        <Button x:Name="ExpandBtn" Content="{loc:T PlanEditor.Expand}" FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                 Click="OnExpandAll" />
                     </StackPanel>
                     <!-- Race filter toggles -->
                     <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Spacing="4" Margin="0,4,0,0">
-                        <ToggleButton x:Name="AmarrToggle" Content="Amarr" IsChecked="True"
+                        <ToggleButton x:Name="AmarrToggle" Content="{loc:T ShipBrowser.Amarr}" IsChecked="True"
                                       FontSize="{DynamicResource EveFontCaption}" Padding="6,2" CornerRadius="8"
                                       Click="OnRaceFilterChanged" />
-                        <ToggleButton x:Name="CaldariToggle" Content="Caldari" IsChecked="True"
+                        <ToggleButton x:Name="CaldariToggle" Content="{loc:T ShipBrowser.Caldari}" IsChecked="True"
                                       FontSize="{DynamicResource EveFontCaption}" Padding="6,2" CornerRadius="8"
                                       Click="OnRaceFilterChanged" />
-                        <ToggleButton x:Name="GallenteToggle" Content="Gallente" IsChecked="True"
+                        <ToggleButton x:Name="GallenteToggle" Content="{loc:T ShipBrowser.Gallente}" IsChecked="True"
                                       FontSize="{DynamicResource EveFontCaption}" Padding="6,2" CornerRadius="8"
                                       Click="OnRaceFilterChanged" />
-                        <ToggleButton x:Name="MinmatarToggle" Content="Minmatar" IsChecked="True"
+                        <ToggleButton x:Name="MinmatarToggle" Content="{loc:T ShipBrowser.Minmatar}" IsChecked="True"
                                       FontSize="{DynamicResource EveFontCaption}" Padding="6,2" CornerRadius="8"
                                       Click="OnRaceFilterChanged" />
                     </StackPanel>
@@ -40,7 +41,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="Search ships..."
+                            <TextBox x:Name="FilterBox" Watermark="{loc:T ShipBrowser.SearchShips}"
                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
@@ -128,16 +129,16 @@
                                Foreground="{StaticResource EveTextSecondaryBrush}"
                                MaxHeight="100" />
                     <Border Height="1" Background="{StaticResource EveBorderBrush}" Margin="0,4" />
-                    <TextBlock x:Name="RequiredSkillsLabel" Text="Required Skills:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="RequiredSkillsLabel" Text="{loc:T ShipBrowser.RequiredSkills}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" />
                     <StackPanel x:Name="PrereqsList" Spacing="2" />
-                    <Button x:Name="PlanToFlyBtn" Content="Plan to Fly" FontSize="{DynamicResource EveFontBody}"
+                    <Button x:Name="PlanToFlyBtn" Content="{loc:T ShipBrowser.PlanToFly}" FontSize="{DynamicResource EveFontBody}"
                             Padding="12,5" CornerRadius="12" Margin="0,8,0,0"
                             Click="OnPlanToFly" IsVisible="False" />
                     <!-- Properties section -->
                     <Border x:Name="PropertiesDivider" Height="1" Background="{StaticResource EveBorderBrush}"
                             Margin="0,4" IsVisible="False" />
-                    <TextBlock x:Name="PropertiesHeader" Text="Properties:" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                    <TextBlock x:Name="PropertiesHeader" Text="{loc:T ShipBrowser.Properties}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                                Foreground="{StaticResource EveTextPrimaryBrush}" IsVisible="False" />
                     <StackPanel x:Name="PropertiesList" Spacing="8" />
                 </StackPanel>

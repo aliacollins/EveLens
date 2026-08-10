@@ -504,8 +504,16 @@ function Invoke-GitMerge {
         git checkout -B $TargetBranch "refs/heads/$TargetBranch"
         if ($LASTEXITCODE -ne 0) { throw "git checkout $TargetBranch failed (exit code $LASTEXITCODE)" }
 
+        # CRITICAL: merge by explicit refs/heads/ — a bare branch name is ambiguous when a
+        # tag with the same name exists, and git resolves the TAG. This exact failure shipped
+        # v1.4.0 built from the months-old 'beta' release TAG instead of the beta branch.
+        $sourceRef = "refs/heads/$SourceBranch"
+        git show-ref --verify --quiet $sourceRef
+        if ($LASTEXITCODE -ne 0) { throw "Source branch '$SourceBranch' does not exist as a local branch ($sourceRef)" }
+        $expectedTip = git rev-parse $sourceRef
+
         # First try a normal merge
-        git merge $SourceBranch --no-ff -m "Merge $SourceBranch into $TargetBranch"
+        git merge $sourceRef --no-ff -m "Merge $SourceBranch into $TargetBranch"
         if ($LASTEXITCODE -ne 0) {
             # Merge conflicted — abort and retry with -X theirs strategy.
             # Cross-branch promotes (alpha→beta, beta→stable) always conflict on
@@ -514,12 +522,21 @@ function Invoke-GitMerge {
             # branch content, then Phase 3 applies the correct target version on top.
             git merge --abort 2>$null
             Write-Warning "Normal merge conflicted. Retrying with source-wins strategy..."
-            git merge $SourceBranch --no-ff -X theirs -m "Merge $SourceBranch into $TargetBranch"
+            git merge $sourceRef --no-ff -X theirs -m "Merge $SourceBranch into $TargetBranch"
             if ($LASTEXITCODE -ne 0) {
                 git merge --abort 2>$null
                 throw "Merge conflict: $SourceBranch into $TargetBranch failed even with -X theirs. Manual resolution required."
             }
         }
+
+        # POST-MERGE CONTENT VERIFICATION: the source branch tip must now be an ancestor of
+        # the target. If it isn't, the merge brought in something other than the branch we
+        # asked for — hard stop before anything gets pushed or released.
+        git merge-base --is-ancestor $expectedTip HEAD
+        if ($LASTEXITCODE -ne 0) {
+            throw "CONTENT VERIFICATION FAILED: $SourceBranch tip ($expectedTip) is not contained in the merge result. The merge picked up the wrong ref. Aborting."
+        }
+        Write-Success "Content verified: $SourceBranch tip $($expectedTip.Substring(0,9)) is in the merge"
     }
     Write-Success "Merged $SourceBranch -> $TargetBranch"
 }
@@ -700,17 +717,31 @@ function Invoke-Promote {
                 git checkout -B $promoteBranch "origin/$targetBranch"
                 if ($LASTEXITCODE -ne 0) { throw "git checkout promote branch from $targetBranch failed" }
 
+                # CRITICAL: merge by explicit refs/heads/ — a bare name resolves to a TAG when
+                # one shares the name (this shipped v1.4.0 from the stale 'beta' release tag).
+                $sourceRef = "refs/heads/$currentBranch"
+                git show-ref --verify --quiet $sourceRef
+                if ($LASTEXITCODE -ne 0) { throw "Source branch '$currentBranch' does not exist as a local branch ($sourceRef)" }
+                $expectedTip = git rev-parse $sourceRef
+
                 # Merge source branch into promote branch
-                git merge $currentBranch --no-ff -m "Merge $currentBranch into $targetBranch"
+                git merge $sourceRef --no-ff -m "Merge $currentBranch into $targetBranch"
                 if ($LASTEXITCODE -ne 0) {
                     git merge --abort 2>$null
                     Write-Warning "Normal merge conflicted. Retrying with source-wins strategy..."
-                    git merge $currentBranch --no-ff -X theirs -m "Merge $currentBranch into $targetBranch"
+                    git merge $sourceRef --no-ff -X theirs -m "Merge $currentBranch into $targetBranch"
                     if ($LASTEXITCODE -ne 0) {
                         git merge --abort 2>$null
                         throw "Merge conflict: $currentBranch into promote branch failed even with -X theirs. Manual resolution required."
                     }
                 }
+
+                # POST-MERGE CONTENT VERIFICATION: source tip must be an ancestor of the result
+                git merge-base --is-ancestor $expectedTip HEAD
+                if ($LASTEXITCODE -ne 0) {
+                    throw "CONTENT VERIFICATION FAILED: $currentBranch tip ($expectedTip) is not in the merge result. Wrong ref was merged. Aborting."
+                }
+                Write-Success "Content verified: $currentBranch tip $($expectedTip.Substring(0,9)) is in the merge"
                 Write-Success "Merged $currentBranch into promote branch"
             }
         } catch {

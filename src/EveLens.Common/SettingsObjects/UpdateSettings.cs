@@ -38,6 +38,13 @@ namespace EveLens.Common.SettingsObjects
         public bool CheckEveLensVersion { get; set; }
 
         /// <summary>
+        /// How downloaded updates are applied (Discussion #100). Starts as NotAsked so the
+        /// first launch asks the user instead of EveLens deciding silently.
+        /// </summary>
+        [XmlElement("autoInstallUpdates")]
+        public AutoInstallUpdates AutoInstallUpdates { get; set; } = AutoInstallUpdates.NotAsked;
+
+        /// <summary>
         /// When true, EveLens will check its time from NIST
         /// </summary>
         [XmlElement("checkTimeOnStartup")]

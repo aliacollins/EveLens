@@ -83,6 +83,15 @@ namespace EveLens.Common.Net
         public HttpStatusCode StatusCode { get; set; }
 
         /// <summary>
+        /// Gets or sets the raw response body returned by the server on an error status, when
+        /// available. For failed SSO/OAuth token requests this carries CCP's actual reason
+        /// (e.g. <c>{"error":"invalid_grant","error_description":"..."}</c>), which would
+        /// otherwise be discarded by <see cref="HttpResponseMessage.EnsureSuccessStatusCode"/>.
+        /// Captured for diagnostics (Issue #94); never <c>null</c>-checked into control flow.
+        /// </summary>
+        public string ResponseBody { get; set; }
+
+        /// <summary>
         /// Gets the URL.
         /// </summary>
         /// <value>The URL.</value>
