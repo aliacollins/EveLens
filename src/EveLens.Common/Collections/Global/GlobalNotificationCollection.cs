@@ -202,13 +202,17 @@ namespace EveLens.Common.Collections.Global
             if (error == SsoTokenError.Transient)
                 return;
 
-            // Resolve the character name so the message names who needs attention.
+            // Resolve the character name so the message names who needs attention. Fall back to
+            // the name persisted on the key itself — the live identity link only exists after a
+            // successful refresh, which never happens for a permanently dead grant (Issue #94).
             string charName = null;
             if (key != null)
             {
                 var id = AppServices.CharacterIdentities.FirstOrDefault(
                     (charID) => charID.ESIKeys.Contains(key));
                 charName = id?.CharacterName;
+                if (string.IsNullOrEmpty(charName) && !string.IsNullOrEmpty(key.CharacterName))
+                    charName = key.CharacterName;
             }
 
             string description;
