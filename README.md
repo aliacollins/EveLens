@@ -9,11 +9,11 @@
 
 ---
 
-## EveLens 1.3.0
+## EveLens 1.4.1
 
 EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 1,857 tests, 14 architectural laws, and support for **100+ characters** out of the box.
+This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 2,100+ tests -- including an EVE Accuracy Suite checked against in-game values -- and support for **100+ characters** out of the box.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.3.0](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens 1.4.1](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -129,13 +129,22 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 ### Smart ESI Error Handling
 Per-endpoint health state machine that tracks ESI reliability per character. Transient errors are silently retried. Persistent failures get one activity log entry, not a hundred. Recovery is automatic. No more error spam filling your notification bell.
 
-### Doctrine Designer (NEW in 1.3.0)
+### Attribute Optimizer (NEW in 1.4.1)
+Remap planning in its own window: one remap for the whole plan, or auto-placed remaps at attribute-focus boundaries like classic EVEMon. Preview every remap's position and attribute spread before applying -- atomically, with an Omega/Alpha what-if toggle. Applied remaps show in the plan sidebar with one-click removal.
+
+### Korean Language Support (NEW in 1.4.1)
+Full Korean (한국어) localization -- 464 UI strings translated by community member Last Bin, plus 50,000+ official SDE names. A Game Names setting controls whether item names show translated or in English (the Korean community default, per translator feedback).
+
+### Auto-Update, Opt-In (NEW in 1.4.1)
+Downloaded updates can install silently when you close the app. EveLens asks once on first launch; the choice is changeable anytime in Settings. Run at Startup launches quietly to the system tray on login (Windows/Linux).
+
+### Doctrine Designer
 Create shared skill templates for fleet doctrines, assign multiple characters, and compare training times side-by-side. Import from existing plans, see who can fly what, and generate personal training plans for each character with one click. Perfect for FCs managing fleet comps across 30+ characters.
 
-### Chinese Language Support (NEW in 1.3.0)
+### Chinese Language Support
 Full Simplified Chinese (简体中文) localization with 300+ translated UI strings and 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance with auto-restart. Game terms use CCP's official Chinese translations.
 
-### CSV Export (NEW in 1.3.0)
+### CSV Export
 Export your full skill list or training queue to CSV files for spreadsheets, fleet planning, or sharing with corpmates.
 
 ### Character Skill Comparison
@@ -236,6 +245,7 @@ Full changelog: [CHANGELOG.md](CHANGELOG.md)
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **[1.4.1](https://github.com/aliacollins/EveLens/releases/tag/v1.4.1)** | August 10, 2026 | Korean language, Attribute Optimizer, auto-update opt-in, run at startup, SDE 3458726, EVE Accuracy Suite, PI/SSO/queue fixes |
 | **[1.3.0](https://github.com/aliacollins/EveLens/releases/tag/v1.3.0)** | May 10, 2026 | Doctrine Designer, Chinese language, Skill Farm configurable base SP, What's New dialog, CSV export, plan editor overhaul, macOS/Linux fixes |
 | **[1.2.1](https://github.com/aliacollins/EveLens/releases/tag/v1.2.1)** | April 9, 2026 | Fix plan training time calculation |
 | **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
