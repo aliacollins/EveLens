@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
@@ -138,6 +139,10 @@ namespace EveLens.Common.Serialization.Settings
         [XmlArray("characterGroups")]
         [XmlArrayItem("group")]
         public Collection<CharacterGroupSettings> CharacterGroups => m_characterGroups;
+
+        [XmlArray("ungroupedCharacterOrder")]
+        [XmlArrayItem("guid")]
+        public List<Guid> UngroupedCharacterOrder { get; set; } = new List<Guid>();
 
         [XmlArray("globalPlanTemplates")]
         [XmlArrayItem("template")]

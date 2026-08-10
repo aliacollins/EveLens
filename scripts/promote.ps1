@@ -460,6 +460,38 @@ function Invoke-GitPush {
     Write-Success "Pushed to origin/$Branch"
 }
 
+function Invoke-PullRequestMerge {
+    param(
+        [string]$PromoteBranch,
+        [string]$TargetBranch,
+        [string]$Title,
+        [string]$Body
+    )
+
+    if (-not $DryRun) {
+        # Push the promote branch
+        git push --no-verify origin "refs/heads/${PromoteBranch}:refs/heads/${PromoteBranch}"
+        if ($LASTEXITCODE -ne 0) { throw "git push promote branch failed (exit code $LASTEXITCODE)" }
+        Write-Success "Pushed promote branch: $PromoteBranch"
+
+        # Create PR
+        $prUrl = gh pr create --base $TargetBranch --head $PromoteBranch --title $Title --body $Body --repo aliacollins/EveLens 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "PR creation failed: $prUrl" }
+        Write-Success "Created PR: $prUrl"
+
+        # Merge PR (0 approvals required, merges immediately)
+        gh pr merge $prUrl --merge --repo aliacollins/EveLens 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "PR merge failed for $prUrl" }
+        Write-Success "Merged PR into $TargetBranch"
+
+        # Clean up remote promote branch
+        git push origin --delete "refs/heads/$PromoteBranch" 2>$null
+        Write-Info "Deleted remote promote branch"
+    } else {
+        Write-Info "[DRY RUN] Would push $PromoteBranch, create PR to $TargetBranch, and merge"
+    }
+}
+
 function Invoke-GitMerge {
     param(
         [string]$SourceBranch,
@@ -632,18 +664,20 @@ function Invoke-Promote {
 
     $isCrossBranch = ($currentBranch -ne $targetBranch)
 
+    # All promotions use a temporary branch + PR to satisfy branch protection.
+    # Protected branches (main, alpha, beta) require PRs — no direct push.
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $promoteBranch = "promote/$Channel-$timestamp"
+
     if ($isCrossBranch) {
         # ================================================================
         # CROSS-BRANCH PROMOTE (e.g., feature->alpha, alpha->beta)
-        # Merge first, then update version files on the TARGET branch.
-        # This prevents polluting the source branch with target-specific
-        # version, badge, installer link, and "you are here" changes.
+        # Merge source into a promote branch based on target, update version
+        # files, then PR into the protected target branch.
         # ================================================================
 
-        # Phase 2: Push source and merge to target
-        Write-Step "Phase 2: Merging $currentBranch -> $targetBranch..."
+        Write-Step "Phase 2: Preparing promote branch from $targetBranch..."
 
-        $pushed = $false
         try {
             # Commit any uncommitted changes on source branch first
             if (-not $DryRun) {
@@ -659,71 +693,37 @@ function Invoke-Promote {
 
             Write-Info "Pushing $currentBranch..."
             Invoke-GitPush $currentBranch
-            $pushed = $true
 
-            Write-Info "Merging $currentBranch -> $targetBranch..."
-            Invoke-GitMerge $currentBranch $targetBranch
+            if (-not $DryRun) {
+                # Create promote branch from target, merge source into it
+                git fetch origin "refs/heads/${targetBranch}:refs/remotes/origin/${targetBranch}" 2>$null
+                git checkout -B $promoteBranch "origin/$targetBranch"
+                if ($LASTEXITCODE -ne 0) { throw "git checkout promote branch from $targetBranch failed" }
+
+                # Merge source branch into promote branch
+                git merge $currentBranch --no-ff -m "Merge $currentBranch into $targetBranch"
+                if ($LASTEXITCODE -ne 0) {
+                    git merge --abort 2>$null
+                    Write-Warning "Normal merge conflicted. Retrying with source-wins strategy..."
+                    git merge $currentBranch --no-ff -X theirs -m "Merge $currentBranch into $targetBranch"
+                    if ($LASTEXITCODE -ne 0) {
+                        git merge --abort 2>$null
+                        throw "Merge conflict: $currentBranch into promote branch failed even with -X theirs. Manual resolution required."
+                    }
+                }
+                Write-Success "Merged $currentBranch into promote branch"
+            }
         } catch {
             Write-Error "Merge failed: $_"
-            if (-not $pushed -and -not $DryRun) {
-                Write-Warning "Nothing was pushed. Rolling back..."
-                git reset HEAD~1 2>$null
-                git checkout -- .
-                Write-Warning "Rollback complete."
-            } elseif (-not $DryRun) {
-                Write-Warning "Source branch was pushed but merge failed."
-                Write-Warning "Resolve manually: git checkout $targetBranch && git merge $currentBranch"
-            }
-            exit 1
-        }
-
-        # Phase 3: Update version files on the TARGET branch and commit
-        Write-Step "Phase 3: Updating version files on $targetBranch..."
-
-        try {
-            Update-SharedAssemblyInfo $nextVersion $Channel
-            Update-Changelog $nextVersion $Message $Channel
-            Update-PatchXml $nextVersion $Channel $Message
-            Update-ReadmeVersion $nextVersion $Channel
-        } catch {
-            Write-Error "File update failed on $targetBranch`: $_"
             if (-not $DryRun) {
-                Write-Warning "Rolling back file changes on $targetBranch..."
-                git checkout -- .
-                Write-Warning "Rollback complete. Merge is intact but version was not bumped."
+                git checkout $currentBranch 2>$null
+                git branch -D $promoteBranch 2>$null
             }
             exit 1
         }
 
-        try {
-            Invoke-GitCommit $commitMsg
-        } catch {
-            Write-Error "Commit failed on $targetBranch`: $_"
-            if (-not $DryRun) {
-                Write-Warning "Rolling back file changes..."
-                git checkout -- .
-            }
-            exit 1
-        }
-
-        # Push target
-        Write-Step "Pushing $targetBranch..."
-        try {
-            Invoke-GitPush $targetBranch
-        } catch {
-            Write-Error "Push to $targetBranch failed: $_"
-            Write-Warning "Commit is local. Retry with: git push origin $targetBranch"
-            exit 1
-        }
-
-    } else {
-        # ================================================================
-        # SAME-BRANCH PROMOTE (e.g., alpha->alpha when already on alpha)
-        # Update files, commit, push - all on the current branch.
-        # ================================================================
-
-        # Phase 2: Update version files
-        Write-Step "Phase 2: Updating version files..."
+        # Phase 3: Update version files on the promote branch and commit
+        Write-Step "Phase 3: Updating version files on promote branch..."
 
         try {
             Update-SharedAssemblyInfo $nextVersion $Channel
@@ -733,40 +733,99 @@ function Invoke-Promote {
         } catch {
             Write-Error "File update failed: $_"
             if (-not $DryRun) {
-                Write-Warning "Rolling back all file changes..."
-                git checkout -- .
-                Write-Warning "Rollback complete. No files were changed."
+                git checkout $currentBranch 2>$null
+                git branch -D $promoteBranch 2>$null
             }
             exit 1
         }
-
-        # Phase 3: Commit and push
-        Write-Step "Phase 3: Committing and pushing..."
 
         try {
             Invoke-GitCommit $commitMsg
         } catch {
             Write-Error "Commit failed: $_"
             if (-not $DryRun) {
-                Write-Warning "Rolling back file changes..."
+                git checkout $currentBranch 2>$null
+                git branch -D $promoteBranch 2>$null
+            }
+            exit 1
+        }
+
+        # PR into target
+        Write-Step "Phase 3b: Creating PR to $targetBranch..."
+        try {
+            Invoke-PullRequestMerge $promoteBranch $targetBranch $commitMsg "Automated promotion: $currentBranch -> $targetBranch ($nextVersion)`n`n$Message"
+        } catch {
+            Write-Error "PR merge failed: $_"
+            Write-Warning "Promote branch '$promoteBranch' is still on remote. Create PR manually."
+            if (-not $DryRun) { git checkout $currentBranch 2>$null }
+            exit 1
+        }
+
+        # Return to source branch and sync local target
+        if (-not $DryRun) {
+            git checkout $currentBranch 2>$null
+            git fetch origin "refs/heads/${targetBranch}:refs/heads/${targetBranch}" 2>$null
+            git branch -D $promoteBranch 2>$null
+        }
+
+    } else {
+        # ================================================================
+        # SAME-BRANCH PROMOTE (e.g., on alpha, promoting to alpha)
+        # Create a promote branch from current state, update version files,
+        # then PR into the protected branch.
+        # ================================================================
+
+        Write-Step "Phase 2: Preparing promote branch..."
+
+        if (-not $DryRun) {
+            git checkout -b $promoteBranch
+            if ($LASTEXITCODE -ne 0) { throw "Failed to create promote branch" }
+        }
+
+        try {
+            Update-SharedAssemblyInfo $nextVersion $Channel
+            Update-Changelog $nextVersion $Message $Channel
+            Update-PatchXml $nextVersion $Channel $Message
+            Update-ReadmeVersion $nextVersion $Channel
+        } catch {
+            Write-Error "File update failed: $_"
+            if (-not $DryRun) {
                 git checkout -- .
-                Write-Warning "Rollback complete. No commit was created."
+                git checkout $targetBranch 2>$null
+                git branch -D $promoteBranch 2>$null
+            }
+            exit 1
+        }
+
+        # Phase 3: Commit and PR
+        Write-Step "Phase 3: Committing and creating PR..."
+
+        try {
+            Invoke-GitCommit $commitMsg
+        } catch {
+            Write-Error "Commit failed: $_"
+            if (-not $DryRun) {
+                git checkout -- .
+                git checkout $targetBranch 2>$null
+                git branch -D $promoteBranch 2>$null
             }
             exit 1
         }
 
         try {
-            Write-Info "Pushing $targetBranch..."
-            Invoke-GitPush $targetBranch
+            Invoke-PullRequestMerge $promoteBranch $targetBranch $commitMsg "Automated promotion: $targetBranch ($nextVersion)`n`n$Message"
         } catch {
-            Write-Error "Push failed: $_"
-            if (-not $DryRun) {
-                Write-Warning "Rolling back local commit..."
-                git reset HEAD~1
-                git checkout -- .
-                Write-Warning "Rollback complete. No changes were pushed."
-            }
+            Write-Error "PR merge failed: $_"
+            Write-Warning "Promote branch '$promoteBranch' is still on remote. Create PR manually."
+            if (-not $DryRun) { git checkout $targetBranch 2>$null }
             exit 1
+        }
+
+        # Return to target branch and sync
+        if (-not $DryRun) {
+            git checkout $targetBranch 2>$null
+            git pull origin $targetBranch 2>$null
+            git branch -D $promoteBranch 2>$null
         }
     }
 

@@ -2,7 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterOverviewView">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <StackPanel x:Name="OverviewPanel" Margin="16,12" Spacing="8" />
-    </ScrollViewer>
+    <Panel>
+        <ScrollViewer x:Name="OverviewScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="OverviewPanel" Margin="16,12" Spacing="8" />
+        </ScrollViewer>
+        <Canvas x:Name="DragCanvas" IsHitTestVisible="False"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+    </Panel>
 </UserControl>
