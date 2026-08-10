@@ -1429,16 +1429,51 @@ namespace EveLens.Common.Collections.Global
         internal void NotifyCharacterPlanetaryPinCompleted(Character character,
             IEnumerable<PlanetaryPin> pinsCompleted)
         {
-            // PI idle is a persistent state, not a one-time event.
-            // Update the notification collection (for internal tracking) but don't
-            // publish to the activity log — the PI tab exists for checking idle colonies.
-            var notification = new PlanetaryPinsNotificationEventArgs(character, pinsCompleted)
+            var pins = pinsCompleted.ToList();
+            int count = pins.Count;
+            var planets = string.Join(", ", pins.Select(p => p.Colony?.PlanetName ?? "Unknown").Distinct().Take(3));
+            if (pins.Select(p => p.Colony?.PlanetName).Distinct().Count() > 3)
+                planets += "...";
+
+            string description = count == 1
+                ? $"Extractor idle on {planets}."
+                : $"{count} extractors now idle ({planets}).";
+
+            var notification = new PlanetaryPinsNotificationEventArgs(character, pins)
             {
+                Description = description,
                 Behaviour = NotificationBehaviour.Overwrite,
-                Priority = NotificationPriority.Information
+                Priority = NotificationPriority.Warning
             };
             InvalidateCore(notification.InvalidationKey);
             Items.Add(notification);
+            Notify(notification);
+        }
+
+        internal void NotifyCharacterPlanetaryPinsExpiring(Character character,
+            IEnumerable<PlanetaryPin> pinsExpiring, TimeSpan leadTime)
+        {
+            var pins = pinsExpiring.ToList();
+            int count = pins.Count;
+            var planets = string.Join(", ", pins.Select(p => p.Colony?.PlanetName ?? "Unknown").Distinct().Take(3));
+            if (pins.Select(p => p.Colony?.PlanetName).Distinct().Count() > 3)
+                planets += "...";
+
+            string timeLeft = leadTime.TotalHours >= 1
+                ? $"{(int)leadTime.TotalHours}h {leadTime.Minutes}m"
+                : $"{leadTime.Minutes}m";
+
+            string description = count == 1
+                ? $"Extractor expiring in ~{timeLeft} on {planets}."
+                : $"{count} extractors expiring in ~{timeLeft} ({planets}).";
+
+            var notification = new NotificationEventArgs(character, NotificationCategory.PlanetaryPinsCompleted)
+            {
+                Description = description,
+                Behaviour = NotificationBehaviour.Overwrite,
+                Priority = NotificationPriority.Warning
+            };
+            Notify(notification);
         }
 
 

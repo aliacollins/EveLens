@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-10</date>
+      <version>1.4.0.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.4.0</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.4.0/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.4.0
+
+1.4.0: Korean language, Attribute Optimizer, community fix train, SDE 3458726, EVE Accuracy Suite, auto-update opt-in]]></message>
+    </release>
+    <release>
       <date>2026-04-09</date>
       <version>1.2.1.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.2.1</url>

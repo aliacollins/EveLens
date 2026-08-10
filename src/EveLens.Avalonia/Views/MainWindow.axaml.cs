@@ -38,12 +38,16 @@ using EveLens.Common.CustomEventArgs;
 using EveLens.Common.Events;
 using EveLens.Common.Notifications;
 using EveLens.Common.SettingsObjects;
+using Avalonia.Controls.Notifications;
 
 namespace EveLens.Avalonia.Views
 {
     public partial class MainWindow : Window
     {
         private const string WindowLocationKey = "MainWindow";
+        private const double ActivityFlyoutMinWidth = 320;
+        private const double ActivityFlyoutMaxWidth = 560;
+        private const double ActivityFlyoutWindowPadding = 12;
         private PixelPoint _lastPosition;
         private double _lastWidth;
         private double _lastHeight;
@@ -63,6 +67,9 @@ namespace EveLens.Avalonia.Views
         private IDisposable? _monitoredChangedSub;
         private NotificationCenterViewModel? _notificationVm;
         private IDisposable? _notificationSentSub;
+        private IDisposable? _piExpiringSub;
+        private IDisposable? _piCompletedSub;
+        private WindowNotificationManager? _toastManager;
         private IDisposable? _privacyModeSub;
         private IDisposable? _fontScaleSub;
         private readonly List<Window> _childWindows = new();
@@ -113,10 +120,26 @@ namespace EveLens.Avalonia.Views
             // Wire notification center
             _notificationVm = new NotificationCenterViewModel();
             MarkReadBtn.Click += (_, _) => { _notificationVm.MarkAllRead(); RefreshNotificationUI(); };
-            ClearAllBtn.Click += (_, _) => { _notificationVm.ClearAll(); RefreshNotificationUI(); NotificationBellBtn.Flyout?.Hide(); };
+            ClearAllBtn.Click += (_, _) => { _notificationVm.ClearAll(); RefreshNotificationUI(); ActivityPopup.IsOpen = false; };
+            ActivityPopup.Opened += (_, _) => UpdateActivityFlyoutWidth();
             _notificationVm.PropertyChanged += (_, _) =>
                 Dispatcher.UIThread.Post(RefreshNotificationUI);
             RefreshNotificationUI();
+
+            // In-app toast notifications (bottom-right corner)
+            _toastManager = new WindowNotificationManager(this)
+            {
+                Position = NotificationPosition.BottomRight,
+                MaxItems = 3
+            };
+
+            // PI alert toasts
+            _piExpiringSub = AppServices.EventAggregator?.Subscribe<CharacterPlanetaryPinsExpiringEvent>(e =>
+                Dispatcher.UIThread.Post(() => ShowPiToast(e.Character?.Name ?? "Unknown",
+                    $"{e.ExpiringPins.Count} extractor(s) expiring soon", NotificationType.Warning)));
+            _piCompletedSub = AppServices.EventAggregator?.Subscribe<CharacterPlanetaryPinsCompletedEvent>(e =>
+                Dispatcher.UIThread.Post(() => ShowPiToast(e.Character?.Name ?? "Unknown",
+                    $"{e.CompletedPins.Count} extractor(s) now idle", NotificationType.Error)));
 
             // Native OS toast notifications (cross-platform)
             _notificationSentSub = AppServices.EventAggregator?.Subscribe<NotificationSentEvent>(
@@ -207,8 +230,17 @@ namespace EveLens.Avalonia.Views
                         needsGap = true;
                     }
 
-                    // Ungrouped at the end
+                    // Ungrouped at the end — respect saved order
                     var ungrouped = allChars.Where(c => !placed.Contains(c.Guid)).ToList();
+                    var ungroupedOrder = Settings.UngroupedCharacterOrder;
+                    if (ungroupedOrder.Count > 0)
+                    {
+                        ungrouped = ungroupedOrder
+                            .Select(guid => ungrouped.FirstOrDefault(c => c.Guid == guid))
+                            .Where(c => c != null).Select(c => c!)
+                            .Concat(ungrouped.Where(c => !ungroupedOrder.Contains(c.Guid)))
+                            .ToList();
+                    }
                     if (ungrouped.Count > 0)
                     {
                         if (needsGap)
@@ -228,6 +260,16 @@ namespace EveLens.Avalonia.Views
                 }
                 else
                 {
+                    // Respect ungrouped order
+                    var savedOrder = Settings.UngroupedCharacterOrder;
+                    if (savedOrder.Count > 0)
+                    {
+                        allChars = savedOrder
+                            .Select(guid => allChars.FirstOrDefault(c => c.Guid == guid))
+                            .Where(c => c != null).Select(c => c!)
+                            .Concat(allChars.Where(c => !savedOrder.Contains(c.Guid)))
+                            .ToList();
+                    }
                     foreach (Character character in allChars)
                     {
                         _observableCharacters.Add(new ObservableCharacter(character));
@@ -696,6 +738,7 @@ namespace EveLens.Avalonia.Views
             // Tools menu
             CharCompMenuItem.Click += OnCharCompClick;
             SkillFarmMenuItem.Click += OnSkillFarmClick;
+            PlanetaryDashMenuItem.Click += OnPlanetaryDashClick;
             GlobalPlanMenuItem.Click += OnGlobalPlanClick;
             SkillConstellationMenuItem.Click += OnSkillConstellationClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
@@ -832,6 +875,56 @@ namespace EveLens.Avalonia.Views
             notifySubMenu.Items.Add(fireAccountExpiry);
             notifySubMenu.Items.Add(fireServerStatus);
             notifySubMenu.Items.Add(fireSettingsChanged);
+
+            var firePiExpiring = new MenuItem { Header = "PI Extractors Expiring (x3 chars)" };
+            firePiExpiring.Click += (_, _) =>
+            {
+                try
+                {
+                    var chars = _viewModel.Characters.Take(3).ToList();
+                    if (chars.Count == 0) return;
+                    foreach (var c in chars)
+                    {
+                        var pin = new Common.Models.PlanetaryPin[] { };
+                        AppServices.EventAggregator?.Publish(
+                            new CharacterPlanetaryPinsExpiringEvent(c, pin, TimeSpan.FromMinutes(45)));
+                        var args = new Common.Notifications.NotificationEventArgs(c, Common.Notifications.NotificationCategory.PlanetaryPinsCompleted)
+                        {
+                            Description = $"Extractor expiring in ~45m on {c.Name}'s colony.",
+                            Behaviour = Common.Notifications.NotificationBehaviour.Overwrite,
+                            Priority = Common.Notifications.NotificationPriority.Warning
+                        };
+                        AppServices.EventAggregator?.Publish(new NotificationSentEvent(args));
+                    }
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+            notifySubMenu.Items.Add(firePiExpiring);
+
+            var firePiIdle = new MenuItem { Header = "PI Extractors Idle (x3 chars)" };
+            firePiIdle.Click += (_, _) =>
+            {
+                try
+                {
+                    var chars = _viewModel.Characters.Take(3).ToList();
+                    if (chars.Count == 0) return;
+                    foreach (var c in chars)
+                    {
+                        var pin = new Common.Models.PlanetaryPin[] { };
+                        AppServices.EventAggregator?.Publish(
+                            new CharacterPlanetaryPinsCompletedEvent(c, pin));
+                        var args = new Common.Notifications.NotificationEventArgs(c, Common.Notifications.NotificationCategory.PlanetaryPinsCompleted)
+                        {
+                            Description = $"{c.Name}: 2 extractors now idle.",
+                            Behaviour = Common.Notifications.NotificationBehaviour.Overwrite,
+                            Priority = Common.Notifications.NotificationPriority.Warning
+                        };
+                        AppServices.EventAggregator?.Publish(new NotificationSentEvent(args));
+                    }
+                }
+                catch (Exception ex) { Debug.WriteLine($"Error: {ex}"); }
+            };
+            notifySubMenu.Items.Add(firePiIdle);
 
             // ── Dialogs ──
             var dialogSubMenu = new MenuItem { Header = "Open Dialogs" };
@@ -1861,6 +1954,19 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        private async void OnPlanetaryDashClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var window = new Dialogs.PlanetaryDashboardWindow();
+                await window.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening Planetary Dashboard: {ex}");
+            }
+        }
+
         private async void OnGlobalPlanClick(object? sender, RoutedEventArgs e)
         {
             try
@@ -2173,6 +2279,44 @@ namespace EveLens.Avalonia.Views
             EmptyActivityText.IsVisible = entries.Count == 0;
         }
 
+        private void OnBellClick(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            ActivityPopup.IsOpen = !ActivityPopup.IsOpen;
+        }
+
+        private void ShowPiToast(string characterName, string message, NotificationType type)
+        {
+            _toastManager?.Show(new Notification(
+                $"PI: {characterName}",
+                message,
+                type,
+                TimeSpan.FromSeconds(8)));
+        }
+
+        private void UpdateActivityFlyoutWidth()
+        {
+            double availableWidth = Bounds.Width - (ActivityFlyoutWindowPadding * 2);
+            Point? buttonRight = NotificationBellBtn.TranslatePoint(
+                new Point(NotificationBellBtn.Bounds.Width, 0), this);
+
+            if (buttonRight.HasValue)
+            {
+                availableWidth = Math.Min(
+                    availableWidth,
+                    buttonRight.Value.X - ActivityFlyoutWindowPadding);
+            }
+
+            if (double.IsNaN(availableWidth) || double.IsInfinity(availableWidth) || availableWidth <= 0)
+                availableWidth = ActivityFlyoutMaxWidth;
+
+            double targetWidth = Math.Min(ActivityFlyoutMaxWidth, availableWidth);
+            targetWidth = Math.Max(220, targetWidth);
+
+            ActivityFlyoutPanel.MinWidth = Math.Min(ActivityFlyoutMinWidth, targetWidth);
+            ActivityFlyoutPanel.Width = targetWidth;
+            ActivityFlyoutPanel.MaxWidth = targetWidth;
+        }
+
         internal async void DeleteCharacterWithConfirmation(Character character)
         {
             try
@@ -2321,6 +2465,8 @@ namespace EveLens.Avalonia.Views
             }
         }
 
+        private DateTime _lastPiOsToast = DateTime.MinValue;
+
         private void OnNotificationSent(NotificationSentEvent e)
         {
             try
@@ -2329,6 +2475,17 @@ namespace EveLens.Avalonia.Views
                     return;
 
                 var args = e.Args;
+
+                // PI: one summary OS toast max every 5 minutes
+                if (args.Category == Common.Notifications.NotificationCategory.PlanetaryPinsCompleted)
+                {
+                    if ((DateTime.UtcNow - _lastPiOsToast).TotalMinutes < 5)
+                        return;
+                    _lastPiOsToast = DateTime.UtcNow;
+                    NativeNotificationService.Show("EveLens", "PI needs attention. Please check.");
+                    return;
+                }
+
                 string title = args.SenderCharacter?.Name ?? "EveLens";
                 string message = args.Description ?? args.Category.ToString();
                 NativeNotificationService.Show(title, message);
