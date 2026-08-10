@@ -1097,8 +1097,43 @@ class Program
             flagID INTEGER,
             quantity INTEGER
         )");
-        // Items are not directly in YAML SDE - they come from universe data
-        // This table may be populated differently or left mostly empty
+
+        // Planets: XmlGenerator's Geography datafile reads planets from invItems
+        // (itemID=planetID, locationID=solarSystemID, typeID filtered to group 7).
+        // Without them every colony shows "Unknown" as its planet name (Issue #66).
+        _planets = LoadYaml<long, PlanetData>("mapPlanets.yaml");
+        using var transaction = _connection!.BeginTransaction();
+        foreach (var kvp in _planets)
+        {
+            var v = kvp.Value;
+            if (v.SolarSystemID == null || v.TypeID == null)
+                continue;
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = @"INSERT OR IGNORE INTO invItems
+                (itemID, typeID, ownerID, locationID, flagID, quantity)
+                VALUES (@id, @typeID, 0, @locationID, 0, 1)";
+            cmd.Parameters.AddWithValue("@id", kvp.Key);
+            cmd.Parameters.AddWithValue("@typeID", v.TypeID.Value);
+            cmd.Parameters.AddWithValue("@locationID", v.SolarSystemID.Value);
+            cmd.ExecuteNonQuery();
+        }
+        transaction.Commit();
+        Console.WriteLine($"  Planets imported into invItems: {_planets.Count}");
+    }
+
+    // Kept between ImportItems and ImportNames so planet names can be derived
+    // ("SystemName + celestial index in Roman numerals", e.g. "Jita IV").
+    private static Dictionary<long, PlanetData> _planets = new();
+
+    private static string ToRoman(int number)
+    {
+        // Celestial indexes are small (1..~25); simple cumulative form is enough.
+        var pairs = new (int Value, string Numeral)[]
+            { (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I") };
+        var sb = new System.Text.StringBuilder();
+        foreach (var (value, numeral) in pairs)
+            while (number >= value) { sb.Append(numeral); number -= value; }
+        return sb.ToString();
     }
 
     private static void ImportNames()
@@ -1145,6 +1180,30 @@ class Program
         using (var cmd = _connection.CreateCommand())
         {
             cmd.CommandText = "INSERT OR IGNORE INTO invNames SELECT corporationID, corporationName FROM crpNPCCorporations";
+            cmd.ExecuteNonQuery();
+        }
+
+        // Add planet names, derived as "SystemName + celestial index" (the game's own
+        // convention, e.g. "Jita IV") — mapPlanets.yaml has no name field (Issue #66).
+        var systemNames = new Dictionary<long, string>();
+        using (var cmd = _connection.CreateCommand())
+        {
+            cmd.CommandText = "SELECT solarSystemID, solarSystemName FROM mapSolarSystems";
+            using var readerSys = cmd.ExecuteReader();
+            while (readerSys.Read())
+                systemNames[readerSys.GetInt64(0)] = readerSys.GetString(1);
+        }
+        foreach (var kvp in _planets)
+        {
+            var v = kvp.Value;
+            if (v.SolarSystemID == null || v.CelestialIndex == null)
+                continue;
+            if (!systemNames.TryGetValue(v.SolarSystemID.Value, out var sysName))
+                continue;
+            using var cmd = _connection.CreateCommand();
+            cmd.CommandText = "INSERT OR IGNORE INTO invNames (itemID, itemName) VALUES (@id, @name)";
+            cmd.Parameters.AddWithValue("@id", kvp.Key);
+            cmd.Parameters.AddWithValue("@name", $"{sysName} {ToRoman(v.CelestialIndex.Value)}");
             cmd.ExecuteNonQuery();
         }
 
@@ -1348,6 +1407,12 @@ class SolarSystemData {
     public int? FactionID { get; set; } public double? Radius { get; set; } public int? SunTypeID { get; set; }
 }
 class CoordinateData { public double? X { get; set; } public double? Y { get; set; } public double? Z { get; set; } }
+class PlanetData
+{
+    public int? TypeID { get; set; }
+    public long? SolarSystemID { get; set; }
+    public int? CelestialIndex { get; set; }
+}
 class StargateData { public int? SolarSystemID { get; set; } public StargateDestination? Destination { get; set; } }
 class StargateDestination { public int? SolarSystemID { get; set; } }
 class StationData {

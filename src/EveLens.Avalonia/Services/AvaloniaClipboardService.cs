@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -79,9 +80,17 @@ namespace EveLens.Avalonia.Services
 
         private static IClipboard? GetClipboard()
         {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                return desktop.MainWindow?.Clipboard;
-            return null;
+            if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+                return null;
+
+            // Prefer a visible window's clipboard: on X11/Wayland the clipboard belongs to a
+            // top-level, and the MainWindow's is unreliable when hidden to tray or when a
+            // dialog (e.g. Plan editor) is the active surface — this made clipboard import
+            // silently fail on Linux while working on Windows.
+            var active = desktop.Windows.FirstOrDefault(w => w.IsActive && w.IsVisible)
+                ?? desktop.Windows.FirstOrDefault(w => w.IsVisible)
+                ?? desktop.MainWindow;
+            return active?.Clipboard;
         }
     }
 }

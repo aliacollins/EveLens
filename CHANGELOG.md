@@ -7,12 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Game Names setting -- show ship/item/skill names in English or translated** -- Korean players told us they navigate by the English item names they know from the game client and killboards, so a fully-translated item list actually made EveLens harder to use (Discussion #79). A new "Game Names" option in Settings > Appearance now controls whether game terms use CCP's translated SDE names or stay in English. The default follows each community's convention: English names for Korean, translated names for Chinese. UI text stays in your chosen language either way. Thanks to Last Bin for the feedback!
+- **Korean translation credit** -- Last Bin, the community translator behind EveLens's Korean localization, is now credited in the About page.
+
 ### Security
 
 - **Updated MailKit to 4.16.0** -- Clears two moderate-severity advisories in the email/MimeKit stack (STARTTLS response injection CVE-2026-41319 and CRLF/SMTP injection CVE-2026-30227). Email skill-completion alerts are unaffected. Also removed an unused MailKit dependency from EveLens.Infrastructure.
 
+### Added
+
+- **Run at Startup** -- New option in Settings > Window launches EveLens automatically when you log in to your computer, starting quietly in the system tray with no window or splash screen. Available on Windows and Linux (Issue #72).
+
+### Changed
+
+- **SDE updated to build 3458726 (August 2026)** -- All game data regenerated from CCP's latest Static Data Export. Fixes outdated skill prerequisites -- e.g. Capital Jump Portal Generation now correctly requires Jump Portal Generation III, not V (Issue #99).
+- **Start Menu shortcut no longer reappears after every update** -- The updater used to re-create the Start Menu shortcut each time a new version installed, even if you had deleted it. New installs create a Desktop shortcut only (Issue #72).
+
 ### Fixed
 
+- **Linux: importing a non-XML file as a plan no longer freezes the app** -- Picking a .txt file in Plans > Import Plan from File hit a misleading "unsupported format" dialog whose sync-over-async plumbing deadlocked the UI thread on Linux/macOS (reported on Reddit). Dialogs shown from synchronous code now pump a proper nested message loop, and plan import explains up front that it expects .emp/.xml -- pointing plain-text skill lists at the plan editor's Import menu, which handles them.
+- **Linux: clipboard import now works when the plan editor is the active window** -- The clipboard was always read through the main window, which fails on X11/Wayland when the main window is hidden to tray or a dialog is focused. The clipboard now comes from the active visible window.
+- **Planetary colonies no longer show "Unknown" as the planet name** -- The bundled map data was missing planets entirely, so every colony card and detail header read "Unknown". Planet names (like "Jita IV") are now included for all 68,000+ planets (Issue #66).
+- **Planetary ISK/day estimates now actually populate** -- The dashboard never requested market prices unless another feature (like Assets) had already loaded them, so most colonies showed 0 ISK/day forever. PI now triggers its own price lookups and repaints as soon as prices arrive (Issue #66).
+- **Planetary flow diagram no longer shows a gap while resizing the window** -- Node positions were recomputed one frame behind the window size during a resize drag (Issue #66).
+- **SSO error for a character that no longer exists can now be cleared** -- If a character was biomassed or transferred off your account, its dead login token kept raising an unnamed "EVE SSO session expired" banner on every startup, and deleting the character didn't remove the underlying key -- so the error could never be dismissed. EveLens now remembers which character each ESI key belongs to (even across restarts), names that character in the error message, and deleting the character properly removes its stale key (Issue #94).
+- **Queue tab: wrong progress bars when the same skill is queued to multiple levels** -- With a skill queued to two or more levels (say Cruiser IV training and Cruiser V waiting), every row of that skill showed the same live progress bar and "Training" status. Each queue entry now computes progress from its own level's SP window, so the training level shows real progress and later levels correctly sit at 0% until they start (Issue #103).
 - **Linux/macOS: hard crash opening Standings, Contacts, Employment History, and Loyalty tabs** -- Default/placeholder images were loaded through a Windows-only graphics library (System.Drawing/GDI+), which throws on Linux and macOS the instant it runs. Opening any of those tabs terminated the whole app with no error. Default images now use the same cross-platform image pipeline (SkiaSharp) as the rest of EveLens, so the tabs work on every platform.
 - **Crashes no longer kill the app silently** -- EveLens now installs a process-wide safety net (unhandled exception, unobserved background task, and UI-thread handlers). An unexpected error is logged and, where possible, the app keeps running instead of vanishing without a trace.
 - **"Error logging in to EVE SSO" now explains itself and stops spamming** -- This generic banner appeared for every kind of token failure, and an expired refresh token retried every few seconds forever -- so an idle character could flood you with a login error it could never clear. EveLens now reads CCP's actual reason and reacts accordingly: an expired session names the specific character to re-authenticate (and stops retrying a token that can't work), bad ESI app credentials point you to Settings, and brief network/server hiccups retry quietly without raising a scary alarm. The banner also clears itself automatically once a character re-authenticates. CCP's raw response is still written to the log and diagnostic stream for deeper diagnosis (Issue #94).

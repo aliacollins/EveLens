@@ -100,8 +100,19 @@ namespace EveLens.Avalonia.Services
         {
             if (Dispatcher.UIThread.CheckAccess())
             {
-                // Already on UI thread — run inline via nested pump to avoid deadlock
-                return asyncFunc().GetAwaiter().GetResult();
+                // Already on UI thread. GetResult() alone would deadlock: ShowDialog's task
+                // only completes when the UI thread pumps, and the UI thread would be blocked
+                // waiting for it (this froze the whole app whenever a sync caller showed a
+                // dialog — e.g. importing a .txt plan file). PushFrame runs a real nested
+                // message loop until the task completes, exactly like modal dialogs do.
+                var task = asyncFunc();
+                if (!task.IsCompleted)
+                {
+                    var frame = new DispatcherFrame();
+                    task.ContinueWith(_ => frame.Continue = false, TaskScheduler.Default);
+                    Dispatcher.UIThread.PushFrame(frame);
+                }
+                return task.GetAwaiter().GetResult();
             }
 
             // Background thread — safe to use .Wait()

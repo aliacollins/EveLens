@@ -230,6 +230,11 @@ namespace EveLens.Avalonia.Views.Dialogs
             stack.Children.Add(BuildChipWrap(new[] { "Alia Collins" }, _accentBrush));
             AddSpacer(stack, 8);
 
+            // Community translators
+            AddSectionHeader(stack, "TRANSLATIONS");
+            stack.Children.Add(BuildChipWrap(new[] { "Last Bin (한국어 / Korean)" }, _textPrimaryBrush));
+            AddSpacer(stack, 8);
+
             // Original EVEMon (Peter Han's fork)
             AddSectionHeader(stack, "ORIGINAL EVEMON (PETERHANEVE/EVEMON)");
             stack.Children.Add(BuildChipWrap(new[]

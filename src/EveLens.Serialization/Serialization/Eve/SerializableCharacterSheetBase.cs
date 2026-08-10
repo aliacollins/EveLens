@@ -193,6 +193,15 @@ namespace EveLens.Common.Serialization.Eve
         [XmlElement("shipTypeName")]
         public string? ShipTypeName { get; set; }
 
+        /// <summary>
+        /// The ship's type ID. Persisted so the display name can be re-resolved in the
+        /// CURRENT UI language on load — persisting only the localized name string froze
+        /// it in whatever language was active at import (e.g. Korean ship names surviving
+        /// a switch back to English). Zero in files saved before this field existed.
+        /// </summary>
+        [XmlElement("shipTypeID")]
+        public int ShipTypeID { get; set; }
+
         [XmlElement("lastKnownLocation")]
         public SerializableLocation? LastKnownLocation { get; set; }
 

@@ -369,6 +369,21 @@ namespace EveLens.Common.Helpers
                     // Plain XML — fall through to normal parsing below
                 }
 
+                // A non-XML file (e.g. a .txt skill list picked via "All Files") used to fall
+                // into the "pre-1.3.0 format" dialog — misleading, and on Linux the resulting
+                // dialog-from-sync-context froze the app. Detect it up front and explain what
+                // plan import actually accepts.
+                string head = ReadFileHead(filename, 256).TrimStart('﻿', ' ', '\t', '\r', '\n');
+                if (!head.StartsWith("<", StringComparison.Ordinal))
+                {
+                    AppServices.DialogService.ShowMessage(
+                        "This file is not an EveLens plan. Plan import expects an .emp or plan .xml file." +
+                        $"{Environment.NewLine}{Environment.NewLine}To import a plain text skill list, " +
+                        "open a plan and use Import > From File in the plan editor instead.",
+                        @"Import Error", DialogButtons.OK, DialogIcon.Error);
+                    return null;
+                }
+
                 // Reads the revision number from the file
                 revision = Util.GetRevisionNumber(filename);
 
@@ -399,6 +414,25 @@ namespace EveLens.Common.Helpers
                     @"Import Error", DialogButtons.OK, DialogIcon.Error);
 
             return result;
+        }
+
+        /// <summary>
+        /// Reads up to <paramref name="maxChars"/> characters from the start of a file,
+        /// for cheap content sniffing without loading the whole file.
+        /// </summary>
+        private static string ReadFileHead(string filename, int maxChars)
+        {
+            try
+            {
+                using var reader = new System.IO.StreamReader(filename);
+                char[] buffer = new char[maxChars];
+                int read = reader.Read(buffer, 0, maxChars);
+                return new string(buffer, 0, Math.Max(read, 0));
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         /// <summary>
