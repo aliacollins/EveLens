@@ -1037,9 +1037,9 @@ namespace EveLens.Common
             byte[] encrypted;
             // Keep legacy parameters for backwards compatibility with existing encrypted data
             // SYSLIB0041 warns about weak iterations, but changing would break existing data
-#pragma warning disable SYSLIB0041
+#pragma warning disable SYSLIB0041, SYSLIB0060 // renamed to SYSLIB0060 in .NET 10 -- NEVER migrate to Pbkdf2: it breaks decryption of stored credentials
             using (var pdb = new Rfc2898DeriveBytes(password, Encoding.Unicode.GetBytes(password)))
-#pragma warning restore SYSLIB0041
+#pragma warning restore SYSLIB0041, SYSLIB0060
             {
                 using (var aes = Aes.Create())
                 {
@@ -1089,9 +1089,9 @@ namespace EveLens.Common
 
             string decrypted;
             // Keep legacy parameters for backwards compatibility with existing encrypted data
-#pragma warning disable SYSLIB0041
+#pragma warning disable SYSLIB0041, SYSLIB0060 // renamed to SYSLIB0060 in .NET 10 -- NEVER migrate to Pbkdf2: it breaks decryption of stored credentials
             using (var pdb = new Rfc2898DeriveBytes(password, Encoding.Unicode.GetBytes(password)))
-#pragma warning restore SYSLIB0041
+#pragma warning restore SYSLIB0041, SYSLIB0060
             {
                 using (var aes = Aes.Create())
                 {
