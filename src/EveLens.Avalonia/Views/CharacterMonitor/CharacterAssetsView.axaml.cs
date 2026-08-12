@@ -88,7 +88,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private void LoadData()
         {
-            if (this.GetVisualRoot() == null) return;
+            if (this.VisualRoot == null) return;
 
             Character? character = DataContext as Character
                 ?? (DataContext as ObservableCharacter)?.Character;
