@@ -137,15 +137,26 @@ namespace EveLens.Common.Models
         }
 
         /// <summary>
-        /// Computes an estimation of the current SP.
+        /// Computes an estimation of the current SP, clamped to this entry's own
+        /// SP window (StartSP..EndSP) — an entry can never report more SP than its
+        /// level's completion value or fewer than it started with.
         /// </summary>
         public int CurrentSP
         {
             get
             {
-                int estimatedSP = (int)(EndSP - EndTime.Subtract(DateTime.UtcNow).TotalHours *
-                    SkillPointsPerHour);
-                return IsTraining ? Math.Max(estimatedSP, StartSP) : StartSP;
+                if (!IsTraining)
+                    return StartSP;
+
+                // Estimate in double and clamp BEFORE narrowing to int. The raw value can
+                // exceed int range (stale EndTime after a resume from sleep × the huge
+                // synthetic SkillPointsPerHour of an unknown skill), and a bare (int) cast
+                // of an out-of-range double is runtime-defined: .NET 8 wrapped it negative
+                // (masked by the StartSP floor), .NET 9+ saturates to int.MaxValue — which
+                // the floor would then select and persist into settings.
+                double estimatedSP = EndSP - EndTime.Subtract(DateTime.UtcNow).TotalHours *
+                    SkillPointsPerHour;
+                return (int)Math.Max(Math.Min(estimatedSP, EndSP), StartSP);
             }
         }
 
