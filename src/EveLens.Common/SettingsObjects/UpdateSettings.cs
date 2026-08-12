@@ -17,6 +17,7 @@ namespace EveLens.Common.SettingsObjects
     public sealed class UpdateSettings
     {
         private int m_updateFrequency;
+        private int m_httpTimeout;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UpdateSettings"/> class.
@@ -76,11 +77,18 @@ namespace EveLens.Common.SettingsObjects
         }
 
         /// <summary>
-        /// Gets or sets the HTTP timeout.
+        /// Gets or sets the HTTP timeout in seconds, clamped to 1..3600. A hand-edited
+        /// huge value used to overflow the millisecond conversion in Emailer (the failure
+        /// mode even differs by runtime: .NET 8 wrapped, .NET 9+ saturates to an infinite
+        /// timeout); clamping at the source protects every consumer at once.
         /// </summary>
         /// <value>The HTTP timeout.</value>
         [XmlElement("httpTimeout")]
-        public int HttpTimeout { get; set; }
+        public int HttpTimeout
+        {
+            get { return m_httpTimeout < 1 ? 20 : Math.Min(m_httpTimeout, 3600); }
+            set { m_httpTimeout = value; }
+        }
 
         /// <summary>
         /// Short circuit the check for network connectivity and try and connect anyway.
