@@ -15,7 +15,6 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="SkiaSharp" Version="2.88.9" />
     <!-- System.Drawing.Common retained for auto-generated .resx Designer files (Bitmap/Icon types) -->
-    <PackageReference Include="System.Drawing.Common" Version="8.0.10" />
     <PackageReference Include="System.Resources.Extensions" Version="10.0.11" />
     <PackageReference Include="Google.Apis.Calendar.v3" Version="1.68.0.3536" />
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.68.0.3544" />
