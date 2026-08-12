@@ -69,8 +69,7 @@ namespace EveLens.Common.Services.Planetary
                 if (pin.InstallTime != DateTime.MinValue && pin.CycleTime > 0)
                 {
                     var elapsed = (DateTime.UtcNow - pin.InstallTime).TotalSeconds;
-                    currentCycleIndex = Math.Min((int)(elapsed / pin.CycleTime), yields.Length - 1);
-                    if (currentCycleIndex < 0) currentCycleIndex = 0;
+                    currentCycleIndex = ComputeCurrentCycleIndex(elapsed, pin.CycleTime, yields.Length);
                 }
 
                 double currentYieldPerHour = yields.Length > 0 && currentCycleIndex < yields.Length
@@ -98,6 +97,26 @@ namespace EveLens.Common.Services.Planetary
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Computes which extraction cycle a program is currently in, clamped to
+        /// [0, cycleCount - 1]. The clamp happens in double space BEFORE narrowing to int:
+        /// with degenerate stored data (ancient InstallTime × tiny CycleTime) the raw
+        /// quotient exceeds int range, and a bare (int) cast of an out-of-range double is
+        /// runtime-defined (.NET 8 wrapped it negative, .NET 9+ saturates to int.MaxValue).
+        /// A future InstallTime (negative elapsed) maps to the first cycle; anything at or
+        /// beyond the program's end maps to the last cycle, consistent with how in-range
+        /// elapsed values past the program end have always behaved.
+        /// </summary>
+        internal static int ComputeCurrentCycleIndex(double elapsedSeconds, int cycleTimeSeconds,
+            int cycleCount)
+        {
+            if (cycleTimeSeconds <= 0 || cycleCount <= 0)
+                return 0;
+
+            double cycles = elapsedSeconds / cycleTimeSeconds;
+            return (int)Math.Max(Math.Min(cycles, cycleCount - 1), 0.0);
         }
 
         private static List<FactoryInfo> ClassifyFactories(List<PlanetaryPin> pins)
