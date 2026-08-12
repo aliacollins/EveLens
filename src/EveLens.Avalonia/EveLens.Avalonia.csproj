@@ -14,11 +14,11 @@
 
   <!-- Avalonia NuGet Packages -->
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.2.3" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.3" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.2.3" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.3" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Avalonia" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.20" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.20" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="DesktopNotifications" Version="1.3.1" />
     <PackageReference Include="DesktopNotifications.Windows" Version="1.3.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
