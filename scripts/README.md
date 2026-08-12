@@ -3,74 +3,56 @@
 ## Workflow
 
 ```
-[Make changes] --> [Push beta] --> [Test] --> [Push stable when ready]
-     |                  |              |               |
-     v                  v              v               v
-  git commit    release-beta.ps1   Testers try   release-stable.ps1
-                                   beta release
+[feature/fix branch] --> [promote.ps1 alpha] --> [promote.ps1 beta] --> [promote.ps1 stable]
+        |                        |                       |                      |
+        v                        v                       v                      v
+   git commit            version stamped +        beta testers get       release.ps1 builds,
+                         merged + pushed          the update             signs & publishes
 ```
 
 ## Commands
 
-### Build Installer Only
+### Promote a branch (version stamp + merge + push)
 ```powershell
-.\scripts\build-installer.ps1
+.\scripts\promote.ps1 alpha -Message "Added feature X"
+.\scripts\promote.ps1 beta -Message "Ready for beta testing"
+.\scripts\promote.ps1 stable -Message "Production release"
 ```
-- Builds EveLens and creates installer
-- Reads version from SharedAssemblyInfo.cs
-- Requires [Inno Setup 6](https://jrsoftware.org/isdl.php) installed
-- Output: `publish\EveLens-install-{version}.exe`
+- Increments the version in `SharedAssemblyInfo.cs`
+- Updates `CHANGELOG.md` and `updates/patch-*.xml`
+- Merges and pushes via pull request (branch protection applies)
 
-Options:
-- `-Version 5.2.0` - Override version
-- `-SkipBuild` - Use existing `publish\win-x64` build
-
-### Push to Beta (do this often)
+### Build, sign, and publish a release
 ```powershell
-.\scripts\release-beta.ps1
+.\scripts\release.ps1 -Version 1.5.0 -Channel stable
 ```
-- Builds and uploads to rolling "beta" release
-- Creates both ZIP and installer (if Inno Setup installed)
-- Testers always get latest from: https://github.com/aliacollins/evelens/releases/tag/beta
-- Overwrites previous beta each time
+- Publishes self-contained builds for win-x64, linux-x64, osx-arm64
+- Packs win-x64 with Velopack (`vpk`) -- this produces the signed
+  `EveLens-{channel}-Setup.exe` and update packages (delta + full)
+- Windows signing requires SimplySign Desktop running
+- macOS `.app` and Linux AppImage come from `make-macapp.sh` / `make-appimage.sh`
+- Uploads artifacts to the GitHub release
 
-### Create Stable Release (when ready)
-```powershell
-.\scripts\release-stable.ps1 5.0.3
-```
-- Creates versioned release (v5.0.3)
-- Creates both ZIP and installer
-- Creates git tag
-- Users download specific stable version
-- **Remember to update `updates/patch.xml` after stable release!**
+**Must be run after promoting** -- pushing code alone does not create a release.
 
-## Installer Features
-
-The installer (`EveLens-install-{version}.exe`) includes:
-- Install location selection
-- Desktop and Start Menu shortcuts
-- Self-contained build -- no separate .NET runtime install needed
-- Uninstaller (via Windows Settings)
-- Non-admin installation option
-
-## Quick Flow Example
-
-```powershell
-# Made some fixes, push to beta for testing
-git add .
-git commit -m "Fix clone location display"
-git push
-.\scripts\release-beta.ps1
-
-# After testing confirms it works, release stable
-.\scripts\release-stable.ps1 5.0.3
-
-# Update auto-update notification
-# Edit updates/patch.xml with new version
-```
+### Other scripts
+| Script | Purpose |
+|--------|---------|
+| `promote-dashboard.ps1` | Overview of branch/version state |
+| `update-sde.ps1` | Regenerate game data from CCP's Static Data Export |
+| `make-macapp.sh` | Build macOS `.app` bundle (run via WSL for Unix permissions) |
+| `make-appimage.sh` | Build Linux AppImage |
+| `codegraph.ps1` / `validate-codegraph.ps1` | Dependency graph generation/validation |
+| `diag-stream.sh` | Tail the TCP diagnostic stream (port 5555) |
 
 ## Requirements
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) - for building
-- [Inno Setup 6](https://jrsoftware.org/isdl.php) - for creating installers
 - [GitHub CLI](https://cli.github.com/) - for uploading releases
+- SimplySign Desktop - for Windows code signing
+- `vpk` (installed automatically by release.ps1) - Velopack packer
+
+> **History:** the Inno Setup installer (`installer/EveLens.iss`) was retired in the
+> 1.5.0 cycle. Velopack builds the Setup.exe, and releases are self-contained, so the
+> installer's runtime-bootstrap job no longer exists. The `installer/` folder keeps
+> only the icons and platform packaging assets.
