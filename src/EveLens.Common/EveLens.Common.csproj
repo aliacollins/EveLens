@@ -12,7 +12,7 @@
 
   <!-- NuGet Package References -->
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="SkiaSharp" Version="2.88.9" />
     <!-- System.Drawing.Common retained for auto-generated .resx Designer files (Bitmap/Icon types) -->
     <PackageReference Include="System.Resources.Extensions" Version="10.0.11" />
