@@ -6,8 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- promote.ps1: unambiguous refs/heads merges + post-merge content verification
-- beta.5 train: community fixes, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in
+
+### Fixed
+
+- **Deleting a character group no longer crashes the Manage Groups window** -- The delete button sits inside the group chip, so its click also triggered the chip's expand/collapse toggle, which re-selected the group that had just been removed and crashed the reorder panel. The click now stops at the delete button, and the reorder panel tolerates a vanished group either way. Thanks to jpn-1 for the exact diagnosis (Issue #78).
 
 ### Added
 
