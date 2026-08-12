@@ -13,9 +13,9 @@
 #define MyAppURL "https://github.com/aliacollins/evelens"
 #define MyAppExeName "EveLens.exe"
 
-; .NET 8.0 Runtime download URL (x64) - standard runtime, not Windows Desktop
-#define DotNet8DownloadUrl "https://download.visualstudio.microsoft.com/download/pr/76e5dbb2-6ae3-4629-9a84-527f8571571b/09002599b32d5d01dc3aa5ef68b5e2ae/dotnet-runtime-8.0.11-win-x64.exe"
-#define DotNet8InstallerFile "dotnet-runtime-8.0.11-win-x64.exe"
+; .NET 10.0 Runtime download URL (x64) - standard runtime, not Windows Desktop
+#define DotNet8DownloadUrl "https://aka.ms/dotnet/10.0/dotnet-runtime-win-x64.exe"
+#define DotNet8InstallerFile "dotnet-runtime-win-x64.exe"
 
 [Setup]
 AppId={{8B3D3C6F-5A7E-4B9A-9D5C-3F2A1B4C5D6E}
@@ -200,8 +200,8 @@ begin
   Result := False;
   TempFile := ExpandConstant('{tmp}\dotnet_check.txt');
 
-  // Check for .NET 8 runtime (not Windows Desktop - we're Avalonia now)
-  if Exec('cmd.exe', '/c dotnet --list-runtimes 2>nul | findstr /C:"Microsoft.NETCore.App 8." > "' + TempFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+  // Check for .NET 10 runtime (not Windows Desktop - we're Avalonia now)
+  if Exec('cmd.exe', '/c dotnet --list-runtimes 2>nul | findstr /C:"Microsoft.NETCore.App 10." > "' + TempFile + '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
     if LoadStringFromFile(TempFile, Output) then
     begin
@@ -247,12 +247,12 @@ begin
 
   if CurPageID = wpReady then
   begin
-    // Check if .NET 8 Runtime is installed
+    // Check if .NET 10 Runtime is installed
     if not IsDotNet8Installed then
     begin
       DotNetRequired := True;
 
-      if MsgBox('EveLens requires .NET 8.0 Runtime which is not installed.'#13#10#13#10 +
+      if MsgBox('EveLens requires .NET 10.0 Runtime which is not installed.'#13#10#13#10 +
                 'Would you like to download and install it now?'#13#10#13#10 +
                 '(Size: approximately 30 MB)', mbConfirmation, MB_YESNO) = IDYES then
       begin
@@ -267,11 +267,11 @@ begin
             DotNetInstaller := ExpandConstant('{tmp}\{#DotNet8InstallerFile}');
             if FileExists(DotNetInstaller) then
             begin
-              Log('Running .NET 8 Runtime installer...');
+              Log('Running .NET 10 Runtime installer...');
               // /quiet for silent install, /norestart to prevent restart
               if not Exec(DotNetInstaller, '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
               begin
-                MsgBox('Failed to run .NET 8 installer. Error code: ' + IntToStr(ResultCode), mbError, MB_OK);
+                MsgBox('Failed to run .NET 10 installer. Error code: ' + IntToStr(ResultCode), mbError, MB_OK);
                 Result := False;
               end
               else if ResultCode <> 0 then
@@ -279,12 +279,12 @@ begin
                 // ResultCode 3010 means success but restart required
                 if ResultCode = 3010 then
                 begin
-                  MsgBox('.NET 8 Runtime installed successfully.'#13#10 +
+                  MsgBox('.NET 10 Runtime installed successfully.'#13#10 +
                          'A system restart may be required after EveLens installation.', mbInformation, MB_OK);
                 end
                 else
                 begin
-                  MsgBox('.NET 8 installer returned code: ' + IntToStr(ResultCode) + #13#10 +
+                  MsgBox('.NET 10 installer returned code: ' + IntToStr(ResultCode) + #13#10 +
                          'EveLens may not run correctly.', mbError, MB_OK);
                 end;
               end;
@@ -303,9 +303,9 @@ begin
       else
       begin
         // User declined to download .NET
-        Result := MsgBox('EveLens will not run without .NET 8.0 Runtime.'#13#10#13#10 +
+        Result := MsgBox('EveLens will not run without .NET 10.0 Runtime.'#13#10#13#10 +
                          'You can download it later from:'#13#10 +
-                         'https://dotnet.microsoft.com/download/dotnet/8.0'#13#10#13#10 +
+                         'https://dotnet.microsoft.com/download/dotnet/10.0'#13#10#13#10 +
                          'Continue installation anyway?', mbConfirmation, MB_YESNO) = IDYES;
       end;
     end;
@@ -337,7 +337,7 @@ begin
   if DotNetRequired then
   begin
     S := S + 'Prerequisites to install:' + NewLine;
-    S := S + Space + '.NET 8.0 Runtime' + NewLine + NewLine;
+    S := S + Space + '.NET 10.0 Runtime' + NewLine + NewLine;
   end;
 
   if MemoDirInfo <> '' then
