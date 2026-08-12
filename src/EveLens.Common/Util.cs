@@ -12,8 +12,6 @@ using EveLens.Common.Serialization;
 using EveLens.Common.Serialization.Esi;
 using EveLens.Common.Serialization.Eve;
 using EveLens.Common.Services;
-using ICSharpCode.SharpZipLib.GZip;
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -870,9 +868,8 @@ namespace EveLens.Common
 
             using (var outputStream = GetMemoryStream())
             {
-                var gZipOutputStream = new GZipOutputStream(outputStream);
-                gZipOutputStream.Write(inputData, 0, inputData.Length);
-                gZipOutputStream.Finish();
+                using (var gZipStream = new GZipStream(outputStream, CompressionMode.Compress, leaveOpen: true))
+                    gZipStream.Write(inputData, 0, inputData.Length);
 
                 return outputStream.ToArray();
             }
@@ -891,9 +888,8 @@ namespace EveLens.Common
             using (var inputStream = GetMemoryStream(inputData))
             using (var outputStream = GetMemoryStream())
             {
-                var gZipOutputStream = new GZipInputStream(inputStream);
-                gZipOutputStream.CopyTo(outputStream);
-                gZipOutputStream.Flush();
+                using (var gZipStream = new GZipStream(inputStream, CompressionMode.Decompress))
+                    gZipStream.CopyTo(outputStream);
 
                 return outputStream.ToArray();
             }
@@ -909,11 +905,12 @@ namespace EveLens.Common
         {
             inputData.ThrowIfNull(nameof(inputData));
 
+            // ZLibStream, not DeflateStream: this data has always been zlib-wrapped
+            // (RFC 1950) — HTTP deflate peers and persisted data both depend on it.
             using (var outputStream = GetMemoryStream())
             {
-                var deflaterOutputStream = new DeflaterOutputStream(outputStream);
-                deflaterOutputStream.Write(inputData, 0, inputData.Length);
-                deflaterOutputStream.Finish();
+                using (var zlibStream = new ZLibStream(outputStream, CompressionMode.Compress, leaveOpen: true))
+                    zlibStream.Write(inputData, 0, inputData.Length);
 
                 return outputStream.ToArray();
             }
@@ -932,9 +929,8 @@ namespace EveLens.Common
             using (var inputStream = GetMemoryStream(inputData))
             using (var outputStream = GetMemoryStream())
             {
-                var deflaterOutputStream = new InflaterInputStream(inputStream);
-                deflaterOutputStream.CopyTo(outputStream);
-                deflaterOutputStream.Flush();
+                using (var zlibStream = new ZLibStream(inputStream, CompressionMode.Decompress))
+                    zlibStream.CopyTo(outputStream);
 
                 return outputStream.ToArray();
             }
