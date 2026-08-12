@@ -21,7 +21,7 @@
                    Foreground="{StaticResource EveTextPrimaryBrush}"
                    Margin="0,0,0,4" />
         <TextBox x:Name="CharacterNameTextBox" DockPanel.Dock="Top"
-                 Watermark="{loc:T CreateBlank.NameWatermark}"
+                 PlaceholderText="{loc:T CreateBlank.NameWatermark}"
                  FontSize="{DynamicResource EveFontBody}"
                  Margin="0,0,0,12" />
 

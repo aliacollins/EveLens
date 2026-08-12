@@ -1,7 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
-             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterFactionalWarfareView">
+             xmlns:models="using:EveLens.Common.Models"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterFactionalWarfareView"
+             x:DataType="models:CCPCharacter">
 
     <Panel>
         <!-- Enable prompt shown when endpoint is not yet activated -->
@@ -38,31 +40,31 @@
         <StackPanel DataContext="{Binding FactionalWarfareStats}" Spacing="8">
             <TextBlock Text="{loc:T FW.Statistics}" FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
                        Foreground="{DynamicResource EveAccentPrimaryBrush}" />
-            <TextBlock Text="{Binding FactionName, StringFormat='Faction: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding FactionName, StringFormat='Faction: {0}'}"
                        FontSize="{DynamicResource EveFontSubheading}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding EnlistedDate, StringFormat='Enlisted: {0:yyyy-MM-dd}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding EnlistedDate, StringFormat='Enlisted: {0:yyyy-MM-dd}'}"
                        FontSize="{DynamicResource EveFontSubheading}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding CurrentRank, StringFormat='Current Rank: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding CurrentRank, StringFormat='Current Rank: {0}'}"
                        FontSize="{DynamicResource EveFontSubheading}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding HighestRank, StringFormat='Highest Rank: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding HighestRank, StringFormat='Highest Rank: {0}'}"
                        FontSize="{DynamicResource EveFontSubheading}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
             <Separator Margin="0,4" />
             <TextBlock Text="{loc:T FW.Kills}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{DynamicResource EveTextPrimaryBrush}" />
-            <TextBlock Text="{Binding KillsYesterday, StringFormat='Yesterday: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding KillsYesterday, StringFormat='Yesterday: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding KillsLastWeek, StringFormat='Last Week: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding KillsLastWeek, StringFormat='Last Week: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding KillsTotal, StringFormat='Total: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding KillsTotal, StringFormat='Total: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
             <Separator Margin="0,4" />
             <TextBlock Text="{loc:T FW.VictoryPoints}" FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
                        Foreground="{DynamicResource EveTextPrimaryBrush}" />
-            <TextBlock Text="{Binding VictoryPointsYesterday, StringFormat='Yesterday: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding VictoryPointsYesterday, StringFormat='Yesterday: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding VictoryPointsLastWeek, StringFormat='Last Week: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding VictoryPointsLastWeek, StringFormat='Last Week: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-            <TextBlock Text="{Binding VictoryPointsTotal, StringFormat='Total: {0}'}"
+            <TextBlock x:DataType="models:FactionalWarfareStats" Text="{Binding VictoryPointsTotal, StringFormat='Total: {0}'}"
                        FontSize="{DynamicResource EveFontBody}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
         </StackPanel>
         </Border>

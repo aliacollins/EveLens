@@ -32,7 +32,7 @@
                     <Button x:Name="ClearSearchBtn" DockPanel.Dock="Right" Classes="ghost"
                             Content="&#x2715;" FontSize="{DynamicResource EveFontSmall}" Padding="8,4" IsVisible="False"
                             Foreground="#484F58" />
-                    <TextBox x:Name="SearchBox" Watermark="{loc:T PlanEditor.SearchSkills}"
+                    <TextBox x:Name="SearchBox" PlaceholderText="{loc:T PlanEditor.SearchSkills}"
                              FontSize="{DynamicResource EveFontBody}" Background="Transparent" BorderThickness="0"
                              Foreground="#C9D1D9" Padding="2,6" />
                 </DockPanel>

@@ -92,7 +92,7 @@
                 <TextBlock Text="&#x1F50D;" VerticalAlignment="Center" Margin="0,0,8,0"
                            Foreground="{DynamicResource EveTextSecondaryBrush}" FontSize="{DynamicResource EveFontSubheading}" />
                 <TextBox x:Name="SearchBox" Grid.Column="1"
-                         Watermark="Search settings..."
+                         PlaceholderText="Search settings..."
                          BorderThickness="0" Background="Transparent"
                          FontSize="{DynamicResource EveFontBody}" />
                 <Button x:Name="SearchClearButton" Grid.Column="2"

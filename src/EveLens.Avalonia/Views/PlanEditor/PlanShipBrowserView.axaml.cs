@@ -45,7 +45,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             CanFlyToggle.Content = Loc.Get("ShipBrowser.CanFlyOnly");
             CollapseBtn.Content = Loc.Get("PlanEditor.Collapse");
             ExpandBtn.Content = Loc.Get("PlanEditor.Expand");
-            FilterBox.Watermark = Loc.Get("ShipBrowser.SearchShips");
+            FilterBox.PlaceholderText = Loc.Get("ShipBrowser.SearchShips");
             AmarrToggle.Content = Loc.Get("ShipBrowser.Amarr");
             CaldariToggle.Content = Loc.Get("ShipBrowser.Caldari");
             GallenteToggle.Content = Loc.Get("ShipBrowser.Gallente");

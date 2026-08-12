@@ -25,7 +25,7 @@
                                 Background="Transparent" BorderThickness="0"
                                 Padding="8,4" CornerRadius="0,14,14,0"
                                 IsVisible="False" Click="OnClearSearch" />
-                        <TextBox x:Name="SearchBox" Watermark="{loc:T PlanEditor.SearchSkills}"
+                        <TextBox x:Name="SearchBox" PlaceholderText="{loc:T PlanEditor.SearchSkills}"
                                  FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                  Background="Transparent" BorderThickness="0"
                                  TextChanged="OnSearchChanged" />

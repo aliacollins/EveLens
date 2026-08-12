@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="using:EveLens.Common.Models"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterPlanetaryView">
 
     <Panel>
@@ -56,7 +57,7 @@
                                     FontSize="{DynamicResource EveFontSmall}" Padding="4,2" Background="Transparent"
                                     BorderThickness="0" IsVisible="False"
                                     Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="Search planets..."
+                            <TextBox x:Name="FilterBox" PlaceholderText="Search planets..."
                                      Background="Transparent" BorderThickness="0"
                                      FontSize="{DynamicResource EveFontBody}"
                                      TextChanged="OnFilterChanged" />
@@ -118,6 +119,7 @@
 
             <!-- Data view (grid) -->
             <DataGrid x:Name="ItemsGrid" IsVisible="False"
+                      x:DataType="models:PlanetaryPin"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserReorderColumns="True"

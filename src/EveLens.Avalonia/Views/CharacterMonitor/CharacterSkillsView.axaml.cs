@@ -59,7 +59,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
             ShowAllToggle.Content = Loc.Get("Action.TrainedOnly");
             ExportCsvBtn.Content = Loc.Get("Action.ExportCsv");
-            FilterBox.Watermark = Loc.Get("Action.Search");
+            FilterBox.PlaceholderText = Loc.Get("Action.Search");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

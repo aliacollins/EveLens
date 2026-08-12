@@ -1,5 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:EveLens.Common.ViewModels.Lists"
+             xmlns:models="using:EveLens.Common.Models"
+             x:DataType="vm:MarketOrdersListViewModel"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMarketOrdersView">
 
     <Panel>
@@ -41,7 +44,7 @@
                 <TextBlock x:Name="FilterLabel" Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBox x:Name="FilterBox"
                          Text="{Binding TextFilter, Mode=TwoWay}"
-                         Watermark="Search market orders..."
+                         PlaceholderText="Search market orders..."
                          MinWidth="200" />
             </DockPanel>
         </Border>
@@ -77,15 +80,15 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Item" Binding="{Binding Item.LocalizedName}" Width="200" />
-                <DataGridTextColumn Header="Station" Binding="{Binding Station.Name}" Width="200" />
-                <DataGridTextColumn Header="Unit Price" Binding="{Binding UnitaryPrice, StringFormat=\{0:N2\} ISK}" Width="120" />
-                <DataGridTextColumn Header="Total Price" Binding="{Binding TotalPrice, StringFormat=\{0:N2\} ISK}" Width="120" />
-                <DataGridTextColumn Header="Initial Vol" Binding="{Binding InitialVolume}" Width="80" />
-                <DataGridTextColumn Header="Remaining" Binding="{Binding RemainingVolume}" Width="80" />
-                <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="70" />
-                <DataGridTextColumn Header="Issued" Binding="{Binding Issued, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
-                <DataGridTextColumn Header="Expires" Binding="{Binding Expiration, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="Item" x:DataType="models:MarketOrder" Binding="{Binding Item.LocalizedName}" Width="200" />
+                <DataGridTextColumn Header="Station" x:DataType="models:MarketOrder" Binding="{Binding Station.Name}" Width="200" />
+                <DataGridTextColumn Header="Unit Price" x:DataType="models:MarketOrder" Binding="{Binding UnitaryPrice, StringFormat=\{0:N2\} ISK}" Width="120" />
+                <DataGridTextColumn Header="Total Price" x:DataType="models:MarketOrder" Binding="{Binding TotalPrice, StringFormat=\{0:N2\} ISK}" Width="120" />
+                <DataGridTextColumn Header="Initial Vol" x:DataType="models:MarketOrder" Binding="{Binding InitialVolume}" Width="80" />
+                <DataGridTextColumn Header="Remaining" x:DataType="models:MarketOrder" Binding="{Binding RemainingVolume}" Width="80" />
+                <DataGridTextColumn Header="Duration" x:DataType="models:MarketOrder" Binding="{Binding Duration}" Width="70" />
+                <DataGridTextColumn Header="Issued" x:DataType="models:MarketOrder" Binding="{Binding Issued, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="Expires" x:DataType="models:MarketOrder" Binding="{Binding Expiration, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
             </DataGrid.Columns>
         </DataGrid>
         </DockPanel>
