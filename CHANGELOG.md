@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Saved character comparisons** -- The Skill Comparison window can now save a named set of characters and reload it in one click, so your routine "compare my 5 industry alts" check no longer means hand-picking them every time. The add-character list is also alphabetical now instead of order-added (Discussion #105, thanks AnszaKalltiern).
 
+### Added
+
+- **Group directly on the overview -- drag a card onto a card** -- Creating and managing character groups no longer needs a dialog: drop one card on another to form a group, drop a card on a group to add it, drag a card out of its group to remove it, and everything glides into place with smooth animations. Double-click a group name to rename it; right-click for rename, reorder, and delete. A one-time tip (and tooltips on every group header) teach the gestures. The Manage Groups window is retired -- one dialog fewer.
+- **Sort and density controls on the overview** -- A sort dropdown orders characters within each group by name, skill points, or "needs attention" (paused queues first, then whoever finishes soonest), alongside your own drag-defined order. A Compact density mode trims the cards to fit ~40% more characters per screen -- built for multi-account fleets (Discussion #46, Issue #72).
+- **Group totals at a glance** -- Every group header now shows combined skill points, ISK, and how many members are actively training (privacy mode masks the numbers, as everywhere).
+
 ### Changed
 
 - **Grouped overview now uses the whole screen** -- Small character groups share a row (each section exactly as wide as its cards) while large groups keep a full-width row with wrapping cards, and the layout re-flows as you resize the window. A dozen per-account groups now fill a widescreen monitor instead of scrolling off the bottom with half the display empty (Issue #72, thanks Agge65).
