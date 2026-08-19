@@ -701,6 +701,7 @@ namespace EveLens.Avalonia.Views
 
             // Tools menu items
             CharCompMenuItem.Header = Loc.Get("Menu.Tools.CharComparison");
+            SkinrViewerMenuItem.Header = Loc.Get("Menu.Tools.SkinrViewer");
             SkillFarmMenuItem.Header = Loc.Get("Menu.Tools.SkillFarm");
             PlanetaryDashMenuItem.Header = Loc.Get("Menu.Tools.PlanetaryDash");
             GlobalPlanMenuItem.Header = Loc.Get("Menu.Tools.DoctrineDesigner");
@@ -749,6 +750,7 @@ namespace EveLens.Avalonia.Views
             PlanetaryDashMenuItem.Click += OnPlanetaryDashClick;
             GlobalPlanMenuItem.Click += OnGlobalPlanClick;
             SkillConstellationMenuItem.Click += OnSkillConstellationClick;
+            SkinrViewerMenuItem.Click += OnSkinrViewerClick;
             ClearCacheMenuItem.Click += OnClearCacheClick;
 
             // Help menu
@@ -1933,6 +1935,19 @@ namespace EveLens.Avalonia.Views
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error creating plan from queue: {ex}");
+            }
+        }
+
+        private async void OnSkinrViewerClick(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var window = new SkinrViewerWindow();
+                await window.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error opening SKINR viewer: {ex}");
             }
         }
 

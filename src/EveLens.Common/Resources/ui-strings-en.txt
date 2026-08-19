@@ -772,6 +772,16 @@ Overview.GestureTip = Tip: drag a card onto another card to create a group, onto
 Overview.GotIt = Got it
 Overview.ReorderHint = Drag to reorder. Drop a card ON another to group them. Drag out of a group to remove. Click Done when finished.
 Overview.DragHint = Drop on a card to group
+Menu.Tools.SkinrViewer = SKINR Viewer (Experimental)
+Skinr.Title = SKINR Viewer - Character Intelligence meets the Paragon Hub
+Skinr.Character = Character
+Skinr.ScopeMissingTitle = SKINR access not granted yet
+Skinr.ScopeMissingDesc = This character was authenticated before SKINR support existed. Re-authenticate the character (File > Add Character, same character) to grant the new cosmetics permission - everything else keeps working either way.
+Skinr.Loading = Loading SKINR inventory...
+Skinr.InventoryCount = {0} SKINR licenses
+Skinr.SelectDesign = Select a design to see its recipe.
+Skinr.RenderPlaceholderTitle = Trinity renderer
+Skinr.RenderPlaceholderDesc = The high-fidelity 3D preview powered by EVE's open-source Trinity engine renders here. The data pipeline behind this window is already live - ship model, materials, and pattern placement all resolve.
 
 # Main Window — privacy flyout
 Privacy.ButtonTip = Privacy mode — hide sensitive values for screenshots

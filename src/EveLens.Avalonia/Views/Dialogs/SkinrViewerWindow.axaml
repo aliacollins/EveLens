@@ -1,0 +1,96 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+        x:Class="EveLens.Avalonia.Views.Dialogs.SkinrViewerWindow"
+        Title="{loc:T Skinr.Title}"
+        Width="1100" Height="720"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        Background="{StaticResource EveBackgroundDarkBrush}"
+        CanResize="True">
+
+    <Grid ColumnDefinitions="320,*" Margin="12">
+
+        <!-- Left: character + inventory -->
+        <DockPanel Grid.Column="0" Margin="0,0,10,0">
+            <StackPanel DockPanel.Dock="Top" Spacing="6">
+                <TextBlock Text="{loc:T Skinr.Character}"
+                           FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <ComboBox x:Name="CharacterCombo" HorizontalAlignment="Stretch"
+                          SelectionChanged="OnCharacterChanged" />
+            </StackPanel>
+
+            <!-- State area fills the rest -->
+            <Panel Margin="0,10,0,0">
+                <!-- Scope missing -->
+                <StackPanel x:Name="ScopeMissingPanel" IsVisible="False" Spacing="8"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{loc:T Skinr.ScopeMissingTitle}"
+                               FontSize="{DynamicResource EveFontSubheading}"
+                               Foreground="{StaticResource EveWarningYellowBrush}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="{loc:T Skinr.ScopeMissingDesc}"
+                               FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- Loading -->
+                <TextBlock x:Name="LoadingText" IsVisible="False"
+                           Text="{loc:T Skinr.Loading}"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+
+                <!-- Error -->
+                <TextBlock x:Name="ErrorText" IsVisible="False"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveErrorRedBrush}"
+                           TextWrapping="Wrap" VerticalAlignment="Center" />
+
+                <!-- Inventory -->
+                <DockPanel x:Name="InventoryPanel" IsVisible="False">
+                    <TextBlock x:Name="InventoryHeader" DockPanel.Dock="Top"
+                               FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource EveTextSecondaryBrush}"
+                               Margin="0,0,0,6" />
+                    <ListBox x:Name="LicenseList" Background="Transparent"
+                             SelectionChanged="OnLicenseSelected" />
+                </DockPanel>
+            </Panel>
+        </DockPanel>
+
+        <!-- Right: design details + render pane -->
+        <DockPanel Grid.Column="1">
+            <Border DockPanel.Dock="Top" Padding="10,8"
+                    Background="{StaticResource EveBackgroundMediumBrush}"
+                    CornerRadius="6" Margin="0,0,0,8" MinHeight="58">
+                <TextBlock x:Name="DesignSummary"
+                           Text="{loc:T Skinr.SelectDesign}"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <!-- The Trinity render surface docks here. Until the sidecar renderer
+                 lands, an honest placeholder holds the space. -->
+            <Border x:Name="RenderPane"
+                    Background="{StaticResource EveBackgroundDarkestBrush}"
+                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="{loc:T Skinr.RenderPlaceholderTitle}"
+                               FontSize="{DynamicResource EveFontHeading}"
+                               Foreground="{StaticResource EveTextDisabledBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="{loc:T Skinr.RenderPlaceholderDesc}"
+                               FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource EveTextDisabledBrush}"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               TextWrapping="Wrap" MaxWidth="420" />
+                </StackPanel>
+            </Border>
+        </DockPanel>
+    </Grid>
+</Window>
