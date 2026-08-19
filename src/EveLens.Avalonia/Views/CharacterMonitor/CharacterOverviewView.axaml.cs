@@ -268,17 +268,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         AddSection("Ungrouped", ungrouped);
                     }
 
-                    // Ghost card joins the last tile row if one is open, else its own row
-                    var ghostHost = tileFlow ?? new WrapPanel { Orientation = Orientation.Horizontal };
-                    var ghostWrap = new WrapPanel
+                    // Ghost "add character" card rides at the end of the last
+                    // group's cards instead of floating on a row of its own.
+                    var lastWrap = OverviewPanel.GetLogicalDescendants()
+                        .OfType<AnimatedWrapPanel>()
+                        .LastOrDefault(w => w.Tag is string && w.IsVisible);
+                    if (lastWrap != null)
+                        lastWrap.Children.Add(BuildGhostCard());
+                    else
                     {
-                        Orientation = Orientation.Horizontal,
-                        VerticalAlignment = VerticalAlignment.Bottom
-                    };
-                    ghostWrap.Children.Add(BuildGhostCard());
-                    ghostHost.Children.Add(ghostWrap);
-                    if (!OverviewPanel.Children.Contains(ghostHost))
-                        OverviewPanel.Children.Add(ghostHost);
+                        var ghostWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+                        ghostWrap.Children.Add(BuildGhostCard());
+                        OverviewPanel.Children.Add(ghostWrap);
+                    }
                 }
                 else
                 {
@@ -304,6 +306,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             }
             catch (Exception ex)
             {
+                // Trace, not Debug: a swallowed exception here silently truncates the
+                // overview (e.g. ungrouped characters missing) with zero evidence.
+                AppServices.TraceService?.Trace($"Overview load error: {ex}");
                 System.Diagnostics.Debug.WriteLine($"Overview load error: {ex}");
             }
         }
@@ -368,21 +373,6 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             bool isCollapsed = _collapsedGroups.Contains(groupName);
 
-            // Collapsed groups render as a single folder card (iOS folder style):
-            // portrait mosaic + name + count + aggregate stats; click to expand.
-            if (isCollapsed)
-            {
-                var folderSection = new StackPanel
-                {
-                    Width = CardWidth + 8,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    Margin = new Thickness(0, 0, 12, 8)
-                };
-                folderSection.Children.Add(BuildGroupFolderCard(groupName, characters));
-                host.Children.Add(folderSection);
-                return;
-            }
-
             var chevron = new TextBlock
             {
                 Text = isCollapsed ? "\u25B6" : "\u25BC",  // ▶ or ▼
@@ -424,14 +414,6 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 [DockPanel.DockProperty] = Dock.Right
             };
 
-            var line = new Border
-            {
-                Height = 1,
-                Background = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                Opacity = 0.3,
-                VerticalAlignment = VerticalAlignment.Center
-            };
-
             var divider = new DockPanel
             {
                 Margin = new Thickness(0, 6, 0, 2),
@@ -442,15 +424,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             divider.Children.Add(label);
             divider.Children.Add(count);
             divider.Children.Add(stats);
-            divider.Children.Add(line);
 
             var wrap = BuildCardWrapPanel(characters, ref cardIndex, groupName: groupName);
             wrap.IsVisible = !isCollapsed;
 
-            // Click header to collapse \u2014 the group re-renders as a folder card
+            // Collapsing changes the group's layout CLASS (full row <-> one-card
+            // chip), so the toggle must relayout — flipping visibility alone left
+            // 15 characters unfolding inside a chip sized for one card.
             divider.PointerPressed += (_, _) =>
             {
-                _collapsedGroups.Add(groupName);
+                if (!_collapsedGroups.Remove(groupName))
+                    _collapsedGroups.Add(groupName);
                 CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
                 LoadData();
             };
@@ -464,109 +448,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 Margin = new Thickness(0, 0, 12, 8)
             };
             if (asTile)
-                section.Width = CardWidth * characters.Count + 8;
+                section.Width = CardWidth * (isCollapsed ? 1 : characters.Count) + 8;
             section.Children.Add(divider);
             section.Children.Add(wrap);
             host.Children.Add(section);
-        }
-
-        /// <summary>
-        /// A collapsed group as an iOS-style folder: 2×2 portrait mosaic, name,
-        /// member count and aggregate stats. Click expands; dropping a dragged
-        /// card on it adds that character to the group.
-        /// </summary>
-        private Button BuildGroupFolderCard(string groupName, List<Character> characters)
-        {
-            double mosaicCell = 26 * DensityFactor;
-            var mosaic = new Grid
-            {
-                RowDefinitions = RowDefinitions.Parse("Auto,Auto"),
-                ColumnDefinitions = ColumnDefinitions.Parse("Auto,Auto"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 12, 0)
-            };
-            for (int i = 0; i < Math.Min(4, characters.Count); i++)
-            {
-                var img = new Image
-                {
-                    Width = mosaicCell,
-                    Height = mosaicCell,
-                    Stretch = Stretch.UniformToFill,
-                    Tag = characters[i].CharacterID // picked up by the portrait loader
-                };
-                var cell = new Border
-                {
-                    Width = mosaicCell,
-                    Height = mosaicCell,
-                    CornerRadius = new CornerRadius(4),
-                    ClipToBounds = true,
-                    Margin = new Thickness(1),
-                    Background = FindBrush("EveBackgroundDarkestBrush", Brushes.Black),
-                    Child = img,
-                    [Grid.RowProperty] = i / 2,
-                    [Grid.ColumnProperty] = i % 2
-                };
-                mosaic.Children.Add(cell);
-            }
-
-            var info = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
-            info.Children.Add(new TextBlock
-            {
-                Text = groupName,
-                FontSize = FontScaleService.Heading,
-                FontWeight = FontWeight.Bold,
-                Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
-            info.Children.Add(new TextBlock
-            {
-                Text = string.Format(Loc.Get("Overview.FolderPilots"), characters.Count),
-                FontSize = FontScaleService.Small,
-                Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray)
-            });
-            info.Children.Add(new TextBlock
-            {
-                Text = FormatGroupStats(characters),
-                FontSize = FontScaleService.Caption,
-                Foreground = FindBrush("EveTextDisabledBrush", Brushes.Gray),
-                TextTrimming = TextTrimming.CharacterEllipsis
-            });
-
-            var row = new DockPanel();
-            row.Children.Add(mosaic);
-            row.Children.Add(info);
-
-            var body = new Border
-            {
-                Width = CardBodyWidth,
-                MinHeight = CardBodyMinHeight,
-                Padding = new Thickness(12, 10),
-                CornerRadius = new CornerRadius(6),
-                Background = FindBrush("EveBackgroundMediumBrush", Brushes.DimGray),
-                BorderBrush = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                BorderThickness = new Thickness(1),
-                Child = row
-            };
-
-            var btn = new Button
-            {
-                Background = Brushes.Transparent,
-                BorderThickness = new Thickness(0),
-                Padding = new Thickness(0),
-                Margin = new Thickness(4),
-                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
-                Content = body,
-                Tag = "FolderCard",
-                DataContext = groupName,
-                [ToolTip.TipProperty] = Loc.Get("Overview.FolderTip")
-            };
-            btn.Click += (_, _) =>
-            {
-                _collapsedGroups.Remove(groupName);
-                CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
-                LoadData();
-            };
-            return btn;
         }
 
         private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
