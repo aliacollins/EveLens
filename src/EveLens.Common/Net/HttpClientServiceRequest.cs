@@ -207,7 +207,7 @@ namespace EveLens.Common.Net
         private static async Task<HttpResponseMessage> GetHttpResponseAsync(
             HttpRequestMessage request)
         {
-            // Don't dispose the client - it's a shared instance in .NET 8
+            // Don't dispose the client - it's a shared instance in .NET 10
             var client = HttpWebClientService.GetHttpClient();
             using (var cts = new System.Threading.CancellationTokenSource(s_timeout))
             {

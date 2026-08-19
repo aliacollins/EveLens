@@ -115,7 +115,10 @@ namespace EveLens.Common
         /// </summary>
         private static TimeSpan GetBackoffDelay()
         {
-            int minutes = Math.Min(60, (int)Math.Pow(2, s_errorRetryCount));
+            // Clamp in double space before the cast: from retry 31 on, 2^n exceeds int
+            // range and (int) of an out-of-range double is runtime-defined (.NET 8 wrapped
+            // negative — a latent negative-TimeSpan crash in Task.Delay — .NET 9+ saturates).
+            int minutes = (int)Math.Min(60.0, Math.Pow(2, s_errorRetryCount));
             s_errorRetryCount++;
             return TimeSpan.FromMinutes(minutes);
         }

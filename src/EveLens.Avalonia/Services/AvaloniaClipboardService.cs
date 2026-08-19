@@ -45,7 +45,7 @@ namespace EveLens.Avalonia.Services
             }
 
             var clipboard = GetClipboard();
-            return clipboard != null ? await clipboard.GetTextAsync() : null;
+            return clipboard != null ? await clipboard.TryGetTextAsync() : null;
         }
 
         // --- Sync methods (Windows-only safe, kept for backward compatibility) ---

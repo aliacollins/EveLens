@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:cm="using:EveLens.Avalonia.Views.CharacterMonitor"
+             xmlns:models="using:EveLens.Common.Models"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterNotificationsView">
 
     <Panel>
@@ -64,7 +66,7 @@
                                         IsVisible="False"
                                         Click="OnClearFilter" />
                                 <TextBox x:Name="FilterBox"
-                                         Watermark="{loc:T ListView.SearchNotifications}"
+                                         PlaceholderText="{loc:T ListView.SearchNotifications}"
                                          Background="Transparent" BorderThickness="0"
                                          FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                          TextChanged="OnFilterTextChanged" />
@@ -110,7 +112,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="cm:NotificationGroupDisplay">
                                 <StackPanel>
                                     <!-- Group header: ▸ Name   count -->
                                     <Border Classes="group-header" HorizontalAlignment="Stretch"
@@ -142,7 +144,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="models:EveNotification">
                                                 <Border Classes="item-row" Padding="24,4,8,4"
                                                         Background="{StaticResource EveBackgroundDarkBrush}"
                                                         BorderBrush="{StaticResource EveBorderBrush}"

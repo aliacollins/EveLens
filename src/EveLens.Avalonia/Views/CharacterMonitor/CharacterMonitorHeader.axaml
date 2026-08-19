@@ -1,7 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
-             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMonitorHeader">
+             xmlns:vm="using:EveLens.Common.ViewModels"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMonitorHeader"
+             x:DataType="vm:ObservableCharacter">
 
     <Border Background="{StaticResource EveBackgroundMediumBrush}"
             BorderBrush="{StaticResource EveBorderBrush}"

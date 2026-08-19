@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:vm="using:EveLens.Avalonia.ViewModels"
+             xmlns:pe="using:EveLens.Avalonia.Views.PlanEditor"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanSkillBrowserView">
     <Grid ColumnDefinitions="300,*">
         <!-- Left panel: Skill groups as lightweight tree -->
@@ -38,7 +40,7 @@
                               CornerRadius="10" HorizontalAlignment="Stretch"
                               SelectionChanged="OnAttributeFilterChanged">
                         <ComboBox.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="pe:AttributeFilterItem">
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0" Text="{Binding Text}" FontSize="{DynamicResource EveFontSmall}"
                                                VerticalAlignment="Center" />
@@ -58,7 +60,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="{loc:T PlanEditor.SearchSkills}"
+                            <TextBox x:Name="FilterBox" PlaceholderText="{loc:T PlanEditor.SearchSkills}"
                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
@@ -81,7 +83,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="pe:SkillBrowserGroupDisplay">
                             <StackPanel>
                                 <!-- Section header -->
                                 <Border Classes="group-header" HorizontalAlignment="Stretch"
@@ -111,7 +113,7 @@
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
+                                        <DataTemplate x:DataType="vm:PlanSkillBrowserDisplayItem">
                                             <Border Padding="24,3,8,3" Classes="item-row"
                                                     Background="{StaticResource EveBackgroundDarkBrush}"
                                                     BorderBrush="{StaticResource EveBorderBrush}"

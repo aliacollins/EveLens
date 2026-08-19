@@ -44,7 +44,7 @@
                                 Background="Transparent" BorderThickness="0"
                                 Padding="6,3" CornerRadius="0,12,12,0"
                                 IsVisible="False" Click="OnClearFilter" />
-                        <TextBox x:Name="FilterBox" Watermark="{loc:T PlanEditor.SearchSkills}"
+                        <TextBox x:Name="FilterBox" PlaceholderText="{loc:T PlanEditor.SearchSkills}"
                                  FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                  Background="Transparent" BorderThickness="0"
                                  TextChanged="OnFilterChanged" />
