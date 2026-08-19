@@ -89,6 +89,14 @@ namespace EveLens.Common.ViewModels
 
                 if (result.HasError || result.Result == null)
                 {
+                    // Legacy keys (stored before per-scope tracking) claim every scope,
+                    // so a pre-SKINR token can pass the local gate and still be denied
+                    // by ESI. A 403 IS the scope answer — show the re-auth panel.
+                    if (result.ResponseCode == 403)
+                    {
+                        SetState(ViewState.ScopeMissing);
+                        return;
+                    }
                     ErrorMessage = result.Exception?.Message ?? "ESI request failed";
                     SetState(ViewState.Error);
                     return;
