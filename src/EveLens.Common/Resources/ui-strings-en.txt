@@ -754,6 +754,16 @@ Strip.ScrollLeft = Scroll left
 Strip.ScrollRight = Scroll right
 Strip.Add = Add
 Strip.AddTip = Add Character
+Overview.Training = training
+Overview.FolderPilots = {0} pilots
+Overview.FolderTip = Click to expand. Drop a character card here to add it to this group.
+Overview.SortCustom = Custom order
+Overview.SortName = By name
+Overview.SortSP = By skill points
+Overview.SortTraining = Needs attention
+Overview.DensityCompact = Compact
+Overview.DensityComfortable = Comfortable
+Overview.ReorderNeedsCustom = Switch sorting to Custom order to rearrange cards manually
 
 # Main Window — privacy flyout
 Privacy.ButtonTip = Privacy mode — hide sensitive values for screenshots

@@ -73,6 +73,18 @@ namespace EveLens.Common.SettingsObjects
         public int FontScalePercent { get; set; } = 100;
 
         /// <summary>
+        /// Character ordering within overview groups (Issue #72 rework).
+        /// </summary>
+        [XmlElement("overviewSort")]
+        public OverviewSortMode OverviewSort { get; set; } = OverviewSortMode.Custom;
+
+        /// <summary>
+        /// Overview card density (Issue #72 rework).
+        /// </summary>
+        [XmlElement("overviewDensity")]
+        public OverviewDensity OverviewDensity { get; set; } = OverviewDensity.Comfortable;
+
+        /// <summary>
         /// UI language code. "en" for English, "zh-CN" for Simplified Chinese.
         /// </summary>
         [XmlElement("language")]
