@@ -622,6 +622,10 @@ CharCompare.SelectCharacters = Select Characters to Compare
 CharCompare.DifferencesOnly = Differences Only
 CharCompare.EmptyTitle = Select at least 2 characters to compare
 CharCompare.EmptyDesc = Click the + button above to add characters
+CharCompare.SaveSet = Save Set
+CharCompare.LoadSet = Load Set
+CharCompare.SetNamePlaceholder = Comparison name...
+CharCompare.NoSavedSets = No saved comparisons yet
 
 # Create Blank Character dialog
 CreateBlank.Title = Create Blank Character

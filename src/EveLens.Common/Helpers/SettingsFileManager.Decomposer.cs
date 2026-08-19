@@ -61,6 +61,11 @@ namespace EveLens.Common.Helpers
                         Level = e.Level
                     }).ToList()
                 }).ToList(),
+                SavedComparisons = settings.SavedComparisons.Select(c => new JsonSavedComparison
+                {
+                    Name = c.Name,
+                    CharacterIDs = new List<long>(c.CharacterIDs)
+                }).ToList(),
                 UI = settings.UI,
                 G15 = settings.G15,
                 Proxy = settings.Proxy,

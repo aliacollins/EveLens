@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Saved character comparisons** -- The Skill Comparison window can now save a named set of characters and reload it in one click, so your routine "compare my 5 industry alts" check no longer means hand-picking them every time. The add-character list is also alphabetical now instead of order-added (Discussion #105, thanks AnszaKalltiern).
+
 ### Changed
+
+- **Comparison header stays frozen while scrolling** -- The character-name header row in Skill Comparison now locks to the top like a spreadsheet freeze pane, so you can always see whose column is whose deep in a long skill list (Discussion #93).
 
 - **Skill search now looks inside descriptions** -- Searching "powergrid" in the skill browser used to find nothing useful because the skill is named "Power Grid Management" -- with a space. The text filter (plan editor and Skills tab alike) now matches skill descriptions too, so functional searches like "capacitor", "velocity", or "powergrid" surface every skill that affects them (Discussion #116, thanks OS17279).
 
