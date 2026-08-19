@@ -144,6 +144,13 @@ namespace EveLens.Common.Services
             {
                 "esi-universe.read_structures.v1"
             }),
+            new FeatureGroup("SKINR & Cosmetics", new[]
+            {
+                // New-style scope name (post-2026 ESI naming). Covers the character's
+                // SKINR design inventory, components, and Paragon Hub listings.
+                // The recipe and public hub routes need no scope at all.
+                "esi.cosmetic.char:read"
+            }),
             new FeatureGroup("Corporation Data", new[]
             {
                 "esi-corporations.read_structures.v1",
