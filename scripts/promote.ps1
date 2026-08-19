@@ -112,6 +112,14 @@ function Get-NextVersion {
     $targetVersion = Get-BranchVersion $targetBranch
     $targetBuild = 0
 
+    # A null read means the fetch or show failed (stale lock file, network, etc.).
+    # NEVER proceed on a guess — a silently-assumed build counter stamps a version
+    # that collides with an existing release (bit us 2026-06-03 and 2026-08-19).
+    if (-not $targetVersion) {
+        throw ("Could not read SharedAssemblyInfo.cs from '$targetBranch'. " +
+            "Check 'git fetch' health (stale .git/refs/**/*.lock?) and retry.")
+    }
+
     if ($targetVersion) {
         try {
             $tv = Parse-Version $targetVersion

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Repack with pinned vpk 1.2.0 (updater tool/library pairing)
+- Repack with pinned vpk 1.2.0 (updater tool/library pairing)
 - net10 + Avalonia 12 + SkiaSharp 3 migration (1.5.0 line)
 
 ### Fixed
