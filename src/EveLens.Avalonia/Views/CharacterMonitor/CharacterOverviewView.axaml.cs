@@ -429,15 +429,56 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             wrap.IsVisible = !isCollapsed;
 
             // Collapsing changes the group's layout CLASS (full row <-> one-card
-            // chip), so the toggle must relayout — flipping visibility alone left
-            // 15 characters unfolding inside a chip sized for one card.
-            divider.PointerPressed += (_, _) =>
+            // chip), so the toggle must relayout. The toggle is DEFERRED ~260ms so a
+            // double-click (inline rename) can cancel it — otherwise click #1's
+            // rebuild destroys the header before click #2 lands.
+            bool isRealGroup = groupName != "Ungrouped";
+            DispatcherTimer? pendingToggle = null;
+            divider.PointerPressed += (_, e) =>
             {
-                if (!_collapsedGroups.Remove(groupName))
-                    _collapsedGroups.Add(groupName);
-                CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
-                LoadData();
+                if (!e.GetCurrentPoint(divider).Properties.IsLeftButtonPressed)
+                    return; // right-click belongs to the context menu
+
+                if (isRealGroup && e.ClickCount >= 2)
+                {
+                    pendingToggle?.Stop();
+                    StartHeaderRename(divider, label, groupName);
+                    return;
+                }
+
+                pendingToggle = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(260) };
+                pendingToggle.Tick += (_, _) =>
+                {
+                    pendingToggle.Stop();
+                    if (!_collapsedGroups.Remove(groupName))
+                        _collapsedGroups.Add(groupName);
+                    CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
+                    LoadData();
+                };
+                pendingToggle.Start();
             };
+
+            if (isRealGroup)
+            {
+                // Discoverability: the context menu is the teachable surface — every
+                // gesture has a visible menu equivalent (Manage Groups dialog retired).
+                ToolTip.SetTip(divider, Loc.Get("Overview.HeaderTip"));
+                var menu = new ContextMenu();
+                var rename = new MenuItem { Header = Loc.Get("Overview.MenuRename") };
+                rename.Click += (_, _) => StartHeaderRename(divider, label, groupName);
+                var moveLeft = new MenuItem { Header = Loc.Get("Overview.MenuMoveLeft") };
+                moveLeft.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.MoveGroup(g, groupName, -1));
+                var moveRight = new MenuItem { Header = Loc.Get("Overview.MenuMoveRight") };
+                moveRight.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.MoveGroup(g, groupName, +1));
+                var delete = new MenuItem { Header = Loc.Get("Overview.MenuDeleteGroup") };
+                delete.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.DeleteGroup(g, groupName));
+                menu.Items.Add(rename);
+                menu.Items.Add(moveLeft);
+                menu.Items.Add(moveRight);
+                menu.Items.Add(new Separator());
+                menu.Items.Add(delete);
+                divider.ContextMenu = menu;
+            }
 
             // A tile is exactly as wide as its cards (they fit in one row by the
             // caller's check), so tiles pack side by side with no orphan holes;
@@ -452,6 +493,79 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             section.Children.Add(divider);
             section.Children.Add(wrap);
             host.Children.Add(section);
+        }
+
+        /// <summary>
+        /// Runs a group mutation; persists and refreshes only when it changed something.
+        /// </summary>
+        private void MutateGroups(Func<IList<CharacterGroupSettings>, bool> mutation)
+        {
+            if (!mutation(Settings.CharacterGroups))
+                return;
+            Settings.Save();
+            AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
+        }
+
+        /// <summary>
+        /// Inline rename: swaps the header label for a TextBox. Enter/focus-loss
+        /// commits, Escape cancels; duplicate or blank names are rejected in place.
+        /// </summary>
+        private void StartHeaderRename(DockPanel divider, TextBlock label, string groupName)
+        {
+            if (divider.Children.OfType<TextBox>().Any())
+                return; // already editing
+
+            var editor = new TextBox
+            {
+                Text = groupName,
+                FontSize = FontScaleService.Body,
+                Padding = new Thickness(6, 1),
+                MinWidth = 120,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0),
+                [DockPanel.DockProperty] = Dock.Left
+            };
+
+            label.IsVisible = false;
+            divider.Children.Insert(divider.Children.IndexOf(label), editor);
+
+            bool done = false;
+            void Finish(bool commit)
+            {
+                if (done) return;
+                done = true;
+
+                string newName = editor.Text?.Trim() ?? string.Empty;
+                if (commit && newName.Length > 0 && newName != groupName)
+                {
+                    bool renamed = false;
+                    MutateGroups(g =>
+                    {
+                        renamed = CharacterGroupMutator.RenameGroup(g, groupName, newName);
+                        if (renamed && _collapsedGroups.Remove(groupName))
+                        {
+                            // Collapse state is keyed by name — follow the rename
+                            _collapsedGroups.Add(newName);
+                            CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
+                        }
+                        return renamed;
+                    });
+                    if (renamed) return; // MutateGroups already triggered the rebuild
+                }
+
+                divider.Children.Remove(editor);
+                label.IsVisible = true;
+            }
+
+            editor.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Enter) Finish(commit: true);
+                else if (args.Key == Key.Escape) Finish(commit: false);
+            };
+            editor.LostFocus += (_, _) => Finish(commit: true);
+
+            editor.SelectAll();
+            editor.Focus();
         }
 
         private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
@@ -1541,30 +1655,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             _reorderToggleBtn.Click += OnReorderToggle;
 
-            var manageGroupsBtn = new Button
-            {
-                Content = "Manage Groups",
-                FontSize = FontScaleService.Small,
-                Padding = new Thickness(10, 3),
-                CornerRadius = new CornerRadius(12),
-                Background = Brushes.Transparent,
-                Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Margin = new Thickness(0, 0, 6, 0),
-                Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand)
-            };
-            manageGroupsBtn.Click += OnManageGroupsClick;
-
             var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
             if (_reorderMode)
             {
+                // Teach the full gesture set while the mode where they work is active
                 toolbar.Children.Add(new TextBlock
                 {
-                    Text = "Drag cards to reorder, then click Done",
+                    Text = Loc.Get("Overview.ReorderHint"),
                     FontSize = FontScaleService.Small,
                     Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
                     VerticalAlignment = VerticalAlignment.Center,
-                    FontStyle = FontStyle.Italic
+                    FontStyle = FontStyle.Italic,
+                    TextTrimming = TextTrimming.CharacterEllipsis
                 });
             }
 
@@ -1625,21 +1727,55 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             btnPanel.Children.Add(sortCombo);
             btnPanel.Children.Add(densityBtn);
-            btnPanel.Children.Add(manageGroupsBtn);
             btnPanel.Children.Add(_reorderToggleBtn);
             DockPanel.SetDock(btnPanel, Dock.Right);
             toolbar.Children.Insert(0, btnPanel);
 
             OverviewPanel.Children.Add(toolbar);
-        }
 
-        private void OnManageGroupsClick(object? sender, RoutedEventArgs e)
-        {
-            var mainWindow = this.FindAncestorOfType<MainWindow>();
-            if (mainWindow == null) return;
-
-            var dialog = new ManageGroupsWindow { };
-            dialog.ShowDialog(mainWindow);
+            // One-time gesture tip (ConfirmedTips-backed): bridges the gap between
+            // invisible gestures and discoverability. "Got it" dismisses forever;
+            // header tooltips remain as the standing reminder.
+            const string gestureTipId = "overview-gestures";
+            if (!Settings.UI.ConfirmedTips.Contains(gestureTipId))
+            {
+                var tipText = new TextBlock
+                {
+                    Text = Loc.Get("Overview.GestureTip"),
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap
+                };
+                var gotIt = new Button
+                {
+                    Content = Loc.Get("Overview.GotIt"),
+                    FontSize = FontScaleService.Small,
+                    Padding = new Thickness(10, 2),
+                    CornerRadius = new CornerRadius(10),
+                    Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+                    [DockPanel.DockProperty] = Dock.Right,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+                var tipRow = new DockPanel();
+                tipRow.Children.Add(gotIt);
+                tipRow.Children.Add(tipText);
+                var tipBar = new Border
+                {
+                    Background = FindBrush("EveBackgroundMediumBrush", Brushes.DimGray),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 6),
+                    Margin = new Thickness(0, 0, 0, 6),
+                    Child = tipRow
+                };
+                gotIt.Click += (_, _) =>
+                {
+                    Settings.UI.ConfirmedTips.Add(gestureTipId);
+                    Settings.Save();
+                    OverviewPanel.Children.Remove(tipBar);
+                };
+                OverviewPanel.Children.Add(tipBar);
+            }
         }
 
         private void OnReorderToggle(object? sender, RoutedEventArgs e)
@@ -1754,12 +1890,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 Padding = new Thickness(14, 8),
                 IsHitTestVisible = false,
                 BoxShadow = new BoxShadows(new BoxShadow { Blur = 12, Color = Color.Parse("#60000000") }),
-                Child = new TextBlock
+                Child = new StackPanel
                 {
-                    Text = label,
-                    FontSize = FontScaleService.Body,
-                    Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                    FontWeight = FontWeight.SemiBold,
+                    Spacing = 2,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = label,
+                            FontSize = FontScaleService.Body,
+                            Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                            FontWeight = FontWeight.SemiBold,
+                        },
+                        // Live coaching: the ghost itself says what a drop will do
+                        new TextBlock
+                        {
+                            Text = Loc.Get("Overview.DragHint"),
+                            FontSize = FontScaleService.Tiny,
+                            Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                        }
+                    }
                 },
             };
 

@@ -4,7 +4,6 @@ Menu.Plans = Plans
 Menu.Tools = Tools
 Menu.Help = Help
 Menu.File.AddCharacter = Add Character
-Menu.File.ManageGroups = Manage Groups
 Menu.File.Settings = Settings
 Menu.File.Exit = Exit
 Menu.Plans.NewPlan = New Plan
@@ -764,6 +763,15 @@ Overview.SortTraining = Needs attention
 Overview.DensityCompact = Compact
 Overview.DensityComfortable = Comfortable
 Overview.ReorderNeedsCustom = Switch sorting to Custom order to rearrange cards manually
+Overview.MenuRename = Rename
+Overview.MenuMoveLeft = Move left
+Overview.MenuMoveRight = Move right
+Overview.MenuDeleteGroup = Delete group (characters stay)
+Overview.HeaderTip = Click to collapse or expand. Double-click to rename. Right-click for more.
+Overview.GestureTip = Tip: drag a card onto another card to create a group, onto a group to add it, or out of a group to remove it. Right-click a group name to rename, reorder, or delete.
+Overview.GotIt = Got it
+Overview.ReorderHint = Drag to reorder. Drop a card ON another to group them. Drag out of a group to remove. Click Done when finished.
+Overview.DragHint = Drop on a card to group
 
 # Main Window — privacy flyout
 Privacy.ButtonTip = Privacy mode — hide sensitive values for screenshots

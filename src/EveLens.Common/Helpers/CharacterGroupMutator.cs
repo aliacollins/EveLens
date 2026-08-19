@@ -73,5 +73,57 @@ namespace EveLens.Common.Helpers
                     groups.Remove(group);
             }
         }
+
+        /// <summary>
+        /// Renames a group. Fails (false) on a blank name or a name already used by
+        /// another group (case-insensitive) — the overview identifies groups by name.
+        /// </summary>
+        public static bool RenameGroup(
+            IList<CharacterGroupSettings> groups, string oldName, string newName)
+        {
+            newName = newName?.Trim() ?? string.Empty;
+            if (newName.Length == 0)
+                return false;
+
+            var group = groups.FirstOrDefault(g => string.Equals(g.Name, oldName, StringComparison.Ordinal));
+            if (group == null)
+                return false;
+            if (string.Equals(oldName, newName, StringComparison.Ordinal))
+                return true;
+            if (groups.Any(g => g != group &&
+                    string.Equals(g.Name, newName, StringComparison.OrdinalIgnoreCase)))
+                return false;
+
+            group.Name = newName;
+            return true;
+        }
+
+        /// <summary>
+        /// Moves a group left (-1) or right (+1) in display order. No-ops at the ends.
+        /// </summary>
+        public static bool MoveGroup(
+            IList<CharacterGroupSettings> groups, string name, int delta)
+        {
+            var group = groups.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.Ordinal));
+            if (group == null) return false;
+
+            int from = groups.IndexOf(group);
+            int to = from + delta;
+            if (to < 0 || to >= groups.Count || to == from)
+                return false;
+
+            groups.RemoveAt(from);
+            groups.Insert(to, group);
+            return true;
+        }
+
+        /// <summary>
+        /// Deletes a group; its members simply become ungrouped.
+        /// </summary>
+        public static bool DeleteGroup(IList<CharacterGroupSettings> groups, string name)
+        {
+            var group = groups.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.Ordinal));
+            return group != null && groups.Remove(group);
+        }
     }
 }

@@ -83,6 +83,41 @@ namespace EveLens.Tests.Helpers
         }
 
         [Fact]
+        public void RenameGroup_Renames_AndRejectsDuplicatesOrBlank()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Mains", A), Group("Alts", B) };
+
+            CharacterGroupMutator.RenameGroup(groups, "Mains", "Chars").Should().BeTrue();
+            groups[0].Name.Should().Be("Chars");
+
+            CharacterGroupMutator.RenameGroup(groups, "Chars", "ALTS").Should().BeFalse("name collides case-insensitively");
+            CharacterGroupMutator.RenameGroup(groups, "Chars", "   ").Should().BeFalse("blank name");
+            CharacterGroupMutator.RenameGroup(groups, "Nope", "X").Should().BeFalse("unknown group");
+        }
+
+        [Fact]
+        public void MoveGroup_ReordersAndClampsAtEnds()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("A", A), Group("B", B), Group("C", C) };
+
+            CharacterGroupMutator.MoveGroup(groups, "C", -1).Should().BeTrue();
+            groups.Select(g => g.Name).Should().Equal("A", "C", "B");
+
+            CharacterGroupMutator.MoveGroup(groups, "A", -1).Should().BeFalse("already first");
+            CharacterGroupMutator.MoveGroup(groups, "B", +1).Should().BeFalse("already last");
+        }
+
+        [Fact]
+        public void DeleteGroup_RemovesGroup_MembersBecomeUngrouped()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Mains", A, B) };
+
+            CharacterGroupMutator.DeleteGroup(groups, "Mains").Should().BeTrue();
+            groups.Should().BeEmpty();
+            CharacterGroupMutator.DeleteGroup(groups, "Mains").Should().BeFalse();
+        }
+
+        [Fact]
         public void RemoveFromAllGroups_DeletesEmptiedGroups()
         {
             var groups = new List<CharacterGroupSettings> { Group("Solo", A), Group("Pair", A, B) };
