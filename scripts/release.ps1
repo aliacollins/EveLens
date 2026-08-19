@@ -371,6 +371,18 @@ else {
     $notesFile = Join-Path $ProjectRoot "release-notes.md"
     Set-Content $notesFile $notes -Encoding UTF8
 
+    # ALPHA IS LOCAL-ONLY (Alia, 2026-08-19): alpha builds are for internal testing
+    # on this machine and must NEVER be published to GitHub. Beta is the first
+    # public channel. Artifacts stay in releases/ for local install.
+    if ($Channel -eq 'alpha') {
+        Write-Host "`n=== Alpha is local-only -- skipping GitHub upload ===" -ForegroundColor Yellow
+        Write-Host "  Artifacts ready for local install:" -ForegroundColor Green
+        foreach ($f in $allFiles) { Write-Host "    $f" -ForegroundColor Gray }
+        Remove-Item $notesFile -ErrorAction SilentlyContinue
+        Pop-Location
+        exit 0
+    }
+
     Write-Host "`n=== Uploading to GitHub Release ===" -ForegroundColor Cyan
 
     $ErrorActionPreference = 'Continue'

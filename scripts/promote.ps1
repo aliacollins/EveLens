@@ -234,9 +234,10 @@ All notable changes to EveLens will be documented in this file.
             $newSection = "## [Unreleased]`n`n## [$Version] - $date`n$unreleasedContent"
             $content = $content -replace '## \[Unreleased\][\s\S]*?(?=\r?\n## \[|$)', $newSection
         } else {
-            # Add entry to Unreleased
-            $entry = "- $Message"
-            $content = $content -replace '(## \[Unreleased\]\r?\n)', "`$1$entry`n"
+            # Alpha/beta: leave the changelog alone. The changelog is human-curated
+            # (Keep a Changelog categories); the promote -Message belongs in the
+            # commit only. Injecting it here put raw one-liners at the top of every
+            # release's notes (shipped that way in 1.5.0-beta.1 -- never again).
         }
     }
 
