@@ -27,6 +27,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         public SkinrViewerWindow()
         {
             InitializeComponent();
+            ApplyPlatformSupport();
 
             _vm.StateChanged += () => Dispatcher.UIThread.Post(RefreshFromViewModel);
 
@@ -71,6 +72,54 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 AppServices.TraceService?.Trace($"SkinrViewer: design select failed: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Honest platform messaging in the render pane: DirectX renderer on Windows
+        /// x64, Metal planned on Apple Silicon, explicit "not available" for Linux
+        /// and Intel Macs. The data half of the window works on every platform.
+        /// </summary>
+        private void ApplyPlatformSupport()
+        {
+            switch (SkinrRenderPlatform.Current)
+            {
+                case SkinrRenderSupport.Supported:
+                    // Windows: keep the standard placeholder until the renderer lands
+                    break;
+                case SkinrRenderSupport.MacArmPlanned:
+                    RenderTitle.Text = Loc.Get("Skinr.RenderMacTitle");
+                    RenderDesc.Text = Loc.Get("Skinr.RenderMacDesc");
+                    break;
+                case SkinrRenderSupport.UnsupportedMacIntel:
+                    RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
+                    RenderDesc.Text = Loc.Get("Skinr.RenderMacIntelDesc");
+                    break;
+                case SkinrRenderSupport.UnsupportedLinux:
+                    RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
+                    RenderDesc.Text = Loc.Get("Skinr.RenderLinuxDesc");
+                    break;
+                default:
+                    RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
+                    RenderDesc.Text = Loc.Get("Skinr.RenderLinuxDesc");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Drives the status strip during asset downloads — called by the renderer
+        /// pipeline with 0.0–1.0 progress (cache hits jump straight to done).
+        /// </summary>
+        internal void ReportDownload(string what, double fraction)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                bool active = fraction < 1.0;
+                DownloadProgress.IsVisible = active;
+                DownloadProgress.Value = fraction * 100;
+                RenderStatusText.Text = active
+                    ? string.Format(Loc.Get("Skinr.StatusDownloading"), what, (int)(fraction * 100))
+                    : Loc.Get("Skinr.StatusReady");
+            });
         }
 
         private void RefreshFromViewModel()

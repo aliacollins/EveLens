@@ -66,7 +66,14 @@ namespace EveLens.Common.Services
         /// the download failed. Cache is content-addressed by CCP's md5, so a file
         /// that changed upstream is re-fetched automatically.
         /// </summary>
-        public static async Task<string> GetResourceAsync(string resPath, CancellationToken ct = default)
+        /// <param name="resPath">The game resource path (res:/…).</param>
+        /// <param name="progress">
+        /// Optional download progress, 0.0–1.0 — drives the SKINR viewer's
+        /// "Downloading hull… 42%" readout. Reports 1.0 on cache hits immediately.
+        /// </param>
+        /// <param name="ct">Cancellation.</param>
+        public static async Task<string> GetResourceAsync(
+            string resPath, IProgress<double> progress = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(resPath))
                 return null;
@@ -79,15 +86,41 @@ namespace EveLens.Common.Services
 
                 string local = Path.Combine(CacheDirectory, entry.Md5 + Path.GetExtension(entry.ResPath));
                 if (File.Exists(local))
+                {
+                    progress?.Report(1.0);
                     return local;
+                }
 
                 Directory.CreateDirectory(CacheDirectory);
-                byte[] data = await s_http.GetByteArrayAsync(
-                    $"{ResourcesRoot}/{entry.CdnPath}", ct).ConfigureAwait(false);
-                await File.WriteAllBytesAsync(local, data, ct).ConfigureAwait(false);
+
+                using var response = await s_http.GetAsync(
+                    $"{ResourcesRoot}/{entry.CdnPath}",
+                    HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+
+                long? total = response.Content.Headers.ContentLength;
+                string tempFile = local + ".part";
+                long written = 0;
+
+                await using (var source = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
+                await using (var target = File.Create(tempFile))
+                {
+                    var buffer = new byte[81920];
+                    int read;
+                    while ((read = await source.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
+                    {
+                        await target.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+                        written += read;
+                        if (total > 0)
+                            progress?.Report(Math.Min(1.0, (double)written / total.Value));
+                    }
+                }
+
+                File.Move(tempFile, local, overwrite: true);
+                progress?.Report(1.0);
 
                 AppServices.TraceService?.Trace(
-                    $"EveResource: fetched {entry.ResPath} ({data.Length:N0} bytes)");
+                    $"EveResource: fetched {entry.ResPath} ({written:N0} bytes)");
                 return local;
             }
             catch (Exception ex)

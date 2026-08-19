@@ -73,23 +73,44 @@
                            TextWrapping="Wrap" />
             </Border>
 
-            <!-- The Trinity render surface docks here. Until the sidecar renderer
-                 lands, an honest placeholder holds the space. -->
+            <!-- The Trinity render surface docks here. Platform-gated: DirectX on
+                 Windows x64, Metal on Apple Silicon planned, honest callouts
+                 elsewhere. The status strip shows download/render progress. -->
             <Border x:Name="RenderPane"
                     Background="{StaticResource EveBackgroundDarkestBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1"
                     CornerRadius="6">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                    <TextBlock Text="{loc:T Skinr.RenderPlaceholderTitle}"
-                               FontSize="{DynamicResource EveFontHeading}"
-                               Foreground="{StaticResource EveTextDisabledBrush}"
-                               HorizontalAlignment="Center" />
-                    <TextBlock Text="{loc:T Skinr.RenderPlaceholderDesc}"
-                               FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveTextDisabledBrush}"
-                               HorizontalAlignment="Center" TextAlignment="Center"
-                               TextWrapping="Wrap" MaxWidth="420" />
-                </StackPanel>
+                <DockPanel>
+                    <!-- Download / render status strip -->
+                    <Border DockPanel.Dock="Bottom" Padding="10,6"
+                            Background="{StaticResource EveBackgroundMediumBrush}"
+                            CornerRadius="0,0,6,6">
+                        <DockPanel>
+                            <TextBlock x:Name="RenderStatusText" DockPanel.Dock="Left"
+                                       Text="{loc:T Skinr.StatusIdle}"
+                                       FontSize="{DynamicResource EveFontSmall}"
+                                       Foreground="{StaticResource EveTextSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <ProgressBar x:Name="DownloadProgress" IsVisible="False"
+                                         Minimum="0" Maximum="100" Height="8"
+                                         Margin="12,0,0,0" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                        <TextBlock x:Name="RenderTitle"
+                                   Text="{loc:T Skinr.RenderPlaceholderTitle}"
+                                   FontSize="{DynamicResource EveFontHeading}"
+                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                   HorizontalAlignment="Center" />
+                        <TextBlock x:Name="RenderDesc"
+                                   Text="{loc:T Skinr.RenderPlaceholderDesc}"
+                                   FontSize="{DynamicResource EveFontSmall}"
+                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" MaxWidth="440" />
+                    </StackPanel>
+                </DockPanel>
             </Border>
         </DockPanel>
     </Grid>
