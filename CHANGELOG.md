@@ -10,19 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Saved character comparisons** -- The Skill Comparison window can now save a named set of characters and reload it in one click, so your routine "compare my 5 industry alts" check no longer means hand-picking them every time. The add-character list is also alphabetical now instead of order-added (Discussion #105, thanks AnszaKalltiern).
-
-### Added
-
 - **Group directly on the overview -- drag a card onto a card** -- Creating and managing character groups no longer needs a dialog: drop one card on another to form a group, drop a card on a group to add it, drag a card out of its group to remove it, and everything glides into place with smooth animations. Double-click a group name to rename it; right-click for rename, reorder, and delete. A one-time tip (and tooltips on every group header) teach the gestures. The Manage Groups window is retired -- one dialog fewer.
 - **Sort and density controls on the overview** -- A sort dropdown orders characters within each group by name, skill points, or "needs attention" (paused queues first, then whoever finishes soonest), alongside your own drag-defined order. A Compact density mode trims the cards to fit ~40% more characters per screen -- built for multi-account fleets (Discussion #46, Issue #72).
 - **Group totals at a glance** -- Every group header now shows combined skill points, ISK, and how many members are actively training (privacy mode masks the numbers, as everywhere).
 
 ### Changed
 
+- **SDE updated to build 3470007 (August 2026)** -- All game data regenerated from CCP's latest Static Data Export: 52,863 types including the new SKINR component data. The EVE Accuracy Suite verified all training math is unchanged.
 - **Grouped overview now uses the whole screen** -- Small character groups share a row (each section exactly as wide as its cards) while large groups keep a full-width row with wrapping cards, and the layout re-flows as you resize the window. A dozen per-account groups now fill a widescreen monitor instead of scrolling off the bottom with half the display empty (Issue #72, thanks Agge65).
 - **Character cards grow with your font size** -- Card dimensions now scale with the Appearance font setting, so text no longer clips at 110%+ on high-DPI monitors (Issue #72).
 - **Comparison header stays frozen while scrolling** -- The character-name header row in Skill Comparison now locks to the top like a spreadsheet freeze pane, so you can always see whose column is whose deep in a long skill list (Discussion #93).
-
 - **Skill search now looks inside descriptions** -- Searching "powergrid" in the skill browser used to find nothing useful because the skill is named "Power Grid Management" -- with a space. The text filter (plan editor and Skills tab alike) now matches skill descriptions too, so functional searches like "capacitor", "velocity", or "powergrid" surface every skill that affects them (Discussion #116, thanks OS17279).
 
 ## [1.5.0-beta.1] - 2026-08-19

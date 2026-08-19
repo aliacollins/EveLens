@@ -47,8 +47,12 @@ namespace EveLens.XmlGenerator
 
             Console.WriteLine(@"Generating files completed in {0:g}", stopwatch.Elapsed);
             Console.WriteLine();
-            Console.Write(@"Press any key to exit.");
-            Console.ReadKey(true);
+            // Skip the interactive pause under automation (update-sde.ps1 / CI)
+            if (!Console.IsInputRedirected)
+            {
+                Console.Write(@"Press any key to exit.");
+                Console.ReadKey(true);
+            }
         }
     }
 }

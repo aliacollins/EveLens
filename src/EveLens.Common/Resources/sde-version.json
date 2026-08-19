@@ -1,0 +1,47 @@
+﻿{
+    "datafiles":  {
+                      "eve-translations-zh-CN.xml.gzip":  {
+                                                              "sizeBytes":  527621,
+                                                              "md5":  "70c88ff984a423e2be0dd16f2835a5b6"
+                                                          },
+                      "eve-properties-en-US.xml.gzip":  {
+                                                            "sizeBytes":  73237,
+                                                            "md5":  "02d312f286e4639b3b5d732b25a21ad9"
+                                                        },
+                      "eve-reprocessing-en-US.xml.gzip":  {
+                                                              "sizeBytes":  119901,
+                                                              "md5":  "4f711dddcba6d0365b52828281a630fa"
+                                                          },
+                      "eve-items-en-US.xml.gzip":  {
+                                                       "sizeBytes":  4600424,
+                                                       "md5":  "5f2d0c9eec7bb6bd23b859f60e4f0083"
+                                                   },
+                      "eve-blueprints-en-US.xml.gzip":  {
+                                                            "sizeBytes":  263169,
+                                                            "md5":  "32ecd1a8322f233c2a81c424d762f82c"
+                                                        },
+                      "eve-geography-en-US.xml.gzip":  {
+                                                           "sizeBytes":  833577,
+                                                           "md5":  "145abad97da6e6bca5075988995cb895"
+                                                       },
+                      "eve-certificates-en-US.xml.gzip":  {
+                                                              "sizeBytes":  46138,
+                                                              "md5":  "540000f7c111354769a54fa31e57d411"
+                                                          },
+                      "eve-translations-ko.xml.gzip":  {
+                                                           "sizeBytes":  548363,
+                                                           "md5":  "d9bdf2065576ecdc1c46fac064f26dcf"
+                                                       },
+                      "eve-masteries-en-US.xml.gzip":  {
+                                                           "sizeBytes":  21831,
+                                                           "md5":  "3668b50996fc40a0c0853fec427b5712"
+                                                       },
+                      "eve-skills-en-US.xml.gzip":  {
+                                                        "sizeBytes":  29763,
+                                                        "md5":  "31ee009e093d4e6d161da99fe3423577"
+                                                    }
+                  },
+    "generatedUtc":  "2026-08-19T10:36:25Z",
+    "generator":  "update-sde.ps1",
+    "sdeBuild":  3470007
+}
