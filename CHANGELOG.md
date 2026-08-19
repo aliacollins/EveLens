@@ -6,53 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Repack with pinned vpk 1.2.0 (updater tool/library pairing)
-- Repack with pinned vpk 1.2.0 (updater tool/library pairing)
-- net10 + Avalonia 12 + SkiaSharp 3 migration (1.5.0 line)
+
+### Added
+
+- **Saved character comparisons** -- The Skill Comparison window can now save a named set of characters and reload it in one click, so your routine "compare my 5 industry alts" check no longer means hand-picking them every time. The add-character list is also alphabetical now instead of order-added (Discussion #105, thanks AnszaKalltiern).
+
+### Added
+
+- **Group directly on the overview -- drag a card onto a card** -- Creating and managing character groups no longer needs a dialog: drop one card on another to form a group, drop a card on a group to add it, drag a card out of its group to remove it, and everything glides into place with smooth animations. Double-click a group name to rename it; right-click for rename, reorder, and delete. A one-time tip (and tooltips on every group header) teach the gestures. The Manage Groups window is retired -- one dialog fewer.
+- **Sort and density controls on the overview** -- A sort dropdown orders characters within each group by name, skill points, or "needs attention" (paused queues first, then whoever finishes soonest), alongside your own drag-defined order. A Compact density mode trims the cards to fit ~40% more characters per screen -- built for multi-account fleets (Discussion #46, Issue #72).
+- **Group totals at a glance** -- Every group header now shows combined skill points, ISK, and how many members are actively training (privacy mode masks the numbers, as everywhere).
+
+### Changed
+
+- **Grouped overview now uses the whole screen** -- Small character groups share a row (each section exactly as wide as its cards) while large groups keep a full-width row with wrapping cards, and the layout re-flows as you resize the window. A dozen per-account groups now fill a widescreen monitor instead of scrolling off the bottom with half the display empty (Issue #72, thanks Agge65).
+- **Character cards grow with your font size** -- Card dimensions now scale with the Appearance font setting, so text no longer clips at 110%+ on high-DPI monitors (Issue #72).
+- **Comparison header stays frozen while scrolling** -- The character-name header row in Skill Comparison now locks to the top like a spreadsheet freeze pane, so you can always see whose column is whose deep in a long skill list (Discussion #93).
+
+- **Skill search now looks inside descriptions** -- Searching "powergrid" in the skill browser used to find nothing useful because the skill is named "Power Grid Management" -- with a space. The text filter (plan editor and Skills tab alike) now matches skill descriptions too, so functional searches like "capacitor", "velocity", or "powergrid" surface every skill that affects them (Discussion #116, thanks OS17279).
+
+## [1.5.0-beta.1] - 2026-08-19
+
+### Changed
+
+- **EveLens now runs on .NET 10** -- The whole app moved from .NET 8 (support ends November 2026) to .NET 10 LTS (supported through 2028), along with its dependency stack: Avalonia 12.1, SkiaSharp 3, and current Microsoft libraries. Releases stay self-contained, so nothing to install -- updates arrive like any other. Under the hood the migration came with a behavioral audit that hardened skill-point estimation, PI cycle math, date parsing under non-English locales, and settings-load diagnostics against runtime edge cases. The solution now builds with zero known dependency vulnerabilities. Thanks to jackmurray for the nudge and the first migration PR (#106).
+- **Avalonia 12 + compiled bindings** -- The UI framework jumped to Avalonia 12.1 (with SkiaSharp 3), bringing its reworked compositor and rendering pipeline, lower idle CPU, and -- on Linux -- the first native .NET screen-reader/accessibility support (AT-SPI2). Every data binding in EveLens is now compiled and type-checked at build time, so an entire class of "this column just stopped showing data" bugs can no longer ship.
+- **Updater engine upgraded (Velopack 1.2)** -- The auto-update machinery moved from a years-old prerelease to the current stable line, picking up a long tail of updater fixes (update-locator and macOS update handling among them).
+- **Leaner, more portable internals** -- Two legacy dependencies are gone: SharpZipLib (replaced by the runtime's built-in compression, with byte-format compatibility tests proving old cloud backups stay readable) and System.Drawing/GDI+ (whose Windows-only image code crashed Linux/macOS whenever it snuck in -- reintroducing it is now a compile error, not a runtime crash report).
 
 ### Fixed
 
 - **Deleting a character group no longer crashes the Manage Groups window** -- The delete button sits inside the group chip, so its click also triggered the chip's expand/collapse toggle, which re-selected the group that had just been removed and crashed the reorder panel. The click now stops at the delete button, and the reorder panel tolerates a vanished group either way. Thanks to jpn-1 for the exact diagnosis (Issue #78).
-
-### Added
-
-- **Game Names setting -- show ship/item/skill names in English or translated** -- Korean players told us they navigate by the English item names they know from the game client and killboards, so a fully-translated item list actually made EveLens harder to use (Discussion #79). A new "Game Names" option in Settings > Appearance now controls whether game terms use CCP's translated SDE names or stay in English. The default follows each community's convention: English names for Korean, translated names for Chinese. UI text stays in your chosen language either way. Thanks to Last Bin for the feedback!
-- **Korean translation credit** -- Last Bin, the community translator behind EveLens's Korean localization, is now credited in the About page.
-
-### Security
-
-- **Updated MailKit to 4.16.0** -- Clears two moderate-severity advisories in the email/MimeKit stack (STARTTLS response injection CVE-2026-41319 and CRLF/SMTP injection CVE-2026-30227). Email skill-completion alerts are unaffected. Also removed an unused MailKit dependency from EveLens.Infrastructure.
-
-### Added
-
-- **Attribute Optimizer window** -- Remap planning got a proper home (Tools in the plan editor sidebar, or right-click any skill). Pick a strategy -- one remap for the whole plan, or auto-placed remaps at attribute-focus boundaries (the old EVEMon behavior, requested in #71) -- preview exactly where each remap goes and what your attributes should be, then apply atomically. A Clone what-if toggle (As-is/Omega/Alpha) shows plan durations under either clone state without touching your character. The optimizer's numbers now always match the plan editor's total: same order, same implants, same applied remaps.
-- **Applied remaps visible in the plan sidebar** -- The Remap section lists every applied remap point with its position and full attribute spread, plus a one-click "Remove All Remaps" to return the plan to your current attributes. Hovering a gold remap band in the queue shows the target attributes.
-- **Plan editor right-click menu actually works** -- The context menu (Plan to Level, View Details, Change Priority, Optimize Attributes, Remove) was lost in the queue-list migration and silently did nothing (Issue #71). Move Up/Down menu items were dropped -- drag-and-drop and the hover arrows own reordering.
-- **EVE Accuracy Suite** -- A visible, separately-runnable test suite (`dotnet test --filter "Suite=EveAccuracy"`) of golden scenarios where EveLens output must match known in-game values: SP thresholds, SP/hour formula, training durations, Alpha/Omega rates, implant math, remap rules, prerequisites, and queue totals. New features can no longer break these calculations unnoticed.
-- **Run at Startup** -- New option in Settings > Window launches EveLens automatically when you log in to your computer, starting quietly in the system tray with no window or splash screen. Available on Windows and Linux (Issue #72).
-
-### Changed
-
-- **Avalonia 12 + compiled bindings** -- The UI framework jumped to Avalonia 12.1 (with SkiaSharp 3), bringing its reworked compositor and rendering pipeline, lower idle CPU, and -- on Linux -- the first native .NET screen-reader/accessibility support (AT-SPI2). Every data binding in EveLens is now compiled and type-checked at build time, so an entire class of "this column just stopped showing data" bugs can no longer ship.
-- **Updater engine upgraded (Velopack 1.2)** -- The auto-update machinery moved from a years-old prerelease to the current stable line, picking up a long tail of updater fixes (update-locator and macOS update handling among them).
-- **Leaner, more portable internals** -- Two legacy dependencies are gone: SharpZipLib (replaced by the runtime's built-in compression, with byte-format compatibility tests proving old cloud backups stay readable) and System.Drawing/GDI+ (whose Windows-only image code crashed Linux/macOS whenever it snuck in -- reintroducing it is now a compile error, not a runtime crash report).
-- **EveLens now runs on .NET 10** -- The whole app moved from .NET 8 (support ends November 2026) to .NET 10 LTS (supported through 2028), along with its dependency stack: Avalonia 11.3.20 and current Microsoft libraries. Releases stay self-contained, so nothing to install -- updates arrive like any other. Under the hood the migration came with a behavioral audit that hardened skill-point estimation, PI cycle math, date parsing under non-English locales, and settings-load diagnostics against runtime edge cases. The solution now builds with zero known dependency vulnerabilities. Thanks to jackmurray for the nudge and the first migration PR (#106).
-- **SDE updated to build 3458726 (August 2026)** -- All game data regenerated from CCP's latest Static Data Export. Fixes outdated skill prerequisites -- e.g. Capital Jump Portal Generation now correctly requires Jump Portal Generation III, not V (Issue #99).
-- **Start Menu shortcut no longer reappears after every update** -- The updater used to re-create the Start Menu shortcut each time a new version installed, even if you had deleted it. New installs create a Desktop shortcut only (Issue #72).
-
-### Fixed
-
 - **Skill point estimates can no longer overflow with stale queue data** -- A skill queue entry whose end time had gone stale (e.g. the app waking from sleep before the next ESI refresh) combined with a skill missing from the datafiles could push the estimated-SP arithmetic past what an integer holds. Estimates are now clamped to the entry's own start/end SP window, and the current PI extraction cycle is clamped to the program's real cycle range the same way. Groundwork for the .NET 10 runtime, where the old overflow behavior would have silently corrupted stored skill points instead of being masked.
-- **Linux: importing a non-XML file as a plan no longer freezes the app** -- Picking a .txt file in Plans > Import Plan from File hit a misleading "unsupported format" dialog whose sync-over-async plumbing deadlocked the UI thread on Linux/macOS (reported on Reddit). Dialogs shown from synchronous code now pump a proper nested message loop, and plan import explains up front that it expects .emp/.xml -- pointing plain-text skill lists at the plan editor's Import menu, which handles them.
-- **Linux: clipboard import now works when the plan editor is the active window** -- The clipboard was always read through the main window, which fails on X11/Wayland when the main window is hidden to tray or a dialog is focused. The clipboard now comes from the active visible window.
-- **Planetary colonies no longer show "Unknown" as the planet name** -- The bundled map data was missing planets entirely, so every colony card and detail header read "Unknown". Planet names (like "Jita IV") are now included for all 68,000+ planets (Issue #66).
-- **Planetary ISK/day estimates now actually populate** -- The dashboard never requested market prices unless another feature (like Assets) had already loaded them, so most colonies showed 0 ISK/day forever. PI now triggers its own price lookups and repaints as soon as prices arrive (Issue #66).
-- **Planetary flow diagram no longer shows a gap while resizing the window** -- Node positions were recomputed one frame behind the window size during a resize drag (Issue #66).
-- **SSO error for a character that no longer exists can now be cleared** -- If a character was biomassed or transferred off your account, its dead login token kept raising an unnamed "EVE SSO session expired" banner on every startup, and deleting the character didn't remove the underlying key -- so the error could never be dismissed. EveLens now remembers which character each ESI key belongs to (even across restarts), names that character in the error message, and deleting the character properly removes its stale key (Issue #94).
-- **Queue tab: wrong progress bars when the same skill is queued to multiple levels** -- With a skill queued to two or more levels (say Cruiser IV training and Cruiser V waiting), every row of that skill showed the same live progress bar and "Training" status. Each queue entry now computes progress from its own level's SP window, so the training level shows real progress and later levels correctly sit at 0% until they start (Issue #103).
-- **Linux/macOS: hard crash opening Standings, Contacts, Employment History, and Loyalty tabs** -- Default/placeholder images were loaded through a Windows-only graphics library (System.Drawing/GDI+), which throws on Linux and macOS the instant it runs. Opening any of those tabs terminated the whole app with no error. Default images now use the same cross-platform image pipeline (SkiaSharp) as the rest of EveLens, so the tabs work on every platform.
-- **Crashes no longer kill the app silently** -- EveLens now installs a process-wide safety net (unhandled exception, unobserved background task, and UI-thread handlers). An unexpected error is logged and, where possible, the app keeps running instead of vanishing without a trace.
-- **"Error logging in to EVE SSO" now explains itself and stops spamming** -- This generic banner appeared for every kind of token failure, and an expired refresh token retried every few seconds forever -- so an idle character could flood you with a login error it could never clear. EveLens now reads CCP's actual reason and reacts accordingly: an expired session names the specific character to re-authenticate (and stops retrying a token that can't work), bad ESI app credentials point you to Settings, and brief network/server hiccups retry quietly without raising a scary alarm. The banner also clears itself automatically once a character re-authenticates. CCP's raw response is still written to the log and diagnostic stream for deeper diagnosis (Issue #94).
 
 ## [1.4.0-beta.4] - 2026-06-04
 

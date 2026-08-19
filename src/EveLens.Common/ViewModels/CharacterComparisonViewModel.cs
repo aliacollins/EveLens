@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using EveLens.Common.Models;
+using EveLens.Common.SettingsObjects;
 
 namespace EveLens.Common.ViewModels
 {
@@ -129,6 +130,62 @@ namespace EveLens.Common.ViewModels
             _groups = groups;
             ApplyFilter();
         }
+
+        #region Saved comparison sets (Discussion #105)
+
+        /// <summary>Saved comparison sets, alphabetical by name.</summary>
+        public IReadOnlyList<SavedComparisonSettings> SavedSets =>
+            Settings.SavedComparisons.OrderBy(s => s.Name, StringComparer.OrdinalIgnoreCase).ToList();
+
+        /// <summary>
+        /// Saves the current selection under the given name, replacing any set
+        /// with the same name. Returns false when there is nothing to save.
+        /// </summary>
+        public bool SaveCurrentSet(string name)
+        {
+            name = name?.Trim() ?? string.Empty;
+            if (name.Length == 0 || _selectedCharacters.Count == 0)
+                return false;
+
+            var existing = Settings.SavedComparisons.FirstOrDefault(
+                s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
+            if (existing != null)
+                Settings.SavedComparisons.Remove(existing);
+
+            Settings.SavedComparisons.Add(new SavedComparisonSettings
+            {
+                Name = name,
+                CharacterIDs = _selectedCharacters.Select(c => c.CharacterID).ToList()
+            });
+            Settings.Save();
+            return true;
+        }
+
+        /// <summary>
+        /// Replaces the current selection with a saved set. Characters that have
+        /// been deleted since the set was saved are skipped silently. Returns the
+        /// number of characters actually loaded.
+        /// </summary>
+        public int LoadSet(SavedComparisonSettings set, IEnumerable<Character> availableCharacters)
+        {
+            var byId = availableCharacters.ToDictionary(c => c.CharacterID);
+            _selectedCharacters.Clear();
+            foreach (long id in set.CharacterIDs)
+            {
+                if (byId.TryGetValue(id, out var character) && _selectedCharacters.Count < 10)
+                    _selectedCharacters.Add(character);
+            }
+            Rebuild();
+            return _selectedCharacters.Count;
+        }
+
+        public void DeleteSet(SavedComparisonSettings set)
+        {
+            Settings.SavedComparisons.Remove(set);
+            Settings.Save();
+        }
+
+        #endregion
 
         public void CollapseAll()
         {

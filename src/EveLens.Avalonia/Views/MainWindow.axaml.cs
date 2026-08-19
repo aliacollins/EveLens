@@ -175,7 +175,7 @@ namespace EveLens.Avalonia.Views
 
         #region Portrait Strip
 
-        // Group tag colors — matches ManageGroupsWindow
+        // Group tag colors — shared palette for group accents
         private static readonly string[] StripGroupColors =
         {
             "#FF4A9EE8", "#FFE8A44A", "#FF6DBA6D", "#FFC75D5D",
@@ -245,10 +245,15 @@ namespace EveLens.Avalonia.Views
                     {
                         if (needsGap)
                         {
+                            // Same divider as between groups — an invisible spacer here
+                            // made the last group appear to blend into the ungrouped run
                             CharStrip.Children.Add(new Border
                             {
-                                Width = 8,
-                                Background = Brushes.Transparent
+                                Width = 1,
+                                Height = 40,
+                                Background = FindStripBrush("EveTextDisabledBrush", Brushes.Gray),
+                                Margin = new Thickness(6, 0),
+                                VerticalAlignment = VerticalAlignment.Center
                             });
                         }
                         foreach (var character in ungrouped)
@@ -685,7 +690,6 @@ namespace EveLens.Avalonia.Views
 
             // File menu items
             AddCharMenuItem.Header = Loc.Get("Menu.File.AddCharacter");
-            ManageGroupsMenuItem.Header = Loc.Get("Menu.File.ManageGroups");
             SettingsMenuItem.Header = Loc.Get("Menu.File.Settings");
             ExitMenuItem.Header = Loc.Get("Menu.File.Exit");
 
@@ -726,7 +730,6 @@ namespace EveLens.Avalonia.Views
             AddCharStripBtn.Click += OnAddCharacterClick;
             CreateBlankCharMenuItem.Click += OnCreateBlankCharacterClick;
             ManageCharsMenuItem.Click += OnManageCharactersClick;
-            ManageGroupsMenuItem.Click += OnManageGroupsClick;
             RestoreSettingsMenuItem.Click += OnRestoreSettingsClick;
             SaveSettingsMenuItem.Click += OnSaveSettingsClick;
             ResetSettingsMenuItem.Click += OnResetSettingsClick;
@@ -1830,21 +1833,6 @@ namespace EveLens.Avalonia.Views
             }
         }
 
-        private async void OnManageGroupsClick(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var groupsWindow = new ManageGroupsWindow();
-                await groupsWindow.ShowDialog(this);
-
-                // Refresh overview to reflect group changes
-                _overviewView?.RefreshView();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error managing groups: {ex}");
-            }
-        }
 
         private async void OnImportPlanClick(object? sender, RoutedEventArgs e)
         {

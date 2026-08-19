@@ -184,6 +184,11 @@ namespace EveLens.Common
 
         public static IList<GlobalPlanTemplate> GlobalPlanTemplates { get; set; } = new List<GlobalPlanTemplate>();
 
+        /// <summary>
+        /// Named character sets for the Skill Comparison window (Discussion #105).
+        /// </summary>
+        public static IList<SavedComparisonSettings> SavedComparisons { get; set; } = new List<SavedComparisonSettings>();
+
         #endregion
 
 
@@ -240,6 +245,9 @@ namespace EveLens.Common
 
                 // Global plan templates
                 GlobalPlanTemplates = new List<GlobalPlanTemplate>(s_settings.GlobalPlanTemplates);
+
+                // Saved comparison sets
+                SavedComparisons = new List<SavedComparisonSettings>(s_settings.SavedComparisons);
 
                 // Scheduler
                 Scheduler.Import(s_settings.Scheduler);

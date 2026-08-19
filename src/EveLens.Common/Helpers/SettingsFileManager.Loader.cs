@@ -221,6 +221,16 @@ namespace EveLens.Common.Helpers
                     });
                 }
 
+                // Restore saved comparison sets (Discussion #105)
+                foreach (var jc in config.SavedComparisons ?? new List<JsonSavedComparison>())
+                {
+                    settings.SavedComparisons.Add(new SavedComparisonSettings
+                    {
+                        Name = jc.Name,
+                        CharacterIDs = new List<long>(jc.CharacterIDs)
+                    });
+                }
+
                 // Convert ESI keys
                 foreach (var esiKey in credentials?.EsiKeys ?? new List<JsonEsiKey>())
                 {
