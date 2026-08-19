@@ -79,7 +79,16 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private int _currentInsertIndex = -1;
         private string? _dragGroupName;
         private const double DragThreshold = 8.0;
-        private const double CardWidth = 308.0; // 300 + 8 margin
+
+        // How many cards fit per row at last layout — drives the dynamic choice
+        // between tiled groups and full-width rows; rebuilt when it changes on resize.
+        private int _layoutColumns;
+
+        // Card dimensions scale with the font factor so text never clips at large
+        // font sizes (Issue #72 — cards stayed 300px while fonts grew past 110%).
+        private static double CardBodyWidth => 300.0 * FontScaleService.Factor;
+        private static double CardBodyMinHeight => 90.0 * FontScaleService.Factor;
+        private static double CardWidth => CardBodyWidth + 8; // + margin
 
 
         public CharacterOverviewView()
@@ -178,6 +187,31 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 {
                     var assignedGuids = new HashSet<Guid>();
 
+                    // Dynamic layout (Issue #72, Agge65's ask): a group whose cards fit
+                    // in ONE row of the current window becomes a tile exactly as wide
+                    // as its cards, and tiles pack side by side — so "Cyno (2)" and
+                    // "PVP (3)" share a row on a 5-card-wide window. Groups wider than
+                    // the window get a classic full-width row with wrapping cards.
+                    // _layoutColumns is recomputed on resize (OnViewportSizeChanged).
+                    _layoutColumns = ComputeCardsPerRow();
+                    WrapPanel? tileFlow = null;
+
+                    void AddSection(string name, List<Character> chars)
+                    {
+                        if (chars.Count <= _layoutColumns)
+                        {
+                            tileFlow ??= new WrapPanel { Orientation = Orientation.Horizontal };
+                            if (!OverviewPanel.Children.Contains(tileFlow))
+                                OverviewPanel.Children.Add(tileFlow);
+                            BuildGroupSection(tileFlow, name, chars, ref cardIndex, asTile: true);
+                        }
+                        else
+                        {
+                            BuildGroupSection(OverviewPanel, name, chars, ref cardIndex, asTile: false);
+                            tileFlow = null; // next tile-able group starts a fresh row
+                        }
+                    }
+
                     foreach (var group in groups)
                     {
                         // Iterate CharacterGuids in order to respect user-defined ordering
@@ -193,20 +227,27 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         foreach (var guid in group.CharacterGuids)
                             assignedGuids.Add(guid);
 
-                        BuildGroupSection(group.Name, groupChars, ref cardIndex);
+                        AddSection(group.Name, groupChars);
                     }
 
                     var ungrouped = characters.Where(c => !assignedGuids.Contains(c.Guid)).ToList();
                     if (ungrouped.Count > 0)
                     {
                         ungrouped = SortByUngroupedOrder(ungrouped);
-                        BuildGroupSection("Ungrouped", ungrouped, ref cardIndex);
+                        AddSection("Ungrouped", ungrouped);
                     }
 
-                    // Ghost card after the last group
-                    var ghostWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+                    // Ghost card joins the last tile row if one is open, else its own row
+                    var ghostHost = tileFlow ?? new WrapPanel { Orientation = Orientation.Horizontal };
+                    var ghostWrap = new WrapPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        VerticalAlignment = VerticalAlignment.Bottom
+                    };
                     ghostWrap.Children.Add(BuildGhostCard());
-                    OverviewPanel.Children.Add(ghostWrap);
+                    ghostHost.Children.Add(ghostWrap);
+                    if (!OverviewPanel.Children.Contains(ghostHost))
+                        OverviewPanel.Children.Add(ghostHost);
                 }
                 else
                 {
@@ -234,7 +275,47 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             }
         }
 
-        private void BuildGroupSection(string groupName, List<Character> characters, ref int cardIndex)
+        protected override void OnSizeChanged(SizeChangedEventArgs e)
+        {
+            base.OnSizeChanged(e);
+
+            // Re-evaluate tile-vs-row decisions when the window crosses a column
+            // boundary — a group that fit in one row may not anymore (Issue #72).
+            // Debounced so a resize drag doesn't rebuild on every pixel.
+            if (_isDragging || _dragPending || Settings.CharacterGroups.Count == 0)
+                return;
+            if (ComputeCardsPerRow() == _layoutColumns)
+                return;
+
+            _resizeRelayoutTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _resizeRelayoutTimer.Stop();
+            _resizeRelayoutTimer.Tick -= OnResizeRelayoutTick;
+            _resizeRelayoutTimer.Tick += OnResizeRelayoutTick;
+            _resizeRelayoutTimer.Start();
+        }
+
+        private void OnResizeRelayoutTick(object? sender, EventArgs e)
+        {
+            _resizeRelayoutTimer?.Stop();
+            if (!_isDragging && !_dragPending && ComputeCardsPerRow() != _layoutColumns)
+                LoadData();
+        }
+
+        private DispatcherTimer? _resizeRelayoutTimer;
+
+        /// <summary>
+        /// Cards that fit in one row at the current viewport width (minimum 1).
+        /// Falls back to 4 before first layout, when Bounds isn't measured yet.
+        /// </summary>
+        private int ComputeCardsPerRow()
+        {
+            double w = OverviewScroller?.Bounds.Width ?? 0;
+            if (w <= 0) w = Bounds.Width;
+            if (w <= 0) return 4;
+            return Math.Max(1, (int)(w / CardWidth));
+        }
+
+        private void BuildGroupSection(Panel host, string groupName, List<Character> characters, ref int cardIndex, bool asTile)
         {
             bool isCollapsed = _collapsedGroups.Contains(groupName);
 
@@ -305,8 +386,19 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
             };
 
-            OverviewPanel.Children.Add(divider);
-            OverviewPanel.Children.Add(wrap);
+            // A tile is exactly as wide as its cards (they fit in one row by the
+            // caller's check), so tiles pack side by side with no orphan holes;
+            // full-width sections stretch and let their cards wrap.
+            var section = new StackPanel
+            {
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 0, 12, 8)
+            };
+            if (asTile)
+                section.Width = CardWidth * characters.Count + 8;
+            section.Children.Add(divider);
+            section.Children.Add(wrap);
+            host.Children.Add(section);
         }
 
         private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
@@ -370,8 +462,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var cardBorder = new Border
             {
                 Padding = new Thickness(12, 14),
-                Width = 300,
-                MinHeight = 90,
+                Width = CardBodyWidth,
+                MinHeight = CardBodyMinHeight,
                 Child = content,
                 BorderThickness = new Thickness(1),
                 BorderBrush = FindBrush("EveTextDisabledBrush", Brushes.Gray),
@@ -723,8 +815,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             var cardBorder = new Border
             {
-                Width = 300,
-                MinHeight = 90,
+                Width = CardBodyWidth,
+                MinHeight = CardBodyMinHeight,
                 Child = cardContent
             };
             cardBorder.Classes.Add("card");
@@ -1230,15 +1322,14 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private IEnumerable<Button> GetAllCardButtons()
         {
-            foreach (var child in OverviewPanel.Children)
+            // Logical descendants, not direct children — card WrapPanels sit inside
+            // group-section tiles in grouped mode (Issue #72 multi-column layout).
+            foreach (var wrap in OverviewPanel.GetLogicalDescendants().OfType<WrapPanel>())
             {
-                if (child is WrapPanel wrap)
+                foreach (var item in wrap.Children)
                 {
-                    foreach (var item in wrap.Children)
-                    {
-                        if (item is Button btn && btn.DataContext is Character)
-                            yield return btn;
-                    }
+                    if (item is Button btn && btn.DataContext is Character)
+                        yield return btn;
                 }
             }
         }
@@ -1570,7 +1661,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _insertIndicator = new Border
             {
                 Width = 3,
-                Height = 90,
+                Height = CardBodyMinHeight,
                 Background = new SolidColorBrush(Color.Parse("#4A94F0")),
                 CornerRadius = new CornerRadius(2),
                 IsHitTestVisible = false,
@@ -1821,7 +1912,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 return;
             }
 
-            _insertIndicator.Height = 90;
+            _insertIndicator.Height = CardBodyMinHeight;
             Canvas.SetLeft(_insertIndicator, indicatorPos.X - 1);
             Canvas.SetTop(_insertIndicator, indicatorPos.Y);
             _insertIndicator.IsVisible = true;

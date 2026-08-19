@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Grouped overview now uses the whole screen** -- Small character groups share a row (each section exactly as wide as its cards) while large groups keep a full-width row with wrapping cards, and the layout re-flows as you resize the window. A dozen per-account groups now fill a widescreen monitor instead of scrolling off the bottom with half the display empty (Issue #72, thanks Agge65).
+- **Character cards grow with your font size** -- Card dimensions now scale with the Appearance font setting, so text no longer clips at 110%+ on high-DPI monitors (Issue #72).
 - **Comparison header stays frozen while scrolling** -- The character-name header row in Skill Comparison now locks to the top like a spreadsheet freeze pane, so you can always see whose column is whose deep in a long skill list (Discussion #93).
 
 - **Skill search now looks inside descriptions** -- Searching "powergrid" in the skill browser used to find nothing useful because the skill is named "Power Grid Management" -- with a space. The text filter (plan editor and Skills tab alike) now matches skill descriptions too, so functional searches like "capacitor", "velocity", or "powergrid" surface every skill that affects them (Discussion #116, thanks OS17279).
