@@ -288,11 +288,11 @@ namespace EveLens.Avalonia.Controls
                 using var paint = new SKPaint
                 {
                     Color = new SKColor(200, 170, 80),
-                    TextSize = 14,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold)
+                    IsAntialias = true
                 };
-                canvas.DrawText(_title, 40, 30, paint);
+                using var font = new SKFont(
+                    SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default, 14);
+                canvas.DrawText(_title, 40, 30, SKTextAlign.Left, font, paint);
             }
 
             private void DrawColumnHeaders(SKCanvas canvas)
@@ -300,9 +300,9 @@ namespace EveLens.Avalonia.Controls
                 using var paint = new SKPaint
                 {
                     Color = new SKColor(120, 130, 150),
-                    TextSize = 11,
                     IsAntialias = true
                 };
+                using var font = new SKFont(SKTypeface.Default, 11);
 
                 // Derive column headers from actual node data
                 var columns = _nodes.Select(n => n.Column).Distinct().OrderBy(c => c).ToList();
@@ -320,7 +320,7 @@ namespace EveLens.Avalonia.Controls
                         1 => "Storage",
                         _ => header + " Factories"
                     };
-                    canvas.DrawText(header, 30 + col * colWidth, 50, paint);
+                    canvas.DrawText(header, 30 + col * colWidth, 50, SKTextAlign.Left, font, paint);
                 }
             }
 
@@ -417,20 +417,20 @@ namespace EveLens.Avalonia.Controls
                 using var badgeTextPaint = new SKPaint
                 {
                     Color = borderColor,
-                    TextSize = 9,
                     IsAntialias = true
                 };
-                canvas.DrawText(node.Role, node.X + 8, node.Y + 14, badgeTextPaint);
+                using var badgeTextFont = new SKFont(SKTypeface.Default, 9);
+                canvas.DrawText(node.Role, node.X + 8, node.Y + 14, SKTextAlign.Left, badgeTextFont, badgeTextPaint);
 
                 // Main label
                 using var labelPaint = new SKPaint
                 {
                     Color = SKColors.White,
-                    TextSize = 11,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold)
+                    IsAntialias = true
                 };
-                canvas.DrawText(TruncateText(node.Label, 22), node.X + 8, node.Y + 30, labelPaint);
+                using var labelFont = new SKFont(
+                    SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default, 11);
+                canvas.DrawText(TruncateText(node.Label, 22), node.X + 8, node.Y + 30, SKTextAlign.Left, labelFont, labelPaint);
 
                 // Detail text (right-aligned)
                 if (!string.IsNullOrEmpty(node.Detail))
@@ -438,11 +438,10 @@ namespace EveLens.Avalonia.Controls
                     using var detailPaint = new SKPaint
                     {
                         Color = new SKColor(150, 160, 180),
-                        TextSize = 9,
-                        IsAntialias = true,
-                        TextAlign = SKTextAlign.Right
+                        IsAntialias = true
                     };
-                    canvas.DrawText(node.Detail, node.X + w - 8, node.Y + 40, detailPaint);
+                    using var detailFont = new SKFont(SKTypeface.Default, 9);
+                    canvas.DrawText(node.Detail, node.X + w - 8, node.Y + 40, SKTextAlign.Right, detailFont, detailPaint);
                 }
             }
 

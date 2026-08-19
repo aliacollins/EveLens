@@ -3,6 +3,7 @@
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:models="using:EveLens.Common.Models"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterContractsView">
 
     <UserControl.Resources>
@@ -88,7 +89,7 @@
                                     Click="OnClearFilter"
                                     VerticalAlignment="Center" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="Search contracts..."
+                                     PlaceholderText="Search contracts..."
                                      FontSize="{DynamicResource EveFontBody}"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterTextChanged"
@@ -117,6 +118,7 @@
 
                 <!-- Data grid -->
                 <DataGrid x:Name="ItemsGrid"
+                      x:DataType="models:Contract"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserReorderColumns="True"
@@ -147,7 +149,7 @@
                     </DataGridTextColumn>
                     <DataGridTemplateColumn Header="{loc:T Column.Status}" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Contract">
                                 <TextBlock Text="{Binding State}"
                                            Foreground="{Binding State, Converter={StaticResource StatusColorConverter}}"
                                            FontWeight="{Binding NeedsAttention, Converter={x:Static converters:BoolToFontWeightConverter.Instance}}"
@@ -167,7 +169,7 @@
                     </DataGridTextColumn>
                     <DataGridTemplateColumn Header="{loc:T Column.Price}" Width="120">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Contract">
                                 <TextBlock Text="{Binding Price, Converter={StaticResource ISKConverter}}"
                                            Foreground="{StaticResource EveSuccessGreenBrush}"
                                            VerticalAlignment="Center" Margin="4,0" />
@@ -181,7 +183,7 @@
                     </DataGridTextColumn>
                     <DataGridTemplateColumn Header="{loc:T Column.Expires}" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:Contract">
                                 <TextBlock Text="{Binding Expiration, StringFormat=\{0:yyyy-MM-dd\}}"
                                            VerticalAlignment="Center" Margin="4,0"
                                            x:Name="ExpirationText" />

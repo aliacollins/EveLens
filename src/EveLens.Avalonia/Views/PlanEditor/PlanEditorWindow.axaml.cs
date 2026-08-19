@@ -46,7 +46,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             ShipsTab.Content = Loc.Get("PlanEditor.ShipsTab");
             ItemsTab.Content = Loc.Get("PlanEditor.ItemsTab");
             BlueprintsTab.Content = Loc.Get("PlanEditor.BlueprintsTab");
-            SearchBox.Watermark = Loc.Get("PlanEditor.SearchSkills");
+            SearchBox.PlaceholderText = Loc.Get("PlanEditor.SearchSkills");
             ClearPlanBtn.Content = Loc.Get("PlanEditor.ClearPlan");
             ImportFitBtn.Content = Loc.Get("PlanEditor.ImportFit") + " ▾";
             ExportBtn.Content = Loc.Get("PlanEditor.Export") + " ▾";

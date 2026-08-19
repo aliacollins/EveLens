@@ -20,7 +20,7 @@ namespace EveLens.Common.Service
     /// <para>
     /// This exists to fix a hard crash on Linux and macOS. The auto-generated
     /// <c>Properties.Resources</c> getters (e.g. <c>DefaultCharacterImage32</c>) return
-    /// <see cref="System.Drawing.Bitmap"/>, which lives in <c>System.Drawing.Common</c>.
+    /// GDI+ bitmaps (whose package was removed in the .NET 10 cycle).
     /// On .NET 6+ that package throws <see cref="PlatformNotSupportedException"/> on any
     /// non-Windows platform the instant the GDI+ type initializer runs. Model fallback-image
     /// properties (Standing, Contact, EmploymentRecord, Loyalty) read those getters and so

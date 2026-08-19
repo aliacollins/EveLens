@@ -463,8 +463,10 @@ namespace EveLens.Avalonia.Views.Dialogs
                     MinWidth = 0, MinHeight = 0,
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                renameBtn.Click += async (_, _) =>
+                renameBtn.Click += async (_, e) =>
                 {
+                    // Nested inside the chip button — stop the click bubbling to OnGroupChipClicked
+                    e.Handled = true;
                     try
                     {
                         string? name = await ShowNameInputDialog("Rename Group", capturedGroup.Name);
@@ -493,8 +495,11 @@ namespace EveLens.Avalonia.Views.Dialogs
                     MinWidth = 0, MinHeight = 0,
                     VerticalAlignment = VerticalAlignment.Center
                 };
-                deleteBtn.Click += (_, _) =>
+                deleteBtn.Click += (_, e) =>
                 {
+                    // Nested inside the chip button — without this the click bubbles to
+                    // OnGroupChipClicked, which re-expands the group we just deleted (Issue #78)
+                    e.Handled = true;
                     try
                     {
                         if (_expandedGroup == capturedGroup) _expandedGroup = null;
@@ -560,6 +565,13 @@ namespace EveLens.Avalonia.Views.Dialogs
             var group = _expandedGroup;
             var groups = Settings.CharacterGroups;
             int groupIndex = groups.IndexOf(group);
+            if (groupIndex < 0)
+            {
+                // Group no longer exists (e.g. deleted) — collapse instead of crashing (Issue #78)
+                _expandedGroup = null;
+                ReorderPanel.IsVisible = false;
+                return;
+            }
 
             int colorIndex = groupIndex % TagColors.Length;
             var tagColor = Color.Parse(TagColors[colorIndex]);
@@ -759,7 +771,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Text = defaultName,
                 FontSize = FontScaleService.Subheading,
                 Margin = new Thickness(0, 8, 0, 0),
-                Watermark = "Enter name..."
+                PlaceholderText = "Enter name..."
             };
 
             var okBtn = new Button

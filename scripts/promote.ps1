@@ -115,7 +115,13 @@ function Get-NextVersion {
     if ($targetVersion) {
         try {
             $tv = Parse-Version $targetVersion
-            if ($tv.Channel -eq $TargetChannel) {
+            # Only inherit the target branch's build counter when it belongs to the
+            # SAME version line. A new major/minor/patch starts its own count at 1 —
+            # otherwise the first 1.5.0 alpha after 1.4.0-alpha.6 would be alpha.7.
+            if ($tv.Channel -eq $TargetChannel -and
+                $tv.Major -eq $v.Major -and
+                $tv.Minor -eq $v.Minor -and
+                $tv.Patch -eq $v.Patch) {
                 $targetBuild = $tv.Build
             }
         } catch { }

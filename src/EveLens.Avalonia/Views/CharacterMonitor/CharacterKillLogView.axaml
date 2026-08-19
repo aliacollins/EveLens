@@ -3,6 +3,7 @@
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:cm="using:EveLens.Avalonia.Views.CharacterMonitor"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterKillLogView">
 
     <Panel>
@@ -75,7 +76,7 @@
                                     Click="OnClearFilter"
                                     IsVisible="False" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="{loc:T ListView.SearchKillLog}"
+                                     PlaceholderText="{loc:T ListView.SearchKillLog}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -115,7 +116,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="cm:KillLogGroupDisplay">
                                 <StackPanel>
                                     <Border Classes="group-header" HorizontalAlignment="Stretch"
                                             PointerPressed="OnGroupHeaderClicked">
@@ -146,7 +147,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="cm:KillLogItemDisplay">
                                                 <Border Classes="item-row" Padding="0,0,10,0"
                                                         Background="{StaticResource EveBackgroundDarkBrush}"
                                                         BorderBrush="{StaticResource EveBorderBrush}"

@@ -409,7 +409,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 var textBox = new TextBox
                 {
-                    Watermark = "Doctrine name (e.g. Cerberus Fleet)...",
+                    PlaceholderText = "Doctrine name (e.g. Cerberus Fleet)...",
                     FontSize = FontScaleService.Body,
                     Margin = new Thickness(16, 16, 16, 8),
                 };
@@ -543,7 +543,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 var searchBox = new TextBox
                 {
-                    Watermark = "Search skills...",
+                    PlaceholderText = "Search skills...",
                     FontSize = FontScaleService.Body,
                     Margin = new Thickness(12, 12, 12, 6),
                 };

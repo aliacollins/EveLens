@@ -6,8 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- promote.ps1: unambiguous refs/heads merges + post-merge content verification
-- beta.5 train: community fixes, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in
+
+### Fixed
+
+- **Deleting a character group no longer crashes the Manage Groups window** -- The delete button sits inside the group chip, so its click also triggered the chip's expand/collapse toggle, which re-selected the group that had just been removed and crashed the reorder panel. The click now stops at the delete button, and the reorder panel tolerates a vanished group either way. Thanks to jpn-1 for the exact diagnosis (Issue #78).
 
 ### Added
 
@@ -28,11 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Avalonia 12 + compiled bindings** -- The UI framework jumped to Avalonia 12.1 (with SkiaSharp 3), bringing its reworked compositor and rendering pipeline, lower idle CPU, and -- on Linux -- the first native .NET screen-reader/accessibility support (AT-SPI2). Every data binding in EveLens is now compiled and type-checked at build time, so an entire class of "this column just stopped showing data" bugs can no longer ship.
+- **Updater engine upgraded (Velopack 1.2)** -- The auto-update machinery moved from a years-old prerelease to the current stable line, picking up a long tail of updater fixes (update-locator and macOS update handling among them).
+- **Leaner, more portable internals** -- Two legacy dependencies are gone: SharpZipLib (replaced by the runtime's built-in compression, with byte-format compatibility tests proving old cloud backups stay readable) and System.Drawing/GDI+ (whose Windows-only image code crashed Linux/macOS whenever it snuck in -- reintroducing it is now a compile error, not a runtime crash report).
+- **EveLens now runs on .NET 10** -- The whole app moved from .NET 8 (support ends November 2026) to .NET 10 LTS (supported through 2028), along with its dependency stack: Avalonia 11.3.20 and current Microsoft libraries. Releases stay self-contained, so nothing to install -- updates arrive like any other. Under the hood the migration came with a behavioral audit that hardened skill-point estimation, PI cycle math, date parsing under non-English locales, and settings-load diagnostics against runtime edge cases. The solution now builds with zero known dependency vulnerabilities. Thanks to jackmurray for the nudge and the first migration PR (#106).
 - **SDE updated to build 3458726 (August 2026)** -- All game data regenerated from CCP's latest Static Data Export. Fixes outdated skill prerequisites -- e.g. Capital Jump Portal Generation now correctly requires Jump Portal Generation III, not V (Issue #99).
 - **Start Menu shortcut no longer reappears after every update** -- The updater used to re-create the Start Menu shortcut each time a new version installed, even if you had deleted it. New installs create a Desktop shortcut only (Issue #72).
 
 ### Fixed
 
+- **Skill point estimates can no longer overflow with stale queue data** -- A skill queue entry whose end time had gone stale (e.g. the app waking from sleep before the next ESI refresh) combined with a skill missing from the datafiles could push the estimated-SP arithmetic past what an integer holds. Estimates are now clamped to the entry's own start/end SP window, and the current PI extraction cycle is clamped to the program's real cycle range the same way. Groundwork for the .NET 10 runtime, where the old overflow behavior would have silently corrupted stored skill points instead of being masked.
 - **Linux: importing a non-XML file as a plan no longer freezes the app** -- Picking a .txt file in Plans > Import Plan from File hit a misleading "unsupported format" dialog whose sync-over-async plumbing deadlocked the UI thread on Linux/macOS (reported on Reddit). Dialogs shown from synchronous code now pump a proper nested message loop, and plan import explains up front that it expects .emp/.xml -- pointing plain-text skill lists at the plan editor's Import menu, which handles them.
 - **Linux: clipboard import now works when the plan editor is the active window** -- The clipboard was always read through the main window, which fails on X11/Wayland when the main window is hidden to tray or a dialog is focused. The clipboard now comes from the active visible window.
 - **Planetary colonies no longer show "Unknown" as the planet name** -- The bundled map data was missing planets entirely, so every colony card and detail header read "Unknown". Planet names (like "Jita IV") are now included for all 68,000+ planets (Issue #66).

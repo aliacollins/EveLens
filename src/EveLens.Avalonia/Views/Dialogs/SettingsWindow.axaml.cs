@@ -62,7 +62,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             SaveButton.Content = Loc.Get("Action.Save");
 
             // Search watermark
-            SearchBox.Watermark = Loc.Get("Settings.SearchWatermark");
+            SearchBox.PlaceholderText = Loc.Get("Settings.SearchWatermark");
 
             // Sidebar categories
             NavAppearanceTitle.Text = Loc.Get("Settings.Appearance");

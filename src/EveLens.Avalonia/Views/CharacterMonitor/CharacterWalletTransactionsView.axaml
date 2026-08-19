@@ -3,6 +3,7 @@
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:models="using:EveLens.Common.Models"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterWalletTransactionsView">
 
     <UserControl.Resources>
@@ -58,7 +59,7 @@
                                     IsVisible="False"
                                     Click="OnClearFilter" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="{loc:T ListView.SearchTransactions}"
+                                     PlaceholderText="{loc:T ListView.SearchTransactions}"
                                      Background="Transparent" BorderThickness="0"
                                      FontSize="{DynamicResource EveFontBody}" Padding="8,5"
                                      TextChanged="OnFilterTextChanged" />
@@ -90,6 +91,7 @@
 
                 <!-- Data grid -->
                 <DataGrid x:Name="ItemsGrid"
+                      x:DataType="models:WalletTransaction"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       CanUserReorderColumns="True"
@@ -112,7 +114,7 @@
                     <DataGridTextColumn Header="{loc:T Column.Date}" Binding="{Binding Date, StringFormat=\{0:yyyy-MM-dd HH:mm\}}" Width="140" />
                     <DataGridTemplateColumn Header="{loc:T Column.Type}" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:WalletTransaction">
                                 <TextBlock Text="{Binding TransactionType}"
                                            Foreground="{Binding Credit, Converter={StaticResource AmountColor}}"
                                            VerticalAlignment="Center" Padding="4,0" />
@@ -124,7 +126,7 @@
                     <DataGridTextColumn Header="{loc:T Column.Price}" Binding="{Binding Price, StringFormat=\{0:N2\} ISK}" Width="120" />
                     <DataGridTemplateColumn Header="{loc:T Column.Credit}" Width="130">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="models:WalletTransaction">
                                 <TextBlock Text="{Binding Credit, StringFormat=\{0:N2\} ISK}"
                                            Foreground="{Binding Credit, Converter={StaticResource AmountColor}}"
                                            VerticalAlignment="Center" Padding="4,0" />

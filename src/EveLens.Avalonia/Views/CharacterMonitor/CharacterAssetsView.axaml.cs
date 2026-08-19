@@ -54,7 +54,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             GroupContainer.Content = Loc.Get("ListView.Container");
             CollapseAllBtn.Content = Loc.Get("Action.CollapseAll");
             ExpandAllBtn.Content = Loc.Get("Action.ExpandAll");
-            FilterBox.Watermark = Loc.Get("ListView.SearchAssets");
+            FilterBox.PlaceholderText = Loc.Get("ListView.SearchAssets");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
@@ -88,7 +88,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private void LoadData()
         {
-            if (this.GetVisualRoot() == null) return;
+            if (this.VisualRoot == null) return;
 
             Character? character = DataContext as Character
                 ?? (DataContext as ObservableCharacter)?.Character;

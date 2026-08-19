@@ -86,9 +86,8 @@ namespace EveLens.Tests.Architecture
                     continue;
 
                 // Skip files with known remaining static coupling (migration targets)
-                // PlanPrinter uses PrintPreviewDialog (GDI+ printing), ImageService uses PictureBox
                 // GlobalSuppressions is auto-generated
-                if (file.Contains("PlanPrinter.cs") || file.Contains("ImageService.cs") ||
+                if (file.Contains("ImageService.cs") ||
                     file.Contains("GlobalSuppressions.cs"))
                     continue;
 
@@ -159,58 +158,50 @@ namespace EveLens.Tests.Architecture
         }
 
         /// <summary>
-        /// Regression guard (non-Windows crash): no source file in EveLens.Common may read a
-        /// GDI+ image resource from <c>Properties.Resources</c>. Those getters are typed
-        /// <see cref="System.Drawing.Bitmap"/> and throw <see cref="PlatformNotSupportedException"/>
-        /// on Linux/macOS via the GDI+ type initializer the instant they are accessed. All default
-        /// images must go through <c>EveLens.Common.Service.DefaultImages</c> (SkiaSharp).
+        /// Blanket guard (non-Windows crash prevention): System.Drawing is BANNED from all
+        /// source. The System.Drawing.Common package was removed in the .NET 10 cycle — GDI+
+        /// types throw PlatformNotSupportedException on Linux/macOS the instant they load.
+        /// The only two permitted files use pure structs (Color, RectangleF) from
+        /// System.Drawing.Primitives, which ships in the shared framework and is
+        /// cross-platform. Everything else must use SkiaSharp (DefaultImages/ImageService).
+        /// CA1416 is additionally un-suppressed, so most regressions fail the build before
+        /// they reach this test.
         /// </summary>
         [Fact]
-        public void CommonSource_DoesNotReadGdiPlusImageResources()
+        public void Source_DoesNotUseSystemDrawing_ExceptStructOnlyFiles()
         {
-            string? commonDir = FindProjectDirectory("src/EveLens.Common");
-            if (commonDir == null)
+            string? srcDir = FindProjectDirectory("src");
+            if (srcDir == null)
                 return; // Skip if source not present (some CI environments)
 
-            // The GDI+ (System.Drawing.Bitmap/Icon) members of Properties.Resources. String
-            // resources (e.g. ErrorStandings) are safe and intentionally excluded.
-            var forbiddenResourceReads = new[]
-            {
-                "Resources.DefaultCharacterImage32",
-                "Resources.DefaultCorporationImage32",
-                "Resources.DefaultAllianceImage32",
-                "Resources.DefaultCorporationImage64",
-                "Resources.DefaultAllianceImage64",
-                "Resources.BadStanding",
-                "Resources.GoodStanding",
-                "Resources.NeutralStanding",
-                "Resources.ExcellentStanding",
-                "Resources.TerribleStanding",
-            };
+            // Struct-only usage (System.Drawing.Primitives — cross-platform, no GDI+)
+            var structOnlyFiles = new[] { "SolarSystem.cs", "SkillQueue.cs" };
 
-            var csFiles = Directory.GetFiles(commonDir, "*.cs", SearchOption.AllDirectories);
             var violations = new List<string>();
-
-            foreach (var file in csFiles)
+            foreach (var file in Directory.GetFiles(srcDir, "*.cs", SearchOption.AllDirectories))
             {
-                // The auto-generated designer file legitimately declares these members.
                 if (file.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (structOnlyFiles.Any(f => file.EndsWith(f, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+                if (file.Contains("obj" + Path.DirectorySeparatorChar) ||
+                    file.Contains("bin" + Path.DirectorySeparatorChar))
                     continue;
 
                 string content = File.ReadAllText(file);
-                foreach (var forbidden in forbiddenResourceReads)
+                if (content.Contains("using System.Drawing", StringComparison.Ordinal) ||
+                    content.Contains("System.Drawing.Bitmap", StringComparison.Ordinal) ||
+                    content.Contains("System.Drawing.Icon", StringComparison.Ordinal) ||
+                    content.Contains("System.Drawing.Image", StringComparison.Ordinal))
                 {
-                    if (content.Contains(forbidden, StringComparison.Ordinal))
-                    {
-                        string relativePath = file.Substring(file.IndexOf("EveLens.Common"));
-                        violations.Add($"{relativePath} reads {forbidden}");
-                    }
+                    violations.Add(file.Substring(file.IndexOf("src", StringComparison.Ordinal)));
                 }
             }
 
             violations.Should().BeEmpty(
-                "GDI+ image resources crash on Linux/macOS — use DefaultImages (SkiaSharp) instead. " +
-                $"Violations: {string.Join("; ", violations)}");
+                "System.Drawing (GDI+) crashes on Linux/macOS and its package is gone — " +
+                "use SkiaSharp. Struct-only Color/RectangleF usage belongs in the two " +
+                $"allowlisted files. Violations: {string.Join("; ", violations)}");
         }
 
         private static string? FindProjectDirectory(string relativePath)

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:vm="using:EveLens.Avalonia.ViewModels"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMailMessagesView">
 
     <Panel>
@@ -76,7 +77,7 @@
                                     Click="OnClearFilter"
                                     IsVisible="False" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="{loc:T ListView.SearchMail}"
+                                     PlaceholderText="{loc:T ListView.SearchMail}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent"
                                      BorderThickness="0"
@@ -119,7 +120,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="vm:MailGroupEntry">
                                 <StackPanel>
                                     <!-- Group header (hidden for flat "All Mail" view) -->
                                     <Border Classes="group-header" HorizontalAlignment="Stretch"
@@ -152,7 +153,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="vm:MailDisplayEntry">
                                                 <Border Classes="item-row"
                                                         Background="{StaticResource EveBackgroundDarkBrush}"
                                                         Padding="12,6,12,6"

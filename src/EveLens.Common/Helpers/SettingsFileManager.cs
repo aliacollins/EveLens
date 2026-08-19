@@ -60,7 +60,7 @@ namespace EveLens.Common.Helpers
         };
 
         // Legacy options for old Json* class format (backward compat during load)
-        private static readonly JsonSerializerOptions s_jsonOptions = new JsonSerializerOptions
+        internal static readonly JsonSerializerOptions s_jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -69,7 +69,7 @@ namespace EveLens.Common.Helpers
             Converters = { new JsonStringEnumConverter() }
         };
 
-        private static readonly JsonSerializerOptions s_jsonReadOptions = new JsonSerializerOptions
+        internal static readonly JsonSerializerOptions s_jsonReadOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
             Converters = { new JsonStringEnumConverter() }
@@ -312,8 +312,10 @@ namespace EveLens.Common.Helpers
 
         /// <summary>
         /// Attempts to load and deserialize a JSON file. Returns null on any failure.
+        /// Failures are traced: a silent null here cascades into "my settings reset to
+        /// defaults" with no evidence of why.
         /// </summary>
-        private static async Task<T?> TryLoadJsonAsync<T>(string filePath) where T : class
+        internal static async Task<T?> TryLoadJsonAsync<T>(string filePath) where T : class
         {
             if (!File.Exists(filePath))
                 return null;
@@ -323,8 +325,10 @@ namespace EveLens.Common.Helpers
                 string json = await File.ReadAllTextAsync(filePath);
                 return JsonSerializer.Deserialize<T>(json, s_jsonReadOptions);
             }
-            catch
+            catch (Exception ex)
             {
+                AppServices.TraceService?.Trace(
+                    $"Failed to load {Path.GetFileName(filePath)} as {typeof(T).Name}: {ex.Message}");
                 return null;
             }
         }

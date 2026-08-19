@@ -33,7 +33,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         {
             CanUseToggle.Content = Loc.Get("ItemBrowser.CanUseOnly");
             CollapseAllBtn.Content = Loc.Get("ItemBrowser.CollapseAll");
-            FilterBox.Watermark = Loc.Get("ItemBrowser.SearchItems");
+            FilterBox.PlaceholderText = Loc.Get("ItemBrowser.SearchItems");
             RequiredSkillsLabel.Text = Loc.Get("ItemBrowser.RequiredSkills");
             PlanToUseBtn.Content = Loc.Get("ItemBrowser.PlanToUse");
             PropertiesHeader.Text = Loc.Get("ItemBrowser.Properties");

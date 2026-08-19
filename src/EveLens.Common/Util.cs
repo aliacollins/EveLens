@@ -12,8 +12,6 @@ using EveLens.Common.Serialization;
 using EveLens.Common.Serialization.Esi;
 using EveLens.Common.Serialization.Eve;
 using EveLens.Common.Services;
-using ICSharpCode.SharpZipLib.GZip;
-using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -870,9 +868,8 @@ namespace EveLens.Common
 
             using (var outputStream = GetMemoryStream())
             {
-                var gZipOutputStream = new GZipOutputStream(outputStream);
-                gZipOutputStream.Write(inputData, 0, inputData.Length);
-                gZipOutputStream.Finish();
+                using (var gZipStream = new GZipStream(outputStream, CompressionMode.Compress, leaveOpen: true))
+                    gZipStream.Write(inputData, 0, inputData.Length);
 
                 return outputStream.ToArray();
             }
@@ -891,9 +888,8 @@ namespace EveLens.Common
             using (var inputStream = GetMemoryStream(inputData))
             using (var outputStream = GetMemoryStream())
             {
-                var gZipOutputStream = new GZipInputStream(inputStream);
-                gZipOutputStream.CopyTo(outputStream);
-                gZipOutputStream.Flush();
+                using (var gZipStream = new GZipStream(inputStream, CompressionMode.Decompress))
+                    gZipStream.CopyTo(outputStream);
 
                 return outputStream.ToArray();
             }
@@ -909,11 +905,12 @@ namespace EveLens.Common
         {
             inputData.ThrowIfNull(nameof(inputData));
 
+            // ZLibStream, not DeflateStream: this data has always been zlib-wrapped
+            // (RFC 1950) — HTTP deflate peers and persisted data both depend on it.
             using (var outputStream = GetMemoryStream())
             {
-                var deflaterOutputStream = new DeflaterOutputStream(outputStream);
-                deflaterOutputStream.Write(inputData, 0, inputData.Length);
-                deflaterOutputStream.Finish();
+                using (var zlibStream = new ZLibStream(outputStream, CompressionMode.Compress, leaveOpen: true))
+                    zlibStream.Write(inputData, 0, inputData.Length);
 
                 return outputStream.ToArray();
             }
@@ -932,9 +929,8 @@ namespace EveLens.Common
             using (var inputStream = GetMemoryStream(inputData))
             using (var outputStream = GetMemoryStream())
             {
-                var deflaterOutputStream = new InflaterInputStream(inputStream);
-                deflaterOutputStream.CopyTo(outputStream);
-                deflaterOutputStream.Flush();
+                using (var zlibStream = new ZLibStream(inputStream, CompressionMode.Decompress))
+                    zlibStream.CopyTo(outputStream);
 
                 return outputStream.ToArray();
             }
@@ -1037,9 +1033,9 @@ namespace EveLens.Common
             byte[] encrypted;
             // Keep legacy parameters for backwards compatibility with existing encrypted data
             // SYSLIB0041 warns about weak iterations, but changing would break existing data
-#pragma warning disable SYSLIB0041
+#pragma warning disable SYSLIB0041, SYSLIB0060 // renamed to SYSLIB0060 in .NET 10 -- NEVER migrate to Pbkdf2: it breaks decryption of stored credentials
             using (var pdb = new Rfc2898DeriveBytes(password, Encoding.Unicode.GetBytes(password)))
-#pragma warning restore SYSLIB0041
+#pragma warning restore SYSLIB0041, SYSLIB0060
             {
                 using (var aes = Aes.Create())
                 {
@@ -1089,9 +1085,9 @@ namespace EveLens.Common
 
             string decrypted;
             // Keep legacy parameters for backwards compatibility with existing encrypted data
-#pragma warning disable SYSLIB0041
+#pragma warning disable SYSLIB0041, SYSLIB0060 // renamed to SYSLIB0060 in .NET 10 -- NEVER migrate to Pbkdf2: it breaks decryption of stored credentials
             using (var pdb = new Rfc2898DeriveBytes(password, Encoding.Unicode.GetBytes(password)))
-#pragma warning restore SYSLIB0041
+#pragma warning restore SYSLIB0041, SYSLIB0060
             {
                 using (var aes = Aes.Create())
                 {

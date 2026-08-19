@@ -340,7 +340,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Text = defaultName,
                 FontSize = FontScaleService.Subheading,
                 Margin = new Thickness(0, 8, 0, 0),
-                Watermark = "Enter name..."
+                PlaceholderText = "Enter name..."
             };
 
             var okBtn = new Button

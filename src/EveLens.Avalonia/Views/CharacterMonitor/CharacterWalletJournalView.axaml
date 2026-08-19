@@ -3,6 +3,7 @@
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:converters="clr-namespace:EveLens.Avalonia.Converters"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:cm="using:EveLens.Avalonia.Views.CharacterMonitor"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterWalletJournalView">
 
     <UserControl.Resources>
@@ -70,7 +71,7 @@
                                         IsVisible="False"
                                         Click="OnClearFilter" />
                                 <TextBox x:Name="FilterBox"
-                                         Watermark="{loc:T ListView.SearchWalletJournal}"
+                                         PlaceholderText="{loc:T ListView.SearchWalletJournal}"
                                          Background="Transparent" BorderThickness="0"
                                          FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                          TextChanged="OnFilterTextChanged" />
@@ -122,7 +123,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="cm:JournalGroupDisplay">
                                 <StackPanel>
                                     <!-- Group header: ▸ Name   count -->
                                     <Border Classes="group-header" HorizontalAlignment="Stretch"
@@ -154,7 +155,7 @@
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="cm:JournalEntryDisplay">
                                                 <Border Classes="item-row" Padding="24,4,8,4"
                                                         Background="{StaticResource EveBackgroundDarkBrush}"
                                                         BorderBrush="{StaticResource EveBorderBrush}"
