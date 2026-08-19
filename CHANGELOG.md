@@ -6,9 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Repack with pinned vpk 1.2.0 (updater tool/library pairing)
-- Repack with pinned vpk 1.2.0 (updater tool/library pairing)
-- net10 + Avalonia 12 + SkiaSharp 3 migration (1.5.0 line)
+
+### Changed
+
+- **Skill search now looks inside descriptions** -- Searching "powergrid" in the skill browser used to find nothing useful because the skill is named "Power Grid Management" -- with a space. The text filter (plan editor and Skills tab alike) now matches skill descriptions too, so functional searches like "capacitor", "velocity", or "powergrid" surface every skill that affects them (Discussion #116, thanks OS17279).
 
 ## [1.5.0-beta.1] - 2026-08-19
 
