@@ -33,7 +33,7 @@ class Program
     {
         Console.WriteLine("===========================================");
         Console.WriteLine(" EVE SDE YAML to SQLite Converter");
-        Console.WriteLine(" For EveLens - .NET 8 Version");
+        Console.WriteLine(" For EveLens - .NET 10 Version");
         Console.WriteLine("===========================================");
         Console.WriteLine();
 

@@ -73,7 +73,7 @@
             </StackPanel>
             <Border CornerRadius="12" Background="{StaticResource EveBackgroundDarkestBrush}"
                     BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1" MaxWidth="300">
-                <TextBox x:Name="FilterBox" Watermark="{loc:T SkillFarm.SearchCharacters}"
+                <TextBox x:Name="FilterBox" PlaceholderText="{loc:T SkillFarm.SearchCharacters}"
                          FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                          Background="Transparent" BorderThickness="0"
                          TextChanged="OnFilterChanged" />

@@ -111,8 +111,6 @@ namespace EveLens.Common.CloudStorageServices.GoogleDrive
         /// <value>
         /// The logo.
         /// </value>
-        public override object? Logo => CloudStorageServiceResources.GoogleDriveLogo;
-
         #endregion
 
 

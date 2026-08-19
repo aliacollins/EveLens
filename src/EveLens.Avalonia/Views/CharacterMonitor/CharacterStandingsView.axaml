@@ -73,7 +73,7 @@
                                     Click="OnClearFilter"
                                     IsVisible="False" />
                             <TextBox x:Name="FilterBox"
-                                     Watermark="{loc:T ListView.SearchStandings}"
+                                     PlaceholderText="{loc:T ListView.SearchStandings}"
                                      FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                      Background="Transparent"
                                      BorderThickness="0"

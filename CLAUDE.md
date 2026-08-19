@@ -626,9 +626,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/install-hooks.p
 
 - **Maintainer:** Alia Collins (EVE character)
 - **GitHub:** https://github.com/aliacollins/evelens
-- **.NET 8 Avalonia** cross-platform application (Windows, Linux, macOS)
+- **.NET 10 Avalonia** cross-platform application (Windows, Linux, macOS)
 - **ESI API** for EVE Online data (OAuth2)
 - Settings location: `%APPDATA%\EveLens\`
 - **Version:** 1.3.0-beta.3
-- **Tests:** 1857 passing
+- **Tests:** 2,140 passing
 - **SDE:** Build 3458726, Aug 2026 (52,539 types, 2,723 groups, 68,407 planets)

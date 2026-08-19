@@ -6,6 +6,36 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-19</date>
+      <version>1.5.0.2</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-alpha.2
+
+Repack with pinned vpk 1.2.0 (updater tool/library pairing)]]></message>
+    </release>
+    <release>
+      <date>2026-08-19</date>
+      <version>1.5.0.1</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-alpha.1
+
+Repack with pinned vpk 1.2.0 (updater tool/library pairing)]]></message>
+    </release>
+    <release>
+      <date>2026-08-19</date>
+      <version>1.5.0.1</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-alpha.1
+
+net10 + Avalonia 12 + SkiaSharp 3 migration (1.5.0 line)]]></message>
+    </release>
+    <release>
       <date>2026-08-10</date>
       <version>1.4.0.6</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
@@ -74,36 +104,6 @@ Skill Farm configurable base SP, What's New dialog, Code Graph system]]></messag
       <message><![CDATA[EveLens 1.1.0-alpha.10
 
 Fix Queue Health not displaying all characters (#47)]]></message>
-    </release>
-    <release>
-      <date>2026-03-29</date>
-      <version>1.1.0.9</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.1.0-alpha.9
-
-Add Untrained filter button to Skills tab (#33)]]></message>
-    </release>
-    <release>
-      <date>2026-03-29</date>
-      <version>1.1.0.8</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.1.0-alpha.8
-
-Consistent skill counts: filter unpublished skills uniformly (#37, #33)]]></message>
-    </release>
-    <release>
-      <date>2026-03-29</date>
-      <version>1.1.0.7</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/alpha</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/alpha/EveLens-install-1.1.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.1.0-alpha.7
-
-Show full character names in Skill Comparison (#45)]]></message>
     </release>
   </releases>
   <datafiles>

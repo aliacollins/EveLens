@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:vm="using:EveLens.Avalonia.ViewModels"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanShipBrowserView">
     <Grid ColumnDefinitions="300,*">
         <!-- Left panel: Ship hierarchy as flat list with depth-based indentation -->
@@ -41,7 +42,7 @@
                                     Background="Transparent" BorderThickness="0"
                                     Padding="6,3" CornerRadius="0,12,12,0"
                                     IsVisible="False" Click="OnClearFilter" />
-                            <TextBox x:Name="FilterBox" Watermark="{loc:T ShipBrowser.SearchShips}"
+                            <TextBox x:Name="FilterBox" PlaceholderText="{loc:T ShipBrowser.SearchShips}"
                                      FontSize="{DynamicResource EveFontSmall}" Padding="8,4"
                                      Background="Transparent" BorderThickness="0"
                                      TextChanged="OnFilterChanged" />
@@ -63,7 +64,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="vm:BrowserTreeNodeDisplay">
                             <Panel>
                                 <!-- Category node: chevron + name + count, indented by depth -->
                                 <Border IsVisible="{Binding IsCategory}" Classes="group-header"
