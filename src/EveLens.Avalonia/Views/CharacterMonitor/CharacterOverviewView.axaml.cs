@@ -32,6 +32,7 @@ using EveLens.Common.ViewModels;
 using EveLens.Avalonia.Views.Dialogs;
 using EveLens.Core.Events;
 using EveLens.Avalonia.Services;
+using EveLens.Avalonia.Controls;
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
     public partial class CharacterOverviewView : UserControl
@@ -79,7 +80,23 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         private int _currentInsertIndex = -1;
         private string? _dragGroupName;
         private const double DragThreshold = 8.0;
-        private const double CardWidth = 308.0; // 300 + 8 margin
+
+        // How many cards fit per row at last layout — drives the dynamic choice
+        // between tiled groups and full-width rows; rebuilt when it changes on resize.
+        private int _layoutColumns;
+
+        // Card dimensions scale with the font factor so text never clips at large
+        // font sizes (Issue #72 — cards stayed 300px while fonts grew past 110%),
+        // and with the density setting (Compact fits ~40% more cards per screen).
+        private static bool IsCompact =>
+            Settings.UI.OverviewDensity == Common.Enumerations.UISettings.OverviewDensity.Compact;
+        private static double DensityFactor => IsCompact ? 0.78 : 1.0;
+        private static double CardBodyWidth => 300.0 * FontScaleService.Factor * DensityFactor;
+        private static double CardBodyMinHeight => 90.0 * FontScaleService.Factor * DensityFactor;
+        private static double CardWidth => CardBodyWidth + 8; // + margin
+
+        // Drag-to-group state (drop a card onto a card/folder to group — iOS style)
+        private Button? _groupDropTarget;
 
 
         public CharacterOverviewView()
@@ -104,7 +121,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 _ => Dispatcher.UIThread.Post(LoadData));
 
             _settingsChangedSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.SettingsChangedEvent>(
-                _ => Dispatcher.UIThread.Post(LoadData));
+                _ => Dispatcher.UIThread.Post(OnSettingsChangedReload));
 
             _fontScaleSub ??= AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
                 _ => Dispatcher.UIThread.Post(LoadData));
@@ -139,6 +156,21 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         /// </summary>
         public void RefreshView()
         {
+            LoadData();
+        }
+
+        // When a reorder was already applied in place (FLIP glide), our own
+        // SettingsChangedEvent must not trigger a full rebuild that would
+        // replace the gliding children mid-animation.
+        private bool _suppressNextSettingsReload;
+
+        private void OnSettingsChangedReload()
+        {
+            if (_suppressNextSettingsReload)
+            {
+                _suppressNextSettingsReload = false;
+                return;
+            }
             LoadData();
         }
 
@@ -178,6 +210,38 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 {
                     var assignedGuids = new HashSet<Guid>();
 
+                    // Dynamic layout (Issue #72, Agge65's ask): a group whose cards fit
+                    // in ONE row of the current window becomes a tile exactly as wide
+                    // as its cards, and tiles pack side by side — so "Cyno (2)" and
+                    // "PVP (3)" share a row on a 5-card-wide window. Groups wider than
+                    // the window get a classic full-width row with wrapping cards.
+                    // _layoutColumns is recomputed on resize (OnViewportSizeChanged).
+                    _layoutColumns = ComputeCardsPerRow();
+                    var sortMode = Settings.UI.OverviewSort;
+                    WrapPanel? tileFlow = null;
+
+                    void AddSection(string name, List<Character> chars)
+                    {
+                        if (sortMode != Common.Enumerations.UISettings.OverviewSortMode.Custom)
+                            chars = OverviewSortHelper.Sort(chars, sortMode);
+
+                        // Collapsed groups render as a single folder card, so they
+                        // always tile regardless of size.
+                        bool tiles = _collapsedGroups.Contains(name) || chars.Count <= _layoutColumns;
+                        if (tiles)
+                        {
+                            tileFlow ??= new AnimatedWrapPanel { Orientation = Orientation.Horizontal };
+                            if (!OverviewPanel.Children.Contains(tileFlow))
+                                OverviewPanel.Children.Add(tileFlow);
+                            BuildGroupSection(tileFlow, name, chars, ref cardIndex, asTile: true);
+                        }
+                        else
+                        {
+                            BuildGroupSection(OverviewPanel, name, chars, ref cardIndex, asTile: false);
+                            tileFlow = null; // next tile-able group starts a fresh row
+                        }
+                    }
+
                     foreach (var group in groups)
                     {
                         // Iterate CharacterGuids in order to respect user-defined ordering
@@ -193,24 +257,36 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                         foreach (var guid in group.CharacterGuids)
                             assignedGuids.Add(guid);
 
-                        BuildGroupSection(group.Name, groupChars, ref cardIndex);
+                        AddSection(group.Name, groupChars);
                     }
 
                     var ungrouped = characters.Where(c => !assignedGuids.Contains(c.Guid)).ToList();
                     if (ungrouped.Count > 0)
                     {
-                        ungrouped = SortByUngroupedOrder(ungrouped);
-                        BuildGroupSection("Ungrouped", ungrouped, ref cardIndex);
+                        if (sortMode == Common.Enumerations.UISettings.OverviewSortMode.Custom)
+                            ungrouped = SortByUngroupedOrder(ungrouped);
+                        AddSection("Ungrouped", ungrouped);
                     }
 
-                    // Ghost card after the last group
-                    var ghostWrap = new WrapPanel { Orientation = Orientation.Horizontal };
-                    ghostWrap.Children.Add(BuildGhostCard());
-                    OverviewPanel.Children.Add(ghostWrap);
+                    // Ghost "add character" card rides at the end of the last
+                    // group's cards instead of floating on a row of its own.
+                    var lastWrap = OverviewPanel.GetLogicalDescendants()
+                        .OfType<AnimatedWrapPanel>()
+                        .LastOrDefault(w => w.Tag is string && w.IsVisible);
+                    if (lastWrap != null)
+                        lastWrap.Children.Add(BuildGhostCard());
+                    else
+                    {
+                        var ghostWrap = new WrapPanel { Orientation = Orientation.Horizontal };
+                        ghostWrap.Children.Add(BuildGhostCard());
+                        OverviewPanel.Children.Add(ghostWrap);
+                    }
                 }
                 else
                 {
-                    characters = SortByUngroupedOrder(characters);
+                    characters = Settings.UI.OverviewSort == Common.Enumerations.UISettings.OverviewSortMode.Custom
+                        ? SortByUngroupedOrder(characters)
+                        : OverviewSortHelper.Sort(characters, Settings.UI.OverviewSort);
                     var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true, groupName: "Ungrouped");
                     OverviewPanel.Children.Add(wrap);
                 }
@@ -230,11 +306,70 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             }
             catch (Exception ex)
             {
+                // Trace, not Debug: a swallowed exception here silently truncates the
+                // overview (e.g. ungrouped characters missing) with zero evidence.
+                AppServices.TraceService?.Trace($"Overview load error: {ex}");
                 System.Diagnostics.Debug.WriteLine($"Overview load error: {ex}");
             }
         }
 
-        private void BuildGroupSection(string groupName, List<Character> characters, ref int cardIndex)
+        protected override void OnSizeChanged(SizeChangedEventArgs e)
+        {
+            base.OnSizeChanged(e);
+
+            // Re-evaluate tile-vs-row decisions when the window crosses a column
+            // boundary — a group that fit in one row may not anymore (Issue #72).
+            // Debounced so a resize drag doesn't rebuild on every pixel.
+            if (_isDragging || _dragPending || Settings.CharacterGroups.Count == 0)
+                return;
+            if (ComputeCardsPerRow() == _layoutColumns)
+                return;
+
+            _resizeRelayoutTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _resizeRelayoutTimer.Stop();
+            _resizeRelayoutTimer.Tick -= OnResizeRelayoutTick;
+            _resizeRelayoutTimer.Tick += OnResizeRelayoutTick;
+            _resizeRelayoutTimer.Start();
+        }
+
+        private void OnResizeRelayoutTick(object? sender, EventArgs e)
+        {
+            _resizeRelayoutTimer?.Stop();
+            if (!_isDragging && !_dragPending && ComputeCardsPerRow() != _layoutColumns)
+                LoadData();
+        }
+
+        private DispatcherTimer? _resizeRelayoutTimer;
+
+        /// <summary>
+        /// Cards that fit in one row at the current viewport width (minimum 1).
+        /// Falls back to 4 before first layout, when Bounds isn't measured yet.
+        /// </summary>
+        private int ComputeCardsPerRow()
+        {
+            double w = OverviewScroller?.Bounds.Width ?? 0;
+            if (w <= 0) w = Bounds.Width;
+            if (w <= 0) return 4;
+            return Math.Max(1, (int)(w / CardWidth));
+        }
+
+        /// <summary>
+        /// Aggregate line for a group header / folder card: total SP, ISK, and how
+        /// many members are actively training. Privacy mode masks the numbers.
+        /// </summary>
+        private static string FormatGroupStats(List<Character> characters)
+        {
+            int training = characters.Count(c => c.IsTraining);
+            string sp = PrivacyHelper.IsSkillPointsHidden
+                ? PrivacyHelper.Mask
+                : FormatHelper.Format(characters.Sum(c => c.SkillPoints), AbbreviationFormat.AbbreviationSymbols);
+            string isk = PrivacyHelper.IsBalanceHidden
+                ? PrivacyHelper.Mask
+                : FormatHelper.Format(characters.Sum(c => c.Balance), AbbreviationFormat.AbbreviationSymbols);
+            return $"{sp} SP · {isk} ISK · {training} {Loc.Get("Overview.Training")}";
+        }
+
+        private void BuildGroupSection(Panel host, string groupName, List<Character> characters, ref int cardIndex, bool asTile)
         {
             bool isCollapsed = _collapsedGroups.Contains(groupName);
 
@@ -269,12 +404,14 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 [DockPanel.DockProperty] = Dock.Left
             };
 
-            var line = new Border
+            var stats = new TextBlock
             {
-                Height = 1,
-                Background = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                Opacity = 0.3,
-                VerticalAlignment = VerticalAlignment.Center
+                Text = FormatGroupStats(characters),
+                FontSize = FontScaleService.Caption,
+                Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0),
+                [DockPanel.DockProperty] = Dock.Right
             };
 
             var divider = new DockPanel
@@ -286,33 +423,155 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             divider.Children.Add(chevron);
             divider.Children.Add(label);
             divider.Children.Add(count);
-            divider.Children.Add(line);
+            divider.Children.Add(stats);
 
             var wrap = BuildCardWrapPanel(characters, ref cardIndex, groupName: groupName);
             wrap.IsVisible = !isCollapsed;
 
-            // Click header to toggle collapse
-            divider.PointerPressed += (_, _) =>
+            // Collapsing changes the group's layout CLASS (full row <-> one-card
+            // chip), so the toggle must relayout. The toggle is DEFERRED ~260ms so a
+            // double-click (inline rename) can cancel it — otherwise click #1's
+            // rebuild destroys the header before click #2 lands.
+            bool isRealGroup = groupName != "Ungrouped";
+            DispatcherTimer? pendingToggle = null;
+            divider.PointerPressed += (_, e) =>
             {
-                wrap.IsVisible = !wrap.IsVisible;
-                chevron.Text = wrap.IsVisible ? "\u25BC" : "\u25B6";
+                if (!e.GetCurrentPoint(divider).Properties.IsLeftButtonPressed)
+                    return; // right-click belongs to the context menu
 
-                if (wrap.IsVisible)
-                    _collapsedGroups.Remove(groupName);
-                else
-                    _collapsedGroups.Add(groupName);
+                if (isRealGroup && e.ClickCount >= 2)
+                {
+                    pendingToggle?.Stop();
+                    StartHeaderRename(divider, label, groupName);
+                    return;
+                }
 
-                CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
+                pendingToggle = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(260) };
+                pendingToggle.Tick += (_, _) =>
+                {
+                    pendingToggle.Stop();
+                    if (!_collapsedGroups.Remove(groupName))
+                        _collapsedGroups.Add(groupName);
+                    CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
+                    LoadData();
+                };
+                pendingToggle.Start();
             };
 
-            OverviewPanel.Children.Add(divider);
-            OverviewPanel.Children.Add(wrap);
+            if (isRealGroup)
+            {
+                // Discoverability: the context menu is the teachable surface — every
+                // gesture has a visible menu equivalent (Manage Groups dialog retired).
+                ToolTip.SetTip(divider, Loc.Get("Overview.HeaderTip"));
+                var menu = new ContextMenu();
+                var rename = new MenuItem { Header = Loc.Get("Overview.MenuRename") };
+                rename.Click += (_, _) => StartHeaderRename(divider, label, groupName);
+                var moveLeft = new MenuItem { Header = Loc.Get("Overview.MenuMoveLeft") };
+                moveLeft.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.MoveGroup(g, groupName, -1));
+                var moveRight = new MenuItem { Header = Loc.Get("Overview.MenuMoveRight") };
+                moveRight.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.MoveGroup(g, groupName, +1));
+                var delete = new MenuItem { Header = Loc.Get("Overview.MenuDeleteGroup") };
+                delete.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.DeleteGroup(g, groupName));
+                menu.Items.Add(rename);
+                menu.Items.Add(moveLeft);
+                menu.Items.Add(moveRight);
+                menu.Items.Add(new Separator());
+                menu.Items.Add(delete);
+                divider.ContextMenu = menu;
+            }
+
+            // A tile is exactly as wide as its cards (they fit in one row by the
+            // caller's check), so tiles pack side by side with no orphan holes;
+            // full-width sections stretch and let their cards wrap.
+            var section = new StackPanel
+            {
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(0, 0, 12, 8)
+            };
+            if (asTile)
+                section.Width = CardWidth * (isCollapsed ? 1 : characters.Count) + 8;
+            section.Children.Add(divider);
+            section.Children.Add(wrap);
+            host.Children.Add(section);
+        }
+
+        /// <summary>
+        /// Runs a group mutation; persists and refreshes only when it changed something.
+        /// </summary>
+        private void MutateGroups(Func<IList<CharacterGroupSettings>, bool> mutation)
+        {
+            if (!mutation(Settings.CharacterGroups))
+                return;
+            Settings.Save();
+            AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
+        }
+
+        /// <summary>
+        /// Inline rename: swaps the header label for a TextBox. Enter/focus-loss
+        /// commits, Escape cancels; duplicate or blank names are rejected in place.
+        /// </summary>
+        private void StartHeaderRename(DockPanel divider, TextBlock label, string groupName)
+        {
+            if (divider.Children.OfType<TextBox>().Any())
+                return; // already editing
+
+            var editor = new TextBox
+            {
+                Text = groupName,
+                FontSize = FontScaleService.Body,
+                Padding = new Thickness(6, 1),
+                MinWidth = 120,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0),
+                [DockPanel.DockProperty] = Dock.Left
+            };
+
+            label.IsVisible = false;
+            divider.Children.Insert(divider.Children.IndexOf(label), editor);
+
+            bool done = false;
+            void Finish(bool commit)
+            {
+                if (done) return;
+                done = true;
+
+                string newName = editor.Text?.Trim() ?? string.Empty;
+                if (commit && newName.Length > 0 && newName != groupName)
+                {
+                    bool renamed = false;
+                    MutateGroups(g =>
+                    {
+                        renamed = CharacterGroupMutator.RenameGroup(g, groupName, newName);
+                        if (renamed && _collapsedGroups.Remove(groupName))
+                        {
+                            // Collapse state is keyed by name — follow the rename
+                            _collapsedGroups.Add(newName);
+                            CollapseStateHelper.SaveExpandState(0, OverviewCollapseKey, _collapsedGroups);
+                        }
+                        return renamed;
+                    });
+                    if (renamed) return; // MutateGroups already triggered the rebuild
+                }
+
+                divider.Children.Remove(editor);
+                label.IsVisible = true;
+            }
+
+            editor.KeyDown += (_, args) =>
+            {
+                if (args.Key == Key.Enter) Finish(commit: true);
+                else if (args.Key == Key.Escape) Finish(commit: false);
+            };
+            editor.LostFocus += (_, _) => Finish(commit: true);
+
+            editor.SelectAll();
+            editor.Focus();
         }
 
         private WrapPanel BuildCardWrapPanel(List<Character> characters, ref int cardIndex,
             bool includeGhostCard = false, string? groupName = null)
         {
-            var wrap = new WrapPanel { Orientation = Orientation.Horizontal, Tag = groupName };
+            var wrap = new AnimatedWrapPanel { Orientation = Orientation.Horizontal, Tag = groupName };
 
             foreach (var character in characters)
             {
@@ -370,8 +629,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             var cardBorder = new Border
             {
                 Padding = new Thickness(12, 14),
-                Width = 300,
-                MinHeight = 90,
+                Width = CardBodyWidth,
+                MinHeight = CardBodyMinHeight,
                 Child = content,
                 BorderThickness = new Thickness(1),
                 BorderBrush = FindBrush("EveTextDisabledBrush", Brushes.Gray),
@@ -576,9 +835,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             infoPanel.Children.Add(spText);
 
-            // Location + Ship line
-            string locationName = character.LastKnownSolarSystem?.Name ?? "";
-            string shipType = character.ShipTypeName ?? "";
+            // Location + Ship line (dropped in Compact density — essentials only)
+            string locationName = IsCompact ? "" : character.LastKnownSolarSystem?.Name ?? "";
+            string shipType = IsCompact ? "" : character.ShipTypeName ?? "";
             if (!string.IsNullOrEmpty(locationName) || !string.IsNullOrEmpty(shipType))
             {
                 string locShipText = !string.IsNullOrEmpty(locationName) && !string.IsNullOrEmpty(shipType)
@@ -723,8 +982,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             var cardBorder = new Border
             {
-                Width = 300,
-                MinHeight = 90,
+                Width = CardBodyWidth,
+                MinHeight = CardBodyMinHeight,
                 Child = cardContent
             };
             cardBorder.Classes.Add("card");
@@ -1230,15 +1489,14 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private IEnumerable<Button> GetAllCardButtons()
         {
-            foreach (var child in OverviewPanel.Children)
+            // Logical descendants, not direct children — card WrapPanels sit inside
+            // group-section tiles in grouped mode (Issue #72 multi-column layout).
+            foreach (var wrap in OverviewPanel.GetLogicalDescendants().OfType<WrapPanel>())
             {
-                if (child is WrapPanel wrap)
+                foreach (var item in wrap.Children)
                 {
-                    foreach (var item in wrap.Children)
-                    {
-                        if (item is Button btn && btn.DataContext is Character)
-                            yield return btn;
-                    }
+                    if (item is Button btn && btn.DataContext is Character)
+                        yield return btn;
                 }
             }
         }
@@ -1397,49 +1655,127 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             };
             _reorderToggleBtn.Click += OnReorderToggle;
 
-            var manageGroupsBtn = new Button
+            var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+            if (_reorderMode)
             {
-                Content = "Manage Groups",
+                // Teach the full gesture set while the mode where they work is active
+                toolbar.Children.Add(new TextBlock
+                {
+                    Text = Loc.Get("Overview.ReorderHint"),
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    FontStyle = FontStyle.Italic,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                });
+            }
+
+            // Manual reorder only makes sense when the user owns the order
+            var sortMode = Settings.UI.OverviewSort;
+            bool customOrder = sortMode == Common.Enumerations.UISettings.OverviewSortMode.Custom;
+            _reorderToggleBtn.IsEnabled = customOrder;
+            if (!customOrder)
+                ToolTip.SetTip(_reorderToggleBtn, Loc.Get("Overview.ReorderNeedsCustom"));
+
+            // Sort mode dropdown (Issue #72 rework / Discussion #46)
+            var sortCombo = new ComboBox
+            {
+                FontSize = FontScaleService.Small,
+                Padding = new Thickness(10, 3),
+                CornerRadius = new CornerRadius(12),
+                Margin = new Thickness(0, 0, 6, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                ItemsSource = new[]
+                {
+                    Loc.Get("Overview.SortCustom"),
+                    Loc.Get("Overview.SortName"),
+                    Loc.Get("Overview.SortSP"),
+                    Loc.Get("Overview.SortTraining")
+                },
+                SelectedIndex = (int)sortMode
+            };
+            sortCombo.SelectionChanged += (_, _) =>
+            {
+                var chosen = (Common.Enumerations.UISettings.OverviewSortMode)Math.Max(0, sortCombo.SelectedIndex);
+                if (chosen == Settings.UI.OverviewSort) return;
+                Settings.UI.OverviewSort = chosen;
+                Settings.Save();
+                LoadData();
+            };
+
+            // Density toggle: Comfortable <-> Compact
+            var densityBtn = new Button
+            {
+                Content = IsCompact ? Loc.Get("Overview.DensityComfortable") : Loc.Get("Overview.DensityCompact"),
                 FontSize = FontScaleService.Small,
                 Padding = new Thickness(10, 3),
                 CornerRadius = new CornerRadius(12),
                 Background = Brushes.Transparent,
                 Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
-                HorizontalAlignment = HorizontalAlignment.Right,
                 Margin = new Thickness(0, 0, 6, 0),
                 Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand)
             };
-            manageGroupsBtn.Click += OnManageGroupsClick;
-
-            var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
-            if (_reorderMode)
+            densityBtn.Click += (_, _) =>
             {
-                toolbar.Children.Add(new TextBlock
-                {
-                    Text = "Drag cards to reorder, then click Done",
-                    FontSize = FontScaleService.Small,
-                    Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                    VerticalAlignment = VerticalAlignment.Center,
-                    FontStyle = FontStyle.Italic
-                });
-            }
+                Settings.UI.OverviewDensity = IsCompact
+                    ? Common.Enumerations.UISettings.OverviewDensity.Comfortable
+                    : Common.Enumerations.UISettings.OverviewDensity.Compact;
+                Settings.Save();
+                LoadData();
+            };
 
             var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            btnPanel.Children.Add(manageGroupsBtn);
+            btnPanel.Children.Add(sortCombo);
+            btnPanel.Children.Add(densityBtn);
             btnPanel.Children.Add(_reorderToggleBtn);
             DockPanel.SetDock(btnPanel, Dock.Right);
             toolbar.Children.Insert(0, btnPanel);
 
             OverviewPanel.Children.Add(toolbar);
-        }
 
-        private void OnManageGroupsClick(object? sender, RoutedEventArgs e)
-        {
-            var mainWindow = this.FindAncestorOfType<MainWindow>();
-            if (mainWindow == null) return;
-
-            var dialog = new ManageGroupsWindow { };
-            dialog.ShowDialog(mainWindow);
+            // One-time gesture tip (ConfirmedTips-backed): bridges the gap between
+            // invisible gestures and discoverability. "Got it" dismisses forever;
+            // header tooltips remain as the standing reminder.
+            const string gestureTipId = "overview-gestures";
+            if (!Settings.UI.ConfirmedTips.Contains(gestureTipId))
+            {
+                var tipText = new TextBlock
+                {
+                    Text = Loc.Get("Overview.GestureTip"),
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap
+                };
+                var gotIt = new Button
+                {
+                    Content = Loc.Get("Overview.GotIt"),
+                    FontSize = FontScaleService.Small,
+                    Padding = new Thickness(10, 2),
+                    CornerRadius = new CornerRadius(10),
+                    Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
+                    [DockPanel.DockProperty] = Dock.Right,
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+                var tipRow = new DockPanel();
+                tipRow.Children.Add(gotIt);
+                tipRow.Children.Add(tipText);
+                var tipBar = new Border
+                {
+                    Background = FindBrush("EveBackgroundMediumBrush", Brushes.DimGray),
+                    CornerRadius = new CornerRadius(6),
+                    Padding = new Thickness(10, 6),
+                    Margin = new Thickness(0, 0, 0, 6),
+                    Child = tipRow
+                };
+                gotIt.Click += (_, _) =>
+                {
+                    Settings.UI.ConfirmedTips.Add(gestureTipId);
+                    Settings.Save();
+                    OverviewPanel.Children.Remove(tipBar);
+                };
+                OverviewPanel.Children.Add(tipBar);
+            }
         }
 
         private void OnReorderToggle(object? sender, RoutedEventArgs e)
@@ -1534,9 +1870,11 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             _isDragging = true;
 
-            // Ghost the dragged card — smooth fade out
+            // Ghost the dragged card — smooth fade out. Tag it so the FLIP panel
+            // leaves its transform alone while the drag owns it.
             if (_draggedCard != null)
             {
+                _draggedCard.Tag = "drag-owned";
                 _draggedCard.Opacity = 0.2;
                 _draggedCard.RenderTransform = global::Avalonia.Media.Transformation.TransformOperations.Parse("scale(0.95)");
             }
@@ -1552,12 +1890,26 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 Padding = new Thickness(14, 8),
                 IsHitTestVisible = false,
                 BoxShadow = new BoxShadows(new BoxShadow { Blur = 12, Color = Color.Parse("#60000000") }),
-                Child = new TextBlock
+                Child = new StackPanel
                 {
-                    Text = label,
-                    FontSize = FontScaleService.Body,
-                    Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
-                    FontWeight = FontWeight.SemiBold,
+                    Spacing = 2,
+                    Children =
+                    {
+                        new TextBlock
+                        {
+                            Text = label,
+                            FontSize = FontScaleService.Body,
+                            Foreground = FindBrush("EveAccentPrimaryBrush", Brushes.Gold),
+                            FontWeight = FontWeight.SemiBold,
+                        },
+                        // Live coaching: the ghost itself says what a drop will do
+                        new TextBlock
+                        {
+                            Text = Loc.Get("Overview.DragHint"),
+                            FontSize = FontScaleService.Tiny,
+                            Foreground = FindBrush("EveTextSecondaryBrush", Brushes.Gray),
+                        }
+                    }
                 },
             };
 
@@ -1570,7 +1922,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _insertIndicator = new Border
             {
                 Width = 3,
-                Height = 90,
+                Height = CardBodyMinHeight,
                 Background = new SolidColorBrush(Color.Parse("#4A94F0")),
                 CornerRadius = new CornerRadius(2),
                 IsHitTestVisible = false,
@@ -1613,6 +1965,18 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     double maxScroll = OverviewScroller.Extent.Height - viewportHeight;
                     OverviewScroller.Offset = new Vector(0, Math.Min(maxScroll, OverviewScroller.Offset.Y + speed));
                 }
+
+                // Grouping intent (iOS folder gesture): hovering the CENTER of another
+                // card or a folder means "group these", not "insert here".
+                var groupTarget = HitTestGroupTarget(viewPos);
+                if (groupTarget != null)
+                {
+                    SetGroupTargetVisual(groupTarget);
+                    if (_insertIndicator != null) _insertIndicator.IsVisible = false;
+                    _currentInsertIndex = -1;
+                    return;
+                }
+                SetGroupTargetVisual(null);
 
                 // Calculate insert position within the source WrapPanel
                 var panelPos = e.GetPosition(_dragSourcePanel);
@@ -1658,8 +2022,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     _draggedCard.RenderTransform = null;
                 }
 
-                // Perform the reorder if we have a valid drop position
-                if (_currentInsertIndex >= 0 && _dragSourcePanel != null && _dragStartIndex >= 0)
+                // Dropped onto a card or folder: group them (iOS folder gesture)
+                if (_groupDropTarget != null)
+                {
+                    PerformGroupDrop();
+                }
+                // Otherwise perform the reorder if we have a valid drop position
+                else if (_currentInsertIndex >= 0 && _dragSourcePanel != null && _dragStartIndex >= 0)
                 {
                     int fromIndex = _dragStartIndex;
                     int toIndex = _currentInsertIndex;
@@ -1713,6 +2082,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private void ResetDragState()
         {
+            SetGroupTargetVisual(null);
+            if (_draggedCard?.Tag as string == "drag-owned")
+                _draggedCard.Tag = null;
             _isDragging = false;
             _dragPending = false;
             _draggedCard = null;
@@ -1720,6 +2092,113 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _dragStartIndex = -1;
             _currentInsertIndex = -1;
             _dragGroupName = null;
+        }
+
+        /// <summary>
+        /// Finds a card or folder whose CENTER zone the pointer is over — the
+        /// "drop to group" target. Edges stay reserved for insertion/reorder.
+        /// </summary>
+        private Button? HitTestGroupTarget(Point scrollerPos)
+        {
+            foreach (var btn in GetAllGroupableTargets())
+            {
+                if (btn == _draggedCard) continue;
+
+                var topLeft = btn.TranslatePoint(new Point(0, 0), OverviewScroller);
+                if (topLeft == null) continue;
+
+                var b = btn.Bounds;
+                // Central zone: inset 22% horizontally, 25% vertically
+                double ix = b.Width * 0.22, iy = b.Height * 0.25;
+                var zone = new Rect(topLeft.Value.X + ix, topLeft.Value.Y + iy,
+                    b.Width - 2 * ix, b.Height - 2 * iy);
+                if (zone.Contains(scrollerPos))
+                    return btn;
+            }
+            return null;
+        }
+
+        private IEnumerable<Button> GetAllGroupableTargets()
+        {
+            foreach (var btn in OverviewPanel.GetLogicalDescendants().OfType<Button>())
+            {
+                if (btn.DataContext is Character)
+                    yield return btn;
+                else if (btn.Tag as string == "FolderCard")
+                    yield return btn;
+            }
+        }
+
+        /// <summary>Swells the group-drop target with a gold cue; null clears it.</summary>
+        private void SetGroupTargetVisual(Button? target)
+        {
+            if (_groupDropTarget == target) return;
+
+            if (_groupDropTarget != null)
+            {
+                _groupDropTarget.RenderTransform =
+                    global::Avalonia.Media.Transformation.TransformOperations.Parse("scale(1, 1)");
+                _groupDropTarget.Opacity = 1.0;
+            }
+
+            _groupDropTarget = target;
+
+            if (target != null)
+            {
+                target.Transitions ??= new global::Avalonia.Animation.Transitions
+                {
+                    new global::Avalonia.Animation.TransformOperationsTransition
+                    {
+                        Property = RenderTransformProperty,
+                        Duration = TimeSpan.FromMilliseconds(140),
+                        Easing = new QuadraticEaseOut()
+                    }
+                };
+                target.RenderTransform =
+                    global::Avalonia.Media.Transformation.TransformOperations.Parse("scale(1.06, 1.06)");
+            }
+        }
+
+        /// <summary>
+        /// Commits the group gesture: dropping on a folder or a grouped character
+        /// joins that group; dropping on an ungrouped character creates a new group
+        /// of the two. Mutations live in CharacterGroupMutator (tested).
+        /// </summary>
+        private void PerformGroupDrop()
+        {
+            if (_draggedCard?.DataContext is not Character dragged || _groupDropTarget == null)
+                return;
+
+            bool changed = false;
+            if (_groupDropTarget.Tag as string == "FolderCard" &&
+                _groupDropTarget.DataContext is string folderName)
+            {
+                changed = CharacterGroupMutator.AddToGroup(
+                    Settings.CharacterGroups, folderName, dragged.Guid);
+            }
+            else if (_groupDropTarget.DataContext is Character target &&
+                     target.Guid != dragged.Guid)
+            {
+                var targetGroup = Settings.CharacterGroups
+                    .FirstOrDefault(g => g.CharacterGuids.Contains(target.Guid));
+                if (targetGroup != null)
+                {
+                    changed = CharacterGroupMutator.AddToGroup(
+                        Settings.CharacterGroups, targetGroup.Name, dragged.Guid);
+                }
+                else
+                {
+                    CharacterGroupMutator.CreateGroup(
+                        Settings.CharacterGroups, new[] { target.Guid, dragged.Guid });
+                    changed = true;
+                }
+            }
+
+            SetGroupTargetVisual(null);
+            if (!changed) return;
+
+            Settings.Save();
+            AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
         }
 
         private int CalculateInsertIndex(WrapPanel panel, Point posInPanel)
@@ -1821,7 +2300,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 return;
             }
 
-            _insertIndicator.Height = 90;
+            _insertIndicator.Height = CardBodyMinHeight;
             Canvas.SetLeft(_insertIndicator, indicatorPos.X - 1);
             Canvas.SetTop(_insertIndicator, indicatorPos.Y);
             _insertIndicator.IsVisible = true;
@@ -1860,9 +2339,40 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 guids.Insert(toIndex, movedGuid);
             }
 
+            // Glide the card to its new slot in place (FLIP) instead of rebuilding —
+            // this is what makes reordering feel physical rather than a page refresh.
+            MoveCardChildInPanel(_dragSourcePanel, fromIndex, toIndex);
+            _suppressNextSettingsReload = true;
+
             // Persist and notify
             Settings.Save();
             AppServices.EventAggregator?.Publish(Common.Events.SettingsChangedEvent.Instance);
+        }
+
+        /// <summary>
+        /// Physically moves a character card between card slots in its panel, mapping
+        /// card indexes (character cards only) to child indexes (ghost card included).
+        /// The AnimatedWrapPanel glides every affected card to its new position.
+        /// </summary>
+        private static void MoveCardChildInPanel(WrapPanel panel, int fromCardIndex, int toCardIndex)
+        {
+            var cardChildIndexes = new List<int>();
+            for (int i = 0; i < panel.Children.Count; i++)
+            {
+                if (panel.Children[i] is Button btn && btn.DataContext is Character)
+                    cardChildIndexes.Add(i);
+            }
+
+            if (fromCardIndex >= cardChildIndexes.Count || toCardIndex >= cardChildIndexes.Count)
+                return;
+
+            int fromChild = cardChildIndexes[fromCardIndex];
+            int toChild = cardChildIndexes[toCardIndex];
+            if (fromChild == toChild) return;
+
+            var child = panel.Children[fromChild];
+            panel.Children.RemoveAt(fromChild);
+            panel.Children.Insert(toChild, child);
         }
 
         private static List<Character> GetCharactersFromPanel(WrapPanel panel)

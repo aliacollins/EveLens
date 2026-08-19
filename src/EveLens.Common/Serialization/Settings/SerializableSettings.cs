@@ -147,5 +147,9 @@ namespace EveLens.Common.Serialization.Settings
         [XmlArray("globalPlanTemplates")]
         [XmlArrayItem("template")]
         public List<GlobalPlanTemplate> GlobalPlanTemplates => m_globalPlanTemplates;
+
+        [XmlArray("savedComparisons")]
+        [XmlArrayItem("comparison")]
+        public List<SavedComparisonSettings> SavedComparisons { get; set; } = new();
     }
 }

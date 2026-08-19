@@ -28,6 +28,12 @@
                 CornerRadius="6" Margin="0,0,0,4">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="SaveSetBtn" Content="{loc:T CharCompare.SaveSet}"
+                            FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                            Click="OnSaveSetClick" />
+                    <Button x:Name="LoadSetBtn" Content="{loc:T CharCompare.LoadSet}"
+                            FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
+                            Click="OnLoadSetClick" />
                     <ToggleButton x:Name="DifferencesToggle" Content="{loc:T CharCompare.DifferencesOnly}"
                                   FontSize="{DynamicResource EveFontSmall}" Padding="8,3" CornerRadius="10"
                                   Click="OnDifferencesToggled" />
@@ -52,6 +58,13 @@
                 </Border>
             </DockPanel>
         </Border>
+
+        <!-- Frozen header row (Discussion #93) — outside the vertical scroller so it
+             stays put like a spreadsheet freeze; horizontal offset is synced in
+             code-behind with the comparison scroller below. -->
+        <ScrollViewer x:Name="HeaderScroller" DockPanel.Dock="Top" IsVisible="False"
+                      HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollBarVisibility="Disabled" />
 
         <!-- Status bar (bottom) -->
         <Border DockPanel.Dock="Bottom" Padding="10,5"
