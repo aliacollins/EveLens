@@ -60,11 +60,25 @@ namespace EveLens.Common.Services
                 parts[2].Trim());
         }
 
+        // Single-flight: concurrent requests for the same resource share one download
+        private static readonly Dictionary<string, Task<string>> s_inFlight = new();
+        private static readonly object s_inFlightLock = new();
+
+        /// <summary>Soft cap for the local cache; oldest files pruned past this.</summary>
+        public const long CacheSoftLimitBytes = 2L * 1024 * 1024 * 1024; // 2 GB
+
         /// <summary>
         /// Downloads (or serves from cache) the resource behind a <c>res:/</c> path.
         /// Returns the local file path, or null when the path isn't in the index or
-        /// the download failed. Cache is content-addressed by CCP's md5, so a file
-        /// that changed upstream is re-fetched automatically.
+        /// the download failed after retries.
+        ///
+        /// Reliability contract:
+        ///  - cache is content-addressed by CCP's own md5 — an upstream change is a
+        ///    different filename, never an overwrite of good data
+        ///  - downloads land in a .part temp file, are MD5-VERIFIED against the index,
+        ///    then atomically moved — a torn download can never enter the cache
+        ///  - transient failures retry twice with backoff
+        ///  - concurrent callers for the same resource share a single download
         /// </summary>
         /// <param name="resPath">The game resource path (res:/…).</param>
         /// <param name="progress">
@@ -72,16 +86,35 @@ namespace EveLens.Common.Services
         /// "Downloading hull… 42%" readout. Reports 1.0 on cache hits immediately.
         /// </param>
         /// <param name="ct">Cancellation.</param>
-        public static async Task<string> GetResourceAsync(
+        public static Task<string> GetResourceAsync(
             string resPath, IProgress<double> progress = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(resPath))
-                return null;
+                return Task.FromResult<string>(null);
 
+            string key = resPath.Trim().ToLowerInvariant();
+            lock (s_inFlightLock)
+            {
+                if (s_inFlight.TryGetValue(key, out var running))
+                    return running;
+
+                var task = FetchCoreAsync(key, progress, ct);
+                s_inFlight[key] = task;
+                _ = task.ContinueWith(_ =>
+                {
+                    lock (s_inFlightLock) s_inFlight.Remove(key);
+                }, TaskScheduler.Default);
+                return task;
+            }
+        }
+
+        private static async Task<string> FetchCoreAsync(
+            string resPath, IProgress<double> progress, CancellationToken ct)
+        {
             try
             {
                 var index = await GetIndexAsync(ct).ConfigureAwait(false);
-                if (index == null || !index.TryGetValue(resPath.Trim().ToLowerInvariant(), out var entry))
+                if (index == null || !index.TryGetValue(resPath, out var entry))
                     return null;
 
                 string local = Path.Combine(CacheDirectory, entry.Md5 + Path.GetExtension(entry.ResPath));
@@ -92,42 +125,118 @@ namespace EveLens.Common.Services
                 }
 
                 Directory.CreateDirectory(CacheDirectory);
+                CleanupPartFiles();
 
-                using var response = await s_http.GetAsync(
-                    $"{ResourcesRoot}/{entry.CdnPath}",
-                    HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
-                response.EnsureSuccessStatusCode();
-
-                long? total = response.Content.Headers.ContentLength;
-                string tempFile = local + ".part";
-                long written = 0;
-
-                await using (var source = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
-                await using (var target = File.Create(tempFile))
+                for (int attempt = 1; attempt <= 3; attempt++)
                 {
-                    var buffer = new byte[81920];
-                    int read;
-                    while ((read = await source.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
+                    try
                     {
-                        await target.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
-                        written += read;
-                        if (total > 0)
-                            progress?.Report(Math.Min(1.0, (double)written / total.Value));
+                        await DownloadVerifiedAsync(entry, local, progress, ct).ConfigureAwait(false);
+                        PruneCacheIfNeeded();
+                        return local;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex) when (attempt < 3)
+                    {
+                        AppServices.TraceService?.Trace(
+                            $"EveResource: attempt {attempt} failed for {entry.ResPath}: {ex.Message} — retrying");
+                        await Task.Delay(TimeSpan.FromSeconds(attempt * 2), ct).ConfigureAwait(false);
                     }
                 }
-
-                File.Move(tempFile, local, overwrite: true);
-                progress?.Report(1.0);
-
-                AppServices.TraceService?.Trace(
-                    $"EveResource: fetched {entry.ResPath} ({written:N0} bytes)");
-                return local;
+                return null; // all retries threw; the final throw was swallowed by the filter above
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
             }
             catch (Exception ex)
             {
                 AppServices.TraceService?.Trace($"EveResource: fetch failed for {resPath}: {ex.Message}");
                 return null;
             }
+        }
+
+        private static async Task DownloadVerifiedAsync(
+            ResFileEntry entry, string local, IProgress<double> progress, CancellationToken ct)
+        {
+            using var response = await s_http.GetAsync(
+                $"{ResourcesRoot}/{entry.CdnPath}",
+                HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            long? total = response.Content.Headers.ContentLength;
+            string tempFile = local + ".part";
+            long written = 0;
+
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            await using (var source = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
+            await using (var target = File.Create(tempFile))
+            {
+                var buffer = new byte[81920];
+                int read;
+                while ((read = await source.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
+                {
+                    md5.TransformBlock(buffer, 0, read, null, 0);
+                    await target.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+                    written += read;
+                    if (total > 0)
+                        progress?.Report(Math.Min(1.0, (double)written / total.Value));
+                }
+                md5.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+            }
+
+            string actualMd5 = Convert.ToHexString(md5.Hash!).ToLowerInvariant();
+            if (!string.Equals(actualMd5, entry.Md5, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(tempFile);
+                throw new InvalidDataException(
+                    $"MD5 mismatch for {entry.ResPath}: expected {entry.Md5}, got {actualMd5}");
+            }
+
+            File.Move(tempFile, local, overwrite: true);
+            progress?.Report(1.0);
+            AppServices.TraceService?.Trace(
+                $"EveResource: fetched + verified {entry.ResPath} ({written:N0} bytes)");
+        }
+
+        /// <summary>Removes torn .part files from crashed/cancelled downloads.</summary>
+        private static void CleanupPartFiles()
+        {
+            try
+            {
+                foreach (var part in Directory.EnumerateFiles(CacheDirectory, "*.part"))
+                {
+                    // Only reap parts old enough that no live download can own them
+                    if (DateTime.UtcNow - File.GetLastWriteTimeUtc(part) > TimeSpan.FromHours(1))
+                        File.Delete(part);
+                }
+            }
+            catch { /* cache hygiene must never break a fetch */ }
+        }
+
+        /// <summary>Oldest-first prune when the cache exceeds the soft limit.</summary>
+        private static void PruneCacheIfNeeded()
+        {
+            try
+            {
+                var files = new DirectoryInfo(CacheDirectory).GetFiles();
+                long totalSize = files.Sum(f => f.Length);
+                if (totalSize <= CacheSoftLimitBytes)
+                    return;
+
+                foreach (var file in files.OrderBy(f => f.LastAccessTimeUtc))
+                {
+                    try { totalSize -= file.Length; file.Delete(); }
+                    catch { /* file in use — skip */ }
+                    if (totalSize <= CacheSoftLimitBytes * 9 / 10)
+                        break;
+                }
+                AppServices.TraceService?.Trace("EveResource: cache pruned to soft limit");
+            }
+            catch { /* cache hygiene must never break a fetch */ }
         }
 
         /// <summary>
