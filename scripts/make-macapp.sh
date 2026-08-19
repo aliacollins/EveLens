@@ -28,9 +28,9 @@ cat > "$APP_DIR/Contents/Info.plist" << 'PLIST'
   <key>CFBundleIdentifier</key>
   <string>dev.evelens.app</string>
   <key>CFBundleVersion</key>
-  <string>1.3.0-beta.5</string>
+  <string>1.5.0-alpha.1</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.3.0-beta.5</string>
+  <string>1.5.0-alpha.1</string>
   <key>CFBundleExecutable</key>
   <string>EveLens</string>
   <key>CFBundleIconFile</key>
@@ -45,6 +45,6 @@ PLIST
 
 # Zip with Unix permissions preserved (use cd to get clean paths)
 cd /tmp
-zip -r -y "/mnt/d/evemon-main/releases/EveLens-beta-osx-arm64.app.zip" EveLens.app
+zip -r -y "/mnt/d/evemon-main/releases/EveLens-alpha-osx-arm64.app.zip" EveLens.app
 rm -rf "$APP_DIR"
 echo "=== macOS .app bundle created ==="
