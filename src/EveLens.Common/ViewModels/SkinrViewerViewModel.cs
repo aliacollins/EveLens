@@ -20,7 +20,7 @@ namespace EveLens.Common.ViewModels
     /// SKINR license inventory, and resolves individual design recipes. The 3D render
     /// pane consumes <see cref="SelectedRecipe"/> — this VM knows nothing about Trinity.
     /// </summary>
-    public sealed class SkinrViewerViewModel : IDisposable
+    public sealed class SkinrViewerViewModel : ViewModelBase
     {
         /// <summary>The scope gating the character-inventory routes.</summary>
         public const string SkinrScope = "esi.cosmetic.char:read";
@@ -151,8 +151,6 @@ namespace EveLens.Common.ViewModels
             State = state;
             StateChanged?.Invoke();
         }
-
-        public void Dispose() { }
     }
 
     /// <summary>One owned SKINR license, display-shaped.</summary>
