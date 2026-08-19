@@ -65,13 +65,18 @@ if (-not $cert) {
 }
 Write-Host "  [OK] Certificate: $($cert.Subject)" -ForegroundColor Green
 
+# vpk version is PINNED and must match the Velopack PackageReference in the app.
+# "install if missing" let the tool silently drift (0.0.1298 stayed installed while
+# the app library moved to 1.2.0); the packer ships Update.exe, so they must pair.
+$RequiredVpkVersion = "1.2.0"
 $vpkPath = "$env:USERPROFILE\.dotnet\tools\vpk.exe"
-if (-not (Test-Path $vpkPath)) {
-    Write-Host "  [..] Installing vpk..." -ForegroundColor Yellow
-    dotnet tool install -g vpk
-    $vpkPath = "$env:USERPROFILE\.dotnet\tools\vpk.exe"
+$vpkInstalled = dotnet tool list -g | Select-String "^vpk\s+(\S+)" | ForEach-Object { $_.Matches[0].Groups[1].Value }
+if ($vpkInstalled -ne $RequiredVpkVersion) {
+    Write-Host "  [..] Installing vpk $RequiredVpkVersion (found: $vpkInstalled)..." -ForegroundColor Yellow
+    dotnet tool update -g vpk --version $RequiredVpkVersion
+    if ($LASTEXITCODE -ne 0) { throw "vpk $RequiredVpkVersion install failed." }
 }
-Write-Host "  [OK] vpk" -ForegroundColor Green
+Write-Host "  [OK] vpk $RequiredVpkVersion" -ForegroundColor Green
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     Write-Error "GitHub CLI (gh) not found."

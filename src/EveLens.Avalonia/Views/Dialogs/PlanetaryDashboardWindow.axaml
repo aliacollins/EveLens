@@ -45,7 +45,7 @@
                 <!-- Search -->
                 <Border DockPanel.Dock="Right" CornerRadius="14" Padding="8,3"
                         Background="{DynamicResource EveBackgroundDarkBrush}" MinWidth="180">
-                    <TextBox x:Name="FilterBox" Watermark="{loc:T Planetary.SearchCharacters}"
+                    <TextBox x:Name="FilterBox" PlaceholderText="{loc:T Planetary.SearchCharacters}"
                              Background="Transparent" BorderThickness="0"
                              FontSize="{DynamicResource EveFontBody}"
                              TextChanged="OnFilterChanged" />

@@ -151,7 +151,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     var entry = timeline[i];
                     var img = images[i];
 
-                    // CorporationImage triggers async download, returns System.Drawing.Image
+                    // CorporationImage triggers async download, returns SKBitmap
                     var corpImage = entry.Record.CorporationImage;
                     if (corpImage != null)
                     {

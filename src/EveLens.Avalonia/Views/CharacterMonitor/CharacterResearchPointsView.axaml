@@ -1,6 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:vm="using:EveLens.Common.ViewModels.Lists"
+             xmlns:models="using:EveLens.Common.Models"
+             x:DataType="vm:ResearchPointsListViewModel"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterResearchPointsView">
 
     <Panel>
@@ -42,7 +45,7 @@
                 <TextBlock x:Name="FilterLabel" Text="Filter:" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <TextBox x:Name="FilterBox"
                          Text="{Binding TextFilter, Mode=TwoWay}"
-                         Watermark="{loc:T ListView.SearchResearch}"
+                         PlaceholderText="{loc:T ListView.SearchResearch}"
                          MinWidth="200" />
             </DockPanel>
         </Border>
@@ -78,13 +81,13 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="{loc:T Column.Agent}" Binding="{Binding AgentName}" Width="150" />
-                <DataGridTextColumn Header="{loc:T Column.Level}" Binding="{Binding AgentLevel}" Width="60" />
-                <DataGridTextColumn Header="{loc:T Column.Field}" Binding="{Binding Field}" Width="200" />
-                <DataGridTextColumn Header="{loc:T Column.CurrentRP}" Binding="{Binding CurrentRP, StringFormat=\{0:N2\}}" Width="120" />
-                <DataGridTextColumn Header="{loc:T Column.PointsPerDay}" Binding="{Binding PointsPerDay, StringFormat=\{0:N2\}}" Width="100" />
-                <DataGridTextColumn Header="{loc:T Column.StartDate}" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
-                <DataGridTextColumn Header="{loc:T Column.Station}" Binding="{Binding Station.Name}" Width="200" />
+                <DataGridTextColumn Header="{loc:T Column.Agent}" x:DataType="models:ResearchPoint" Binding="{Binding AgentName}" Width="150" />
+                <DataGridTextColumn Header="{loc:T Column.Level}" x:DataType="models:ResearchPoint" Binding="{Binding AgentLevel}" Width="60" />
+                <DataGridTextColumn Header="{loc:T Column.Field}" x:DataType="models:ResearchPoint" Binding="{Binding Field}" Width="200" />
+                <DataGridTextColumn Header="{loc:T Column.CurrentRP}" x:DataType="models:ResearchPoint" Binding="{Binding CurrentRP, StringFormat=\{0:N2\}}" Width="120" />
+                <DataGridTextColumn Header="{loc:T Column.PointsPerDay}" x:DataType="models:ResearchPoint" Binding="{Binding PointsPerDay, StringFormat=\{0:N2\}}" Width="100" />
+                <DataGridTextColumn Header="{loc:T Column.StartDate}" x:DataType="models:ResearchPoint" Binding="{Binding StartDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100" />
+                <DataGridTextColumn Header="{loc:T Column.Station}" x:DataType="models:ResearchPoint" Binding="{Binding Station.Name}" Width="200" />
             </DataGrid.Columns>
         </DataGrid>
         </DockPanel>

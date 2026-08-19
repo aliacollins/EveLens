@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:cm="using:EveLens.Avalonia.Views.CharacterMonitor"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMedalsView">
 
     <Panel>
@@ -58,7 +59,7 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="cm:MedalDisplayEntry">
                                 <Border Margin="0,0,0,4" Padding="12,8" CornerRadius="6"
                                         Background="{StaticResource EveBackgroundMediumBrush}"
                                         BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1">

@@ -65,34 +65,5 @@ namespace EveLens.Common.CloudStorageServices {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap DropboxLogo {
-            get {
-                object obj = ResourceManager.GetObject("DropboxLogo", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap GoogleDriveLogo {
-            get {
-                object obj = ResourceManager.GetObject("GoogleDriveLogo", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap OneDriveLogo {
-            get {
-                object obj = ResourceManager.GetObject("OneDriveLogo", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
     }
 }

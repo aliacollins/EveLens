@@ -1696,7 +1696,7 @@ namespace EveLens.Avalonia.Views
                     Text = defaultName,
                     FontSize = FontScaleService.Subheading,
                     Margin = new Thickness(0, 8, 0, 0),
-                    Watermark = "Enter plan name..."
+                    PlaceholderText = "Enter plan name..."
                 };
 
                 var errorText = new TextBlock

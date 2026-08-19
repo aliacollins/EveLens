@@ -33,7 +33,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             CanBuildToggle.Content = Loc.Get("BlueprintBrowser.CanBuildOnly");
             CollapseBtn.Content = Loc.Get("PlanEditor.Collapse");
             ExpandBtn.Content = Loc.Get("PlanEditor.Expand");
-            FilterBox.Watermark = Loc.Get("BlueprintBrowser.SearchBlueprints");
+            FilterBox.PlaceholderText = Loc.Get("BlueprintBrowser.SearchBlueprints");
             RequiredSkillsLabel.Text = Loc.Get("BlueprintBrowser.RequiredSkills");
             MaterialsLabel.Text = Loc.Get("BlueprintBrowser.Materials");
             PlanSkillsBtn.Content = Loc.Get("BlueprintBrowser.PlanSkills");

@@ -5,7 +5,7 @@
         Title="EveLens"
         Width="400" Height="250"
         CanResize="False"
-        SystemDecorations="None"
+        WindowDecorations="None"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource EveBackgroundDarkBrush}"
         Icon="avares://EveLens/Properties/EveLens.ico"

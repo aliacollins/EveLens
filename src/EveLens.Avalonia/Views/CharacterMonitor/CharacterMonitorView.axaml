@@ -1,7 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:EveLens.Avalonia.Views.CharacterMonitor"
-             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMonitorView">
+             xmlns:vm="using:EveLens.Common.ViewModels"
+             x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterMonitorView"
+             x:DataType="vm:ObservableCharacter">
 
     <DockPanel>
         <!-- Character header docked to top -->

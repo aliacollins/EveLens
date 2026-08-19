@@ -13,7 +13,6 @@ using EveLens.Common.Constants;
 using EveLens.Common.Serialization;
 using Microsoft.OneDrive.Sdk;
 using Microsoft.OneDrive.Sdk.WindowsForms;
-using Image = System.Drawing.Image;
 
 namespace EveLens.Common.CloudStorageServices.OneDrive
 {
@@ -78,8 +77,6 @@ namespace EveLens.Common.CloudStorageServices.OneDrive
         /// <value>
         /// The logo.
         /// </value>
-        public override Image Logo => CloudStorageServiceResources.OneDriveLogo;
-
         #endregion
 
 

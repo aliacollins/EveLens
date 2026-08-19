@@ -23,8 +23,18 @@ namespace EveLens.Common.Services
     /// </remarks>
     internal sealed class EventAggregator : IEventAggregator
     {
-        private readonly ConcurrentDictionary<Type, List<SubscriptionBase>> _subscriptions
-            = new ConcurrentDictionary<Type, List<SubscriptionBase>>();
+        private readonly ConcurrentDictionary<Type, SubscriptionList> _subscriptions
+            = new ConcurrentDictionary<Type, SubscriptionList>();
+
+        /// <summary>
+        /// Per-event-type subscriber list with its own dedicated <see cref="Lock"/> —
+        /// .NET 9+'s lock primitive is cheaper than Monitor on an arbitrary object and
+        /// makes the guard explicit instead of locking the list instance itself.
+        /// </summary>
+        private sealed class SubscriptionList : List<SubscriptionBase>
+        {
+            public readonly Lock Gate = new Lock();
+        }
         private readonly ILogger? _logger;
 
         /// <summary>
@@ -41,8 +51,8 @@ namespace EveLens.Common.Services
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
 
-            var subs = _subscriptions.GetOrAdd(typeof(TEvent), _ => new List<SubscriptionBase>());
-            lock (subs)
+            var subs = _subscriptions.GetOrAdd(typeof(TEvent), _ => new SubscriptionList());
+            lock (subs.Gate)
             {
                 subs.Add(new StrongSubscription<TEvent>(handler));
             }
@@ -56,8 +66,8 @@ namespace EveLens.Common.Services
             if (handler == null)
                 throw new ArgumentNullException(nameof(handler));
 
-            var subs = _subscriptions.GetOrAdd(typeof(TEvent), _ => new List<SubscriptionBase>());
-            lock (subs)
+            var subs = _subscriptions.GetOrAdd(typeof(TEvent), _ => new SubscriptionList());
+            lock (subs.Gate)
             {
                 subs.Add(new WeakSubscription<TEvent>(handler));
             }
@@ -74,7 +84,7 @@ namespace EveLens.Common.Services
             if (!_subscriptions.TryGetValue(typeof(TEvent), out var subs))
                 return;
 
-            lock (subs)
+            lock (subs.Gate)
             {
                 for (int i = subs.Count - 1; i >= 0; i--)
                 {
@@ -97,7 +107,7 @@ namespace EveLens.Common.Services
                 return;
 
             SubscriptionBase[] snapshot;
-            lock (subs)
+            lock (subs.Gate)
             {
                 // Clean up dead weak references while we're here
                 subs.RemoveAll(s => !s.IsAlive);

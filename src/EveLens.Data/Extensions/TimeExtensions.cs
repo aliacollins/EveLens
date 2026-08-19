@@ -65,8 +65,11 @@ namespace EveLens.Common.Extensions
         public static DateTime TimeStringToDateTime(this string timeUtc)
         {
             // timeUTC = yyyy-MM-dd HH:mm:ss
+            // Parse with the SAME culture the writer (DateTimeToTimeString) uses. Reading
+            // with CurrentCulture silently returned default(DateTime) for our own invariant
+            // output under some locales (~25 deserialization sites, incl. CachedUntil).
             DateTime dt;
-            return DateTime.TryParse(timeUtc, CultureConstants.DefaultCulture.DateTimeFormat,
+            return DateTime.TryParse(timeUtc, CultureConstants.InvariantCulture.DateTimeFormat,
                 DateTimeStyles.AdjustToUniversal, out dt) ? dt : default(DateTime);
         }
 
