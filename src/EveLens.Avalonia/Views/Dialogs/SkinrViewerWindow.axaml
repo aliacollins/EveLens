@@ -3,115 +3,339 @@
         xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.SkinrViewerWindow"
         Title="{loc:T Skinr.Title}"
-        Width="1100" Height="720"
+        Width="1360" Height="860"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
-        Background="{StaticResource EveBackgroundDarkBrush}"
+        Background="#0C0E15"
         CanResize="True">
 
-    <Grid ColumnDefinitions="320,*" Margin="12">
+    <!-- SKINR Hub: a deliberate sub-brand inside EveLens. The violet accent and the
+         near-black navy are local to this window on purpose - the Hub is the app's
+         creative-marketplace space and reads as its own room, while fonts stay on the
+         shared DynamicResource tiers so the global font scale still applies. -->
+    <Window.Resources>
+        <SolidColorBrush x:Key="SkinrBgBrush" Color="#0C0E15" />
+        <SolidColorBrush x:Key="SkinrRailBrush" Color="#090B11" />
+        <SolidColorBrush x:Key="SkinrPanelBrush" Color="#131623" />
+        <SolidColorBrush x:Key="SkinrPillBrush" Color="#1A1D2B" />
+        <SolidColorBrush x:Key="SkinrAccentBrush" Color="#8B7DF2" />
+        <SolidColorBrush x:Key="SkinrAccentDimBrush" Color="#4A4380" />
+        <SolidColorBrush x:Key="SkinrTextBrush" Color="#F2F3F8" />
+        <SolidColorBrush x:Key="SkinrTextSecBrush" Color="#9CA1B4" />
+        <SolidColorBrush x:Key="SkinrTextDimBrush" Color="#5E6376" />
+        <SolidColorBrush x:Key="SkinrTierBrush" Color="#E8B54D" />
+        <SolidColorBrush x:Key="SkinrBorderBrush" Color="#232738" />
+    </Window.Resources>
 
-        <!-- Left: character + inventory -->
-        <DockPanel Grid.Column="0" Margin="0,0,10,0">
-            <StackPanel DockPanel.Dock="Top" Spacing="6">
-                <TextBlock Text="{loc:T Skinr.Character}"
-                           FontSize="{DynamicResource EveFontSubheading}" FontWeight="SemiBold"
-                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                <ComboBox x:Name="CharacterCombo" HorizontalAlignment="Stretch"
-                          SelectionChanged="OnCharacterChanged" />
-            </StackPanel>
+    <Window.Styles>
+        <!-- Loading pulse for carousel tiles still waiting on their captured thumbnail. -->
+        <Style Selector="TextBlock.shimmer">
+            <Style.Animations>
+                <Animation Duration="0:0:1.6" IterationCount="INFINITE">
+                    <KeyFrame Cue="0%"><Setter Property="Opacity" Value="0.30" /></KeyFrame>
+                    <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.85" /></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Opacity" Value="0.30" /></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </Window.Styles>
 
-            <!-- State area fills the rest -->
-            <Panel Margin="0,10,0,0">
-                <!-- Scope missing -->
-                <StackPanel x:Name="ScopeMissingPanel" IsVisible="False" Spacing="8"
-                            VerticalAlignment="Center">
-                    <TextBlock Text="{loc:T Skinr.ScopeMissingTitle}"
-                               FontSize="{DynamicResource EveFontSubheading}"
-                               Foreground="{StaticResource EveWarningYellowBrush}"
-                               TextWrapping="Wrap" />
-                    <TextBlock Text="{loc:T Skinr.ScopeMissingDesc}"
-                               FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveTextSecondaryBrush}"
-                               TextWrapping="Wrap" />
+    <Grid ColumnDefinitions="Auto,*">
+
+        <!-- ===== Left rail ===== -->
+        <Border x:Name="LeftRail" Grid.Column="0" Width="64"
+                Background="{StaticResource SkinrRailBrush}"
+                BorderBrush="{StaticResource SkinrBorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="✦" Margin="0,18,0,26"
+                           FontSize="{DynamicResource EveFontTitle}"
+                           Foreground="{StaticResource SkinrAccentBrush}"
+                           HorizontalAlignment="Center" />
+                <StackPanel Spacing="4">
+                    <Border x:Name="RailCollection" Background="{StaticResource SkinrPillBrush}"
+                            CornerRadius="10" Margin="8,0" Padding="0,10">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="❖" HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontHeading}"
+                                       Foreground="{StaticResource SkinrAccentBrush}" />
+                            <TextBlock Text="{loc:T Skinr.RailCollection}"
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontTiny}"
+                                       Foreground="{StaticResource SkinrTextSecBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <Border ToolTip.Tip="{loc:T Skinr.ComingSoon}" Margin="8,0" Padding="0,10">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="◈" HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontHeading}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                            <TextBlock Text="{loc:T Skinr.RailHub}"
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontTiny}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
+            </DockPanel>
+        </Border>
 
-                <!-- Loading -->
-                <TextBlock x:Name="LoadingText" IsVisible="False"
-                           Text="{loc:T Skinr.Loading}"
-                           FontSize="{DynamicResource EveFontBody}"
-                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                           VerticalAlignment="Center" HorizontalAlignment="Center" />
-
-                <!-- Error -->
-                <TextBlock x:Name="ErrorText" IsVisible="False"
-                           FontSize="{DynamicResource EveFontBody}"
-                           Foreground="{StaticResource EveErrorRedBrush}"
-                           TextWrapping="Wrap" VerticalAlignment="Center" />
-
-                <!-- Inventory -->
-                <DockPanel x:Name="InventoryPanel" IsVisible="False">
-                    <TextBlock x:Name="InventoryHeader" DockPanel.Dock="Top"
-                               FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveTextSecondaryBrush}"
-                               Margin="0,0,0,6" />
-                    <ListBox x:Name="LicenseList" Background="Transparent"
-                             SelectionChanged="OnLicenseSelected" />
-                </DockPanel>
-            </Panel>
-        </DockPanel>
-
-        <!-- Right: design details + render pane -->
+        <!-- ===== Stage column ===== -->
         <DockPanel Grid.Column="1">
-            <Border DockPanel.Dock="Top" Padding="10,8"
-                    Background="{StaticResource EveBackgroundMediumBrush}"
-                    CornerRadius="6" Margin="0,0,0,8" MinHeight="58">
-                <TextBlock x:Name="DesignSummary"
-                           Text="{loc:T Skinr.SelectDesign}"
-                           FontSize="{DynamicResource EveFontBody}"
-                           Foreground="{StaticResource EveTextSecondaryBrush}"
-                           TextWrapping="Wrap" />
-            </Border>
 
-            <!-- The Trinity render surface docks here. Platform-gated: DirectX on
-                 Windows x64, Metal on Apple Silicon planned, honest callouts
-                 elsewhere. The status strip shows download/render progress. -->
-            <Border x:Name="RenderPane"
-                    Background="{StaticResource EveBackgroundDarkestBrush}"
-                    BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="1"
-                    CornerRadius="6">
-                <DockPanel>
-                    <!-- Download / render status strip -->
-                    <Border DockPanel.Dock="Bottom" Padding="10,6"
-                            Background="{StaticResource EveBackgroundMediumBrush}"
-                            CornerRadius="0,0,6,6">
-                        <DockPanel>
-                            <TextBlock x:Name="RenderStatusText" DockPanel.Dock="Left"
-                                       Text="{loc:T Skinr.StatusIdle}"
-                                       FontSize="{DynamicResource EveFontSmall}"
-                                       Foreground="{StaticResource EveTextSecondaryBrush}"
-                                       VerticalAlignment="Center" />
-                            <ProgressBar x:Name="DownloadProgress" IsVisible="False"
-                                         Minimum="0" Maximum="100" Height="8"
-                                         Margin="12,0,0,0" VerticalAlignment="Center" />
+            <!-- Top bar -->
+            <Border x:Name="TopBar" DockPanel.Dock="Top" Height="56"
+                    Background="{StaticResource SkinrBgBrush}"
+                    BorderBrush="{StaticResource SkinrBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto" Margin="18,0">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{loc:T Skinr.HubWordmark}" FontWeight="Bold"
+                                   FontSize="{DynamicResource EveFontHeading}"
+                                   Foreground="{StaticResource SkinrTextBrush}" />
+                        <TextBlock Text="{loc:T Skinr.HubWordmarkSub}"
+                                   FontSize="{DynamicResource EveFontHeading}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}" />
+                    </StackPanel>
+
+                    <!-- Search pill -->
+                    <Border Grid.Column="1" MaxWidth="520" Height="34" Margin="24,0"
+                            Background="{StaticResource SkinrPillBrush}" CornerRadius="17"
+                            VerticalAlignment="Center">
+                        <DockPanel Margin="14,0">
+                            <TextBlock DockPanel.Dock="Left" Text="⌕" VerticalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontSubheading}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}"
+                                       Margin="0,0,8,0" />
+                            <TextBox x:Name="SearchBox" Background="Transparent"
+                                     BorderThickness="0" VerticalContentAlignment="Center"
+                                     FontSize="{DynamicResource EveFontBody}"
+                                     Foreground="{StaticResource SkinrTextBrush}"
+                                     Watermark="{loc:T Skinr.SearchPlaceholder}"
+                                     TextChanged="OnSearchChanged" />
                         </DockPanel>
                     </Border>
 
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                        <TextBlock x:Name="RenderTitle"
-                                   Text="{loc:T Skinr.RenderPlaceholderTitle}"
-                                   FontSize="{DynamicResource EveFontHeading}"
-                                   Foreground="{StaticResource EveTextDisabledBrush}"
-                                   HorizontalAlignment="Center" />
-                        <TextBlock x:Name="RenderDesc"
-                                   Text="{loc:T Skinr.RenderPlaceholderDesc}"
-                                   FontSize="{DynamicResource EveFontSmall}"
-                                   Foreground="{StaticResource EveTextDisabledBrush}"
-                                   HorizontalAlignment="Center" TextAlignment="Center"
-                                   TextWrapping="Wrap" MaxWidth="440" />
-                    </StackPanel>
-                </DockPanel>
+                    <!-- Character picker -->
+                    <ComboBox Grid.Column="2" x:Name="CharacterCombo" MinWidth="180"
+                              VerticalAlignment="Center"
+                              FontSize="{DynamicResource EveFontBody}"
+                              SelectionChanged="OnCharacterChanged" />
+                </Grid>
             </Border>
+
+            <!-- ===== The stage: full-bleed render, chrome floating over it ===== -->
+            <Panel>
+                <!-- Render surface fills the stage -->
+                <Panel x:Name="RenderSurface"
+                       SizeChanged="OnRenderSurfaceSizeChanged"
+                       PointerPressed="OnRenderPointerPressed"
+                       PointerMoved="OnRenderPointerMoved"
+                       PointerReleased="OnRenderPointerReleased"
+                       PointerWheelChanged="OnRenderPointerWheel"
+                       DoubleTapped="OnRenderDoubleTapped"
+                       Background="{StaticResource SkinrBgBrush}">
+                    <Image x:Name="RenderImage" IsVisible="False" Stretch="Uniform"
+                           RenderOptions.BitmapInterpolationMode="HighQuality">
+                        <Image.Transitions>
+                            <Transitions>
+                                <!-- Design swaps dim the old ship and fade the new one up;
+                                     during a build this reads as a crossfade instead of a
+                                     stale frame that suddenly pops. -->
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.28" />
+                            </Transitions>
+                        </Image.Transitions>
+                    </Image>
+                </Panel>
+
+                <!-- Center state overlays (placeholder / scope / loading / error) -->
+                <StackPanel x:Name="RenderPlaceholder" VerticalAlignment="Center"
+                            HorizontalAlignment="Center" Spacing="8" MaxWidth="480"
+                            IsHitTestVisible="False">
+                    <TextBlock x:Name="RenderTitle" Text="{loc:T Skinr.RenderPlaceholderTitle}"
+                               FontSize="{DynamicResource EveFontTitle}"
+                               Foreground="{StaticResource SkinrTextDimBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock x:Name="RenderDesc" Text="{loc:T Skinr.RenderPlaceholderDesc}"
+                               FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource SkinrTextDimBrush}"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel x:Name="ScopeMissingPanel" IsVisible="False" Spacing="8"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"
+                            MaxWidth="440">
+                    <TextBlock Text="{loc:T Skinr.ScopeMissingTitle}"
+                               FontSize="{DynamicResource EveFontSubheading}"
+                               Foreground="{StaticResource EveWarningYellowBrush}"
+                               TextWrapping="Wrap" HorizontalAlignment="Center" />
+                    <TextBlock Text="{loc:T Skinr.ScopeMissingDesc}"
+                               FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource SkinrTextSecBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" />
+                </StackPanel>
+                <TextBlock x:Name="LoadingText" IsVisible="False" Text="{loc:T Skinr.Loading}"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource SkinrTextSecBrush}"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+                <TextBlock x:Name="ErrorText" IsVisible="False"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveErrorRedBrush}"
+                           TextWrapping="Wrap" MaxWidth="480"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+
+                <!-- Hull identity, top-left -->
+                <StackPanel x:Name="HullOverlay" IsVisible="False" Margin="26,20,0,0"
+                            HorizontalAlignment="Left" VerticalAlignment="Top" Spacing="6"
+                            MaxWidth="340" IsHitTestVisible="False">
+                    <TextBlock x:Name="HullNameText" FontWeight="Bold"
+                               Foreground="{StaticResource SkinrTextBrush}" />
+                    <TextBlock x:Name="HullSubtitleText"
+                               FontSize="{DynamicResource EveFontCaption}"
+                               Foreground="{StaticResource SkinrAccentBrush}" />
+                    <TextBlock x:Name="HullDescText"
+                               FontSize="{DynamicResource EveFontSmall}"
+                               Foreground="{StaticResource SkinrTextSecBrush}"
+                               TextWrapping="Wrap" MaxLines="6"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <!-- Stage buttons, top-right: photo mode beside render settings -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
+                            VerticalAlignment="Top" Margin="0,16,20,0">
+                    <Button x:Name="PhotoButton" Padding="10,6" CornerRadius="14"
+                            Background="{StaticResource SkinrPillBrush}"
+                            Foreground="{StaticResource SkinrTextSecBrush}"
+                            FontSize="{DynamicResource EveFontSmall}"
+                            ToolTip.Tip="{loc:T Skinr.PhotoMode}"
+                            Click="OnPhotoModeToggle" Content="📷" />
+                    <Button x:Name="SettingsButton" Padding="10,6" CornerRadius="14"
+                            Background="{StaticResource SkinrPillBrush}"
+                            Foreground="{StaticResource SkinrTextSecBrush}"
+                            FontSize="{DynamicResource EveFontSmall}"
+                            ToolTip.Tip="{loc:T Skinr.RenderSettings}"
+                            Content="⚙">
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedRight">
+                                <StackPanel Spacing="8" MinWidth="240">
+                                    <TextBlock Text="{loc:T Skinr.Quality}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <ComboBox x:Name="QualityCombo" HorizontalAlignment="Stretch"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              SelectionChanged="OnQualityChanged" />
+                                    <TextBlock Text="{loc:T Skinr.Resolution}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <ComboBox x:Name="ResolutionCombo" HorizontalAlignment="Stretch"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              SelectionChanged="OnResolutionChanged" />
+                                    <Button Content="{loc:T Skinr.ResetView}" Click="OnResetView"
+                                            HorizontalAlignment="Stretch" Padding="10,4"
+                                            CornerRadius="12"
+                                            FontSize="{DynamicResource EveFontSmall}" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+
+                <!-- ===== Bottom band, floating over the render on a gradient scrim.
+                     Back-to-overlay by request: the docked version protected the hull
+                     from overlap but flattened the whole window into page-with-footer.
+                     The scrim + a ONE-ROW card keeps the cinematic full-bleed while
+                     covering a fraction of what the old stacked card did. ===== -->
+                <StackPanel x:Name="BottomBand" VerticalAlignment="Bottom" Spacing="2">
+                    <StackPanel.Background>
+                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                            <GradientStop Offset="0" Color="#000C0E15" />
+                            <GradientStop Offset="0.45" Color="#C80C0E15" />
+                            <GradientStop Offset="1" Color="#F20C0E15" />
+                        </LinearGradientBrush>
+                    </StackPanel.Background>
+
+                    <!-- Design title card: one row, minimal height -->
+                    <StackPanel x:Name="DesignCard" IsVisible="False" Orientation="Horizontal"
+                                HorizontalAlignment="Center" Spacing="12" Margin="0,14,0,0">
+                        <TextBlock x:Name="DesignNameText" FontWeight="Bold"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource SkinrTextBrush}" />
+                        <TextBlock x:Name="DesignSubtitleText"
+                                   FontSize="{DynamicResource EveFontSmall}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                        <Border x:Name="TierBadge" IsVisible="False"
+                                VerticalAlignment="Center" CornerRadius="10"
+                                Background="{StaticResource SkinrPillBrush}" Padding="10,3">
+                            <TextBlock x:Name="TierBadgeText"
+                                       FontSize="{DynamicResource EveFontCaption}"
+                                       Foreground="{StaticResource SkinrTierBrush}" />
+                        </Border>
+                        <Button x:Name="ViewDetailsButton" Content="{loc:T Skinr.ViewDetails}"
+                                Padding="12,4" CornerRadius="14" VerticalAlignment="Center"
+                                Background="{StaticResource SkinrPillBrush}"
+                                Foreground="{StaticResource SkinrTextBrush}"
+                                FontSize="{DynamicResource EveFontSmall}">
+                            <Button.Flyout>
+                                <Flyout Placement="Top">
+                                    <TextBlock x:Name="DetailsFlyoutText" MaxWidth="360"
+                                               TextWrapping="Wrap"
+                                               FontSize="{DynamicResource EveFontSmall}" />
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <Button Content="{loc:T Skinr.Compare}" Padding="12,4"
+                                CornerRadius="14" IsEnabled="False" VerticalAlignment="Center"
+                                ToolTip.Tip="{loc:T Skinr.ComingSoon}"
+                                Background="{StaticResource SkinrAccentDimBrush}"
+                                Foreground="{StaticResource SkinrTextBrush}"
+                                FontSize="{DynamicResource EveFontSmall}" />
+                        <StackPanel x:Name="HintStrip" IsVisible="False"
+                                    Orientation="Horizontal" Spacing="14"
+                                    VerticalAlignment="Center" Margin="10,0,0,0">
+                            <TextBlock Text="{loc:T Skinr.HintRotate}"
+                                       FontSize="{DynamicResource EveFontCaption}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                            <TextBlock Text="{loc:T Skinr.HintZoom}"
+                                       FontSize="{DynamicResource EveFontCaption}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                            <TextBlock Text="{loc:T Skinr.HintReset}"
+                                       FontSize="{DynamicResource EveFontCaption}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Design carousel -->
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  Margin="18,4,18,0">
+                        <StackPanel x:Name="DesignStrip" Orientation="Horizontal" Spacing="8"
+                                    Margin="0,2" />
+                    </ScrollViewer>
+
+                    <!-- Environment switcher -->
+                    <Border HorizontalAlignment="Center"
+                            Margin="0,4,0,10" Background="{StaticResource SkinrPillBrush}"
+                            CornerRadius="18" Padding="6,4">
+                        <StackPanel x:Name="EnvSwitcher" Orientation="Horizontal" Spacing="4" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Download / render status, unobtrusive -->
+                <Border x:Name="StatusPill" HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="18,0,0,10" Background="{StaticResource SkinrPillBrush}"
+                        CornerRadius="10" Padding="10,4" Opacity="0.9">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock x:Name="RenderStatusText" Text="{loc:T Skinr.StatusIdle}"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}"
+                                   VerticalAlignment="Center" />
+                        <ProgressBar x:Name="DownloadProgress" IsVisible="False" Width="120"
+                                     Minimum="0" Maximum="100" Height="6"
+                                     VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Panel>
         </DockPanel>
     </Grid>
 </Window>

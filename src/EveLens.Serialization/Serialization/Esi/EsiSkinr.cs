@@ -50,6 +50,16 @@ namespace EveLens.Common.Serialization.Esi
     [DataContract]
     public class EsiSkinrLayout
     {
+        /// <summary>
+        /// How the pattern layers are composited: <c>normal</c>, <c>subtract</c>,
+        /// <c>exclusion</c>, <c>nested</c> or <c>nested_inverted</c>. Required by the
+        /// route, and it changes the rendered result rather than just its description —
+        /// two designs with identical slots and different blend modes do not look alike,
+        /// so this cannot be treated as cosmetic metadata.
+        /// </summary>
+        [DataMember(Name = "pattern_blend_mode")]
+        public string PatternBlendMode { get; set; }
+
         [DataMember(Name = "slots")]
         public List<EsiSkinrSlot> Slots { get; set; } = new();
     }

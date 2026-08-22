@@ -3,7 +3,9 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Json;
 using EveLens.Common;
 using EveLens.Common.Serialization.Esi;
 using FluentAssertions;
@@ -95,6 +97,82 @@ namespace EveLens.Tests.Serialization
             listing.State.Should().Be("removed", "final states linger — that is the price-history contract");
             listing.Price.Plex.Should().Be(200);
             listing.SellerId.Should().Be(2029528905);
+        }
+
+        /// <summary>
+        /// Round-trips the recipe through the same serializer that reads it off the wire.
+        /// </summary>
+        /// <remarks>
+        /// Law 13: the DTO is the data contract. What this actually protects is the
+        /// <c>[DataMember(Name = ...)]</c> spelling of every field — a rename to
+        /// <c>PatternBlendMode</c> without its attribute would still compile, still
+        /// deserialize, and silently produce <c>null</c>, which the resolver would then
+        /// dutifully default to <c>"normal"</c>. Two designs that differ only in blend mode do
+        /// not look alike, so that failure surfaces as "the render is wrong" months later
+        /// rather than as a broken build now.
+        /// </remarks>
+        [Theory]
+        [InlineData("normal")]
+        [InlineData("subtract")]
+        [InlineData("exclusion")]
+        [InlineData("nested")]
+        [InlineData("nested_inverted")]
+        public void Recipe_RoundTrips_PreservingBlendModeAndProjection(string blendMode)
+        {
+            EsiSkinrRecipe original = Util.DeserializeJson<EsiSkinrRecipe>(RecipeJson)!;
+            original.Layout.PatternBlendMode = blendMode;
+
+            EsiSkinrRecipe restored = RoundTrip(original);
+
+            restored.Layout.PatternBlendMode.Should().Be(blendMode);
+            restored.Id.Should().Be(original.Id);
+            restored.Name.Should().Be(original.Name);
+            restored.Line.Should().Be(original.Line);
+            restored.CreatorId.Should().Be(original.CreatorId);
+            restored.ShipTypeId.Should().Be(original.ShipTypeId);
+            restored.Tier.Level.Should().Be(original.Tier.Level);
+
+            // Every slot, in order, with its discriminated configuration intact.
+            restored.Layout.Slots.Select(s => s.Id)
+                .Should().Equal(original.Layout.Slots.Select(s => s.Id));
+            restored.Layout.Slots[0].Configuration.Nanocoating!.Id.Should().Be(1591);
+            restored.Layout.Slots[0].Configuration.Pattern.Should().BeNull();
+
+            EsiSkinrPatternConfiguration config = restored.Layout.Slots[1].Configuration.Pattern!.Configuration;
+            config.Projection.Slot1.Should().BeTrue();
+            config.Projection.Slot4.Should().BeFalse();
+            config.Mirrored.Should().BeFalse();
+
+            // The transform is what places the pattern on the hull; doubles must survive
+            // exactly, not approximately, or a design drifts every time we persist it.
+            config.Transform.Position.Y.Should().Be(
+                original.Layout.Slots[1].Configuration.Pattern!.Configuration.Transform.Position.Y);
+            config.Transform.Rotation.W.Should().Be(
+                original.Layout.Slots[1].Configuration.Pattern!.Configuration.Transform.Rotation.W);
+            config.Transform.Scaling.X.Should().Be(
+                original.Layout.Slots[1].Configuration.Pattern!.Configuration.Transform.Scaling.X);
+        }
+
+        [Fact]
+        public void Recipe_MissingBlendModeIsNullSoTheResolverCanDefaultIt()
+        {
+            // The route marks it required, but the DTO must not invent a value: the resolver
+            // owns the "normal" default and warns nowhere else can.
+            EsiSkinrRecipe recipe = Util.DeserializeJson<EsiSkinrRecipe>(RecipeJson)!;
+
+            recipe.Layout.PatternBlendMode.Should().BeNull();
+        }
+
+        private static EsiSkinrRecipe RoundTrip(EsiSkinrRecipe recipe)
+        {
+            var serializer = new DataContractJsonSerializer(typeof(EsiSkinrRecipe),
+                new DataContractJsonSerializerSettings { UseSimpleDictionaryFormat = true });
+
+            using var stream = new MemoryStream();
+            serializer.WriteObject(stream, recipe);
+            stream.Position = 0;
+
+            return (EsiSkinrRecipe)serializer.ReadObject(stream)!;
         }
 
         [Fact]
