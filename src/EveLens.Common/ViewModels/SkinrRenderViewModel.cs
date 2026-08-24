@@ -651,6 +651,52 @@ namespace EveLens.Common.ViewModels
             RequestRender(settled: false);
         }
 
+        // --- the Garage balcony -------------------------------------------------
+
+        private volatile bool _balcony;
+
+        /// <summary>True while the camera stands on the deck instead of orbiting.</summary>
+        public bool BalconyActive => _balcony;
+
+        /// <summary>
+        /// Stands the camera at a human 1.7m eye on the pad edge, looking up at the
+        /// berthed hull — probe217's proven vantage, scaled to this hull. Orbit input
+        /// is suspended while active: the balcony is a place you stand, not a gesture
+        /// surface. Call after the design has built (the vantage needs the radius).
+        /// </summary>
+        public async Task EnterBalconyAsync(CancellationToken ct = default)
+        {
+            var host = _host;
+            if (host == null || !HasDesign)
+                return;
+            _cameraAnimCts?.Cancel();
+            double r = Camera.Radius;
+            double drop = Math.Max(60.0, r * 1.25);
+            double eyeY = -(r + (drop - r) * 0.6) + 1.7;
+            var eye = new[] { 2.2 * r * 0.85, eyeY, 2.2 * r * 0.55 };
+            var at = new[] { 0.0, -r * 0.25, 0.0 };
+            double dist = Math.Sqrt(eye[0] * eye[0] + eye[1] * eye[1] + eye[2] * eye[2]);
+            _balcony = true;
+            await host.SetCameraAsync(0.0, 0.0, dist, 78.0, eye, at, ct)
+                .ConfigureAwait(false);
+            RequestRender(settled: true);
+        }
+
+        /// <summary>Clears the POV eye and returns to the orbit camera (fov back to
+        /// the sidecar's 55° default).</summary>
+        public async Task ExitBalconyAsync(CancellationToken ct = default)
+        {
+            if (!_balcony)
+                return;
+            _balcony = false;
+            var host = _host;
+            if (host != null)
+                await host.SetCameraAsync(Camera.Yaw, Camera.Pitch, Camera.Distance,
+                    55.0, Array.Empty<double>(), null, ct).ConfigureAwait(false);
+            _sentCamera = (double.NaN, double.NaN, double.NaN);
+            RequestRender(settled: true);
+        }
+
         /// <summary>Returns the camera to the default three-quarter view.</summary>
         public void ResetCamera()
         {
@@ -823,7 +869,10 @@ namespace EveLens.Common.ViewModels
             // a value that had not changed. Interaction and settled frames always send: the
             // resize path re-derives the projection, and a stale skip after one of those is
             // a frame rendered through last gesture's camera.
-            if (!quiet || _sentCamera != (yaw, pitch, distance))
+            // While the balcony is active the camera is a fixed POV eye the sidecar
+            // holds; orbit values must not be sent (eye wins sidecar-side, but the
+            // send would still churn near/far derivation for nothing).
+            if (!_balcony && (!quiet || _sentCamera != (yaw, pitch, distance)))
             {
                 await _host.SetCameraAsync(yaw, pitch, distance, ct: ct).ConfigureAwait(false);
                 _sentCamera = (yaw, pitch, distance);
