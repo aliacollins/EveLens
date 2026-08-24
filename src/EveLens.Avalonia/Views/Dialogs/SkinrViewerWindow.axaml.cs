@@ -175,13 +175,12 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void OnRailCollection(object? sender, PointerPressedEventArgs e)
         {
-            bool wasAway = _marketDetail || _garageDetail;
+            bool wasDetail = _marketDetail;
             _marketDetail = false;
-            LeaveGarage();
             ShowMarket(false);
-            // Collection must show THEIR ship, not whatever design/hull was left on
-            // the stage. Restore the last owned design they had open, if any.
-            if (wasAway && _lastCollectionSkinrId != null &&
+            // Collection must show THEIR ship, not the market design left on the
+            // stage. Restore the last owned design they had open, if any.
+            if (wasDetail && _lastCollectionSkinrId != null &&
                 _lastCollectionSkinrId != _selectedSkinrId)
                 OnDesignTilePressed(_lastCollectionSkinrId);
         }
@@ -189,165 +188,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void OnRailHub(object? sender, PointerPressedEventArgs e)
         {
             _marketDetail = false;
-            LeaveGarage();
             ShowMarket(true);
-        }
-
-        // --- My Hangar (the Garage) ------------------------------------------------
-
-        private readonly SkinrGarageViewModel _garage = new();
-        private bool _garageDetail;
-        private List<GarageStation> _garageStations = new();
-
-        private void OnRailGarage(object? sender, PointerPressedEventArgs e)
-        {
-            _marketDetail = false;
-            _garageDetail = false;
-            ShowMarket(false);
-            MarketPane.IsVisible = false;
-            GaragePane.IsVisible = true;
-            CarouselScroller.IsVisible = false;
-            RailCollection.Background = Brushes.Transparent;
-            RailCollectionGlyph.Foreground = (IBrush?)Resources["SkinrTextDimBrush"];
-            RailGarage.Background = (IBrush?)Resources["SkinrPillBrush"];
-            RailGarageGlyph.Foreground = (IBrush?)Resources["SkinrAccentBrush"];
-            RefreshGarage();
-        }
-
-        private void LeaveGarage()
-        {
-            GaragePane.IsVisible = false;
-            GarageBackButton.IsVisible = false;
-            if (_garageDetail || _render.BalconyActive)
-                _ = _render.ExitBalconyAsync();
-            _garageDetail = false;
-        }
-
-        private void RefreshGarage()
-        {
-            _garage.Character = (CharacterCombo.Tag as List<Character>)?
-                .ElementAtOrDefault(CharacterCombo.SelectedIndex);
-            _garageStations = new List<GarageStation>(_garage.Stations());
-
-            GarageStationCombo.ItemsSource = _garageStations
-                .Select(s => $"{s.Name}  ({s.Ships})").ToList();
-            if (_garageStations.Count > 0 && GarageStationCombo.SelectedIndex < 0)
-                GarageStationCombo.SelectedIndex = 0;
-
-            GarageStatus.IsVisible = _garageStations.Count == 0;
-            GarageStatus.Text = Loc.Get("Skinr.GarageEmpty");
-            RefreshGarageShips();
-        }
-
-        private void OnGarageStationChanged(object? sender, SelectionChangedEventArgs e) =>
-            RefreshGarageShips();
-
-        private void RefreshGarageShips()
-        {
-            GarageGrid.Children.Clear();
-            int index = GarageStationCombo.SelectedIndex;
-            if (index < 0 || index >= _garageStations.Count)
-            {
-                GarageStats.Text = string.Empty;
-                return;
-            }
-            GarageStation station = _garageStations[index];
-            var ships = _garage.ShipsAt(station.Name);
-            GarageStats.Text = string.Format(
-                Loc.Get("Skinr.GarageStats"), ships.Count, station.Ships);
-
-            foreach (GarageShip ship in ships)
-            {
-                var card = new Border
-                {
-                    Width = 208,
-                    Margin = new Thickness(0, 0, 12, 12),
-                    CornerRadius = new CornerRadius(8),
-                    BorderThickness = new Thickness(1),
-                    BorderBrush = (IBrush?)Resources["SkinrBorderBrush"],
-                    Background = (IBrush?)Resources["SkinrPanelBrush"],
-                    Cursor = new Cursor(StandardCursorType.Hand),
-                    ClipToBounds = true
-                };
-                var layout = new StackPanel();
-                var thumb = new Border
-                {
-                    Height = 120,
-                    Background = (IBrush?)Resources["SkinrPillBrush"]
-                };
-                var img = new Image { Stretch = Stretch.Uniform };
-                thumb.Child = img;
-                LoadHullRender(img, ship.TypeId);
-                layout.Children.Add(thumb);
-                var body = new StackPanel
-                {
-                    Margin = new Thickness(10, 8, 10, 10),
-                    Spacing = 2
-                };
-                body.Children.Add(new TextBlock
-                {
-                    Text = ship.Name,
-                    FontWeight = FontWeight.SemiBold,
-                    FontSize = FontScaleService.Small,
-                    Foreground = (IBrush?)Resources["SkinrTextBrush"],
-                    TextTrimming = global::Avalonia.Media.TextTrimming.CharacterEllipsis
-                });
-                body.Children.Add(new TextBlock
-                {
-                    Text = ship.Count > 1
-                        ? string.Format(Loc.Get("Skinr.GarageCountFmt"), ship.Count)
-                        : Loc.Get("Skinr.GarageOne"),
-                    FontSize = FontScaleService.Caption,
-                    Foreground = (IBrush?)Resources["SkinrTextSecBrush"]
-                });
-                layout.Children.Add(body);
-                card.Child = layout;
-                card.PointerPressed += (_, _) => OnGarageShipPressed(ship);
-                GarageGrid.Children.Add(card);
-            }
-        }
-
-        /// <summary>
-        /// Berths a hull on the bay pad and stands the camera on the deck beside it —
-        /// the balcony. Plain hull by design: ESI never says which skin a stored ship
-        /// wears, so it arrives as the ship itself.
-        /// </summary>
-        private async void OnGarageShipPressed(GarageShip ship)
-        {
-            try
-            {
-                _garageDetail = true;
-                GaragePane.IsVisible = false;
-                GarageBackButton.IsVisible = true;
-                CarouselScroller.IsVisible = false;
-
-                _selectedSkinrId = null;
-                _thumbSavedFor = null;
-                _thumbArmed = false;   // hull views never write design thumbnails
-                DesignCard.IsVisible = false;
-                HullNameText.Text = ship.Name.ToUpperInvariant();
-                HullNameText.IsVisible = true;
-                RenderImage.Opacity = 0.25;
-
-                await _render.SetEnvironmentAsync(SkinrEnvironmentPreset.Hangar);
-                await _render.ExitBalconyAsync();
-                await _render.LoadRecipeAsync(
-                    SkinrGarageViewModel.HullRecipe(ship.TypeId, ship.Name));
-                await _render.EnterBalconyAsync();
-            }
-            catch (Exception ex)
-            {
-                AppServices.TraceService?.Trace(
-                    $"SkinrViewer: garage berth failed: {ex.Message}");
-            }
-        }
-
-        private void OnGarageBack(object? sender,
-            global::Avalonia.Interactivity.RoutedEventArgs e)
-        {
-            LeaveGarage();
-            GaragePane.IsVisible = true;
-            GarageBackButton.IsVisible = false;
         }
 
         private void OnMarketBack(object? sender,
@@ -364,10 +205,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             MarketPane.IsVisible = market;
             MarketBackButton.IsVisible = !market && _marketDetail;
             // The collection carousel exists only in Collection context.
-            CarouselScroller.IsVisible = !market && !_marketDetail && !_garageDetail;
+            CarouselScroller.IsVisible = !market && !_marketDetail;
             bool hubContext = market || _marketDetail;
-            RailGarage.Background = Brushes.Transparent;
-            RailGarageGlyph.Foreground = (IBrush?)Resources["SkinrTextDimBrush"];
             RailCollection.Background = hubContext
                 ? Brushes.Transparent : (IBrush?)Resources["SkinrPillBrush"];
             RailHub.Background = hubContext
@@ -1354,9 +1193,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             LeftRail.IsVisible = !on;
             TopBar.IsVisible = !on;
             BottomBand.IsVisible = !on;
-            HullNameText.IsVisible = !on && (_hub.Hull != null || _garageDetail);
+            HullNameText.IsVisible = !on && _hub.Hull != null;
             MarketBackButton.IsVisible = !on && _marketDetail;
-            GarageBackButton.IsVisible = !on && _garageDetail;
             StatusPill.IsVisible = !on;
             SettingsButton.IsVisible = !on;
             if (on)

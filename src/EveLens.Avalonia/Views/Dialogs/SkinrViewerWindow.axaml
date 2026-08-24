@@ -79,20 +79,6 @@
                                        Foreground="{StaticResource SkinrTextDimBrush}" />
                         </StackPanel>
                     </Border>
-                    <Border x:Name="RailGarage" Margin="8,0" Padding="0,10" CornerRadius="10"
-                            Cursor="Hand" PointerPressed="OnRailGarage"
-                            ToolTip.Tip="{loc:T Skinr.GarageTitle}">
-                        <StackPanel Spacing="4">
-                            <TextBlock x:Name="RailGarageGlyph" Text="⬢"
-                                       HorizontalAlignment="Center"
-                                       FontSize="{DynamicResource EveFontHeading}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}" />
-                            <TextBlock Text="{loc:T Skinr.RailGarage}"
-                                       HorizontalAlignment="Center"
-                                       FontSize="{DynamicResource EveFontTiny}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}" />
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -501,45 +487,6 @@
                         </ScrollViewer>
                     </DockPanel>
                 </Border>
-
-                <!-- ===== My Hangar: station-scoped garage. Pick a station holding
-                     your ships, pick a hull, stand on the pad with it. ===== -->
-                <Border x:Name="GaragePane" IsVisible="False" Background="#FA0C0E15">
-                    <DockPanel Margin="26,18,26,12">
-                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                            <ComboBox x:Name="GarageStationCombo" DockPanel.Dock="Right"
-                                      MinWidth="340" VerticalAlignment="Center"
-                                      FontSize="{DynamicResource EveFontSmall}"
-                                      SelectionChanged="OnGarageStationChanged" />
-                            <StackPanel Spacing="3">
-                                <TextBlock Text="{loc:T Skinr.GarageTitle}" FontWeight="Bold"
-                                           FontSize="{DynamicResource EveFontTitle}"
-                                           Foreground="{StaticResource SkinrAccentBrush}" />
-                                <TextBlock x:Name="GarageStats"
-                                           FontSize="{DynamicResource EveFontCaption}"
-                                           Foreground="{StaticResource SkinrTextSecBrush}" />
-                            </StackPanel>
-                        </DockPanel>
-                        <TextBlock x:Name="GarageStatus" DockPanel.Dock="Top" IsVisible="False"
-                                   Margin="0,30,0,0" HorizontalAlignment="Center"
-                                   FontSize="{DynamicResource EveFontBody}"
-                                   Foreground="{StaticResource SkinrTextSecBrush}" />
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <WrapPanel x:Name="GarageGrid" />
-                        </ScrollViewer>
-                    </DockPanel>
-                </Border>
-
-                <!-- Balcony mode: back to the station's ship list. -->
-                <Button x:Name="GarageBackButton" IsVisible="False"
-                        Content="{loc:T Skinr.GarageBack}" Padding="12,5" CornerRadius="14"
-                        HorizontalAlignment="Left" VerticalAlignment="Top"
-                        Margin="20,16,0,0"
-                        Background="{StaticResource SkinrPillBrush}"
-                        Foreground="{StaticResource SkinrTextBrush}"
-                        FontSize="{DynamicResource EveFontSmall}"
-                        Click="OnGarageBack" />
 
                 <Border x:Name="StatusPill" HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"

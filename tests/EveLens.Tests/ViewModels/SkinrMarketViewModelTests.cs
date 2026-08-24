@@ -154,16 +154,6 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
-        public void GarageHullRecipe_ResolvesToPlainHull()
-        {
-            var recipe = SkinrGarageViewModel.HullRecipe(587, "Rifter");
-            recipe.ShipTypeId.Should().Be(587);
-            recipe.Layout.Should().BeNull();          // no layout = zero coatings = base hull
-            recipe.Id.Should().Be("hull:587");
-            recipe.Name.Should().Be("Rifter");
-        }
-
-        [Fact]
         public void HubPreferences_RoundTrip_AndCorruptFileReAsks()
         {
             string path = System.IO.Path.Combine(
