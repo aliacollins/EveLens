@@ -67,7 +67,14 @@ namespace EveLens.Common.ViewModels
         private double _pitch = 15.0;
         private double _distance;
         private double _radius = 1.0;
+        private double _fleetSpan;
         private double _spinAccumDegrees;
+
+        /// <summary>The sidecar's default projection FOV in degrees — the value the
+        /// engine uses when the camera op sends none. Mirrored here because the
+        /// screen↔world drag math must divide by the same tangent the projection
+        /// multiplied by.</summary>
+        public const double FovDegrees = 55.0;
 
         // UI-thread only (pointer events and release), like the gestures that feed it.
         private readonly List<OrbitSample> _orbitSamples = new();
@@ -112,8 +119,34 @@ namespace EveLens.Common.ViewModels
         public void SetHull(double radius)
         {
             _radius = radius > 0 ? radius : 1.0;
+            _fleetSpan = 0.0;
             _distance = _radius * 3.0;
         }
+
+        /// <summary>
+        /// A photo-op formation is on stage: extend the zoom-OUT ceiling to cover its
+        /// half-span and pull back to frame it. The hull radius — and with it the
+        /// zoom-IN floor — is deliberately untouched: assembling a fleet must never
+        /// cost the ability to fly the camera right up to one ship's plating.
+        /// </summary>
+        public void FrameFleet(double span)
+        {
+            _fleetSpan = Math.Max(0.0, span);
+            if (_fleetSpan > 0.0)
+                _distance = Math.Clamp(Math.Max(_distance, _fleetSpan * 1.8),
+                    _radius * MinDistanceFactor, MaxDistance);
+        }
+
+        /// <summary>The formation is gone; the ceiling contracts back to the hull's.</summary>
+        public void ClearFleetFraming()
+        {
+            _fleetSpan = 0.0;
+            _distance = Math.Clamp(_distance,
+                _radius * MinDistanceFactor, MaxDistance);
+        }
+
+        private double MaxDistance =>
+            Math.Max(_radius * CurrentMaxDistanceFactor, _fleetSpan * 3.5);
 
         /// <summary>Returns to the default three-quarter view.</summary>
         public void Reset()
@@ -131,7 +164,7 @@ namespace EveLens.Common.ViewModels
             _yaw = Wrap(yaw);
             _pitch = Math.Clamp(pitch, EffectiveMinPitch(), MaxPitch);
             _distance = Math.Clamp(distance,
-                _radius * MinDistanceFactor, _radius * CurrentMaxDistanceFactor);
+                _radius * MinDistanceFactor, MaxDistance);
         }
 
         /// <summary>Applies a drag as an orbit; deltas are pixels.</summary>
@@ -157,7 +190,7 @@ namespace EveLens.Common.ViewModels
         {
             double factor = Math.Pow(ZoomPerNotch, notches);
             _distance = Math.Clamp(_distance * factor,
-                _radius * MinDistanceFactor, _radius * CurrentMaxDistanceFactor);
+                _radius * MinDistanceFactor, MaxDistance);
             // The pad-plane floor tightens as the camera pulls back (same angle, more
             // depth below the deck), so a zoom-out at a low angle rides the camera up
             // over the pad instead of sinking it through the plating.
@@ -281,6 +314,73 @@ namespace EveLens.Common.ViewModels
                 pitchPerSec *= FlickMaxSpeed / speed;
             }
             return (yawPerSec, pitchPerSec);
+        }
+
+        // --- fleet drag math ---------------------------------------------------
+        //
+        // The sidecar's view is Trinity's LookAt with up (0,1,0) and the eye at
+        //   at + distance * (sin yaw · cos pitch, sin pitch, cos yaw · cos pitch).
+        // From that orbit pose these derive the camera basis in world axes, so a
+        // pointer drag can move a wingman in the exact plane the user is looking at.
+        // All pure math on (yaw, pitch, distance) — testable without an engine.
+
+        /// <summary>Camera basis vectors in world space for the current orbit pose:
+        /// Forward (eye→target), Right (screen +x), Up (screen +y).</summary>
+        internal (double[] Forward, double[] Right, double[] Up) Basis()
+        {
+            double yaw = _yaw * Math.PI / 180.0, pitch = _pitch * Math.PI / 180.0;
+            double sy = Math.Sin(yaw), cy = Math.Cos(yaw);
+            double sp = Math.Sin(pitch), cp = Math.Cos(pitch);
+            // Right-handed, MEASURED (probe220): a wingman parked at +right*K renders
+            // right of centre and +up*K renders above it with exactly these vectors.
+            double[] forward = { -sy * cp, -sp, -cy * cp };
+            double[] right = { cy, 0.0, -sy };
+            double[] up = { -sp * sy, cp, -sp * cy };
+            return (forward, right, up);
+        }
+
+        /// <summary>
+        /// Where a world offset (relative to the orbit target) lands on screen, plus
+        /// its depth along the view axis. Positions behind the camera report a
+        /// non-positive depth — callers must treat those as unpickable.
+        /// </summary>
+        public (double X, double Y, double Depth) Project(IReadOnlyList<double> offset,
+            double viewportWidth, double viewportHeight)
+        {
+            var (f, r, u) = Basis();
+            // Eye sits at -forward * distance from the target.
+            double vx = offset[0] + f[0] * _distance;
+            double vy = offset[1] + f[1] * _distance;
+            double vz = offset[2] + f[2] * _distance;
+            double depth = vx * f[0] + vy * f[1] + vz * f[2];
+            if (depth <= 0.0)
+                return (double.NaN, double.NaN, depth);
+            double tanV = Math.Tan(FovDegrees * Math.PI / 360.0);
+            double tanH = tanV * (viewportWidth / Math.Max(1.0, viewportHeight));
+            double sx = (vx * r[0] + vy * r[1] + vz * r[2]) / (depth * tanH);
+            double sy = (vx * u[0] + vy * u[1] + vz * u[2]) / (depth * tanV);
+            return (viewportWidth * 0.5 * (1.0 + sx),
+                    viewportHeight * 0.5 * (1.0 - sy), depth);
+        }
+
+        /// <summary>
+        /// The world-space move that keeps a ship at <paramref name="depth"/> under a
+        /// pointer travelling (dx, dy) pixels — the drag stays glued to the cursor at
+        /// any zoom because the pixel size is measured at that ship's own depth.
+        /// </summary>
+        public double[] ScreenDragToWorld(double dxPixels, double dyPixels,
+            double depth, double viewportHeight)
+        {
+            var (_, r, u) = Basis();
+            double perPixel = 2.0 * Math.Max(0.0, depth) *
+                Math.Tan(FovDegrees * Math.PI / 360.0) / Math.Max(1.0, viewportHeight);
+            double mx = dxPixels * perPixel, my = -dyPixels * perPixel;
+            return new[]
+            {
+                r[0] * mx + u[0] * my,
+                r[1] * mx + u[1] * my,
+                r[2] * mx + u[2] * my
+            };
         }
 
         /// <summary>Keeps yaw in [0, 360) so a long spinning session never walks the

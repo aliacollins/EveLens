@@ -227,6 +227,13 @@
                                                TextWrapping="Wrap"
                                                FontSize="{DynamicResource EveFontCaption}"
                                                Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <TextBlock Text="{loc:T Skinr.PhotoOpFormation}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <ComboBox x:Name="PhotoOpFormationCombo"
+                                              HorizontalAlignment="Stretch"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              SelectionChanged="OnPhotoOpFormationChanged" />
                                     <ScrollViewer MaxHeight="240"
                                                   HorizontalScrollBarVisibility="Disabled">
                                         <StackPanel x:Name="PhotoOpList" Spacing="4" />

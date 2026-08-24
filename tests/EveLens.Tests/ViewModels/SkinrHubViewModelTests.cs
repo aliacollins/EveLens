@@ -86,7 +86,7 @@ namespace EveLens.Tests.ViewModels
             int placed = await render.AssembleFleetAsync(new[]
             {
                 new EsiSkinrRecipe { Id = "x", Name = "X", ShipTypeId = 587 }
-            });
+            }, SkinrFleetFormation.Vic);
 
             placed.Should().Be(0);
             render.WingmenCount.Should().Be(0);
@@ -94,6 +94,142 @@ namespace EveLens.Tests.ViewModels
             await render.DisbandFleetAsync();
             render.WingmenCount.Should().Be(0);
             render.Dispose();
+        }
+
+        // --- formation slot math -------------------------------------------------
+
+        [Theory]
+        [InlineData(SkinrFleetFormation.Vic)]
+        [InlineData(SkinrFleetFormation.LineAbreast)]
+        [InlineData(SkinrFleetFormation.Echelon)]
+        [InlineData(SkinrFleetFormation.Column)]
+        [InlineData(SkinrFleetFormation.Wall)]
+        public void Formations_NeverOverlap_WithMixedHullSizes(SkinrFleetFormation formation)
+        {
+            // A shuttle (15m), cruisers, and a titan-class radius in one fleet: every
+            // pair of ships — and every ship against the primary — must keep clear
+            // separation, because slot math runs on real measured radii.
+            double r0 = 300.0;
+            double[] radii = { 15.0, 250.0, 6000.0, 40.0, 900.0, 900.0, 15.0, 3000.0, 120.0, 500.0 };
+            IReadOnlyList<double[]> slots =
+                SkinrFleetFormations.ComputeSlots(formation, r0, radii);
+
+            slots.Should().HaveCount(radii.Length);
+            var all = new List<(double[] Pos, double R)> { (new[] { 0.0, 0.0, 0.0 }, r0) };
+            for (int i = 0; i < slots.Count; i++)
+                all.Add((slots[i], radii[i]));
+
+            for (int a = 0; a < all.Count; a++)
+                for (int b = a + 1; b < all.Count; b++)
+                {
+                    double dx = all[a].Pos[0] - all[b].Pos[0];
+                    double dy = all[a].Pos[1] - all[b].Pos[1];
+                    double dz = all[a].Pos[2] - all[b].Pos[2];
+                    double dist = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+                    dist.Should().BeGreaterThan(all[a].R + all[b].R,
+                        $"{formation}: ships {a} and {b} must not intersect");
+                }
+        }
+
+        [Fact]
+        public void LineAbreast_AlternatesFlanks_AndStaysInPlane()
+        {
+            IReadOnlyList<double[]> slots = SkinrFleetFormations.ComputeSlots(
+                SkinrFleetFormation.LineAbreast, 100.0, new[] { 50.0, 50.0, 50.0, 50.0 });
+
+            slots[0][0].Should().BeNegative();
+            slots[1][0].Should().BePositive();
+            slots[2][0].Should().BeNegative();
+            slots[3][0].Should().BePositive();
+            foreach (double[] s in slots)
+            {
+                s[1].Should().Be(0.0);
+                s[2].Should().Be(0.0);
+            }
+        }
+
+        [Fact]
+        public void Vic_SweepsBack_ProportionallyToLateralOffset()
+        {
+            IReadOnlyList<double[]> slots = SkinrFleetFormations.ComputeSlots(
+                SkinrFleetFormation.Vic, 100.0, new[] { 50.0, 50.0, 50.0, 50.0 });
+
+            foreach (double[] s in slots)
+                s[2].Should().BeApproximately(-Math.Abs(s[0]) * 0.8, 0.001);
+            // The second rank on each flank sits farther back than the first — a V.
+            Math.Abs(slots[2][2]).Should().BeGreaterThan(Math.Abs(slots[0][2]));
+            Math.Abs(slots[3][2]).Should().BeGreaterThan(Math.Abs(slots[1][2]));
+        }
+
+        [Fact]
+        public void FormationSpan_CoversTheFarthestHull()
+        {
+            double[] radii = { 50.0, 6000.0 };
+            IReadOnlyList<double[]> slots = SkinrFleetFormations.ComputeSlots(
+                SkinrFleetFormation.LineAbreast, 100.0, radii);
+            double span = SkinrFleetFormations.Span(100.0, radii, slots);
+
+            // The big ship's centre plus its radius must be inside the span.
+            double reach = Math.Abs(slots[1][0]) + radii[1];
+            span.Should().BeGreaterThanOrEqualTo(reach);
+        }
+
+        // --- fleet camera --------------------------------------------------------
+
+        [Fact]
+        public void FrameFleet_ExtendsZoomOutCeiling_ButNeverZoomInFloor()
+        {
+            var cam = new SkinrStageCamera { EnvironmentPreset = SkinrEnvironmentPreset.Space };
+            cam.SetHull(30.0);
+
+            cam.FrameFleet(5000.0);
+            cam.Distance.Should().BeGreaterThanOrEqualTo(5000.0, "the fleet must be framed");
+
+            // Zooming all the way IN must still reach one hull's close-inspection
+            // distance — assembling a fleet must never lock the camera at fleet scale.
+            for (int i = 0; i < 200; i++)
+                cam.Zoom(1.0);
+            cam.Distance.Should().BeApproximately(30.0 * 1.2, 0.5);
+
+            // And disbanding contracts the ceiling back to the hull's own.
+            cam.ClearFleetFraming();
+            for (int i = 0; i < 200; i++)
+                cam.Zoom(-1.0);
+            cam.Distance.Should().BeApproximately(30.0 * 16.0, 1.0);
+        }
+
+        [Fact]
+        public void CameraProjection_RoundTripsWithScreenDrag()
+        {
+            // The invariant free-move rides on: dragging by the pixel delta that
+            // Project reports between two points moves the ship exactly between them.
+            var cam = new SkinrStageCamera { EnvironmentPreset = SkinrEnvironmentPreset.Space };
+            cam.SetHull(100.0);
+            cam.Set(35.0, 20.0, 800.0);
+
+            double[] start = { 150.0, -40.0, 60.0 };
+            (double px0, double py0, double depth) = cam.Project(start, 1856, 952);
+            depth.Should().BeGreaterThan(0.0);
+
+            double[] move = cam.ScreenDragToWorld(120.0, -80.0, depth, 952);
+            double[] end = { start[0] + move[0], start[1] + move[1], start[2] + move[2] };
+            (double px1, double py1, _) = cam.Project(end, 1856, 952);
+
+            (px1 - px0).Should().BeApproximately(120.0, 1.5);
+            (py1 - py0).Should().BeApproximately(-80.0, 1.5);
+        }
+
+        [Fact]
+        public void CameraProjection_CentreOfOrbit_LandsMidScreen()
+        {
+            var cam = new SkinrStageCamera();
+            cam.SetHull(100.0);
+            (double px, double py, double depth) =
+                cam.Project(new[] { 0.0, 0.0, 0.0 }, 1000, 500);
+
+            px.Should().BeApproximately(500.0, 0.001);
+            py.Should().BeApproximately(250.0, 0.001);
+            depth.Should().BeApproximately(cam.Distance, 0.001);
         }
 
         [Fact]

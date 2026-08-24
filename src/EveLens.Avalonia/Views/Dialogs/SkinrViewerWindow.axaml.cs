@@ -922,11 +922,12 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         // --- Photo Op ------------------------------------------------------------
 
-        /// <summary>Formation size cap: each wingman is a full engine build, and four
-        /// escorts plus the primary already fills a frame.</summary>
-        private const int PhotoOpMaxWingmen = 4;
+        /// <summary>Formation size cap: each wingman is a full engine build; ten
+        /// escorts plus the primary is a small fleet and a full frame.</summary>
+        private const int PhotoOpMaxWingmen = 10;
 
         private bool _photoOpBusy;
+        private bool _photoOpComboReady;
 
         /// <summary>
         /// (Re)builds the flyout's checkbox list from the user's collection. Only
@@ -937,6 +938,14 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             try
             {
+                if (!_photoOpComboReady)
+                {
+                    PhotoOpFormationCombo.ItemsSource = SkinrFleetFormations.All
+                        .Select(f => Loc.Get(SkinrFleetFormations.NameKey(f)))
+                        .ToList();
+                    PhotoOpFormationCombo.SelectedIndex = 0;
+                    _photoOpComboReady = true;
+                }
                 PhotoOpList.Children.Clear();
                 foreach (SkinrHubDesignEntry entry in _hub.Designs)
                 {
@@ -1020,7 +1029,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     await _render.SetEnvironmentAsync(SkinrEnvironmentPreset.Space);
                     HighlightEnvironment();
                 }
-                int placed = await _render.AssembleFleetAsync(recipes);
+                int placed = await _render.AssembleFleetAsync(recipes, SelectedFormation());
                 PhotoOpStatus.Text = placed > 0
                     ? string.Format(Loc.Get("Skinr.PhotoOpAssembled"), placed)
                     : Loc.Get("Skinr.PhotoOpFailed");
@@ -1036,6 +1045,30 @@ namespace EveLens.Avalonia.Views.Dialogs
                 _photoOpBusy = false;
                 PhotoOpAssembleButton.IsEnabled = true;
                 PhotoOpDisbandButton.IsEnabled = _render.WingmenCount > 0;
+            }
+        }
+
+        private SkinrFleetFormation SelectedFormation()
+        {
+            int index = PhotoOpFormationCombo.SelectedIndex;
+            return index >= 0 && index < SkinrFleetFormations.All.Count
+                ? SkinrFleetFormations.All[index]
+                : SkinrFleetFormation.Vic;
+        }
+
+        /// <summary>Re-forms a live fleet instantly when the shape changes — the ships
+        /// move; nothing rebuilds.</summary>
+        private async void OnPhotoOpFormationChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                if (!_photoOpComboReady || _photoOpBusy || _render.WingmenCount == 0)
+                    return;
+                await _render.ApplyFormationAsync(SelectedFormation());
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: formation change failed: {ex.Message}");
             }
         }
 
@@ -1357,7 +1390,20 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             if (!_render.HasDesign)
                 return;
-            _dragOrigin = e.GetPosition(RenderSurface);
+            Point pos = e.GetPosition(RenderSurface);
+
+            // Ctrl+drag = photo-op free move: grab the ship nearest the cursor and
+            // slide it in the camera plane. A plain drag stays the orbit it always was.
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _render.WingmenCount > 0 &&
+                _render.BeginWingmanDrag(pos.X, pos.Y,
+                    RenderSurface.Bounds.Width, RenderSurface.Bounds.Height))
+            {
+                _dragOrigin = pos;
+                e.Pointer.Capture(RenderSurface);
+                return;
+            }
+
+            _dragOrigin = pos;
             _render.SetInteracting(true);
             e.Pointer.Capture(RenderSurface);
         }
@@ -1372,7 +1418,10 @@ namespace EveLens.Avalonia.Views.Dialogs
                 return;
 
             Point current = e.GetPosition(RenderSurface);
-            _render.Orbit(current.X - origin.X, current.Y - origin.Y);
+            if (_render.IsDraggingWingman)
+                _render.DragWingmanBy(current.X - origin.X, current.Y - origin.Y);
+            else
+                _render.Orbit(current.X - origin.X, current.Y - origin.Y);
             _dragOrigin = current;
         }
 
@@ -1381,16 +1430,36 @@ namespace EveLens.Avalonia.Views.Dialogs
             if (_dragOrigin == null)
                 return;
             _dragOrigin = null;
-            _render.SetInteracting(false);
+            if (_render.IsDraggingWingman)
+                _render.EndWingmanDrag();
+            else
+                _render.SetInteracting(false);
             e.Pointer.Capture(null);
         }
 
-        private void OnRenderPointerWheel(object? sender, PointerWheelEventArgs e)
+        private async void OnRenderPointerWheel(object? sender, PointerWheelEventArgs e)
         {
-            if (!_render.HasDesign)
-                return;
-            _render.Zoom(e.Delta.Y);
-            e.Handled = true;
+            try
+            {
+                if (!_render.HasDesign)
+                    return;
+                e.Handled = true;
+
+                // Ctrl+scroll = the depth half of photo-op free movement: push the
+                // ship under the cursor along the view axis instead of zooming.
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _render.WingmenCount > 0)
+                {
+                    Point pos = e.GetPosition(RenderSurface);
+                    await _render.PushWingmanDepthAsync(pos.X, pos.Y, e.Delta.Y,
+                        RenderSurface.Bounds.Width, RenderSurface.Bounds.Height);
+                    return;
+                }
+                _render.Zoom(e.Delta.Y);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: wheel failed: {ex.Message}");
+            }
         }
 
         // --- details panel -------------------------------------------------------
