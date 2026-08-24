@@ -5,12 +5,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using EveLens.Common.Constants;
 using EveLens.Common.Data;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Service;
 using EveLens.Common.Services;
 
 namespace EveLens.Common.ViewModels
@@ -132,7 +136,11 @@ namespace EveLens.Common.ViewModels
                 if (hull == null)
                     return string.Empty;
                 var parts = new List<string>();
-                if (hull.Race != Race.None)
+                // Race is a FLAGS enum and non-empire hulls carry combined bits — a
+                // Triglavian ship reports "Caldari, Minmatar, Amarr, Ore", which is
+                // nonsense on screen. Only a single defined race is worth printing.
+                if (hull.Race != Race.None && hull.Race != Race.All &&
+                    Enum.IsDefined(typeof(Race), hull.Race))
                     parts.Add(hull.Race.ToString().ToUpperInvariant());
                 if (!string.IsNullOrEmpty(hull.GroupName))
                     parts.Add(hull.GroupName!.ToUpperInvariant());
@@ -148,16 +156,149 @@ namespace EveLens.Common.ViewModels
                 EsiSkinrRecipe? recipe = Data.SelectedRecipe;
                 if (recipe == null)
                     return string.Empty;
-                int coatings = recipe.Layout?.Slots?
-                    .Count(s => s.Configuration?.Nanocoating != null) ?? 0;
-                int patterns = recipe.Layout?.Slots?
-                    .Count(s => s.Configuration?.Pattern != null) ?? 0;
+                (int coatings, int patterns) = Composition(recipe);
                 return $"{coatings} nanocoatings · {patterns} patterns";
+            }
+        }
+
+        /// <summary>How many of the recipe's slots carry a nanocoating / a pattern.</summary>
+        internal static (int Coatings, int Patterns) Composition(EsiSkinrRecipe? recipe)
+        {
+            int coatings = recipe?.Layout?.Slots?
+                .Count(s => s.Configuration?.Nanocoating != null) ?? 0;
+            int patterns = recipe?.Layout?.Slots?
+                .Count(s => s.Configuration?.Pattern != null) ?? 0;
+            return (coatings, patterns);
+        }
+
+        /// <summary>
+        /// The design's creator — "who built this" — resolved through the shared
+        /// ID→name pipeline every other EVE entity uses. Null until the lookup lands;
+        /// <c>EveIDToNameUpdatedEvent</c> announces when unresolved names arrive, so a
+        /// visible panel refreshes then rather than polling.
+        /// </summary>
+        public string? DesignerName
+        {
+            get
+            {
+                long id = Data.SelectedRecipe?.CreatorId ?? 0;
+                if (id <= 0)
+                    return null;
+                string name = EveIDToName.GetIDToName(id);
+                return name == EveLensConstants.UnknownText ? null : name;
+            }
+        }
+
+        /// <summary>The selected design's license: activation state and spare copies.
+        /// Null before a selection or when the license list has no match.</summary>
+        public SkinrLicenseEntry? SelectedLicense
+        {
+            get
+            {
+                string? id = Data.SelectedRecipe?.Id;
+                return string.IsNullOrEmpty(id)
+                    ? null
+                    : Data.Licenses.FirstOrDefault(l => l.SkinrId == id);
             }
         }
 
         /// <summary>Tier level of the selected design, or 0 when none/unknown.</summary>
         public int SelectedTier => Data.SelectedRecipe?.Tier?.Level ?? 0;
+
+        // --- details panel -------------------------------------------------------
+
+        /// <summary>
+        /// The hull rows for the details panel: SDE mass and volume, plus the hull's real
+        /// engine-measured length when a build has reported its bounding radius. Values
+        /// arrive formatted by the property system (units included).
+        /// </summary>
+        public IReadOnlyList<(string LabelKey, string Value)> HullStats(double hullRadius)
+        {
+            var rows = new List<(string, string)>();
+            Item? hull = Hull;
+            if (hull == null)
+                return rows;
+            if (hullRadius > 1.0)
+                rows.Add(("Skinr.StatLength",
+                    string.Format("{0:N0} m", hullRadius * 2.0)));
+            foreach (int id in new[] { DBConstants.MassPropertyID, DBConstants.VolumePropertyID })
+            {
+                try
+                {
+                    EveProperty prop = StaticProperties.GetPropertyByID(id);
+                    if (prop == null)
+                        continue;
+                    string label = id == DBConstants.MassPropertyID
+                        ? "Skinr.StatMass" : "Skinr.StatVolume";
+                    rows.Add((label, prop.GetLabelOrDefault(hull)));
+                }
+                catch (Exception)
+                {
+                    // A missing property row is not worth a broken panel.
+                }
+            }
+            return rows;
+        }
+
+        /// <summary>The selected design's collection/line name, empty when unknown.</summary>
+        public string SelectedLine => Data.SelectedRecipe?.Line ?? string.Empty;
+
+        // --- favorites -----------------------------------------------------------
+
+        private HashSet<string>? _favorites;
+
+        private string FavoritesFile => Path.Combine(
+            AppServices.ApplicationPaths.DataDirectory, "cache", "skinr", "favorites.json");
+
+        private HashSet<string> Favorites
+        {
+            get
+            {
+                if (_favorites != null)
+                    return _favorites;
+                try
+                {
+                    if (File.Exists(FavoritesFile))
+                    {
+                        var loaded = JsonSerializer.Deserialize<List<string>>(
+                            File.ReadAllText(FavoritesFile));
+                        _favorites = new HashSet<string>(
+                            loaded ?? new List<string>(), StringComparer.Ordinal);
+                        return _favorites;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AppServices.TraceService?.Trace(
+                        $"SkinrHub: favorites load failed: {ex.Message}");
+                }
+                _favorites = new HashSet<string>(StringComparer.Ordinal);
+                return _favorites;
+            }
+        }
+
+        public bool IsFavorite(string skinrId) => Favorites.Contains(skinrId);
+
+        /// <summary>Toggles a design's favorite flag and persists — purely local data.</summary>
+        public bool ToggleFavorite(string skinrId)
+        {
+            bool now = !Favorites.Remove(skinrId);
+            if (now)
+                Favorites.Add(skinrId);
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(FavoritesFile)!);
+                File.WriteAllText(FavoritesFile,
+                    JsonSerializer.Serialize(Favorites.ToList()));
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrHub: favorites save failed: {ex.Message}");
+            }
+            CarouselChanged?.Invoke();
+            return now;
+        }
 
         protected override void Dispose(bool disposing)
         {

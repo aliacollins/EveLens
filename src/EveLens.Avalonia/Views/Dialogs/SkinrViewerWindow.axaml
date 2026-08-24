@@ -53,9 +53,11 @@
                            HorizontalAlignment="Center" />
                 <StackPanel Spacing="4">
                     <Border x:Name="RailCollection" Background="{StaticResource SkinrPillBrush}"
-                            CornerRadius="10" Margin="8,0" Padding="0,10">
+                            CornerRadius="10" Margin="8,0" Padding="0,10"
+                            Cursor="Hand" PointerPressed="OnRailCollection">
                         <StackPanel Spacing="4">
-                            <TextBlock Text="❖" HorizontalAlignment="Center"
+                            <TextBlock x:Name="RailCollectionGlyph" Text="❖"
+                                       HorizontalAlignment="Center"
                                        FontSize="{DynamicResource EveFontHeading}"
                                        Foreground="{StaticResource SkinrAccentBrush}" />
                             <TextBlock Text="{loc:T Skinr.RailCollection}"
@@ -64,9 +66,11 @@
                                        Foreground="{StaticResource SkinrTextSecBrush}" />
                         </StackPanel>
                     </Border>
-                    <Border ToolTip.Tip="{loc:T Skinr.ComingSoon}" Margin="8,0" Padding="0,10">
+                    <Border x:Name="RailHub" Margin="8,0" Padding="0,10" CornerRadius="10"
+                            Cursor="Hand" PointerPressed="OnRailHub"
+                            ToolTip.Tip="{loc:T Skinr.HubTitle}">
                         <StackPanel Spacing="4">
-                            <TextBlock Text="◈" HorizontalAlignment="Center"
+                            <TextBlock x:Name="RailHubGlyph" Text="◈" HorizontalAlignment="Center"
                                        FontSize="{DynamicResource EveFontHeading}"
                                        Foreground="{StaticResource SkinrTextDimBrush}" />
                             <TextBlock Text="{loc:T Skinr.RailHub}"
@@ -183,21 +187,23 @@
                            TextWrapping="Wrap" MaxWidth="480"
                            VerticalAlignment="Center" HorizontalAlignment="Center" />
 
-                <!-- Hull identity, top-left -->
-                <StackPanel x:Name="HullOverlay" IsVisible="False" Margin="26,20,0,0"
-                            HorizontalAlignment="Left" VerticalAlignment="Top" Spacing="6"
-                            MaxWidth="340" IsHitTestVisible="False">
-                    <TextBlock x:Name="HullNameText" FontWeight="Bold"
-                               Foreground="{StaticResource SkinrTextBrush}" />
-                    <TextBlock x:Name="HullSubtitleText"
-                               FontSize="{DynamicResource EveFontCaption}"
-                               Foreground="{StaticResource SkinrAccentBrush}" />
-                    <TextBlock x:Name="HullDescText"
-                               FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource SkinrTextSecBrush}"
-                               TextWrapping="Wrap" MaxLines="6"
-                               TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+                <!-- Hull identity: the name alone, centered — ship type, description and
+                     every other detail live in the right-hand panel by request. -->
+                <TextBlock x:Name="HullNameText" IsVisible="False" FontWeight="Bold"
+                           Margin="0,18,0,0" HorizontalAlignment="Center"
+                           VerticalAlignment="Top" IsHitTestVisible="False"
+                           Foreground="{StaticResource SkinrTextBrush}" />
+
+                <!-- Hub detail mode: a market card opened this design — the way back to
+                     the discovery grid, pinned over the stage's top-left. -->
+                <Button x:Name="MarketBackButton" IsVisible="False"
+                        Content="{loc:T Skinr.HubBack}" Padding="12,5" CornerRadius="14"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="20,16,0,0"
+                        Background="{StaticResource SkinrPillBrush}"
+                        Foreground="{StaticResource SkinrTextBrush}"
+                        FontSize="{DynamicResource EveFontSmall}"
+                        Click="OnMarketBack" />
 
                 <!-- Stage buttons, top-right: photo mode beside render settings -->
                 <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
@@ -233,6 +239,10 @@
                                             HorizontalAlignment="Stretch" Padding="10,4"
                                             CornerRadius="12"
                                             FontSize="{DynamicResource EveFontSmall}" />
+                                    <CheckBox x:Name="CdnToggle"
+                                              Content="{loc:T Skinr.HubCdnToggle}"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              IsCheckedChanged="OnCdnToggled" />
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
@@ -253,59 +263,51 @@
                         </LinearGradientBrush>
                     </StackPanel.Background>
 
-                    <!-- Design title card: one row, minimal height -->
-                    <StackPanel x:Name="DesignCard" IsVisible="False" Orientation="Horizontal"
-                                HorizontalAlignment="Center" Spacing="12" Margin="0,14,0,0">
+                    <!-- Design title card: ONLY the name in the center (by request) —
+                         tier, coatings and the rest live in the details panel. Actions
+                         and hints sit at the right edge of the same row. -->
+                    <Grid x:Name="DesignCard" IsVisible="False" Margin="18,14,18,0">
                         <TextBlock x:Name="DesignNameText" FontWeight="Bold"
-                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{StaticResource SkinrTextBrush}" />
-                        <TextBlock x:Name="DesignSubtitleText"
-                                   FontSize="{DynamicResource EveFontSmall}"
-                                   VerticalAlignment="Center"
-                                   Foreground="{StaticResource SkinrTextSecBrush}" />
-                        <Border x:Name="TierBadge" IsVisible="False"
-                                VerticalAlignment="Center" CornerRadius="10"
-                                Background="{StaticResource SkinrPillBrush}" Padding="10,3">
-                            <TextBlock x:Name="TierBadgeText"
-                                       FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="{StaticResource SkinrTierBrush}" />
-                        </Border>
-                        <Button x:Name="ViewDetailsButton" Content="{loc:T Skinr.ViewDetails}"
-                                Padding="12,4" CornerRadius="14" VerticalAlignment="Center"
-                                Background="{StaticResource SkinrPillBrush}"
-                                Foreground="{StaticResource SkinrTextBrush}"
-                                FontSize="{DynamicResource EveFontSmall}">
-                            <Button.Flyout>
-                                <Flyout Placement="Top">
-                                    <TextBlock x:Name="DetailsFlyoutText" MaxWidth="360"
-                                               TextWrapping="Wrap"
-                                               FontSize="{DynamicResource EveFontSmall}" />
-                                </Flyout>
-                            </Button.Flyout>
-                        </Button>
-                        <Button Content="{loc:T Skinr.Compare}" Padding="12,4"
-                                CornerRadius="14" IsEnabled="False" VerticalAlignment="Center"
-                                ToolTip.Tip="{loc:T Skinr.ComingSoon}"
-                                Background="{StaticResource SkinrAccentDimBrush}"
-                                Foreground="{StaticResource SkinrTextBrush}"
-                                FontSize="{DynamicResource EveFontSmall}" />
-                        <StackPanel x:Name="HintStrip" IsVisible="False"
-                                    Orientation="Horizontal" Spacing="14"
-                                    VerticalAlignment="Center" Margin="10,0,0,0">
-                            <TextBlock Text="{loc:T Skinr.HintRotate}"
-                                       FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}" />
-                            <TextBlock Text="{loc:T Skinr.HintZoom}"
-                                       FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}" />
-                            <TextBlock Text="{loc:T Skinr.HintReset}"
-                                       FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="12"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <StackPanel x:Name="HintStrip" IsVisible="False"
+                                        Orientation="Horizontal" Spacing="14"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{loc:T Skinr.HintRotate}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}" />
+                                <TextBlock Text="{loc:T Skinr.HintZoom}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}" />
+                                <TextBlock Text="{loc:T Skinr.HintReset}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}" />
+                            </StackPanel>
+                            <Button Content="{loc:T Skinr.Compare}" Padding="12,4"
+                                    CornerRadius="14" IsEnabled="False"
+                                    VerticalAlignment="Center"
+                                    ToolTip.Tip="{loc:T Skinr.ComingSoon}"
+                                    Background="{StaticResource SkinrAccentDimBrush}"
+                                    Foreground="{StaticResource SkinrTextBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}" />
+                            <Button x:Name="ViewDetailsButton"
+                                    Content="{loc:T Skinr.ViewDetails}"
+                                    Padding="12,4" CornerRadius="14"
+                                    VerticalAlignment="Center"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    Foreground="{StaticResource SkinrTextBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    Click="OnViewDetails" />
                         </StackPanel>
-                    </StackPanel>
+                    </Grid>
 
-                    <!-- Design carousel -->
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                    <!-- Design carousel: the user's COLLECTION, and only that. Hidden in
+                         Hub detail mode so market designs never appear to sit among
+                         owned ones — the two navigations must not mix. -->
+                    <ScrollViewer x:Name="CarouselScroller"
+                                  HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled"
                                   Margin="18,4,18,0">
                         <StackPanel x:Name="DesignStrip" Orientation="Horizontal" Spacing="8"
@@ -321,6 +323,171 @@
                 </StackPanel>
 
                 <!-- Download / render status, unobtrusive -->
+                <!-- ===== Details panel, docked right over the stage: hull stats from the
+                     SDE, the design's attributes, share + favorite. The mock this follows
+                     is a label/value ledger — every row is a Grid of dim label and
+                     right-aligned value, sections split by hairlines. ===== -->
+                <Border x:Name="DetailsPanel" IsVisible="False" Width="272"
+                        HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                        Background="#F00D0F17"
+                        BorderBrush="{StaticResource SkinrBorderBrush}"
+                        BorderThickness="1,0,0,0" Padding="18,14">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                            <Button DockPanel.Dock="Right" Content="✕" Padding="6,2"
+                                    Background="Transparent"
+                                    Foreground="{StaticResource SkinrTextDimBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    Click="OnDetailsClose" />
+                            <TextBlock x:Name="PanelHullName" FontWeight="Bold"
+                                       FontSize="{DynamicResource EveFontTitle}"
+                                       Foreground="{StaticResource SkinrTextBrush}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+
+                        <!-- share / favorite pinned to the panel foot -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                                    Spacing="10" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button x:Name="ShareButton" Content="⇪" Padding="10,4"
+                                    CornerRadius="12"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    Foreground="{StaticResource SkinrTextSecBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    ToolTip.Tip="{loc:T Skinr.Share}"
+                                    Click="OnShare" />
+                            <Button x:Name="FavoriteButton" Content="♡" Padding="10,4"
+                                    CornerRadius="12"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    Foreground="{StaticResource SkinrTextSecBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    ToolTip.Tip="{loc:T Skinr.Favorite}"
+                                    Click="OnFavorite" />
+                        </StackPanel>
+
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="0">
+                                <TextBlock x:Name="PanelHullSub"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           Margin="0,0,0,12" />
+                                <!-- hull stat rows land here -->
+                                <StackPanel x:Name="PanelHullStats" Spacing="9" />
+                                <Border Height="1" Margin="0,14"
+                                        Background="{StaticResource SkinrBorderBrush}" />
+                                <!-- design attribute rows land here -->
+                                <StackPanel x:Name="PanelDesignStats" Spacing="9" />
+                                <Border Height="1" Margin="0,14"
+                                        Background="{StaticResource SkinrBorderBrush}" />
+                                <!-- composition rows: coatings, patterns, licenses -->
+                                <StackPanel x:Name="PanelCompositionStats" Spacing="9" />
+                                <Border Height="1" Margin="0,14"
+                                        Background="{StaticResource SkinrBorderBrush}" />
+                                <!-- the hull's lore paragraph, displaced from the stage -->
+                                <TextBlock x:Name="PanelHullDesc"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
+                                           TextWrapping="Wrap" Margin="0,0,0,10" />
+                                <TextBlock x:Name="PanelNotes" IsVisible="False"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource EveWarningYellowBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <!-- ===== Paragon Hub discovery pane: covers the stage while browsing.
+                     Phase 1 of the marketplace — the public listing feed grouped per
+                     design, ship-first filter, cards that open straight into the
+                     viewer. Price history and recommendations arrive with the
+                     collector phases. ===== -->
+                <Border x:Name="MarketPane" IsVisible="False" Background="#FA0C0E15">
+                    <DockPanel Margin="26,18,26,12">
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                        Spacing="10" VerticalAlignment="Center">
+                                <Border Background="{StaticResource SkinrPillBrush}"
+                                        CornerRadius="14" Height="30" MinWidth="220">
+                                    <DockPanel Margin="12,0">
+                                        <TextBlock DockPanel.Dock="Left" Text="⌕"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextDimBrush}"
+                                                   Margin="0,0,8,0" />
+                                        <TextBox x:Name="MarketSearchBox" Background="Transparent"
+                                                 BorderThickness="0"
+                                                 VerticalContentAlignment="Center"
+                                                 FontSize="{DynamicResource EveFontSmall}"
+                                                 Foreground="{StaticResource SkinrTextBrush}"
+                                                 Watermark="{loc:T Skinr.SearchPlaceholder}"
+                                                 TextChanged="OnMarketSearchChanged" />
+                                    </DockPanel>
+                                </Border>
+                            </StackPanel>
+                            <StackPanel Spacing="3">
+                                <TextBlock x:Name="MarketTitle" Text="{loc:T Skinr.HubTitle}"
+                                           FontWeight="Bold"
+                                           FontSize="{DynamicResource EveFontTitle}"
+                                           Foreground="{StaticResource SkinrAccentBrush}" />
+                                <TextBlock x:Name="MarketStats"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <!-- One-time consent for the preview shelf: the app never talks
+                             to a non-CCP server without a remembered, revisitable yes. -->
+                        <Border x:Name="CdnBanner" DockPanel.Dock="Top" IsVisible="False"
+                                Background="{StaticResource SkinrPillBrush}"
+                                CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                            Spacing="8" VerticalAlignment="Center"
+                                            Margin="12,0,0,0">
+                                    <Button Content="{loc:T Skinr.HubCdnEnable}"
+                                            Padding="12,4" CornerRadius="12"
+                                            Background="{StaticResource SkinrAccentDimBrush}"
+                                            Foreground="{StaticResource SkinrTextBrush}"
+                                            FontSize="{DynamicResource EveFontSmall}"
+                                            Click="OnCdnEnable" />
+                                    <Button Content="{loc:T Skinr.HubCdnNo}"
+                                            Padding="12,4" CornerRadius="12"
+                                            Background="Transparent"
+                                            Foreground="{StaticResource SkinrTextSecBrush}"
+                                            FontSize="{DynamicResource EveFontSmall}"
+                                            Click="OnCdnDecline" />
+                                </StackPanel>
+                                <TextBlock Text="{loc:T Skinr.HubCdnAsk}" TextWrapping="Wrap"
+                                           VerticalAlignment="Center"
+                                           FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </DockPanel>
+                        </Border>
+                        <TextBlock x:Name="MarketStatus" DockPanel.Dock="Top" IsVisible="False"
+                                   Margin="0,30,0,0" HorizontalAlignment="Center"
+                                   FontSize="{DynamicResource EveFontBody}"
+                                   Foreground="{StaticResource SkinrTextSecBrush}"
+                                   TextWrapping="Wrap" />
+                        <!-- The market tree: class → faction → ship with design counts,
+                             the way EVE's own market browses. Clicking a node scopes
+                             the card grid on the right. -->
+                        <Border DockPanel.Dock="Left" Width="250" Margin="0,0,16,0"
+                                Background="{StaticResource SkinrPanelBrush}"
+                                CornerRadius="8"
+                                BorderBrush="{StaticResource SkinrBorderBrush}"
+                                BorderThickness="1" Padding="4">
+                            <TreeView x:Name="MarketTree" Background="Transparent"
+                                      FontSize="{DynamicResource EveFontSmall}"
+                                      SelectionChanged="OnMarketTreeSelection" />
+                        </Border>
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <!-- Class·faction sections, cards sorted ship-then-name. -->
+                            <StackPanel x:Name="MarketSections" Spacing="6" />
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
                 <Border x:Name="StatusPill" HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"
                         Margin="18,0,0,10" Background="{StaticResource SkinrPillBrush}"
@@ -333,6 +500,10 @@
                         <ProgressBar x:Name="DownloadProgress" IsVisible="False" Width="120"
                                      Minimum="0" Maximum="100" Height="6"
                                      VerticalAlignment="Center" />
+                        <TextBlock x:Name="SpinCounterText" IsVisible="False"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrAccentBrush}"
+                                   VerticalAlignment="Center" />
                     </StackPanel>
                 </Border>
             </Panel>

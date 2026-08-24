@@ -4,6 +4,7 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Avalonia;
@@ -14,7 +15,11 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using EveLens.Avalonia.Converters;
 using EveLens.Avalonia.Services;
+using EveLens.Common.Events;
+using EveLens.Common.Helpers;
+using EveLens.Common.Service;
 using EveLens.Common.Models;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
@@ -50,17 +55,31 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private readonly SkinrHubViewModel _hub = new();
         private readonly SkinrRenderViewModel _render = new();
+        private readonly SkinrMarketViewModel _market = new();
+
+        // The market pane redraws at most this often while the recipe walk streams in
+        // names — a full grid rebuild per resolved recipe would churn ~6 times a second.
+        private static readonly TimeSpan MarketRefreshDebounce = TimeSpan.FromMilliseconds(400);
+        private bool _marketRefreshPending;
 
         private bool _suppressQuality;
         private bool _suppressResolution;
         private WriteableBitmap? _surface;
         private Point? _dragOrigin;
         private string? _thumbSavedFor;
+        private bool _thumbArmed;
+        private IDisposable? _idNamesSub;
         private string? _selectedSkinrId;
+        private SkinrThumbnailPrerenderer? _prerenderer;
+        private readonly SkinrHubPreferences _hubPrefs = SkinrHubPreferences.Load();
+        private bool _suppressCdnToggle;
 
         public SkinrViewerWindow()
         {
             InitializeComponent();
+            _suppressCdnToggle = true;
+            CdnToggle.IsChecked = _hubPrefs.CommunityPreviews == true;
+            _suppressCdnToggle = false;
             ApplyDisplayTypography();
             ApplyPlatformSupport();
             PopulateQualities();
@@ -75,12 +94,36 @@ namespace EveLens.Avalonia.Views.Dialogs
             _render.DownloadProgress += fraction => ReportDownload(
                 Loc.Get("Skinr.RenderPlaceholderTitle"), fraction);
             _render.DiagnosticsChanged += () => Dispatcher.UIThread.Post(RefreshRenderDiagnostics);
+            // The ship-spin counter: the docked capsuleer's oldest pastime, kept alive.
+            // Marshalled because the inertia glide spins off the UI thread too.
+            _render.Camera.SpinCountChanged += spins => Dispatcher.UIThread.Post(() =>
+            {
+                SpinCounterText.IsVisible = true;
+                SpinCounterText.Text = string.Format(Loc.Get("Skinr.SpinsFmt"), spins);
+            });
+            // Recipe creators resolve through the shared ID→name pipeline; when a batch
+            // of names lands, a visible details panel owes its Designer row a refresh —
+            // and so do the market cards' "by <creator>" lines.
+            _idNamesSub = AppServices.EventAggregator?.Subscribe<EveIDToNameUpdatedEvent>(
+                _ => Dispatcher.UIThread.Post(() =>
+                {
+                    if (DetailsPanel.IsVisible)
+                        RefreshDetailsPanel();
+                    if (MarketPane.IsVisible)
+                        QueueMarketRefresh();
+                }));
+            _market.MarketChanged += () => Dispatcher.UIThread.Post(QueueMarketRefresh);
 
             var characters = AppServices.Characters.Where(c => c.Monitored)
                 .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
             CharacterCombo.ItemsSource = characters.Select(c => c.Name).ToList();
             CharacterCombo.Tag = characters;
+            // Auto-select the first character: an empty picker meant an empty
+            // Collection that read as a bug ("where are my ships?"), and the Hub
+            // half works without a character anyway — this only ever adds data.
+            if (characters.Count > 0)
+                CharacterCombo.SelectedIndex = 0;
         }
 
         /// <summary>
@@ -119,8 +162,518 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        // --- Paragon Hub pane ----------------------------------------------------
+
+        // THE NAVIGATION LAW OF THIS WINDOW (user-mandated, twice): Collection is ONLY
+        // the user's own designs — nothing else, ever. Hub is where market listings
+        // live, and a market design opened from a card stays inside Hub context (rail
+        // on Hub, Back pill to the grid, collection carousel hidden). The two must
+        // never read as one surface.
+        private bool _marketDetail;
+        private int _marketPresetTypeId;
+        private string? _lastCollectionSkinrId;
+
+        private void OnRailCollection(object? sender, PointerPressedEventArgs e)
+        {
+            bool wasDetail = _marketDetail;
+            _marketDetail = false;
+            ShowMarket(false);
+            // Collection must show THEIR ship, not the market design left on the
+            // stage. Restore the last owned design they had open, if any.
+            if (wasDetail && _lastCollectionSkinrId != null &&
+                _lastCollectionSkinrId != _selectedSkinrId)
+                OnDesignTilePressed(_lastCollectionSkinrId);
+        }
+
+        private void OnRailHub(object? sender, PointerPressedEventArgs e)
+        {
+            _marketDetail = false;
+            ShowMarket(true);
+        }
+
+        private void OnMarketBack(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            _marketDetail = false;
+            // No ship preset on the way back: "Back to results" means THE results, not
+            // a fresh filter to whatever hull was just on the stage.
+            ShowMarket(true, applyShipPreset: false);
+        }
+
+        private void ShowMarket(bool market, bool applyShipPreset = true)
+        {
+            MarketPane.IsVisible = market;
+            MarketBackButton.IsVisible = !market && _marketDetail;
+            // The collection carousel exists only in Collection context.
+            CarouselScroller.IsVisible = !market && !_marketDetail;
+            bool hubContext = market || _marketDetail;
+            RailCollection.Background = hubContext
+                ? Brushes.Transparent : (IBrush?)Resources["SkinrPillBrush"];
+            RailHub.Background = hubContext
+                ? (IBrush?)Resources["SkinrPillBrush"] : Brushes.Transparent;
+            RailCollectionGlyph.Foreground = (IBrush?)Resources[hubContext
+                ? "SkinrTextDimBrush" : "SkinrAccentBrush"];
+            RailHubGlyph.Foreground = (IBrush?)Resources[hubContext
+                ? "SkinrAccentBrush" : "SkinrTextDimBrush"];
+            if (!market)
+                return;
+
+            // Ship-first: arriving from a design means "find a design for THIS hull".
+            // Only when the hull changed since the last visit — a user who switched the
+            // dropdown to All ships and comes back keeps their choice.
+            int hull = applyShipPreset ? _hub.Data.SelectedRecipe?.ShipTypeId ?? 0 : 0;
+            if (hull > 0 && hull != _marketPresetTypeId)
+            {
+                _marketPresetTypeId = hull;
+                _market.ShipTypeFilter = hull;
+            }
+
+            if (!_market.HasLoaded && !_market.IsLoading)
+                _ = _market.LoadAsync();
+            CdnBanner.IsVisible = _hubPrefs.CommunityPreviews == null;
+            EnsurePrerenderer();
+            RefreshMarket();
+        }
+
+        // --- community previews consent ------------------------------------------
+
+        private void OnCdnEnable(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e) => SetCommunityPreviews(true);
+
+        private void OnCdnDecline(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e) => SetCommunityPreviews(false);
+
+        private void OnCdnToggled(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (!_suppressCdnToggle)
+                SetCommunityPreviews(CdnToggle.IsChecked == true);
+        }
+
+        private void SetCommunityPreviews(bool enabled)
+        {
+            _hubPrefs.CommunityPreviews = enabled;
+            _hubPrefs.Save();
+            _suppressCdnToggle = true;
+            CdnToggle.IsChecked = enabled;
+            _suppressCdnToggle = false;
+            CdnBanner.IsVisible = false;
+        }
+
+        /// <summary>
+        /// The Hub's second engine: a Preview-tier sidecar that quietly renders REAL
+        /// skinned thumbnails for market designs, always working on whatever the grid
+        /// currently shows first. Started on the first Hub visit, never before — the
+        /// Collection experience must not pay for a marketplace it hasn't opened.
+        /// </summary>
+        private void EnsurePrerenderer()
+        {
+            if (_prerenderer != null || SkinrRenderPlatform.Current != SkinrRenderSupport.Supported)
+                return;
+            _prerenderer = new SkinrThumbnailPrerenderer(_hub.Thumbnails,
+                () => _market.Entries
+                    .Where(e => e.Recipe != null)
+                    .Select(e => e.Recipe!)
+                    .ToList(),
+                () => _hubPrefs.CommunityPreviews == true);
+            _prerenderer.ThumbnailCaptured += (_, _) =>
+                Dispatcher.UIThread.Post(QueueMarketRefresh);
+            _prerenderer.StateChanged += () =>
+                Dispatcher.UIThread.Post(QueueMarketRefresh);
+            _prerenderer.Start();
+        }
+
+        private void QueueMarketRefresh()
+        {
+            if (_marketRefreshPending || !MarketPane.IsVisible)
+                return;
+            _marketRefreshPending = true;
+            DispatcherTimer.RunOnce(() =>
+            {
+                _marketRefreshPending = false;
+                if (MarketPane.IsVisible)
+                    RefreshMarket();
+            }, MarketRefreshDebounce);
+        }
+
+        private void OnMarketSearchChanged(object? sender, TextChangedEventArgs e) =>
+            _market.SearchText = MarketSearchBox.Text ?? string.Empty;
+
+        /// <summary>One tree node's scope: class, class+faction, or an exact hull.</summary>
+        private sealed record MarketNode(string Key, string Class, string Faction, int TypeId);
+
+        private string _marketTreeSig = string.Empty;
+        private bool _marketTreeRebuilding;
+
+        private void OnMarketTreeSelection(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_marketTreeRebuilding)
+                return;
+            if (MarketTree.SelectedItem is TreeViewItem { Tag: MarketNode node })
+                _market.SetScope(node.Class, node.Faction, node.TypeId);
+        }
+
+        /// <summary>
+        /// Rebuilds the market tree only when its CONTENT changed (the identify walk
+        /// grows it steadily), preserving which branches the user has open — a rebuild
+        /// that collapsed the tree every few seconds would be unusable during the walk.
+        /// </summary>
+        private void RefreshMarketTree()
+        {
+            var tree = _market.Tree();
+            var sig = new System.Text.StringBuilder();
+            int total = 0;
+            foreach (var cls in tree)
+            {
+                sig.Append(cls.Name).Append(':');
+                foreach (var fac in cls.Factions)
+                {
+                    sig.Append(fac.Name).Append('=');
+                    foreach (var hull in fac.Hulls)
+                    {
+                        sig.Append(hull.TypeId).Append(',').Append(hull.Designs).Append(';');
+                        total += hull.Designs;
+                    }
+                }
+            }
+            string signature = sig.ToString();
+            if (signature == _marketTreeSig)
+                return;
+            _marketTreeSig = signature;
+
+            var expanded = new HashSet<string>();
+            void Collect(ItemsControl parent)
+            {
+                foreach (object? child in parent.Items)
+                {
+                    if (child is not TreeViewItem tvi)
+                        continue;
+                    if (tvi.IsExpanded && tvi.Tag is MarketNode node)
+                        expanded.Add(node.Key);
+                    Collect(tvi);
+                }
+            }
+            Collect(MarketTree);
+
+            _marketTreeRebuilding = true;
+            try
+            {
+                MarketTree.Items.Clear();
+                MarketTree.Items.Add(new TreeViewItem
+                {
+                    Header = $"{Loc.Get("Skinr.HubAllShips")} ({total})",
+                    Tag = new MarketNode("all", string.Empty, string.Empty, 0)
+                });
+                foreach (var cls in tree)
+                {
+                    string clsLabel = cls.Name.Length == 0
+                        ? Loc.Get("Skinr.HubOther") : cls.Name;
+                    int clsCount = cls.Factions.Sum(f => f.Hulls.Sum(h => h.Designs));
+                    var clsNode = new MarketNode("c:" + cls.Name, cls.Name, string.Empty, 0);
+                    var clsItem = new TreeViewItem
+                    {
+                        Header = $"{clsLabel} ({clsCount})",
+                        Tag = clsNode,
+                        IsExpanded = expanded.Contains(clsNode.Key)
+                    };
+                    foreach (var fac in cls.Factions)
+                    {
+                        string facLabel = fac.Name.Length == 0
+                            ? Loc.Get("Skinr.HubOther") : fac.Name;
+                        var facNode = new MarketNode(
+                            "f:" + cls.Name + "|" + fac.Name, cls.Name, fac.Name, 0);
+                        var facItem = new TreeViewItem
+                        {
+                            Header = $"{facLabel} ({fac.Hulls.Sum(h => h.Designs)})",
+                            Tag = facNode,
+                            IsExpanded = expanded.Contains(facNode.Key)
+                        };
+                        foreach (var hull in fac.Hulls)
+                        {
+                            facItem.Items.Add(new TreeViewItem
+                            {
+                                Header = $"{hull.Name} ({hull.Designs})",
+                                Tag = new MarketNode("h:" + hull.TypeId,
+                                    cls.Name, fac.Name, hull.TypeId)
+                            });
+                        }
+                        clsItem.Items.Add(facItem);
+                    }
+                    MarketTree.Items.Add(clsItem);
+                }
+            }
+            finally
+            {
+                _marketTreeRebuilding = false;
+            }
+        }
+
+        /// <summary>
+        /// Loads CCP's official render of the plain hull into a market card's
+        /// placeholder. Best-effort and cached by <see cref="ImageService"/> (memory +
+        /// disk, keyed by URL), so the same hull across fifty cards downloads once. A
+        /// card rebuilt before the image lands just orphans a bitmap for the GC.
+        /// </summary>
+        private static async void LoadHullRender(Image image, int typeId)
+        {
+            try
+            {
+                var drawing = await ImageService.GetImageAsync(
+                    ImageHelper.GetTypeRenderURL(typeId, 256));
+                if (drawing == null)
+                    return;
+                object? converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                    drawing, typeof(Bitmap), null,
+                    System.Globalization.CultureInfo.InvariantCulture);
+                if (converted is Bitmap bitmap)
+                    image.Source = bitmap;
+            }
+            catch (Exception)
+            {
+                // Best-effort art; the hull-name text stays underneath.
+            }
+        }
+
+        /// <summary>The display name for a hull type id, empty when unknown.</summary>
+        private static string HullNameFor(int typeId)
+        {
+            if (typeId <= 0)
+                return string.Empty;
+            var item = EveLens.Common.Data.StaticItems.GetItemByID(typeId);
+            return item == EveLens.Common.Data.Item.UnknownItem
+                ? string.Empty : item.LocalizedName;
+        }
+
+        private void RefreshMarket()
+        {
+            var entries = _market.Entries;
+
+            string hullName = HullNameFor(_market.ShipTypeFilter);
+            if (!string.IsNullOrEmpty(hullName))
+                MarketTitle.Text = string.Format(
+                    Loc.Get("Skinr.HubForShip"), hullName.ToUpperInvariant());
+            else if (_market.GroupFilter.Length > 0)
+                MarketTitle.Text = _market.FactionFilter.Length > 0
+                    ? $"{_market.GroupFilter.ToUpperInvariant()} · {_market.FactionFilter}"
+                    : _market.GroupFilter.ToUpperInvariant();
+            else
+                MarketTitle.Text = Loc.Get("Skinr.HubTitle");
+
+            string stats = string.Format(Loc.Get("Skinr.HubStats"),
+                entries.Count, _market.TotalListings);
+            int unresolved = _market.UnresolvedCount;
+            if (unresolved > 0)
+                stats += " · " + string.Format(Loc.Get("Skinr.HubResolvingFmt"), unresolved);
+            if (_prerenderer?.CurrentLabel is { } rendering)
+                stats += " · " + string.Format(Loc.Get("Skinr.HubRenderingFmt"), rendering);
+            MarketStats.Text = stats;
+
+            if (_market.IsLoading && entries.Count == 0)
+            {
+                MarketStatus.Text = Loc.Get("Skinr.HubLoading");
+                MarketStatus.IsVisible = true;
+            }
+            else if (!string.IsNullOrEmpty(_market.Error) && entries.Count == 0)
+            {
+                MarketStatus.Text = _market.Error;
+                MarketStatus.IsVisible = true;
+            }
+            else if (entries.Count == 0 && _market.HasLoaded)
+            {
+                MarketStatus.Text = Loc.Get("Skinr.HubEmpty");
+                MarketStatus.IsVisible = true;
+            }
+            else
+            {
+                MarketStatus.IsVisible = false;
+            }
+
+            RefreshMarketTree();
+
+            // Ship class → faction → hull → name, the way a capsuleer thinks about
+            // hulls ("Shuttles · Amarr"). "…" is the recipes still identifying.
+            MarketSections.Children.Clear();
+            foreach ((string group, string faction, IReadOnlyList<SkinrMarketEntry> designs)
+                in _market.Sections())
+            {
+                string label;
+                if (group == "…")
+                    label = Loc.Get("Skinr.HubIdentifying");
+                else if (group.Length == 0)
+                    label = string.IsNullOrEmpty(faction)
+                        ? Loc.Get("Skinr.HubOther") : faction;
+                else
+                    label = string.IsNullOrEmpty(faction)
+                        ? group.ToUpperInvariant()
+                        : $"{group.ToUpperInvariant()} · {faction}";
+                MarketSections.Children.Add(new TextBlock
+                {
+                    Text = label,
+                    FontWeight = FontWeight.SemiBold,
+                    FontSize = FontScaleService.Small,
+                    Foreground = (IBrush?)Resources["SkinrAccentBrush"],
+                    Margin = new Thickness(0, 8, 0, 4)
+                });
+                var wrap = new WrapPanel();
+                foreach (SkinrMarketEntry entry in designs)
+                    wrap.Children.Add(BuildMarketCard(entry));
+                MarketSections.Children.Add(wrap);
+            }
+        }
+
+
+        /// <summary>One discovery card: render thumbnail (when the cache has one), the
+        /// design name, creator, and the ask. Ridiculously visual, zero lore.</summary>
+        private Control BuildMarketCard(SkinrMarketEntry entry)
+        {
+            var card = new Border
+            {
+                Width = 208,
+                Margin = new Thickness(0, 0, 12, 12),
+                CornerRadius = new CornerRadius(8),
+                BorderThickness = new Thickness(1),
+                BorderBrush = (IBrush?)Resources["SkinrBorderBrush"],
+                Background = (IBrush?)Resources["SkinrPanelBrush"],
+                Cursor = new Cursor(StandardCursorType.Hand),
+                ClipToBounds = true
+            };
+
+            var layout = new StackPanel();
+
+            var thumbHost = new Border
+            {
+                Height = 120,
+                Background = (IBrush?)Resources["SkinrPillBrush"]
+            };
+            string? thumb = _hub.Thumbnails.TryGetPath(entry.SkinrId);
+            if (thumb != null)
+            {
+                try
+                {
+                    thumbHost.Child = new Image
+                    {
+                        Source = new Bitmap(thumb),
+                        Stretch = Stretch.UniformToFill
+                    };
+                }
+                catch (Exception)
+                {
+                    thumbHost.Child = PlaceholderGlyph();
+                }
+            }
+            else
+            {
+                // No captured render yet — CCP's official hull render stands in (the
+                // REGULAR hull, no skin), so every card shows a ship immediately;
+                // opening the design captures the real skinned thumbnail for everyone
+                // after (capture-on-view). The hull name underlays while it downloads.
+                var placeholder = new Panel();
+                placeholder.Children.Add(new TextBlock
+                {
+                    Text = string.IsNullOrEmpty(entry.HullName) ? "◈" : entry.HullName,
+                    FontSize = FontScaleService.Body,
+                    Foreground = (IBrush?)Resources["SkinrTextDimBrush"],
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                if (entry.ShipTypeId > 0)
+                {
+                    // Ghosted deliberately: a full-strength stock photo made five
+                    // designs on the same hull read as five identical cards. The dim
+                    // art + tag says "this is the ship, not the skin"; the real skinned
+                    // thumbnail arrives at full strength once the design is viewed.
+                    var hullImage = new Image { Stretch = Stretch.Uniform, Opacity = 0.4 };
+                    placeholder.Children.Add(hullImage);
+                    placeholder.Children.Add(new TextBlock
+                    {
+                        Text = Loc.Get("Skinr.HubBaseHull"),
+                        FontSize = FontScaleService.Tiny,
+                        Foreground = (IBrush?)Resources["SkinrTextDimBrush"],
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        VerticalAlignment = VerticalAlignment.Bottom,
+                        Margin = new Thickness(0, 0, 6, 4)
+                    });
+                    LoadHullRender(hullImage, entry.ShipTypeId);
+                }
+                thumbHost.Child = placeholder;
+            }
+            layout.Children.Add(thumbHost);
+
+            var body = new StackPanel { Margin = new Thickness(10, 8, 10, 10), Spacing = 2 };
+            body.Children.Add(new TextBlock
+            {
+                Text = entry.DisplayName,
+                FontWeight = FontWeight.SemiBold,
+                FontSize = FontScaleService.Small,
+                Foreground = (IBrush?)Resources["SkinrTextBrush"],
+                TextTrimming = global::Avalonia.Media.TextTrimming.CharacterEllipsis
+            });
+
+            // Ship always visible on the card (sections sort by it); creator appended.
+            string subtitle = entry.HullName;
+            if (!string.IsNullOrEmpty(entry.CreatorName))
+            {
+                string by = string.Format(Loc.Get("Skinr.HubBy"), entry.CreatorName);
+                subtitle = string.IsNullOrEmpty(subtitle) ? by : subtitle + " · " + by;
+            }
+            body.Children.Add(new TextBlock
+            {
+                Text = subtitle,
+                FontSize = FontScaleService.Caption,
+                Foreground = (IBrush?)Resources["SkinrTextSecBrush"],
+                TextTrimming = global::Avalonia.Media.TextTrimming.CharacterEllipsis
+            });
+
+            var priceRow = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
+            priceRow.Children.Add(new TextBlock
+            {
+                Text = entry.ActiveListings > 0
+                    ? string.Format(Loc.Get("Skinr.HubListingsFmt"), entry.ActiveListings)
+                    : Loc.Get("Skinr.HubNoListings"),
+                FontSize = FontScaleService.Caption,
+                Foreground = (IBrush?)Resources["SkinrTextDimBrush"],
+                VerticalAlignment = VerticalAlignment.Center,
+                [DockPanel.DockProperty] = Dock.Right
+            });
+            priceRow.Children.Add(new TextBlock
+            {
+                Text = entry.MinPlex > 0
+                    ? string.Format(Loc.Get("Skinr.HubPlexFmt"), entry.MinPlex)
+                    : string.Empty,
+                FontWeight = FontWeight.SemiBold,
+                FontSize = FontScaleService.Small,
+                Foreground = (IBrush?)Resources["SkinrAccentBrush"],
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            body.Children.Add(priceRow);
+            layout.Children.Add(body);
+
+            card.Child = layout;
+            string tooltip = entry.DisplayName;
+            if (!string.IsNullOrEmpty(entry.HullName))
+                tooltip += " — " + entry.HullName;
+            if (entry.TierLevel > 0)
+                tooltip += " · " + string.Format(Loc.Get("Skinr.TierBadge"), entry.TierLevel);
+            ToolTip.SetTip(card, tooltip);
+
+            // A card opens the design in the viewer we already have — the recipe route
+            // is public, so unowned designs render exactly like owned ones. This is a
+            // DETAIL view inside the Hub: the rail stays on Hub and the Back pill
+            // returns to the grid; the Collection rail remains the way to your own designs.
+            card.PointerPressed += (_, _) =>
+            {
+                _marketDetail = true;
+                ShowMarket(false);
+                OnDesignTilePressed(entry.SkinrId);
+            };
+            return card;
+        }
+
         protected override void OnClosed(EventArgs e)
         {
+            _prerenderer?.Dispose();
+            _market.Dispose();
+            _idNamesSub?.Dispose();
             // The render VM first: it owns the sidecar process, and disposing it is what kills a
             // 200 MB engine that would otherwise outlive the window it was opened for.
             _render.Dispose();
@@ -154,6 +707,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 _selectedSkinrId = skinrId;
                 _thumbSavedFor = null;
+                _thumbArmed = false;   // no captures until THIS design's build returns
                 RefreshCarousel();
 
                 await _hub.Data.SelectDesignAsync(skinrId);
@@ -166,6 +720,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // The recipe drives the render. Awaited so a second click while the first design
                 // is still building cannot interleave two builds in the engine.
                 await _render.LoadRecipeAsync(_hub.Data.SelectedRecipe);
+                _thumbArmed = _selectedSkinrId == skinrId;
 
                 // The welcome sweep — CCP's studio rotates a freshly landed ship into place,
                 // and so do we. Fire-and-forget: any user gesture cancels it mid-flight.
@@ -248,7 +803,12 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ToolTip.SetTip(tile, string.IsNullOrEmpty(entry.HullName)
                     ? entry.SkinrId
                     : $"{entry.DisplayLabel} — {entry.HullName}");
-                tile.PointerPressed += (_, _) => OnDesignTilePressed(entry.SkinrId);
+                tile.PointerPressed += (_, _) =>
+                {
+                    // Remembered so leaving Hub detail can put THEIR ship back on stage.
+                    _lastCollectionSkinrId = entry.SkinrId;
+                    OnDesignTilePressed(entry.SkinrId);
+                };
                 DesignStrip.Children.Add(tile);
             }
 
@@ -339,25 +899,20 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             var recipe = _hub.Data.SelectedRecipe;
             DesignCard.IsVisible = recipe != null;
-            HullOverlay.IsVisible = _hub.Hull != null && !_photoMode;
+            HullNameText.IsVisible = _hub.Hull != null && !_photoMode;
             if (recipe == null)
                 return;
 
+            // The stage carries names only, by request — the design's centered on the
+            // band, the hull's centered up top. Tier, composition, ship type and the
+            // lore paragraph all live in the details panel.
             DesignNameText.Text = string.IsNullOrEmpty(recipe.Name)
                 ? recipe.Id : recipe.Name;
-            DesignSubtitleText.Text = _hub.DesignSubtitle;
-            int tier = _hub.SelectedTier;
-            TierBadge.IsVisible = tier > 0;
-            TierBadgeText.Text = string.Format(Loc.Get("Skinr.TierBadge"), tier);
-            DetailsFlyoutText.Text = _hub.Data.DescribeSelectedRecipe();
+            RefreshDetailsPanel();
 
             var hull = _hub.Hull;
             if (hull != null)
-            {
                 HullNameText.Text = hull.LocalizedName.ToUpperInvariant();
-                HullSubtitleText.Text = _hub.HullSubtitle;
-                HullDescText.Text = hull.Description;
-            }
         }
 
         /// <summary>
@@ -448,6 +1003,14 @@ namespace EveLens.Avalonia.Views.Dialogs
             string? skinrId = _selectedSkinrId;
             if (skinrId == null || !frame.Settled || _thumbSavedFor == skinrId)
                 return;
+            // THE RACE THIS GUARDS (it shipped a Raven thumbnail under an Oracle's id):
+            // settled frames of the PREVIOUS design keep arriving after a click. The
+            // arm flag only sets after the new build returns — Dispatcher posts are
+            // FIFO, so every frame processed before that point predates the build —
+            // and the engine's own loaded-id must agree. The luma floor drops black
+            // warm-up frames.
+            if (!_thumbArmed || _render.LoadedSkinrId != skinrId || frame.MeanLuma <= 4.0)
+                return;
             _thumbSavedFor = skinrId;
 
             string? path = _hub.Thumbnails.Save(skinrId, frame);
@@ -474,8 +1037,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             if (_render.Warnings.Count > 0 && _hub.Data.SelectedRecipe != null)
             {
-                DetailsFlyoutText.Text = _hub.Data.DescribeSelectedRecipe() + "\n" +
-                                         string.Join("\n", _render.Warnings);
+                PanelNotes.Text = string.Join("\n", _render.Warnings);
+                PanelNotes.IsVisible = true;
             }
         }
 
@@ -630,9 +1193,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             LeftRail.IsVisible = !on;
             TopBar.IsVisible = !on;
             BottomBand.IsVisible = !on;
-            HullOverlay.IsVisible = !on && _hub.Hull != null;
+            HullNameText.IsVisible = !on && _hub.Hull != null;
+            MarketBackButton.IsVisible = !on && _marketDetail;
             StatusPill.IsVisible = !on;
             SettingsButton.IsVisible = !on;
+            if (on)
+                DetailsPanel.IsVisible = false;
             PhotoButton.Opacity = on ? 0.35 : 1.0;
             ToolTip.SetTip(PhotoButton,
                 Loc.Get(on ? "Skinr.PhotoModeExit" : "Skinr.PhotoMode"));
@@ -678,10 +1244,162 @@ namespace EveLens.Avalonia.Views.Dialogs
             e.Handled = true;
         }
 
+        // --- details panel -------------------------------------------------------
+
+        private void OnViewDetails(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            DetailsPanel.IsVisible = !DetailsPanel.IsVisible;
+            if (DetailsPanel.IsVisible)
+                RefreshDetailsPanel();
+        }
+
+        private void OnDetailsClose(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            DetailsPanel.IsVisible = false;
+        }
+
+        /// <summary>
+        /// Copies a text summary of the current design to the clipboard — the "share"
+        /// that needs no server and leaks nothing.
+        /// </summary>
+        private async void OnShare(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                string text = _hub.Data.DescribeSelectedRecipe();
+                if (string.IsNullOrEmpty(text))
+                    return;
+                await AppServices.ClipboardService.SetTextAsync(text);
+                RenderStatusText.Text = Loc.Get("Skinr.Copied");
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: share failed: {ex.Message}");
+            }
+        }
+
+        private void OnFavorite(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                if (_selectedSkinrId == null)
+                    return;
+                bool now = _hub.ToggleFavorite(_selectedSkinrId);
+                ApplyFavoriteGlyph(now);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: favorite failed: {ex.Message}");
+            }
+        }
+
+        private void ApplyFavoriteGlyph(bool favorite)
+        {
+            FavoriteButton.Content = favorite ? "♥" : "♡";
+            FavoriteButton.Foreground = (IBrush?)Resources[favorite
+                ? "SkinrAccentBrush" : "SkinrTextSecBrush"];
+        }
+
+        /// <summary>
+        /// Rebuilds the panel's ledger rows from the hull and the selected recipe. Cheap:
+        /// a handful of TextBlocks, rebuilt only on design change or panel open.
+        /// </summary>
+        private void RefreshDetailsPanel()
+        {
+            var hull = _hub.Hull;
+            var recipe = _hub.Data.SelectedRecipe;
+            PanelHullName.Text = hull?.LocalizedName ?? string.Empty;
+            PanelHullSub.Text = _hub.HullSubtitle;
+            PanelHullDesc.Text = hull?.Description ?? string.Empty;
+            PanelHullDesc.IsVisible = !string.IsNullOrEmpty(PanelHullDesc.Text);
+            PanelNotes.IsVisible = false;
+
+            PanelHullStats.Children.Clear();
+            foreach ((string labelKey, string value) in _hub.HullStats(_render.HullRadius))
+                PanelHullStats.Children.Add(LedgerRow(Loc.Get(labelKey), value));
+
+            PanelDesignStats.Children.Clear();
+            PanelCompositionStats.Children.Clear();
+            if (recipe != null)
+            {
+                var culture = System.Globalization.CultureInfo.CurrentCulture;
+                PanelDesignStats.Children.Add(LedgerRow(
+                    Loc.Get("Skinr.StatDesign"),
+                    string.IsNullOrEmpty(recipe.Name) ? recipe.Id : recipe.Name));
+                // Who built it — resolves through the shared ID→name pipeline; the row
+                // appears once the lookup lands (EveIDToNameUpdatedEvent re-runs this).
+                string? designer = _hub.DesignerName;
+                if (!string.IsNullOrEmpty(designer))
+                    PanelDesignStats.Children.Add(LedgerRow(
+                        Loc.Get("Skinr.StatDesigner"), designer));
+                if (!string.IsNullOrEmpty(_hub.SelectedLine))
+                    PanelDesignStats.Children.Add(LedgerRow(
+                        Loc.Get("Skinr.StatCollection"), _hub.SelectedLine));
+                if (_hub.SelectedTier > 0)
+                    PanelDesignStats.Children.Add(LedgerRow(
+                        Loc.Get("Skinr.StatTier"),
+                        string.Format(Loc.Get("Skinr.TierBadge"), _hub.SelectedTier)));
+
+                (int coatings, int patterns) = SkinrHubViewModel.Composition(recipe);
+                PanelCompositionStats.Children.Add(LedgerRow(
+                    Loc.Get("Skinr.StatCoatings"), coatings.ToString(culture)));
+                PanelCompositionStats.Children.Add(LedgerRow(
+                    Loc.Get("Skinr.StatPatterns"), patterns.ToString(culture)));
+                SkinrLicenseEntry? license = _hub.SelectedLicense;
+                if (license != null)
+                {
+                    string value = license.Activated
+                        ? Loc.Get("Skinr.LicActive") : Loc.Get("Skinr.LicInactive");
+                    if (license.Unactivated > 0)
+                        value += " · " + string.Format(
+                            Loc.Get("Skinr.LicSpareFmt"), license.Unactivated);
+                    PanelCompositionStats.Children.Add(LedgerRow(
+                        Loc.Get("Skinr.StatLicenses"), value));
+                }
+            }
+
+            ApplyFavoriteGlyph(_selectedSkinrId != null && _hub.IsFavorite(_selectedSkinrId));
+        }
+
+        /// <summary>One ledger row: dim label left, light value right-aligned.</summary>
+        private Control LedgerRow(string label, string value)
+        {
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+            var labelBlock = new TextBlock
+            {
+                Text = label,
+                FontSize = FontScaleService.Small,
+                Foreground = (IBrush?)Resources["SkinrTextDimBrush"]
+            };
+            var valueBlock = new TextBlock
+            {
+                Text = value,
+                FontSize = FontScaleService.Small,
+                Foreground = (IBrush?)Resources["SkinrTextBrush"],
+                HorizontalAlignment = HorizontalAlignment.Right,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                Margin = new Thickness(12, 0, 0, 0)
+            };
+            Grid.SetColumn(valueBlock, 1);
+            grid.Children.Add(labelBlock);
+            grid.Children.Add(valueBlock);
+            return grid;
+        }
+
         private void RefreshFromViewModel()
         {
             var state = _hub.Data.State;
-            ScopeMissingPanel.IsVisible = state == SkinrViewerViewModel.ViewState.ScopeMissing;
+            // The cosmetics scope gates the character's OWN collection and nothing
+            // else — market designs are public routes. With a design open (a Hub
+            // card, typically) the notice would block a render it has no claim
+            // over; it shows only while the stage is otherwise empty.
+            ScopeMissingPanel.IsVisible =
+                state == SkinrViewerViewModel.ViewState.ScopeMissing &&
+                _selectedSkinrId == null;
             LoadingText.IsVisible = state == SkinrViewerViewModel.ViewState.LoadingInventory;
             ErrorText.IsVisible = state == SkinrViewerViewModel.ViewState.Error;
 

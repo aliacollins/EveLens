@@ -40,12 +40,18 @@ namespace EveLens.Common.Services
                 AppServices.ApplicationPaths.DataDirectory, "cache", "skinr", "thumbs");
         }
 
-        /// <summary>The on-disk path a design's thumbnail lives at, whether or not it exists yet.</summary>
-        public string PathFor(string skinrId)
+        /// <summary>The filename a design's thumbnail uses — shared verbatim with the
+        /// evelens.dev preview CDN, so "download it" and "render it" produce the same
+        /// cache entry.</summary>
+        public static string FileNameFor(string skinrId)
         {
             byte[] hash = SHA1.HashData(Encoding.UTF8.GetBytes(skinrId ?? string.Empty));
-            return Path.Combine(_directory, Convert.ToHexString(hash) + ".png");
+            return Convert.ToHexString(hash) + ".png";
         }
+
+        /// <summary>The on-disk path a design's thumbnail lives at, whether or not it exists yet.</summary>
+        public string PathFor(string skinrId) =>
+            Path.Combine(_directory, FileNameFor(skinrId));
 
         /// <summary>The thumbnail path when one has been captured, else null.</summary>
         public string? TryGetPath(string skinrId)
@@ -97,6 +103,35 @@ namespace EveLens.Common.Services
             {
                 AppServices.TraceService?.Trace(
                     $"Skinr: thumbnail save failed for {skinrId}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Stores an already-encoded image fetched from the community preview CDN.
+        /// Network content is validated, not trusted: the bytes must decode as a real
+        /// image of sane dimensions or nothing is written. Returns the stored path.
+        /// </summary>
+        public string? SaveBytes(string skinrId, byte[] encoded)
+        {
+            if (string.IsNullOrEmpty(skinrId) || encoded == null || encoded.Length == 0)
+                return null;
+            try
+            {
+                using SKBitmap? decoded = SKBitmap.Decode(encoded);
+                if (decoded == null || decoded.Width < 8 || decoded.Height < 8)
+                    return null;
+                Directory.CreateDirectory(_directory);
+                string path = PathFor(skinrId);
+                string tmp = path + ".tmp";
+                File.WriteAllBytes(tmp, encoded);
+                File.Move(tmp, path, overwrite: true);
+                return path;
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"Skinr: CDN thumbnail save failed for {skinrId}: {ex.Message}");
                 return null;
             }
         }

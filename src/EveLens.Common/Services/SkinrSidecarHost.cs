@@ -47,6 +47,8 @@ namespace EveLens.Common.Services
     /// </remarks>
     public sealed class SkinrSidecarHost : IDisposable
     {
+        private readonly string _frameScratch = $"frame-{Guid.NewGuid():N}.bgra";
+
         // These are INACTIVITY budgets, not durations: the transport re-arms each one on every
         // line the sidecar sends, and the sidecar heartbeats every ~2s while it is working. So
         // these numbers answer "how long may the engine be silent before we assume it is wedged",
@@ -432,7 +434,10 @@ namespace EveLens.Common.Services
             if (_process?.IsRunning != true || _loadedSkinrId == null)
                 return null;
 
-            string scratch = Path.Combine(_options.ResourceCacheDirectory, "frame.bgra");
+            // Per-instance scratch: the viewer and the thumbnail pre-renderer are two
+            // hosts sharing one cache directory, and a single "frame.bgra" would have
+            // them overwriting each other's frames mid-read.
+            string scratch = Path.Combine(_options.ResourceCacheDirectory, _frameScratch);
             var request = new SkinrSidecarRequest
             {
                 Op = "render",
@@ -1007,7 +1012,9 @@ namespace EveLens.Common.Services
 
             List<string> ship = Dark(built.ShipGeometry);
             List<string> room = Dark(built.LightEnv?.Geometry);
-            var missing = ship.Concat(room).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            List<string> hangar = Dark(built.HangarGeometry);
+            var missing = ship.Concat(room).Concat(hangar)
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             if (missing.Count == 0)
                 return built;
 

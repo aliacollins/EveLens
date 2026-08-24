@@ -593,6 +593,15 @@ namespace EveLens.Common.Serialization.Skinr
         [JsonPropertyName("lightEnvGeometry")]
         public SkinrSidecarGeometryReport? LightEnvGeometry { get; set; }
 
+        /// <summary>
+        /// The hangar bay's geometry accounting, from <c>build</c> and <c>geometry-map</c>.
+        /// The bay attaches hidden at boot; its unmapped <c>.gr2</c> paths convert in the
+        /// same pass as the ship's own fx meshes, so the Hangar preset is warm by the
+        /// time anyone clicks it.
+        /// </summary>
+        [JsonPropertyName("hangarGeometry")]
+        public SkinrSidecarGeometryReport? HangarGeometry { get; set; }
+
         /// <summary>The hull's SOF category — <c>frigate</c>, <c>battleship</c>, and so on.</summary>
         [JsonPropertyName("category")]
         public string? Category { get; set; }

@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using EveLens.Common.Serialization.Esi;
@@ -82,7 +84,7 @@ namespace EveLens.Tests.ViewModels
         {
             SkinrEnvironmentPresets.All.Should().HaveCount(5);
 
-            string[] known = { "room", "dome", "nebula", "studio", "transparent" };
+            string[] known = { "room", "dome", "nebula", "studio", "transparent", "hangar" };
             foreach (SkinrEnvironmentPreset preset in SkinrEnvironmentPresets.All)
             {
                 known.Should().Contain(SkinrEnvironmentPresets.Backdrop(preset));
@@ -91,21 +93,165 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
-        public void EnvironmentPresets_EveryPreset_StatesItsSunExplicitly()
+        public void EnvironmentPresets_StateTheirSunExplicitly_ExceptSpace()
         {
-            // Never null: a preset that sent nothing would inherit the previous preset's
-            // sun (scene writes are sticky), so Studio-after-Sunlight would keep the x2 key.
+            // Explicit suns everywhere: a preset that sent nothing would inherit the
+            // previous preset's sun (scene writes are sticky). Space is the one
+            // deliberate null — the sidecar owns its lighting, applying each sky's own
+            // authored universe sun, and a value sent from here would overwrite it.
             foreach (SkinrEnvironmentPreset preset in SkinrEnvironmentPresets.All)
             {
+                if (preset is SkinrEnvironmentPreset.Space or SkinrEnvironmentPreset.Hangar)
+                {
+                    // Sidecar-owned lighting: Space applies each sky's authored
+                    // universe sun; Hangar applies the bay's own authored scene values.
+                    SkinrEnvironmentPresets.SunColor(preset).Should().BeNull();
+                    SkinrEnvironmentPresets.SunDirection(preset).Should().BeNull();
+                    continue;
+                }
                 SkinrEnvironmentPresets.SunColor(preset).Should().HaveCount(4);
                 SkinrEnvironmentPresets.SunDirection(preset).Should().HaveCount(3);
             }
 
-            // The lighting presets differ from the authored studio key; the rest restore it.
             SkinrEnvironmentPresets.SunColor(SkinrEnvironmentPreset.Sunlight)
                 .Should().NotEqual(SkinrEnvironmentPresets.SunColor(SkinrEnvironmentPreset.Studio));
-            SkinrEnvironmentPresets.SunColor(SkinrEnvironmentPreset.Hangar)
-                .Should().Equal(SkinrEnvironmentPresets.SunColor(SkinrEnvironmentPreset.Studio));
+        }
+
+        [Fact]
+        public void HangarCamera_ClampsPitch_AbovePadPlane()
+        {
+            // Studio keeps the full pole-to-pole range regardless of geometry.
+            SkinrStageCamera.MinPitchForEnvironment(
+                SkinrEnvironmentPreset.Studio, 240.0, 3000.0).Should().Be(-89.4);
+
+            // Hangar, close in: the pad plane lies outside the orbit sphere, so no
+            // angle can reach it and the full range stays.
+            SkinrStageCamera.MinPitchForEnvironment(
+                SkinrEnvironmentPreset.Hangar, 240.0, 200.0).Should().Be(-89.4);
+
+            // Hangar, pulled out: the floor tightens toward level — the camera may
+            // skim the deck but never orbit under it. drop = max(60, 240*1.25)*0.9
+            // = 270; at distance 3000 the plane subtends asin(270/3000) ≈ 5.2°.
+            double farOut = SkinrStageCamera.MinPitchForEnvironment(
+                SkinrEnvironmentPreset.Hangar, 240.0, 3000.0);
+            farOut.Should().BeGreaterThan(-6.0).And.BeLessThan(0.0);
+
+            // Monotonic in distance: further out means a tighter floor.
+            double closer = SkinrStageCamera.MinPitchForEnvironment(
+                SkinrEnvironmentPreset.Hangar, 240.0, 600.0);
+            closer.Should().BeLessThan(farOut);
+        }
+
+        [Fact]
+        public void SpinCounter_CountsFullRevolutions_EitherDirection()
+        {
+            var camera = new SkinrStageCamera();
+            int raised = 0;
+            camera.SpinCountChanged += _ => raised++;
+
+            // Wiggling in place is not spinning: signed accumulation nets to zero.
+            for (int i = 0; i < 20; i++)
+                camera.Orbit(i % 2 == 0 ? 100 : -100, 0);
+            camera.SpinCount.Should().Be(0);
+
+            // 360° of yaw is ~1029 px at the orbit's 0.35°/px; either direction counts.
+            for (int i = 0; i < 10; i++)
+                camera.Orbit(103, 0);
+            camera.SpinCount.Should().Be(1);
+            for (int i = 0; i < 10; i++)
+                camera.Orbit(-103, 0);
+            camera.SpinCount.Should().Be(2);
+            raised.Should().Be(2);
+        }
+
+        [Fact]
+        public void Composition_CountsCoatedAndPatternedSlots()
+        {
+            var recipe = new EsiSkinrRecipe
+            {
+                Layout = new EsiSkinrLayout
+                {
+                    Slots =
+                    {
+                        new EsiSkinrSlot
+                        {
+                            Configuration = new EsiSkinrSlotConfiguration
+                            {
+                                Nanocoating = new EsiSkinrNanocoating { Id = 1 }
+                            }
+                        },
+                        new EsiSkinrSlot
+                        {
+                            Configuration = new EsiSkinrSlotConfiguration
+                            {
+                                Nanocoating = new EsiSkinrNanocoating { Id = 2 },
+                                Pattern = new EsiSkinrPattern { Id = 9 }
+                            }
+                        },
+                        new EsiSkinrSlot()
+                    }
+                }
+            };
+
+            SkinrHubViewModel.Composition(recipe).Should().Be((2, 1));
+            SkinrHubViewModel.Composition(null).Should().Be((0, 0));
+        }
+
+        [Fact]
+        public void FlickVelocity_SteadyDrag_ReleasesWithMomentum()
+        {
+            // Ten moves of 3° yaw over 90ms ending at now: 30° / 0.09s ≈ 333°/s.
+            var samples = new List<SkinrStageCamera.OrbitSample>();
+            for (int i = 0; i < 10; i++)
+                samples.Add(new SkinrStageCamera.OrbitSample(1000 + i * 10, 3.0, 0.0));
+
+            (double yaw, double pitch) =
+                SkinrStageCamera.FlickVelocity(samples, 1090);
+            yaw.Should().BeApproximately(30.0 / 0.090, 1.0);
+            pitch.Should().Be(0.0);
+        }
+
+        [Fact]
+        public void FlickVelocity_ZeroCases_ReleaseAStationaryShip()
+        {
+            // No samples, a single twitch, a slow drift, and a drag that HELD before
+            // releasing (all samples stale) must all come back (0, 0).
+            var none = new List<SkinrStageCamera.OrbitSample>();
+            SkinrStageCamera.FlickVelocity(none, 1000).Should().Be((0.0, 0.0));
+
+            var twitch = new List<SkinrStageCamera.OrbitSample>
+            {
+                new(990, 5.0, 0.0)
+            };
+            SkinrStageCamera.FlickVelocity(twitch, 1000).Should().Be((0.0, 0.0));
+
+            var slow = new List<SkinrStageCamera.OrbitSample>
+            {
+                new(900, 0.5, 0.0), new(950, 0.5, 0.0), new(1000, 0.5, 0.0)
+            };
+            SkinrStageCamera.FlickVelocity(slow, 1000).Should().Be((0.0, 0.0));
+
+            var held = new List<SkinrStageCamera.OrbitSample>
+            {
+                new(100, 8.0, 0.0), new(120, 8.0, 0.0), new(140, 8.0, 0.0)
+            };
+            SkinrStageCamera.FlickVelocity(held, 1000).Should().Be((0.0, 0.0));
+        }
+
+        [Fact]
+        public void FlickVelocity_WildSwipe_IsCappedNotRejected()
+        {
+            var samples = new List<SkinrStageCamera.OrbitSample>
+            {
+                new(1000, 60.0, 30.0), new(1020, 60.0, 30.0), new(1040, 60.0, 30.0)
+            };
+
+            (double yaw, double pitch) =
+                SkinrStageCamera.FlickVelocity(samples, 1040);
+            double speed = Math.Sqrt(yaw * yaw + pitch * pitch);
+            speed.Should().BeApproximately(480.0, 0.001);
+            // Direction survives the cap: yaw and pitch keep their 2:1 ratio.
+            (yaw / pitch).Should().BeApproximately(2.0, 0.001);
         }
 
         [Fact]

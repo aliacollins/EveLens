@@ -129,8 +129,14 @@ namespace EveLens.Common.Services
             return null;
         }
 
-        /// <summary>Memory ceiling for the converter process.</summary>
-        public long MemoryLimitBytes { get; set; } = 1536L * 1024 * 1024;
+        /// <summary>
+        /// Memory ceiling for the converter process. Sized for the heaviest legitimate
+        /// input: station hangar interiors (the Jita bay is a 15.8 MB gr2 with 2.4M
+        /// vertices, and Node's V8 heap peaks well past 1.5 GB compressing its 54 MB
+        /// output — the old cap aborted it with exit 134). The jail exists to stop
+        /// runaways, not CCP's own MD5-verified content.
+        /// </summary>
+        public long MemoryLimitBytes { get; set; } = 4096L * 1024 * 1024;
 
         /// <summary>CPU share for the converter process, or 0 for unlimited.</summary>
         public int CpuPercent { get; set; } = 50;
@@ -249,6 +255,9 @@ namespace EveLens.Common.Services
                 StandardErrorEncoding = new UTF8Encoding(false),
                 WorkingDirectory = Path.GetDirectoryName(_scriptPath) ?? "."
             };
+            // V8 aborts (exit 134) when its own heap default is tighter than the work,
+            // regardless of the job-object ceiling; state the budget explicitly.
+            psi.Environment["NODE_OPTIONS"] = "--max-old-space-size=3072";
             foreach (string arg in new[]
                      {
                          _scriptPath,

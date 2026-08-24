@@ -44,30 +44,6 @@ namespace EveLens.Common.ViewModels
     /// </remarks>
     public sealed class SkinrRenderViewModel : ViewModelBase
     {
-        // Orbit limits. Pitch stops short of the poles because a camera looking straight down its
-        // own up-vector has no defined orientation and the view rolls unpredictably as it passes.
-        // CCP's own studio camera allows 0.001 rad from either pole
-        // (skinrShipSceneContainerCamera: kMinPitch 0.001, kMaxPitch pi-0.001, i.e.
-        // ±89.94° about level). ±85 felt like hitting a wall a fifth of a turn early on
-        // every vertical drag. 89.4 stays inside the sidecar's own ±89.5 degeneracy
-        // guard on the up vector.
-        private const double MinPitch = -89.4;
-        private const double MaxPitch = 89.4;
-        // The far end is CCP's own studio limit (shipSKINRSceneContainer ZOOM_RANGE
-        // [1.6, 3.6]) and it is load-bearing, not taste: past ~4 radii the hull is so
-        // small on screen that the glow strips' bloom envelope — a fixed fraction of
-        // the frame — swallows the whole ship in a milky grey wash. The game never
-        // shows that veil because the game never lets you get there. The near end
-        // stays at 1.2 (CCP use 1.6): close inspection has no such artefact and the
-        // detail is the point of a viewer.
-        private const double MinDistanceFactor = 1.2;
-        private const double MaxDistanceFactor = 3.6;
-
-        // 8% per notch rather than 15%. A wheel notch is the coarsest input the pane takes, and
-        // at 15% a three-notch flick more than halves the distance — which reads as a jump even
-        // when every intermediate frame is drawn.
-        private const double ZoomPerNotch = 0.92;
-
         // How long after the last gesture we render the sharp frame. Long enough that a
         // continuous scroll or a drag with a pause in it counts as one gesture, short enough that
         // letting go feels like it sharpened immediately rather than after a beat.
@@ -105,10 +81,6 @@ namespace EveLens.Common.ViewModels
         // way back but re-picking the design from the list.
         private EsiSkinrRecipe? _recipe;
 
-        private double _yaw = 35.0;
-        private double _pitch = 15.0;
-        private double _distance;
-        private double _radius = 1.0;
 
         private volatile bool _cameraDirty;
         private volatile bool _interacting;
@@ -168,12 +140,27 @@ namespace EveLens.Common.ViewModels
         /// <summary>The graphics device in use, for the diagnostics line.</summary>
         public string Device => _host?.Device ?? string.Empty;
 
+        /// <summary>The design the engine has actually BUILT, or null. This is the
+        /// truth the thumbnail capture must check: the selected id changes at click
+        /// time, but frames keep arriving from the previous scene until the new build
+        /// completes — saving one of those under the new id is how a Raven ends up
+        /// wearing an Oracle's name in the cache.</summary>
+        public string? LoadedSkinrId => _host?.LoadedSkinrId;
+
         /// <summary>
         /// How much the renderer is allowed to spend on a frame. Defaults to
         /// <see cref="SkinrRenderQuality.Balanced"/> rather than the cheapest tier because the
         /// point of the pane is to look at a design. Change it with <see cref="SetQualityAsync"/>.
         /// </summary>
         public SkinrRenderQuality Quality { get; private set; } = SkinrRenderQuality.Balanced;
+
+        /// <summary>The orbit camera: gesture math, clamps, flick inertia and the
+        /// ship-spin counter live here (split out of this VM along Law 2's seam).</summary>
+        public SkinrStageCamera Camera { get; } = new();
+
+        /// <summary>The built hull's bounding radius in world units (metres); 1.0 before
+        /// any build. The details panel derives the ship's real length from it.</summary>
+        public double HullRadius => Camera.Radius;
 
         /// <summary>
         /// How large a frame to produce. Defaults to <see cref="SkinrRenderResolution.MatchViewport"/>
@@ -190,9 +177,6 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public SkinrRenderSize RenderSize => _appliedSize;
 
-        public double Yaw => _yaw;
-        public double Pitch => _pitch;
-        public double Distance => _distance;
 
         /// <summary>
         /// Why the 3D preview cannot run here, or null when it can. Checked before the UI offers
@@ -286,9 +270,14 @@ namespace EveLens.Common.ViewModels
         public async Task SetEnvironmentAsync(SkinrEnvironmentPreset preset,
             CancellationToken ct = default)
         {
-            if (preset == EnvironmentPreset)
+            // Space is deliberately re-clickable: every application advances one sky
+            // through CCP's authored nebula list. The rest no-op when already active.
+            if (preset == EnvironmentPreset && preset != SkinrEnvironmentPreset.Space)
                 return;
             EnvironmentPreset = preset;
+            // Entering the bay with the camera already parked below the pad plane
+            // (studio allows it) would show the deck's underside; lift it to the floor.
+            Camera.ClampPitchToFloor();
 
             var host = _host;
             if (host == null)
@@ -302,8 +291,11 @@ namespace EveLens.Common.ViewModels
         }
 
         /// <summary>The environment preset currently applied (or queued for first boot).</summary>
-        public SkinrEnvironmentPreset EnvironmentPreset { get; private set; } =
-            SkinrEnvironmentPreset.Studio;
+        public SkinrEnvironmentPreset EnvironmentPreset
+        {
+            get => Camera.EnvironmentPreset;
+            private set => Camera.EnvironmentPreset = value;
+        }
 
         /// <summary>
         /// Changes the frame size the renderer produces. Live, like <see cref="SetQualityAsync"/>.
@@ -472,8 +464,7 @@ namespace EveLens.Common.ViewModels
             // Frame the hull by its measured radius rather than a fixed distance: a Rifter and a
             // Leviathan differ by three orders of magnitude, and a constant would put one of them
             // inside the camera and the other in a corner of the frame.
-            _radius = result.Radius > 0 ? result.Radius : 1.0;
-            _distance = _radius * 3.0;
+            Camera.SetHull(result.Radius);
 
             DiagnosticsChanged?.Invoke();
             EnsureLoop();
@@ -489,12 +480,10 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public void Orbit(double deltaXPixels, double deltaYPixels)
         {
-            // The hand always wins: a drag mid-intro takes the camera over cleanly rather
-            // than fighting a script for it.
-            _introCts?.Cancel();
-            const double degreesPerPixel = 0.35;
-            _yaw = Wrap(_yaw + deltaXPixels * degreesPerPixel);
-            _pitch = Math.Clamp(_pitch - deltaYPixels * degreesPerPixel, MinPitch, MaxPitch);
+            // The hand always wins: a drag mid-intro (or mid-glide) takes the camera over
+            // cleanly rather than fighting a script for it.
+            _cameraAnimCts?.Cancel();
+            Camera.Orbit(deltaXPixels, deltaYPixels);
             Gesture();
         }
 
@@ -505,11 +494,58 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public void Zoom(double notches)
         {
-            _introCts?.Cancel();
-            double factor = Math.Pow(ZoomPerNotch, notches);
-            _distance = Math.Clamp(_distance * factor,
-                _radius * MinDistanceFactor, _radius * MaxDistanceFactor);
+            _cameraAnimCts?.Cancel();
+            Camera.Zoom(notches);
             Gesture();
+        }
+
+        // Exponential decay: a full-speed flick glides for roughly two seconds, losing
+        // most of its speed in the first half — reads as mass, not as a conveyor belt.
+        private const double InertiaTimeConstant = 0.55;   // seconds
+        private const double InertiaStopSpeed = 4.0;       // degrees/second
+
+        /// <summary>
+        /// The glide after a flick: the release velocity carries the orbit on, decaying
+        /// exponentially until it drops under <see cref="InertiaStopSpeed"/>, then the
+        /// settled frame lands. Any gesture cancels it mid-glide — same contract as the
+        /// intro sweep, same token. Pitch obeys the live clamps every step; hitting the
+        /// pole or the hangar's pad plane absorbs the vertical component and the spin
+        /// continues flat, which is how a globe feels when you flick it into its stand.
+        /// </summary>
+        private async Task RunInertiaAsync(double yawPerSec, double pitchPerSec)
+        {
+            _cameraAnimCts?.Cancel();
+            var cts = new CancellationTokenSource();
+            _cameraAnimCts = cts;
+            try
+            {
+                long last = Environment.TickCount64;
+                while (!cts.IsCancellationRequested)
+                {
+                    await Task.Delay(AnimationFrameMs, cts.Token).ConfigureAwait(false);
+                    long now = Environment.TickCount64;
+                    // Capped so a stall (breakpoint, starved thread pool) resumes with a
+                    // step, not a leap.
+                    double dt = Math.Min(0.1, (now - last) / 1000.0);
+                    last = now;
+
+                    Camera.GlideStep(yawPerSec, ref pitchPerSec, dt);
+
+                    double decay = Math.Exp(-dt / InertiaTimeConstant);
+                    yawPerSec *= decay;
+                    pitchPerSec *= decay;
+                    if (Math.Sqrt(yawPerSec * yawPerSec + pitchPerSec * pitchPerSec)
+                        < InertiaStopSpeed)
+                        break;
+                    Gesture();
+                }
+                if (!cts.IsCancellationRequested)
+                    RequestRender(settled: true);
+            }
+            catch (OperationCanceledException)
+            {
+                // A gesture grabbed the ship mid-glide; it stays where the hand put it.
+            }
         }
 
         /// <summary>
@@ -522,17 +558,18 @@ namespace EveLens.Common.ViewModels
         {
             if (!HasDesign)
                 return;
-            _introCts?.Cancel();
+            _cameraAnimCts?.Cancel();
             var cts = new CancellationTokenSource();
-            _introCts = cts;
+            _cameraAnimCts = cts;
 
             const int steps = 30;
             const double durationMs = 1100;
-            double restYaw = _yaw, restPitch = _pitch, restDistance = _distance;
+            double restYaw = Camera.Yaw, restPitch = Camera.Pitch,
+                restDistance = Camera.Distance;
+            // The from-pose offsets; Camera.Set clamps them to the live limits.
             double fromYaw = restYaw - 26.0;
-            double fromPitch = Math.Clamp(restPitch + 8.0, MinPitch, MaxPitch);
-            double fromDistance = Math.Clamp(restDistance * 1.22,
-                _radius * MinDistanceFactor, _radius * MaxDistanceFactor);
+            double fromPitch = restPitch + 8.0;
+            double fromDistance = restDistance * 1.22;
 
             try
             {
@@ -543,9 +580,10 @@ namespace EveLens.Common.ViewModels
                         return;
                     double t = (double)i / steps;
                     double eased = t * t * (3.0 - 2.0 * t);   // smoothstep: no snap at either end
-                    _yaw = fromYaw + (restYaw - fromYaw) * eased;
-                    _pitch = fromPitch + (restPitch - fromPitch) * eased;
-                    _distance = fromDistance + (restDistance - fromDistance) * eased;
+                    Camera.Set(
+                        fromYaw + (restYaw - fromYaw) * eased,
+                        fromPitch + (restPitch - fromPitch) * eased,
+                        fromDistance + (restDistance - fromDistance) * eased);
                     RequestRender(settled: false);
                     await Task.Delay((int)(durationMs / steps), cts.Token).ConfigureAwait(false);
                 }
@@ -564,7 +602,7 @@ namespace EveLens.Common.ViewModels
             }
         }
 
-        private CancellationTokenSource? _introCts;
+        private CancellationTokenSource? _cameraAnimCts;
 
         /// <summary>
         /// Marks the start and end of a drag. Pointer-down holds off the settled frame for as
@@ -574,8 +612,20 @@ namespace EveLens.Common.ViewModels
         {
             bool wasInteracting = _interacting;
             _interacting = interacting;
-            if (wasInteracting && !interacting)
-                Gesture();          // release re-arms the settle timer; it does not force a render
+            if (interacting)
+            {
+                // A fresh grab: whatever the previous drag left in the window is history.
+                Camera.ClearFlickSamples();
+                return;
+            }
+            if (!wasInteracting)
+                return;
+            Gesture();          // release re-arms the settle timer; it does not force a render
+            // A flick at release keeps the orbit going. The intro sweep also passes
+            // through here with no samples recorded, so it releases a stationary camera.
+            (double yawPerSec, double pitchPerSec) = Camera.ReleaseFlick();
+            if (yawPerSec != 0.0 || pitchPerSec != 0.0)
+                _ = RunInertiaAsync(yawPerSec, pitchPerSec);
         }
 
         /// <summary>
@@ -604,10 +654,8 @@ namespace EveLens.Common.ViewModels
         /// <summary>Returns the camera to the default three-quarter view.</summary>
         public void ResetCamera()
         {
-            _introCts?.Cancel();
-            _yaw = 35.0;
-            _pitch = 15.0;
-            _distance = _radius * 3.0;
+            _cameraAnimCts?.Cancel();
+            Camera.Reset();
             RequestRender(settled: true);
         }
 
@@ -724,7 +772,7 @@ namespace EveLens.Common.ViewModels
                     }
                 }
 
-                double yaw = _yaw, pitch = _pitch, distance = _distance;
+                double yaw = Camera.Yaw, pitch = Camera.Pitch, distance = Camera.Distance;
 
                 try
                 {
@@ -846,15 +894,9 @@ namespace EveLens.Common.ViewModels
             Status(message);
         }
 
-        private static double Wrap(double degrees)
-        {
-            degrees %= 360.0;
-            return degrees < 0 ? degrees + 360.0 : degrees;
-        }
-
         protected override void Dispose(bool disposing)
         {
-            _introCts?.Cancel();
+            _cameraAnimCts?.Cancel();
             if (disposing)
             {
                 _shutdown.Cancel();

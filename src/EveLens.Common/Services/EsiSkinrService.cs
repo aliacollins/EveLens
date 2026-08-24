@@ -60,15 +60,23 @@ namespace EveLens.Common.Services
         }
 
         /// <summary>
-        /// One page of the public Paragon Hub feed. Pass the previous page's
-        /// <c>Cursor.After</c> to continue; null starts from the newest.
+        /// One page of the public Paragon Hub feed. Null starts from the newest;
+        /// pass the previous page's <c>Cursor.Before</c> to walk OLDER listings —
+        /// the feed is newest-first, so <c>after</c> asks for listings newer than
+        /// the newest and returns nothing (measured live: the "10 listings total"
+        /// bug). The default page size is 10; <paramref name="limit"/> raises it
+        /// (100 verified working).
         /// </summary>
-        public static Task<JsonResult<EsiSkinrListingsPage>> GetHubListingsAsync(string cursorAfter = null)
+        public static Task<JsonResult<EsiSkinrListingsPage>> GetHubListingsAsync(
+            string cursorBefore = null, int limit = 0)
         {
-            string query = string.IsNullOrEmpty(cursorAfter)
-                ? string.Empty
-                : "?after=" + WebUtility.UrlEncode(cursorAfter);
-            var url = new Uri($"{EsiRoot}/paragon-hub/skinr{query}");
+            var query = new List<string>();
+            if (limit > 0)
+                query.Add("limit=" + limit);
+            if (!string.IsNullOrEmpty(cursorBefore))
+                query.Add("before=" + WebUtility.UrlEncode(cursorBefore));
+            string qs = query.Count > 0 ? "?" + string.Join("&", query) : string.Empty;
+            var url = new Uri($"{EsiRoot}/paragon-hub/skinr{qs}");
             return Util.DownloadJsonAsync<EsiSkinrListingsPage>(url, BuildParams());
         }
 
