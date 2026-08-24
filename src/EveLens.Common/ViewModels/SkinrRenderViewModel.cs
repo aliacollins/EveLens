@@ -480,6 +480,10 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public void Orbit(double deltaXPixels, double deltaYPixels)
         {
+            // The balcony is a fixed stance — drags must not mutate the orbit state
+            // behind it (or tick the spin counter for a camera that isn't moving).
+            if (_balcony)
+                return;
             // The hand always wins: a drag mid-intro (or mid-glide) takes the camera over
             // cleanly rather than fighting a script for it.
             _cameraAnimCts?.Cancel();
@@ -494,6 +498,8 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public void Zoom(double notches)
         {
+            if (_balcony)
+                return;
             _cameraAnimCts?.Cancel();
             Camera.Zoom(notches);
             Gesture();
@@ -659,10 +665,12 @@ namespace EveLens.Common.ViewModels
         public bool BalconyActive => _balcony;
 
         /// <summary>
-        /// Stands the camera at a human 1.7m eye on the pad edge, looking up at the
-        /// berthed hull — probe217's proven vantage, scaled to this hull. Orbit input
-        /// is suspended while active: the balcony is a place you stand, not a gesture
-        /// surface. Call after the design has built (the vantage needs the radius).
+        /// The showcase: PARKS the hull on the pad (ship offset sinks it out of hover
+        /// height to a size-scaled ground clearance) and stands a human 1.7m eye beside
+        /// it, looking at its side profile — a showroom stance, not a ceiling view.
+        /// Small ships sit close and personal; capitals become a wall of metal, which
+        /// is the honest experience of standing next to one. Orbit input is suspended
+        /// while active. Call after the design has built (needs the radius).
         /// </summary>
         public async Task EnterBalconyAsync(CancellationToken ct = default)
         {
@@ -672,18 +680,32 @@ namespace EveLens.Common.ViewModels
             _cameraAnimCts?.Cancel();
             double r = Camera.Radius;
             double drop = Math.Max(60.0, r * 1.25);
-            double eyeY = -(r + (drop - r) * 0.6) + 1.7;
-            var eye = new[] { 2.2 * r * 0.85, eyeY, 2.2 * r * 0.55 };
-            var at = new[] { 0.0, -r * 0.25, 0.0 };
-            double dist = Math.Sqrt(eye[0] * eye[0] + eye[1] * eye[1] + eye[2] * eye[2]);
+
+            // Park it: hover clearance is (drop - r); keep a quarter of it.
+            double offsetY = -(drop - r) * 0.75;
+            var shipOffset = new[] { 0.0, offsetY, 0.0 };
+            double hullBottom = offsetY - r;
+
+            // The observation gallery (probe218 B_gallery, matched to the user's
+            // concept): eye a bit ABOVE the hull's spine, close in, gazing gently
+            // down across it — a berth seen from the balcony, not a ceiling seen
+            // from the floor. Standoff capped so capitals don't put the eye
+            // through the bay wall.
+            _ = hullBottom; // geometry documented above; the gallery stands off the spine
+            double standoff = Math.Min(2400.0, Math.Max(60.0, 1.7 * r));
+            var eye = new[] { standoff * 0.85, offsetY + 0.65 * r + 1.7, standoff * 0.55 };
+            var at = new[] { 0.0, offsetY, 0.0 };
+            double dx = eye[0] - at[0], dy = eye[1] - at[1], dz = eye[2] - at[2];
+            double dist = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+
             _balcony = true;
-            await host.SetCameraAsync(0.0, 0.0, dist, 78.0, eye, at, ct)
+            await host.SetCameraAsync(0.0, 0.0, dist, 70.0, eye, at, shipOffset, ct)
                 .ConfigureAwait(false);
             RequestRender(settled: true);
         }
 
-        /// <summary>Clears the POV eye and returns to the orbit camera (fov back to
-        /// the sidecar's 55° default).</summary>
+        /// <summary>Clears the POV eye and the pad parking, returning to the orbit
+        /// camera (fov back to the sidecar's 55° default, hull back to hover).</summary>
         public async Task ExitBalconyAsync(CancellationToken ct = default)
         {
             if (!_balcony)
@@ -692,7 +714,8 @@ namespace EveLens.Common.ViewModels
             var host = _host;
             if (host != null)
                 await host.SetCameraAsync(Camera.Yaw, Camera.Pitch, Camera.Distance,
-                    55.0, Array.Empty<double>(), null, ct).ConfigureAwait(false);
+                    55.0, Array.Empty<double>(), null, new[] { 0.0, 0.0, 0.0 }, ct)
+                    .ConfigureAwait(false);
             _sentCamera = (double.NaN, double.NaN, double.NaN);
             RequestRender(settled: true);
         }

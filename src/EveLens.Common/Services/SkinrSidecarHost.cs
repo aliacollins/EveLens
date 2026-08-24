@@ -320,6 +320,7 @@ namespace EveLens.Common.Services
         public async Task<SkinrSidecarCamera?> SetCameraAsync(double yaw, double pitch,
             double? distance = null, double? fov = null,
             IReadOnlyList<double>? eye = null, IReadOnlyList<double>? at = null,
+            IReadOnlyList<double>? shipOffset = null,
             CancellationToken ct = default)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -334,7 +335,8 @@ namespace EveLens.Common.Services
                 Distance = distance,
                 Fov = fov,
                 Eye = eye,
-                At = at
+                At = at,
+                ShipOffset = shipOffset
             };
 
             try

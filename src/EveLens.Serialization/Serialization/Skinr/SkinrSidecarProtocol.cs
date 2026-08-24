@@ -163,6 +163,12 @@ namespace EveLens.Common.Serialization.Skinr
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public IReadOnlyList<double>? At { get; set; }
 
+        /// <summary>Moves the built ship itself (the Garage parks it on the pad
+        /// instead of hover height). Sticky sidecar-side; a build resets it.</summary>
+        [JsonPropertyName("shipOffset")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public IReadOnlyList<double>? ShipOffset { get; set; }
+
         // --- resize ----------------------------------------------------------
 
         /// <summary>
