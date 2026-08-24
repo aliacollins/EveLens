@@ -280,6 +280,135 @@ namespace EveLens.Common.Services
         }
 
         /// <summary>
+        /// Builds an ADDITIONAL ship into the scene at a formation offset — the Photo
+        /// Op wingman. Converts whatever of the wingman's geometry is missing (same
+        /// contract as the primary build) so it draws completely. Returns the built
+        /// hull's radius, or null on failure.
+        /// </summary>
+        public async Task<double?> AddWingmanAsync(SkinrResolvedDesign design,
+            IReadOnlyList<double> offset, CancellationToken ct = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var sidecar = _process;
+            if (sidecar?.IsRunning != true || string.IsNullOrEmpty(design.Dna))
+                return null;
+            await _gate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                SkinrSidecarResponse built = await sidecar.CallAsync(new SkinrSidecarRequest
+                {
+                    Op = "wingman",
+                    Dna = design.Dna,
+                    Offset = offset
+                }, s_buildTimeout, ct).ConfigureAwait(false);
+                if (built.Ok != true)
+                    return null;
+
+                // The wingman's unconverted meshes, fixed the same way the primary's
+                // are: convert, then geometry-map (which re-repoints all wingmen).
+                var missing = Dark(built.WingmanGeometry);
+                if (missing.Count > 0 && _converter != null)
+                {
+                    Report($"Preparing {missing.Count} wingman parts…");
+                    var entries = new Dictionary<string, string>(
+                        StringComparer.OrdinalIgnoreCase);
+                    foreach (string path in missing)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        try
+                        {
+                            string? cmf = await _converter
+                                .ConvertAsync(GrannySourceOf(path), null, ct)
+                                .ConfigureAwait(false);
+                            if (!string.IsNullOrWhiteSpace(cmf))
+                                entries[path] = cmf;
+                        }
+                        catch (Exception ex) when (ex is not OperationCanceledException)
+                        {
+                            AppServices.TraceService?.Trace(
+                                $"Skinr: wingman convert failed {path}: {ex.Message}");
+                        }
+                    }
+                    if (entries.Count > 0)
+                    {
+                        await sidecar.CallAsync(new SkinrSidecarRequest
+                        {
+                            Op = "geometry-map",
+                            GeometryEntries = entries
+                        }, s_resolveTimeout, ct).ConfigureAwait(false);
+                    }
+                }
+                return built.Radius;
+            }
+            catch (SkinrSidecarException ex)
+            {
+                AppServices.TraceService?.Trace($"Skinr: wingman failed: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        /// <summary>Repositions a built wingman (its radius is only known after the
+        /// build, so slots are computed and applied afterwards).</summary>
+        public async Task<bool> MoveWingmanAsync(int index, IReadOnlyList<double> offset,
+            CancellationToken ct = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var sidecar = _process;
+            if (sidecar?.IsRunning != true)
+                return false;
+            await _gate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                SkinrSidecarResponse r = await sidecar.CallAsync(new SkinrSidecarRequest
+                {
+                    Op = "wingman-move",
+                    Index = index,
+                    Offset = offset
+                }, s_cameraTimeout, ct).ConfigureAwait(false);
+                return r.Ok == true;
+            }
+            catch (SkinrSidecarException ex)
+            {
+                AppServices.TraceService?.Trace($"Skinr: wingman move failed: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        /// <summary>Disbands the formation: removes every wingman from the scene.</summary>
+        public async Task<bool> ClearWingmenAsync(CancellationToken ct = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var sidecar = _process;
+            if (sidecar?.IsRunning != true)
+                return false;
+            await _gate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                SkinrSidecarResponse r = await sidecar.CallAsync(
+                    new SkinrSidecarRequest { Op = "wingman-clear" },
+                    s_cameraTimeout, ct).ConfigureAwait(false);
+                return r.Ok == true;
+            }
+            catch (SkinrSidecarException ex)
+            {
+                AppServices.TraceService?.Trace($"Skinr: disband failed: {ex.Message}");
+                return false;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+
+        /// <summary>
         /// Applies an environment preset: a backdrop mode plus optional sun overrides, in a
         /// single <c>scene</c> round trip. Returns false when the sidecar is not running or
         /// declined the change — the caller keeps its previous switcher state either way.

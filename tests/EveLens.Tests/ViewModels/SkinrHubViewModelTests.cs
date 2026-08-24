@@ -58,6 +58,45 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
+        public void DesignEntry_RetainsFullRecipe_ForPhotoOp()
+        {
+            // Photo Op rebuilds a wingman from its recipe DNA; the entry must keep
+            // the recipe object itself, not just the display fields peeled off it.
+            var entry = Entry("some-id");
+            entry.Recipe.Should().BeNull();
+
+            var recipe = new EsiSkinrRecipe
+            {
+                Id = "some-id",
+                Name = "Solar Queen",
+                ShipTypeId = 587
+            };
+            entry.ApplyRecipe(recipe);
+
+            entry.Recipe.Should().BeSameAs(recipe);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task PhotoOp_NoOpsSafely_WithoutRendererOrDesign()
+        {
+            // The fleet methods must be safe to call in every degraded state the
+            // window can reach them from: no sidecar, no design loaded.
+            var render = new SkinrRenderViewModel();
+
+            int placed = await render.AssembleFleetAsync(new[]
+            {
+                new EsiSkinrRecipe { Id = "x", Name = "X", ShipTypeId = 587 }
+            });
+
+            placed.Should().Be(0);
+            render.WingmenCount.Should().Be(0);
+
+            await render.DisbandFleetAsync();
+            render.WingmenCount.Should().Be(0);
+            render.Dispose();
+        }
+
+        [Fact]
         public void Search_FiltersByLabel_CaseInsensitive()
         {
             var hub = new SkinrHubViewModel();

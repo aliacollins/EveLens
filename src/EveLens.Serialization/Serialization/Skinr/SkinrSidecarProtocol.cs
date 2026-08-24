@@ -163,11 +163,20 @@ namespace EveLens.Common.Serialization.Skinr
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public IReadOnlyList<double>? At { get; set; }
 
-        /// <summary>Moves the built ship itself (the Garage parks it on the pad
-        /// instead of hover height). Sticky sidecar-side; a build resets it.</summary>
+        /// <summary>Moves the built ship itself. Sticky sidecar-side; a build resets it.</summary>
         [JsonPropertyName("shipOffset")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public IReadOnlyList<double>? ShipOffset { get; set; }
+
+        /// <summary>Formation position for the <c>wingman</c> op, world units.</summary>
+        [JsonPropertyName("offset")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public IReadOnlyList<double>? Offset { get; set; }
+
+        /// <summary>Which wingman the <c>wingman-move</c> op repositions.</summary>
+        [JsonPropertyName("index")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? Index { get; set; }
 
         // --- resize ----------------------------------------------------------
 
@@ -404,6 +413,11 @@ namespace EveLens.Common.Serialization.Skinr
 
         [JsonPropertyName("ok")]
         public bool? Ok { get; set; }
+
+        /// <summary>The wingman op's own geometry report (which of the extra ship's
+        /// meshes still need conversion before it draws completely).</summary>
+        [JsonPropertyName("geometry")]
+        public SkinrSidecarGeometryReport? WingmanGeometry { get; set; }
 
         [JsonPropertyName("op")]
         public string? Op { get; set; }

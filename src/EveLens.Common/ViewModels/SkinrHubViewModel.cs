@@ -367,6 +367,10 @@ namespace EveLens.Common.ViewModels
 
         public bool HasRecipe { get; private set; }
 
+        /// <summary>The full public recipe once the name walk has fetched it — kept so
+        /// features like Photo Op can rebuild the design without a second ESI trip.</summary>
+        public EsiSkinrRecipe? Recipe { get; private set; }
+
         /// <summary>Captured thumbnail path, or null while the tile shows its placeholder.</summary>
         public string? ThumbnailPath { get; set; }
 
@@ -376,6 +380,7 @@ namespace EveLens.Common.ViewModels
 
         public void ApplyRecipe(EsiSkinrRecipe recipe)
         {
+            Recipe = recipe;
             Label = recipe.Name ?? string.Empty;
             TierLevel = recipe.Tier?.Level ?? 0;
             HullName = StaticItems.GetItemName(recipe.ShipTypeId);

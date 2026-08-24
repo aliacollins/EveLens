@@ -282,6 +282,14 @@ namespace EveLens.Common.ViewModels
             var host = _host;
             if (host == null)
                 return;
+            // A formation only makes sense in open space — bringing four wingmen
+            // into a hangar bay would stack them inside its walls. Disband first.
+            if (preset != SkinrEnvironmentPreset.Space && WingmenCount > 0)
+            {
+                await host.ClearWingmenAsync(ct).ConfigureAwait(false);
+                WingmenCount = 0;
+                Camera.SetHull(_builtRadius);
+            }
             bool ok = await host.SetSceneAsync(
                 SkinrEnvironmentPresets.Backdrop(preset),
                 SkinrEnvironmentPresets.SunColor(preset),
@@ -434,6 +442,14 @@ namespace EveLens.Common.ViewModels
                 return;
             }
 
+            // A new primary dissolves any photo-op formation — the wingmen belong
+            // to the shot, not to the stage.
+            if (WingmenCount > 0)
+            {
+                await _host.ClearWingmenAsync(ct).ConfigureAwait(false);
+                WingmenCount = 0;
+            }
+
             if (!_resolver.IsAvailable)
             {
                 SetError("EveLens's SKINR component catalog is missing, so designs cannot be " +
@@ -465,6 +481,7 @@ namespace EveLens.Common.ViewModels
             // Leviathan differ by three orders of magnitude, and a constant would put one of them
             // inside the camera and the other in a corner of the frame.
             Camera.SetHull(result.Radius);
+            _builtRadius = Camera.Radius;   // restored when a fleet disbands
 
             DiagnosticsChanged?.Invoke();
             EnsureLoop();
@@ -649,6 +666,95 @@ namespace EveLens.Common.ViewModels
         {
             Volatile.Write(ref _settleDueAt, Environment.TickCount64 + SettleDelayMs);
             RequestRender(settled: false);
+        }
+
+        // --- Photo Op --------------------------------------------------------------
+
+        /// <summary>Ships currently flying formation with the primary (0 = solo).</summary>
+        public int WingmenCount { get; private set; }
+
+        // The primary's own built radius, because assembling a fleet widens the
+        // camera's hull radius to the formation span and disbanding must undo that.
+        private double _builtRadius = 1.0;
+
+        /// <summary>
+        /// Assembles a formation: each recipe becomes an additional built ship,
+        /// echeloned alternately left and right of the primary with spacing computed
+        /// from REAL built radii (a wingman is built at a parking offset first, its
+        /// radius read back, then moved into its slot — sizes aren't known up front).
+        /// The camera pulls back to frame the whole fleet.
+        /// </summary>
+        public async Task<int> AssembleFleetAsync(IReadOnlyList<EsiSkinrRecipe> recipes,
+            CancellationToken ct = default)
+        {
+            var host = _host;
+            if (host == null || !HasDesign || !_resolver.IsAvailable)
+                return 0;
+            await host.ClearWingmenAsync(ct).ConfigureAwait(false);
+            WingmenCount = 0;
+
+            // The primary's own radius, not Camera.Radius — a prior assemble widens
+            // the camera to the fleet span and would inflate every gap on re-shoot.
+            double r0 = _builtRadius;
+            // Running outer edge per side, so mixed sizes never overlap: each new
+            // ship parks beyond everything already on its side.
+            double leftEdge = r0, rightEdge = r0;
+            double gap = Math.Max(40.0, r0 * 0.6);
+            int index = 0, placed = 0;
+
+            foreach (EsiSkinrRecipe recipe in recipes)
+            {
+                ct.ThrowIfCancellationRequested();
+                SkinrResolvedDesign design = _resolver.Resolve(recipe);
+                if (!design.IsRenderable)
+                    continue;
+                StatusChanged?.Invoke(string.Format(
+                    "Wingman arriving: {0}…", design.Name));
+                double? radius = await host.AddWingmanAsync(design,
+                    new[] { 0.0, 0.0, -200000.0 }, ct).ConfigureAwait(false);
+                if (radius is not > 0)
+                    continue;
+
+                bool left = placed % 2 == 0;
+                double edge = left ? leftEdge : rightEdge;
+                double x = (edge + gap + radius.Value) * (left ? -1.0 : 1.0);
+                if (left)
+                    leftEdge = Math.Abs(x) + radius.Value;
+                else
+                    rightEdge = Math.Abs(x) + radius.Value;
+                var slot = new[]
+                {
+                    x,
+                    (placed % 3 - 1) * r0 * 0.18,            // slight vertical stagger
+                    -(placed + 1) * Math.Max(r0, radius.Value) * 0.85
+                };
+                await host.MoveWingmanAsync(index, slot, ct).ConfigureAwait(false);
+                index++;
+                placed++;
+                RequestRender(settled: false);
+            }
+
+            WingmenCount = placed;
+            if (placed > 0)
+            {
+                // Frame the fleet: the orbit radius becomes the formation's half-span.
+                Camera.SetHull(Math.Max(leftEdge, rightEdge) * 1.15);
+            }
+            RequestRender(settled: true);
+            return placed;
+        }
+
+        /// <summary>Disbands the formation and reframes the primary alone.</summary>
+        public async Task DisbandFleetAsync(CancellationToken ct = default)
+        {
+            var host = _host;
+            if (host == null)
+                return;
+            await host.ClearWingmenAsync(ct).ConfigureAwait(false);
+            if (WingmenCount > 0)
+                Camera.SetHull(_builtRadius);
+            WingmenCount = 0;
+            RequestRender(settled: true);
         }
 
         /// <summary>Returns the camera to the default three-quarter view.</summary>

@@ -21,6 +21,7 @@ using EveLens.Common.Events;
 using EveLens.Common.Helpers;
 using EveLens.Common.Service;
 using EveLens.Common.Models;
+using EveLens.Common.Serialization.Esi;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 
@@ -899,6 +900,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             var recipe = _hub.Data.SelectedRecipe;
             DesignCard.IsVisible = recipe != null;
+            // Photo Op assembles the user's OWN ships around their own primary — the
+            // Collection context only, never a market design someone else listed.
+            PhotoOpButton.IsVisible = recipe != null && !_marketDetail &&
+                                      _render.IsAvailable;
             HullNameText.IsVisible = _hub.Hull != null && !_photoMode;
             if (recipe == null)
                 return;
@@ -913,6 +918,150 @@ namespace EveLens.Avalonia.Views.Dialogs
             var hull = _hub.Hull;
             if (hull != null)
                 HullNameText.Text = hull.LocalizedName.ToUpperInvariant();
+        }
+
+        // --- Photo Op ------------------------------------------------------------
+
+        /// <summary>Formation size cap: each wingman is a full engine build, and four
+        /// escorts plus the primary already fills a frame.</summary>
+        private const int PhotoOpMaxWingmen = 4;
+
+        private bool _photoOpBusy;
+
+        /// <summary>
+        /// (Re)builds the flyout's checkbox list from the user's collection. Only
+        /// designs whose recipes have arrived qualify — a wingman is built from its
+        /// recipe DNA, so a still-loading tile has nothing to fly yet.
+        /// </summary>
+        private void OnPhotoOpOpening(object? sender, EventArgs e)
+        {
+            try
+            {
+                PhotoOpList.Children.Clear();
+                foreach (SkinrHubDesignEntry entry in _hub.Designs)
+                {
+                    if (entry.Recipe == null || entry.SkinrId == _selectedSkinrId)
+                        continue;
+                    var box = new CheckBox
+                    {
+                        Content = string.IsNullOrEmpty(entry.HullName)
+                            ? entry.DisplayLabel
+                            : $"{entry.DisplayLabel} — {entry.HullName}",
+                        FontSize = FontScaleService.Small,
+                        Tag = entry.Recipe
+                    };
+                    box.IsCheckedChanged += OnPhotoOpChecked;
+                    PhotoOpList.Children.Add(box);
+                }
+                if (PhotoOpList.Children.Count == 0)
+                {
+                    PhotoOpList.Children.Add(new TextBlock
+                    {
+                        Text = Loc.Get("Skinr.PhotoOpEmpty"),
+                        TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                        FontSize = FontScaleService.Caption,
+                        Foreground = (IBrush?)Resources["SkinrTextDimBrush"]
+                    });
+                }
+                PhotoOpAssembleButton.IsEnabled = !_photoOpBusy;
+                PhotoOpDisbandButton.IsEnabled = !_photoOpBusy && _render.WingmenCount > 0;
+                PhotoOpStatus.IsVisible = false;
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: photo op list failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>Enforces the wingman cap by refusing the check that exceeds it.</summary>
+        private void OnPhotoOpChecked(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (sender is not CheckBox box || box.IsChecked != true)
+                return;
+            int chosen = PhotoOpList.Children.OfType<CheckBox>()
+                .Count(c => c.IsChecked == true);
+            if (chosen > PhotoOpMaxWingmen)
+            {
+                box.IsChecked = false;
+                PhotoOpStatus.Text = string.Format(
+                    Loc.Get("Skinr.PhotoOpLimit"), PhotoOpMaxWingmen);
+                PhotoOpStatus.IsVisible = true;
+            }
+        }
+
+        private async void OnPhotoOpAssemble(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                if (_photoOpBusy || !_render.HasDesign)
+                    return;
+                var recipes = PhotoOpList.Children.OfType<CheckBox>()
+                    .Where(c => c.IsChecked == true)
+                    .Select(c => c.Tag)
+                    .OfType<EsiSkinrRecipe>()
+                    .Take(PhotoOpMaxWingmen)
+                    .ToList();
+                if (recipes.Count == 0)
+                {
+                    PhotoOpStatus.Text = Loc.Get("Skinr.PhotoOpPickFirst");
+                    PhotoOpStatus.IsVisible = true;
+                    return;
+                }
+
+                _photoOpBusy = true;
+                PhotoOpAssembleButton.IsEnabled = false;
+                PhotoOpDisbandButton.IsEnabled = false;
+                PhotoOpStatus.Text = Loc.Get("Skinr.PhotoOpAssembling");
+                PhotoOpStatus.IsVisible = true;
+
+                // A photo op happens in open space; the bay can't hold a fleet.
+                if (_render.EnvironmentPreset != SkinrEnvironmentPreset.Space)
+                {
+                    await _render.SetEnvironmentAsync(SkinrEnvironmentPreset.Space);
+                    HighlightEnvironment();
+                }
+                int placed = await _render.AssembleFleetAsync(recipes);
+                PhotoOpStatus.Text = placed > 0
+                    ? string.Format(Loc.Get("Skinr.PhotoOpAssembled"), placed)
+                    : Loc.Get("Skinr.PhotoOpFailed");
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: photo op assemble failed: {ex.Message}");
+                PhotoOpStatus.Text = Loc.Get("Skinr.PhotoOpFailed");
+                PhotoOpStatus.IsVisible = true;
+            }
+            finally
+            {
+                _photoOpBusy = false;
+                PhotoOpAssembleButton.IsEnabled = true;
+                PhotoOpDisbandButton.IsEnabled = _render.WingmenCount > 0;
+            }
+        }
+
+        private async void OnPhotoOpDisband(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                if (_photoOpBusy)
+                    return;
+                _photoOpBusy = true;
+                PhotoOpAssembleButton.IsEnabled = false;
+                PhotoOpDisbandButton.IsEnabled = false;
+                await _render.DisbandFleetAsync();
+                PhotoOpStatus.Text = Loc.Get("Skinr.PhotoOpDisbanded");
+                PhotoOpStatus.IsVisible = true;
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: photo op disband failed: {ex.Message}");
+            }
+            finally
+            {
+                _photoOpBusy = false;
+                PhotoOpAssembleButton.IsEnabled = true;
+                PhotoOpDisbandButton.IsEnabled = _render.WingmenCount > 0;
+            }
         }
 
         /// <summary>
