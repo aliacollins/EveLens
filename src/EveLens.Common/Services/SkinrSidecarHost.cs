@@ -318,7 +318,9 @@ namespace EveLens.Common.Services
         /// null means "keep the framing <c>build</c> chose", which is the auto-framed default.
         /// </summary>
         public async Task<SkinrSidecarCamera?> SetCameraAsync(double yaw, double pitch,
-            double? distance = null, double? fov = null, CancellationToken ct = default)
+            double? distance = null, double? fov = null,
+            IReadOnlyList<double>? eye = null, IReadOnlyList<double>? at = null,
+            CancellationToken ct = default)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (_process?.IsRunning != true)
@@ -330,7 +332,9 @@ namespace EveLens.Common.Services
                 Yaw = yaw,
                 Pitch = pitch,
                 Distance = distance,
-                Fov = fov
+                Fov = fov,
+                Eye = eye,
+                At = at
             };
 
             try

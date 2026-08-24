@@ -149,6 +149,20 @@ namespace EveLens.Common.Serialization.Skinr
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public double? Fov { get; set; }
 
+        /// <summary>
+        /// POV camera position (the Garage balcony). Setting it switches the sidecar
+        /// from orbit to look-from; an EMPTY array explicitly clears it back to orbit
+        /// (null means "don't touch", per the sticky-camera contract).
+        /// </summary>
+        [JsonPropertyName("eye")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public IReadOnlyList<double>? Eye { get; set; }
+
+        /// <summary>Look-at target, world units. Null means "don't touch".</summary>
+        [JsonPropertyName("at")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public IReadOnlyList<double>? At { get; set; }
+
         // --- resize ----------------------------------------------------------
 
         /// <summary>
