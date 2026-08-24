@@ -208,6 +208,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             // The collection carousel exists only in Collection context.
             CarouselScroller.IsVisible = !market && !_marketDetail;
             bool hubContext = market || _marketDetail;
+            // The Hub is the public marketplace — character-agnostic by definition.
+            // The picker belongs to Collection, where "whose ships" is the question.
+            CharacterCombo.IsVisible = !hubContext;
             RailCollection.Background = hubContext
                 ? Brushes.Transparent : (IBrush?)Resources["SkinrPillBrush"];
             RailHub.Background = hubContext
@@ -957,7 +960,10 @@ namespace EveLens.Avalonia.Views.Dialogs
                             ? entry.DisplayLabel
                             : $"{entry.DisplayLabel} — {entry.HullName}",
                         FontSize = FontScaleService.Small,
-                        Tag = entry.Recipe
+                        Tag = entry.Recipe,
+                        // The list reflects the LIVE fleet: reopening the flyout shows
+                        // what's already flying instead of forgetting the selection.
+                        IsChecked = _render.Fleet.AssembledDesignIds.Contains(entry.Recipe.Id ?? "")
                     };
                     box.IsCheckedChanged += OnPhotoOpChecked;
                     PhotoOpList.Children.Add(box);
@@ -973,7 +979,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     });
                 }
                 PhotoOpAssembleButton.IsEnabled = !_photoOpBusy;
-                PhotoOpDisbandButton.IsEnabled = !_photoOpBusy && _render.WingmenCount > 0;
+                PhotoOpDisbandButton.IsEnabled = !_photoOpBusy && _render.Fleet.WingmenCount > 0;
                 PhotoOpStatus.IsVisible = false;
             }
             catch (Exception ex)
@@ -1029,7 +1035,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     await _render.SetEnvironmentAsync(SkinrEnvironmentPreset.Space);
                     HighlightEnvironment();
                 }
-                int placed = await _render.AssembleFleetAsync(recipes, SelectedFormation());
+                int placed = await _render.Fleet.AssembleAsync(recipes, SelectedFormation());
                 PhotoOpStatus.Text = placed > 0
                     ? string.Format(Loc.Get("Skinr.PhotoOpAssembled"), placed)
                     : Loc.Get("Skinr.PhotoOpFailed");
@@ -1044,7 +1050,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 _photoOpBusy = false;
                 PhotoOpAssembleButton.IsEnabled = true;
-                PhotoOpDisbandButton.IsEnabled = _render.WingmenCount > 0;
+                PhotoOpDisbandButton.IsEnabled = _render.Fleet.WingmenCount > 0;
             }
         }
 
@@ -1062,9 +1068,9 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             try
             {
-                if (!_photoOpComboReady || _photoOpBusy || _render.WingmenCount == 0)
+                if (!_photoOpComboReady || _photoOpBusy || _render.Fleet.WingmenCount == 0)
                     return;
-                await _render.ApplyFormationAsync(SelectedFormation());
+                await _render.Fleet.ApplyFormationAsync(SelectedFormation());
             }
             catch (Exception ex)
             {
@@ -1081,7 +1087,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 _photoOpBusy = true;
                 PhotoOpAssembleButton.IsEnabled = false;
                 PhotoOpDisbandButton.IsEnabled = false;
-                await _render.DisbandFleetAsync();
+                await _render.Fleet.DisbandAsync();
                 PhotoOpStatus.Text = Loc.Get("Skinr.PhotoOpDisbanded");
                 PhotoOpStatus.IsVisible = true;
             }
@@ -1093,7 +1099,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 _photoOpBusy = false;
                 PhotoOpAssembleButton.IsEnabled = true;
-                PhotoOpDisbandButton.IsEnabled = _render.WingmenCount > 0;
+                PhotoOpDisbandButton.IsEnabled = _render.Fleet.WingmenCount > 0;
             }
         }
 
@@ -1394,8 +1400,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // Ctrl+drag = photo-op free move: grab the ship nearest the cursor and
             // slide it in the camera plane. A plain drag stays the orbit it always was.
-            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _render.WingmenCount > 0 &&
-                _render.BeginWingmanDrag(pos.X, pos.Y,
+            if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _render.Fleet.WingmenCount > 0 &&
+                _render.Fleet.BeginDrag(pos.X, pos.Y,
                     RenderSurface.Bounds.Width, RenderSurface.Bounds.Height))
             {
                 _dragOrigin = pos;
@@ -1418,8 +1424,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                 return;
 
             Point current = e.GetPosition(RenderSurface);
-            if (_render.IsDraggingWingman)
-                _render.DragWingmanBy(current.X - origin.X, current.Y - origin.Y);
+            if (_render.Fleet.IsDraggingWingman)
+                _render.Fleet.DragBy(current.X - origin.X, current.Y - origin.Y);
             else
                 _render.Orbit(current.X - origin.X, current.Y - origin.Y);
             _dragOrigin = current;
@@ -1430,8 +1436,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             if (_dragOrigin == null)
                 return;
             _dragOrigin = null;
-            if (_render.IsDraggingWingman)
-                _render.EndWingmanDrag();
+            if (_render.Fleet.IsDraggingWingman)
+                _render.Fleet.EndDrag();
             else
                 _render.SetInteracting(false);
             e.Pointer.Capture(null);
@@ -1447,10 +1453,10 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 // Ctrl+scroll = the depth half of photo-op free movement: push the
                 // ship under the cursor along the view axis instead of zooming.
-                if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _render.WingmenCount > 0)
+                if (e.KeyModifiers.HasFlag(KeyModifiers.Control) && _render.Fleet.WingmenCount > 0)
                 {
                     Point pos = e.GetPosition(RenderSurface);
-                    await _render.PushWingmanDepthAsync(pos.X, pos.Y, e.Delta.Y,
+                    await _render.Fleet.PushDepthAsync(pos.X, pos.Y, e.Delta.Y,
                         RenderSurface.Bounds.Width, RenderSurface.Bounds.Height);
                     return;
                 }

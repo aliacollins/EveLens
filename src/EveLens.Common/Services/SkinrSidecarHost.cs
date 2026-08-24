@@ -759,6 +759,10 @@ namespace EveLens.Common.Services
             {
                 Op = "build",
                 Dna = design.Dna,
+                // The design id keys the sidecar's built-ship LRU: revisiting a
+                // recently viewed design restores the parked ship instead of paying
+                // the full build again.
+                CacheKey = string.IsNullOrEmpty(design.SkinrId) ? null : design.SkinrId,
                 GeometryResPath = geometryResPath,
                 AutoFrame = true,
                 // The blend mode travels beside the masks, not inside them: it is one fact per

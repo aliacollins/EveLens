@@ -92,6 +92,16 @@ namespace EveLens.Common.Serialization.Skinr
         public string? Dna { get; set; }
 
         /// <summary>
+        /// Identity for the sidecar's built-ship LRU (the design's SKINR id). A
+        /// <c>build</c> whose key and DNA match a parked ship restores it instead of
+        /// rebuilding — measured near-free in memory (probe221), seconds saved per
+        /// design switch.
+        /// </summary>
+        [JsonPropertyName("cacheKey")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CacheKey { get; set; }
+
+        /// <summary>
         /// Where the converted <c>.cmf</c> geometry lives in the res-override tree. CCP
         /// publishes hull geometry as Granny <c>.gr2</c>, which Trinity cannot read, so the
         /// host converts it and repoints the mesh here.

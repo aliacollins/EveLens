@@ -83,16 +83,18 @@ namespace EveLens.Tests.ViewModels
             // window can reach them from: no sidecar, no design loaded.
             var render = new SkinrRenderViewModel();
 
-            int placed = await render.AssembleFleetAsync(new[]
+            int placed = await render.Fleet.AssembleAsync(new[]
             {
                 new EsiSkinrRecipe { Id = "x", Name = "X", ShipTypeId = 587 }
             }, SkinrFleetFormation.Vic);
 
             placed.Should().Be(0);
-            render.WingmenCount.Should().Be(0);
+            render.Fleet.WingmenCount.Should().Be(0);
+            render.Fleet.AssembledDesignIds.Should().BeEmpty(
+                "a failed assemble must not leave ghost selections for the flyout");
 
-            await render.DisbandFleetAsync();
-            render.WingmenCount.Should().Be(0);
+            await render.Fleet.DisbandAsync();
+            render.Fleet.WingmenCount.Should().Be(0);
             render.Dispose();
         }
 

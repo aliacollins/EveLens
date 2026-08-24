@@ -21,11 +21,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Design switching is dramatically cheaper** -- Re-clicking the design already on stage is now a no-op instead of a full rebuild, and the renderer keeps the last four built ships parked off-stage: revisiting a recently viewed design restores the finished ship (verified pixel-identical) instead of paying the whole build again. Measured first: keeping ships resident costs almost nothing, because the engine retains their textures either way.
+- **The Hub is character-agnostic** -- The character picker now only appears in Collection, where "whose ships" is the question; the Paragon Hub marketplace shows the same designs to everyone.
 - **SDE updated to build 3470007 (August 2026)** -- All game data regenerated from CCP's latest Static Data Export: 52,863 types including the new SKINR component data. The EVE Accuracy Suite verified all training math is unchanged.
 - **Grouped overview now uses the whole screen** -- Small character groups share a row (each section exactly as wide as its cards) while large groups keep a full-width row with wrapping cards, and the layout re-flows as you resize the window. A dozen per-account groups now fill a widescreen monitor instead of scrolling off the bottom with half the display empty (Issue #72, thanks Agge65).
 - **Character cards grow with your font size** -- Card dimensions now scale with the Appearance font setting, so text no longer clips at 110%+ on high-DPI monitors (Issue #72).
 - **Comparison header stays frozen while scrolling** -- The character-name header row in Skill Comparison now locks to the top like a spreadsheet freeze pane, so you can always see whose column is whose deep in a long skill list (Discussion #93).
 - **Skill search now looks inside descriptions** -- Searching "powergrid" in the skill browser used to find nothing useful because the skill is named "Power Grid Management" -- with a space. The text filter (plan editor and Skills tab alike) now matches skill descriptions too, so functional searches like "capacitor", "velocity", or "powergrid" surface every skill that affects them (Discussion #116, thanks OS17279).
+
+### Fixed
+
+- **The Photo Op flyout remembers the fleet** -- Reopening the flyout now shows the wingmen that are actually flying as checked, instead of presenting a blank list while five ships sit in formation behind it.
 
 ## [1.5.0-beta.1] - 2026-08-19
 
