@@ -246,8 +246,12 @@ namespace EveLens.Avalonia.Views.Dialogs
                 }
                 else
                 {
-                    RuntimeInstallDesc.Text = _render.UnavailableReason ??
-                        Loc.Get("Skinr.RuntimeFailed");
+                    // The friendly sentence for the user; the discovery report is
+                    // developer material and goes to the trace.
+                    RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeFailed");
+                    AppServices.TraceService?.Trace(
+                        "SkinrViewer: runtime installed but unavailable: " +
+                        _render.UnavailableReason);
                     RuntimeInstallButton.IsEnabled = true;
                 }
             }
@@ -1310,6 +1314,14 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// </summary>
         private void RefreshRenderDiagnostics()
         {
+            // While the Rendering Runtime offer is on screen, IT owns the placeholder.
+            // The raw discovery report (env vars, local build paths) is developer
+            // diagnostics — it belongs in the trace, not painted over the consent
+            // panel. Measured: the offer rendered with the search dump stamped on
+            // top of it, twice.
+            if (RuntimeInstallPanel.IsVisible)
+                return;
+
             if (_render.Error != null)
             {
                 RenderImage.IsVisible = false;

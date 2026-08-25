@@ -200,8 +200,17 @@ namespace EveLens.Common.ViewModels
         /// </summary>
         public async Task InitializeAsync(CancellationToken ct = default)
         {
-            if (_host != null)
+            // A host that exists AND validated is settled. A host that exists but
+            // found no runtime must NOT block re-initialization: the Rendering
+            // Runtime add-on can be installed while the window is open, and
+            // "close the window and reopen it" is not a recovery mechanism.
+            if (_host != null && UnavailableReason == null)
                 return;
+            if (_host != null)
+            {
+                _host.Dispose();
+                _host = null;
+            }
 
             string? platform = DescribePlatform(SkinrRenderPlatform.Current);
             if (platform != null)
