@@ -1028,3 +1028,4 @@ Skinr.PhotoOpShort = 合影
 Skinr.PhotoShort = 拍照
 Skinr.SettingsShort = 设置
 PlanEditor.BookBadge = 书
+PlanEditor.RemapStale = 重映射已不匹配此区段，请查看优化方案

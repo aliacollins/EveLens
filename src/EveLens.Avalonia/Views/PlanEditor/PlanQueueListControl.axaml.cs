@@ -174,14 +174,28 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         [EveAttribute.Memory] = remap[EveAttribute.Memory],
                         [EveAttribute.Charisma] = remap[EveAttribute.Charisma],
                     };
-                    _visualRows.Add(BuildSegmentDivider(
-                        "◆ " + string.Format(Loc.Get("PlanEditor.RemapBeforeBanner"),
-                            item.DisplayName.ToUpperInvariant()),
-                        spread, Color.Parse("#FFE6A817")));
+                    // The reorder-staleness contract: a remap is a promise about
+                    // what FOLLOWS it. When manual moves change the block so its
+                    // dominant pair no longer matches the spread's top two, the
+                    // divider says so in amber instead of silently presiding over
+                    // the wrong skills — and the fix is one click away in the
+                    // stats-band verdict.
+                    var top2 = spread.OrderByDescending(kv => kv.Value)
+                        .Take(2).Select(kv => kv.Key).ToHashSet();
+                    var dominant = DominantPair(i);
+                    bool stale = dominant.Item1 != EveAttribute.None &&
+                        !(top2.Contains(dominant.Item1) && top2.Contains(dominant.Item2));
+                    Color accent = stale
+                        ? Color.Parse("#FFE07B39") : Color.Parse("#FFE6A817");
+                    string label = "◆ " + string.Format(
+                        Loc.Get("PlanEditor.RemapBeforeBanner"),
+                        item.DisplayName.ToUpperInvariant());
+                    if (stale)
+                        label += " — " + Loc.Get("PlanEditor.RemapStale");
+                    _visualRows.Add(BuildSegmentDivider(label, spread, accent));
                     y += HeaderRowHeight;
                     _visualRows.Add(BuildSegmentHeader(
-                        DominantPairLabel(i), SegmentStats(i), spread,
-                        Color.Parse("#FFE6A817")));
+                        DominantPairLabel(i), SegmentStats(i), spread, accent));
                     y += HeaderRowHeight;
                 }
                 else if (i == 0 && anyRemap)
@@ -224,8 +238,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
         }
 
         /// <summary>The dominant primary/secondary pair over the segment starting at
-        /// <paramref name="startIndex"/>, e.g. "PERCEPTION / WILLPOWER".</summary>
-        private string DominantPairLabel(int startIndex)
+        /// <paramref name="startIndex"/>, by training time.</summary>
+        private (EveAttribute, EveAttribute) DominantPair(int startIndex)
         {
             var totals = new Dictionary<(EveAttribute, EveAttribute), long>();
             for (int i = startIndex; i < _viewModel!.Items.Count; i++)
@@ -237,9 +251,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 totals[key] = totals.GetValueOrDefault(key)
                     + _viewModel.Items[i].TrainingTime.Ticks;
             }
-            if (totals.Count == 0) return string.Empty;
-            var top = totals.OrderByDescending(kv => kv.Value).First().Key;
-            return $"{top.Item1} / {top.Item2}".ToUpperInvariant();
+            if (totals.Count == 0) return (EveAttribute.None, EveAttribute.None);
+            return totals.OrderByDescending(kv => kv.Value).First().Key;
+        }
+
+        private string DominantPairLabel(int startIndex)
+        {
+            var top = DominantPair(startIndex);
+            return top.Item1 == EveAttribute.None
+                ? string.Empty
+                : $"{top.Item1} / {top.Item2}".ToUpperInvariant();
         }
 
         /// <summary>The gold "◆ REMAP BEFORE X" divider row with the spread's top
@@ -511,15 +532,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             // Editor affordance: the drag handle appears on hover — the whole row
             // was always draggable, but nothing SAID so.
-            var dragHandle = new TextBlock
-            {
-                Text = "⠿",
-                FontSize = FontScaleService.Small,
-                Foreground = new SolidColorBrush(Color.Parse("#FF707088")),
-                Opacity = 0,
-                Width = 12,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
+            var dragHandle = Services.Codicon.Icon(Services.Codicon.Gripper,
+                FontScaleService.Small, new SolidColorBrush(Color.Parse("#FF707088")));
+            dragHandle.Opacity = 0;
+            dragHandle.Width = 14;
             namePanel.Children.Add(dragHandle);
             container.PointerEntered += (_, _) => dragHandle.Opacity = 0.8;
             container.PointerExited += (_, _) => dragHandle.Opacity = 0;

@@ -1062,3 +1062,4 @@ Skinr.PhotoOpShort = Photo op
 Skinr.PhotoShort = Photo
 Skinr.SettingsShort = Settings
 PlanEditor.BookBadge = BOOK
+PlanEditor.RemapStale = remap no longer matches this block, review optimization

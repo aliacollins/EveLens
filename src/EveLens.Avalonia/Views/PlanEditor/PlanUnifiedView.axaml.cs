@@ -979,12 +979,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     Padding = new Thickness(3, 0),
                     Margin = new Thickness(0, 0, 4, 0),
                     VerticalAlignment = VerticalAlignment.Center,
-                    Child = new TextBlock
-                    {
-                        Text = Loc.Get("PlanEditor.BookBadge"),
-                        FontSize = FontScaleService.Caption,
-                        Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
-                    }
+                    Child = Codicon.Icon(Codicon.Book, FontScaleService.Caption,
+                        new SolidColorBrush(Color.Parse("#FFCF6679")))
                 };
                 ToolTip.SetTip(bookBadge, $"Skillbook not owned \u2014 {item.Entry.Skill.FormattedCost}");
                 nameStack.Children.Add(bookBadge);
@@ -1048,8 +1044,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 var upBtn = new Button
                 {
-                    Content = "\u25B2",
-                    FontSize = FontScaleService.Tiny,
+                    Content = Codicon.Icon(Codicon.ArrowUp, FontScaleService.Tiny),
                     Padding = new Thickness(3, 0),
                     CornerRadius = new CornerRadius(3),
                     Background = Brushes.Transparent,
@@ -1068,8 +1063,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 var downBtn = new Button
                 {
-                    Content = "\u25BC",
-                    FontSize = FontScaleService.Tiny,
+                    Content = Codicon.Icon(Codicon.ArrowDown, FontScaleService.Tiny),
                     Padding = new Thickness(3, 0),
                     CornerRadius = new CornerRadius(3),
                     Background = Brushes.Transparent,
@@ -1523,7 +1517,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             var locateBtn = new Button
             {
-                Content = Loc.Get("PlanEditor.LocateInPlan"),
+                Content = Codicon.IconText(Codicon.Target,
+                    Loc.Get("PlanEditor.LocateInPlan"), FontScaleService.Caption),
                 FontSize = FontScaleService.Caption,
                 Padding = new Thickness(8, 2),
                 CornerRadius = new CornerRadius(10),
@@ -1535,7 +1530,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 var upBtn = new Button
                 {
-                    Content = "▲", FontSize = FontScaleService.Caption,
+                    Content = Codicon.Icon(Codicon.ArrowUp, FontScaleService.Caption),
                     Padding = new Thickness(8, 2), CornerRadius = new CornerRadius(10),
                     DataContext = item,
                 };
@@ -1547,7 +1542,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 var downBtn = new Button
                 {
-                    Content = "▼", FontSize = FontScaleService.Caption,
+                    Content = Codicon.Icon(Codicon.ArrowDown, FontScaleService.Caption),
                     Padding = new Thickness(8, 2), CornerRadius = new CornerRadius(10),
                     DataContext = item,
                 };
@@ -1624,7 +1619,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Remove from plan — cascades through dependents via TryRemoveSet.
             var removeBtn = new Button
             {
-                Content = Loc.Get("PlanEditor.RemoveFromPlan"),
+                Content = Codicon.IconText(Codicon.Trash, Loc.Get("PlanEditor.RemoveFromPlan"),
+                    FontScaleService.Small,
+                    (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!),
                 FontSize = FontScaleService.Small,
                 Foreground = (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!,
                 Background = Brushes.Transparent,
@@ -2586,8 +2583,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var optimizeBtn = new Button
             {
                 Content = hasRemapPoints
-                    ? Loc.Get("PlanEditor.ReviewOptimization")
-                    : Loc.Get("PlanEditor.OptimizePlan"),
+                    ? Codicon.IconText(Codicon.Graph,
+                        Loc.Get("PlanEditor.ReviewOptimization"), FontScaleService.Body)
+                    : Codicon.IconText(Codicon.Wand,
+                        Loc.Get("PlanEditor.OptimizePlan"), FontScaleService.Body),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(12),

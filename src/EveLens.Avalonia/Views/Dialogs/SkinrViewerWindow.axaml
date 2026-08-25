@@ -106,7 +106,7 @@
                             Background="{StaticResource SkinrPillBrush}" CornerRadius="17"
                             VerticalAlignment="Center">
                         <DockPanel Margin="14,0">
-                            <TextBlock DockPanel.Dock="Left" Text="⌕" VerticalAlignment="Center"
+                            <TextBlock DockPanel.Dock="Left" Text="&#xEA6D;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon" VerticalAlignment="Center"
                                        FontSize="{DynamicResource EveFontSubheading}"
                                        Foreground="{StaticResource SkinrTextDimBrush}"
                                        Margin="0,0,8,0" />
@@ -351,7 +351,7 @@
                             Foreground="{StaticResource SkinrTextSecBrush}"
                             FontSize="{DynamicResource EveFontSmall}"
                             ToolTip.Tip="{loc:T Skinr.PhotoOp}"
-                            Content="{loc:T Skinr.PhotoOpShort}">
+                            Content="&#xEAD9;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon">
                         <Button.Flyout>
                             <Flyout Placement="BottomEdgeAlignedRight"
                                     Opening="OnPhotoOpOpening">
@@ -403,13 +403,13 @@
                             Foreground="{StaticResource SkinrTextSecBrush}"
                             FontSize="{DynamicResource EveFontSmall}"
                             ToolTip.Tip="{loc:T Skinr.PhotoMode}"
-                            Click="OnPhotoModeToggle" Content="{loc:T Skinr.PhotoShort}" />
+                            Click="OnPhotoModeToggle" Content="&#xEADA;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon" />
                     <Button x:Name="SettingsButton" Padding="10,6" CornerRadius="14"
                             Background="{StaticResource SkinrPillBrush}"
                             Foreground="{StaticResource SkinrTextSecBrush}"
                             FontSize="{DynamicResource EveFontSmall}"
                             ToolTip.Tip="{loc:T Skinr.RenderSettings}"
-                            Content="{loc:T Skinr.SettingsShort}">
+                            Content="&#xEB51;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon">
                         <Button.Flyout>
                             <Flyout Placement="BottomEdgeAlignedRight">
                                 <StackPanel Spacing="8" MinWidth="240">

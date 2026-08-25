@@ -1028,3 +1028,4 @@ Skinr.PhotoOpShort = 촬영
 Skinr.PhotoShort = 사진
 Skinr.SettingsShort = 설정
 PlanEditor.BookBadge = BOOK
+PlanEditor.RemapStale = 리맵이 이 구간과 더 이상 일치하지 않습니다. 최적화를 검토하세요
