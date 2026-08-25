@@ -993,3 +993,5 @@ Optimizer.StartsAfter = 起始于
 Optimizer.ViewAffected = 查看相关技能
 Optimizer.PlanStart = 计划开始
 Optimizer.SkillsDurFmt = {0} 个技能 · {1}
+Optimizer.TimeSavedTotal = 节省时间
+Optimizer.WhyHereStartFmt = 训练从重映射开始：该阶段的全部 {0} 个技能最受益于 {1}。

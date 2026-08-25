@@ -80,6 +80,11 @@ namespace EveLens.Common.Services
             /// <summary>Dominant attribute pair of the keep-current prefix, for the
             /// "Keep current attributes" card.</summary>
             public string PrefixPairLabel { get; init; } = string.Empty;
+
+            /// <summary>First and last skills of the keep-current prefix, for the
+            /// card's "Navigation IV → Science V" range line.</summary>
+            public string PrefixFirstSkill { get; init; } = string.Empty;
+            public string PrefixLastSkill { get; init; } = string.Empty;
         }
 
         /// <summary>
@@ -424,6 +429,10 @@ namespace EveLens.Common.Services
                 PrefixSkillCount = prefixEntryEnd,
                 PrefixPairLabel = prefixEntries.Count > 0
                     ? PairLabelOf(prefixEntries) : string.Empty,
+                PrefixFirstSkill = prefixEntries.Count > 0
+                    ? $"{prefixEntries[0].Skill.Name} {prefixEntries[0].Level}" : string.Empty,
+                PrefixLastSkill = prefixEntries.Count > 0
+                    ? $"{prefixEntries[^1].Skill.Name} {prefixEntries[^1].Level}" : string.Empty,
             };
             proposal.Remaps.AddRange(result);
             return proposal;

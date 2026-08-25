@@ -1027,3 +1027,5 @@ Optimizer.StartsAfter = Starts after
 Optimizer.ViewAffected = View affected skills
 Optimizer.PlanStart = plan-start
 Optimizer.SkillsDurFmt = {0} skills · {1}
+Optimizer.TimeSavedTotal = Time saved
+Optimizer.WhyHereStartFmt = Training begins remapped: all {0} skills in this block benefit most from {1}.

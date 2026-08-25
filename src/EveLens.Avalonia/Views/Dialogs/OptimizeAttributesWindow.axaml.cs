@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using EveLens.Avalonia.Services;
@@ -38,27 +39,61 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// <summary>Raised after a proposal has been applied so the editor can refresh once.</summary>
         public event Action? Applied;
 
+        private bool _suppressToggles;
+
         public OptimizeAttributesWindow()
         {
             InitializeComponent();
             CancelButton.Click += (_, _) => Close();
             ApplyButton.Click += (_, _) => ApplyProposal();
-            // Pass the strategy EXPLICITLY per handler. Reading StrategyAutoPlace.IsChecked
-            // inside a shared handler was event-order dependent: when clicking "whole plan",
-            // its checked event can fire while the other radio is still checked, so the
-            // analysis ran with the OLD strategy and rendered the wrong result ("the whole-
-            // plan card never comes back" bug).
-            StrategyWholePlan.IsCheckedChanged += (_, _) =>
-            { if (StrategyWholePlan.IsChecked == true) _ = RunAnalysisAsync(autoPlace: false); };
-            StrategyAutoPlace.IsCheckedChanged += (_, _) =>
-            { if (StrategyAutoPlace.IsChecked == true) _ = RunAnalysisAsync(autoPlace: true); };
-            // Clone what-if: rerun with the CURRENT strategy when the clone state changes
-            CloneAuto.IsCheckedChanged += (_, _) =>
-            { if (CloneAuto.IsChecked == true) _ = RunAnalysisAsync(StrategyAutoPlace.IsChecked == true); };
-            CloneOmega.IsCheckedChanged += (_, _) =>
-            { if (CloneOmega.IsChecked == true) _ = RunAnalysisAsync(StrategyAutoPlace.IsChecked == true); };
-            CloneAlpha.IsCheckedChanged += (_, _) =>
-            { if (CloneAlpha.IsChecked == true) _ = RunAnalysisAsync(StrategyAutoPlace.IsChecked == true); };
+            // Segmented pill groups: exclusive, never empty, restyled on change, and
+            // the analysis reruns once per USER change (the suppress flag keeps the
+            // programmatic uncheck/recheck from cascading — the successor of the old
+            // "whole-plan card never comes back" event-order bug).
+            WireToggleGroup(new[] { StrategyAutoPlace, StrategyWholePlan });
+            WireToggleGroup(new[] { CloneAuto, CloneOmega, CloneAlpha });
+        }
+
+        private void WireToggleGroup(ToggleButton[] group)
+        {
+            foreach (var button in group)
+            {
+                var self = button;
+                self.IsCheckedChanged += (_, _) =>
+                {
+                    if (_suppressToggles) return;
+                    _suppressToggles = true;
+                    if (self.IsChecked == true)
+                    {
+                        foreach (var other in group)
+                            if (other != self) other.IsChecked = false;
+                    }
+                    else if (group.All(b => b.IsChecked != true))
+                    {
+                        self.IsChecked = true;   // a segmented control is never empty
+                        _suppressToggles = false;
+                        StyleToggleGroup(group);
+                        return;
+                    }
+                    _suppressToggles = false;
+                    StyleToggleGroup(group);
+                    _ = RunAnalysisAsync(StrategyAutoPlace.IsChecked == true);
+                };
+            }
+            StyleToggleGroup(group);
+        }
+
+        private static void StyleToggleGroup(ToggleButton[] group)
+        {
+            foreach (var button in group)
+            {
+                bool on = button.IsChecked == true;
+                button.Background = on
+                    ? new SolidColorBrush(Color.Parse("#FF2C2C4E"))
+                    : Brushes.Transparent;
+                button.Foreground = on ? GoldBrush : DimBrush;
+                button.FontWeight = on ? FontWeight.SemiBold : FontWeight.Normal;
+            }
         }
 
         private AccountStatusMode? SelectedCloneOverride =>
@@ -194,16 +229,23 @@ namespace EveLens.Avalonia.Views.Dialogs
                     DimBrush, FontScaleService.Body));
             }
 
-            // ── Timeline: keep-current card, then marker + card per remap ──────
+            // ── Timeline: rail with nodes, keep-current card, marker + card per remap ──
+            _cards.Clear();
             if (proposal.PrefixSkillCount > 0)
             {
+                string range = proposal.PrefixSkillCount > 1
+                    ? $"{proposal.PrefixFirstSkill} → {proposal.PrefixLastSkill} · "
+                    : $"{proposal.PrefixFirstSkill} · ";
                 var keepCard = SegmentCard(
                     "✓ " + Loc.Get("Optimizer.KeepCurrent"), GreenBrush,
-                    string.Format(Loc.Get("Optimizer.SkillsDurFmt"),
+                    range + string.Format(Loc.Get("Optimizer.SkillsDurFmt"),
                         proposal.PrefixSkillCount, FormatTime(proposal.PrefixDuration)),
                     CurrentAttributeValues(), proposal.PrefixPairLabel);
-                keepCard.PointerPressed += (_, _) => ShowKeepCurrentDetails(proposal);
-                ResultsPanel.Children.Add(keepCard);
+                _cards.Add(keepCard);
+                int self = _cards.Count - 1;
+                keepCard.PointerPressed += (_, _) =>
+                { SelectCard(self); ShowKeepCurrentDetails(proposal); };
+                ResultsPanel.Children.Add(TimelineRow(RailNode(TealBrush), keepCard));
             }
 
             for (int i = 0; i < proposal.Remaps.Count; i++)
@@ -212,18 +254,26 @@ namespace EveLens.Avalonia.Views.Dialogs
                 string skillLabel =
                     $"{remap.Skill.LocalizedName} {Common.Models.Skill.GetRomanFromInt(remap.Level)}";
 
-                ResultsPanel.Children.Add(Text(
-                    "◆ " + string.Format(Loc.Get("Optimizer.RemapBeforeFmt"), skillLabel),
-                    GoldBrush, FontScaleService.Small, FontWeight.SemiBold));
+                ResultsPanel.Children.Add(TimelineRow(RailDiamond(), Text(
+                    string.Format(Loc.Get("Optimizer.RemapBeforeFmt"), skillLabel),
+                    GoldBrush, FontScaleService.Small, FontWeight.SemiBold)));
 
+                string range = remap.SkillNames.Count > 1
+                    ? $"{remap.SkillNames[0]} → {remap.SkillNames[^1]} · "
+                    : remap.SkillNames.Count == 1 ? $"{remap.SkillNames[0]} · " : "";
                 var card = SegmentCard(remap.PairLabel, GoldBrush,
-                    string.Format(Loc.Get("Optimizer.SkillsDurFmt"),
+                    range + string.Format(Loc.Get("Optimizer.SkillsDurFmt"),
                         remap.SkillCount, FormatTime(remap.SegmentDuration)),
                     remap.Attributes, remap.PairLabel);
+                _cards.Add(card);
+                int self = _cards.Count - 1;
                 int index = i;
-                card.PointerPressed += (_, _) => ShowRemapDetails(proposal, index);
-                ResultsPanel.Children.Add(card);
+                card.PointerPressed += (_, _) =>
+                { SelectCard(self); ShowRemapDetails(proposal, index); };
+                ResultsPanel.Children.Add(TimelineRow(RailNode(GoldBrush), card));
             }
+            // Default selection mirrors the default inspector content below.
+            SelectCard(proposal.Remaps.Count > 0 ? (proposal.PrefixSkillCount > 0 ? 1 : 0) : 0);
 
             // Proportional duration bar: how the optimized plan divides its time.
             if (proposal.Remaps.Count > 0)
@@ -239,6 +289,55 @@ namespace EveLens.Avalonia.Views.Dialogs
             // could clear better hand-placed remap points (Apply replaces all of them).
             ApplyButton.IsEnabled = isImprovement && proposal.Remaps.Count > 0;
         }
+
+        private static readonly IBrush TealBrush = new SolidColorBrush(Color.Parse("#FF2BB5AD"));
+        private static readonly IBrush RailBrush = new SolidColorBrush(Color.Parse("#FF33334E"));
+        private readonly System.Collections.Generic.List<Border> _cards = new();
+
+        /// <summary>The selected card wears a gold border; the timeline is a
+        /// master-detail and the master must show which row the inspector explains.</summary>
+        private void SelectCard(int index)
+        {
+            for (int i = 0; i < _cards.Count; i++)
+                _cards[i].BorderBrush = i == index ? GoldBrush : Brushes.Transparent;
+        }
+
+        /// <summary>One timeline row: the rail (vertical line + node) beside content.</summary>
+        private static Control TimelineRow(Control node, Control content)
+        {
+            var rail = new Grid { Width = 22 };
+            rail.Children.Add(new Border
+            {
+                Width = 2,
+                Background = RailBrush,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            });
+            rail.Children.Add(node);
+            var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("22,*") };
+            grid.Children.Add(rail);
+            Grid.SetColumn(content, 1);
+            grid.Children.Add(content);
+            return grid;
+        }
+
+        private static Control RailNode(IBrush brush) => new Border
+        {
+            Width = 10, Height = 10,
+            CornerRadius = new global::Avalonia.CornerRadius(5),
+            Background = brush,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new global::Avalonia.Thickness(0, 14, 0, 0),
+        };
+
+        private static Control RailDiamond() => new Border
+        {
+            Width = 9, Height = 9,
+            Background = GoldBrush,
+            RenderTransform = new RotateTransform(45),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 
         /// <summary>One timeline card: colored title, "N skills · duration", attribute
         /// chips (top two bolded), and the dominant pair tag.</summary>
@@ -286,6 +385,9 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Background = PanelBg,
                 CornerRadius = new global::Avalonia.CornerRadius(6),
                 Padding = new global::Avalonia.Thickness(14, 10),
+                // Always present, so selection never causes a layout shift.
+                BorderThickness = new global::Avalonia.Thickness(1),
+                BorderBrush = Brushes.Transparent,
                 Cursor = new global::Avalonia.Input.Cursor(
                     global::Avalonia.Input.StandardCursorType.Hand),
                 Child = stack,
@@ -306,23 +408,30 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             DetailsPanel.Children.Add(Text(Loc.Get("Optimizer.WhyHere"), Brushes.White,
                 FontScaleService.Small, FontWeight.SemiBold));
-            string previous = index == 0
-                ? (proposal.PrefixSkillCount > 0
-                    ? proposal.PrefixPairLabel : Loc.Get("Optimizer.PlanStart"))
-                : proposal.Remaps[index - 1].PairLabel;
-            var why = Text(string.Format(Loc.Get("Optimizer.WhyHereFmt"),
-                    previous, remap.SkillCount, remap.PairLabel),
-                DimBrush, FontScaleService.Small);
+            // "plan-start-focused training ends here" read as broken copy: the
+            // remap-at-start case gets its own sentence instead of a placeholder.
+            bool atPlanStart = index == 0 && proposal.PrefixSkillCount == 0;
+            string whyText = atPlanStart
+                ? string.Format(Loc.Get("Optimizer.WhyHereStartFmt"),
+                    remap.SkillCount, remap.PairLabel)
+                : string.Format(Loc.Get("Optimizer.WhyHereFmt"),
+                    index == 0 ? proposal.PrefixPairLabel
+                        : proposal.Remaps[index - 1].PairLabel,
+                    remap.SkillCount, remap.PairLabel);
+            var why = Text(whyText, DimBrush, FontScaleService.Small);
             why.TextWrapping = TextWrapping.Wrap;
             DetailsPanel.Children.Add(why);
 
-            DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.SegmentLength"),
+            if (proposal.TimeSaved > TimeSpan.Zero)
+                DetailsPanel.Children.Add(DetailRow("⏱ " + Loc.Get("Optimizer.TimeSavedTotal"),
+                    FormatTime(proposal.TimeSaved), GreenBrush));
+            DetailsPanel.Children.Add(DetailRow("▤ " + Loc.Get("Optimizer.SegmentLength"),
                 FormatTime(remap.SegmentDuration), GreenBrush));
-            DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.RemapsUsed"),
+            DetailsPanel.Children.Add(DetailRow("↻ " + Loc.Get("Optimizer.RemapsUsed"),
                 string.Format(Loc.Get("Optimizer.OfFmt"), index + 1, MaxRemapBudget()),
                 Brushes.White));
             if (!string.IsNullOrEmpty(remap.StartsAfter))
-                DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.StartsAfter"),
+                DetailsPanel.Children.Add(DetailRow("▷ " + Loc.Get("Optimizer.StartsAfter"),
                     remap.StartsAfter, GreenBrush));
 
             var affectedBtn = new Button

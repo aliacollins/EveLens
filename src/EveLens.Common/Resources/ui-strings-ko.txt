@@ -993,3 +993,5 @@ Optimizer.StartsAfter = 시작 시점
 Optimizer.ViewAffected = 영향받는 스킬 보기
 Optimizer.PlanStart = 계획 시작
 Optimizer.SkillsDurFmt = 스킬 {0}개 · {1}
+Optimizer.TimeSavedTotal = 절약 시간
+Optimizer.WhyHereStartFmt = 리맵으로 훈련을 시작합니다: 이 구간의 {0}개 스킬 모두 {1}에서 가장 큰 이득을 얻습니다.
