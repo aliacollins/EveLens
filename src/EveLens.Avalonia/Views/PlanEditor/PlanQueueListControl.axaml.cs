@@ -28,7 +28,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
         private PlanQueueManager? _viewModel;
         private readonly HashSet<int> _selected = new();
         private int _lastClickIndex = -1;
-        private const double RowHeight = 36;
+        // 28, not 36: the schedule design is information-dense — at 36 a 40-skill
+        // plan needed a second screen the mock fits on one.
+        private const double RowHeight = 28;
         private bool _groupByAttribute;
 
         // Drag state
@@ -122,7 +124,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         // drag visuals keep their index math), while _visualRows is what actually
         // renders (headers + rows), and _itemTops maps item index → Y so the drag
         // slot math works over non-uniform row heights.
-        private const double HeaderRowHeight = 30;
+        private const double HeaderRowHeight = 26;
         private readonly List<Control> _visualRows = new();
         private readonly List<double> _itemTops = new();
 
@@ -584,8 +586,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
                 pipsPanel.Children.Add(new Border
                 {
-                    Width = 10,
-                    Height = 12,
+                    Width = 9,
+                    Height = 10,
                     CornerRadius = new CornerRadius(2),
                     Background = fill,
                 });

@@ -2909,12 +2909,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // the 80\u2013150% font setting still applies (no hardcoded sizes).
             TrainingTimeText.FontSize = FontScaleService.Title * 1.25;
             TrainingTimeText.Text = FormatTime(stats.TrainingTime);
-            FooterStatsText.Text =
-                $"{Loc.Get("PlanEditor.TrainingTimeLabel")} {FormatTime(stats.TrainingTime)}  ·  " +
-                $"{Loc.Get("PlanEditor.Skills")} {_viewModel.EntryCount}  ·  " +
-                $"SP {stats.TotalSkillPoints:N0}";
-            ClearPlanConfirmText.Text = string.Format(
-                Loc.Get("PlanEditor.ClearPlanAsk"), _viewModel.EntryCount);
             UpdateOptimizedBadge();
             TotalSpText.Text = FormatSP(stats.TotalSkillPoints);
 
@@ -2998,30 +2992,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnOptimizedBadgeClick(object? sender, RoutedEventArgs e) =>
             OpenOptimizeWindow();
-
-        /// <summary>Clear plan, post-confirmation (the flyout is the confirm step):
-        /// one atomic TryRemoveSet over everything, same op the row removals use.</summary>
-        private void OnClearPlanConfirmed(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (_viewModel?.Plan == null) return;
-                ClearPlanBtn.Flyout?.Hide();
-                var all = _viewModel.Plan.ToList();
-                if (all.Count == 0) return;
-                var op = _viewModel.Plan.TryRemoveSet(all);
-                op.Perform();
-                _selectedQueueItem = null;
-                _viewModel.UpdateDisplayPlan();
-                Refresh();
-                UpdateStatsHeader();
-                BuildSidebarContent();
-            }
-            catch (Exception ex)
-            {
-                AppServices.TraceService?.Trace($"PlanEditor: clear plan failed: {ex.Message}");
-            }
-        }
 
         private static int GetSpPerInjector(long characterSP) => characterSP switch
         {
