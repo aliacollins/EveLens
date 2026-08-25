@@ -51,6 +51,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
         /// </summary>
         public event Action? Reordered;
 
+        /// <summary>Raised when the selection settles on exactly one entry (that
+        /// entry), or on none/many (null) — feeds the sidebar's Selected Skill card.</summary>
+        public event Action<PlanQueueItem?>? SelectionChanged;
+
+        /// <summary>The queue in display order, for consumers positioning an entry
+        /// within the plan (the sidebar's completes-on / starts-after math).</summary>
+        public System.Collections.Generic.IReadOnlyList<PlanQueueItem> QueueItems =>
+            (System.Collections.Generic.IReadOnlyList<PlanQueueItem>?)_viewModel?.Items
+            ?? System.Array.Empty<PlanQueueItem>();
+
         /// <summary>
         /// Event raised when a skill is double-clicked (for sidebar detail).
         /// </summary>
@@ -567,6 +577,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             _lastClickIndex = index;
             UpdateSelectionVisuals();
+            SelectionChanged?.Invoke(_selected.Count == 1 && _viewModel != null
+                ? _viewModel.Items[_selected.First()] : null);
         }
 
         /// <summary>

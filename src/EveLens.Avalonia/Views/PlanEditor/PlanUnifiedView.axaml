@@ -50,6 +50,42 @@
             </DockPanel>
         </Border>
 
+        <!-- Footer: the plan's totals restated where the mock puts them, plus the
+             destructive/export actions kept away from the everyday toolbar. -->
+        <Border DockPanel.Dock="Bottom" Padding="14,7"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,1,0,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="ClearPlanBtn" Content="{loc:T PlanEditor.ClearPlan}"
+                            FontSize="{DynamicResource EveFontSmall}" Padding="12,4"
+                            CornerRadius="12">
+                        <Button.Flyout>
+                            <Flyout Placement="Top">
+                                <StackPanel Spacing="8" MaxWidth="240">
+                                    <TextBlock x:Name="ClearPlanConfirmText" TextWrapping="Wrap"
+                                               FontSize="{DynamicResource EveFontSmall}" />
+                                    <Button x:Name="ClearPlanConfirmBtn"
+                                            Content="{loc:T PlanEditor.ClearPlanConfirm}"
+                                            FontSize="{DynamicResource EveFontSmall}"
+                                            Padding="12,4" CornerRadius="12"
+                                            Foreground="{StaticResource EveErrorRedBrush}"
+                                            Click="OnClearPlanConfirmed" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button x:Name="ExportBtn" Content="{loc:T PlanEditor.Export}"
+                            FontSize="{DynamicResource EveFontSmall}" Padding="12,4"
+                            CornerRadius="12" Click="OnCopyClick" />
+                </StackPanel>
+                <TextBlock x:Name="FooterStatsText"
+                           FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+            </DockPanel>
+        </Border>
+
         <!-- Main content: skill list + gap + left-sticking sidebar -->
         <Grid ColumnDefinitions="*,8,Auto">
             <!-- Column 0: Skill list area -->
