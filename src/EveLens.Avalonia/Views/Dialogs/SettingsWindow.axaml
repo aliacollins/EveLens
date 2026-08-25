@@ -235,16 +235,11 @@
                                       VerticalAlignment="Center" MinWidth="200" />
                         </Grid>
 
-                        <!-- Safe for Work -->
-                        <Grid ColumnDefinitions="*,Auto">
-                            <StackPanel>
-                                <TextBlock x:Name="SafeForWorkLabel" Text="Safe for Work" FontSize="{DynamicResource EveFontBody}" />
-                                <TextBlock x:Name="SafeForWorkDesc" Text="Hide character portraits and identifying colors."
-                                           FontSize="{DynamicResource EveFontSmall}" Foreground="{DynamicResource EveTextSecondaryBrush}" />
-                            </StackPanel>
-                            <ToggleSwitch x:Name="SafeForWorkToggle" Grid.Column="1"
-                                          VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- Safe for Work: REMOVED (issue #123) — the toggle never
+                             did anything in the Avalonia UI, and a setting that
+                             visibly changes nothing erodes trust in every other
+                             setting. The UISettings property survives so old
+                             config.json files keep round-tripping. -->
 
                         <!-- Custom Browser -->
                         <StackPanel Spacing="6">
@@ -432,6 +427,13 @@
                             </Grid>
                         </StackPanel>
 
+                        <!-- External Calendar: HIDDEN (issue #125) — cloud calendar
+                             authentication is currently disabled in EveLens, so a
+                             full configuration pane with no way to sign in was a
+                             trap ("all the configurations are there, but no
+                             authentication button anywhere"). Controls stay wired
+                             for when cloud services return. -->
+                        <StackPanel x:Name="CalendarSection" Spacing="14" IsVisible="False">
                         <Separator />
 
                         <!-- External Calendar -->
@@ -501,6 +503,7 @@
 
                             <CheckBox x:Name="CalendarLastQueuedOnlyCheckBox" Content="Export last queued skill only" Tag="LastQueued"
                                       FontSize="{DynamicResource EveFontBody}" Margin="0,4,0,0" />
+                        </StackPanel>
                         </StackPanel>
                     </StackPanel>
 

@@ -971,3 +971,5 @@ Skinr.WelcomeStageDesc = 从工作室到开阔太空的五种环境、隐藏全�
 Skinr.RenderFailedShort = 渲染器未能启动。详细信息见 EveLens 日志。
 Skinr.RuntimeDescFmt = 一个独立的 {0:F0} MB 组件，提供交互式 3D 舰船与涂装预览。只需安装一次即可启用 3D。
 Skinr.RuntimeWhyNote = 它只与 CCP 的美术资源服务器及本机的 EveLens 通信，运行前会先通过 EveLens 内置签名校验。安装即表示接受其许可协议（安装目录中的 EULA.md）。
+Optimizer.BoosterActive = 当前有属性加速剂生效，你的实时属性超过任何重映射所能达到的水平。该方案针对加速剂过期后的状态——过期后请重新比较。
+SkillFarm.PerAccount = 每账号角色数:

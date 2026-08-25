@@ -46,6 +46,15 @@ namespace EveLens.Common.Services
             public bool CurrentIncludesRemaps { get; init; }
 
             public TimeSpan OptimizedDuration { get; init; }
+
+            /// <summary>
+            /// True when the character's live base attributes exceed what any legal
+            /// remap can produce (17×5 + 14 assignable = 99 total): an attribute
+            /// booster — the "genius boost" accelerator — is active. Every proposal
+            /// then loses to "current", and without this flag that read as the
+            /// optimizer giving bad values rather than the booster expiring.
+            /// </summary>
+            public bool CurrentLikelyBoosted { get; init; }
             public TimeSpan TimeSaved => CurrentDuration - OptimizedDuration;
         }
 
@@ -93,22 +102,25 @@ namespace EveLens.Common.Services
             currentScratch.TrainEntries(entries, applyRemappingPoints: true);
             TimeSpan currentDuration = currentScratch.TrainingTime;
 
-            // Find attribute-focus boundaries: split where the dominant primary attribute
-            // of consecutive entries changes AND the accumulated segment is long enough.
-            // maxRemaps remap points = at most maxRemaps segments (the first segment
-            // consumes one remap at plan start), so allow maxRemaps - 1 splits.
+            // Find attribute-focus boundaries: split where the (primary, secondary)
+            // PAIR of consecutive entries changes AND the accumulated segment is long
+            // enough. The pair, not the primary alone: Memory/Perception →
+            // Memory/Intelligence is a real remap boundary (the secondary carries half
+            // the weight), and keying on the primary made a plan like
+            // [Mem/Per, Mem/Int…, Per/Wil…] read as one Memory block with its only
+            // split far too late — "it always suggests remapping at the first skill"
+            // (issue #122).
             var segments = new List<List<PlanEntry>>();
             var segment = new List<PlanEntry>();
             TimeSpan segmentTime = TimeSpan.Zero;
-            EveAttribute segmentAttr = EveAttribute.None;
+            (EveAttribute, EveAttribute) segmentKey = (EveAttribute.None, EveAttribute.None);
 
             foreach (var entry in entries)
             {
-                var attr = entry.Skill.PrimaryAttribute;
-                bool boundary = segmentAttr != EveAttribute.None
-                    && attr != segmentAttr
-                    && segmentTime.TotalDays >= minSegmentDays
-                    && segments.Count + 1 < maxRemaps;
+                var key = (entry.Skill.PrimaryAttribute, entry.Skill.SecondaryAttribute);
+                bool boundary = segmentKey.Item1 != EveAttribute.None
+                    && key != segmentKey
+                    && segmentTime.TotalDays >= minSegmentDays;
 
                 if (boundary)
                 {
@@ -118,12 +130,48 @@ namespace EveLens.Common.Services
                 }
 
                 if (segment.Count == 0)
-                    segmentAttr = attr;
+                    segmentKey = key;
                 segment.Add(entry);
                 segmentTime += entry.TrainingTime;
             }
             if (segment.Count > 0)
                 segments.Add(segment);
+
+            // The remap budget caps how many segments we may keep (the first consumes
+            // a remap at plan start). Merging the SHORTEST segment into its shorter
+            // neighbour repeatedly keeps the boundaries that matter: consuming the
+            // budget front-to-back instead meant a short leading segment could eat
+            // the only remap and the long tail never got one (issue #122's shape).
+            while (segments.Count > Math.Max(1, maxRemaps))
+            {
+                int shortest = 0;
+                TimeSpan shortestTime = TimeSpan.MaxValue;
+                for (int i = 0; i < segments.Count; i++)
+                {
+                    TimeSpan t = TimeSpan.FromTicks(
+                        segments[i].Sum(e => e.TrainingTime.Ticks));
+                    if (t < shortestTime)
+                    {
+                        shortestTime = t;
+                        shortest = i;
+                    }
+                }
+                int mergeInto = shortest == 0 ? 1
+                    : shortest == segments.Count - 1 ? shortest - 1
+                    : segments[shortest - 1].Sum(e => e.TrainingTime.Ticks) <=
+                      segments[shortest + 1].Sum(e => e.TrainingTime.Ticks)
+                        ? shortest - 1 : shortest + 1;
+                if (mergeInto < shortest)
+                {
+                    segments[mergeInto].AddRange(segments[shortest]);
+                }
+                else
+                {
+                    segments[shortest].AddRange(segments[mergeInto]);
+                    segments[mergeInto] = segments[shortest];
+                }
+                segments.RemoveAt(shortest);
+            }
 
             // Optimize each segment's attributes on a CUMULATIVE scratchpad: segment N
             // trains on top of the SP from segments 1..N-1. Optimizing each segment from
@@ -171,12 +219,16 @@ namespace EveLens.Common.Services
                 });
             }
 
+            long liveBaseTotal = baseScratchpad.Intelligence.Base +
+                baseScratchpad.Perception.Base + baseScratchpad.Charisma.Base +
+                baseScratchpad.Willpower.Base + baseScratchpad.Memory.Base;
             var proposal = new RemapProposal
             {
                 CurrentDuration = currentDuration,
                 CurrentIncludesRemaps = entries.Any(e => e.Remapping != null
                     && e.Remapping.Status == RemappingPointStatus.UpToDate),
                 OptimizedDuration = trainedSoFar,
+                CurrentLikelyBoosted = liveBaseTotal > 99,
             };
             proposal.Remaps.AddRange(result);
             return proposal;

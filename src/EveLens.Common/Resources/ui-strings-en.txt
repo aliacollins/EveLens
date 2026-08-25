@@ -1005,3 +1005,5 @@ Skinr.WelcomeStageDesc = Five environments from Studio to open Space, a photo mo
 Skinr.RenderFailedShort = The renderer could not start. Details are in the EveLens log.
 Skinr.RuntimeDescFmt = A separate {0:F0} MB component that enables interactive 3D ships and SKIN previews. Install it once to enable 3D.
 Skinr.RuntimeWhyNote = It talks only to CCP's art servers and to EveLens on this machine, and is verified against EveLens's built-in signature before anything runs. Installing means accepting its license (EULA.md in the install folder).
+Optimizer.BoosterActive = An attribute booster is active, so your live attributes beat anything a remap can reach. The proposal targets your post-booster state - compare again once it expires.
+SkillFarm.PerAccount = Chars / account:

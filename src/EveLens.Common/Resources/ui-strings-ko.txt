@@ -971,3 +971,5 @@ Skinr.WelcomeStageDesc = 스튜디오부터 우주 공간까지 다섯 가지 �
 Skinr.RenderFailedShort = 렌더러를 시작하지 못했습니다. 자세한 내용은 EveLens 로그를 확인하세요.
 Skinr.RuntimeDescFmt = 인터랙티브 3D 함선과 SKIN 미리보기를 제공하는 별도의 {0:F0} MB 구성 요소입니다. 한 번만 설치하면 3D가 활성화됩니다.
 Skinr.RuntimeWhyNote = CCP 아트 서버와 이 컴퓨터의 EveLens와만 통신하며, 실행 전에 EveLens 내장 서명으로 검증됩니다. 설치하면 라이선스(설치 폴더의 EULA.md)에 동의하는 것입니다.
+Optimizer.BoosterActive = 속성 부스터가 활성화되어 있어 현재 속성이 어떤 리맵보다도 높습니다. 이 제안은 부스터 만료 후 상태를 기준으로 합니다 - 만료 후 다시 비교하세요.
+SkillFarm.PerAccount = 계정당 캐릭터:

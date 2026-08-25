@@ -95,6 +95,63 @@ namespace EveLens.Tests.Services
         }
 
         [Fact]
+        public void Propose_SplitsOnPrimarySecondaryPairChanges_NotPrimaryAlone()
+        {
+            // Issue #122: a plan of [Mem/Per, Mem/Int…, Per/Wil…] read as one Memory
+            // block because boundaries compared primaries only — "it always suggests
+            // remapping at the first skill". The contract: with no length guard and
+            // ample budget, one segment per consecutive (primary, secondary) group.
+            var plan = CreateMixedAttributePlan(out _);
+            var entries = plan.Where(e => e.Skill != null).ToList();
+            int pairGroups = 1;
+            for (int i = 1; i < entries.Count; i++)
+            {
+                if ((entries[i].Skill.PrimaryAttribute, entries[i].Skill.SecondaryAttribute) !=
+                    (entries[i - 1].Skill.PrimaryAttribute, entries[i - 1].Skill.SecondaryAttribute))
+                    pairGroups++;
+            }
+            pairGroups.Should().BeGreaterThan(1,
+                "the fixture plan must actually contain a pair boundary for this test to bite");
+
+            var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 99, minSegmentDays: 0);
+
+            proposal.Remaps.Count.Should().Be(pairGroups,
+                "every consecutive (primary, secondary) change is a remap boundary");
+        }
+
+        [Fact]
+        public void Propose_BudgetMergesShortestSegments_KeepingRealBoundaries()
+        {
+            // With fewer remaps than natural segments, the SHORTEST segments fold into
+            // their neighbours — the old front-greedy consumption could spend the whole
+            // budget before the longest block ever got its remap.
+            var plan = CreateMixedAttributePlan(out _);
+
+            var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 2, minSegmentDays: 0);
+
+            proposal.Remaps.Count.Should().Be(2, "the budget is the segment cap");
+            // The mid-plan remap must be a real boundary, not the plan's first entry.
+            var firstEntry = plan.First(e => e.Skill != null);
+            proposal.Remaps[1].Skill.Should().NotBe(firstEntry.Skill,
+                "the second remap is mid-plan by definition");
+        }
+
+        [Fact]
+        public void Propose_FlagsBoostedAttributes()
+        {
+            // Dureiken's "genius boost" report: live attributes above the legal remap
+            // total (99) mean every proposal loses to 'current' — the proposal must
+            // say WHY instead of looking broken.
+            var plan = CreateMixedAttributePlan(out var character);
+            var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(plan, 2);
+            // The test character has legal base attributes, so no flag:
+            proposal.CurrentLikelyBoosted.Should().BeFalse(
+                "an unboosted character must not trigger the booster note");
+        }
+
+        [Fact]
         public void Apply_WritesProposalAtomically()
         {
             var plan = CreateMixedAttributePlan(out _);

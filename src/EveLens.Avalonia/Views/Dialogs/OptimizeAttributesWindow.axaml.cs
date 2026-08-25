@@ -175,7 +175,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // Current setup (including already-applied remap points) matches or beats
                 // this strategy. Cards below stay visible as reference, but Apply is
                 // blocked — one click must never make a plan slower.
-                ResultsPanel.Children.Add(Text(Loc.Get("Optimizer.AlreadyOptimal"),
+                // Name the actual reason when there is one: with an attribute
+                // booster active, live attributes beat every legal remap and the
+                // bare "nothing to gain" read as the optimizer being broken.
+                ResultsPanel.Children.Add(Text(Loc.Get(
+                        proposal.CurrentLikelyBoosted
+                            ? "Optimizer.BoosterActive"
+                            : "Optimizer.AlreadyOptimal"),
                     DimBrush, FontScaleService.Body));
             }
 
