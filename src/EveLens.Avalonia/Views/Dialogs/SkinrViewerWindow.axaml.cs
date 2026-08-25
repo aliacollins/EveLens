@@ -190,6 +190,11 @@ namespace EveLens.Avalonia.Views.Dialogs
                 _runtimeRelease = await SkinrRuntimeInstaller.GetLatestAsync();
                 if (_runtimeRelease == null || !RuntimeInstallPanel.IsVisible)
                     return;
+                RuntimeVerifiedText.Text = string.Format(
+                    Loc.Get("Skinr.RuntimeVerifiedFmt"),
+                    _runtimeRelease.Version,
+                    _runtimeRelease.SizeBytes / (1024.0 * 1024.0));
+                RuntimeVerifiedText.IsVisible = true;
                 RuntimeDetailsText.Text = string.Format(
                     Loc.Get("Skinr.RuntimeDetailsFmt"),
                     _runtimeRelease.Version,
@@ -205,6 +210,58 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        /// <summary>"Not now" — an explicit decline that leaves the welcome screen
+        /// clean. The offer returns next time the window opens.</summary>
+        private void OnRuntimeNotNow(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            RuntimeInstallPanel.IsVisible = false;
+        }
+
+        /// <summary>The expander a technically concerned user expects: verification
+        /// chain, communication boundaries, license, and the exact hash.</summary>
+        private void OnRuntimeWhy(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            RuntimeWhyPanel.IsVisible = !RuntimeWhyPanel.IsVisible;
+        }
+
+        /// <summary>Runs the exact re-auth flow in place — a recoverable state must
+        /// never send the user to a menu with directions.</summary>
+        private async void OnScopeUpdate(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new AddCharacterWindow();
+                await dialog.ShowDialog(this);
+                if (!dialog.CharacterImported)
+                    return;
+                // Re-run the scope check for whoever is selected; a fresh token
+                // with the cosmetics scope flips the gate on the same visit.
+                if (CharacterCombo.Tag is List<Character> characters &&
+                    CharacterCombo.SelectedIndex >= 0 &&
+                    CharacterCombo.SelectedIndex < characters.Count)
+                {
+                    await _hub.Data.SelectCharacterAsync(
+                        characters[CharacterCombo.SelectedIndex]);
+                    _hub.RefreshDesigns();
+                }
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrViewer: scope re-auth failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>"Continue without SKINR" — the Hub half needs no character scope.</summary>
+        private void OnScopeContinue(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            ShowMarket(true);
+        }
+
         /// <summary>
         /// The add-on consent flow: fetch the release, download with progress,
         /// verify (hash → pinned-key signature → per-file hashes), install, then
@@ -216,6 +273,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             try
             {
                 RuntimeInstallButton.IsEnabled = false;
+                RuntimeInstallDesc.IsVisible = true;
                 RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeChecking");
 
                 var release = _runtimeRelease ?? await SkinrRuntimeInstaller.GetLatestAsync();
@@ -1211,6 +1269,8 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// </summary>
         private void ApplyPlatformSupport()
         {
+            if (SkinrRenderPlatform.Current != SkinrRenderSupport.Supported)
+                WelcomeGuide.IsVisible = false;   // platform message, not a welcome
             switch (SkinrRenderPlatform.Current)
             {
                 case SkinrRenderSupport.Supported:
@@ -1327,6 +1387,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 RenderImage.IsVisible = false;
                 HintStrip.IsVisible = false;
                 RenderPlaceholder.IsVisible = true;
+                WelcomeGuide.IsVisible = false;   // an error report is not a welcome
                 RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
                 RenderDesc.Text = _render.Error;
                 return;

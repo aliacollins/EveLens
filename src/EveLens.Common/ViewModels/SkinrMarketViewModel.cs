@@ -35,7 +35,10 @@ namespace EveLens.Common.ViewModels
     /// </remarks>
     public sealed class SkinrMarketViewModel : ViewModelBase
     {
-        private const int MaxPages = 8;
+        // Sized to the REAL market with headroom, not a guess: the live feed
+        // measured 3,729 listings across 39 pages (2026-08-25). Eight pages
+        // showed 800 and read as "the whole market" — a silent 79% truncation.
+        private const int MaxPages = 60;
         private const int PageDelayMs = 250;
         private const int RecipeDelayMs = 150;
 
