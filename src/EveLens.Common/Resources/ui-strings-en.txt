@@ -989,7 +989,7 @@ SHA-256: {3}
 Signature: verified against EveLens's built-in key before install
 Skinr.RuntimeNotNow = Not now
 Skinr.RuntimeWhy = Why is this a separate download?
-Skinr.RuntimeWhyBody = EveLens is open source; the Rendering Runtime is its closed-source 3D engine, so it ships separately and only to people who want 3D. It installs into EveLens's own data folder, talks only to CCP's art servers and to EveLens on this machine, and every download is checked against a signature built into EveLens - exact hash below - before anything runs.
+Skinr.RuntimeWhyBody = EveLens is open source; the Rendering Runtime is its closed-source 3D engine, so it ships separately and only to people who want 3D. It installs into EveLens's own data folder, talks only to CCP's art servers and to EveLens on this machine, and every download is checked against a signature built into EveLens - exact hash below - before anything runs. Installing means accepting its license (EULA.md in the install folder).
 Skinr.RuntimeVerifiedFmt = EveLens Rendering Runtime {0} · {1:F0} MB · verified download
 Skinr.ScopeUpdate = Update permissions
 Skinr.ScopeContinue = Continue without SKINR

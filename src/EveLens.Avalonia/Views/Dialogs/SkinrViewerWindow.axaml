@@ -248,23 +248,26 @@
                                 Foreground="{StaticResource SkinrTextDimBrush}"
                                 FontSize="{DynamicResource EveFontCaption}"
                                 Click="OnRuntimeWhy" />
-                        <StackPanel x:Name="RuntimeWhyPanel" IsVisible="False" Spacing="6"
-                                    MaxWidth="520">
-                            <TextBlock Text="{loc:T Skinr.RuntimeWhyBody}"
-                                       FontSize="{DynamicResource EveFontSmall}"
-                                       Foreground="{StaticResource SkinrTextSecBrush}"
-                                       TextWrapping="Wrap" TextAlignment="Center" />
-                            <TextBlock Text="{loc:T Skinr.RuntimeEulaNote}"
-                                       FontSize="{DynamicResource EveFontCaption}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}"
-                                       TextWrapping="Wrap" TextAlignment="Center" />
-                            <SelectableTextBlock x:Name="RuntimeDetailsText" IsVisible="False"
-                                       FontSize="{DynamicResource EveFontCaption}"
-                                       FontFamily="Consolas,Menlo,monospace"
-                                       Foreground="{StaticResource SkinrTextSecBrush}"
-                                       HorizontalAlignment="Center" TextAlignment="Left"
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
+                        <!-- Scrolls: the expander opens over a stage whose bottom is
+                             the carousel band, and clipped text with no scrollbar
+                             reads as a broken page (measured on a 1080p window). -->
+                        <ScrollViewer x:Name="RuntimeWhyPanel" IsVisible="False"
+                                      MaxHeight="170" MaxWidth="520"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:T Skinr.RuntimeWhyBody}"
+                                           FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center" />
+                                <SelectableTextBlock x:Name="RuntimeDetailsText" IsVisible="False"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           FontFamily="Consolas,Menlo,monospace"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           HorizontalAlignment="Center" TextAlignment="Left"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ScrollViewer>
                     </StackPanel>
                 </StackPanel>
                 <!-- A recoverable state gets a BUTTON, not directions to a menu:

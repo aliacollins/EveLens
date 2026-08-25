@@ -955,7 +955,7 @@ SHA-256: {3}
 서명: 설치 전 EveLens 내장 키로 검증
 Skinr.RuntimeNotNow = 나중에
 Skinr.RuntimeWhy = 왜 별도 다운로드인가요?
-Skinr.RuntimeWhyBody = EveLens는 오픈소스이고, 렌더링 런타임은 비공개 소스 3D 엔진이기 때문에 별도로 배포되며 3D가 필요한 사용자에게만 제공됩니다. EveLens 자체 데이터 폴더에 설치되고, CCP 아트 서버와 이 컴퓨터의 EveLens와만 통신하며, 모든 다운로드는 실행 전에 EveLens 내장 서명으로 검증됩니다(아래 해시 참조).
+Skinr.RuntimeWhyBody = EveLens는 오픈소스이고, 렌더링 런타임은 비공개 소스 3D 엔진이기 때문에 별도로 배포되며 3D가 필요한 사용자에게만 제공됩니다. EveLens 자체 데이터 폴더에 설치되고, CCP 아트 서버와 이 컴퓨터의 EveLens와만 통신하며, 모든 다운로드는 실행 전에 EveLens 내장 서명으로 검증됩니다(아래 해시 참조). 설치하면 라이선스(설치 폴더의 EULA.md)에 동의하는 것입니다.
 Skinr.RuntimeVerifiedFmt = EveLens 렌더링 런타임 {0} · {1:F0} MB · 검증된 다운로드
 Skinr.ScopeUpdate = 권한 업데이트
 Skinr.ScopeContinue = SKINR 없이 계속

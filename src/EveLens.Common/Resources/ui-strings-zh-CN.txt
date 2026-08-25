@@ -955,7 +955,7 @@ SHA-256：{3}
 签名：安装前经 EveLens 内置密钥校验
 Skinr.RuntimeNotNow = 暂不安装
 Skinr.RuntimeWhy = 为什么需要单独下载？
-Skinr.RuntimeWhyBody = EveLens 是开源软件；渲染运行时是其闭源的 3D 引擎，因此单独分发，只提供给需要 3D 的用户。它安装在 EveLens 自己的数据目录中，只与 CCP 的美术资源服务器及本机的 EveLens 通信，每次下载都会先通过 EveLens 内置签名校验（哈希值见下方）后才会运行。
+Skinr.RuntimeWhyBody = EveLens 是开源软件；渲染运行时是其闭源的 3D 引擎，因此单独分发，只提供给需要 3D 的用户。它安装在 EveLens 自己的数据目录中，只与 CCP 的美术资源服务器及本机的 EveLens 通信，每次下载都会先通过 EveLens 内置签名校验（哈希值见下方）后才会运行。安装即表示接受其许可协议（安装目录中的 EULA.md）。
 Skinr.RuntimeVerifiedFmt = EveLens 渲染运行时 {0} · {1:F0} MB · 已验证下载
 Skinr.ScopeUpdate = 更新权限
 Skinr.ScopeContinue = 跳过 SKINR 继续
