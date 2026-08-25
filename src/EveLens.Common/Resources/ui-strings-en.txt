@@ -1029,3 +1029,7 @@ Optimizer.PlanStart = plan-start
 Optimizer.SkillsDurFmt = {0} skills · {1}
 Optimizer.TimeSavedTotal = Time saved
 Optimizer.WhyHereStartFmt = Training begins remapped: all {0} skills in this block benefit most from {1}.
+PlanEditor.Optimized = Optimized
+PlanEditor.CouldSaveFmt = save {0}
+PlanEditor.RemapBeforeBanner = REMAP BEFORE {0}
+PlanEditor.CurrentAttrBanner = CURRENT ATTRIBUTES

@@ -2721,7 +2721,11 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             var stats = _viewModel.PlanStats;
             SkillCountText.Text = $"{_viewModel.EntryCount} {Loc.Get("PlanEditor.Skills")} \u00B7 {stats.UniqueSkillsCount} {Loc.Get("PlanEditor.Unique")}";
+            // The band's headline number: poster-sized through the scale service so
+            // the 80\u2013150% font setting still applies (no hardcoded sizes).
+            TrainingTimeText.FontSize = FontScaleService.Title * 1.25;
             TrainingTimeText.Text = FormatTime(stats.TrainingTime);
+            UpdateOptimizedBadge();
             TotalSpText.Text = FormatSP(stats.TotalSkillPoints);
 
             if (stats.TrainingTime > TimeSpan.Zero)
@@ -2749,6 +2753,61 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 InjectorText.Text = string.Empty;
             }
         }
+
+        private int _badgeVersion;
+
+        /// <summary>
+        /// The band's live optimization verdict: runs the remap DP off the UI thread
+        /// (debounced — every plan edit calls the stats refresh) and reports either
+        /// "✓ Optimized" or "⚡ save X — clickable straight into the optimizer.
+        /// </summary>
+        private async void UpdateOptimizedBadge()
+        {
+            int version = ++_badgeVersion;
+            try
+            {
+                if (_viewModel?.Plan == null || _viewModel.EntryCount == 0 ||
+                    _viewModel.Character is not Character character)
+                {
+                    OptimizedBadge.IsVisible = false;
+                    return;
+                }
+                await System.Threading.Tasks.Task.Delay(700);
+                if (version != _badgeVersion) return;
+
+                bool timedAvailable = character.LastReMapTimed == DateTime.MinValue
+                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
+                int budget = Math.Max(1, character.AvailableReMaps + (timedAvailable ? 1 : 0));
+                BasePlan analysisPlan = _viewModel.DisplayPlan != null
+                    ? _viewModel.DisplayPlan : _viewModel.Plan;
+                var proposal = await System.Threading.Tasks.Task.Run(() =>
+                    RemapPlanningService.ProposeAtAttributeBoundaries(analysisPlan, budget));
+                if (version != _badgeVersion) return;
+
+                if (proposal.TimeSaved > TimeSpan.FromHours(12))
+                {
+                    OptimizedBadge.Content = "⚡ " + string.Format(
+                        Loc.Get("PlanEditor.CouldSaveFmt"), FormatTime(proposal.TimeSaved));
+                    OptimizedBadge.Foreground = GoldBrush;
+                }
+                else
+                {
+                    OptimizedBadge.Content = "✓ " + Loc.Get("PlanEditor.Optimized");
+                    OptimizedBadge.Foreground =
+                        (IBrush)Application.Current!.FindResource("EveSuccessGreenBrush")!;
+                }
+                OptimizedBadge.IsVisible = true;
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"PlanEditor: badge check failed: {ex.Message}");
+                if (version == _badgeVersion)
+                    OptimizedBadge.IsVisible = false;
+            }
+        }
+
+        private void OnOptimizedBadgeClick(object? sender, RoutedEventArgs e) =>
+            OpenOptimizeWindow();
 
         private static int GetSpPerInjector(long characterSP) => characterSP switch
         {

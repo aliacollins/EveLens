@@ -995,3 +995,7 @@ Optimizer.PlanStart = 계획 시작
 Optimizer.SkillsDurFmt = 스킬 {0}개 · {1}
 Optimizer.TimeSavedTotal = 절약 시간
 Optimizer.WhyHereStartFmt = 리맵으로 훈련을 시작합니다: 이 구간의 {0}개 스킬 모두 {1}에서 가장 큰 이득을 얻습니다.
+PlanEditor.Optimized = 최적화됨
+PlanEditor.CouldSaveFmt = {0} 절약 가능
+PlanEditor.RemapBeforeBanner = {0} 전에 리맵
+PlanEditor.CurrentAttrBanner = 현재 속성

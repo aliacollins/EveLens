@@ -995,3 +995,7 @@ Optimizer.PlanStart = 计划开始
 Optimizer.SkillsDurFmt = {0} 个技能 · {1}
 Optimizer.TimeSavedTotal = 节省时间
 Optimizer.WhyHereStartFmt = 训练从重映射开始：该阶段的全部 {0} 个技能最受益于 {1}。
+PlanEditor.Optimized = 已优化
+PlanEditor.CouldSaveFmt = 可节省 {0}
+PlanEditor.RemapBeforeBanner = 在 {0} 之前重映射
+PlanEditor.CurrentAttrBanner = 当前属性

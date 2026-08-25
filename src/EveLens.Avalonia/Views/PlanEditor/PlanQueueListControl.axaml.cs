@@ -117,26 +117,34 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 var item = _viewModel.Items[i];
                 var row = BuildRow(item, i);
 
-                // Gold top band marks a remap point on this row. Deliberately NOT a separate
-                // list row: drag/selection logic indexes _rowControls 1:1 with Items, so
-                // injected rows would corrupt reorder indices. The remap actions live in the
-                // row's right-click menu instead (Issue #71).
+                // Segment banners live INSIDE the remap row, never as separate list
+                // rows: drag/selection logic indexes _rowControls 1:1 with Items, so
+                // injected rows would corrupt reorder indices (Issue #71). Visually
+                // they read as the full-width dividers of the schedule design —
+                // "◆ REMAP BEFORE X · n skills · dur" with the target spread.
                 if (item.Entry.Remapping != null && row is Border remapBorder)
                 {
-                    remapBorder.BorderThickness = new Thickness(0, 3, 0, 0);
-                    remapBorder.BorderBrush = new SolidColorBrush(Color.Parse("#CCE6A817"));
-                    // Show the actual target attributes — a marker whose meaning you can't
-                    // see is what confused users in #71 ("what should my attributes be?")
                     var remap = item.Entry.Remapping;
-                    string tip = remap.Status == RemappingPointStatus.UpToDate
-                        ? string.Format(Loc.Get("PlanEditor.RemapBandTip"),
-                            $"PER {remap[EveAttribute.Perception]}  " +
-                            $"WIL {remap[EveAttribute.Willpower]}  " +
-                            $"INT {remap[EveAttribute.Intelligence]}  " +
-                            $"MEM {remap[EveAttribute.Memory]}  " +
-                            $"CHA {remap[EveAttribute.Charisma]}")
+                    string spread = remap.Status == RemappingPointStatus.UpToDate
+                        ? $"PER {remap[EveAttribute.Perception]}  " +
+                          $"WIL {remap[EveAttribute.Willpower]}  " +
+                          $"INT {remap[EveAttribute.Intelligence]}  " +
+                          $"MEM {remap[EveAttribute.Memory]}  " +
+                          $"CHA {remap[EveAttribute.Charisma]}"
                         : Loc.Get("PlanEditor.RemapPointHint");
-                    ToolTip.SetTip(remapBorder, tip);
+                    WrapWithBanner(remapBorder,
+                        "◆ " + string.Format(Loc.Get("PlanEditor.RemapBeforeBanner"),
+                            item.DisplayName.ToUpperInvariant()) + SegmentStats(i),
+                        spread, Color.Parse("#FFE6A817"));
+                }
+                // The mirror banner: when the plan holds remap points, the leading
+                // block trains on the character's CURRENT attributes — say so.
+                else if (i == 0 && row is Border firstBorder &&
+                         _viewModel.Items.Any(it => it.Entry.Remapping != null))
+                {
+                    WrapWithBanner(firstBorder,
+                        "● " + Loc.Get("PlanEditor.CurrentAttrBanner") + SegmentStats(0),
+                        string.Empty, Color.Parse("#FF2BB5AD"));
                 }
 
                 // When grouped by attribute, add a visible separator on rows
@@ -161,6 +169,68 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // reference is assigned to ItemsSource (it short-circuits).
             QueueList.ItemsSource = null;
             QueueList.ItemsSource = _rowControls.ToList();
+        }
+
+        /// <summary>"· n skills · duration" for the segment starting at
+        /// <paramref name="startIndex"/> and running to the next remap point.</summary>
+        private string SegmentStats(int startIndex)
+        {
+            int count = 0;
+            TimeSpan total = TimeSpan.Zero;
+            for (int i = startIndex; i < _viewModel!.Items.Count; i++)
+            {
+                if (i > startIndex && _viewModel.Items[i].Entry.Remapping != null)
+                    break;
+                count++;
+                total += _viewModel.Items[i].TrainingTime;
+            }
+            string dur = total.TotalDays >= 1
+                ? $"{(int)total.TotalDays}d {total.Hours}h"
+                : $"{(int)total.TotalHours}h {total.Minutes}m";
+            return $" · {count} {Loc.Get("PlanEditor.Skills")} · {dur}";
+        }
+
+        /// <summary>Stacks a full-width banner strip above a row's own content,
+        /// inside the same Border — the row stays one list item.</summary>
+        private static void WrapWithBanner(Border row, string label, string right, Color accent)
+        {
+            var banner = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(34, accent.R, accent.G, accent.B)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(190, accent.R, accent.G, accent.B)),
+                BorderThickness = new Thickness(0, 2, 0, 0),
+                Padding = new Thickness(10, 3),
+            };
+            var dock = new DockPanel();
+            if (!string.IsNullOrEmpty(right))
+            {
+                var rightText = new TextBlock
+                {
+                    Text = right,
+                    FontSize = FontScaleService.Caption,
+                    Foreground = new SolidColorBrush(accent),
+                    VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center,
+                };
+                DockPanel.SetDock(rightText, Dock.Right);
+                dock.Children.Add(rightText);
+            }
+            dock.Children.Add(new TextBlock
+            {
+                Text = label,
+                FontSize = FontScaleService.Caption,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(accent),
+                VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center,
+            });
+            banner.Child = dock;
+
+            var content = row.Child;
+            row.Child = null;
+            var stack = new StackPanel();
+            stack.Children.Add(banner);
+            if (content != null)
+                stack.Children.Add(content);
+            row.Child = stack;
         }
 
         private Control BuildRow(PlanQueueItem item, int index)
