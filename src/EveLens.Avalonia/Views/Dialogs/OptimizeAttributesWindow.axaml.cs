@@ -137,7 +137,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             ResultsPanel.Children.Clear();
             ResultsPanel.Children.Add(new TextBlock
             {
-                Text = "⚡ " + Loc.Get("Plan.Analyzing"),
+                Text = Loc.Get("Plan.Analyzing"),
                 FontSize = FontScaleService.Body,
                 Foreground = GoldBrush,
             });
@@ -423,15 +423,15 @@ namespace EveLens.Avalonia.Views.Dialogs
             DetailsPanel.Children.Add(why);
 
             if (proposal.TimeSaved > TimeSpan.Zero)
-                DetailsPanel.Children.Add(DetailRow("⏱ " + Loc.Get("Optimizer.TimeSavedTotal"),
+                DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.TimeSavedTotal"),
                     FormatTime(proposal.TimeSaved), GreenBrush));
-            DetailsPanel.Children.Add(DetailRow("▤ " + Loc.Get("Optimizer.SegmentLength"),
+            DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.SegmentLength"),
                 FormatTime(remap.SegmentDuration), GreenBrush));
-            DetailsPanel.Children.Add(DetailRow("↻ " + Loc.Get("Optimizer.RemapsUsed"),
+            DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.RemapsUsed"),
                 string.Format(Loc.Get("Optimizer.OfFmt"), index + 1, MaxRemapBudget()),
                 Brushes.White));
             if (!string.IsNullOrEmpty(remap.StartsAfter))
-                DetailsPanel.Children.Add(DetailRow("▷ " + Loc.Get("Optimizer.StartsAfter"),
+                DetailsPanel.Children.Add(DetailRow(Loc.Get("Optimizer.StartsAfter"),
                     remap.StartsAfter, GreenBrush));
 
             var affectedBtn = new Button

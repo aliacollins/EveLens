@@ -351,7 +351,7 @@
                             Foreground="{StaticResource SkinrTextSecBrush}"
                             FontSize="{DynamicResource EveFontSmall}"
                             ToolTip.Tip="{loc:T Skinr.PhotoOp}"
-                            Content="🎬">
+                            Content="{loc:T Skinr.PhotoOpShort}">
                         <Button.Flyout>
                             <Flyout Placement="BottomEdgeAlignedRight"
                                     Opening="OnPhotoOpOpening">
@@ -403,13 +403,13 @@
                             Foreground="{StaticResource SkinrTextSecBrush}"
                             FontSize="{DynamicResource EveFontSmall}"
                             ToolTip.Tip="{loc:T Skinr.PhotoMode}"
-                            Click="OnPhotoModeToggle" Content="📷" />
+                            Click="OnPhotoModeToggle" Content="{loc:T Skinr.PhotoShort}" />
                     <Button x:Name="SettingsButton" Padding="10,6" CornerRadius="14"
                             Background="{StaticResource SkinrPillBrush}"
                             Foreground="{StaticResource SkinrTextSecBrush}"
                             FontSize="{DynamicResource EveFontSmall}"
                             ToolTip.Tip="{loc:T Skinr.RenderSettings}"
-                            Content="⚙">
+                            Content="{loc:T Skinr.SettingsShort}">
                         <Button.Flyout>
                             <Flyout Placement="BottomEdgeAlignedRight">
                                 <StackPanel Spacing="8" MinWidth="240">

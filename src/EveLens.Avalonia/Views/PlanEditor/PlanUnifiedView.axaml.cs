@@ -773,7 +773,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             string secName = GetAttributeShortName(divider.DominantSecondary);
 
             // Auto-optimize
-            var autoItem = new MenuItem { Header = $"\u26A1 Auto-optimize all remap points" };
+            var autoItem = new MenuItem { Header = "Auto-optimize all remap points" };
             autoItem.Click += (_, _) => EnsureOptimizationRun();
             menu.Items.Add(autoItem);
 
@@ -981,8 +981,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     VerticalAlignment = VerticalAlignment.Center,
                     Child = new TextBlock
                     {
-                        Text = "\uD83D\uDCD6",
+                        Text = Loc.Get("PlanEditor.BookBadge"),
                         FontSize = FontScaleService.Caption,
+                        Foreground = new SolidColorBrush(Color.Parse("#FFCF6679")),
                     }
                 };
                 ToolTip.SetTip(bookBadge, $"Skillbook not owned \u2014 {item.Entry.Skill.FormattedCost}");
@@ -1298,7 +1299,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             // Attribute remapping lives in its own window now — inline plan-table mutation
             // proved fragile and undiscoverable (Issue #71). One entry point, atomic apply.
-            var optimizeItem = new MenuItem { Header = "⚡ " + Loc.Get("PlanEditor.OptimizeAttributes") };
+            var optimizeItem = new MenuItem { Header = Loc.Get("PlanEditor.OptimizeAttributes") };
             optimizeItem.Click += (_, _) => OpenOptimizeWindow();
             menu.Items.Add(optimizeItem);
 
@@ -1522,7 +1523,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             var locateBtn = new Button
             {
-                Content = "◎ " + Loc.Get("PlanEditor.LocateInPlan"),
+                Content = Loc.Get("PlanEditor.LocateInPlan"),
                 FontSize = FontScaleService.Caption,
                 Padding = new Thickness(8, 2),
                 CornerRadius = new CornerRadius(10),
@@ -1623,7 +1624,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Remove from plan — cascades through dependents via TryRemoveSet.
             var removeBtn = new Button
             {
-                Content = "🗑 " + Loc.Get("PlanEditor.RemoveFromPlan"),
+                Content = Loc.Get("PlanEditor.RemoveFromPlan"),
                 FontSize = FontScaleService.Small,
                 Foreground = (IBrush)Application.Current!.FindResource("EveErrorRedBrush")!,
                 Background = Brushes.Transparent,
@@ -2299,7 +2300,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 SidebarContent.Children.Add(new TextBlock
                 {
-                    Text = "\u26A1 " + Loc.Get("Plan.Analyzing"),
+                    Text = Loc.Get("Plan.Analyzing"),
                     FontSize = FontScaleService.Body,
                     Foreground = GoldBrush,
                     Margin = new Thickness(0, 4, 0, 0),
@@ -2319,21 +2320,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     EveAttribute.Willpower, EveAttribute.Intelligence, EveAttribute.Charisma
                 };
 
-                // Compact result line: ⚡ 47d → 38d  ✓ -9d 4h
+                // Compact result line: 47d -> 38d, -9d 4h
                 var resultLine = new StackPanel
                 {
                     Orientation = Orientation.Horizontal,
                     Spacing = 6,
                     Margin = new Thickness(0, 2, 0, 0),
                 };
-
-                resultLine.Children.Add(new TextBlock
-                {
-                    Text = "\u26A1",
-                    FontSize = FontScaleService.Subheading,
-                    Foreground = GoldBrush,
-                    VerticalAlignment = VerticalAlignment.Center,
-                });
 
                 resultLine.Children.Add(new TextBlock
                 {
@@ -2593,8 +2586,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var optimizeBtn = new Button
             {
                 Content = hasRemapPoints
-                    ? "\uD83D\uDCCA " + Loc.Get("PlanEditor.ReviewOptimization")
-                    : "\u26A1 " + Loc.Get("PlanEditor.OptimizePlan"),
+                    ? Loc.Get("PlanEditor.ReviewOptimization")
+                    : Loc.Get("PlanEditor.OptimizePlan"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(12),
@@ -3041,7 +3034,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         /// <summary>
         /// The band's live optimization verdict: runs the remap DP off the UI thread
         /// (debounced — every plan edit calls the stats refresh) and reports either
-        /// "✓ Optimized" or "⚡ save X — clickable straight into the optimizer.
+        /// "Optimized" or "save X" — clickable straight into the optimizer.
         /// </summary>
         private async void UpdateOptimizedBadge()
         {
@@ -3072,7 +3065,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 string clone = character.EffectiveCharacterStatus.ToString();
                 if (proposal.TimeSaved > TimeSpan.FromHours(12))
                 {
-                    OptimizedBadge.Content = "⚡ " + string.Format(
+                    OptimizedBadge.Content = string.Format(
                         Loc.Get("PlanEditor.CouldSaveCloneFmt"),
                         FormatTime(proposal.TimeSaved), clone);
                     OptimizedBadge.Foreground = GoldBrush;
