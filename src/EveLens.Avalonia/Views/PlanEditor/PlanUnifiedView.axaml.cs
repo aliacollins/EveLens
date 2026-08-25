@@ -3054,14 +3054,23 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 int budget = Math.Max(1, character.AvailableReMaps + (timedAvailable ? 1 : 0));
                 BasePlan analysisPlan = _viewModel.DisplayPlan != null
                     ? _viewModel.DisplayPlan : _viewModel.Plan;
+                // Judge the plan in the terms it was optimized FOR: an Omega
+                // what-if applied on an Alpha character is verdict-checked under
+                // Omega rates and labeled Omega.
+                AccountStatusMode? cloneOverride = null;
+                if (Enum.TryParse<AccountStatusMode>(
+                        _viewModel.Plan.OptimizedForClone, out var recorded))
+                    cloneOverride = recorded;
                 var proposal = await System.Threading.Tasks.Task.Run(() =>
-                    RemapPlanningService.ProposeAtAttributeBoundaries(analysisPlan, budget));
+                    RemapPlanningService.ProposeAtAttributeBoundaries(
+                        analysisPlan, budget, cloneOverride: cloneOverride));
                 if (version != _badgeVersion) return;
 
                 // Name the clone the numbers were computed for -- As-is vs Alpha vs
                 // Omega changes every duration, and an unlabeled verdict left users
                 // unable to explain the difference.
-                string clone = character.EffectiveCharacterStatus.ToString();
+                string clone = cloneOverride?.ToString()
+                    ?? character.EffectiveCharacterStatus.ToString();
                 if (proposal.TimeSaved > TimeSpan.FromHours(12))
                 {
                     OptimizedBadge.Content = string.Format(

@@ -546,6 +546,11 @@ namespace EveLens.Avalonia.Views.Dialogs
             // Applied to the REAL plan; remap points carry to the display plan on refresh
             // (matched by skill+level).
             RemapPlanningService.Apply(_targetPlan, _proposal);
+            // Record the clone this schedule was computed FOR: applying an Omega
+            // what-if on an Alpha character must leave a verdict that says Omega.
+            _targetPlan.OptimizedForClone =
+                (SelectedCloneOverride ?? (AccountStatusMode?)null)?.ToString()
+                ?? _character?.EffectiveCharacterStatus.ToString();
             Applied?.Invoke();
             Close();
         }

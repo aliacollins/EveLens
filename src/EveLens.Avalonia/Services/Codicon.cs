@@ -43,14 +43,22 @@ namespace EveLens.Avalonia.Services
         public const string History = "\uEA82";
 
         /// <summary>An icon TextBlock, sized and tinted like the text beside it.</summary>
-        public static TextBlock Icon(string glyph, double size, IBrush? brush = null) => new()
+        public static TextBlock Icon(string glyph, double size, IBrush? brush = null)
         {
-            Text = glyph,
-            FontFamily = Font,
-            FontSize = size,
-            Foreground = brush,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
+            var block = new TextBlock
+            {
+                Text = glyph,
+                FontFamily = Font,
+                FontSize = size,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            // Only set when given: assigning null OVERRIDES the inherited brush
+            // with nothing, which rendered every un-tinted icon/label invisible
+            // (the "empty pill" bug).
+            if (brush != null)
+                block.Foreground = brush;
+            return block;
+        }
 
         /// <summary>Icon + label in a row — the standard button content shape.</summary>
         public static Control IconText(string glyph, string text, double size,
@@ -63,13 +71,15 @@ namespace EveLens.Avalonia.Services
                 VerticalAlignment = VerticalAlignment.Center,
             };
             panel.Children.Add(Icon(glyph, size, brush));
-            panel.Children.Add(new TextBlock
+            var label = new TextBlock
             {
                 Text = text,
                 FontSize = size,
-                Foreground = brush,
                 VerticalAlignment = VerticalAlignment.Center,
-            });
+            };
+            if (brush != null)
+                label.Foreground = brush;
+            panel.Children.Add(label);
             return panel;
         }
     }

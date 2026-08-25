@@ -37,6 +37,13 @@ namespace EveLens.Common.Serialization.Settings
         [XmlAttribute("lastActivity")]
         public DateTime LastActivity { get; set; }
 
+        /// <summary>Which clone state the plan's remap points were optimized
+        /// for ("Omega"/"Alpha"), or null when never optimized. Kept so the plan
+        /// editor's verdict can speak in the user's own terms after an Omega
+        /// what-if is applied on an Alpha character.</summary>
+        [XmlAttribute("optimizedFor")]
+        public string? OptimizedFor { get; set; }
+
         [XmlElement("sorting")]
         public PlanSorting SortingPreferences { get; set; }
 
