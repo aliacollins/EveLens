@@ -160,7 +160,8 @@
                      orbit drag underneath is untouched when the placeholder hides. -->
                 <ScrollViewer x:Name="PlaceholderScroller"
                               HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Auto">
+                              VerticalScrollBarVisibility="Auto"
+                              IsHitTestVisible="{Binding IsVisible, ElementName=RenderPlaceholder}">
                 <StackPanel x:Name="RenderPlaceholder" VerticalAlignment="Center"
                             HorizontalAlignment="Center" Spacing="10" MaxWidth="560">
                     <TextBlock x:Name="RenderTitle" Text="{loc:T Skinr.RenderPlaceholderTitle}"
