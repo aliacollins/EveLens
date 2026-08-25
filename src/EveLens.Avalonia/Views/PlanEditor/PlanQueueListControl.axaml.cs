@@ -117,69 +117,237 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         #region Row Building
 
+        // Header rows are REAL rows now. The old 1:1 rowControls↔Items invariant is
+        // replaced by two structures: _rowControls stays item-indexed (selection and
+        // drag visuals keep their index math), while _visualRows is what actually
+        // renders (headers + rows), and _itemTops maps item index → Y so the drag
+        // slot math works over non-uniform row heights.
+        private const double HeaderRowHeight = 30;
+        private readonly List<Control> _visualRows = new();
+        private readonly List<double> _itemTops = new();
+
         private void BuildRows()
         {
             _rowControls.Clear();
+            _visualRows.Clear();
+            _itemTops.Clear();
+            double y = 0;
             EveAttribute lastAttr = EveAttribute.None;
+            bool anyRemap = _viewModel!.Items.Any(it => it.Entry.Remapping != null);
+            var character = _viewModel.Plan?.Character;
 
-            for (int i = 0; i < _viewModel!.Items.Count; i++)
+            for (int i = 0; i < _viewModel.Items.Count; i++)
             {
                 var item = _viewModel.Items[i];
-                var row = BuildRow(item, i);
 
-                // Segment banners live INSIDE the remap row, never as separate list
-                // rows: drag/selection logic indexes _rowControls 1:1 with Items, so
-                // injected rows would corrupt reorder indices (Issue #71). Visually
-                // they read as the full-width dividers of the schedule design —
-                // "◆ REMAP BEFORE X · n skills · dur" with the target spread.
-                if (item.Entry.Remapping != null && row is Border remapBorder)
+                // ── Segment headers (schedule design) ──
+                if (item.Entry.Remapping != null &&
+                    item.Entry.Remapping.Status == RemappingPointStatus.UpToDate)
                 {
                     var remap = item.Entry.Remapping;
-                    string spread = remap.Status == RemappingPointStatus.UpToDate
-                        ? $"PER {remap[EveAttribute.Perception]}  " +
-                          $"WIL {remap[EveAttribute.Willpower]}  " +
-                          $"INT {remap[EveAttribute.Intelligence]}  " +
-                          $"MEM {remap[EveAttribute.Memory]}  " +
-                          $"CHA {remap[EveAttribute.Charisma]}"
-                        : Loc.Get("PlanEditor.RemapPointHint");
-                    WrapWithBanner(remapBorder,
-                        "◆ " + string.Format(Loc.Get("PlanEditor.RemapBeforeBanner"),
-                            item.DisplayName.ToUpperInvariant()) + SegmentStats(i),
-                        spread, Color.Parse("#FFE6A817"));
-                }
-                // The mirror banner: when the plan holds remap points, the leading
-                // block trains on the character's CURRENT attributes — say so.
-                else if (i == 0 && row is Border firstBorder &&
-                         _viewModel.Items.Any(it => it.Entry.Remapping != null))
-                {
-                    WrapWithBanner(firstBorder,
-                        "● " + Loc.Get("PlanEditor.CurrentAttrBanner") + SegmentStats(0),
-                        string.Empty, Color.Parse("#FF2BB5AD"));
-                }
-
-                // When grouped by attribute, add a visible separator on rows
-                // where the primary attribute changes — no extra rows, no broken indices
-                if (_groupByAttribute && item.PrimaryAttribute != lastAttr && i > 0)
-                {
-                    var (_, fg) = GetAttrColors(item.PrimaryAttribute);
-                    if (row is Border b)
+                    var spread = new Dictionary<EveAttribute, long>
                     {
-                        b.BorderThickness = new Thickness(0, 3, 0, 0);
-                        b.BorderBrush = new SolidColorBrush(Color.FromArgb(80, fg.R, fg.G, fg.B));
-                        b.Margin = new Thickness(0, 2, 0, 0);
+                        [EveAttribute.Perception] = remap[EveAttribute.Perception],
+                        [EveAttribute.Willpower] = remap[EveAttribute.Willpower],
+                        [EveAttribute.Intelligence] = remap[EveAttribute.Intelligence],
+                        [EveAttribute.Memory] = remap[EveAttribute.Memory],
+                        [EveAttribute.Charisma] = remap[EveAttribute.Charisma],
+                    };
+                    _visualRows.Add(BuildSegmentDivider(
+                        "◆ " + string.Format(Loc.Get("PlanEditor.RemapBeforeBanner"),
+                            item.DisplayName.ToUpperInvariant()),
+                        spread, Color.Parse("#FFE6A817")));
+                    y += HeaderRowHeight;
+                    _visualRows.Add(BuildSegmentHeader(
+                        DominantPairLabel(i), SegmentStats(i), spread,
+                        Color.Parse("#FFE6A817")));
+                    y += HeaderRowHeight;
+                }
+                else if (i == 0 && anyRemap)
+                {
+                    // The mirror header: the leading block trains on CURRENT attributes.
+                    Dictionary<EveAttribute, long>? current = null;
+                    if (character != null)
+                    {
+                        current = new Dictionary<EveAttribute, long>();
+                        foreach (var attr in new[] { EveAttribute.Perception,
+                            EveAttribute.Willpower, EveAttribute.Intelligence,
+                            EveAttribute.Memory, EveAttribute.Charisma })
+                            current[attr] = character[attr].EffectiveValue;
                     }
+                    _visualRows.Add(BuildSegmentHeader(
+                        Loc.Get("PlanEditor.CurrentAttrBanner"), SegmentStats(0),
+                        current, Color.Parse("#FF2BB5AD")));
+                    y += HeaderRowHeight;
+                }
+                else if (_groupByAttribute && item.PrimaryAttribute != lastAttr)
+                {
+                    _visualRows.Add(BuildAttributeGroupHeader(item.PrimaryAttribute));
+                    y += HeaderRowHeight;
                 }
                 lastAttr = item.PrimaryAttribute;
 
+                var row = BuildRow(item, i);
                 _rowControls.Add(row);
+                _visualRows.Add(row);
+                _itemTops.Add(y);
+                y += RowHeight;
             }
+            _itemTops.Add(y);   // sentinel: the slot after the last item
 
             // CRITICAL: Must set to null first, then to a NEW list.
             // Avalonia's ItemsControl won't re-render if the same object
             // reference is assigned to ItemsSource (it short-circuits).
             QueueList.ItemsSource = null;
-            QueueList.ItemsSource = _rowControls.ToList();
+            QueueList.ItemsSource = _visualRows.ToList();
         }
+
+        /// <summary>The dominant primary/secondary pair over the segment starting at
+        /// <paramref name="startIndex"/>, e.g. "PERCEPTION / WILLPOWER".</summary>
+        private string DominantPairLabel(int startIndex)
+        {
+            var totals = new Dictionary<(EveAttribute, EveAttribute), long>();
+            for (int i = startIndex; i < _viewModel!.Items.Count; i++)
+            {
+                if (i > startIndex && _viewModel.Items[i].Entry.Remapping != null)
+                    break;
+                var key = (_viewModel.Items[i].PrimaryAttribute,
+                    _viewModel.Items[i].SecondaryAttribute);
+                totals[key] = totals.GetValueOrDefault(key)
+                    + _viewModel.Items[i].TrainingTime.Ticks;
+            }
+            if (totals.Count == 0) return string.Empty;
+            var top = totals.OrderByDescending(kv => kv.Value).First().Key;
+            return $"{top.Item1} / {top.Item2}".ToUpperInvariant();
+        }
+
+        /// <summary>The gold "◆ REMAP BEFORE X" divider row with the spread's top
+        /// two attributes as chips on the right.</summary>
+        private Control BuildSegmentDivider(string label,
+            Dictionary<EveAttribute, long> spread, Color accent)
+        {
+            var dock = new DockPanel();
+            var chips = BuildAttrChips(spread, 2);
+            DockPanel.SetDock(chips, Dock.Right);
+            dock.Children.Add(chips);
+            dock.Children.Add(new TextBlock
+            {
+                Text = label,
+                FontSize = FontScaleService.Small,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(accent),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            return new Border
+            {
+                Height = HeaderRowHeight,
+                Background = new SolidColorBrush(Color.FromArgb(26, accent.R, accent.G, accent.B)),
+                BorderBrush = new SolidColorBrush(Color.FromArgb(150, accent.R, accent.G, accent.B)),
+                BorderThickness = new Thickness(1, 1, 1, 1),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(12, 0),
+                Margin = new Thickness(2, 3, 8, 0),
+                Child = dock,
+            };
+        }
+
+        /// <summary>A segment header row: pair label + "n skills · dur" left, top-two
+        /// attribute chips right — teal for keep-current, gold for remapped blocks.</summary>
+        private Control BuildSegmentHeader(string title, string stats,
+            Dictionary<EveAttribute, long>? attrs, Color accent)
+        {
+            var dock = new DockPanel();
+            if (attrs != null)
+            {
+                var chips = BuildAttrChips(attrs, 2);
+                DockPanel.SetDock(chips, Dock.Right);
+                dock.Children.Add(chips);
+            }
+            var left = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 8,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            left.Children.Add(new TextBlock
+            {
+                Text = title,
+                FontSize = FontScaleService.Small,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(accent),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            left.Children.Add(new TextBlock
+            {
+                Text = stats.TrimStart(' ', '·', ' '),
+                FontSize = FontScaleService.Caption,
+                Foreground = new SolidColorBrush(
+                    Color.FromArgb(190, accent.R, accent.G, accent.B)),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            dock.Children.Add(left);
+            return new Border
+            {
+                Height = HeaderRowHeight,
+                Padding = new Thickness(18, 0, 8, 0),
+                Child = dock,
+            };
+        }
+
+        /// <summary>The top-<paramref name="take"/> attributes as "MEM 30"-style chips.</summary>
+        private Control BuildAttrChips(Dictionary<EveAttribute, long> attrs, int take)
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            foreach (var kv in attrs.OrderByDescending(kv => kv.Value).Take(take))
+            {
+                var (bg, fg) = GetAttrColors(kv.Key);
+                panel.Children.Add(new Border
+                {
+                    Background = new SolidColorBrush(bg),
+                    CornerRadius = new CornerRadius(4),
+                    Padding = new Thickness(8, 2),
+                    Child = new TextBlock
+                    {
+                        Text = $"{AttrAbbrev(kv.Key)} {kv.Value}",
+                        FontSize = FontScaleService.Caption,
+                        FontWeight = FontWeight.Bold,
+                        Foreground = new SolidColorBrush(fg),
+                    },
+                });
+            }
+            return panel;
+        }
+
+        private static string AttrAbbrev(EveAttribute attr) => attr switch
+        {
+            EveAttribute.Perception => "PER",
+            EveAttribute.Willpower => "WIL",
+            EveAttribute.Intelligence => "INT",
+            EveAttribute.Memory => "MEM",
+            EveAttribute.Charisma => "CHA",
+            _ => "?",
+        };
+
+        /// <summary>Insertion slot for an absolute Y — replaces the uniform
+        /// <c>Y / RowHeight</c> math, which real header rows made wrong.</summary>
+        private int SlotFromY(double absoluteY)
+        {
+            for (int i = 0; i < _itemTops.Count - 1; i++)
+            {
+                if (absoluteY < _itemTops[i] + RowHeight / 2)
+                    return i;
+            }
+            return _itemTops.Count - 1;
+        }
+
+        /// <summary>The Y of an insertion slot's indicator line.</summary>
+        private double TopOfSlot(int slot) =>
+            slot < _itemTops.Count ? _itemTops[slot] : _itemTops[^1];
 
         /// <summary>"· n skills · duration" for the segment starting at
         /// <paramref name="startIndex"/> and running to the next remap point.</summary>
@@ -198,49 +366,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 ? $"{(int)total.TotalDays}d {total.Hours}h"
                 : $"{(int)total.TotalHours}h {total.Minutes}m";
             return $" · {count} {Loc.Get("PlanEditor.Skills")} · {dur}";
-        }
-
-        /// <summary>Stacks a full-width banner strip above a row's own content,
-        /// inside the same Border — the row stays one list item.</summary>
-        private static void WrapWithBanner(Border row, string label, string right, Color accent)
-        {
-            var banner = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(34, accent.R, accent.G, accent.B)),
-                BorderBrush = new SolidColorBrush(Color.FromArgb(190, accent.R, accent.G, accent.B)),
-                BorderThickness = new Thickness(0, 2, 0, 0),
-                Padding = new Thickness(10, 3),
-            };
-            var dock = new DockPanel();
-            if (!string.IsNullOrEmpty(right))
-            {
-                var rightText = new TextBlock
-                {
-                    Text = right,
-                    FontSize = FontScaleService.Caption,
-                    Foreground = new SolidColorBrush(accent),
-                    VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center,
-                };
-                DockPanel.SetDock(rightText, Dock.Right);
-                dock.Children.Add(rightText);
-            }
-            dock.Children.Add(new TextBlock
-            {
-                Text = label,
-                FontSize = FontScaleService.Caption,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(accent),
-                VerticalAlignment = global::Avalonia.Layout.VerticalAlignment.Center,
-            });
-            banner.Child = dock;
-
-            var content = row.Child;
-            row.Child = null;
-            var stack = new StackPanel();
-            stack.Children.Add(banner);
-            if (content != null)
-                stack.Children.Add(content);
-            row.Child = stack;
         }
 
         private Control BuildRow(PlanQueueItem item, int index)
@@ -373,12 +498,15 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     VerticalAlignment = VerticalAlignment.Center,
                 });
             }
+            // White typography (the chain color lives on the ribbon and the omega
+            // badge): whole rows of magenta/green text read as a syntax error, not
+            // a plan.
             namePanel.Children.Add(new TextBlock
             {
                 Text = item.DisplayName,
                 FontSize = FontScaleService.Body,
                 FontWeight = item.IsGoal ? FontWeight.Medium : FontWeight.Normal,
-                Foreground = chainBrush,
+                Foreground = (IBrush)Application.Current!.FindResource("EveTextPrimaryBrush")!,
                 VerticalAlignment = VerticalAlignment.Center,
                 TextTrimming = TextTrimming.CharacterEllipsis,
             });
@@ -734,7 +862,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 QueueScroller.Offset = new Vector(0, Math.Min(maxScroll, QueueScroller.Offset.Y + speed));
             }
 
-            int slot = (int)Math.Round(absoluteY / RowHeight);
+            int slot = SlotFromY(absoluteY);
             slot = Math.Max(0, Math.Min(totalItems, slot));
 
             if (slot == _currentInsertSlot) return;
@@ -743,7 +871,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var indices = _selected.OrderBy(i => i).ToList();
             bool valid = _viewModel.CanMove(indices, slot);
 
-            double indicatorViewportY = slot * RowHeight - QueueScroller.Offset.Y - 1;
+            double indicatorViewportY = TopOfSlot(slot) - QueueScroller.Offset.Y - 1;
             InsertIndicator.IsVisible = true;
             Canvas.SetLeft(InsertIndicator, 18);
             Canvas.SetTop(InsertIndicator, indicatorViewportY);
