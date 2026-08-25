@@ -157,15 +157,16 @@ namespace EveLens.Avalonia.Views.Dialogs
                     // first-run case — offer the add-on download instead of an error.
                     if (SkinrRuntimeInstaller.InstalledRoot() == null)
                     {
-                        RenderTitle.Text = Loc.Get("Skinr.RuntimeTitle");
-                        RenderDesc.Text = Loc.Get("Skinr.RuntimeDesc");
-                        RuntimeInstallPanel.IsVisible = true;
-                        _ = ShowRuntimeReleaseDetailsAsync();
+                        ShowRuntimeOffer();
                     }
                     else
                     {
+                        // Installed but not starting: a short sentence for the user,
+                        // the path-laden discovery report for the trace.
                         RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
-                        RenderDesc.Text = _render.UnavailableReason;
+                        RenderDesc.Text = Loc.Get("Skinr.RenderFailedShort");
+                        AppServices.TraceService?.Trace(
+                            "SkinrViewer: renderer unavailable: " + _render.UnavailableReason);
                     }
                 }
             }
@@ -210,8 +211,25 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        /// <summary>Puts the Rendering Runtime offer on the placeholder — the ONE
+        /// screen for "no runtime", used at open and again whenever an action needed
+        /// the renderer. Never the raw discovery report: that names environment
+        /// variables and local paths, and it goes to the trace instead.</summary>
+        private void ShowRuntimeOffer()
+        {
+            RenderImage.IsVisible = false;
+            RenderPlaceholder.IsVisible = true;
+            WelcomeGuide.IsVisible = true;
+            RenderTitle.Text = Loc.Get("Skinr.RuntimeTitle");
+            RenderDesc.Text = Loc.Get("Skinr.RuntimeDesc");
+            RuntimeInstallPanel.IsVisible = true;
+            if (_runtimeRelease == null)
+                _ = ShowRuntimeReleaseDetailsAsync();
+        }
+
         /// <summary>"Not now" — an explicit decline that leaves the welcome screen
-        /// clean. The offer returns next time the window opens.</summary>
+        /// clean. The offer returns next time the window opens, or the next time an
+        /// action actually needs the renderer.</summary>
         private void OnRuntimeNotNow(object? sender,
             global::Avalonia.Interactivity.RoutedEventArgs e)
         {
@@ -1384,12 +1402,32 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             if (_render.Error != null)
             {
+                // "No runtime" is not an error, it is the offer — clicking a design
+                // after "Not now" must re-ask, not print a discovery report.
+                if (SkinrRenderPlatform.Current == SkinrRenderSupport.Supported &&
+                    SkinrRuntimeInstaller.InstalledRoot() == null)
+                {
+                    AppServices.TraceService?.Trace(
+                        "SkinrViewer: render blocked, runtime not installed: " + _render.Error);
+                    HintStrip.IsVisible = false;
+                    ShowRuntimeOffer();
+                    return;
+                }
                 RenderImage.IsVisible = false;
                 HintStrip.IsVisible = false;
                 RenderPlaceholder.IsVisible = true;
                 WelcomeGuide.IsVisible = false;   // an error report is not a welcome
                 RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
-                RenderDesc.Text = _render.Error;
+                // Design errors are short human sentences and stay verbatim; the
+                // discovery report (recognisable by its search log) names local
+                // paths and environment variables — that goes to the trace and the
+                // user gets a sentence.
+                bool discoveryDump = _render.Error.Contains("Searched:");
+                RenderDesc.Text = discoveryDump
+                    ? Loc.Get("Skinr.RenderFailedShort") : _render.Error;
+                if (discoveryDump)
+                    AppServices.TraceService?.Trace(
+                        "SkinrViewer: render error: " + _render.Error);
                 return;
             }
 

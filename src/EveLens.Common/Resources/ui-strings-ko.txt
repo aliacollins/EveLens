@@ -965,3 +965,4 @@ Skinr.WelcomeHubTitle = 파라곤 허브
 Skinr.WelcomeHubDesc = 왼쪽 레일의 EVE 디자인 마켓: 수천 개의 판매 디자인을 함선·세력·가격별로 둘러보고, 소유 여부와 관계없이 어떤 디자인이든 3D로 미리 볼 수 있습니다.
 Skinr.WelcomeStageTitle = 무대
 Skinr.WelcomeStageDesc = 스튜디오부터 우주 공간까지 다섯 가지 환경, 모든 컨트롤을 숨기는 사진 모드, 그리고 함대 촬영 - 내 함선 최대 10척을 편대로 한 컷에.
+Skinr.RenderFailedShort = 렌더러를 시작하지 못했습니다. 자세한 내용은 EveLens 로그를 확인하세요.

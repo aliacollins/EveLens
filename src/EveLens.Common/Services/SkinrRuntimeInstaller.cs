@@ -265,32 +265,51 @@ mIqhIr1UnPgA18UMXK/zeOJXE02ogEoQP+5Nt9OJ1gsEGcZwqhZCsgeV5A==
             }
         }
 
+        /// <summary>
+        /// Dedicated client, deliberately NOT <see cref="HttpWebClientService"/>: that
+        /// stack applies the app-wide HttpTimeout (20s default, 5min ceiling) to the
+        /// WHOLE request, which is correct for API calls and fatal for a 232 MB
+        /// artifact on any connection slower than the ceiling allows. This one
+        /// streams with headers-first completion and a generous cap of its own.
+        /// </summary>
         private static async Task DownloadZipAsync(SkinrRuntimeRelease release,
             string zipPath, IProgress<double>? progress, CancellationToken ct)
         {
             long total = Math.Max(1, release.SizeBytes);
-            var result = await HttpWebClientService.DownloadStreamAsync<bool>(
-                new Uri(release.Url!),
-                (stream, _) =>
+            try
+            {
+                using var client = new System.Net.Http.HttpClient();
+                client.Timeout = TimeSpan.FromMinutes(30);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                    HttpWebClientServiceState.UserAgent);
+                using var response = await client.GetAsync(new Uri(release.Url!),
+                    System.Net.Http.HttpCompletionOption.ResponseHeadersRead, ct)
+                    .ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+                await using Stream stream = await response.Content
+                    .ReadAsStreamAsync(ct).ConfigureAwait(false);
+                await using FileStream file = File.Create(zipPath);
+                byte[] buffer = new byte[1 << 16];
+                long written = 0;
+                int read;
+                while ((read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
                 {
-                    using FileStream file = File.Create(zipPath);
-                    byte[] buffer = new byte[1 << 16];
-                    long written = 0;
-                    int read;
-                    while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        ct.ThrowIfCancellationRequested();
-                        file.Write(buffer, 0, read);
-                        written += read;
-                        progress?.Report(Math.Min(1.0, written / (double)total));
-                    }
-                    return true;
-                }, null).ConfigureAwait(false);
-
-            if (result?.Error != null || result?.Result != true)
+                    await file.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+                    written += read;
+                    progress?.Report(Math.Min(1.0, written / (double)total));
+                }
+                if (written == 0)
+                    throw new InvalidOperationException("no data received");
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
                 throw new InvalidOperationException(
-                    "The runtime download failed: " +
-                    (result?.Error?.Message ?? "no data received."));
+                    "The runtime download failed: " + ex.Message, ex);
+            }
         }
 
         private static async Task<string> HashFileAsync(string path, CancellationToken ct)

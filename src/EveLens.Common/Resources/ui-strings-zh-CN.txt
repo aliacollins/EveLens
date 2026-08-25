@@ -965,3 +965,4 @@ Skinr.WelcomeHubTitle = 帕拉贡中心
 Skinr.WelcomeHubDesc = EVE 的设计市场，位于左侧栏：按舰船、势力和价格浏览数千个在售设计，并以 3D 预览任意设计——无论是否拥有。
 Skinr.WelcomeStageTitle = 舞台
 Skinr.WelcomeStageDesc = 从工作室到开阔太空的五种环境、隐藏全部控件的拍照模式，以及舰队合影——让你的最多十艘舰船编队入镜。
+Skinr.RenderFailedShort = 渲染器未能启动。详细信息见 EveLens 日志。

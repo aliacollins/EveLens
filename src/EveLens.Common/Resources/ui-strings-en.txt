@@ -999,3 +999,4 @@ Skinr.WelcomeHubTitle = Paragon Hub
 Skinr.WelcomeHubDesc = EVE's design marketplace, on the left rail: browse thousands of listed designs by ship, faction and price, and preview any of them in 3D - owned or not.
 Skinr.WelcomeStageTitle = The stage
 Skinr.WelcomeStageDesc = Five environments from Studio to open Space, a photo mode that hides every control, and Photo Op - fly up to ten of your ships in formation for one screenshot.
+Skinr.RenderFailedShort = The renderer could not start. Details are in the EveLens log.
