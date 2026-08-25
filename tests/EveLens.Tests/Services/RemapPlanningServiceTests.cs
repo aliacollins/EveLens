@@ -95,12 +95,11 @@ namespace EveLens.Tests.Services
         }
 
         [Fact]
-        public void Propose_SplitsOnPrimarySecondaryPairChanges_NotPrimaryAlone()
+        public void Propose_FindsMidPlanBoundaries_NeverOnlyTheFirstSkill()
         {
-            // Issue #122: a plan of [Mem/Per, Mem/Int…, Per/Wil…] read as one Memory
-            // block because boundaries compared primaries only — "it always suggests
-            // remapping at the first skill". The contract: with no length guard and
-            // ample budget, one segment per consecutive (primary, secondary) group.
+            // Issue #122's exact symptom: "it always suggests remapping at the skill
+            // at the top of my list." A plan with genuinely different attribute
+            // blocks and budget to spare must place at least one MID-plan remap.
             var plan = CreateMixedAttributePlan(out _);
             var entries = plan.Where(e => e.Skill != null).ToList();
             int pairGroups = 1;
@@ -114,28 +113,56 @@ namespace EveLens.Tests.Services
                 "the fixture plan must actually contain a pair boundary for this test to bite");
 
             var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(
-                plan, maxRemaps: 99, minSegmentDays: 0);
+                plan, maxRemaps: 4, minSegmentDays: 0);
 
-            proposal.Remaps.Count.Should().Be(pairGroups,
-                "every consecutive (primary, secondary) change is a remap boundary");
+            proposal.Remaps.Count.Should().BeGreaterThan(1,
+                "distinct attribute blocks with budget to spare earn a mid-plan remap");
+            proposal.Remaps.Count.Should().BeLessThanOrEqualTo(pairGroups,
+                "cuts only ever land on (primary, secondary) group edges");
+            var firstEntry = entries[0];
+            proposal.Remaps.Skip(1).Should().OnlyContain(
+                r => r.Skill != firstEntry.Skill || r.Level != (int)firstEntry.Level,
+                "remaps after the first are mid-plan by definition");
         }
 
         [Fact]
-        public void Propose_BudgetMergesShortestSegments_KeepingRealBoundaries()
+        public void Propose_MoreRemaps_NeverProducesASlowerPlan()
         {
-            // With fewer remaps than natural segments, the SHORTEST segments fold into
-            // their neighbours — the old front-greedy consumption could spend the whole
-            // budget before the longest block ever got its remap.
+            // The DP includes every lower budget as a sub-solution, so extra budget
+            // can only help. Small tolerance covers the canonical re-train of two
+            // different-but-equivalent segmentations.
+            var plan = CreateMixedAttributePlan(out _);
+
+            var one = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 1, minSegmentDays: 0);
+            var four = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 4, minSegmentDays: 0);
+
+            one.Remaps.Count.Should().BeLessThanOrEqualTo(1);
+            four.OptimizedDuration.Should().BeLessThanOrEqualTo(
+                one.OptimizedDuration + TimeSpan.FromHours(2));
+        }
+
+        [Fact]
+        public void Propose_SingleRemapBudget_MayPlaceItMidPlan()
+        {
+            // With one remap, "train the prefix on current attributes, remap at the
+            // boundary that saves the most" must be a real option — the old code
+            // could only ever spend the single remap at plan start.
             var plan = CreateMixedAttributePlan(out _);
 
             var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(
-                plan, maxRemaps: 2, minSegmentDays: 0);
+                plan, maxRemaps: 1, minSegmentDays: 0);
 
-            proposal.Remaps.Count.Should().Be(2, "the budget is the segment cap");
-            // The mid-plan remap must be a real boundary, not the plan's first entry.
-            var firstEntry = plan.First(e => e.Skill != null);
-            proposal.Remaps[1].Skill.Should().NotBe(firstEntry.Skill,
-                "the second remap is mid-plan by definition");
+            // Wherever it lands, the choice is globally priced: total time with the
+            // proposal can never lose to the no-remap baseline.
+            proposal.OptimizedDuration.Should().BeLessThanOrEqualTo(proposal.CurrentDuration);
+            if (proposal.Remaps.Count == 1 && proposal.PrefixSkillCount > 0)
+            {
+                // A mid-plan placement must report the keep-current prefix honestly.
+                proposal.PrefixDuration.Should().BeGreaterThan(TimeSpan.Zero);
+                proposal.Remaps[0].StartsAfter.Should().NotBeEmpty();
+            }
         }
 
         [Fact]
