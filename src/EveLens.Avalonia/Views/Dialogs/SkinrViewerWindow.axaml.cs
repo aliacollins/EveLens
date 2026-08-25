@@ -22,6 +22,7 @@ using EveLens.Common.Helpers;
 using EveLens.Common.Service;
 using EveLens.Common.Models;
 using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Serialization.Skinr;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 
@@ -152,14 +153,110 @@ namespace EveLens.Avalonia.Views.Dialogs
                 if (SkinrRenderPlatform.Current == SkinrRenderSupport.Supported &&
                     !_render.IsAvailable)
                 {
-                    RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
-                    RenderDesc.Text = _render.UnavailableReason;
+                    // No runtime found. If none is INSTALLED either, this is the
+                    // first-run case — offer the add-on download instead of an error.
+                    if (SkinrRuntimeInstaller.InstalledRoot() == null)
+                    {
+                        RenderTitle.Text = Loc.Get("Skinr.RuntimeTitle");
+                        RenderDesc.Text = Loc.Get("Skinr.RuntimeDesc");
+                        RuntimeInstallPanel.IsVisible = true;
+                        _ = ShowRuntimeReleaseDetailsAsync();
+                    }
+                    else
+                    {
+                        RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
+                        RenderDesc.Text = _render.UnavailableReason;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 AppServices.TraceService?.Trace(
                     $"SkinrViewer: renderer discovery failed: {ex.Message}");
+            }
+        }
+
+        private SkinrRuntimeRelease? _runtimeRelease;
+
+        /// <summary>
+        /// Everything the download IS, shown before consent: exact version, size,
+        /// host and SHA-256. The install button uses this same fetched release, so
+        /// what the user verified is byte-for-byte what gets installed.
+        /// </summary>
+        private async System.Threading.Tasks.Task ShowRuntimeReleaseDetailsAsync()
+        {
+            try
+            {
+                _runtimeRelease = await SkinrRuntimeInstaller.GetLatestAsync();
+                if (_runtimeRelease == null || !RuntimeInstallPanel.IsVisible)
+                    return;
+                RuntimeDetailsText.Text = string.Format(
+                    Loc.Get("Skinr.RuntimeDetailsFmt"),
+                    _runtimeRelease.Version,
+                    _runtimeRelease.SizeBytes / (1024.0 * 1024.0),
+                    new Uri(_runtimeRelease.Url!).Host,
+                    _runtimeRelease.ZipSha256);
+                RuntimeDetailsText.IsVisible = true;
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrViewer: release details fetch failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// The add-on consent flow: fetch the release, download with progress,
+        /// verify (hash → pinned-key signature → per-file hashes), install, then
+        /// boot the renderer that was missing a minute ago.
+        /// </summary>
+        private async void OnRuntimeInstall(object? sender,
+            global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                RuntimeInstallButton.IsEnabled = false;
+                RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeChecking");
+
+                var release = _runtimeRelease ?? await SkinrRuntimeInstaller.GetLatestAsync();
+                if (release == null)
+                {
+                    RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeUnreachable");
+                    RuntimeInstallButton.IsEnabled = true;
+                    return;
+                }
+
+                RuntimeInstallDesc.Text = string.Format(
+                    Loc.Get("Skinr.RuntimeDownloadingFmt"), release.Version,
+                    release.SizeBytes / (1024.0 * 1024.0));
+                var progress = new Progress<double>(fraction => ReportDownload(
+                    Loc.Get("Skinr.RuntimeTitle"), fraction));
+                await SkinrRuntimeInstaller.InstallAsync(release, progress);
+
+                RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeStarting");
+                await _render.InitializeAsync();
+                if (_render.IsAvailable)
+                {
+                    RuntimeInstallPanel.IsVisible = false;
+                    RenderTitle.Text = Loc.Get("Skinr.RenderPlaceholderTitle");
+                    RenderDesc.Text = Loc.Get("Skinr.RenderPlaceholderDesc");
+                    // A design may already be selected — put it on the stage.
+                    if (_hub.Data.SelectedRecipe != null)
+                        await _render.LoadRecipeAsync(_hub.Data.SelectedRecipe);
+                }
+                else
+                {
+                    RuntimeInstallDesc.Text = _render.UnavailableReason ??
+                        Loc.Get("Skinr.RuntimeFailed");
+                    RuntimeInstallButton.IsEnabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrViewer: runtime install failed: {ex.Message}");
+                RuntimeInstallDesc.Text = ex.Message;
+                RuntimeInstallButton.IsEnabled = true;
             }
         }
 

@@ -972,3 +972,18 @@ AutoUpdate.Body = EveLens already checks for new versions and downloads them in 
 AutoUpdate.ChangeAnytime = You can change this anytime in Settings > Data. We'll only ask once.
 AutoUpdate.OptIn = Update automatically
 AutoUpdate.NotifyOnly = Just notify me
+Skinr.CcpNotice = © 2016 CCP hf. All rights reserved. "EVE", "EVE Online", "CCP", and all related logos and images are trademarks or registered trademarks of CCP hf.
+Skinr.RuntimeTitle = Render studio
+Skinr.RuntimeDesc = The 3D studio is powered by the EveLens Rendering Runtime — a separate program, downloaded once. Required only for 3D rendering; everything else in EveLens works without it.
+Skinr.RuntimeOffer = Install the EveLens Rendering Runtime to see your designs in full 3D — real hulls, real nanocoatings, real lighting.
+Skinr.RuntimeEulaNote = The Rendering Runtime is proprietary EveLens software (licensed, not open source). It talks only to CCP's art servers and to EveLens on this machine. Every download is verified against a signature built into EveLens before anything runs. Installing means accepting its license (EULA.md in the install folder).
+Skinr.RuntimeInstall = Download & install
+Skinr.RuntimeChecking = Checking for the latest runtime…
+Skinr.RuntimeDownloadingFmt = Downloading runtime {0} ({1:F0} MB)…
+Skinr.RuntimeStarting = Verifying and starting the renderer…
+Skinr.RuntimeUnreachable = The runtime service is unreachable right now — try again in a few minutes.
+Skinr.RuntimeFailed = The runtime installed but did not start. See the log for details.
+Skinr.RuntimeDetailsFmt = EveLens Rendering Runtime {0} · {1:F0} MB
+Host: {2}
+SHA-256: {3}
+Signature: verified against EveLens's built-in key before install

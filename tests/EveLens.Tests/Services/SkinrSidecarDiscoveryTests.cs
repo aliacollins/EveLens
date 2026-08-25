@@ -84,7 +84,7 @@ namespace EveLens.Tests.Services
         // --- the search is recorded ------------------------------------------
 
         /// <summary>
-        /// With neither variable set, all three attempts are still reported. "Not set" is a finding:
+        /// With neither variable set, all four attempts are still reported. "Not set" is a finding:
         /// it is the difference between the variable being wrong and the variable being unknown to
         /// whoever is reading the message.
         /// </summary>
@@ -93,10 +93,14 @@ namespace EveLens.Tests.Services
         {
             SkinrSidecarOptions options = DiscoverWith(null, null);
 
-            options.DiscoverySteps.Should().HaveCount(3);
+            options.DiscoverySteps.Should().HaveCount(4);
             options.DiscoverySteps[0].Should().Be($"{RuntimeVar} not set");
             options.DiscoverySteps[1].Should().Be($"{TrinityVar} not set");
-            options.DiscoverySteps[2].Should().StartWith("beside the executable (");
+            // On a machine with no downloaded add-on this is a plain finding; a dev
+            // machine with one installed reports the root it found instead.
+            options.DiscoverySteps[2].Should().MatchRegex(
+                "^(no installed render runtime|installed runtime)");
+            options.DiscoverySteps[3].Should().StartWith("beside the executable (");
         }
 
         [Fact]
@@ -107,13 +111,15 @@ namespace EveLens.Tests.Services
 
             SkinrSidecarOptions options = DiscoverWith(badRuntime, badTrinity);
 
-            options.DiscoverySteps.Should().HaveCount(3);
+            options.DiscoverySteps.Should().HaveCount(4);
             // The scope is part of the line because it is the actionable half of the answer: a root
             // found in "user" scope that the process never inherited is a different fix from a root
             // that is simply wrong.
             options.DiscoverySteps[0].Should().StartWith($"{RuntimeVar}={badRuntime} (process) — ");
             options.DiscoverySteps[1].Should().StartWith($"{TrinityVar}={badTrinity} (process) — ");
-            options.DiscoverySteps[2].Should().StartWith("beside the executable (");
+            options.DiscoverySteps[2].Should().MatchRegex(
+                "^(no installed render runtime|installed runtime)");
+            options.DiscoverySteps[3].Should().StartWith("beside the executable (");
         }
 
         /// <summary>

@@ -552,6 +552,16 @@ namespace EveLens.Common.Services
                          ApplySourceBuildLayout(options, trinity!)))
                 return options;
 
+            // The downloaded add-on: what SkinrRuntimeInstaller verified and installed.
+            // After the environment variables (a developer's build tree always wins)
+            // and before the beside-the-exe fallback (the add-on is the shipping path).
+            string? installed = SkinrRuntimeInstaller.InstalledRoot();
+            if (installed == null)
+                options.DiscoverySteps.Add("no installed render runtime (add-on not downloaded)");
+            else if (options.Record($"installed runtime ({installed})",
+                         ApplyShippedLayout(options, installed)))
+                return options;
+
             // Shipped default: a "skinr" folder beside the executable. Last rather than first
             // so a developer's environment variable always wins over a stale installed copy.
             string beside = Path.Combine(AppContext.BaseDirectory, "skinr");

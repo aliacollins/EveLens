@@ -153,8 +153,7 @@
 
                 <!-- Center state overlays (placeholder / scope / loading / error) -->
                 <StackPanel x:Name="RenderPlaceholder" VerticalAlignment="Center"
-                            HorizontalAlignment="Center" Spacing="8" MaxWidth="480"
-                            IsHitTestVisible="False">
+                            HorizontalAlignment="Center" Spacing="8" MaxWidth="480">
                     <TextBlock x:Name="RenderTitle" Text="{loc:T Skinr.RenderPlaceholderTitle}"
                                FontSize="{DynamicResource EveFontTitle}"
                                Foreground="{StaticResource SkinrTextDimBrush}"
@@ -164,6 +163,43 @@
                                Foreground="{StaticResource SkinrTextDimBrush}"
                                HorizontalAlignment="Center" TextAlignment="Center"
                                TextWrapping="Wrap" />
+
+                    <!-- The render-runtime add-on: EveLens ships without the 3D engine
+                         (it is a separate, proprietary download) — this is the consent
+                         moment. Visible only when the platform could render and no
+                         runtime is installed. -->
+                    <StackPanel x:Name="RuntimeInstallPanel" IsVisible="False" Spacing="8"
+                                Margin="0,10,0,0">
+                        <TextBlock x:Name="RuntimeInstallDesc"
+                                   Text="{loc:T Skinr.RuntimeOffer}"
+                                   FontSize="{DynamicResource EveFontSmall}"
+                                   Foreground="{StaticResource SkinrTextSecBrush}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Text="{loc:T Skinr.RuntimeEulaNote}"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <!-- Full observability before consent: exact version, size,
+                             host and hash — the cautious can verify, the extremely
+                             cautious can decline, and nobody is told "some
+                             additional files". -->
+                        <SelectableTextBlock x:Name="RuntimeDetailsText" IsVisible="False"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   FontFamily="Consolas,Menlo,monospace"
+                                   Foreground="{StaticResource SkinrTextSecBrush}"
+                                   HorizontalAlignment="Center" TextAlignment="Left"
+                                   TextWrapping="Wrap" />
+                        <Button x:Name="RuntimeInstallButton"
+                                Content="{loc:T Skinr.RuntimeInstall}"
+                                HorizontalAlignment="Center" Padding="16,7"
+                                CornerRadius="14"
+                                Background="{StaticResource SkinrAccentDimBrush}"
+                                Foreground="{StaticResource SkinrTextBrush}"
+                                FontSize="{DynamicResource EveFontSmall}"
+                                Click="OnRuntimeInstall" />
+                    </StackPanel>
                 </StackPanel>
                 <StackPanel x:Name="ScopeMissingPanel" IsVisible="False" Spacing="8"
                             VerticalAlignment="Center" HorizontalAlignment="Center"
@@ -373,6 +409,14 @@
                             CornerRadius="18" Padding="6,4">
                         <StackPanel x:Name="EnvSwitcher" Orientation="Horizontal" Spacing="4" />
                     </Border>
+
+                    <!-- CCP legal notice: this window renders CCP's copyrighted ship art
+                         wholesale — the attribution lives where the art does. -->
+                    <TextBlock Text="{loc:T Skinr.CcpNotice}"
+                               HorizontalAlignment="Center" Margin="18,0,18,6"
+                               TextWrapping="Wrap" TextAlignment="Center"
+                               FontSize="{DynamicResource EveFontCaption}"
+                               Foreground="{StaticResource SkinrTextDimBrush}" />
                 </StackPanel>
 
                 <!-- Download / render status, unobtrusive -->
