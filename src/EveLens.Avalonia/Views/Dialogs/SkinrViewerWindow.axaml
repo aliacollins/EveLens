@@ -266,9 +266,16 @@
                                       HorizontalScrollBarVisibility="Disabled"
                                       VerticalScrollBarVisibility="Auto">
                             <StackPanel Spacing="6">
+                                <!-- One plain sentence answers the question; the
+                                     boundaries + license live in a caption and the
+                                     verifiable facts in the block below it. -->
                                 <TextBlock Text="{loc:T Skinr.RuntimeWhyBody}"
                                            FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{StaticResource SkinrTextSecBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center" />
+                                <TextBlock Text="{loc:T Skinr.RuntimeWhyNote}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
                                            TextWrapping="Wrap" TextAlignment="Center" />
                                 <SelectableTextBlock x:Name="RuntimeDetailsText" IsVisible="False"
                                            FontSize="{DynamicResource EveFontCaption}"

@@ -958,7 +958,7 @@ SHA-256: {3}
 서명: 설치 전 EveLens 내장 키로 검증
 Skinr.RuntimeNotNow = 나중에
 Skinr.RuntimeWhy = 왜 별도 다운로드인가요?
-Skinr.RuntimeWhyBody = 3D 렌더링은 선택 기능이므로 3D 렌더러는 표준 EveLens 설치에 포함되지 않습니다. EveLens 자체 데이터 폴더에 설치되고, CCP 아트 서버와 이 컴퓨터의 EveLens와만 통신하며, 모든 다운로드는 실행 전에 EveLens 내장 서명으로 검증됩니다(아래 해시 참조). 설치하면 라이선스(설치 폴더의 EULA.md)에 동의하는 것입니다.
+Skinr.RuntimeWhyBody = 3D 렌더링은 선택 기능이므로 3D 렌더러는 표준 EveLens 설치에 포함되지 않습니다.
 Skinr.RuntimeVerifiedFmt = EveLens 3D 렌더러 {0} · {1:F0} MB · 검증된 다운로드
 Skinr.ScopeUpdate = 권한 업데이트
 Skinr.ScopeContinue = SKINR 없이 계속
@@ -970,3 +970,4 @@ Skinr.WelcomeStageTitle = 무대
 Skinr.WelcomeStageDesc = 스튜디오부터 우주 공간까지 다섯 가지 환경, 모든 컨트롤을 숨기는 사진 모드, 그리고 함대 촬영 - 내 함선 최대 10척을 편대로 한 컷에.
 Skinr.RenderFailedShort = 렌더러를 시작하지 못했습니다. 자세한 내용은 EveLens 로그를 확인하세요.
 Skinr.RuntimeDescFmt = 인터랙티브 3D 함선과 SKIN 미리보기를 제공하는 별도의 {0:F0} MB 구성 요소입니다. 한 번만 설치하면 3D가 활성화됩니다.
+Skinr.RuntimeWhyNote = CCP 아트 서버와 이 컴퓨터의 EveLens와만 통신하며, 실행 전에 EveLens 내장 서명으로 검증됩니다. 설치하면 라이선스(설치 폴더의 EULA.md)에 동의하는 것입니다.

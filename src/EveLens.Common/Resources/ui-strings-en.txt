@@ -992,7 +992,7 @@ SHA-256: {3}
 Signature: verified against EveLens's built-in key before install
 Skinr.RuntimeNotNow = Not now
 Skinr.RuntimeWhy = Why is this a separate download?
-Skinr.RuntimeWhyBody = 3D rendering is optional, so the 3D Renderer isn't included with the standard EveLens installation. It installs into EveLens's own data folder, talks only to CCP's art servers and to EveLens on this machine, and every download is checked against a signature built into EveLens - exact hash below - before anything runs. Installing means accepting its license (EULA.md in the install folder).
+Skinr.RuntimeWhyBody = 3D rendering is optional, so the 3D Renderer isn't included with the standard EveLens installation.
 Skinr.RuntimeVerifiedFmt = EveLens 3D Renderer {0} · {1:F0} MB · verified download
 Skinr.ScopeUpdate = Update permissions
 Skinr.ScopeContinue = Continue without SKINR
@@ -1004,3 +1004,4 @@ Skinr.WelcomeStageTitle = The stage
 Skinr.WelcomeStageDesc = Five environments from Studio to open Space, a photo mode that hides every control, and Photo Op - fly up to ten of your ships in formation for one screenshot.
 Skinr.RenderFailedShort = The renderer could not start. Details are in the EveLens log.
 Skinr.RuntimeDescFmt = A separate {0:F0} MB component that enables interactive 3D ships and SKIN previews. Install it once to enable 3D.
+Skinr.RuntimeWhyNote = It talks only to CCP's art servers and to EveLens on this machine, and is verified against EveLens's built-in signature before anything runs. Installing means accepting its license (EULA.md in the install folder).
