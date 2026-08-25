@@ -529,6 +529,31 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     if (_activeSidebarTab == "Plan")
                         BuildSidebarContent();
                 };
+                // Level pips are editable: pip N retargets the skill to level N —
+                // planning prerequisites in on the way up, cascading dependents out
+                // on the way down.
+                QueueListControl.LevelChangeRequested += (item, level) =>
+                {
+                    try
+                    {
+                        if (_viewModel?.Plan == null) return;
+                        if (level > item.Level)
+                            _viewModel.Plan.PlanTo(item.Skill, level);
+                        else if (level < item.Level)
+                            RemoveSkillLevelsAbove(item.Skill, level);
+                        else
+                            return;
+                        _viewModel.UpdateDisplayPlan();
+                        Refresh();
+                        UpdateStatsHeader();
+                        BuildSidebarContent();
+                    }
+                    catch (Exception ex)
+                    {
+                        AppServices.TraceService?.Trace(
+                            $"PlanEditor: level change failed: {ex.Message}");
+                    }
+                };
                 // Right-click menu on queue rows: reuse the full skill context menu (Plan to
                 // level, move, priority, Insert Remap Point). The menu was previously only
                 // attached in the legacy row builder that no longer renders, leaving the
@@ -1486,6 +1511,50 @@ namespace EveLens.Avalonia.Views.PlanEditor
             int index = -1;
             for (int i = 0; i < items.Count; i++)
                 if (items[i] == item) { index = i; break; }
+
+            // The inspector and the list must feel like ONE surface: locate scrolls
+            // the entry into view, the arrows reorder without touching the mouse-drag.
+            var actionRow = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Spacing = 6,
+                Margin = new Thickness(0, 2, 0, 0),
+            };
+            var locateBtn = new Button
+            {
+                Content = "◎ " + Loc.Get("PlanEditor.LocateInPlan"),
+                FontSize = FontScaleService.Caption,
+                Padding = new Thickness(8, 2),
+                CornerRadius = new CornerRadius(10),
+            };
+            var capturedForLocate = item;
+            locateBtn.Click += (_, _) => QueueListControl.ScrollToItem(capturedForLocate);
+            actionRow.Children.Add(locateBtn);
+            if (index > 0)
+            {
+                var upBtn = new Button
+                {
+                    Content = "▲", FontSize = FontScaleService.Caption,
+                    Padding = new Thickness(8, 2), CornerRadius = new CornerRadius(10),
+                    DataContext = item,
+                };
+                ToolTip.SetTip(upBtn, Loc.Get("PlanEditor.MoveUp"));
+                upBtn.Click += OnMoveItemUp;
+                actionRow.Children.Add(upBtn);
+            }
+            if (index >= 0 && index < items.Count - 1)
+            {
+                var downBtn = new Button
+                {
+                    Content = "▼", FontSize = FontScaleService.Caption,
+                    Padding = new Thickness(8, 2), CornerRadius = new CornerRadius(10),
+                    DataContext = item,
+                };
+                ToolTip.SetTip(downBtn, Loc.Get("PlanEditor.MoveDown"));
+                downBtn.Click += OnMoveItemDown;
+                actionRow.Children.Add(downBtn);
+            }
+            SidebarContent.Children.Add(actionRow);
             if (index > 0)
                 SidebarContent.Children.Add(SidebarKeyValue(
                     Loc.Get("Optimizer.StartsAfter"), items[index - 1].DisplayName, goldBrush));
@@ -1516,12 +1585,15 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     Foreground = dimBrush,
                     Margin = new Thickness(0, 6, 0, 0),
                 });
+                // Five pills, then a count: a wall of gold outlines competed with
+                // the plan itself for attention. Muted borders, dim text.
                 var wrap = new WrapPanel { Orientation = Orientation.Horizontal };
-                foreach (var dep in dependents.OrderBy(d => d.Skill.LocalizedName).Take(9))
+                var mutedBorder = new SolidColorBrush(Color.Parse("#44E6A817"));
+                foreach (var dep in dependents.OrderBy(d => d.Skill.LocalizedName).Take(5))
                 {
                     wrap.Children.Add(new Border
                     {
-                        BorderBrush = goldBrush,
+                        BorderBrush = mutedBorder,
                         BorderThickness = new Thickness(1),
                         CornerRadius = new CornerRadius(10),
                         Padding = new Thickness(8, 2),
@@ -1530,8 +1602,19 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         {
                             Text = dep.Skill.LocalizedName,
                             FontSize = FontScaleService.Caption,
-                            Foreground = goldBrush,
+                            Foreground = new SolidColorBrush(Color.Parse("#FFB8AE8E")),
                         },
+                    });
+                }
+                if (dependents.Count > 5)
+                {
+                    wrap.Children.Add(new TextBlock
+                    {
+                        Text = string.Format(Loc.Get("PlanEditor.MoreFmt"), dependents.Count - 5),
+                        FontSize = FontScaleService.Caption,
+                        Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(2, 0, 0, 4),
                     });
                 }
                 SidebarContent.Children.Add(wrap);
@@ -1999,12 +2082,15 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             var heroStack = new StackPanel { Spacing = 2 };
 
+            // One compact line, not a second hero: the stats band above the list
+            // already carries the headline — duplicating it at full size wasted the
+            // inspector's space (review point 3).
             heroStack.Children.Add(new TextBlock
             {
                 Text = FormatTime(stats.TrainingTime),
-                FontSize = FontScaleService.Title,
+                FontSize = FontScaleService.Subheading,
                 FontWeight = FontWeight.Bold,
-                Foreground = GoldBrush,
+                Foreground = (IBrush)Application.Current!.FindResource("EveTextPrimaryBrush")!,
             });
 
             int totalEntries = _viewModel.EntryCount;
@@ -2069,9 +2155,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
                 int available = Math.Max(0,
                     character.AvailableReMaps + (timedAvail ? 1 : 0) - used);
+                string remapLine = used == 0
+                    ? string.Format(Loc.Get("PlanEditor.RemapsNoneFmt"), available)
+                    : available == 0
+                        ? string.Format(Loc.Get("PlanEditor.RemapsScheduledFmt"), used) +
+                          " · " + Loc.Get("PlanEditor.RemapsAllUsed")
+                        : string.Format(Loc.Get("PlanEditor.RemapsScheduledFmt"), used) +
+                          " · " + string.Format(Loc.Get("PlanEditor.RemapsRemainingFmt"), available);
                 SidebarContent.Children.Add(new TextBlock
                 {
-                    Text = string.Format(Loc.Get("PlanEditor.RemapBudgetLine"), used, available),
+                    Text = remapLine,
                     FontSize = FontScaleService.Small,
                     Foreground = new SolidColorBrush(Color.Parse("#FF909090")),
                 });
@@ -2494,9 +2587,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
             }
 
             // ── State: Not yet run ──
+            // Once the plan carries remap points, "Optimize Plan" is the wrong verb:
+            // the work is done and the button becomes a review.
+            bool hasRemapPoints = _viewModel?.Plan?.Any(e => e.Remapping != null) == true;
             var optimizeBtn = new Button
             {
-                Content = "\u26A1 " + Loc.Get("PlanEditor.OptimizePlan"),
+                Content = hasRemapPoints
+                    ? "\uD83D\uDCCA " + Loc.Get("PlanEditor.ReviewOptimization")
+                    : "\u26A1 " + Loc.Get("PlanEditor.OptimizePlan"),
                 FontSize = FontScaleService.Body,
                 Padding = new Thickness(10, 5),
                 CornerRadius = new CornerRadius(12),
@@ -2968,15 +3066,21 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     RemapPlanningService.ProposeAtAttributeBoundaries(analysisPlan, budget));
                 if (version != _badgeVersion) return;
 
+                // Name the clone the numbers were computed for -- As-is vs Alpha vs
+                // Omega changes every duration, and an unlabeled verdict left users
+                // unable to explain the difference.
+                string clone = character.EffectiveCharacterStatus.ToString();
                 if (proposal.TimeSaved > TimeSpan.FromHours(12))
                 {
                     OptimizedBadge.Content = "⚡ " + string.Format(
-                        Loc.Get("PlanEditor.CouldSaveFmt"), FormatTime(proposal.TimeSaved));
+                        Loc.Get("PlanEditor.CouldSaveCloneFmt"),
+                        FormatTime(proposal.TimeSaved), clone);
                     OptimizedBadge.Foreground = GoldBrush;
                 }
                 else
                 {
-                    OptimizedBadge.Content = "✓ " + Loc.Get("PlanEditor.Optimized");
+                    OptimizedBadge.Content = "✓ " + string.Format(
+                        Loc.Get("PlanEditor.OptimizedCloneFmt"), clone);
                     OptimizedBadge.Foreground =
                         (IBrush)Application.Current!.FindResource("EveSuccessGreenBrush")!;
                 }

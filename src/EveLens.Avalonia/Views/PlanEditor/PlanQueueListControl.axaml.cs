@@ -57,6 +57,25 @@ namespace EveLens.Avalonia.Views.PlanEditor
         /// entry), or on none/many (null) — feeds the sidebar's Selected Skill card.</summary>
         public event Action<PlanQueueItem?>? SelectionChanged;
 
+        /// <summary>Raised when a level pip is clicked: the user wants this skill's
+        /// TARGET level changed — the editor half of "editable level cells".</summary>
+        public event Action<PlanQueueItem, int>? LevelChangeRequested;
+
+        /// <summary>Scrolls the entry into view and selects it — the inspector's
+        /// "Locate in plan" for selections that scrolled out of the viewport.</summary>
+        public void ScrollToItem(PlanQueueItem item)
+        {
+            int index = _viewModel?.Items.IndexOf(item) ?? -1;
+            if (index < 0 || index >= _itemTops.Count - 1) return;
+            double target = Math.Max(0,
+                _itemTops[index] - QueueScroller.Bounds.Height / 3);
+            QueueScroller.Offset = new Vector(0, target);
+            _selected.Clear();
+            _selected.Add(index);
+            _lastClickIndex = index;
+            UpdateSelectionVisuals();
+        }
+
         /// <summary>The queue in display order, for consumers positioning an entry
         /// within the plan (the sidebar's completes-on / starts-after math).</summary>
         public System.Collections.Generic.IReadOnlyList<PlanQueueItem> QueueItems =>
@@ -490,6 +509,20 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 Spacing = 5,
                 VerticalAlignment = VerticalAlignment.Center,
             };
+            // Editor affordance: the drag handle appears on hover — the whole row
+            // was always draggable, but nothing SAID so.
+            var dragHandle = new TextBlock
+            {
+                Text = "⠿",
+                FontSize = FontScaleService.Small,
+                Foreground = new SolidColorBrush(Color.Parse("#FF707088")),
+                Opacity = 0,
+                Width = 12,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            namePanel.Children.Add(dragHandle);
+            container.PointerEntered += (_, _) => dragHandle.Opacity = 0.8;
+            container.PointerExited += (_, _) => dragHandle.Opacity = 0;
             if (item.OmegaRequired)
             {
                 namePanel.Children.Add(new TextBlock
@@ -584,13 +617,27 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 else
                     fill = emptyBrush;
 
-                pipsPanel.Children.Add(new Border
+                var pip = new Border
                 {
                     Width = 9,
                     Height = 10,
                     CornerRadius = new CornerRadius(2),
                     Background = fill,
-                });
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                };
+                // Editable, not just readable: clicking pip N retargets the plan to
+                // level N (up plans prerequisites in, down cascades dependents out).
+                int targetLevel = lvl;
+                var pipItem = item;
+                pip.PointerPressed += (_, pe) =>
+                {
+                    if (!pe.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+                    pe.Handled = true;   // a pip click edits; it must not start a drag
+                    LevelChangeRequested?.Invoke(pipItem, targetLevel);
+                };
+                ToolTip.SetTip(pip, string.Format(
+                    Loc.Get("PlanEditor.SetTargetLevelFmt"), targetLevel));
+                pipsPanel.Children.Add(pip);
             }
             Grid.SetColumn(pipsPanel, 6);
 
