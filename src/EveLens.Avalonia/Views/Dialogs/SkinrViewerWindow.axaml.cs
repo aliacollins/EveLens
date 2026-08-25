@@ -116,6 +116,17 @@ namespace EveLens.Avalonia.Views.Dialogs
                 }));
             _market.MarketChanged += () => Dispatcher.UIThread.Post(QueueMarketRefresh);
 
+            // The placeholder scroller must stop where the bottom band begins, and
+            // the band's height varies (carousel, env switcher, notice, font scale)
+            // — so the margin tracks the measured height instead of guessing one.
+            LayoutUpdated += (_, _) =>
+            {
+                double bottom = BottomBand.IsVisible ? BottomBand.Bounds.Height + 6 : 0;
+                var margin = new Thickness(0, 0, 0, bottom);
+                if (PlaceholderScroller.Margin != margin)
+                    PlaceholderScroller.Margin = margin;
+            };
+
             var characters = AppServices.Characters.Where(c => c.Monitored)
                 .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -218,7 +229,14 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void ShowRuntimeOffer()
         {
             RenderImage.IsVisible = false;
-            RenderPlaceholder.IsVisible = true;
+            // The view-state overlays (scope gate, loading, inventory error) own
+            // the stage while active — the offer ARMS the placeholder without
+            // stealing the screen (measured: the scope card and the welcome text
+            // rendered on top of each other).
+            bool stateOwnsStage = ScopeMissingPanel.IsVisible ||
+                                  LoadingText.IsVisible || ErrorText.IsVisible;
+            if (!stateOwnsStage)
+                RenderPlaceholder.IsVisible = true;
             WelcomeGuide.IsVisible = true;
             RenderTitle.Text = Loc.Get("Skinr.RuntimeTitle");
             RenderDesc.Text = Loc.Get("Skinr.RuntimeDesc");

@@ -152,6 +152,15 @@
                 </Panel>
 
                 <!-- Center state overlays (placeholder / scope / loading / error) -->
+                <!-- Scrolls as a WHOLE: welcome rows + offer + expander can exceed
+                     the stage on small windows, and content sliding under the
+                     carousel band with no scrollbar reads as broken (measured
+                     twice). Bottom margin tracks the band's real height from
+                     code-behind. Null background keeps it hit-transparent, so the
+                     orbit drag underneath is untouched when the placeholder hides. -->
+                <ScrollViewer x:Name="PlaceholderScroller"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
                 <StackPanel x:Name="RenderPlaceholder" VerticalAlignment="Center"
                             HorizontalAlignment="Center" Spacing="10" MaxWidth="560">
                     <TextBlock x:Name="RenderTitle" Text="{loc:T Skinr.RenderPlaceholderTitle}"
@@ -270,6 +279,7 @@
                         </ScrollViewer>
                     </StackPanel>
                 </StackPanel>
+                </ScrollViewer>
                 <!-- A recoverable state gets a BUTTON, not directions to a menu:
                      "Update permissions" runs the exact re-auth flow in place. -->
                 <StackPanel x:Name="ScopeMissingPanel" IsVisible="False" Spacing="10"
