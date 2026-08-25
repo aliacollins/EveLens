@@ -273,10 +273,6 @@
                                            FontSize="{DynamicResource EveFontSmall}"
                                            Foreground="{StaticResource SkinrTextSecBrush}"
                                            TextWrapping="Wrap" TextAlignment="Center" />
-                                <TextBlock Text="{loc:T Skinr.RuntimeWhyNote}"
-                                           FontSize="{DynamicResource EveFontCaption}"
-                                           Foreground="{StaticResource SkinrTextDimBrush}"
-                                           TextWrapping="Wrap" TextAlignment="Center" />
                                 <SelectableTextBlock x:Name="RuntimeDetailsText" IsVisible="False"
                                            FontSize="{DynamicResource EveFontCaption}"
                                            FontFamily="Consolas,Menlo,monospace"
