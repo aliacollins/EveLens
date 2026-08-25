@@ -207,6 +207,11 @@ namespace EveLens.Avalonia.Views.Dialogs
                     _runtimeRelease.Version,
                     _runtimeRelease.SizeBytes / (1024.0 * 1024.0));
                 RuntimeVerifiedText.IsVisible = true;
+                // Upgrade the description with the real size — a static "232 MB"
+                // goes stale the first time a release grows.
+                if (RuntimeInstallPanel.IsVisible)
+                    RenderDesc.Text = string.Format(Loc.Get("Skinr.RuntimeDescFmt"),
+                        _runtimeRelease.SizeBytes / (1024.0 * 1024.0));
                 RuntimeDetailsText.Text = string.Format(
                     Loc.Get("Skinr.RuntimeDetailsFmt"),
                     _runtimeRelease.Version,

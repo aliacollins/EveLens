@@ -973,24 +973,27 @@ AutoUpdate.ChangeAnytime = You can change this anytime in Settings > Data. We'll
 AutoUpdate.OptIn = Update automatically
 AutoUpdate.NotifyOnly = Just notify me
 Skinr.CcpNotice = © 2016 CCP hf. All rights reserved. "EVE", "EVE Online", "CCP", and all related logos and images are trademarks or registered trademarks of CCP hf.
-Skinr.RuntimeTitle = See your SKINs in full 3D
-Skinr.RuntimeDesc = 3D previews use the optional EveLens Rendering Runtime - installed once, used only for 3D rendering. Everything else in EveLens works without it.
+Skinr.RuntimeTitle = 3D previews require the EveLens 3D Renderer
+Skinr.RuntimeDesc = A separate component that enables interactive 3D ships and SKIN previews. Install it once to enable 3D.
 Skinr.RuntimeOffer = Install the EveLens Rendering Runtime to see your designs in full 3D — real hulls, real nanocoatings, real lighting.
 Skinr.RuntimeEulaNote = The Rendering Runtime is EveLens's closed-source 3D engine component. It talks only to CCP's art servers and to EveLens on this machine, and every download is verified against a signature built into EveLens before anything runs. By installing, you accept its license (EULA.md in the install folder).
-Skinr.RuntimeInstall = Install 3D viewer
-Skinr.RuntimeChecking = Checking for the latest runtime…
-Skinr.RuntimeDownloadingFmt = Downloading runtime {0} ({1:F0} MB)…
-Skinr.RuntimeStarting = Verifying and starting the renderer…
-Skinr.RuntimeUnreachable = The runtime service is unreachable right now — try again in a few minutes.
-Skinr.RuntimeFailed = The runtime installed but did not start. See the log for details.
-Skinr.RuntimeDetailsFmt = EveLens Rendering Runtime {0} · {1:F0} MB
+Skinr.RuntimeInstall = Install 3D Renderer
+Skinr.RuntimeChecking = Checking for the latest 3D Renderer…
+Skinr.RuntimeDownloadingFmt = Downloading the 3D Renderer {0} ({1:F0} MB)…
+Skinr.RuntimeStarting = Verifying and starting the 3D Renderer…
+Skinr.RuntimeUnreachable = The 3D Renderer service is unreachable right now - try again in a few minutes.
+Skinr.RuntimeFailed = The 3D Renderer installed but did not start. See the log for details.
+Skinr.RuntimeDetailsFmt = EveLens 3D Renderer {0} · {1:F0} MB
+Host: {2}
+SHA-256: {3}
+Signature: verified against EveLens's built-in key before install
 Host: {2}
 SHA-256: {3}
 Signature: verified against EveLens's built-in key before install
 Skinr.RuntimeNotNow = Not now
 Skinr.RuntimeWhy = Why is this a separate download?
-Skinr.RuntimeWhyBody = EveLens is open source; the Rendering Runtime is its closed-source 3D engine, so it ships separately and only to people who want 3D. It installs into EveLens's own data folder, talks only to CCP's art servers and to EveLens on this machine, and every download is checked against a signature built into EveLens - exact hash below - before anything runs. Installing means accepting its license (EULA.md in the install folder).
-Skinr.RuntimeVerifiedFmt = EveLens Rendering Runtime {0} · {1:F0} MB · verified download
+Skinr.RuntimeWhyBody = 3D rendering is optional, so the 3D Renderer isn't included with the standard EveLens installation. It installs into EveLens's own data folder, talks only to CCP's art servers and to EveLens on this machine, and every download is checked against a signature built into EveLens - exact hash below - before anything runs. Installing means accepting its license (EULA.md in the install folder).
+Skinr.RuntimeVerifiedFmt = EveLens 3D Renderer {0} · {1:F0} MB · verified download
 Skinr.ScopeUpdate = Update permissions
 Skinr.ScopeContinue = Continue without SKINR
 Skinr.WelcomeCollectionTitle = Collection
@@ -1000,3 +1003,4 @@ Skinr.WelcomeHubDesc = EVE's design marketplace, on the left rail: browse thousa
 Skinr.WelcomeStageTitle = The stage
 Skinr.WelcomeStageDesc = Five environments from Studio to open Space, a photo mode that hides every control, and Photo Op - fly up to ten of your ships in formation for one screenshot.
 Skinr.RenderFailedShort = The renderer could not start. Details are in the EveLens log.
+Skinr.RuntimeDescFmt = A separate {0:F0} MB component that enables interactive 3D ships and SKIN previews. Install it once to enable 3D.
