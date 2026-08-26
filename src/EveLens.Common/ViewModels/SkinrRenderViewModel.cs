@@ -198,6 +198,23 @@ namespace EveLens.Common.ViewModels
         /// runtime, and settles <see cref="IsAvailable"/>. Cheap — no process is spawned until a
         /// design is actually loaded.
         /// </summary>
+        /// <summary>
+        /// Tears the host down and rediscovers everything. This is the runtime UPDATE
+        /// path: a freshly installed runtime version must replace a RUNNING sidecar —
+        /// and its geometry converter, discovered at host creation — without "close
+        /// the window and reopen it" as the recovery mechanism.
+        /// </summary>
+        public Task ReinitializeAsync(CancellationToken ct = default)
+        {
+            if (_host != null)
+            {
+                _host.Dispose();
+                _host = null;
+            }
+            UnavailableReason = null;
+            return InitializeAsync(ct);
+        }
+
         public async Task InitializeAsync(CancellationToken ct = default)
         {
             // A host that exists AND validated is settled. A host that exists but
