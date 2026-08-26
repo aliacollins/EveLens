@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **3D geometry now converts on installed builds** -- Beta.2's SKINR studio could fail with "Could not prepare this hull's geometry": the gr2-to-cmf converter and the Node runtime it runs on existed only on development machines. Render Runtime 1.0.3 now carries both (converter bundle + a checksum-pinned Node), verified by the signed manifest like everything else in the package, and EveLens looks for them exactly there. Update the runtime when prompted.
+- **The 3D renderer now updates in place** -- EveLens only ever offered the runtime download when none was installed; a newer announced version was invisible to existing installs. The SKINR window now offers the update on open -- same consent panel, same verification chain -- and a running renderer restarts onto the new version without closing the window.
 
 ## [1.5.0-beta.2] - 2026-08-26
 
