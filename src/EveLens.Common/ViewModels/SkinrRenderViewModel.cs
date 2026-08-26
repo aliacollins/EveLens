@@ -247,9 +247,23 @@ namespace EveLens.Common.ViewModels
             _appliedSize = _host.RenderSize;
 
             IReadOnlyList<string> problems = _host.Validate();
-            UnavailableReason = problems.Count == 0
-                ? null
-                : "3D preview unavailable — " + string.Join("; ", problems);
+            if (problems.Count == 0)
+            {
+                UnavailableReason = null;
+            }
+            else
+            {
+                // The search report names environment variables and local file
+                // paths — developer material. It is traced HERE, at the source,
+                // and the user-facing reason stays one human sentence: routed
+                // through SetError, the raw report reached the macOS status strip
+                // verbatim (user screenshot), paths and all.
+                AppServices.TraceService?.Trace(
+                    "SkinrRender: unavailable — " + string.Join("; ", problems));
+                UnavailableReason =
+                    "3D preview unavailable — the 3D engine is not installed on " +
+                    "this machine.";
+            }
         }
 
         private static string? DescribePlatform(SkinrRenderSupport support) => support switch
