@@ -1,4 +1,4 @@
-# Main Window — 主窗口
+﻿# Main Window — 主窗口
 Menu.File = 文件
 Menu.Plans = 训练计划
 Menu.Tools = 工具
@@ -106,6 +106,11 @@ Doctrine.Title = 教义设计器
 Doctrine.Doctrines = 教义
 Doctrine.NewDoctrine = + 新建教义
 Doctrine.ImportFromPlan = 从计划导入
+Doctrine.ImportFromFile = 从文件导入
+Doctrine.ImportFailed = 导入失败 -- 文件中未识别到任何技能
+Doctrine.Groups = 分组
+Doctrine.Characters = 角色
+Doctrine.RemoveCharacter = 从预案中移除
 Doctrine.CreatePlan = 生成计划
 Doctrine.PlanCreated = 计划已创建！
 Doctrine.CreatePlansForAll = 为所有角色生成计划
@@ -813,7 +818,8 @@ PlanEditor.PlanToLevel = Plan to Level
 PlanEditor.MoveUp = Move Up
 PlanEditor.MoveDown = Move Down
 PlanEditor.MoveToTop = Move to Top
-PlanEditor.ChangePriority = Change Priority...
+PlanEditor.ChangePriority = 更改优先级
+PlanEditor.PriorityFmt = 优先级 {0}
 PlanEditor.RemoveRemapPoint = Remove Remap Point
 PlanEditor.InsertRemapPoint = Insert Remap Point
 PlanEditor.RemoveFromPlan = Remove from Plan

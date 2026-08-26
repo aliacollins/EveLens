@@ -1,4 +1,4 @@
-# Main Window
+﻿# Main Window
 Menu.File = 파일
 Menu.Plans = 플랜
 Menu.Tools = 도구
@@ -106,6 +106,11 @@ Doctrine.Title = 독트린 디자이너
 Doctrine.Doctrines = 독트린
 Doctrine.NewDoctrine = + 새 독트린
 Doctrine.ImportFromPlan = 플랜에서 가져오기
+Doctrine.ImportFromFile = 파일에서 가져오기
+Doctrine.ImportFailed = 가져오기 실패 -- 파일에서 인식된 스킬이 없습니다
+Doctrine.Groups = 그룹
+Doctrine.Characters = 캐릭터
+Doctrine.RemoveCharacter = 독트린에서 제거
 Doctrine.CreatePlan = 플랜 생성
 Doctrine.PlanCreated = 플랜 생성됨!
 Doctrine.CreatePlansForAll = 모두를 위한 플랜 생성
@@ -813,7 +818,8 @@ PlanEditor.PlanToLevel = Plan to Level
 PlanEditor.MoveUp = Move Up
 PlanEditor.MoveDown = Move Down
 PlanEditor.MoveToTop = Move to Top
-PlanEditor.ChangePriority = Change Priority...
+PlanEditor.ChangePriority = 우선순위 변경
+PlanEditor.PriorityFmt = 우선순위 {0}
 PlanEditor.RemoveRemapPoint = Remove Remap Point
 PlanEditor.InsertRemapPoint = Insert Remap Point
 PlanEditor.RemoveFromPlan = Remove from Plan

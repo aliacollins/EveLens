@@ -16,6 +16,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EveLens.Avalonia.Converters;
 using EveLens.Avalonia.Services;
+using EveLens.Common;
 using EveLens.Common.Data;
 using EveLens.Common.Models;
 using EveLens.Common.Service;
@@ -46,6 +47,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             NewTemplateBtn.Click += OnNewTemplate;
             ImportFromPlanBtn.Click += OnImportFromPlan;
+            ImportFromFileBtn.Click += OnImportFromFile;
             AddSkillBtn.Click += OnAddSkill;
             AddCharBtn.Click += OnAddCharacter;
             ApplyAllBtn.Click += OnApplyAll;
@@ -59,6 +61,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             DoctrinesSidebarLabel.Text = Loc.Get("Doctrine.Doctrines");
             NewTemplateBtn.Content = Loc.Get("Doctrine.NewDoctrine");
             ImportFromPlanBtn.Content = Loc.Get("Doctrine.ImportFromPlan");
+            ImportFromFileBtn.Content = Loc.Get("Doctrine.ImportFromFile");
             AddSkillBtn.Content = Loc.Get("Action.AddSkill");
             AddCharBtn.Content = Loc.Get("Action.AddCharacter");
             ApplyAllBtn.Content = Loc.Get("Doctrine.CreatePlansForAll");
@@ -288,7 +291,31 @@ namespace EveLens.Avalonia.Views.Dialogs
                     cardStack.Children.Add(createPlanBtn);
                 }
 
-                var row = new StackPanel { Orientation = Orientation.Horizontal };
+                // Cards are the character list for this doctrine, so they carry the way OUT
+                // too — there was no way to remove a character at all (Issue #137)
+                var removeChar = character;
+                var removeBtn = new Button
+                {
+                    Content = "✕",
+                    FontSize = FontScaleService.Caption,
+                    Padding = new Thickness(4, 2),
+                    Background = Brushes.Transparent,
+                    Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
+                    CornerRadius = new CornerRadius(8),
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    VerticalAlignment = VerticalAlignment.Top,
+                };
+                ToolTip.SetTip(removeBtn, Loc.Get("Doctrine.RemoveCharacter"));
+                removeBtn.Click += (_, _) =>
+                {
+                    _vm.UnsubscribeCharacter(removeChar);
+                    RebuildUI();
+                };
+
+                var row = new DockPanel();
+                DockPanel.SetDock(removeBtn, Dock.Right);
+                DockPanel.SetDock(portraitBorder, Dock.Left);
+                row.Children.Add(removeBtn);
                 row.Children.Add(portraitBorder);
                 row.Children.Add(cardStack);
                 card.Child = row;
@@ -316,10 +343,13 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             for (int i = 0; i < charCount; i++)
             {
+                // Full name, not the first word — alts often share a firstname and became
+                // indistinguishable (Issue #137). Trim to the column, tooltip carries the rest.
                 string name = _vm.SubscribedCharacters[i].Name;
-                if (name.Contains(' '))
-                    name = name.Split(' ')[0];
-                header.Children.Add(MakeHeaderCell(name, 3 + i, HorizontalAlignment.Center));
+                var cell = MakeHeaderCell(name, 3 + i, HorizontalAlignment.Center);
+                cell.TextTrimming = TextTrimming.CharacterEllipsis;
+                ToolTip.SetTip(cell, name);
+                header.Children.Add(cell);
             }
 
             ComparisonGrid.Children.Add(header);
@@ -527,6 +557,46 @@ namespace EveLens.Avalonia.Views.Dialogs
             catch { }
         }
 
+        // Doctrines shared by alliances arrive as exported plan files; importing one used to
+        // require attaching it to a character's plan first, then importing from that plan
+        // (Issue #137). This reads the file straight into a template.
+        private async void OnImportFromFile(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var files = await StorageProvider.OpenFilePickerAsync(new global::Avalonia.Platform.Storage.FilePickerOpenOptions
+                {
+                    Title = Loc.Get("Doctrine.ImportFromFile"),
+                    AllowMultiple = false,
+                    FileTypeFilter = new[]
+                    {
+                        new global::Avalonia.Platform.Storage.FilePickerFileType("EveLens Plans") { Patterns = new[] { "*.emp", "*.xml" } },
+                        new global::Avalonia.Platform.Storage.FilePickerFileType("All Files") { Patterns = new[] { "*" } },
+                    }
+                });
+
+                if (files.Count == 0) return;
+
+                var serialPlan = Common.Helpers.PlanIOHelper.ImportFromXML(files[0].Path.LocalPath);
+                if (serialPlan == null || serialPlan.Entries.Count == 0)
+                {
+                    ShowToast(Loc.Get("Doctrine.ImportFailed"));
+                    return;
+                }
+
+                var template = _vm.CreateFromPlanFile(serialPlan);
+                if (template == null)
+                {
+                    ShowToast(Loc.Get("Doctrine.ImportFailed"));
+                    return;
+                }
+
+                _vm.SelectTemplate(template);
+                RebuildUI();
+            }
+            catch { }
+        }
+
         private async void OnAddSkill(object? sender, RoutedEventArgs e)
         {
             if (_vm.SelectedTemplate == null) return;
@@ -642,6 +712,59 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var allChars = AppServices.Characters?.Cast<Character>().ToList() ?? new List<Character>();
                 var alreadySubscribed = new HashSet<Guid>(_vm.SelectedTemplate.SubscribedCharacterGuids);
                 bool anyAdded = false;
+
+                // Overview groups first — one click subscribes every unsubscribed member,
+                // so a "mains" group can be compared against a doctrine at once (Issue #137)
+                var groupRows = Settings.CharacterGroups
+                    .Select(g => new
+                    {
+                        g.Name,
+                        Members = allChars.Where(c => g.CharacterGuids.Contains(c.Guid)
+                            && !alreadySubscribed.Contains(c.Guid)).ToList()
+                    })
+                    .Where(g => g.Members.Count > 0)
+                    .ToList();
+
+                if (groupRows.Count > 0)
+                {
+                    charList.Children.Add(new TextBlock
+                    {
+                        Text = Loc.Get("Doctrine.Groups"),
+                        FontSize = FontScaleService.Caption,
+                        Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
+                        Margin = new Thickness(0, 0, 0, 2),
+                    });
+
+                    foreach (var group in groupRows)
+                    {
+                        var capturedMembers = group.Members;
+                        var groupBtn = new Button
+                        {
+                            Content = $"{group.Name}  (+{group.Members.Count})",
+                            FontSize = FontScaleService.Body,
+                            HorizontalAlignment = HorizontalAlignment.Stretch,
+                            HorizontalContentAlignment = HorizontalAlignment.Left,
+                            Padding = new Thickness(10, 6),
+                            Background = Brushes.Transparent,
+                            CornerRadius = new CornerRadius(6),
+                            Foreground = FindBrush("EveAccentPrimaryBrush") ?? Brushes.Gold,
+                        };
+                        groupBtn.Click += (_, _) =>
+                        {
+                            anyAdded = _vm.SubscribeCharacters(capturedMembers) > 0;
+                            dialog.Close();
+                        };
+                        charList.Children.Add(groupBtn);
+                    }
+
+                    charList.Children.Add(new TextBlock
+                    {
+                        Text = Loc.Get("Doctrine.Characters"),
+                        FontSize = FontScaleService.Caption,
+                        Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
+                        Margin = new Thickness(0, 6, 0, 2),
+                    });
+                }
 
                 foreach (var character in allChars.OrderBy(c => c.Name))
                 {

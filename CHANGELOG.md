@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0-beta.9] - 2026-08-26
+
+### Added
+
+- **Doctrine Designer: import a doctrine straight from a file** -- Alliance skill plans shared as .emp or plan .xml files no longer have to be routed through a character's plan first; the new "Import from File" button in the sidebar reads them directly into a doctrine (#137).
+- **Doctrine Designer: add characters by group** -- The Add Character dialog now lists your Overview groups first; one click subscribes every member of a group, so checking all your mains against a doctrine is a single action (#137).
+- **Doctrine Designer: remove a character from a doctrine** -- Each character card in the comparison now has a remove button. There was previously no way out at all once a character was added (#137).
+
+### Fixed
+
+- **Skill Planner keeps your skill order** -- Adding a skill to a hand-ordered plan rearranged the whole plan: the prerequisite-order pass was grouping skills by training attribute on every change, whether or not any sort was active. Manual order is now only touched when a prerequisite genuinely forces it, and attribute grouping happens only when Group by Attr is on (#136).
+- **Skill Planner: Change Priority now works** -- Right-click > Change Priority silently cycled the priority with no visible response, which read as doing nothing. It is now a proper submenu showing priorities 1-5 with the current one marked (#135).
+- **Doctrine Designer shows full character names** -- The comparison table's column headers truncated names to the first word, which made same-firstname alts indistinguishable. Full names now, trimmed with a tooltip when the column is tight (#137).
+
+## [1.5.0-beta.8] - 2026-08-26
+
 ### Fixed
 
 - **Sort and reorder controls appear when the second character arrives** -- The overview's sort, density, and reorder controls only exist with 2+ characters, but adding the second character took the incremental card-update path that never re-evaluates the toolbar -- so the controls stayed hidden until an app restart. Crossing the threshold (either direction) now rebuilds the header.
