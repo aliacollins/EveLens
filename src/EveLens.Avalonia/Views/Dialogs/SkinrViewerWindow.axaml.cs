@@ -167,21 +167,10 @@ namespace EveLens.Avalonia.Views.Dialogs
                     if (installed == null && !_render.IsAvailable)
                     {
                         // First-run case — offer the add-on download instead of an
-                        // error. Server-driven availability: the offer only shows
-                        // when the per-platform announcement answers. On a Mac
-                        // before the Metal runtime publishes, that means honest
-                        // "planned" messaging instead of an Install button that
-                        // cannot work.
-                        _runtimeRelease = await SkinrRuntimeInstaller.GetLatestAsync();
-                        if (_runtimeRelease != null || OperatingSystem.IsWindows())
-                        {
-                            ShowRuntimeOffer();
-                        }
-                        else
-                        {
-                            RenderTitle.Text = Loc.Get("Skinr.RenderMacTitle");
-                            RenderDesc.Text = Loc.Get("Skinr.RenderMacDesc");
-                        }
+                        // error. The offer method itself decides between the real
+                        // offer and "coming" copy on platforms whose runtime is
+                        // not yet published (server-driven availability).
+                        await ShowRuntimeOfferAsync();
                     }
                     else if (installed != null)
                     {
@@ -192,7 +181,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                         if (_runtimeRelease?.Version != null &&
                             _runtimeRelease.Version != installed)
                         {
-                            ShowRuntimeOffer(update: true, installedVersion: installed);
+                            await ShowRuntimeOfferAsync(update: true,
+                                installedVersion: installed);
                         }
                         else if (!_render.IsAvailable)
                         {
@@ -258,8 +248,46 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// screen for "no runtime", used at open and again whenever an action needed
         /// the renderer. Never the raw discovery report: that names environment
         /// variables and local paths, and it goes to the trace instead.</summary>
-        private void ShowRuntimeOffer(bool update = false, string? installedVersion = null)
+        /// <summary>Law 10 wrapper for sync call sites (design-click error path).</summary>
+        private async void ShowRuntimeOffer(bool update = false, string? installedVersion = null)
         {
+            try
+            {
+                await ShowRuntimeOfferAsync(update, installedVersion);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrViewer: runtime offer failed: {ex.Message}");
+            }
+        }
+
+        private async System.Threading.Tasks.Task ShowRuntimeOfferAsync(
+            bool update = false, string? installedVersion = null)
+        {
+            // Server-driven availability, enforced HERE so every caller inherits
+            // it: on a platform whose runtime is not yet published (announcement
+            // 404s), the honest state is "coming" — never an Install button whose
+            // click can only report "service unreachable". This bit a Mac user on
+            // the design-click path, which bypassed the same check in OnOpened.
+            if (!update && !OperatingSystem.IsWindows())
+            {
+                _runtimeRelease ??= await SkinrRuntimeInstaller.GetLatestAsync();
+                if (_runtimeRelease == null)
+                {
+                    RenderImage.IsVisible = false;
+                    bool stateOwns = ScopeMissingPanel.IsVisible ||
+                                     LoadingText.IsVisible || ErrorText.IsVisible;
+                    if (!stateOwns)
+                        RenderPlaceholder.IsVisible = true;
+                    WelcomeGuide.IsVisible = true;
+                    RenderTitle.Text = Loc.Get("Skinr.RenderMacTitle");
+                    RenderDesc.Text = Loc.Get("Skinr.RenderMacDesc");
+                    RuntimeInstallPanel.IsVisible = false;
+                    return;
+                }
+            }
+
             RenderImage.IsVisible = false;
             // The view-state overlays (scope gate, loading, inventory error) own
             // the stage while active — the offer ARMS the placeholder without
