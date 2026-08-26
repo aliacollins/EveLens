@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.5.0-beta.9] - 2026-08-26
+### Added
+
+- **Skill priorities are now a real feature of the plan editor** -- Priority used to be settable but invisible: nothing displayed it and nothing ordered by it. Now every skill row shows its priority (a chip in its own column -- quiet at the default, tinted when you've changed it), and a new "Group by Priority" toolbar toggle orders the plan into priority bands with 1 training first, so long plans can carry milestones. Prerequisites always stay ahead of the skills that need them, and raising a skill's priority pulls its prerequisites up along with it (#135, and the milestone use case from #136).
+
+### Fixed
+
+- **Changing a priority can no longer scramble your plan order** -- The priority-change machinery inherited a convention from the old editor that rebuilt the plan from the currently sorted view, which would have silently made a temporary sort permanent. It now always preserves your manual order.
 
 ### Added
 

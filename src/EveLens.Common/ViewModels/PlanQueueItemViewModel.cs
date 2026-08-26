@@ -28,6 +28,7 @@ namespace EveLens.Common.ViewModels
         public TimeSpan TrainingTime => Entry.TrainingTime;
         public long SkillPointsPerHour => Entry.SpPerHour;
         public bool OmegaRequired => Entry.OmegaRequired;
+        public int Priority => Entry.Priority;
 
         // Chain assignment (set by RecomputeChains)
         public int ChainGoalId { get; set; }

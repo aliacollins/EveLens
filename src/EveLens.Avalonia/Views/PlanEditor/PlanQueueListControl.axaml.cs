@@ -111,6 +111,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             HeaderPri.Text = Loc.Get("Plan.Primary");
             HeaderSec.Text = Loc.Get("Plan.Secondary");
             HeaderSphr.Text = Loc.Get("Plan.SPPerHour");
+            HeaderPrio.Text = Loc.Get("Plan.PriorityHeader");
             HeaderLevel.Text = Loc.Get("Plan.Level");
         }
 
@@ -119,6 +120,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             get => _groupByAttribute;
             set { _groupByAttribute = value; Rebuild(); }
         }
+
+        public bool GroupByPriority
+        {
+            get => _groupByPriority;
+            set { _groupByPriority = value; Rebuild(); }
+        }
+        private bool _groupByPriority;
 
         public void SetViewModel(PlanQueueManager viewModel)
         {
@@ -154,12 +162,24 @@ namespace EveLens.Avalonia.Views.PlanEditor
             _itemTops.Clear();
             double y = 0;
             EveAttribute lastAttr = EveAttribute.None;
+            int lastPriority = -1;
             bool anyRemap = _viewModel!.Items.Any(it => it.Entry.Remapping != null);
             var character = _viewModel.Plan?.Character;
 
             for (int i = 0; i < _viewModel.Items.Count; i++)
             {
                 var item = _viewModel.Items[i];
+
+                // Priority bands: the display plan is already partitioned 1 -> 5 when
+                // grouping is on, so a band header marks each boundary. They're the
+                // OUTER structure (the sorter partitions by priority first), hence
+                // rendered above any remap/attribute header for the same row.
+                if (_groupByPriority && item.Priority != lastPriority)
+                {
+                    _visualRows.Add(BuildPriorityGroupHeader(item.Priority));
+                    y += HeaderRowHeight;
+                }
+                lastPriority = item.Priority;
 
                 // ── Segment headers (schedule design) ──
                 if (item.Entry.Remapping != null &&
@@ -488,10 +508,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (ContextMenuFactory != null)
                 container.ContextMenu = ContextMenuFactory(capturedItem);
 
-            // 7-column grid: skill | time | R | PRI | SEC | SP/HR | LEVEL
+            // 8-column grid: skill | time | R | PRI | SEC | SP/HR | PRIO | LEVEL
             var grid = new Grid
             {
-                ColumnDefinitions = ColumnDefinitions.Parse("*,100,40,75,75,55,60"),
+                ColumnDefinitions = ColumnDefinitions.Parse("*,100,40,75,75,55,45,60"),
                 Margin = new Thickness(18, 0, 8, 0),
             };
 
@@ -610,7 +630,32 @@ namespace EveLens.Avalonia.Views.PlanEditor
             };
             Grid.SetColumn(spText, 5);
 
-            // ── Col 6: Level blocks (standard 10x12, matches Skills tab) ──
+            // ── Col 6: Priority chip ──
+            // Default (3) stays quiet -- a plain number in tertiary gray. Off-default
+            // priorities get a tinted pill so the plans that USE priorities show their
+            // structure at a glance, and untouched plans stay clean.
+            var (prioBg, prioFg) = PriorityColors(item.Priority, 30);
+            var prioChip = new Border
+            {
+                Background = item.Priority == 3
+                    ? Brushes.Transparent : new SolidColorBrush(prioBg),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(7, 2),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = item.Priority.ToString(),
+                    FontSize = FontScaleService.Caption,
+                    Foreground = new SolidColorBrush(prioFg),
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            };
+            ToolTip.SetTip(prioChip, string.Format(
+                Loc.Get("PlanEditor.PriorityChipTipFmt"), item.Priority));
+            Grid.SetColumn(prioChip, 6);
+
+            // ── Col 7: Level blocks (standard 10x12, matches Skills tab) ──
             var accentColor = Color.Parse("#FFE6A817");
             var trainedBrush = new SolidColorBrush(accentColor);
             var plannedBrush = new SolidColorBrush(new Color(80, accentColor.R, accentColor.G, accentColor.B));
@@ -655,7 +700,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     Loc.Get("PlanEditor.SetTargetLevelFmt"), targetLevel));
                 pipsPanel.Children.Add(pip);
             }
-            Grid.SetColumn(pipsPanel, 6);
+            Grid.SetColumn(pipsPanel, 7);
 
             grid.Children.Add(ribbon);
             grid.Children.Add(namePanel);
@@ -664,6 +709,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             grid.Children.Add(priPill);
             grid.Children.Add(secPill);
             grid.Children.Add(spText);
+            grid.Children.Add(prioChip);
             grid.Children.Add(pipsPanel);
 
             container.Child = grid;
@@ -701,6 +747,38 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 Child = new TextBlock
                 {
                     Text = Loc.Get($"Eve.{attr}"),
+                    FontSize = FontScaleService.Body,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = new SolidColorBrush(fg),
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+            };
+        }
+
+        /// <summary>Priority band colors: 1 burns hottest (gold), fading to gray at 5.
+        /// Shared by the band headers and the row chips so the mapping reads as one system.</summary>
+        internal static (Color bg, Color fg) PriorityColors(int priority, byte bgAlpha) => priority switch
+        {
+            1 => (Color.FromArgb(bgAlpha, 230, 168, 23), Color.Parse("#E6A817")),
+            2 => (Color.FromArgb(bgAlpha, 230, 166, 50), Color.Parse("#D8B96A")),
+            3 => (Color.FromArgb(bgAlpha, 160, 160, 176), Color.Parse("#A0A0B0")),
+            4 => (Color.FromArgb(bgAlpha, 112, 112, 136), Color.Parse("#8888A0")),
+            _ => (Color.FromArgb(bgAlpha, 96, 96, 112), Color.Parse("#707088")),
+        };
+
+        private static Control BuildPriorityGroupHeader(int priority)
+        {
+            var (bg, fg) = PriorityColors(priority, 40);
+
+            return new Border
+            {
+                Height = 28,
+                Background = new SolidColorBrush(bg),
+                Padding = new Thickness(18, 4),
+                Margin = new Thickness(0, 4, 0, 0),
+                Child = new TextBlock
+                {
+                    Text = string.Format(Loc.Get("PlanEditor.PriorityBandFmt"), priority),
                     FontSize = FontScaleService.Body,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = new SolidColorBrush(fg),
