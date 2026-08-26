@@ -101,8 +101,11 @@
                                    Foreground="{StaticResource SkinrTextDimBrush}" />
                     </StackPanel>
 
-                    <!-- Search pill -->
-                    <Border Grid.Column="1" MaxWidth="520" Height="34" Margin="24,0"
+                    <!-- Search pill (designs) — hidden while the landing is up: the
+                         landing carries its own character search, and two search boxes
+                         at once read as a bug -->
+                    <Border Grid.Column="1" x:Name="SearchPill" MaxWidth="520" Height="34"
+                            Margin="24,0"
                             Background="{StaticResource SkinrPillBrush}" CornerRadius="17"
                             VerticalAlignment="Center">
                         <DockPanel Margin="14,0">
@@ -119,10 +122,15 @@
                         </DockPanel>
                     </Border>
 
-                    <!-- Character picker -->
-                    <ComboBox Grid.Column="2" x:Name="CharacterCombo" MinWidth="180"
-                              VerticalAlignment="Center"
+                    <!-- Character picker — dressed as a SKINR pill, not a bare themed
+                         combo; the placeholder tells first-timers what it's FOR -->
+                    <ComboBox Grid.Column="2" x:Name="CharacterCombo" MinWidth="190"
+                              VerticalAlignment="Center" Height="34"
+                              Background="{StaticResource SkinrPillBrush}"
+                              BorderThickness="0" CornerRadius="17" Padding="14,0"
                               FontSize="{DynamicResource EveFontBody}"
+                              PlaceholderText="{loc:T Skinr.PickCharacter}"
+                              PlaceholderForeground="{StaticResource SkinrTextDimBrush}"
                               SelectionChanged="OnCharacterChanged" />
                 </Grid>
             </Border>
@@ -707,10 +715,16 @@
 
                 <!-- ===== Landing: whose collection? Shown on first open (no remembered
                      character) and on demand; card grid only lists characters whose
-                     monitored SKINR data says they own designs. Search reveals everyone. -->
-                <Border x:Name="LandingPane" IsVisible="False" Background="#FA0C0E15">
-                    <DockPanel MaxWidth="880" Margin="32,26" HorizontalAlignment="Center">
-                        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,14">
+                     monitored SKINR data says they own designs. Search reveals everyone.
+                     One centered block (title, search, cards, grant) — nothing docked to
+                     the far edges, nothing showing through: the pane is fully opaque so
+                     the stage's welcome placeholder cannot ghost underneath. -->
+                <Border x:Name="LandingPane" IsVisible="False"
+                        Background="{StaticResource SkinrBgBrush}">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Spacing="6" Margin="32,26" MaxWidth="880">
                             <TextBlock Text="{loc:T Skinr.LandingTitle}" FontWeight="Bold"
                                        FontSize="{DynamicResource EveFontTitle}"
                                        Foreground="{StaticResource SkinrTextBrush}"
@@ -719,51 +733,61 @@
                                        FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource SkinrTextSecBrush}"
                                        HorizontalAlignment="Center" TextAlignment="Center" />
+
+                            <Border Width="420" Height="34"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    CornerRadius="17" Margin="0,14,0,4">
+                                <TextBox x:Name="LandingSearchBox" Background="Transparent"
+                                         BorderThickness="0" VerticalContentAlignment="Center"
+                                         Margin="14,0"
+                                         FontSize="{DynamicResource EveFontBody}"
+                                         Foreground="{StaticResource SkinrTextBrush}"
+                                         Watermark="{loc:T Skinr.LandingSearch}"
+                                         TextChanged="OnLandingSearchChanged" />
+                            </Border>
+
+                            <WrapPanel x:Name="LandingGrid" HorizontalAlignment="Center"
+                                       MaxWidth="760" Margin="0,10" />
+
+                            <StackPanel Orientation="Horizontal" Spacing="10"
+                                        HorizontalAlignment="Center" Margin="0,8,0,0">
+                                <TextBlock x:Name="LandingGrantText"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="LandingGrantButton" Padding="12,5"
+                                        CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Content="{loc:T Skinr.LandingGrantBtn}"
+                                        Click="OnScopeUpdate" />
+                            </StackPanel>
                         </StackPanel>
-
-                        <Border DockPanel.Dock="Top" MaxWidth="420" Height="32"
-                                Background="{StaticResource SkinrPillBrush}" CornerRadius="16"
-                                Margin="0,0,0,16">
-                            <TextBox x:Name="LandingSearchBox" Background="Transparent"
-                                     BorderThickness="0" VerticalContentAlignment="Center"
-                                     Margin="14,0"
-                                     FontSize="{DynamicResource EveFontBody}"
-                                     Foreground="{StaticResource SkinrTextBrush}"
-                                     Watermark="{loc:T Skinr.LandingSearch}"
-                                     TextChanged="OnLandingSearchChanged" />
-                        </Border>
-
-                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
-                                    Spacing="10" HorizontalAlignment="Center" Margin="0,14,0,0">
-                            <TextBlock x:Name="LandingGrantText"
-                                       FontSize="{DynamicResource EveFontBody}"
-                                       Foreground="{StaticResource SkinrTextDimBrush}"
-                                       VerticalAlignment="Center" />
-                            <Button x:Name="LandingGrantButton" Padding="12,5" CornerRadius="14"
-                                    FontSize="{DynamicResource EveFontBody}"
-                                    Content="{loc:T Skinr.LandingGrantBtn}"
-                                    Click="OnScopeUpdate" />
-                        </StackPanel>
-
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <WrapPanel x:Name="LandingGrid" HorizontalAlignment="Center" />
-                        </ScrollViewer>
-                    </DockPanel>
+                    </ScrollViewer>
                 </Border>
 
                 <!-- Centered loading overlay: a collection load is a real wait (ESI +
                      thumbnails), and the bottom-left status pill was invisible as the
-                     only signal (Issue #139). -->
-                <Border x:Name="LoadingOverlay" IsVisible="False" Background="#B00C0E15">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Spacing="12">
-                        <ProgressBar IsIndeterminate="True" Width="220" Height="6" />
-                        <TextBlock x:Name="LoadingOverlayText"
-                                   FontSize="{DynamicResource EveFontSubheading}"
-                                   Foreground="{StaticResource SkinrTextSecBrush}"
-                                   HorizontalAlignment="Center" />
-                    </StackPanel>
+                     only signal (Issue #139). Fully opaque: it only ever shows over an
+                     EMPTY stage, and the welcome guide ghosting through a translucent
+                     scrim read as an overlap bug. -->
+                <!-- Two postures, one control: over an EMPTY stage the outer border is
+                     opaque (nothing may ghost through); during a design swap it goes
+                     transparent and only the inner card floats over the dimmed ship.
+                     Hit-transparent throughout — orbiting is never blocked. -->
+                <Border x:Name="LoadingOverlay" IsVisible="False" IsHitTestVisible="False"
+                        Background="{StaticResource SkinrBgBrush}">
+                    <Border Background="{StaticResource SkinrPillBrush}" CornerRadius="12"
+                            Padding="26,18" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Opacity="0.96">
+                        <StackPanel Spacing="12">
+                            <ProgressBar x:Name="LoadingOverlayBar" IsIndeterminate="True"
+                                         Minimum="0" Maximum="100" Width="220" Height="6" />
+                            <TextBlock x:Name="LoadingOverlayText"
+                                       FontSize="{DynamicResource EveFontSubheading}"
+                                       Foreground="{StaticResource SkinrTextSecBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
                 </Border>
             </Panel>
         </DockPanel>

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0-beta.10] - 2026-08-27
+
 ### Added
 
 - **SKINR knows your collections without being asked** -- Your SKINR design and component licenses are now first-class monitored data, refreshed on ESI's own cache schedule alongside skills, assets, and everything else -- and only for characters who granted SKINR access. Counts survive restarts, update live, and never cost a request more than ESI's cadence allows.
@@ -14,10 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Loading is front and center** -- Opening a collection now shows a centered progress overlay instead of a bottom-corner whisper (#139).
 - **The character picker shows who needs access** -- Characters without the SKINR permission appear dimmed with a "needs access" tag, and granting access lands you on that character instead of silently staying where you were (#139).
 - **Space cycles, and now says so** -- The Space environment deals a different nebula on each click; the active pill now carries a cycle mark and a tooltip so the deck is discoverable (#139).
+- **Doctrine Designer: import from clipboard** -- Paste a doctrine ping (one "Skill Name V" per line, roman or numeric levels) straight into a new doctrine (#137).
+- **Doctrine Designer: the comparison table grew frozen panes** -- The skill column and character header row stay on screen while the grid scrolls both ways, and wide comparisons finally get a horizontal scrollbar (#137).
 - **Skill priorities are now a real feature of the plan editor** -- Priority used to be settable but invisible: nothing displayed it and nothing ordered by it. Now every skill row shows its priority (a chip in its own column -- quiet at the default, tinted when you've changed it), and a new "Group by Priority" toolbar toggle orders the plan into priority bands with 1 training first, so long plans can carry milestones. Prerequisites always stay ahead of the skills that need them, and raising a skill's priority pulls its prerequisites up along with it (#135, and the milestone use case from #136).
 
 ### Fixed
 
+- **"Amarr Titan V" now imports** -- Clipboard skill lists accept roman numeral levels everywhere, matching what the game itself copies; digits keep working (#137).
 - **Changing a priority can no longer scramble your plan order** -- The priority-change machinery inherited a convention from the old editor that rebuilt the plan from the currently sorted view, which would have silently made a temporary sort permanent. It now always preserves your manual order.
 
 ### Changed

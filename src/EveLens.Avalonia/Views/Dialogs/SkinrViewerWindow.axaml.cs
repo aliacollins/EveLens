@@ -1,4 +1,4 @@
-// EveLens — Character Intelligence for EVE Online
+﻿// EveLens — Character Intelligence for EVE Online
 // Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
@@ -94,7 +94,21 @@ namespace EveLens.Avalonia.Views.Dialogs
             _hub.CarouselChanged += () => Dispatcher.UIThread.Post(RefreshCarousel);
             _render.FrameReady += frame => Dispatcher.UIThread.Post(() => ShowFrame(frame));
             _render.StatusChanged += text => Dispatcher.UIThread.Post(() =>
-                RenderStatusText.Text = text);
+            {
+                RenderStatusText.Text = text;
+                // While the stage is empty and a build is in flight, the engine's own
+                // narration ("Starting the renderer — this takes up to a minute the
+                // first time...") belongs front and center, not in the corner pill.
+                if (_stageWaiting && !_overlayFromDownload)
+                {
+                    LoadingOverlayText.Text = text;
+                    LoadingOverlay.IsVisible = true;
+                    // The render VM reports failures as status text (it never throws
+                    // across the event boundary); a failure ends the wait.
+                    if (text.StartsWith("Render failed", StringComparison.Ordinal))
+                        EndStageWait();
+                }
+            });
             _render.DownloadProgress += fraction => ReportDownload(
                 Loc.Get("Skinr.RenderPlaceholderTitle"), fraction);
             _render.DiagnosticsChanged += () => Dispatcher.UIThread.Post(RefreshRenderDiagnostics);
@@ -226,7 +240,16 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void ShowLanding()
         {
             LandingPane.IsVisible = true;
+            // One search at a time: the top bar's design search is meaningless while
+            // the landing (with its character search) owns the stage
+            SearchPill.IsVisible = false;
             BuildLandingGrid();
+        }
+
+        private void HideLanding()
+        {
+            LandingPane.IsVisible = false;
+            SearchPill.IsVisible = true;
         }
 
         private void OnLandingSearchChanged(object? sender, TextChangedEventArgs e)
@@ -368,7 +391,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             Settings.UI.SkinrLastCharacterId = character.CharacterID;
             Settings.Save();
-            LandingPane.IsVisible = false;
+            HideLanding();
 
             if (CharacterCombo.Tag is List<Character> characters)
             {
@@ -601,7 +624,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // while the window silently stayed on character A read as "not working"
                 // (Issue #139). Replacing ItemsSource resets the selection, so setting
                 // the index fires OnCharacterChanged, which runs the scope check.
-                LandingPane.IsVisible = false;
+                HideLanding();
                 RebuildCharacterPicker(dialog.ImportedCharacterNames.LastOrDefault());
             }
             catch (Exception ex)
@@ -701,7 +724,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ShowLanding();
                 return;
             }
-            LandingPane.IsVisible = false;
+            HideLanding();
 
             bool wasDetail = _marketDetail;
             _marketDetail = false;
@@ -1236,6 +1259,9 @@ namespace EveLens.Avalonia.Views.Dialogs
                     // not a bottom-left whisper (Issue #139)
                     LoadingOverlayText.Text = string.Format(
                         Loc.Get("Skinr.LoadingDesignsFmt"), character.Name);
+                    LoadingOverlayBar.IsIndeterminate = true;
+                    _overlayFromDownload = false;
+                    LoadingOverlay.Background = (IBrush?)Resources["SkinrBgBrush"];
                     LoadingOverlay.IsVisible = true;
                 }
 
@@ -1265,6 +1291,19 @@ namespace EveLens.Avalonia.Views.Dialogs
                 _thumbArmed = false;   // no captures until THIS design's build returns
                 RefreshCarousel();
 
+                // Every design choice engages the centered narration until its first
+                // frame. Empty stage: opaque (nothing to see behind). Ship on stage:
+                // transparent scrim, just the floating card over the dimmed ship —
+                // the swap is visible progress, so it must not be hidden.
+                _stageWaiting = true;
+                _overlayFromDownload = false;
+                LoadingOverlay.Background = RenderImage.IsVisible
+                    ? Brushes.Transparent
+                    : (IBrush?)Resources["SkinrBgBrush"];
+                LoadingOverlayBar.IsIndeterminate = true;
+                LoadingOverlayText.Text = Loc.Get("Skinr.StatusRendering");
+                LoadingOverlay.IsVisible = true;
+
                 await _hub.Data.SelectDesignAsync(skinrId);
                 RefreshDesignCard();
 
@@ -1283,6 +1322,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
             catch (Exception ex)
             {
+                EndStageWait();
                 AppServices.TraceService?.Trace($"SkinrViewer: design select failed: {ex.Message}");
             }
         }
@@ -1695,10 +1735,48 @@ namespace EveLens.Avalonia.Views.Dialogs
                 bool active = fraction < 1.0;
                 DownloadProgress.IsVisible = active;
                 DownloadProgress.Value = fraction * 100;
-                RenderStatusText.Text = active
+                string status = active
                     ? string.Format(Loc.Get("Skinr.StatusDownloading"), what, (int)(fraction * 100))
                     : Loc.Get("Skinr.StatusReady");
+                RenderStatusText.Text = status;
+
+                // Front and center while there is nothing on the stage to cover: an
+                // empty stage with a bottom-corner whisper read as frozen (Issue #139).
+                // Once a ship is up, downloads stay in the pill — a modal bar over a
+                // render you're actively orbiting would be worse.
+                bool center = active && !RenderImage.IsVisible && !LandingPane.IsVisible;
+                if (center)
+                {
+                    LoadingOverlayBar.IsIndeterminate = false;
+                    LoadingOverlayBar.Value = fraction * 100;
+                    LoadingOverlayText.Text = status;
+                    LoadingOverlay.Background = (IBrush?)Resources["SkinrBgBrush"];
+                    LoadingOverlay.IsVisible = true;
+                    _overlayFromDownload = true;
+                }
+                else if (_overlayFromDownload)
+                {
+                    LoadingOverlay.IsVisible = false;
+                    LoadingOverlayBar.IsIndeterminate = true;
+                    _overlayFromDownload = false;
+                }
             });
+        }
+
+        /// <summary>True while the center overlay is showing DOWNLOAD progress — so a
+        /// finished download hides it without stomping a character-load overlay.</summary>
+        private bool _overlayFromDownload;
+
+        /// <summary>True from picking a design on an empty stage until its first frame
+        /// (or a reported failure): the center overlay narrates everything in between.</summary>
+        private bool _stageWaiting;
+
+        private void EndStageWait()
+        {
+            _stageWaiting = false;
+            _overlayFromDownload = false;
+            LoadingOverlay.IsVisible = false;
+            LoadingOverlayBar.IsIndeterminate = true;
         }
 
         // --- render surface ---------------------------------------------------
@@ -1709,6 +1787,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// </summary>
         private void ShowFrame(SkinrFrame frame)
         {
+            // The first frame ends the wait — a visible ship IS the progress report
+            if (_stageWaiting || LoadingOverlay.IsVisible)
+                EndStageWait();
+
             var size = new PixelSize(frame.Width, frame.Height);
             if (_surface == null || _surface.PixelSize != size)
             {

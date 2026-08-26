@@ -72,6 +72,40 @@ namespace EveLens.Tests.ViewModels
         }
 
         [Fact]
+        public void CreateFromSkillLines_ParsesRomansAndDigits_WithPrerequisiteLevels()
+        {
+            PlanTestFixture.EnsureStaticSkillsLoaded();
+            var skill = PlanTestFixture.GetSkill("Spaceship Command");
+
+            var vm = new GlobalPlanDashboardViewModel();
+            vm.Refresh();
+            var template = vm.CreateFromSkillLines("Ping Doctrine",
+                $"{skill.Name} III\nNot A Real Skill V\n");
+
+            template.Should().NotBeNull();
+            template!.Name.Should().Be("Ping Doctrine");
+            // Roman "III" parsed, and levels I..III all present so comparisons are honest
+            template.Entries.Where(e => e.SkillID == skill.ID)
+                .Select(e => e.Level).Should().BeEquivalentTo(new[] { 1, 2, 3 });
+        }
+
+        [Fact]
+        public void CreateFromSkillLines_MostlyGarbage_ReturnsNull()
+        {
+            PlanTestFixture.EnsureStaticSkillsLoaded();
+            var skill = PlanTestFixture.GetSkill("Spaceship Command");
+
+            var vm = new GlobalPlanDashboardViewModel();
+            vm.Refresh();
+
+            // 1 valid line out of 4 = a paste accident, not a skill list
+            vm.CreateFromSkillLines("Oops",
+                $"{skill.Name} V\nlorem ipsum\ndolor sit amet\nconsectetur adipiscing")
+                .Should().BeNull();
+            EveLens.Common.Settings.GlobalPlanTemplates.Should().BeEmpty();
+        }
+
+        [Fact]
         public void SubscribeCharacters_AddsAll_SkipsAlreadySubscribed()
         {
             PlanTestFixture.EnsureStaticSkillsLoaded();
