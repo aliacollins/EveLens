@@ -64,6 +64,16 @@ namespace EveLens.Common.Helpers
         public CloudStorageServiceProviderSettings? CloudStorageServiceProvider { get; set; }
         public SchedulerSettings? Scheduler { get; set; }
         public List<JsonGlobalPlanTemplate>? GlobalPlanTemplates { get; set; }
+        public List<JsonSavedComparison>? SavedComparisons { get; set; }
+    }
+
+    /// <summary>
+    /// Saved character-comparison set for config.json (Discussion #105).
+    /// </summary>
+    public class JsonSavedComparison
+    {
+        public string Name { get; set; } = string.Empty;
+        public List<long> CharacterIDs { get; set; } = new();
     }
 
     public class JsonGlobalPlanTemplate

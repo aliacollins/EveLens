@@ -71,6 +71,14 @@ namespace EveLens.Common.Models
         }
 
         /// <summary>
+        /// Which clone state ("Omega"/"Alpha") this plan's remap points were
+        /// optimized for, or null when never optimized. Set by the optimizer on
+        /// Apply; the plan editor's verdict speaks in these terms so an Omega
+        /// what-if applied on an Alpha character reads as the user intended it.
+        /// </summary>
+        public string? OptimizedForClone { get; set; }
+
+        /// <summary>
         /// Gets or sets the plan's description.
         /// </summary>
         public string Description

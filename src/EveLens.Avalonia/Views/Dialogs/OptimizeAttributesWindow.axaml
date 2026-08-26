@@ -3,58 +3,90 @@
         xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
         x:Class="EveLens.Avalonia.Views.Dialogs.OptimizeAttributesWindow"
         Title="{loc:T Optimizer.Title}"
-        Width="640" Height="560"
+        Width="820" Height="660"
         WindowStartupLocation="CenterOwner"
         Icon="avares://EveLens/Properties/EveLens.ico"
         CanResize="True">
 
     <DockPanel Margin="20,16">
 
-        <!-- Header -->
-        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,12">
-            <TextBlock Text="{loc:T Optimizer.Heading}"
-                       FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
-                       Foreground="{StaticResource EveAccentPrimaryBrush}" />
-            <TextBlock Text="{loc:T Optimizer.Subtitle}"
-                       FontSize="{DynamicResource EveFontSmall}"
-                       Foreground="{StaticResource EveTextSecondaryBrush}"
-                       TextWrapping="Wrap" />
-        </StackPanel>
-
-        <!-- Strategy picker -->
-        <StackPanel DockPanel.Dock="Top" Spacing="6" Margin="0,0,0,12">
-            <TextBlock Text="{loc:T Optimizer.Strategy}"
-                       FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <RadioButton x:Name="StrategyWholePlan" GroupName="strategy" IsChecked="True"
-                             Content="{loc:T Optimizer.StrategyWholePlan}"
-                             FontSize="{DynamicResource EveFontBody}" />
-                <RadioButton x:Name="StrategyAutoPlace" GroupName="strategy"
-                             Content="{loc:T Optimizer.StrategyAutoPlace}"
-                             FontSize="{DynamicResource EveFontBody}" />
+        <!-- Header: title left, remap budget chip right -->
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+            <Border DockPanel.Dock="Right" VerticalAlignment="Top"
+                    Background="{DynamicResource EveBackgroundMediumBrush}"
+                    CornerRadius="12" Padding="12,6">
+                <TextBlock x:Name="RemapsChipText"
+                           FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+            </Border>
+            <StackPanel Spacing="4">
+                <TextBlock Text="{loc:T Optimizer.Heading}"
+                           FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveAccentPrimaryBrush}" />
+                <TextBlock Text="{loc:T Optimizer.Subtitle}"
+                           FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           TextWrapping="Wrap" />
             </StackPanel>
+        </DockPanel>
 
-            <!-- Clone state what-if (analysis only, never changes the character) -->
-            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+        <!-- Strategy + clone pickers on one row -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="24"
+                    Margin="0,0,0,10">
+            <!-- Segmented pills, not radio circles: exclusivity + at-least-one is
+                 enforced in code (WireToggleGroup), styling on checked-change. -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="{loc:T Optimizer.Strategy}"
+                           FontSize="{DynamicResource EveFontSmall}" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+                <Border Background="{DynamicResource EveBackgroundMediumBrush}"
+                        CornerRadius="10" Padding="3" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <ToggleButton x:Name="StrategyAutoPlace" IsChecked="True"
+                                      Content="{loc:T Optimizer.StrategyAutoPlace}"
+                                      CornerRadius="8" Padding="12,5" BorderThickness="0"
+                                      FontSize="{DynamicResource EveFontSmall}" />
+                        <ToggleButton x:Name="StrategyWholePlan"
+                                      Content="{loc:T Optimizer.StrategyWholePlan}"
+                                      CornerRadius="8" Padding="12,5" BorderThickness="0"
+                                      FontSize="{DynamicResource EveFontSmall}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+            <StackPanel Spacing="4">
                 <TextBlock Text="{loc:T Optimizer.CloneState}"
-                           FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
-                           VerticalAlignment="Center" />
-                <RadioButton x:Name="CloneAuto" GroupName="clone" IsChecked="True"
-                             Content="{loc:T Optimizer.CloneAuto}"
-                             FontSize="{DynamicResource EveFontBody}" />
-                <RadioButton x:Name="CloneOmega" GroupName="clone"
-                             Content="{loc:T Eve.Omega}"
-                             FontSize="{DynamicResource EveFontBody}" />
-                <RadioButton x:Name="CloneAlpha" GroupName="clone"
-                             Content="{loc:T Eve.Alpha}"
-                             FontSize="{DynamicResource EveFontBody}" />
+                           FontSize="{DynamicResource EveFontSmall}" FontWeight="SemiBold"
+                           Foreground="{StaticResource EveTextSecondaryBrush}" />
+                <Border Background="{DynamicResource EveBackgroundMediumBrush}"
+                        CornerRadius="10" Padding="3" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <ToggleButton x:Name="CloneAuto" IsChecked="True"
+                                      Content="{loc:T Optimizer.CloneAuto}"
+                                      CornerRadius="8" Padding="12,5" BorderThickness="0"
+                                      FontSize="{DynamicResource EveFontSmall}" />
+                        <ToggleButton x:Name="CloneOmega"
+                                      Content="{loc:T Eve.Omega}"
+                                      CornerRadius="8" Padding="12,5" BorderThickness="0"
+                                      FontSize="{DynamicResource EveFontSmall}" />
+                        <ToggleButton x:Name="CloneAlpha"
+                                      Content="{loc:T Eve.Alpha}"
+                                      CornerRadius="8" Padding="12,5" BorderThickness="0"
+                                      FontSize="{DynamicResource EveFontSmall}" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </StackPanel>
 
-        <!-- Footer buttons -->
+        <!-- Headline: current → optimized · save · finish date -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource EveBackgroundMediumBrush}"
+                CornerRadius="6" Padding="14,10" Margin="0,0,0,10">
+            <StackPanel x:Name="HeadlineRow" Orientation="Horizontal" Spacing="12" />
+        </Border>
+
+        <!-- Footer -->
         <Border DockPanel.Dock="Bottom" Padding="0,12,0,0">
             <DockPanel>
-                <TextBlock x:Name="RemapBudgetText" DockPanel.Dock="Left"
+                <TextBlock Text="{loc:T Optimizer.NothingChanges}" DockPanel.Dock="Left"
                            FontSize="{DynamicResource EveFontSmall}"
                            Foreground="{StaticResource EveTextDisabledBrush}"
                            VerticalAlignment="Center" />
@@ -70,10 +102,28 @@
             </DockPanel>
         </Border>
 
-        <!-- Analysis content -->
-        <ScrollViewer>
-            <StackPanel x:Name="ResultsPanel" Spacing="10" />
-        </ScrollViewer>
+        <!-- Two columns: proposed schedule timeline | remap details inspector -->
+        <Grid ColumnDefinitions="*,12,330">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="{loc:T Optimizer.ProposedSchedule}"
+                           FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                           Margin="0,0,0,6" />
+                <ScrollViewer>
+                    <StackPanel x:Name="ResultsPanel" Spacing="8" Margin="0,0,8,0" />
+                </ScrollViewer>
+            </DockPanel>
+            <Border Grid.Column="2" Background="{DynamicResource EveBackgroundMediumBrush}"
+                    CornerRadius="6" Padding="14,12">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{loc:T Optimizer.RemapDetails}"
+                               FontSize="{DynamicResource EveFontBody}" FontWeight="SemiBold"
+                               Margin="0,0,0,8" />
+                    <ScrollViewer>
+                        <StackPanel x:Name="DetailsPanel" Spacing="8" />
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
 
     </DockPanel>
 </Window>

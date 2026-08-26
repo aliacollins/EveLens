@@ -30,6 +30,19 @@ namespace EveLens.Common.Services
             public Dictionary<EveAttribute, long> Attributes { get; init; } = new();
             public TimeSpan SegmentDuration { get; init; }
             public string SegmentLabel { get; init; } = string.Empty;
+
+            /// <summary>How many plan entries this segment trains.</summary>
+            public int SkillCount { get; init; }
+
+            /// <summary>The skill trained immediately before this remap ("Starts after"),
+            /// or empty when the remap is at plan start.</summary>
+            public string StartsAfter { get; init; } = string.Empty;
+
+            /// <summary>The dominant primary/secondary pair, e.g. "Perception / Willpower".</summary>
+            public string PairLabel { get; init; } = string.Empty;
+
+            /// <summary>The skills this segment trains, in order — "View affected skills".</summary>
+            public List<string> SkillNames { get; init; } = new();
         }
 
         /// <summary>The full proposal: remap placements plus the before/after plan durations.</summary>
@@ -46,7 +59,32 @@ namespace EveLens.Common.Services
             public bool CurrentIncludesRemaps { get; init; }
 
             public TimeSpan OptimizedDuration { get; init; }
+
+            /// <summary>
+            /// True when the character's live base attributes exceed what any legal
+            /// remap can produce (17×5 + 14 assignable = 99 total): an attribute
+            /// booster — the "genius boost" accelerator — is active. Every proposal
+            /// then loses to "current", and without this flag that read as the
+            /// optimizer giving bad values rather than the booster expiring.
+            /// </summary>
+            public bool CurrentLikelyBoosted { get; init; }
             public TimeSpan TimeSaved => CurrentDuration - OptimizedDuration;
+
+            /// <summary>Time the plan trains on CURRENT attributes before the first
+            /// proposed remap; zero when the first remap is at plan start.</summary>
+            public TimeSpan PrefixDuration { get; init; }
+
+            /// <summary>How many entries train before the first proposed remap.</summary>
+            public int PrefixSkillCount { get; init; }
+
+            /// <summary>Dominant attribute pair of the keep-current prefix, for the
+            /// "Keep current attributes" card.</summary>
+            public string PrefixPairLabel { get; init; } = string.Empty;
+
+            /// <summary>First and last skills of the keep-current prefix, for the
+            /// card's "Navigation IV → Science V" range line.</summary>
+            public string PrefixFirstSkill { get; init; } = string.Empty;
+            public string PrefixLastSkill { get; init; } = string.Empty;
         }
 
         /// <summary>
@@ -93,57 +131,249 @@ namespace EveLens.Common.Services
             currentScratch.TrainEntries(entries, applyRemappingPoints: true);
             TimeSpan currentDuration = currentScratch.TrainingTime;
 
-            // Find attribute-focus boundaries: split where the dominant primary attribute
-            // of consecutive entries changes AND the accumulated segment is long enough.
-            // maxRemaps remap points = at most maxRemaps segments (the first segment
-            // consumes one remap at plan start), so allow maxRemaps - 1 splits.
-            var segments = new List<List<PlanEntry>>();
-            var segment = new List<PlanEntry>();
-            TimeSpan segmentTime = TimeSpan.Zero;
-            EveAttribute segmentAttr = EveAttribute.None;
+            // ── Global optimization (issue #122, round two) ─────────────────────
+            //
+            // The first fix keyed boundaries on the (primary, secondary) PAIR — a
+            // real improvement (Mem/Per → Mem/Int IS a boundary), but selecting
+            // WHICH boundaries get the budget by merging the shortest segments was
+            // a heuristic: a short segment can hold one huge rank-8 skill, a long
+            // one many cheap skills. The durable answer is exact:
+            //
+            //   1. Candidate cuts = consecutive (primary, secondary) group edges.
+            //   2. Segment cost = remaining SP per pair ÷ the CANONICAL rate for a
+            //      spread (BaseCharacter.GetBaseSPPerHour: implants, Alpha/Omega,
+            //      everything), minimized over every legal spread.
+            //   3. DP[r][j] = min over i<j of DP[r-1][i] + BestCost(i, j), with the
+            //      prefix before the first remap training on CURRENT attributes for
+            //      free — so "no remap yet" and "no remap at all" are real options.
+            //
+            // Tie-breaks: fewer remaps within EPSILON of the optimum (a remap locks
+            // for a year — don't spend one for minutes), and later boundaries on
+            // exact ties.
 
-            foreach (var entry in entries)
+            // Consecutive (primary, secondary) groups; SP-per-pair prefix sums.
+            var groups = new List<(int Start, int End, (EveAttribute P, EveAttribute S) Key)>();
+            for (int e = 0; e < entries.Count; e++)
             {
-                var attr = entry.Skill.PrimaryAttribute;
-                bool boundary = segmentAttr != EveAttribute.None
-                    && attr != segmentAttr
-                    && segmentTime.TotalDays >= minSegmentDays
-                    && segments.Count + 1 < maxRemaps;
-
-                if (boundary)
-                {
-                    segments.Add(segment);
-                    segment = new List<PlanEntry>();
-                    segmentTime = TimeSpan.Zero;
-                }
-
-                if (segment.Count == 0)
-                    segmentAttr = attr;
-                segment.Add(entry);
-                segmentTime += entry.TrainingTime;
+                var key = (entries[e].Skill.PrimaryAttribute, entries[e].Skill.SecondaryAttribute);
+                if (groups.Count > 0 && groups[^1].Key == key)
+                    groups[^1] = (groups[^1].Start, e + 1, key);
+                else
+                    groups.Add((e, e + 1, key));
             }
-            if (segment.Count > 0)
-                segments.Add(segment);
 
-            // Optimize each segment's attributes on a CUMULATIVE scratchpad: segment N
-            // trains on top of the SP from segments 1..N-1. Optimizing each segment from
-            // the bare base state double-counted prerequisite SP and produced "optimized"
-            // times WORSE than the current plan (seen live: 466d current → 503d optimized).
+            // Remaining SP per entry from a canonical pass (SP is attribute-independent).
+            var spScratch = new CharacterScratchpad(baseScratchpad);
+            var entrySp = new long[entries.Count];
+            for (int e = 0; e < entries.Count; e++)
+            {
+                long before = spScratch.GetSkillPoints(entries[e].Skill);
+                spScratch.Train(entries[e]);
+                entrySp[e] = Math.Max(0,
+                    entries[e].Skill.GetPointsRequiredForLevel(entries[e].Level) - before);
+            }
+
+            // Keep the exact search instant even on pathological alternating plans:
+            // under ~48 candidate groups the O(G² × spreads) sweep is milliseconds;
+            // above, the smallest-SP groups merge into a neighbour first. (The old
+            // minSegmentDays boundary rule is obsolete — the DP itself decides
+            // whether a boundary earns a remap — but the parameter survives for
+            // callers.)
+            while (groups.Count > 48)
+            {
+                int smallest = 0;
+                double smallestSp = double.MaxValue;
+                for (int g = 0; g < groups.Count; g++)
+                {
+                    double sp = 0;
+                    for (int e = groups[g].Start; e < groups[g].End; e++)
+                        sp += entrySp[e];
+                    if (sp < smallestSp) { smallestSp = sp; smallest = g; }
+                }
+                int other = smallest == 0 ? 1 : smallest;
+                int into = smallest == 0 ? 0 : smallest - 1;
+                groups[into] = (groups[into].Start, groups[other].End, groups[into].Key);
+                groups.RemoveAt(other);
+            }
+
+            // Distinct pairs in the plan, a representative skill per pair (the canonical
+            // rate function takes a skill), and SP-per-pair prefix sums at group cuts.
+            var pairIndex = new Dictionary<(EveAttribute, EveAttribute), int>();
+            var pairSkill = new List<StaticSkill>();
+            foreach (var en in entries)
+            {
+                var key = (en.Skill.PrimaryAttribute, en.Skill.SecondaryAttribute);
+                if (!pairIndex.ContainsKey(key))
+                {
+                    pairIndex[key] = pairSkill.Count;
+                    pairSkill.Add(en.Skill);
+                }
+            }
+            int pairCount = pairSkill.Count;
+            int cutCount = groups.Count + 1;
+            var prefixSp = new double[cutCount, pairCount];
+            for (int g = 0; g < groups.Count; g++)
+            {
+                for (int p = 0; p < pairCount; p++)
+                    prefixSp[g + 1, p] = prefixSp[g, p];
+                for (int e = groups[g].Start; e < groups[g].End; e++)
+                {
+                    var key = (entries[e].Skill.PrimaryAttribute,
+                        entries[e].Skill.SecondaryAttribute);
+                    prefixSp[g + 1, pairIndex[key]] += entrySp[e];
+                }
+            }
+
+            // Rate tables: hours per SP for every pair, under every legal spread and
+            // under the CURRENT attributes. One reused scratchpad; the rate comes from
+            // GetBaseSPPerHour so implants and clone state ride along canonically.
+            var rateScratch = new CharacterScratchpad(baseScratchpad);
+            double[] RatesFor()
+            {
+                var rates = new double[pairCount];
+                for (int p = 0; p < pairCount; p++)
+                    rates[p] = rateScratch.GetBaseSPPerHour(pairSkill[p]);
+                return rates;
+            }
+            double[] currentRates = RatesFor();
+
+            var spreads = new List<long[]>();       // [i, p, c, w, m] bases
+            var spreadRates = new List<double[]>();
+            for (int i = 0; i <= 10; i++)
+            for (int p = 0; p <= 10 && i + p <= 14; p++)
+            for (int c = 0; c <= 10 && i + p + c <= 14; c++)
+            for (int w = 0; w <= 10 && i + p + c + w <= 14; w++)
+            {
+                int m = 14 - i - p - c - w;
+                if (m > 10) continue;
+                rateScratch.Intelligence.Base = 17 + i;
+                rateScratch.Perception.Base = 17 + p;
+                rateScratch.Charisma.Base = 17 + c;
+                rateScratch.Willpower.Base = 17 + w;
+                rateScratch.Memory.Base = 17 + m;
+                spreads.Add(new long[] { 17 + i, 17 + p, 17 + c, 17 + w, 17 + m });
+                spreadRates.Add(RatesFor());
+            }
+
+            double SegmentHours(int cutFrom, int cutTo, double[] rates)
+            {
+                double hours = 0;
+                for (int p = 0; p < pairCount; p++)
+                {
+                    double sp = prefixSp[cutTo, p] - prefixSp[cutFrom, p];
+                    if (sp > 0 && rates[p] > 0)
+                        hours += sp / rates[p];
+                }
+                return hours;
+            }
+
+            // Best spread per contiguous range, memoized.
+            var bestCost = new double[cutCount, cutCount];
+            var bestSpread = new int[cutCount, cutCount];
+            for (int i = 0; i < cutCount; i++)
+            for (int j = i + 1; j < cutCount; j++)
+            {
+                double best = double.MaxValue;
+                int arg = 0;
+                for (int s = 0; s < spreads.Count; s++)
+                {
+                    double h = SegmentHours(i, j, spreadRates[s]);
+                    if (h < best) { best = h; arg = s; }
+                }
+                bestCost[i, j] = best;
+                bestSpread[i, j] = arg;
+            }
+
+            // DP over cuts. dp[r][j]: groups 0..j trained, r remaps spent; the part
+            // before the first remap runs on current attributes (dp[0][j]).
+            int budget = Math.Max(1, Math.Min(maxRemaps, groups.Count));
+            int G = groups.Count;
+            var dp = new double[budget + 1, cutCount];
+            var from = new int[budget + 1, cutCount];
+            for (int j = 0; j <= G; j++)
+            {
+                dp[0, j] = SegmentHours(0, j, currentRates);
+                from[0, j] = 0;
+            }
+            for (int r = 1; r <= budget; r++)
+            for (int j = 0; j <= G; j++)
+            {
+                dp[r, j] = dp[r - 1, j];            // spending fewer remaps is always legal
+                from[r, j] = -1;                    // -1: inherited, no new split here
+                for (int i = 0; i < j; i++)
+                {
+                    double candidate = dp[r - 1, i] + bestCost[i, j];
+                    if (candidate <= dp[r, j])      // <=: later boundary wins exact ties
+                    {
+                        dp[r, j] = candidate;
+                        from[r, j] = i;
+                    }
+                }
+            }
+
+            // Fewest remaps within EPSILON of the true optimum: a remap locks for a
+            // year, so saving minutes is not worth one.
+            double bestHours = dp[budget, G];
+            double epsilonHours = Math.Max(1.0, currentDuration.TotalHours * 0.0025);
+            int chosenR = budget;
+            for (int r = 0; r <= budget; r++)
+            {
+                if (dp[r, G] <= bestHours + epsilonHours)
+                {
+                    chosenR = r;
+                    break;
+                }
+            }
+
+            // Reconstruct the chosen cuts (ascending group indices where remaps land).
+            var cuts = new List<int>();
+            {
+                int r = chosenR, j = G;
+                while (r > 0)
+                {
+                    int i = from[r, j];
+                    if (i < 0) { r--; continue; }   // inherited: this level added no split
+                    cuts.Add(i);
+                    j = i;
+                    r--;
+                }
+                cuts.Reverse();
+            }
+
+            // Canonical re-train of the CHOSEN configuration: the DP priced segments
+            // through the canonical rate function, but the numbers the user sees come
+            // from the same scratchpad training the plan editor uses — one source of
+            // arithmetic truth, and a live cross-check on the aggregation.
             var result = new List<ProposedRemap>();
             var cumulative = new CharacterScratchpad(baseScratchpad);
-            TimeSpan trainedSoFar = TimeSpan.Zero;
-            foreach (var seg in segments)
-            {
-                var best = AttributesOptimizer.Optimize(
-                    seg, new CharacterScratchpad(cumulative), TimeSpan.MaxValue);
+            int prefixEntryEnd = cuts.Count > 0 ? groups[cuts[0]].Start : entries.Count;
+            for (int e = 0; e < prefixEntryEnd; e++)
+                cumulative.Train(entries[e]);
+            TimeSpan prefixDuration = cumulative.TrainingTime;
+            TimeSpan trainedSoFar = prefixDuration;
 
-                // Remap the cumulative scratchpad to the segment's optimal attributes,
-                // then train the segment on it — carrying SP and time forward.
-                cumulative.Memory.Base = best.Memory.Base;
-                cumulative.Charisma.Base = best.Charisma.Base;
-                cumulative.Willpower.Base = best.Willpower.Base;
-                cumulative.Perception.Base = best.Perception.Base;
-                cumulative.Intelligence.Base = best.Intelligence.Base;
+            static string PairLabelOf(List<PlanEntry> seg)
+            {
+                var dominant = seg.GroupBy(
+                        e => (e.Skill.PrimaryAttribute, e.Skill.SecondaryAttribute))
+                    .OrderByDescending(g => g.Sum(e => e.TrainingTime.Ticks))
+                    .First().Key;
+                return $"{dominant.Item1} / {dominant.Item2}";
+            }
+
+            for (int c = 0; c < cuts.Count; c++)
+            {
+                int startEntry = groups[cuts[c]].Start;
+                int endEntry = c + 1 < cuts.Count ? groups[cuts[c + 1]].Start : entries.Count;
+                var seg = entries.GetRange(startEntry, endEntry - startEntry);
+                long[] spread = spreads[bestSpread[cuts[c],
+                    c + 1 < cuts.Count ? cuts[c + 1] : G]];
+
+                cumulative.Intelligence.Base = spread[0];
+                cumulative.Perception.Base = spread[1];
+                cumulative.Charisma.Base = spread[2];
+                cumulative.Willpower.Base = spread[3];
+                cumulative.Memory.Base = spread[4];
                 foreach (var entry in seg)
                     cumulative.Train(entry);
 
@@ -151,32 +381,58 @@ namespace EveLens.Common.Services
                 trainedSoFar = cumulative.TrainingTime;
 
                 var first = seg[0];
-                var dominant = seg.GroupBy(e => e.Skill.PrimaryAttribute)
-                    .OrderByDescending(g => g.Sum(e => e.TrainingTime.Ticks))
-                    .First().Key;
                 result.Add(new ProposedRemap
                 {
                     Skill = first.Skill,
                     Level = (int)first.Level,
                     SegmentDuration = segmentDuration,
-                    SegmentLabel = $"{seg.Count} skills, {dominant}-focused",
+                    SegmentLabel = $"{seg.Count} skills, {PairLabelOf(seg)}",
+                    SkillCount = seg.Count,
+                    StartsAfter = startEntry > 0
+                        ? entries[startEntry - 1].Skill.Name : string.Empty,
+                    PairLabel = PairLabelOf(seg),
+                    SkillNames = seg.Select(en => $"{en.Skill.Name} {en.Level}").ToList(),
                     Attributes = new Dictionary<EveAttribute, long>
                     {
-                        [EveAttribute.Intelligence] = best.Intelligence.Base,
-                        [EveAttribute.Perception] = best.Perception.Base,
-                        [EveAttribute.Charisma] = best.Charisma.Base,
-                        [EveAttribute.Willpower] = best.Willpower.Base,
-                        [EveAttribute.Memory] = best.Memory.Base,
+                        [EveAttribute.Intelligence] = spread[0],
+                        [EveAttribute.Perception] = spread[1],
+                        [EveAttribute.Charisma] = spread[2],
+                        [EveAttribute.Willpower] = spread[3],
+                        [EveAttribute.Memory] = spread[4],
                     },
                 });
             }
 
+            // If the canonical re-train somehow lands slower than current (it should
+            // not — r = 0 is always a DP option), fall back to "no remaps" honestly
+            // rather than presenting a plan that loses time.
+            if (trainedSoFar > currentDuration)
+            {
+                result.Clear();
+                trainedSoFar = currentDuration;
+                prefixDuration = currentDuration;
+                prefixEntryEnd = entries.Count;
+            }
+
+            long liveBaseTotal = baseScratchpad.Intelligence.Base +
+                baseScratchpad.Perception.Base + baseScratchpad.Charisma.Base +
+                baseScratchpad.Willpower.Base + baseScratchpad.Memory.Base;
+            var prefixEntries = entries.GetRange(0, prefixEntryEnd);
             var proposal = new RemapProposal
             {
                 CurrentDuration = currentDuration,
                 CurrentIncludesRemaps = entries.Any(e => e.Remapping != null
                     && e.Remapping.Status == RemappingPointStatus.UpToDate),
                 OptimizedDuration = trainedSoFar,
+                CurrentLikelyBoosted = liveBaseTotal > 99,
+                PrefixDuration = prefixDuration,
+                PrefixSkillCount = prefixEntryEnd,
+                PrefixPairLabel = prefixEntries.Count > 0
+                    ? PairLabelOf(prefixEntries) : string.Empty,
+                PrefixFirstSkill = prefixEntries.Count > 0
+                    ? $"{prefixEntries[0].Skill.Name} {prefixEntries[0].Level}" : string.Empty,
+                PrefixLastSkill = prefixEntries.Count > 0
+                    ? $"{prefixEntries[^1].Skill.Name} {prefixEntries[^1].Level}" : string.Empty,
             };
             proposal.Remaps.AddRange(result);
             return proposal;

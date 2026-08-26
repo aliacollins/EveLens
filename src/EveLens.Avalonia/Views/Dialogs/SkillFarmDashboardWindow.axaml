@@ -34,6 +34,20 @@
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6"
                         HorizontalAlignment="Right" VerticalAlignment="Center">
+                <!-- Omega is per account, not per character (issue #124): how many
+                     farm characters share one account drives the monthly math. -->
+                <TextBlock x:Name="PerAccountLabel" Text="{loc:T SkillFarm.PerAccount}"
+                           FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{DynamicResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+                <ComboBox x:Name="PerAccountCombo" MinWidth="52"
+                          FontSize="{DynamicResource EveFontSmall}"
+                          VerticalAlignment="Center"
+                          SelectionChanged="OnPerAccountChanged">
+                    <ComboBoxItem Content="1" />
+                    <ComboBoxItem Content="2" />
+                    <ComboBoxItem Content="3" />
+                </ComboBox>
                 <Button x:Name="AddCharBtn" Content="{loc:T Action.AddCharacter}"
                         FontSize="{DynamicResource EveFontSmall}" Padding="8,3"
                         CornerRadius="12" Click="OnAddCharacterClick" />

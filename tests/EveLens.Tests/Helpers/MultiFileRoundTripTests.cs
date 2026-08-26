@@ -205,6 +205,13 @@ namespace EveLens.Tests.Helpers
 
             settings.CharacterGroups.Add(group);
 
+            // Saved comparison sets (Discussion #105)
+            settings.SavedComparisons.Add(new SavedComparisonSettings
+            {
+                Name = "Industry Alts",
+                CharacterIDs = { 2100000001L, 2100000002L }
+            });
+
             return settings;
         }
 
@@ -373,6 +380,11 @@ namespace EveLens.Tests.Helpers
                 original.Characters.Any(c => c.Guid == plan.Owner).Should().BeTrue(
                     "plan owner Guid must match a character");
             }
+
+            // Saved comparison sets survive the full cycle (Discussion #105, Law 13)
+            loaded.SavedComparisons.Should().HaveCount(1);
+            loaded.SavedComparisons[0].Name.Should().Be("Industry Alts");
+            loaded.SavedComparisons[0].CharacterIDs.Should().Equal(2100000001L, 2100000002L);
         }
 
         [Fact]

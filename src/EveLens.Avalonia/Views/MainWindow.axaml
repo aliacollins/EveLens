@@ -16,8 +16,6 @@
                 <MenuItem x:Name="CreateBlankCharMenuItem" Header="Create _Blank Character" />
                 <MenuItem x:Name="ManageCharsMenuItem" Header="_Manage Characters" />
                 <Separator />
-                <MenuItem x:Name="ManageGroupsMenuItem" Header="Manage _Groups" />
-                <Separator />
                 <MenuItem x:Name="RestoreSettingsMenuItem" Header="_Restore Settings" />
                 <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings" />
                 <MenuItem x:Name="ResetSettingsMenuItem" Header="Re_set Settings" />
@@ -39,6 +37,7 @@
                 <MenuItem x:Name="PlanetaryDashMenuItem" Header="_Planetary Dashboard" />
                 <MenuItem x:Name="GlobalPlanMenuItem" Header="_Doctrine Designer" InputGesture="Ctrl+G" />
                 <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
+                <MenuItem x:Name="SkinrViewerMenuItem" Header="_SKINR Viewer (Experimental)" />
                 <Separator />
                 <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache" />
             </MenuItem>

@@ -217,67 +217,11 @@ try {
     $appBundleZip = "releases/EveLens-${Channel}-osx-arm64.app.zip"
     if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
 
-    $wslPublishDir = "/mnt/d/evemon-main/publish/osx-arm64"
-    $wslReleasesDir = "/mnt/d/evemon-main/releases"
-    $wslIconsDir = "/mnt/d/evemon-main/installer/icons"
-    $wslScript = @"
-#!/bin/bash
-set -e
-
-APP_DIR="/tmp/EveLens.app"
-rm -rf "`$APP_DIR"
-mkdir -p "`$APP_DIR/Contents/MacOS"
-mkdir -p "`$APP_DIR/Contents/Resources"
-
-# Copy published files preserving structure
-cp -r $wslPublishDir/* "`$APP_DIR/Contents/MacOS/"
-
-# Set executable permission on the main binary
-chmod +x "`$APP_DIR/Contents/MacOS/EveLens"
-
-# Copy icon into Resources
-cp "$wslIconsDir/evelens.icns" "`$APP_DIR/Contents/Resources/evelens.icns"
-
-# Create Info.plist
-cat > "`$APP_DIR/Contents/Info.plist" << 'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleName</key>
-  <string>EveLens</string>
-  <key>CFBundleDisplayName</key>
-  <string>EveLens</string>
-  <key>CFBundleIdentifier</key>
-  <string>dev.evelens.app</string>
-  <key>CFBundleVersion</key>
-  <string>$Version</string>
-  <key>CFBundleShortVersionString</key>
-  <string>$Version</string>
-  <key>CFBundleExecutable</key>
-  <string>EveLens</string>
-  <key>CFBundleIconFile</key>
-  <string>evelens</string>
-  <key>CFBundlePackageType</key>
-  <string>APPL</string>
-  <key>NSHighResolutionCapable</key>
-  <true/>
-</dict>
-</plist>
-PLIST
-
-# Zip with Unix permissions preserved (use cd to get clean paths)
-cd /tmp
-zip -r -y "$wslReleasesDir/EveLens-${Channel}-osx-arm64.app.zip" EveLens.app
-rm -rf "`$APP_DIR"
-echo "=== macOS .app bundle created ==="
-"@
-
-    # Write with Unix line endings and no BOM for WSL/bash compatibility
-    $wslScript = $wslScript -replace "`r`n", "`n"
-    [System.IO.File]::WriteAllText("$ProjectRoot/scripts/make-macapp.sh", $wslScript, (New-Object System.Text.UTF8Encoding $false))
+    # make-macapp.sh is a real source file taking (channel, version) as arguments.
+    # It used to be GENERATED here with the version baked in, which dirtied the
+    # working tree on every release and broke the next promote. Never regenerate it.
     $ErrorActionPreference = 'Continue'
-    wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh 2>&1 | ForEach-Object { $_ }
+    wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh $Channel $Version 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'
 
     if (Test-Path $appBundleZip) {
@@ -370,6 +314,18 @@ else {
     if (-not $notes) { $notes = "See CHANGELOG.md for details." }
     $notesFile = Join-Path $ProjectRoot "release-notes.md"
     Set-Content $notesFile $notes -Encoding UTF8
+
+    # ALPHA IS LOCAL-ONLY (Alia, 2026-08-19): alpha builds are for internal testing
+    # on this machine and must NEVER be published to GitHub. Beta is the first
+    # public channel. Artifacts stay in releases/ for local install.
+    if ($Channel -eq 'alpha') {
+        Write-Host "`n=== Alpha is local-only -- skipping GitHub upload ===" -ForegroundColor Yellow
+        Write-Host "  Artifacts ready for local install:" -ForegroundColor Green
+        foreach ($f in $allFiles) { Write-Host "    $f" -ForegroundColor Gray }
+        Remove-Item $notesFile -ErrorAction SilentlyContinue
+        Pop-Location
+        exit 0
+    }
 
     Write-Host "`n=== Uploading to GitHub Release ===" -ForegroundColor Cyan
 

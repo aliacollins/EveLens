@@ -243,6 +243,9 @@ namespace EveLens.Common
             foreach (var template in GlobalPlanTemplates)
                 serial.GlobalPlanTemplates.Add(template);
 
+            foreach (var comparison in SavedComparisons)
+                serial.SavedComparisons.Add(comparison);
+
             serial.Characters.AddRange(AppServices.DataStore.ExportCharacters());
             AppServices.TraceService?.Trace($"{serial.Characters.Count} characters exported");
             serial.ESIKeys.AddRange(AppServices.DataStore.ExportESIKeys());
