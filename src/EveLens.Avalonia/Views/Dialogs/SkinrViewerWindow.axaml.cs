@@ -161,17 +161,17 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ReportDisplaySize();
                 await _render.InitializeAsync();
 
-                if (SkinrRenderPlatform.Current == SkinrRenderSupport.Supported &&
-                    !_render.IsAvailable)
+                if (SkinrRenderPlatform.Current == SkinrRenderSupport.Supported)
                 {
-                    // No runtime found. If none is INSTALLED either, this is the
-                    // first-run case — offer the add-on download instead of an error.
-                    if (SkinrRuntimeInstaller.InstalledRoot() == null)
+                    string? installed = SkinrRuntimeInstaller.InstalledVersion();
+                    if (installed == null && !_render.IsAvailable)
                     {
-                        // Server-driven availability: the offer only shows when the
-                        // per-platform announcement answers. On a Mac before the
-                        // Metal runtime publishes, that means honest "planned"
-                        // messaging instead of an Install button that cannot work.
+                        // First-run case — offer the add-on download instead of an
+                        // error. Server-driven availability: the offer only shows
+                        // when the per-platform announcement answers. On a Mac
+                        // before the Metal runtime publishes, that means honest
+                        // "planned" messaging instead of an Install button that
+                        // cannot work.
                         _runtimeRelease = await SkinrRuntimeInstaller.GetLatestAsync();
                         if (_runtimeRelease != null || OperatingSystem.IsWindows())
                         {
@@ -183,14 +183,28 @@ namespace EveLens.Avalonia.Views.Dialogs
                             RenderDesc.Text = Loc.Get("Skinr.RenderMacDesc");
                         }
                     }
-                    else
+                    else if (installed != null)
                     {
-                        // Installed but not starting: a short sentence for the user,
-                        // the path-laden discovery report for the trace.
-                        RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
-                        RenderDesc.Text = Loc.Get("Skinr.RenderFailedShort");
-                        AppServices.TraceService?.Trace(
-                            "SkinrViewer: renderer unavailable: " + _render.UnavailableReason);
+                        // A runtime is installed: is a newer one announced? An
+                        // update can also be the FIX for an installed-but-broken
+                        // runtime, so this outranks the failure message below.
+                        _runtimeRelease = await SkinrRuntimeInstaller.GetLatestAsync();
+                        if (_runtimeRelease?.Version != null &&
+                            _runtimeRelease.Version != installed)
+                        {
+                            ShowRuntimeOffer(update: true, installedVersion: installed);
+                        }
+                        else if (!_render.IsAvailable)
+                        {
+                            // Installed, current, and still not starting: a short
+                            // sentence for the user, the path-laden discovery
+                            // report for the trace.
+                            RenderTitle.Text = Loc.Get("Skinr.RenderUnsupportedTitle");
+                            RenderDesc.Text = Loc.Get("Skinr.RenderFailedShort");
+                            AppServices.TraceService?.Trace(
+                                "SkinrViewer: renderer unavailable: " +
+                                _render.UnavailableReason);
+                        }
                     }
                 }
             }
@@ -244,7 +258,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// screen for "no runtime", used at open and again whenever an action needed
         /// the renderer. Never the raw discovery report: that names environment
         /// variables and local paths, and it goes to the trace instead.</summary>
-        private void ShowRuntimeOffer()
+        private void ShowRuntimeOffer(bool update = false, string? installedVersion = null)
         {
             RenderImage.IsVisible = false;
             // The view-state overlays (scope gate, loading, inventory error) own
@@ -256,8 +270,18 @@ namespace EveLens.Avalonia.Views.Dialogs
             if (!stateOwnsStage)
                 RenderPlaceholder.IsVisible = true;
             WelcomeGuide.IsVisible = true;
-            RenderTitle.Text = Loc.Get("Skinr.RuntimeTitle");
-            RenderDesc.Text = Loc.Get("Skinr.RuntimeDesc");
+            if (update)
+            {
+                RenderTitle.Text = Loc.Get("Skinr.RuntimeUpdateTitle");
+                RenderDesc.Text = string.Format(
+                    Loc.Get("Skinr.RuntimeUpdateDescFmt"),
+                    installedVersion, _runtimeRelease?.Version);
+            }
+            else
+            {
+                RenderTitle.Text = Loc.Get("Skinr.RuntimeTitle");
+                RenderDesc.Text = Loc.Get("Skinr.RuntimeDesc");
+            }
             RuntimeInstallPanel.IsVisible = true;
             if (_runtimeRelease == null)
                 _ = ShowRuntimeReleaseDetailsAsync();
@@ -346,7 +370,10 @@ namespace EveLens.Avalonia.Views.Dialogs
                 await SkinrRuntimeInstaller.InstallAsync(release, progress);
 
                 RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeStarting");
-                await _render.InitializeAsync();
+                // Reinitialize, not Initialize: on the UPDATE path a healthy host
+                // (and the converter it discovered) is already running and must be
+                // replaced, not kept.
+                await _render.ReinitializeAsync();
                 if (_render.IsAvailable)
                 {
                     RuntimeInstallPanel.IsVisible = false;
