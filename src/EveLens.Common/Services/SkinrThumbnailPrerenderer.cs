@@ -43,18 +43,25 @@ namespace EveLens.Common.Services
         private const int IdlePollMs = 5000;
 
         private readonly Func<bool>? _communityPreviews;
+        private readonly Func<bool>? _canRenderLocally;
+        private bool _couldRenderLastPass = true;
 
         public SkinrThumbnailPrerenderer(
             SkinrThumbnailCache cache,
             Func<IReadOnlyList<EsiSkinrRecipe>> candidates,
             Func<bool>? communityPreviews = null,
-            ISkinrRecipeResolver? resolver = null)
+            ISkinrRecipeResolver? resolver = null,
+            Func<bool>? canRenderLocally = null)
         {
             _cache = cache;
             _candidates = candidates;
             _communityPreviews = communityPreviews;
+            _canRenderLocally = canRenderLocally;
             _resolver = resolver ?? AppServices.SkinrRecipeResolver;
         }
+
+        /// <summary>Designs given up on so far — a test seam, and honest bookkeeping.</summary>
+        internal int FailedCount => _failed.Count;
 
         /// <summary>Raised (off the UI thread) when a design's thumbnail lands on disk.</summary>
         public event Action<string, string>? ThumbnailCaptured;
@@ -83,6 +90,15 @@ namespace EveLens.Common.Services
             {
                 while (!ct.IsCancellationRequested)
                 {
+                    // When the local engine appears mid-session (the runtime just
+                    // installed), designs parked as "failed" because there was no
+                    // engine deserve another pass — that verdict was about the
+                    // machine, not the designs.
+                    bool canRender = _canRenderLocally?.Invoke() != false;
+                    if (canRender && !_couldRenderLastPass)
+                        _failed.Clear();
+                    _couldRenderLastPass = canRender;
+
                     EsiSkinrRecipe? next = PickNext();
                     if (next == null)
                     {
@@ -152,6 +168,19 @@ namespace EveLens.Common.Services
                     ThumbnailCaptured?.Invoke(recipe.Id, shelf);
                     return false;
                 }
+            }
+
+            // No local engine (runtime not installed — a Mac before its Metal
+            // runtime ships, or a decline on Windows): the CDN shelf above was
+            // the only possible source, so stop here. Without this gate the loop
+            // resolved every market design and attempted a sidecar per one —
+            // hundreds of doomed attempts that made the whole window feel busy
+            // (user-reported on macOS). The failed set is cleared the moment an
+            // engine appears, so these designs get their render then.
+            if (_canRenderLocally?.Invoke() == false)
+            {
+                _failed.Add(recipe.Id);
+                return false;
             }
 
             if (!_resolver.IsAvailable)
