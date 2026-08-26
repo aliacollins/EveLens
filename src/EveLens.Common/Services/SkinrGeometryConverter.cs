@@ -111,12 +111,27 @@ namespace EveLens.Common.Services
             return new SkinrGeometryConverter(script, cacheDirectory, overrideDirectory);
         }
 
-        private static string? FindScript()
+        // Internal so tests can prove the discovery ORDER — the beta.2 regression
+        // was precisely a search list that no installed machine could satisfy.
+        internal static string? FindScript()
         {
             string beside = Path.Combine(
                 AppContext.BaseDirectory, "skinr", "gr2-convert", "convert.mjs");
             if (File.Exists(beside))
                 return beside;
+
+            // The converter ships INSIDE the render runtime package (1.0.3+): it is part
+            // of the 3D pipeline and the runtime is the artifact whose signed manifest
+            // verifies every file — exactly where an untrusted-binary parser belongs.
+            // This is the path an installed build actually hits; the walk-up below only
+            // ever fires from a repository checkout.
+            string? runtime = SkinrRuntimeInstaller.InstalledRoot();
+            if (runtime != null)
+            {
+                string packaged = Path.Combine(runtime, "gr2-convert", "convert.mjs");
+                if (File.Exists(packaged))
+                    return packaged;
+            }
 
             var dir = new DirectoryInfo(AppContext.BaseDirectory);
             for (int depth = 0; depth < 8 && dir != null; depth++, dir = dir.Parent)
@@ -407,7 +422,7 @@ namespace EveLens.Common.Services
         /// — so a bundled runtime, when we ship one, must win over a system one that might be
         /// Node 18.
         /// </remarks>
-        private static string? DiscoverNode()
+        internal static string? DiscoverNode()
         {
             string? explicitPath = Environment.GetEnvironmentVariable(NodePathVariable);
             if (!string.IsNullOrWhiteSpace(explicitPath) && File.Exists(explicitPath))
@@ -418,6 +433,21 @@ namespace EveLens.Common.Services
             string bundled = Path.Combine(AppContext.BaseDirectory, "skinr", "node", exe);
             if (File.Exists(bundled))
                 return bundled;
+
+            // Users do not have Node installed — the runtime package (1.0.3+) carries its
+            // own pinned Node, verified by the signed manifest like everything else in it.
+            // Preferred over PATH so a user's stray old Node can never shadow the one the
+            // converter was actually verified against.
+            string? runtime = SkinrRuntimeInstaller.InstalledRoot();
+            if (runtime != null)
+            {
+                string packaged = Path.Combine(runtime, "node", exe);
+                if (File.Exists(packaged))
+                    return packaged;
+                string packagedUnix = Path.Combine(runtime, "node", "bin", exe);
+                if (File.Exists(packagedUnix))
+                    return packagedUnix;
+            }
 
             string? pathVar = Environment.GetEnvironmentVariable("PATH");
             if (string.IsNullOrEmpty(pathVar))
