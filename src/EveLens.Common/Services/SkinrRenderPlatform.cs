@@ -41,7 +41,12 @@ namespace EveLens.Common.Services
         public static SkinrRenderSupport Classify(string os, Architecture arch) => os switch
         {
             "windows" when arch == Architecture.X64 => SkinrRenderSupport.Supported,
-            "macos" when arch == Architecture.Arm64 => SkinrRenderSupport.MacArmPlanned,
+            // Supported = the CAPABILITY exists (CCP ships a Metal backend and the
+            // runtime pipeline is platform-aware). Whether a mac runtime is actually
+            // downloadable is server-driven: the viewer shows the offer only when
+            // latest-osx-arm64.json answers, so shipping this flag early costs
+            // nothing and spares mac users an app update on the day it publishes.
+            "macos" when arch == Architecture.Arm64 => SkinrRenderSupport.Supported,
             "macos" => SkinrRenderSupport.UnsupportedMacIntel,
             "linux" => SkinrRenderSupport.UnsupportedLinux,
             _ => SkinrRenderSupport.Unsupported

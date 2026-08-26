@@ -168,7 +168,20 @@ namespace EveLens.Avalonia.Views.Dialogs
                     // first-run case — offer the add-on download instead of an error.
                     if (SkinrRuntimeInstaller.InstalledRoot() == null)
                     {
-                        ShowRuntimeOffer();
+                        // Server-driven availability: the offer only shows when the
+                        // per-platform announcement answers. On a Mac before the
+                        // Metal runtime publishes, that means honest "planned"
+                        // messaging instead of an Install button that cannot work.
+                        _runtimeRelease = await SkinrRuntimeInstaller.GetLatestAsync();
+                        if (_runtimeRelease != null || OperatingSystem.IsWindows())
+                        {
+                            ShowRuntimeOffer();
+                        }
+                        else
+                        {
+                            RenderTitle.Text = Loc.Get("Skinr.RenderMacTitle");
+                            RenderDesc.Text = Loc.Get("Skinr.RenderMacDesc");
+                        }
                     }
                     else
                     {
