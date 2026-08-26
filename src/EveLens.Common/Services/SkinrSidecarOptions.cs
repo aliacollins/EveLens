@@ -670,7 +670,13 @@ namespace EveLens.Common.Services
         /// <returns>Null when this root is usable, otherwise why it is not.</returns>
         private static string? ApplyShippedLayout(SkinrSidecarOptions options, string root)
         {
-            string python = Path.Combine(root, "python", "python.exe");
+            // Per-platform interpreter location inside OUR package layout: the
+            // Windows runtime ships python\python.exe, the macOS runtime ships a
+            // unix prefix (python/bin/python3). Both are defined by
+            // build_runtime.py — this mirrors it, nothing more.
+            string python = OperatingSystem.IsWindows()
+                ? Path.Combine(root, "python", "python.exe")
+                : Path.Combine(root, "python", "bin", "python3");
             string script = Path.Combine(root, "renderer", "skinr_sidecar.py");
             options.PythonPath = python;
             options.ScriptPath = script;

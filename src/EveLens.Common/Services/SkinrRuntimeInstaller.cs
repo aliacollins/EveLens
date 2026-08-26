@@ -38,9 +38,25 @@ namespace EveLens.Common.Services
     /// </remarks>
     public static class SkinrRuntimeInstaller
     {
-        /// <summary>Where releases are announced. The JSON is a
-        /// <see cref="SkinrRuntimeRelease"/>.</summary>
-        public const string LatestUrl = "https://hub.evelens.dev/runtime/latest.json";
+        /// <summary>This machine's runtime platform id, matching the packaging
+        /// script's <c>--platform</c> axis and the manifest's <c>platform</c> field.</summary>
+        public static string PlatformId =>
+            OperatingSystem.IsMacOS() &&
+            System.Runtime.InteropServices.RuntimeInformation.OSArchitecture ==
+                System.Runtime.InteropServices.Architecture.Arm64
+                ? "osx-arm64"
+                : "win-x64";
+
+        /// <summary>
+        /// Where releases are announced, per platform. The JSON is a
+        /// <see cref="SkinrRuntimeRelease"/>. Windows keeps the original
+        /// <c>latest.json</c> name (already published and polled); other platforms
+        /// get suffixed announcements so each rolls forward independently.
+        /// </summary>
+        public static string LatestUrl =>
+            PlatformId == "win-x64"
+                ? "https://hub.evelens.dev/runtime/latest.json"
+                : $"https://hub.evelens.dev/runtime/latest-{PlatformId}.json";
 
         /// <summary>The sidecar protocol generation this build of EveLens speaks.</summary>
         public const int SupportedProtocolVersion = 1;
