@@ -1,4 +1,4 @@
-// EveLens — Character Intelligence for EVE Online
+﻿// EveLens — Character Intelligence for EVE Online
 // Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
@@ -17,6 +17,7 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using EveLens.Avalonia.Converters;
 using EveLens.Avalonia.Services;
+using EveLens.Common;
 using EveLens.Common.Events;
 using EveLens.Common.Helpers;
 using EveLens.Common.Service;
@@ -93,7 +94,21 @@ namespace EveLens.Avalonia.Views.Dialogs
             _hub.CarouselChanged += () => Dispatcher.UIThread.Post(RefreshCarousel);
             _render.FrameReady += frame => Dispatcher.UIThread.Post(() => ShowFrame(frame));
             _render.StatusChanged += text => Dispatcher.UIThread.Post(() =>
-                RenderStatusText.Text = text);
+            {
+                RenderStatusText.Text = text;
+                // While the stage is empty and a build is in flight, the engine's own
+                // narration ("Starting the renderer — this takes up to a minute the
+                // first time...") belongs front and center, not in the corner pill.
+                if (_stageWaiting && !_overlayFromDownload)
+                {
+                    LoadingOverlayText.Text = text;
+                    LoadingOverlay.IsVisible = true;
+                    // The render VM reports failures as status text (it never throws
+                    // across the event boundary); a failure ends the wait.
+                    if (text.StartsWith("Render failed", StringComparison.Ordinal))
+                        EndStageWait();
+                }
+            });
             _render.DownloadProgress += fraction => ReportDownload(
                 Loc.Get("Skinr.RenderPlaceholderTitle"), fraction);
             _render.DiagnosticsChanged += () => Dispatcher.UIThread.Post(RefreshRenderDiagnostics);
@@ -128,16 +143,276 @@ namespace EveLens.Avalonia.Views.Dialogs
                     PlaceholderScroller.Margin = margin;
             };
 
+            CharacterCombo.ItemTemplate = BuildCharacterOptionTemplate();
+
+            // Fresh SKINR license counts land per character on the monitor's cadence;
+            // a visible landing keeps its card grid current as they do.
+            _skinrDataSub = AppServices.EventAggregator?.Subscribe<CharacterSkinrUpdatedEvent>(
+                _ => Dispatcher.UIThread.Post(() =>
+                {
+                    if (LandingPane.IsVisible)
+                        BuildLandingGrid();
+                }));
+
+            // First open (or the remembered character is gone): the landing asks WHOSE
+            // collection instead of silently guessing first-alphabetical — the guess is
+            // exactly what read as "not working" (Issue #139).
+            long remembered = Settings.UI.SkinrLastCharacterId;
+            string rememberedName = remembered == 0 ? null : AppServices.Characters
+                .Where(c => c.Monitored)
+                .OfType<CCPCharacter>()
+                .FirstOrDefault(c => c.CharacterID == remembered)?.Name;
+            RebuildCharacterPicker(rememberedName, allowNone: rememberedName == null);
+            if (rememberedName == null)
+                ShowLanding();
+        }
+
+        private IDisposable? _skinrDataSub;
+
+        /// <summary>A picker row: the character, and whether their token carries the
+        /// SKINR scope. Display-only.</summary>
+        private sealed record CharacterOption(Character Character, bool HasScope)
+        {
+            public string Name => Character.Name;
+        }
+
+        /// <summary>
+        /// Populates the character picker with access markers — characters whose tokens
+        /// lack the SKINR scope show dimmed with a "needs access" tag, so it's visible
+        /// BEFORE selecting them why their collection would be gated (Issue #139).
+        /// </summary>
+        /// <param name="selectName">Character to land on; null keeps/starts at the first.
+        /// Auto-selecting the first character: an empty picker meant an empty Collection
+        /// that read as a bug ("where are my ships?"), and the Hub half works without a
+        /// character anyway — this only ever adds data.</param>
+        /// <param name="allowNone">When true, no fallback selection is made — used while
+        /// the landing is the chooser, so no character's collection loads before the user
+        /// has actually chosen one.</param>
+        private void RebuildCharacterPicker(string? selectName = null, bool allowNone = false)
+        {
             var characters = AppServices.Characters.Where(c => c.Monitored)
                 .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            CharacterCombo.ItemsSource = characters.Select(c => c.Name).ToList();
+            CharacterCombo.ItemsSource = characters
+                .Select(c => new CharacterOption(c, SkinrViewerViewModel.HasSkinrScope(c)))
+                .ToList();
             CharacterCombo.Tag = characters;
-            // Auto-select the first character: an empty picker meant an empty
-            // Collection that read as a bug ("where are my ships?"), and the Hub
-            // half works without a character anyway — this only ever adds data.
-            if (characters.Count > 0)
-                CharacterCombo.SelectedIndex = 0;
+
+            int index = selectName == null
+                ? -1
+                : characters.FindIndex(c => string.Equals(
+                    c.Name, selectName, StringComparison.OrdinalIgnoreCase));
+            if (index < 0 && characters.Count > 0 && !allowNone)
+                index = 0;
+            CharacterCombo.SelectedIndex = index;
+        }
+
+        private global::Avalonia.Controls.Templates.FuncDataTemplate<CharacterOption>
+            BuildCharacterOptionTemplate() => new((option, _) =>
+        {
+            if (option == null)
+                return new TextBlock();
+
+            var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 7 };
+            panel.Children.Add(new TextBlock
+            {
+                Text = option.Name,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = (IBrush?)Resources[option.HasScope
+                    ? "SkinrTextBrush" : "SkinrTextDimBrush"],
+            });
+            if (!option.HasScope)
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = Loc.Get("Skinr.NeedsAccess"),
+                    FontSize = FontScaleService.Caption,
+                    FontStyle = FontStyle.Italic,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = (IBrush?)Resources["SkinrAccentBrush"],
+                });
+            }
+            return panel;
+        });
+
+        // --- landing (whose collection?) ----------------------------------------
+
+        private void ShowLanding()
+        {
+            LandingPane.IsVisible = true;
+            // One search at a time: the top bar's design search is meaningless while
+            // the landing (with its character search) owns the stage
+            SearchPill.IsVisible = false;
+            BuildLandingGrid();
+        }
+
+        private void HideLanding()
+        {
+            LandingPane.IsVisible = false;
+            SearchPill.IsVisible = true;
+        }
+
+        private void OnLandingSearchChanged(object? sender, TextChangedEventArgs e)
+            => BuildLandingGrid();
+
+        /// <summary>
+        /// The landing's card grid. Default view lists ONLY characters whose monitored
+        /// SKINR data shows owned designs — at a hundred alts, the four that matter.
+        /// Searching reveals every character with their state labeled, so nobody is
+        /// unreachable, just unadvertised (#139, scaled per design discussion).
+        /// </summary>
+        private void BuildLandingGrid()
+        {
+            LandingGrid.Children.Clear();
+
+            var all = AppServices.Characters.Where(c => c.Monitored)
+                .OfType<CCPCharacter>()
+                .ToList();
+            long lastUsed = Settings.UI.SkinrLastCharacterId;
+            string filter = LandingSearchBox.Text?.Trim() ?? string.Empty;
+
+            List<CCPCharacter> shown;
+            if (filter.Length > 0)
+            {
+                shown = all.Where(c => c.Name.Contains(filter,
+                        StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            else
+            {
+                shown = all.Where(c => SkinrViewerViewModel.HasSkinrScope(c)
+                        && c.SkinrLicenses.Count > 0)
+                    .OrderByDescending(c => c.CharacterID == lastUsed)
+                    .ThenByDescending(c => c.SkinrLicenses.Count)
+                    .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            foreach (var character in shown)
+                LandingGrid.Children.Add(BuildLandingCard(character));
+
+            if (shown.Count == 0)
+            {
+                LandingGrid.Children.Add(new TextBlock
+                {
+                    Text = Loc.Get(filter.Length > 0
+                        ? "Skinr.LandingNoMatch" : "Skinr.LandingEmpty"),
+                    FontSize = FontScaleService.Body,
+                    Foreground = (IBrush?)Resources["SkinrTextDimBrush"],
+                    TextWrapping = TextWrapping.Wrap,
+                    TextAlignment = TextAlignment.Center,
+                    MaxWidth = 420,
+                    Margin = new Thickness(0, 30),
+                });
+            }
+
+            int unscoped = all.Count(c => !SkinrViewerViewModel.HasSkinrScope(c));
+            LandingGrantText.Text = unscoped > 0
+                ? string.Format(Loc.Get("Skinr.LandingGrantFmt"), unscoped)
+                : Loc.Get("Skinr.LandingGrantAll");
+            LandingGrantButton.IsVisible = unscoped > 0;
+        }
+
+        private Control BuildLandingCard(CCPCharacter character)
+        {
+            bool hasScope = SkinrViewerViewModel.HasSkinrScope(character);
+            int designs = hasScope ? character.SkinrLicenses.Count : 0;
+
+            var card = new Border
+            {
+                Width = 168,
+                Background = (IBrush?)Resources["SkinrPanelBrush"],
+                BorderBrush = (IBrush?)Resources["SkinrBorderBrush"],
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(14, 14, 14, 12),
+                Margin = new Thickness(6),
+                Cursor = new Cursor(StandardCursorType.Hand),
+            };
+
+            var portrait = new Image { Width = 64, Height = 64, Stretch = Stretch.UniformToFill };
+            var portraitFrame = new Border
+            {
+                Width = 64, Height = 64,
+                CornerRadius = new CornerRadius(32),
+                ClipToBounds = true,
+                Background = (IBrush?)Resources["SkinrPillBrush"],
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Child = portrait,
+            };
+            LoadLandingPortraitAsync(portrait, character);
+
+            string stateText = !hasScope
+                ? Loc.Get("Skinr.NeedsAccess")
+                : designs > 0
+                    ? string.Format(Loc.Get("Skinr.LandingDesignsFmt"), designs)
+                    : Loc.Get("Skinr.LandingNoDesigns");
+            IBrush? stateBrush = !hasScope
+                ? (IBrush?)Resources["SkinrAccentBrush"]
+                : designs > 0
+                    ? (IBrush?)Resources["SkinrTextSecBrush"]
+                    : (IBrush?)Resources["SkinrTextDimBrush"];
+
+            var stack = new StackPanel { Spacing = 7 };
+            stack.Children.Add(portraitFrame);
+            stack.Children.Add(new TextBlock
+            {
+                Text = character.Name,
+                FontSize = FontScaleService.Body,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = (IBrush?)Resources["SkinrTextBrush"],
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            });
+            stack.Children.Add(new TextBlock
+            {
+                Text = stateText,
+                FontSize = FontScaleService.Caption,
+                Foreground = stateBrush,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            });
+            card.Child = stack;
+
+            card.PointerPressed += (_, _) =>
+            {
+                if (hasScope)
+                    PickCharacter(character);
+                else
+                    OnScopeUpdate(card, new global::Avalonia.Interactivity.RoutedEventArgs());
+            };
+            return card;
+        }
+
+        /// <summary>The landing's exit: remember the choice, drop the pane, and let the
+        /// picker's selection change drive the load (index always changes — the landing
+        /// keeps the combo unselected).</summary>
+        private void PickCharacter(CCPCharacter character)
+        {
+            Settings.UI.SkinrLastCharacterId = character.CharacterID;
+            Settings.Save();
+            HideLanding();
+
+            if (CharacterCombo.Tag is List<Character> characters)
+            {
+                int index = characters.FindIndex(c => c == character);
+                if (index >= 0 && CharacterCombo.SelectedIndex != index)
+                    CharacterCombo.SelectedIndex = index;
+            }
+        }
+
+        private async void LoadLandingPortraitAsync(Image image, CCPCharacter character)
+        {
+            try
+            {
+                var drawingImage = await ImageService.GetCharacterImageAsync(character.CharacterID);
+                if (drawingImage == null) return;
+                var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
+                    drawingImage, typeof(Bitmap), null!, System.Globalization.CultureInfo.InvariantCulture);
+                if (converted is Bitmap bitmap)
+                    image.Source = bitmap;
+            }
+            catch { }
         }
 
         /// <summary>
@@ -344,16 +619,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 await dialog.ShowDialog(this);
                 if (!dialog.CharacterImported)
                     return;
-                // Re-run the scope check for whoever is selected; a fresh token
-                // with the cosmetics scope flips the gate on the same visit.
-                if (CharacterCombo.Tag is List<Character> characters &&
-                    CharacterCombo.SelectedIndex >= 0 &&
-                    CharacterCombo.SelectedIndex < characters.Count)
-                {
-                    await _hub.Data.SelectCharacterAsync(
-                        characters[CharacterCombo.SelectedIndex]);
-                    _hub.RefreshDesigns();
-                }
+                // Scopes changed: rebuild the picker so the access markers update, and
+                // land on the character who just granted access — re-authing character X
+                // while the window silently stayed on character A read as "not working"
+                // (Issue #139). Replacing ItemsSource resets the selection, so setting
+                // the index fires OnCharacterChanged, which runs the scope check.
+                HideLanding();
+                RebuildCharacterPicker(dialog.ImportedCharacterNames.LastOrDefault());
             }
             catch (Exception ex)
             {
@@ -445,6 +717,15 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void OnRailCollection(object? sender, PointerPressedEventArgs e)
         {
+            // Already on Collection: the second click is the way BACK to the landing —
+            // the character chooser stays reachable without a dedicated button.
+            if (!MarketPane.IsVisible && !LandingPane.IsVisible)
+            {
+                ShowLanding();
+                return;
+            }
+            HideLanding();
+
             bool wasDetail = _marketDetail;
             _marketDetail = false;
             ShowMarket(false);
@@ -947,6 +1228,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             _prerenderer?.Dispose();
             _market.Dispose();
             _idNamesSub?.Dispose();
+            _skinrDataSub?.Dispose();
             // The render VM first: it owns the sidecar process, and disposing it is what kills a
             // 200 MB engine that would otherwise outlive the window it was opened for.
             _render.Dispose();
@@ -966,11 +1248,36 @@ namespace EveLens.Avalonia.Views.Dialogs
                     return;
                 int index = CharacterCombo.SelectedIndex;
                 var character = index >= 0 && index < characters.Count ? characters[index] : null;
-                await _hub.Data.SelectCharacterAsync(character);
-                _hub.RefreshDesigns();
+
+                if (character != null)
+                {
+                    // Every explicit choice is remembered — next open skips the landing
+                    Settings.UI.SkinrLastCharacterId = character.CharacterID;
+                    Settings.Save();
+
+                    // A collection load is ESI + resolver + thumbnails: front and center,
+                    // not a bottom-left whisper (Issue #139)
+                    LoadingOverlayText.Text = string.Format(
+                        Loc.Get("Skinr.LoadingDesignsFmt"), character.Name);
+                    LoadingOverlayBar.IsIndeterminate = true;
+                    _overlayFromDownload = false;
+                    LoadingOverlay.Background = (IBrush?)Resources["SkinrBgBrush"];
+                    LoadingOverlay.IsVisible = true;
+                }
+
+                try
+                {
+                    await _hub.Data.SelectCharacterAsync(character);
+                    _hub.RefreshDesigns();
+                }
+                finally
+                {
+                    LoadingOverlay.IsVisible = false;
+                }
             }
             catch (Exception ex)
             {
+                LoadingOverlay.IsVisible = false;
                 AppServices.TraceService?.Trace($"SkinrViewer: character select failed: {ex.Message}");
             }
         }
@@ -983,6 +1290,19 @@ namespace EveLens.Avalonia.Views.Dialogs
                 _thumbSavedFor = null;
                 _thumbArmed = false;   // no captures until THIS design's build returns
                 RefreshCarousel();
+
+                // Every design choice engages the centered narration until its first
+                // frame. Empty stage: opaque (nothing to see behind). Ship on stage:
+                // transparent scrim, just the floating card over the dimmed ship —
+                // the swap is visible progress, so it must not be hidden.
+                _stageWaiting = true;
+                _overlayFromDownload = false;
+                LoadingOverlay.Background = RenderImage.IsVisible
+                    ? Brushes.Transparent
+                    : (IBrush?)Resources["SkinrBgBrush"];
+                LoadingOverlayBar.IsIndeterminate = true;
+                LoadingOverlayText.Text = Loc.Get("Skinr.StatusRendering");
+                LoadingOverlay.IsVisible = true;
 
                 await _hub.Data.SelectDesignAsync(skinrId);
                 RefreshDesignCard();
@@ -1002,6 +1322,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
             catch (Exception ex)
             {
+                EndStageWait();
                 AppServices.TraceService?.Trace($"SkinrViewer: design select failed: {ex.Message}");
             }
         }
@@ -1122,6 +1443,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Tag = preset
                 };
                 button.Click += async (_, _) => await OnEnvironmentPicked(preset);
+                if (preset == SkinrEnvironmentPreset.Space)
+                    ToolTip.SetTip(button, Loc.Get("Skinr.SpaceCycleTip"));
                 EnvSwitcher.Children.Add(button);
             }
             HighlightEnvironment();
@@ -1155,6 +1478,15 @@ namespace EveLens.Avalonia.Views.Dialogs
                     ? (IBrush?)Resources["SkinrAccentDimBrush"] : Brushes.Transparent;
                 button.Foreground = (IBrush?)Resources[active
                     ? "SkinrTextBrush" : "SkinrTextSecBrush"];
+
+                // Space is a deck of nebulas, not one backdrop: clicking it again deals
+                // the next sky. Nobody discovered that (Issue #139), so the active pill
+                // says so — the cycle glyph is the invitation to click once more.
+                if (preset == SkinrEnvironmentPreset.Space)
+                {
+                    string name = Loc.Get(SkinrEnvironmentPresets.NameKey(preset));
+                    button.Content = active ? name + "  ↻" : name;
+                }
             }
         }
 
@@ -1403,10 +1735,48 @@ namespace EveLens.Avalonia.Views.Dialogs
                 bool active = fraction < 1.0;
                 DownloadProgress.IsVisible = active;
                 DownloadProgress.Value = fraction * 100;
-                RenderStatusText.Text = active
+                string status = active
                     ? string.Format(Loc.Get("Skinr.StatusDownloading"), what, (int)(fraction * 100))
                     : Loc.Get("Skinr.StatusReady");
+                RenderStatusText.Text = status;
+
+                // Front and center while there is nothing on the stage to cover: an
+                // empty stage with a bottom-corner whisper read as frozen (Issue #139).
+                // Once a ship is up, downloads stay in the pill — a modal bar over a
+                // render you're actively orbiting would be worse.
+                bool center = active && !RenderImage.IsVisible && !LandingPane.IsVisible;
+                if (center)
+                {
+                    LoadingOverlayBar.IsIndeterminate = false;
+                    LoadingOverlayBar.Value = fraction * 100;
+                    LoadingOverlayText.Text = status;
+                    LoadingOverlay.Background = (IBrush?)Resources["SkinrBgBrush"];
+                    LoadingOverlay.IsVisible = true;
+                    _overlayFromDownload = true;
+                }
+                else if (_overlayFromDownload)
+                {
+                    LoadingOverlay.IsVisible = false;
+                    LoadingOverlayBar.IsIndeterminate = true;
+                    _overlayFromDownload = false;
+                }
             });
+        }
+
+        /// <summary>True while the center overlay is showing DOWNLOAD progress — so a
+        /// finished download hides it without stomping a character-load overlay.</summary>
+        private bool _overlayFromDownload;
+
+        /// <summary>True from picking a design on an empty stage until its first frame
+        /// (or a reported failure): the center overlay narrates everything in between.</summary>
+        private bool _stageWaiting;
+
+        private void EndStageWait()
+        {
+            _stageWaiting = false;
+            _overlayFromDownload = false;
+            LoadingOverlay.IsVisible = false;
+            LoadingOverlayBar.IsIndeterminate = true;
         }
 
         // --- render surface ---------------------------------------------------
@@ -1417,6 +1787,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// </summary>
         private void ShowFrame(SkinrFrame frame)
         {
+            // The first frame ends the wait — a visible ship IS the progress report
+            if (_stageWaiting || LoadingOverlay.IsVisible)
+                EndStageWait();
+
             var size = new PixelSize(frame.Width, frame.Height);
             if (_surface == null || _surface.PixelSize != size)
             {

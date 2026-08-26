@@ -515,6 +515,14 @@ namespace EveLens.Avalonia.Views.PlanEditor
             var sortedEntries = _viewModel.DisplayPlan?.ToArray();
             _queueVm.Initialize(_viewModel.Plan, _viewModel.Character as Character, sortedEntries);
 
+            // Priority bands follow the VM (which follows the plan's saved sorting
+            // preferences), so a plan saved grouped reopens grouped.
+            bool priorityBands = _viewModel.GroupByPriority;
+            if (QueueListControl.GroupByPriority != priorityBands)
+                QueueListControl.GroupByPriority = priorityBands;
+            GroupByPriorityBtn.Content = priorityBands
+                ? Loc.Get("Plan.GroupedByPriority") : Loc.Get("Plan.GroupByPriority");
+
             QueueListControl.SetViewModel(_queueVm);
 
             if (!_queueEventsWired)
@@ -582,6 +590,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Reset group button state
             QueueListControl.GroupByAttribute = false;
             GroupByAttrBtn.Content = Loc.Get("Plan.GroupByAttr");
+            QueueListControl.GroupByPriority = false;
+            GroupByPriorityBtn.Content = Loc.Get("Plan.GroupByPriority");
 
             UpdateStatsHeader();
             if (_activeSidebarTab == "Plan")
@@ -3263,6 +3273,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
             Refresh();
         }
 
+        private void OnGroupByPriority(object? sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            // The VM setter syncs the plan's saved sorting preferences and rebuilds
+            // the display plan; RefreshQueueList picks the state up from the VM.
+            _viewModel.GroupByPriority = !_viewModel.GroupByPriority;
+            Refresh();
+        }
+
         private async void CopyPlanToClipboard()
         {
             if (_viewModel?.Plan == null) return;
@@ -3282,23 +3302,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         #region Context Menu Actions
 
-        private void OnMoveToTopItem(PlanEntryDisplayItem item)
-        {
-            if (_viewModel?.Plan == null) return;
-
-            var plan = _viewModel.Plan;
-            var entry = plan.FirstOrDefault(pe =>
-                pe.Skill == item.Entry.Skill && pe.Level == item.Entry.Level);
-            if (entry != null)
-            {
-                entry.Priority = 1;
-                _viewModel.UpdateDisplayPlan();
-                Refresh();
-                BuildSidebarContent();
-                UpdateParentStatusBar();
-            }
-        }
-
         private void OnChangePriorityItem(PlanEntryDisplayItem item, int newPriority)
         {
             if (_viewModel?.Plan == null) return;
@@ -3308,7 +3311,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 pe.Skill == item.Entry.Skill && pe.Level == item.Entry.Level);
             if (entry == null || entry.Priority == newPriority) return;
 
-            entry.Priority = newPriority;
+            // The model validates consistency: a prerequisite may never sit at lower
+            // priority than a skill that depends on it. When the plain set would break
+            // that, fall through to the fixing variant, which pulls the prerequisites
+            // along -- that's what raising a skill's priority MEANS.
+            if (!_viewModel.TrySetPriority(new[] { entry }, newPriority))
+                _viewModel.SetPriority(new[] { entry }, newPriority);
+
             _viewModel.UpdateDisplayPlan();
             Refresh();
             BuildSidebarContent();

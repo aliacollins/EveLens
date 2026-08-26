@@ -664,6 +664,28 @@ namespace EveLens.Common.Services
                 RequiredScope = (ulong)ESIAPICharacterMethods.LoyaltyPoints,
             });
 
+            // 28. SKINR design licenses
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.SkinrLicenses,
+                ExecuteAsync = CreateFetchFunc<EsiSkinrInventory>(
+                    ESIAPICharacterMethods.SkinrLicenses,
+                    OnSkinrLicensesUpdated,
+                    (c, r) => notifiers.NotifyCharacterSkinrLicensesError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.SkinrLicenses,
+            });
+
+            // 29. SKINR component licenses
+            registrations.Add(new Core.Interfaces.EndpointRegistration
+            {
+                Method = (long)ESIAPICharacterMethods.SkinrComponents,
+                ExecuteAsync = CreateFetchFunc<EsiSkinrComponentInventory>(
+                    ESIAPICharacterMethods.SkinrComponents,
+                    OnSkinrComponentsUpdated,
+                    (c, r) => notifiers.NotifyCharacterSkinrComponentsError(c, r)),
+                RequiredScope = (ulong)ESIAPICharacterMethods.SkinrComponents,
+            });
+
             scheduler.RegisterCharacter(ccpCharacter.CharacterID, registrations);
 
             AppServices.TraceService?.Trace(
@@ -990,6 +1012,17 @@ namespace EveLens.Common.Services
                 ccpCharacter, ESIAPICharacterMethods.LoyaltyPoints,
                 OnLoyaltyPointsUpdated, notifiers.
                 NotifyCharacterLoyaltyPointsError, suppressSelfTicking: true) { QueryOnStartup = true });
+            // SKINR — scope-gated automatically: HasAccess is false until the character's
+            // key carries esi.cosmetic.char:read, so only characters who granted SKINR
+            // access ever spend char-skinr rate tokens
+            monitors.Add(new CharacterQueryMonitor<EsiSkinrInventory>(
+                ccpCharacter, ESIAPICharacterMethods.SkinrLicenses,
+                OnSkinrLicensesUpdated, notifiers.
+                NotifyCharacterSkinrLicensesError, suppressSelfTicking: true) { QueryOnStartup = true });
+            monitors.Add(new CharacterQueryMonitor<EsiSkinrComponentInventory>(
+                ccpCharacter, ESIAPICharacterMethods.SkinrComponents,
+                OnSkinrComponentsUpdated, notifiers.
+                NotifyCharacterSkinrComponentsError, suppressSelfTicking: true) { QueryOnStartup = true });
 
             return monitors;
         }
@@ -1835,6 +1868,34 @@ namespace EveLens.Common.Services
                 AppServices.TraceService?.Trace($"CharacterResearchPointsUpdated: {target.Name}");
                 AppServices.EventAggregator?.Publish(new CharacterResearchUpdatedEvent(target.CharacterID, target.Name));
                 AppServices.EventAggregator?.Publish(new CommonEvents.CharacterResearchPointsUpdatedEvent(target));
+            }
+        }
+
+        private void OnSkinrLicensesUpdated(EsiSkinrInventory result)
+        {
+            var target = m_ccpCharacter;
+            // Character may have been deleted since we queried
+            if (target != null)
+            {
+                target.SkinrLicenses.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "skinr_licenses", result);
+                AppServices.TraceService?.Trace(
+                    $"CharacterSkinrLicensesUpdated: {target.Name} ({result.Licenses.Count} designs)");
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterSkinrUpdatedEvent(target));
+            }
+        }
+
+        private void OnSkinrComponentsUpdated(EsiSkinrComponentInventory result)
+        {
+            var target = m_ccpCharacter;
+            // Character may have been deleted since we queried
+            if (target != null)
+            {
+                target.SkinrComponents.Import(result);
+                _ = AppServices.CharacterDataCache.SaveAsync(target.CharacterID, "skinr_components", result);
+                AppServices.TraceService?.Trace(
+                    $"CharacterSkinrComponentsUpdated: {target.Name} ({result.Licenses.Count} components)");
+                AppServices.EventAggregator?.Publish(new CommonEvents.CharacterSkinrUpdatedEvent(target));
             }
         }
 
