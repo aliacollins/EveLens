@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-27</date>
+      <version>1.5.0.10</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.10
+
+SKINR landing + monitored SKINR data, priority feature, Doctrine clipboard/frozen panes, SDE 3480926 (#135 #136 #137 #139)]]></message>
+    </release>
+    <release>
       <date>2026-08-26</date>
       <version>1.5.0.9</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
@@ -94,16 +104,6 @@ Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime upda
       <message><![CDATA[EveLens 1.5.0-beta.2
 
 Beta 2: SKINR studio public debut, Plan Editor rebuilt, global remap optimization, per-account Skill Farm economics, community fixes]]></message>
-    </release>
-    <release>
-      <date>2026-08-19</date>
-      <version>1.5.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.1
-
-net10 + Avalonia 12 + SkiaSharp 3 -- first 1.5.0 beta]]></message>
     </release>
   </releases>
   <datafiles>
