@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0-beta.6] - 2026-08-26
+
 ### Fixed
 
 - **SKINR marketplace no longer hangs the app** -- Every refresh of the marketplace grid re-decoded every card's image from scratch on the UI thread (and re-converted every hull render -- five designs on one hull paid five times). On a Mac this pinned the interface for 14 seconds at a 4 GB memory footprint and had to be force-closed. Card art is now decoded once at card size and reused across rebuilds, hull renders are fetched once per ship, and memory stays flat.
