@@ -257,6 +257,14 @@
     <value>/v5/characters/{0:D}/assets/</value>
     <comment>3600</comment>
   </data>
+  <data name="ESISkinrLicenses" xml:space="preserve">
+    <value>/characters/{0:D}/cosmetics/skinr</value>
+    <comment>3600</comment>
+  </data>
+  <data name="ESISkinrComponents" xml:space="preserve">
+    <value>/characters/{0:D}/cosmetics/skinr/components</value>
+    <comment>3600</comment>
+  </data>
   <data name="ESICalendarEventAttendees" xml:space="preserve">
     <value>/v2/characters/{0:D}/calendar/{1:D}/attendees/</value>
     <comment>600</comment>

@@ -111,6 +111,13 @@ namespace EveLens.Common.SettingsObjects
         public bool SafeForWork { get; set; }
 
         /// <summary>
+        /// The character the SKINR studio last showed. 0 = never opened; the studio
+        /// presents its landing (character choice) instead of guessing.
+        /// </summary>
+        [XmlElement("skinrLastCharacterId")]
+        public long SkinrLastCharacterId { get; set; }
+
+        /// <summary>
         /// Gets or sets whether the app minimizes to system tray on close (Avalonia).
         /// When true, closing the window hides to tray; when false, close exits the app.
         /// </summary>

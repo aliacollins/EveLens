@@ -199,6 +199,24 @@ namespace EveLens.Common.Constants {
                 return ResourceManager.GetString("ESIAssetList", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to /characters/{0:D}/cosmetics/skinr.
+        /// </summary>
+        public static string ESISkinrLicenses {
+            get {
+                return ResourceManager.GetString("ESISkinrLicenses", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to /characters/{0:D}/cosmetics/skinr/components.
+        /// </summary>
+        public static string ESISkinrComponents {
+            get {
+                return ResourceManager.GetString("ESISkinrComponents", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to /v1/characters/{0:D}/attributes/.

@@ -885,6 +885,42 @@ namespace EveLens.Common.Collections.Global
         }
 
         /// <summary>
+        /// Notifies a SKINR design licenses querying error.
+        /// </summary>
+        /// <param name="character">The character.</param>
+        /// <param name="result">The result.</param>
+        internal void NotifyCharacterSkinrLicensesError(CCPCharacter character,
+            EsiResult<EsiSkinrInventory> result)
+        {
+            var notification = new APIErrorNotificationEventArgs(character, result)
+            {
+                Description = string.Format(Properties.Resources.ErrorSkinrLicenses,
+                    character?.Name),
+                Behaviour = NotificationBehaviour.Overwrite,
+                Priority = NotificationPriority.Error
+            };
+            Notify(notification);
+        }
+
+        /// <summary>
+        /// Notifies a SKINR component licenses querying error.
+        /// </summary>
+        /// <param name="character">The character.</param>
+        /// <param name="result">The result.</param>
+        internal void NotifyCharacterSkinrComponentsError(CCPCharacter character,
+            EsiResult<EsiSkinrComponentInventory> result)
+        {
+            var notification = new APIErrorNotificationEventArgs(character, result)
+            {
+                Description = string.Format(Properties.Resources.ErrorSkinrComponents,
+                    character?.Name),
+                Behaviour = NotificationBehaviour.Overwrite,
+                Priority = NotificationPriority.Error
+            };
+            Notify(notification);
+        }
+
+        /// <summary>
         /// Notifies a mail messages query error.
         /// </summary>
         /// <param name="character">The character.</param>

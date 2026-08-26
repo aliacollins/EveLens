@@ -87,6 +87,8 @@ namespace EveLens.Common.Constants
             { ESIAPICharacterMethods.ResearchPoints,    TimeSpan.FromHours(1) },       // /characters/{id}/agents_research/ — cached 1 hour
             { ESIAPICharacterMethods.LoyaltyPoints,     TimeSpan.FromHours(1) },       // /characters/{id}/loyalty/points/ — cached 1 hour
             { ESIAPICharacterMethods.UpcomingCalendarEvents, TimeSpan.FromMinutes(5) }, // /characters/{id}/calendar/ — cached 5 minutes
+            { ESIAPICharacterMethods.SkinrLicenses,     TimeSpan.FromHours(1) },       // /characters/{id}/cosmetics/skinr — cached 60 minutes, rate group: char-skinr (30/15m)
+            { ESIAPICharacterMethods.SkinrComponents,   TimeSpan.FromHours(1) },       // /characters/{id}/cosmetics/skinr/components — cached 60 minutes, rate group: char-skinr (30/15m)
         };
 
         /// <summary>
@@ -125,6 +127,8 @@ namespace EveLens.Common.Constants
             { ESIAPICharacterMethods.WalletTransactions,"char-wallet" },
             { ESIAPICharacterMethods.LoyaltyPoints,     "char-wallet" },
             { ESIAPICharacterMethods.AssetList,         "char-asset" },
+            { ESIAPICharacterMethods.SkinrLicenses,     "char-skinr" },
+            { ESIAPICharacterMethods.SkinrComponents,   "char-skinr" },
             { ESIAPICharacterMethods.Contracts,         "char-contract" },
             { ESIAPICharacterMethods.ContactList,       "char-social" },
             { ESIAPICharacterMethods.MailMessages,      "char-social" },
