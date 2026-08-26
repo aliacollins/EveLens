@@ -73,6 +73,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private IDisposable? _idNamesSub;
         private string? _selectedSkinrId;
         private SkinrThumbnailPrerenderer? _prerenderer;
+        private readonly SkinrCardBitmapCache _cardBitmaps = new();
         private readonly SkinrHubPreferences _hubPrefs = SkinrHubPreferences.Load();
         private bool _suppressCdnToggle;
 
@@ -553,8 +554,12 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // shelf can fill cards — the sidecar must not be attempted.
                 canRenderLocally: () => SkinrRuntimeInstaller.InstalledRoot() != null &&
                                         _render.IsAvailable);
-            _prerenderer.ThumbnailCaptured += (_, _) =>
-                Dispatcher.UIThread.Post(QueueMarketRefresh);
+            _prerenderer.ThumbnailCaptured += (_, path) =>
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _cardBitmaps.Invalidate(path);
+                    QueueMarketRefresh();
+                });
             _prerenderer.StateChanged += () =>
                 Dispatcher.UIThread.Post(QueueMarketRefresh);
             _prerenderer.Start();
@@ -691,18 +696,15 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// disk, keyed by URL), so the same hull across fifty cards downloads once. A
         /// card rebuilt before the image lands just orphans a bitmap for the GC.
         /// </summary>
-        private static async void LoadHullRender(Image image, int typeId)
+        private async void LoadHullRender(Image image, int typeId)
         {
             try
             {
-                var drawing = await ImageService.GetImageAsync(
-                    ImageHelper.GetTypeRenderURL(typeId, 256));
-                if (drawing == null)
-                    return;
-                object? converted = DrawingImageToAvaloniaConverter.Instance.Convert(
-                    drawing, typeof(Bitmap), null,
-                    System.Globalization.CultureInfo.InvariantCulture);
-                if (converted is Bitmap bitmap)
+                // Once per hull, ever — five designs on the same hull used to run
+                // five SKBitmap→PNG→Bitmap conversions per grid rebuild, on the UI
+                // thread. The cache's single-flight makes them share one.
+                Bitmap? bitmap = await _cardBitmaps.GetHullRenderAsync(typeId);
+                if (bitmap != null)
                     image.Source = bitmap;
             }
             catch (Exception)
@@ -825,18 +827,12 @@ namespace EveLens.Avalonia.Views.Dialogs
             string? thumb = _hub.Thumbnails.TryGetPath(entry.SkinrId);
             if (thumb != null)
             {
-                try
-                {
-                    thumbHost.Child = new Image
-                    {
-                        Source = new Bitmap(thumb),
-                        Stretch = Stretch.UniformToFill
-                    };
-                }
-                catch (Exception)
-                {
-                    thumbHost.Child = PlaceholderGlyph();
-                }
+                // Decoded once per file via the cache — a grid rebuild must reuse
+                // pixels, not re-pay SkiaSharp for them (the macOS 4 GB hang).
+                Bitmap? decoded = _cardBitmaps.GetFile(thumb);
+                thumbHost.Child = decoded != null
+                    ? new Image { Source = decoded, Stretch = Stretch.UniformToFill }
+                    : PlaceholderGlyph();
             }
             else
             {
@@ -955,6 +951,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             // 200 MB engine that would otherwise outlive the window it was opened for.
             _render.Dispose();
             _surface?.Dispose();
+            _cardBitmaps.Dispose();
             _hub.Dispose();
             base.OnClosed(e);
         }
@@ -1057,19 +1054,10 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 if (entry.ThumbnailPath != null)
                 {
-                    try
-                    {
-                        layout.Children.Add(new Image
-                        {
-                            Source = new Bitmap(entry.ThumbnailPath),
-                            Stretch = Stretch.UniformToFill
-                        });
-                    }
-                    catch (Exception)
-                    {
-                        // A truncated cache file must not break the strip; the glyph stands in.
-                        layout.Children.Add(PlaceholderGlyph());
-                    }
+                    Bitmap? decoded = _cardBitmaps.GetFile(entry.ThumbnailPath);
+                    layout.Children.Add(decoded != null
+                        ? new Image { Source = decoded, Stretch = Stretch.UniformToFill }
+                        : PlaceholderGlyph());
                 }
                 else
                 {
@@ -1478,7 +1466,11 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             string? path = _hub.Thumbnails.Save(skinrId, frame);
             if (path != null)
+            {
+                // The file just changed under any cached decode of it.
+                _cardBitmaps.Invalidate(path);
                 _hub.OnThumbnailCaptured(skinrId, path);
+            }
         }
 
         /// <summary>
