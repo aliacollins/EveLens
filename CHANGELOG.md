@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0-beta.8] - 2026-08-26
+
 ### Fixed
 
 - **Sort and reorder controls appear when the second character arrives** -- The overview's sort, density, and reorder controls only exist with 2+ characters, but adding the second character took the incremental card-update path that never re-evaluates the toolbar -- so the controls stayed hidden until an app restart. Crossing the threshold (either direction) now rebuilds the header.
