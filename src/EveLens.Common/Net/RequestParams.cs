@@ -77,6 +77,14 @@ namespace EveLens.Common.Net
         public string ContentType { get; set; }
 
         /// <summary>
+        /// Additional request headers with no dedicated property, e.g. the
+        /// X-Compatibility-Date header required by date-versioned ESI routes
+        /// (the post-2026 versioning scheme — SKINR routes were the first).
+        /// Null when no extra headers are needed.
+        /// </summary>
+        public IDictionary<string, string> CustomHeaders { get; set; }
+
+        /// <summary>
         /// The E-Tag to send to the server. If it matches the content on the server, the
         /// response will be "No Content", saving bandwidth. If it is null, no e-tag will be
         /// sent.

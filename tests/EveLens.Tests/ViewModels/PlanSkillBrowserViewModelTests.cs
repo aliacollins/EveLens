@@ -240,6 +240,39 @@ namespace EveLens.Tests.ViewModels
             vm.Dispose();
         }
 
+        // ── Discussion #116: text filter searches descriptions, not just names ──
+
+        [Fact]
+        public void TextFilter_MatchesSkillDescriptions()
+        {
+            var vm = new PlanSkillBrowserViewModel(CreateAggregator());
+            vm.Refresh();
+
+            // "powergrid" appears in descriptions (e.g. Power Grid Management's
+            // "5% Bonus to ship's powergrid output") but the skill NAME spells it
+            // "Power Grid" with a space — so a name-only filter finds nothing useful.
+            vm.TextFilter = "powergrid";
+
+            var visible = vm.Groups.SelectMany(g => g.VisibleSkills).ToList();
+            visible.Should().Contain(
+                s => !s.Name.Contains("powergrid", System.StringComparison.OrdinalIgnoreCase),
+                "skills whose description mentions the term must match even when their name does not (Discussion #116)");
+            vm.Dispose();
+        }
+
+        [Fact]
+        public void TextFilter_StillMatchesNames()
+        {
+            var vm = new PlanSkillBrowserViewModel(CreateAggregator());
+            vm.Refresh();
+
+            vm.TextFilter = "Navigation";
+            var visible = vm.Groups.SelectMany(g => g.VisibleSkills).ToList();
+            visible.Should().Contain(s => s.Name.Contains("Navigation"),
+                "name matching must keep working alongside description matching");
+            vm.Dispose();
+        }
+
         // ── Issue #71: "Hide Maxed" filter (hide skills already trained to Level V) ──
 
         [Fact]

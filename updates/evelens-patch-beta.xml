@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-26</date>
+      <version>1.5.0.2</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.2
+
+Beta 2: SKINR studio public debut, Plan Editor rebuilt, global remap optimization, per-account Skill Farm economics, community fixes]]></message>
+    </release>
+    <release>
       <date>2026-08-19</date>
       <version>1.5.0.1</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
@@ -94,16 +104,6 @@ Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed
       <message><![CDATA[EveLens 1.4.0-beta.1
 
 Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)]]></message>
-    </release>
-    <release>
-      <date>2026-05-10</date>
-      <version>1.3.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.3.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.3.0-beta.1
-
-Skill Farm configurable base SP, What's New dialog, Code Graph system]]></message>
     </release>
   </releases>
   <datafiles>

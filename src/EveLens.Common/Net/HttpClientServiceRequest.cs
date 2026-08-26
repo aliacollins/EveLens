@@ -250,6 +250,12 @@ namespace EveLens.Common.Net
                 headers.IfModifiedSince = param.IfModifiedSince;
             headers.Pragma.TryParseAdd("no-cache");
             headers.UserAgent.TryParseAdd(HttpWebClientServiceState.UserAgent);
+            // Free-form headers (e.g. X-Compatibility-Date for date-versioned ESI)
+            if (param.CustomHeaders != null)
+            {
+                foreach (var pair in param.CustomHeaders)
+                    headers.TryAddWithoutValidation(pair.Key, pair.Value);
+            }
             // Encoding support
             if (param.AcceptEncoded)
                 headers.AcceptEncoding.ParseAdd("gzip,deflate;q=0.8");

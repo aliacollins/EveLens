@@ -39,11 +39,29 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             InitializeComponent();
 
+            _suppressPerAccount = true;
+            PerAccountCombo.SelectedIndex = Math.Clamp(
+                Settings.UI.SkillFarm.CharactersPerAccount, 1, 3) - 1;
+            _suppressPerAccount = false;
+
             _vm.Refresh();
             RebuildUI();
 
             // Fetch prices from ESI async, then rebuild when they arrive
             FetchPricesAndRebuild();
+        }
+
+        private bool _suppressPerAccount;
+
+        /// <summary>Omega is per account (issue #124): the divisor drives the monthly
+        /// cost, so a change re-runs the economics immediately and persists.</summary>
+        private void OnPerAccountChanged(object? sender, SelectionChangedEventArgs e)
+        {
+            if (_suppressPerAccount || PerAccountCombo.SelectedIndex < 0)
+                return;
+            Settings.UI.SkillFarm.CharactersPerAccount = PerAccountCombo.SelectedIndex + 1;
+            Settings.Save();
+            RebuildUI();
         }
 
         private async void FetchPricesAndRebuild()
@@ -170,16 +188,37 @@ namespace EveLens.Avalonia.Views.Dialogs
                 FindBrush("EveAccentPrimaryBrush")));
 
             // ── MONTHLY ECONOMICS ──
-            // Calculate ongoing monthly costs and revenue based on actual SP/hr
-            int farmAccounts = _vm.TotalCharacters;
+            // Calculate ongoing monthly costs and revenue based on actual SP/hr.
+            // Omega is a per-ACCOUNT cost (issue #124): an account holds up to
+            // CharactersPerAccount farm characters, the extra slots training on MCT
+            // certificates (485 PLEX/month each in the NES) rather than more Omega.
+            int farmCharacters = _vm.TotalCharacters;
+            int perAccount = Math.Clamp(
+                Settings.UI.SkillFarm.CharactersPerAccount, 1, 3);
+            // Explicit account labels win: characters sharing a label share one
+            // Omega. The unlabeled remainder packs by the per-account divisor.
+            var farmByGuid = Settings.UI.SkillFarm.FarmCharacters
+                .GroupBy(f => f.CharacterGuid)
+                .ToDictionary(g => g.Key, g => (g.First().AccountLabel ?? "").Trim());
+            var labels = _vm.Entries
+                .Select(en => farmByGuid.TryGetValue(en.Character.Guid, out var l) ? l : "")
+                .ToList();
+            int labeledAccounts = labels.Where(l => l.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            int unlabeled = labels.Count(l => l.Length == 0);
+            int farmAccounts = labeledAccounts +
+                (unlabeled == 0 ? 0 : (unlabeled + perAccount - 1) / perAccount);
+            int mctSlots = Math.Max(0, farmCharacters - farmAccounts);
             double totalSpPerHour = _vm.Entries.Sum(e => e.SpPerHour);
 
             // If all paused, estimate potential with +5 implants (2700 SP/hr per char)
-            bool allPaused = totalSpPerHour == 0 && farmAccounts > 0;
-            double estimatedSpPerHour = allPaused ? farmAccounts * 2700.0 : totalSpPerHour;
+            bool allPaused = totalSpPerHour == 0 && farmCharacters > 0;
+            double estimatedSpPerHour = allPaused ? farmCharacters * 2700.0 : totalSpPerHour;
             double monthlySpTotal = estimatedSpPerHour * 24 * 30;
             double monthlyExtractions = monthlySpTotal / 500_000;
-            double omegaCostPerMonth = farmAccounts * 500.0 * _vm.PlexPrice;
+            const double OmegaPlex = 500.0, MctPlex = 485.0;
+            double omegaCostPerMonth =
+                (farmAccounts * OmegaPlex + mctSlots * MctPlex) * _vm.PlexPrice;
 
             double bestTaxRateForMonthly = bestSeller != null
                 ? bestSeller.SalesTaxPercent / 100.0 : 0.075;
@@ -189,7 +228,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             double omegaSavings = omegaCostPerMonth > 0
                 ? (monthlyRevenue - monthlyExtractorCost) : 0;
 
-            if (_vm.PricesLoaded && farmAccounts > 0)
+            if (_vm.PricesLoaded && farmCharacters > 0)
             {
                 SummaryPanel.Children.Add(BuildStatCard(
                     $"{monthlyExtractions:N0}/mo",
@@ -201,8 +240,10 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 SummaryPanel.Children.Add(BuildStatCard(
                     FormatIsk(omegaCostPerMonth),
-                    "Monthly Omega",
-                    $"{farmAccounts} × 500 PLEX",
+                    "Monthly Omega + MCT",
+                    mctSlots > 0
+                        ? $"{farmAccounts} acct × 500 + {mctSlots} MCT × 485 PLEX"
+                        : $"{farmAccounts} acct × 500 PLEX",
                     FindBrush("EveErrorRedBrush")));
 
                 SummaryPanel.Children.Add(BuildStatCard(
@@ -430,6 +471,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             AddToGrid(grid, "Impl", 8, HorizontalAlignment.Center, true);
             AddToGrid(grid, "Tax", 9, HorizontalAlignment.Right, true);
             AddSortableHeader(grid, "Status", 10, HorizontalAlignment.Right);
+            AddToGrid(grid, "Acct", 11, HorizontalAlignment.Center, true);
 
             return new Border
             {
@@ -588,6 +630,36 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             AddCell(grid, entry.StatusText, 10, statusColor);
 
+            // Account label (issue #124): characters sharing a label share ONE Omega.
+            // Free text because ESI is character-scoped and cannot name accounts.
+            var farmSetting = Settings.UI.SkillFarm.FarmCharacters
+                .FirstOrDefault(f => f.CharacterGuid == entry.Character.Guid);
+            var accountBox = new TextBox
+            {
+                Text = farmSetting?.AccountLabel ?? string.Empty,
+                Watermark = "—",
+                FontSize = FontScaleService.Small,
+                MinWidth = 0,
+                Padding = new Thickness(4, 1),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0, 0, 0),
+            };
+            ToolTip.SetTip(accountBox,
+                "Account this character lives on — same label shares one Omega");
+            accountBox.LostFocus += (_, _) =>
+            {
+                if (farmSetting == null)
+                    return;
+                string label = (accountBox.Text ?? string.Empty).Trim();
+                if (label == farmSetting.AccountLabel)
+                    return;
+                farmSetting.AccountLabel = label;
+                Settings.Save();
+                BuildSummaryCards();   // the economics changed; the table did not
+            };
+            Grid.SetColumn(accountBox, 11);
+            grid.Children.Add(accountBox);
+
             LoadPortraitAsync(portraitImage, entry.Character.CharacterID);
 
             return new Border
@@ -605,7 +677,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             return new Grid
             {
-                ColumnDefinitions = ColumnDefinitions.Parse("3*,1.2*,0.8*,0.8*,1.2*,1.2*,1.2*,0.8*,0.6*,0.6*,1.2*"),
+                ColumnDefinitions = ColumnDefinitions.Parse("3*,1.2*,0.8*,0.8*,1.2*,1.2*,1.2*,0.8*,0.6*,0.6*,1.2*,0.9*"),
                 HorizontalAlignment = HorizontalAlignment.Stretch
             };
         }
