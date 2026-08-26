@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **macOS and Linux now get update checks** -- The auto-updater only worked on Windows (the mac .app and Linux archives are hand-packaged, so the update engine considered itself not installed and went silent). Both platforms now check GitHub Releases in the background on the same schedule as Windows and notify when a newer build for your channel exists; Help > Check for Updates opens the download page. Version comparison is numeric now too -- the old manual check ordered beta.10 before beta.4 and misread the channel, so it could claim you were current when you were not.
+
 ## [1.5.0-beta.4] - 2026-08-26
 
 ### Fixed
