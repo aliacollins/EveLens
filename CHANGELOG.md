@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Status strip no longer prints your file paths** -- When the 3D engine is missing, the SKINR status line showed the renderer's full internal search report: environment variable names and local filesystem paths. That report belongs in the diagnostic log (where it still goes, complete); the interface now says one plain sentence.
+
 ## [1.5.0-beta.6] - 2026-08-26
 
 ### Fixed
