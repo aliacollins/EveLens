@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Mac: SKINR no longer dangles an Install button that cannot work** -- On Apple Silicon, clicking a design could surface the runtime install offer, whose Install click then reported "service unreachable - try again" forever: the Metal runtime is not published yet, and one code path missed that check. The availability decision now lives in one place, so every path shows the honest "Metal renderer coming" message until the day the Mac runtime actually ships.
+
 ## [1.5.0-beta.3] - 2026-08-26
 
 ### Fixed
