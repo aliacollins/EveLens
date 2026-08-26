@@ -9,6 +9,7 @@ using System.Linq;
 using EveLens.Common.Data;
 using EveLens.Common.Helpers;
 using EveLens.Common.Models;
+using EveLens.Common.Serialization.Settings;
 using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
 
@@ -238,6 +239,45 @@ namespace EveLens.Common.ViewModels
             BuildComparisonRows();
         }
 
+        /// <summary>
+        /// Creates a template straight from an exported plan file (.emp/plan .xml), so alliance
+        /// doctrines can be imported without routing them through a character's plan first
+        /// (Issue #137). Entries resolve by skill ID with a name fallback for older exports.
+        /// Returns null when no entry resolves to a known skill.
+        /// </summary>
+        public GlobalPlanTemplate? CreateFromPlanFile(SerializablePlan serial)
+        {
+            var template = new GlobalPlanTemplate
+            {
+                Name = string.IsNullOrWhiteSpace(serial.Name) ? "Imported Doctrine" : serial.Name,
+            };
+
+            foreach (var entry in serial.Entries)
+            {
+                var skill = StaticSkills.GetSkillByID(entry.ID)
+                    ?? (entry.SkillName == null ? null : StaticSkills.GetSkillByName(entry.SkillName));
+                if (skill == null) continue;
+
+                if (!template.Entries.Any(e => e.SkillID == skill.ID && e.Level == (int)entry.Level))
+                {
+                    template.Entries.Add(new GlobalPlanTemplateEntry
+                    {
+                        SkillID = skill.ID,
+                        SkillName = skill.Name,
+                        Level = (int)entry.Level
+                    });
+                }
+            }
+
+            if (template.Entries.Count == 0)
+                return null;
+
+            _templates.Add(template);
+            Settings.GlobalPlanTemplates.Add(template);
+            Settings.Save();
+            return template;
+        }
+
         public GlobalPlanTemplate CreateFromPlan(Plan plan)
         {
             var template = new GlobalPlanTemplate
@@ -277,6 +317,32 @@ namespace EveLens.Common.ViewModels
             Settings.Save();
             ResolveSubscribedCharacters();
             BuildComparisonRows();
+        }
+
+        /// <summary>
+        /// Subscribes a whole set of characters at once (e.g. an Overview group — Issue #137).
+        /// One save and one comparison rebuild regardless of how many were added.
+        /// Returns the number of characters actually added.
+        /// </summary>
+        public int SubscribeCharacters(IEnumerable<Character> characters)
+        {
+            if (_selectedTemplate == null) return 0;
+
+            int added = 0;
+            foreach (var character in characters)
+            {
+                if (_selectedTemplate.SubscribedCharacterGuids.Contains(character.Guid)) continue;
+                _selectedTemplate.SubscribedCharacterGuids.Add(character.Guid);
+                added++;
+            }
+
+            if (added > 0)
+            {
+                Settings.Save();
+                ResolveSubscribedCharacters();
+                BuildComparisonRows();
+            }
+            return added;
         }
 
         public void UnsubscribeCharacter(Character character)
