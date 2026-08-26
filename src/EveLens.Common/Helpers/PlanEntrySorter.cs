@@ -73,8 +73,11 @@ namespace EveLens.Common.Helpers
                 list.AddRange(group);
             }
 
-            // Fix prerequisites order
-            FixPrerequisitesOrder(list);
+            // Fix prerequisites order. Attribute clustering belongs to the attribute sort
+            // and nothing else: this pass runs on every plan mutation (UpdateDisplayPlan
+            // sorts even when no sort is selected), so clustering unconditionally rewrote
+            // hand-ordered plans the moment a skill was added (Issue #136).
+            FixPrerequisitesOrder(list, m_sort == PlanEntrySort.PrimaryAttribute);
 
             // Check we didn't mess up anything
             if (initialCount != list.Count)
@@ -87,8 +90,11 @@ namespace EveLens.Common.Helpers
         /// <summary>
         /// Ensures the prerequisites order is correct.
         /// </summary>
-        /// <param name="list"></param>
-        private static void FixPrerequisitesOrder(ICollection<PlanEntry> list)
+        /// <param name="list">The entries, in the order the sort produced them.</param>
+        /// <param name="preferAttributeRuns">When true, keeps same-primary-attribute skills
+        /// together where prerequisites allow. Only the attribute sort wants this; every other
+        /// caller needs the given order preserved.</param>
+        private static void FixPrerequisitesOrder(ICollection<PlanEntry> list, bool preferAttributeRuns)
         {
             // Gather prerequisites/postrequisites relationships and use them to connect nodes
             Dictionary<PlanEntry, List<PlanEntry>> dependencies = new Dictionary<PlanEntry, List<PlanEntry>>();
@@ -97,7 +103,8 @@ namespace EveLens.Common.Helpers
                 dependencies[entry] = new List<PlanEntry>(list.Where(x => entry.IsDependentOf(x)));
             }
 
-            // Insert entries, preferring same-attribute runs to keep grouping intact
+            // Insert entries in the order they came in, moving one later only when a
+            // prerequisite forces it (or, under the attribute sort, to keep a run intact)
             LinkedList<PlanEntry> entriesToAdd = new LinkedList<PlanEntry>(list);
             SkillLevelSet<PlanEntry> set = new SkillLevelSet<PlanEntry>();
             list.Clear();
@@ -111,9 +118,12 @@ namespace EveLens.Common.Helpers
                     .Where(x => dependencies[x].All(y => set[y.Skill, y.Level] != null))
                     .ToList();
 
-                // Prefer entries from the same primary attribute as the last added skill
-                PlanEntry item = ready.FirstOrDefault(x => x.Skill.PrimaryAttribute == lastAttr)
-                    ?? ready.First();
+                // Under the attribute sort, prefer an entry sharing the last added skill's
+                // primary attribute; otherwise take the first ready entry, which is the
+                // earliest one in the incoming order
+                PlanEntry item = preferAttributeRuns
+                    ? ready.FirstOrDefault(x => x.Skill.PrimaryAttribute == lastAttr) ?? ready.First()
+                    : ready.First();
 
                 set[item.Skill, item.Level] = item;
                 entriesToAdd.Remove(item);

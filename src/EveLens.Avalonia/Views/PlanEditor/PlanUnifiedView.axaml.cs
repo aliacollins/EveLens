@@ -1283,8 +1283,21 @@ namespace EveLens.Avalonia.Views.PlanEditor
             details.Click += (_, _) => ShowSkillDetail(item.Entry.Skill);
             menu.Items.Add(details);
 
+            // Priority is picked, not cycled: the old single item stepped 1 -> 2 -> ... -> 5
+            // silently, so a click looked like nothing happened (Issue #135).
             var priority = new MenuItem { Header = Loc.Get("PlanEditor.ChangePriority") };
-            priority.Click += (_, _) => OnChangePriorityItem(item);
+            for (int p = 1; p <= 5; p++)
+            {
+                int targetPriority = p;
+                var mi = new MenuItem
+                {
+                    Header = string.Format(Loc.Get("PlanEditor.PriorityFmt"), p),
+                    ToggleType = MenuItemToggleType.Radio,
+                    IsChecked = item.Entry.Priority == p,
+                };
+                mi.Click += (_, _) => OnChangePriorityItem(item, targetPriority);
+                priority.Items.Add(mi);
+            }
             menu.Items.Add(priority);
 
             menu.Items.Add(new Separator());
@@ -3286,21 +3299,20 @@ namespace EveLens.Avalonia.Views.PlanEditor
             }
         }
 
-        private void OnChangePriorityItem(PlanEntryDisplayItem item)
+        private void OnChangePriorityItem(PlanEntryDisplayItem item, int newPriority)
         {
             if (_viewModel?.Plan == null) return;
-
-            int newPriority = (item.Entry.Priority % 5) + 1;
 
             var plan = _viewModel.Plan;
             var entry = plan.FirstOrDefault(pe =>
                 pe.Skill == item.Entry.Skill && pe.Level == item.Entry.Level);
-            if (entry != null)
-            {
-                entry.Priority = newPriority;
-                _viewModel.UpdateDisplayPlan();
-                Refresh();
-            }
+            if (entry == null || entry.Priority == newPriority) return;
+
+            entry.Priority = newPriority;
+            _viewModel.UpdateDisplayPlan();
+            Refresh();
+            BuildSidebarContent();
+            UpdateParentStatusBar();
         }
 
         private void RemoveItem(PlanEntryDisplayItem item)

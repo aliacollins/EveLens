@@ -37,6 +37,9 @@
                         <Button x:Name="ImportFromPlanBtn" Content="{loc:T Doctrine.ImportFromPlan}"
                                 HorizontalAlignment="Stretch" Padding="8,5"
                                 CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
+                        <Button x:Name="ImportFromFileBtn" Content="{loc:T Doctrine.ImportFromFile}"
+                                HorizontalAlignment="Stretch" Padding="8,5"
+                                CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
                     </StackPanel>
 
                     <!-- Template list -->
