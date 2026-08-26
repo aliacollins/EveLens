@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-26</date>
+      <version>1.5.0.5</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.5
+
+Beta 5: Mac SKINR usable without the renderer; macOS/Linux update checks]]></message>
+    </release>
+    <release>
+      <date>2026-08-26</date>
       <version>1.5.0.4</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Non-Windows stability: crash backstop, GDI+ default-image fix, SSO token error c
       <message><![CDATA[EveLens 1.4.0-beta.4
 
 i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes everywhere, market-group SDE names; ~300 strings migrated]]></message>
-    </release>
-    <release>
-      <date>2026-06-03</date>
-      <version>1.4.0.3</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.3
-
-Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)]]></message>
     </release>
   </releases>
   <datafiles>

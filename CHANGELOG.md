@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Mac: the SKINR window is usable without the renderer** -- On Apple Silicon the marketplace's background thumbnail engine tried to render every design through a 3D engine that is not installed yet: hundreds of doomed attempts that kept the window busy and every card stuck on "preparing". Without a local engine it now fills cards only from opted-in community previews and parks the rest quietly -- and the moment the Metal runtime installs, those designs get their real renders.
+- **macOS and Linux now get update checks** -- The auto-updater only worked on Windows (the mac .app and Linux archives are hand-packaged, so the update engine considered itself not installed and went silent). Both platforms now check GitHub Releases in the background on the same schedule as Windows and notify when a newer build for your channel exists; Help > Check for Updates opens the download page. Version comparison is numeric now too -- the old manual check ordered beta.10 before beta.4 and misread the channel, so it could claim you were current when you were not.
+
+## [1.5.0-beta.4] - 2026-08-26
+
+### Fixed
+
 - **Mac: SKINR no longer dangles an Install button that cannot work** -- On Apple Silicon, clicking a design could surface the runtime install offer, whose Install click then reported "service unreachable - try again" forever: the Metal runtime is not published yet, and one code path missed that check. The availability decision now lives in one place, so every path shows the honest "Metal renderer coming" message until the day the Mac runtime actually ships.
 
 ## [1.5.0-beta.3] - 2026-08-26

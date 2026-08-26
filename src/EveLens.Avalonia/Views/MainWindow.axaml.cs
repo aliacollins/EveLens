@@ -2070,52 +2070,15 @@ namespace EveLens.Avalonia.Views
                 string currentVersion = AppServices.VelopackUpdate?.CurrentVersion
                     ?? AppServices.FileVersionInfo.FileVersion ?? "Unknown";
 
-                bool hasUpdate;
-                string pendingVersionFromGitHub = "";
-                string releaseUrl = "";
-
-                // Velopack handles Windows updates. For macOS/Linux, check GitHub API.
-                if (AppServices.VelopackUpdate?.IsInstalled == true)
-                {
-                    hasUpdate = await (AppServices.VelopackUpdate?.CheckNowAsync() ?? Task.FromResult(false));
-                }
-                else
-                {
-                    // Cross-platform: check GitHub releases API
-                    try
-                    {
-                        using var http = new System.Net.Http.HttpClient();
-                        http.DefaultRequestHeaders.UserAgent.ParseAdd("EveLens");
-                        var json = await http.GetStringAsync("https://api.github.com/repos/aliacollins/EveLens/releases");
-                        // Find first release matching our channel (or any if stable)
-                        string channel = currentVersion.Contains("-beta") ? "beta"
-                            : currentVersion.Contains("-alpha") ? "alpha" : "stable";
-
-                        foreach (System.Text.Json.JsonElement release in System.Text.Json.JsonDocument.Parse(json).RootElement.EnumerateArray())
-                        {
-                            string tag = release.GetProperty("tag_name").GetString() ?? "";
-                            bool prerelease = release.GetProperty("prerelease").GetBoolean();
-
-                            // For beta channel, check all prereleases. For stable, skip prereleases.
-                            if (channel == "stable" && prerelease) continue;
-                            if (channel == "beta" && !tag.Contains("beta")) continue;
-                            if (channel == "alpha" && !tag.Contains("alpha") && !tag.Contains("beta")) continue;
-
-                            string latestVer = tag.TrimStart('v');
-                            if (string.Compare(latestVer, currentVersion, StringComparison.OrdinalIgnoreCase) > 0)
-                            {
-                                pendingVersionFromGitHub = latestVer;
-                                releaseUrl = release.GetProperty("html_url").GetString() ?? "";
-                            }
-                            break;
-                        }
-                        hasUpdate = !string.IsNullOrEmpty(pendingVersionFromGitHub);
-                    }
-                    catch
-                    {
-                        hasUpdate = false;
-                    }
-                }
+                // One path for every platform: the service handles Velopack when
+                // installed through it, and the GitHub Releases fallback on the
+                // hand-packaged macOS/Linux builds (proper numeric version
+                // comparison lives there too — the old inline string compare
+                // ordered beta.10 before beta.4).
+                bool hasUpdate = await (AppServices.VelopackUpdate?.CheckNowAsync()
+                    ?? Task.FromResult(false));
+                string pendingVersionFromGitHub = AppServices.VelopackUpdate?.PendingVersion ?? "";
+                string releaseUrl = AppServices.VelopackUpdate?.PendingUrl ?? "";
 
                 if (hasUpdate)
                 {

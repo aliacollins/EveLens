@@ -547,7 +547,12 @@ namespace EveLens.Avalonia.Views.Dialogs
                     .Where(e => e.Recipe != null)
                     .Select(e => e.Recipe!)
                     .ToList(),
-                () => _hubPrefs.CommunityPreviews == true);
+                () => _hubPrefs.CommunityPreviews == true,
+                // Platform capability is not engine presence: on a Mac before the
+                // Metal runtime ships (or after a declined install), only the CDN
+                // shelf can fill cards — the sidecar must not be attempted.
+                canRenderLocally: () => SkinrRuntimeInstaller.InstalledRoot() != null &&
+                                        _render.IsAvailable);
             _prerenderer.ThumbnailCaptured += (_, _) =>
                 Dispatcher.UIThread.Post(QueueMarketRefresh);
             _prerenderer.StateChanged += () =>
