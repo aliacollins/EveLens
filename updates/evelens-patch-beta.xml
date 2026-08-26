@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-26</date>
+      <version>1.5.0.6</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.6
+
+Beta 6: SKINR card art decodes once -- fixes the Mac marketplace hang]]></message>
+    </release>
+    <release>
+      <date>2026-08-26</date>
       <version>1.5.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ net10 + Avalonia 12 + SkiaSharp 3 -- first 1.5.0 beta]]></message>
       <message><![CDATA[EveLens 1.4.0-beta.5
 
 Non-Windows stability: crash backstop, GDI+ default-image fix, SSO token error classification (#94), MailKit CVE]]></message>
-    </release>
-    <release>
-      <date>2026-06-04</date>
-      <version>1.4.0.4</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.4
-
-i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes everywhere, market-group SDE names; ~300 strings migrated]]></message>
     </release>
   </releases>
   <datafiles>
