@@ -60,6 +60,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         // Reorder mode — when active, cards are draggable instead of clickable
         private bool _reorderMode;
         private Button? _reorderToggleBtn;
+        private DockPanel? _reorderToolbar;
 
         // Only animate the staggered fade-in on first application load
         private bool _initialLoadDone;
@@ -1225,6 +1226,21 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 }
 
                 var currentChars = AppServices.Characters.Where(c => c.Monitored).ToList();
+
+                // The sort/reorder/density toolbar exists only at 2+ characters,
+                // and this incremental path only touches CARDS. When the count
+                // crosses that boundary (adding the second character, or dropping
+                // back to one), the toolbar's existence-condition changed — full
+                // rebuild, or the controls only appear after an app restart
+                // (user-reported).
+                bool toolbarShown = _reorderToolbar != null &&
+                                    OverviewPanel.Children.Contains(_reorderToolbar);
+                if (currentChars.Count >= 2 != toolbarShown)
+                {
+                    LoadData();
+                    return;
+                }
+
                 var existingCards = GetAllCardButtons().ToList();
                 var existingIds = new HashSet<long>(
                     existingCards
@@ -1656,6 +1672,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             _reorderToggleBtn.Click += OnReorderToggle;
 
             var toolbar = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+            _reorderToolbar = toolbar;
             if (_reorderMode)
             {
                 // Teach the full gesture set while the mode where they work is active

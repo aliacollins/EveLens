@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-26</date>
+      <version>1.5.0.8</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.8
+
+Beta 8: overview sort/reorder controls appear when the second character arrives]]></message>
+    </release>
+    <release>
+      <date>2026-08-26</date>
       <version>1.5.0.7</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ net10 + Avalonia 12 + SkiaSharp 3 -- first 1.5.0 beta]]></message>
       <message><![CDATA[EveLens 1.4.0-beta.7
 
 1.4.1 corrective: full 1.4.0 content train plus promote-script content verification]]></message>
-    </release>
-    <release>
-      <date>2026-08-10</date>
-      <version>1.4.0.6</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.6
-
-1.4.0-beta.5: community fix train, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in]]></message>
     </release>
   </releases>
   <datafiles>

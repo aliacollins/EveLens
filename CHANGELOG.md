@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Sort and reorder controls appear when the second character arrives** -- The overview's sort, density, and reorder controls only exist with 2+ characters, but adding the second character took the incremental card-update path that never re-evaluates the toolbar -- so the controls stayed hidden until an app restart. Crossing the threshold (either direction) now rebuilds the header.
+
+## [1.5.0-beta.7] - 2026-08-26
+
+### Fixed
+
 - **Status strip no longer prints your file paths** -- When the 3D engine is missing, the SKINR status line showed the renderer's full internal search report: environment variable names and local filesystem paths. That report belongs in the diagnostic log (where it still goes, complete); the interface now says one plain sentence.
 
 ## [1.5.0-beta.6] - 2026-08-26
