@@ -40,6 +40,9 @@
                         <Button x:Name="ImportFromFileBtn" Content="{loc:T Doctrine.ImportFromFile}"
                                 HorizontalAlignment="Stretch" Padding="8,5"
                                 CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
+                        <Button x:Name="ImportFromClipboardBtn" Content="{loc:T Doctrine.ImportFromClipboard}"
+                                HorizontalAlignment="Stretch" Padding="8,5"
+                                CornerRadius="12" FontSize="{DynamicResource EveFontBody}" />
                     </StackPanel>
 
                     <!-- Template list -->
@@ -82,11 +85,35 @@
                     <WrapPanel x:Name="SummaryCards" DockPanel.Dock="Top"
                                Orientation="Horizontal" Margin="12,8,12,4" />
 
-                    <!-- Comparison grid -->
-                    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="ComparisonGrid" Margin="12,4" Spacing="1" />
-                    </ScrollViewer>
+                    <!-- Comparison table with frozen panes: the skill column and the
+                         header row stay on screen while the character cells scroll
+                         both ways (odon, #137 follow-up). The body scroller owns the
+                         scrollbars; header and skill column mirror its offsets. -->
+                    <Grid Margin="12,4" RowDefinitions="Auto,*" ColumnDefinitions="Auto,*">
+                        <Grid x:Name="FrozenCorner" Grid.Row="0" Grid.Column="0" />
+                        <ScrollViewer x:Name="HeaderScroller" Grid.Row="0" Grid.Column="1"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="HeaderStrip" Orientation="Horizontal" />
+                        </ScrollViewer>
+                        <ScrollViewer x:Name="SkillColScroller" Grid.Row="1" Grid.Column="0"
+                                      VerticalScrollBarVisibility="Hidden"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="SkillColumn" Spacing="1" />
+                        </ScrollViewer>
+                        <ScrollViewer x:Name="BodyScroller" Grid.Row="1" Grid.Column="1"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      ScrollChanged="OnBodyScrollChanged">
+                            <StackPanel x:Name="BodyRows" Spacing="1" />
+                        </ScrollViewer>
+                        <TextBlock x:Name="ComparisonMessage" Grid.Row="1" Grid.Column="0"
+                                   Grid.ColumnSpan="2" IsVisible="False"
+                                   FontSize="{DynamicResource EveFontBody}"
+                                   Foreground="{StaticResource EveTextDisabledBrush}"
+                                   HorizontalAlignment="Center" Margin="0,40"
+                                   TextWrapping="Wrap" TextAlignment="Center" />
+                    </Grid>
                 </DockPanel>
             </Border>
         </Grid>

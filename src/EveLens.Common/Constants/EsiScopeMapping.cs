@@ -48,6 +48,10 @@ namespace EveLens.Common.Constants
             // Assets
             { ESIAPICharacterMethods.AssetList, "esi-assets.read_assets.v1" },
 
+            // SKINR (cosmetics)
+            { ESIAPICharacterMethods.SkinrLicenses, "esi.cosmetic.char:read" },
+            { ESIAPICharacterMethods.SkinrComponents, "esi.cosmetic.char:read" },
+
             // Market Orders
             { ESIAPICharacterMethods.MarketOrders, "esi-markets.read_character_orders.v1" },
             { ESIAPICharacterMethods.MarketOrdersHistory, "esi-markets.read_character_orders.v1" },
@@ -142,6 +146,7 @@ namespace EveLens.Common.Constants
         {
             { "esi-wallet.read_character_wallet.v1", new[] { "wallet_journal", "wallet_transactions" } },
             { "esi-assets.read_assets.v1", new[] { "assets" } },
+            { "esi.cosmetic.char:read", new[] { "skinr_licenses", "skinr_components" } },
             { "esi-markets.read_character_orders.v1", new[] { "market_orders" } },
             { "esi-contracts.read_character_contracts.v1", new[] { "contracts" } },
             { "esi-industry.read_character_jobs.v1", new[] { "industry_jobs" } },

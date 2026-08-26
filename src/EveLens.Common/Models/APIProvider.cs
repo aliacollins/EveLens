@@ -1,4 +1,4 @@
-// EveLens — Character Intelligence for EVE Online
+﻿// EveLens — Character Intelligence for EVE Online
 // Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
@@ -176,16 +176,27 @@ namespace EveLens.Common.Models
         /// <summary>
         /// Creates the request parameters for ESI.
         /// </summary>
+        /// <param name="method">The method being queried; compatibility-routed methods (see
+        /// <see cref="Constants.EsiCompatibilityDates"/>) get their X-Compatibility-Date
+        /// header attached here, so every query path — monitor, paged, async — is dated
+        /// without any caller knowing which routes need it.</param>
         /// <param name="data">The ESI parameters.</param>
         /// <returns>The required request parameters, including the ETag/Expiry (if supplied)
         /// and POST data/token.</returns>
-        private RequestParams GetRequestParams(ESIParams data)
+        private RequestParams GetRequestParams(Enum method, ESIParams data)
         {
-            return new RequestParams(data.LastResponse, data.PostData!)
+            var requestParams = new RequestParams(data.LastResponse, data.PostData!)
             {
                 Authentication = data.Token!,
                 AcceptEncoded = SupportsCompressedResponse
             };
+            string compatDate = Constants.EsiCompatibilityDates.ForMethod(method);
+            if (compatDate != null)
+                requestParams.CustomHeaders = new Dictionary<string, string>
+                {
+                    ["X-Compatibility-Date"] = compatDate
+                };
+            return requestParams;
         }
 
         #endregion
@@ -279,7 +290,7 @@ namespace EveLens.Common.Models
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
 
             Uri url = GetESIUrl(method, data);
-            var requestParams = GetRequestParams(data);
+            var requestParams = GetRequestParams(method, data);
             var queue = EveLensClient.ApiRequestQueue;
 
             Action<Task<JsonResult<T>>> handleResult = task =>
@@ -328,7 +339,7 @@ namespace EveLens.Common.Models
             callback.ThrowIfNull(nameof(callback), "The callback cannot be null.");
 
             Uri url = GetESIUrl(method, data);
-            var requestParams = GetRequestParams(data);
+            var requestParams = GetRequestParams(method, data);
             var queue = EveLensClient.ApiRequestQueue;
 
             if (queue != null)
@@ -369,7 +380,7 @@ namespace EveLens.Common.Models
         public async Task<EsiResult<T>> QueryEsiAsync<T>(Enum method, ESIParams data) where T : class
         {
             Uri url = GetESIUrl(method, data);
-            var requestParams = GetRequestParams(data);
+            var requestParams = GetRequestParams(method, data);
 
             // Route through the API request queue for rate limiting
             var queue = EveLensClient.ApiRequestQueue;
@@ -406,7 +417,7 @@ namespace EveLens.Common.Models
             where T : List<U> where U : class
         {
             Uri url = GetESIUrl(method, data);
-            var requestParams = GetRequestParams(data);
+            var requestParams = GetRequestParams(method, data);
 
             // Route through the API request queue for rate limiting
             var queue = EveLensClient.ApiRequestQueue;

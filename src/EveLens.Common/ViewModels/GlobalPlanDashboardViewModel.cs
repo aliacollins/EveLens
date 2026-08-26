@@ -278,6 +278,63 @@ namespace EveLens.Common.ViewModels
             return template;
         }
 
+        /// <summary>
+        /// Creates a template from pasted skill-list text — one "Skill Name 3" or
+        /// "Skill Name III" per line, the format doctrine pings are shared in (#137
+        /// follow-up). Unrecognized lines are skipped; returns null when fewer than
+        /// half the non-empty lines parse (that's not a skill list, that's a paste
+        /// accident) or when nothing resolves.
+        /// </summary>
+        public GlobalPlanTemplate? CreateFromSkillLines(string name, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var template = new GlobalPlanTemplate
+            {
+                Name = string.IsNullOrWhiteSpace(name) ? "Imported Doctrine" : name.Trim(),
+            };
+
+            int considered = 0, parsed = 0;
+            foreach (var rawLine in lines)
+            {
+                string line = rawLine.Trim();
+                if (line.Length == 0) continue;
+                considered++;
+
+                int lastSpace = line.LastIndexOf(' ');
+                if (lastSpace < 0) continue;
+                if (!SkillLevelText.TryParse(line.Substring(lastSpace + 1), out int level))
+                    continue;
+
+                var skill = StaticSkills.GetSkillByName(line.Substring(0, lastSpace).Trim());
+                if (skill == null) continue;
+                parsed++;
+
+                for (int lvl = 1; lvl <= level; lvl++)
+                {
+                    if (!template.Entries.Any(e => e.SkillID == skill.ID && e.Level == lvl))
+                    {
+                        template.Entries.Add(new GlobalPlanTemplateEntry
+                        {
+                            SkillID = skill.ID,
+                            SkillName = skill.Name,
+                            Level = lvl
+                        });
+                    }
+                }
+            }
+
+            if (parsed == 0 || parsed < considered / 2)
+                return null;
+
+            _templates.Add(template);
+            Settings.GlobalPlanTemplates.Add(template);
+            Settings.Save();
+            return template;
+        }
+
         public GlobalPlanTemplate CreateFromPlan(Plan plan)
         {
             var template = new GlobalPlanTemplate

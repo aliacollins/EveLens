@@ -254,6 +254,12 @@ If you changed your password, you must log in again using File &gt; Add Characte
   <data name="ErrorResearchPoints" xml:space="preserve">
     <value>Error querying research points for {0}.</value>
   </data>
+  <data name="ErrorSkinrLicenses" xml:space="preserve">
+    <value>Error querying SKINR designs for {0}.</value>
+  </data>
+  <data name="ErrorSkinrComponents" xml:space="preserve">
+    <value>Error querying SKINR components for {0}.</value>
+  </data>
   <data name="ErrorShip" xml:space="preserve">
     <value>Error querying the current ship of {0}.</value>
   </data>

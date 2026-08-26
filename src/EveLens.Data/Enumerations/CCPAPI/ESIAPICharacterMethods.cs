@@ -277,6 +277,22 @@ namespace EveLens.Common.Enumerations.CCPAPI
         WalletTransactions = 1L << 34,
 
         /// <summary>
+        /// The SKINR design licenses a character owns.
+        /// </summary>
+        [Header("SKINR Designs")]
+        [Description("The SKINR design licenses of a character.")]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Hours1)]
+        SkinrLicenses = 1L << 38,
+
+        /// <summary>
+        /// The SKINR component licenses (nanocoatings and patterns) a character owns.
+        /// </summary>
+        [Header("SKINR Components")]
+        [Description("The SKINR component licenses of a character.")]
+        [Update(UpdatePeriod.Hours1, UpdatePeriod.Hours1)]
+        SkinrComponents = 1L << 39,
+
+        /// <summary>
         /// The personal issued market order history of a character.
         /// </summary>
         [Update(UpdatePeriod.Hours1, UpdatePeriod.Minutes30)]

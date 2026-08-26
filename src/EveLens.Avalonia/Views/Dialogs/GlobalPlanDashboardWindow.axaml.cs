@@ -1,4 +1,4 @@
-// EveLens — Character Intelligence for EVE Online
+﻿// EveLens — Character Intelligence for EVE Online
 // Copyright © 2006-2021 EVEMon Development Team, © 2025-2026 Alia Collins
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
@@ -48,6 +48,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             NewTemplateBtn.Click += OnNewTemplate;
             ImportFromPlanBtn.Click += OnImportFromPlan;
             ImportFromFileBtn.Click += OnImportFromFile;
+            ImportFromClipboardBtn.Click += OnImportFromClipboard;
             AddSkillBtn.Click += OnAddSkill;
             AddCharBtn.Click += OnAddCharacter;
             ApplyAllBtn.Click += OnApplyAll;
@@ -62,6 +63,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             NewTemplateBtn.Content = Loc.Get("Doctrine.NewDoctrine");
             ImportFromPlanBtn.Content = Loc.Get("Doctrine.ImportFromPlan");
             ImportFromFileBtn.Content = Loc.Get("Doctrine.ImportFromFile");
+            ImportFromClipboardBtn.Content = Loc.Get("Doctrine.ImportFromClipboard");
             AddSkillBtn.Content = Loc.Get("Action.AddSkill");
             AddCharBtn.Content = Loc.Get("Action.AddCharacter");
             ApplyAllBtn.Content = Loc.Get("Doctrine.CreatePlansForAll");
@@ -170,20 +172,18 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void BuildComparisonPanel()
         {
-            ComparisonGrid.Children.Clear();
+            FrozenCorner.Children.Clear();
+            HeaderStrip.Children.Clear();
+            SkillColumn.Children.Clear();
+            BodyRows.Children.Clear();
             SummaryCards.Children.Clear();
+            ComparisonMessage.IsVisible = false;
 
             if (_vm.SelectedTemplate == null)
             {
                 TemplateTitle.Text = Loc.Get("Doctrine.NoTemplateSelected");
-                ComparisonGrid.Children.Add(new TextBlock
-                {
-                    Text = Loc.Get("Doctrine.SelectDoctrine"),
-                    FontSize = FontScaleService.Body,
-                    Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 60),
-                });
+                ComparisonMessage.Text = Loc.Get("Doctrine.SelectDoctrine");
+                ComparisonMessage.IsVisible = true;
                 return;
             }
 
@@ -191,22 +191,23 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             if (_vm.SubscribedCharacters.Count == 0)
             {
-                ComparisonGrid.Children.Add(new TextBlock
-                {
-                    Text = Loc.Get("Doctrine.NoCharacters"),
-                    FontSize = FontScaleService.Body,
-                    Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(0, 8),
-                    TextWrapping = TextWrapping.Wrap,
-                });
+                ComparisonMessage.Text = Loc.Get("Doctrine.NoCharacters");
+                ComparisonMessage.IsVisible = true;
             }
 
             BuildSummaryCards();
             BuildComparisonHeader();
 
             foreach (var row in _vm.ComparisonRows)
-                ComparisonGrid.Children.Add(BuildComparisonRow(row));
+                BuildComparisonRow(row);
+        }
+
+        /// <summary>Mirrors the body's scroll offsets into the frozen header row and
+        /// skill column, so they track without owning scrollbars of their own.</summary>
+        private void OnBodyScrollChanged(object? sender, ScrollChangedEventArgs e)
+        {
+            HeaderScroller.Offset = new Vector(BodyScroller.Offset.X, 0);
+            SkillColScroller.Offset = new Vector(0, BodyScroller.Offset.Y);
         }
 
         private void BuildSummaryCards()
@@ -324,56 +325,47 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
+        // Frozen-pane geometry: the corner and skill column share these widths, the
+        // header strip and body rows share the cell width, and every quadrant uses
+        // the same row heights — alignment is arithmetic, not luck.
+        private const double SkillColWidth = 200;
+        private const double LevelColWidth = 50;
+        private const double RankColWidth = 50;
+        private const double CharCellWidth = 120;
+        private const double HeaderHeight = 28;
+        private const double RowHeight = 31;   // 30 + the 1px StackPanel spacing
+
         private void BuildComparisonHeader()
         {
-            int charCount = _vm.SubscribedCharacters.Count;
-            string colDefs = "200,50,50";
-            for (int i = 0; i < charCount; i++)
-                colDefs += ",120";
+            FrozenCorner.ColumnDefinitions = ColumnDefinitions.Parse(
+                $"{SkillColWidth},{LevelColWidth},{RankColWidth}");
+            FrozenCorner.Height = HeaderHeight;
+            FrozenCorner.Children.Add(MakeHeaderCell("SKILL", 0, HorizontalAlignment.Left));
+            FrozenCorner.Children.Add(MakeHeaderCell("LVL", 1, HorizontalAlignment.Center));
+            FrozenCorner.Children.Add(MakeHeaderCell("R", 2, HorizontalAlignment.Center));
 
-            var header = new Grid
-            {
-                ColumnDefinitions = ColumnDefinitions.Parse(colDefs),
-                Height = 28,
-            };
-
-            header.Children.Add(MakeHeaderCell("SKILL", 0, HorizontalAlignment.Left));
-            header.Children.Add(MakeHeaderCell("LVL", 1, HorizontalAlignment.Center));
-            header.Children.Add(MakeHeaderCell("R", 2, HorizontalAlignment.Center));
-
-            for (int i = 0; i < charCount; i++)
+            foreach (var character in _vm.SubscribedCharacters)
             {
                 // Full name, not the first word — alts often share a firstname and became
                 // indistinguishable (Issue #137). Trim to the column, tooltip carries the rest.
-                string name = _vm.SubscribedCharacters[i].Name;
-                var cell = MakeHeaderCell(name, 3 + i, HorizontalAlignment.Center);
+                var cell = MakeHeaderCell(character.Name, 0, HorizontalAlignment.Center);
                 cell.TextTrimming = TextTrimming.CharacterEllipsis;
-                ToolTip.SetTip(cell, name);
-                header.Children.Add(cell);
+                cell.Width = CharCellWidth;
+                cell.Height = HeaderHeight;
+                ToolTip.SetTip(cell, character.Name);
+                HeaderStrip.Children.Add(cell);
             }
-
-            ComparisonGrid.Children.Add(header);
-
-            ComparisonGrid.Children.Add(new Border
-            {
-                Height = 1,
-                Background = FindBrush("EveBorderBrush") ?? Brushes.Gray,
-            });
         }
 
-        private Control BuildComparisonRow(SkillComparisonRow row)
+        private void BuildComparisonRow(SkillComparisonRow row)
         {
-            int charCount = _vm.SubscribedCharacters.Count;
-            string colDefs = "200,50,50";
-            for (int i = 0; i < charCount; i++)
-                colDefs += ",120";
-
-            var grid = new Grid
+            // Left quadrant: the frozen skill identity
+            var left = new Grid
             {
-                ColumnDefinitions = ColumnDefinitions.Parse(colDefs),
-                Height = 30,
+                ColumnDefinitions = ColumnDefinitions.Parse(
+                    $"{SkillColWidth},{LevelColWidth},{RankColWidth}"),
+                Height = RowHeight - 1,
             };
-
             var nameText = new TextBlock
             {
                 Text = $"{row.SkillName}",
@@ -385,14 +377,19 @@ namespace EveLens.Avalonia.Views.Dialogs
             };
             ToolTip.SetTip(nameText, $"{row.SkillGroup} · {row.PrimaryAttribute}/{row.SecondaryAttribute}");
             Grid.SetColumn(nameText, 0);
-            grid.Children.Add(nameText);
+            left.Children.Add(nameText);
+            left.Children.Add(MakeCell(row.TargetLevel.ToString(), 1, FindBrush("EveTextSecondaryBrush")));
+            left.Children.Add(MakeCell(row.Rank.ToString(), 2, FindBrush("EveTextDisabledBrush")));
+            SkillColumn.Children.Add(left);
 
-            grid.Children.Add(MakeCell(row.TargetLevel.ToString(), 1, FindBrush("EveTextSecondaryBrush")));
-            grid.Children.Add(MakeCell(row.Rank.ToString(), 2, FindBrush("EveTextDisabledBrush")));
-
-            for (int i = 0; i < row.CharacterEntries.Count; i++)
+            // Right quadrant: one fixed-width cell per character
+            var cells = new StackPanel
             {
-                var entry = row.CharacterEntries[i];
+                Orientation = Orientation.Horizontal,
+                Height = RowHeight - 1,
+            };
+            foreach (var entry in row.CharacterEntries)
+            {
                 IBrush? fg;
                 string text;
 
@@ -411,13 +408,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                             : (FindBrush("EveTextPrimaryBrush") ?? Brushes.White);
                 }
 
-                var cell = MakeCell(text, 3 + i, fg);
+                var cell = MakeCell(text, 0, fg);
+                cell.Width = CharCellWidth;
                 if (entry.Status == SkillTrainingStatus.NeedsTraining)
                     ToolTip.SetTip(cell, $"Level {entry.CurrentLevel} → {entry.TargetLevel} · {entry.SpPerHour:N0} SP/hr");
-                grid.Children.Add(cell);
+                cells.Children.Add(cell);
             }
-
-            return grid;
+            BodyRows.Children.Add(cells);
         }
 
         #endregion
@@ -595,6 +592,73 @@ namespace EveLens.Avalonia.Views.Dialogs
                 RebuildUI();
             }
             catch { }
+        }
+
+        // Doctrine pings arrive as pasted skill lists ("Amarr Titan V" per line) at
+        // least as often as files — clipboard is the shortest path in (#137 follow-up).
+        private async void OnImportFromClipboard(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? text = AppServices.ClipboardService != null
+                    ? await AppServices.ClipboardService.GetTextAsync() : null;
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    ShowToast(Loc.Get("Doctrine.ClipboardEmpty"));
+                    return;
+                }
+
+                // Same name prompt as New Doctrine — a pasted list carries no name
+                var dialog = new Window
+                {
+                    Title = Loc.Get("Doctrine.ImportFromClipboard"),
+                    Width = 350, Height = 150,
+                    CanResize = false,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Background = FindBrush("EveBackgroundDarkBrush") as ISolidColorBrush ?? new SolidColorBrush(Color.Parse("#1A1A2E")),
+                };
+                var textBox = new TextBox
+                {
+                    PlaceholderText = Loc.Get("Doctrine.NamePlaceholder"),
+                    FontSize = FontScaleService.Body,
+                    Margin = new Thickness(16, 16, 16, 8),
+                };
+                var okBtn = new Button
+                {
+                    Content = Loc.Get("Action.Create"),
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Padding = new Thickness(24, 6),
+                    CornerRadius = new CornerRadius(12),
+                };
+                string? name = null;
+                okBtn.Click += (_, _) => { name = textBox.Text; dialog.Close(); };
+                textBox.KeyDown += (_, ke) =>
+                {
+                    if (ke.Key == Key.Enter) { name = textBox.Text; dialog.Close(); }
+                };
+                dialog.Content = new StackPanel
+                {
+                    Children = { textBox, okBtn },
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                await dialog.ShowDialog(this);
+                if (name == null) return;
+
+                var template = _vm.CreateFromSkillLines(name, text);
+                if (template == null)
+                {
+                    ShowToast(Loc.Get("Doctrine.ClipboardNotSkills"));
+                    return;
+                }
+
+                _vm.SelectTemplate(template);
+                RebuildUI();
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"DoctrineDesigner: clipboard import failed: {ex.Message}");
+            }
         }
 
         private async void OnAddSkill(object? sender, RoutedEventArgs e)

@@ -20,6 +20,9 @@
                     <Button x:Name="GroupByAttrBtn" Content="{loc:T Plan.GroupByAttr}" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                             CornerRadius="8" Click="OnGroupByAttribute"
                             ToolTip.Tip="{loc:T PlanEditor.GroupByAttrTip}" />
+                    <Button x:Name="GroupByPriorityBtn" Content="{loc:T Plan.GroupByPriority}" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
+                            CornerRadius="8" Click="OnGroupByPriority"
+                            ToolTip.Tip="{loc:T PlanEditor.GroupByPriorityTip}" />
                 </StackPanel>
             </DockPanel>
         </Border>

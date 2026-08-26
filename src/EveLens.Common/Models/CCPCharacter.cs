@@ -90,6 +90,8 @@ namespace EveLens.Common.Models
         private Lazy<KillLogCollection> _killLog;
         private Lazy<PlanetaryColonyCollection> _planetaryColonies;
         private Lazy<LoyaltyCollection> _loyaltyPoints;
+        private Lazy<SkinrLicenseCollection> _skinrLicenses;
+        private Lazy<SkinrComponentCollection> _skinrComponents;
 
         #endregion
 
@@ -131,6 +133,8 @@ namespace EveLens.Common.Models
             _killLog = new Lazy<KillLogCollection>(() => new KillLogCollection(this));
             _planetaryColonies = new Lazy<PlanetaryColonyCollection>(() => new PlanetaryColonyCollection(this));
             _loyaltyPoints = new Lazy<LoyaltyCollection>(() => new LoyaltyCollection(this));
+            _skinrLicenses = new Lazy<SkinrLicenseCollection>(() => new SkinrLicenseCollection());
+            _skinrComponents = new Lazy<SkinrComponentCollection>(() => new SkinrComponentCollection());
 
             m_endedOrdersForCharacter = new List<MarketOrder>();
             m_endedOrdersForCorporation = new List<MarketOrder>();
@@ -297,6 +301,16 @@ namespace EveLens.Common.Models
         public ResearchPointCollection ResearchPoints => _researchPoints.Value;
 
         /// <summary>
+        /// Gets the SKINR design licenses this character owns.
+        /// </summary>
+        public SkinrLicenseCollection SkinrLicenses => _skinrLicenses.Value;
+
+        /// <summary>
+        /// Gets the SKINR component licenses (nanocoatings and patterns) this character owns.
+        /// </summary>
+        public SkinrComponentCollection SkinrComponents => _skinrComponents.Value;
+
+        /// <summary>
         /// Gets the collection of EVE mail messages.
         /// </summary>
         public EveMailMessageCollection EVEMailMessages => _eveMailMessages.Value;
@@ -447,6 +461,12 @@ namespace EveLens.Common.Models
 
             var research = await cache.LoadAsync<Serialization.Esi.EsiAPIResearchPoints>(id, "research");
             if (research != null) ResearchPoints.Import(research);
+
+            var skinrLicenses = await cache.LoadAsync<Serialization.Esi.EsiSkinrInventory>(id, "skinr_licenses");
+            if (skinrLicenses != null) SkinrLicenses.Import(skinrLicenses);
+
+            var skinrComponents = await cache.LoadAsync<Serialization.Esi.EsiSkinrComponentInventory>(id, "skinr_components");
+            if (skinrComponents != null) SkinrComponents.Import(skinrComponents);
 
             var loyalty = await cache.LoadAsync<Serialization.Esi.EsiAPILoyality>(id, "loyalty");
             if (loyalty != null) LoyaltyPoints.Import(loyalty);
@@ -958,6 +978,10 @@ namespace EveLens.Common.Models
                         break;
                     case "esi-characters.read_agents_research.v1":
                         _researchPoints = new Lazy<ResearchPointCollection>(() => new ResearchPointCollection(this));
+                        break;
+                    case "esi.cosmetic.char:read":
+                        _skinrLicenses = new Lazy<SkinrLicenseCollection>(() => new SkinrLicenseCollection());
+                        _skinrComponents = new Lazy<SkinrComponentCollection>(() => new SkinrComponentCollection());
                         break;
                     case "esi-killmails.read_killmails.v1":
                         _killLog = new Lazy<KillLogCollection>(() => new KillLogCollection(this));
