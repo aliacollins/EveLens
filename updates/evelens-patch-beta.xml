@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-26</date>
+      <version>1.5.0.3</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.3
+
+Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime updates in place]]></message>
+    </release>
+    <release>
+      <date>2026-08-26</date>
       <version>1.5.0.1</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -92,16 +102,6 @@ Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)]]>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EveLens 1.4.0-beta.2
-
-Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)]]></message>
-    </release>
-    <release>
-      <date>2026-06-03</date>
-      <version>1.4.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.1
 
 Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)]]></message>
     </release>

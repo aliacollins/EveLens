@@ -32,6 +32,13 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$Message,
 
+    # Explicit version override. The computed next-version depends on reading the
+    # target branch's SharedAssemblyInfo, and a failed/stale read has twice stamped
+    # a colliding version (2026-06-03, 2026-08-26). When the right answer is known,
+    # say it outright: promote.ps1 beta -Version 1.5.0-beta.3
+    [Parameter(Mandatory=$false)]
+    [string]$Version,
+
     [switch]$SkipBuild,
     [switch]$DryRun
 )
@@ -615,7 +622,16 @@ function Test-GitHubRelease {
 function Invoke-Promote {
     $currentBranch = Get-CurrentBranch
     $currentVersion = Get-CurrentVersion
-    $nextVersion = Get-NextVersion $currentVersion $Channel
+    $nextVersion = if ($Version) {
+        # Sanity: the override must parse and belong to the target channel.
+        $pv = Parse-Version $Version
+        if ($pv.Channel -ne $Channel -and -not ($Channel -eq "stable" -and $pv.Channel -eq "stable")) {
+            throw "-Version '$Version' does not belong to channel '$Channel'."
+        }
+        $Version
+    } else {
+        Get-NextVersion $currentVersion $Channel
+    }
 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor White
