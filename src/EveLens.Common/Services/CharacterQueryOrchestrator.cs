@@ -727,9 +727,9 @@ namespace EveLens.Common.Services
                 if (target == null)
                     return new FetchOutcome { StatusCode = 0 };
 
-                // Skip non-core endpoints that the user hasn't enabled
-                if (!EndpointClassification.IsCore(method) &&
-                    !target.UISettings.EnabledEndpoints.Contains(method.ToString()))
+                // Skip endpoints the user hasn't opted into (core and scope-activated
+                // ones always pass — SKINR has no tab, its opt-in is the scope grant)
+                if (!EndpointClassification.IsFetchAllowed(method, target.UISettings.EnabledEndpoints))
                     return new FetchOutcome { StatusCode = 0 };
 
                 var esiKey = target.Identity.FindAPIKeyWithAccess(method);
@@ -809,9 +809,9 @@ namespace EveLens.Common.Services
                 if (target == null)
                     return new FetchOutcome { StatusCode = 0 };
 
-                // Skip non-core endpoints that the user hasn't enabled
-                if (!EndpointClassification.IsCore(method) &&
-                    !target.UISettings.EnabledEndpoints.Contains(method.ToString()))
+                // Skip endpoints the user hasn't opted into (core and scope-activated
+                // ones always pass — SKINR has no tab, its opt-in is the scope grant)
+                if (!EndpointClassification.IsFetchAllowed(method, target.UISettings.EnabledEndpoints))
                     return new FetchOutcome { StatusCode = 0 };
 
                 var esiKey = target.Identity.FindAPIKeyWithAccess(method);

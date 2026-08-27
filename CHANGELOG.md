@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Doctrine Designer: scrolling the skill column no longer desyncs the rows** -- The frozen skill column quietly accepted the mouse wheel on its own, so scrolling with the cursor over skill names moved them out of step with the training times. All three panes of the comparison table now mirror each other in both directions, whichever one the wheel lands on (#137).
+- **Scrollbars are actually visible now, app-wide** -- Two theme bugs stacked up: the custom scrollbar style forced every scrollbar to 10px *wide* (right for vertical bars, but it squashed horizontal ones into an invisible nub), and Avalonia's default auto-hide kept even correctly-sized bars invisible until the pointer hovered right over them -- so the theme's "visible at rest" intent never actually happened anywhere. Both fixed; wide views like the Doctrine Designer comparison now show their scrollbars at rest (#137).
+- **SKINR's landing actually knows who owns designs now** -- The monitored SKINR license routes were registered but never fetched: the scheduler only runs non-core endpoints a character-monitor tab has enabled, and SKINR has no tab. The scope grant itself is now the opt-in (a new scope-activated endpoint class), so counts populate on the monitor's cadence, persist across restarts, and the landing lists every character with SKINR access up front -- no more empty page until you search (#139).
+- **SKINR landing never lies about an unfetched collection** -- "no designs yet" only appears after a real answer from ESI; until then the card says it's still checking. Opening a collection also writes the live result back to the landing's data, so the two can no longer disagree (#139).
+- **Picking a character from the SKINR top-right picker works from the landing** -- it used to load the collection behind the still-visible landing page, which read as nothing happening (#139).
+- **The SKINR loader now covers every switch** -- design swaps after the first one, character switches, and environment changes all show the centered progress card. The old logic hid the loader on the first incoming frame, and after a swap the engine still delivers a few frames of the *previous* design, killing the loader instantly; it now waits for the first frame of the design you actually asked for (#139).
+- **The Hub button on SKINR's left rail is clickable across its whole face on first open** -- its background brush was unset, which in Avalonia makes everything but the glyph text click-through until the first visit assigned a brush (#139).
+- **Granting SKINR access keeps you where you were** -- Authenticating a character from the chooser used to yank you onto that character's (still empty) stage. You now stay on the chooser, the card moves up into "has access", and its design count arrives within seconds instead of waiting for the monitor's next SKINR pass (#139).
+- **Opening a collection puts a ship on the stage** -- The studio used to open on an empty stage with a strip of tiles and no hint that one needed clicking. The first design now stages itself automatically (#139).
+- **An empty collection says so plainly** -- A character who owns no designs got the search-filter message ("no designs match"), as though something were filtered out. It now names the real situation (#139).
+- **The SKINR landing behaves on a brand-new install** -- With no characters yet, it used to offer a "find a character" search box over an empty page, announce that every character had granted access, and hide the only button that could change that. It now says there are no characters yet and keeps the way in visible; the search box appears only once the roster is large enough to need it (#139).
+- **SKINR's status line no longer leaks filesystem paths** -- With no 3D engine installed, the renderer's internal search report (environment variable names, local paths) reached the status pill again. It goes to the diagnostic log, in full, and the interface shows one plain sentence.
+
+### Added
+
+- **SKINR shows your collection size** -- the design band now carries "N designs in collection" alongside the design name, so the answer to "how many do I own?" doesn't require counting tiles (#139).
+- **A first-run walkthrough for the SKINR studio** -- Until any character has SKINR access, the landing becomes a three-step introduction: what the studio is (Collection, Paragon Hub, the stage), then granting the one extra ESI permission that lets EveLens see your designs, then the optional one-download 3D renderer. The left rail stays dimmed while the walkthrough runs and the Hub button pulses as it unlocks, so it's clear the studio just opened rather than something being disabled. It runs once -- after that the landing goes straight to the character chooser.
+- **The SKINR chooser groups characters by access** -- Characters who granted SKINR access come first, and those who haven't follow under their own heading, so a large roster reads at a glance instead of mixing the two (#139).
+
 ## [1.5.0-beta.10] - 2026-08-27
 
 ### Added

@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using System.Collections.Generic;
 using EveLens.Common.Constants;
 using EveLens.Common.Enumerations.CCPAPI;
 using FluentAssertions;
@@ -101,6 +102,58 @@ namespace EveLens.Tests.Services
             {
                 EndpointClassification.CoreEndpoints.Should().NotContain(tabEndpoint,
                     $"{tabEndpoint} is in both CoreEndpoints and TabToEndpoint");
+            }
+        }
+
+        // --- scope-activated endpoints (SKINR) ---------------------------------
+        // Regression for #139: the SKINR routes have no character-monitor tab, so
+        // gating them on EnabledEndpoints left them permanently skipped — the
+        // landing read a never-populated collection and showed an empty grid.
+
+        [Theory]
+        [InlineData(ESIAPICharacterMethods.SkinrLicenses)]
+        [InlineData(ESIAPICharacterMethods.SkinrComponents)]
+        public void Skinr_Endpoints_Are_ScopeActivated(ESIAPICharacterMethods method)
+        {
+            EndpointClassification.ScopeActivatedEndpoints.Should().Contain(method);
+        }
+
+        [Theory]
+        [InlineData(ESIAPICharacterMethods.SkinrLicenses)]
+        [InlineData(ESIAPICharacterMethods.SkinrComponents)]
+        public void IsFetchAllowed_Permits_Skinr_Without_EnabledEndpoints_Entry(
+            ESIAPICharacterMethods method)
+        {
+            EndpointClassification.IsFetchAllowed(method, new List<string>())
+                .Should().BeTrue("scope-activated endpoints must not require a tab opt-in");
+        }
+
+        [Fact]
+        public void IsFetchAllowed_Permits_Core_Without_EnabledEndpoints_Entry()
+        {
+            EndpointClassification.IsFetchAllowed(
+                    ESIAPICharacterMethods.Skills, new List<string>())
+                .Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsFetchAllowed_Blocks_OnDemand_Until_Enabled()
+        {
+            EndpointClassification.IsFetchAllowed(
+                    ESIAPICharacterMethods.AssetList, new List<string>())
+                .Should().BeFalse();
+            EndpointClassification.IsFetchAllowed(
+                    ESIAPICharacterMethods.AssetList, new List<string> { "AssetList" })
+                .Should().BeTrue();
+        }
+
+        [Fact]
+        public void ScopeActivated_And_Core_And_Tabs_Are_Disjoint()
+        {
+            foreach (var method in EndpointClassification.ScopeActivatedEndpoints)
+            {
+                EndpointClassification.CoreEndpoints.Should().NotContain(method);
+                EndpointClassification.TabToEndpoint.Values.Should().NotContain(method);
             }
         }
     }

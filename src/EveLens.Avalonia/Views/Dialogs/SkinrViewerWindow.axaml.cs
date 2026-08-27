@@ -95,17 +95,24 @@ namespace EveLens.Avalonia.Views.Dialogs
             _render.FrameReady += frame => Dispatcher.UIThread.Post(() => ShowFrame(frame));
             _render.StatusChanged += text => Dispatcher.UIThread.Post(() =>
             {
-                RenderStatusText.Text = text;
+                // The discovery report names environment variables and local paths —
+                // developer material for the trace, never the status pill. This
+                // regressed once already (macOS, verbatim paths in the strip).
+                string shown = text != null && text.Contains("Searched:")
+                    ? Loc.Get("Skinr.RenderFailedShort")
+                    : text ?? string.Empty;
+                RenderStatusText.Text = shown;
                 // While the stage is empty and a build is in flight, the engine's own
                 // narration ("Starting the renderer — this takes up to a minute the
                 // first time...") belongs front and center, not in the corner pill.
                 if (_stageWaiting && !_overlayFromDownload)
                 {
-                    LoadingOverlayText.Text = text;
+                    LoadingOverlayText.Text = shown;
                     LoadingOverlay.IsVisible = true;
                     // The render VM reports failures as status text (it never throws
                     // across the event boundary); a failure ends the wait.
-                    if (text.StartsWith("Render failed", StringComparison.Ordinal))
+                    if (text != null &&
+                        text.StartsWith("Render failed", StringComparison.Ordinal))
                         EndStageWait();
                 }
             });
@@ -248,6 +255,14 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void HideLanding()
         {
+            // Entering the studio mid-wizard (a scoped card was clicked) completes
+            // it — the wizard informs, it never traps.
+            if (_wizardStep != WizardStep.None)
+            {
+                _wizardStep = WizardStep.None;
+                _wizardDone = true;
+                SetRailLocked(false);
+            }
             LandingPane.IsVisible = false;
             SearchPill.IsVisible = true;
         }
@@ -256,14 +271,16 @@ namespace EveLens.Avalonia.Views.Dialogs
             => BuildLandingGrid();
 
         /// <summary>
-        /// The landing's card grid. Default view lists ONLY characters whose monitored
-        /// SKINR data shows owned designs — at a hundred alts, the four that matter.
-        /// Searching reveals every character with their state labeled, so nobody is
-        /// unreachable, just unadvertised (#139, scaled per design discussion).
+        /// The landing's card grid: every character with SKINR access, up front and
+        /// unconditionally — access is the membership test, not the owned-design count
+        /// (a count of 0 may just mean "not fetched yet", and hiding people behind the
+        /// search box read as an empty page, #139). Characters without access follow,
+        /// dimmed, as their own grant-access entry. Search filters by name.
         /// </summary>
         private void BuildLandingGrid()
         {
             LandingGrid.Children.Clear();
+            LandingNeedsGrid.Children.Clear();
 
             var all = AppServices.Characters.Where(c => c.Monitored)
                 .OfType<CCPCharacter>()
@@ -271,28 +288,43 @@ namespace EveLens.Avalonia.Views.Dialogs
             long lastUsed = Settings.UI.SkinrLastCharacterId;
             string filter = LandingSearchBox.Text?.Trim() ?? string.Empty;
 
-            List<CCPCharacter> shown;
-            if (filter.Length > 0)
-            {
-                shown = all.Where(c => c.Name.Contains(filter,
-                        StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-            }
-            else
-            {
-                shown = all.Where(c => SkinrViewerViewModel.HasSkinrScope(c)
-                        && c.SkinrLicenses.Count > 0)
-                    .OrderByDescending(c => c.CharacterID == lastUsed)
-                    .ThenByDescending(c => c.SkinrLicenses.Count)
-                    .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-            }
+            // True first run — nobody has the SKINR scope yet: the landing becomes a
+            // three-step wizard (meet SKINR → grant access → 3D renderer) and the
+            // rail stays locked until it finishes. Once anyone has access, the
+            // landing opens straight on the chooser.
+            bool firstRun = !all.Any(SkinrViewerViewModel.HasSkinrScope);
+            if (_wizardStep == WizardStep.None && firstRun && !_wizardDone)
+                _wizardStep = WizardStep.Intro;
 
-            foreach (var character in shown)
+            List<CCPCharacter> shown = all
+                .Where(c => filter.Length == 0 ||
+                    c.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            var withAccess = shown
+                .Where(SkinrViewerViewModel.HasSkinrScope)
+                .OrderByDescending(c => c.CharacterID == lastUsed)
+                .ThenByDescending(c => c.SkinrLicenses.Count)
+                .ThenBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var needsAccess = shown
+                .Where(c => !SkinrViewerViewModel.HasSkinrScope(c))
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var character in withAccess)
                 LandingGrid.Children.Add(BuildLandingCard(character));
+            foreach (var character in needsAccess)
+                LandingNeedsGrid.Children.Add(BuildLandingCard(character));
 
-            if (shown.Count == 0)
+            LandingAccessHeader.IsVisible = withAccess.Count > 0 && needsAccess.Count > 0;
+            LandingNeedsHeader.IsVisible = needsAccess.Count > 0;
+
+            // An empty grid needs an explanation only when there ARE characters to
+            // explain away. On a brand-new install the grant row below already says
+            // "no characters yet" — "grant access to a character below" would be
+            // pointing at nobody.
+            if (shown.Count == 0 && all.Count > 0)
             {
                 LandingGrid.Children.Add(new TextBlock
                 {
@@ -307,11 +339,29 @@ namespace EveLens.Avalonia.Views.Dialogs
                 });
             }
 
+            // Search only earns its pixels on a big roster — with a handful of
+            // characters (or none at all) every card is already on screen, and a
+            // "find a character" box over an empty page read as absurd (#139).
+            LandingSearchPill.IsVisible = all.Count > 8;
+
             int unscoped = all.Count(c => !SkinrViewerViewModel.HasSkinrScope(c));
-            LandingGrantText.Text = unscoped > 0
-                ? string.Format(Loc.Get("Skinr.LandingGrantFmt"), unscoped)
-                : Loc.Get("Skinr.LandingGrantAll");
-            LandingGrantButton.IsVisible = unscoped > 0;
+            if (all.Count == 0)
+            {
+                // Brand-new install: no characters at all. The old logic proudly
+                // reported "every character has granted access" over an empty page
+                // and HID the only button that could fix it.
+                LandingGrantText.Text = Loc.Get("Skinr.LandingNoCharactersYet");
+                LandingGrantButton.IsVisible = true;
+            }
+            else
+            {
+                LandingGrantText.Text = unscoped > 0
+                    ? string.Format(Loc.Get("Skinr.LandingGrantFmt"), unscoped)
+                    : Loc.Get("Skinr.LandingGrantAll");
+                LandingGrantButton.IsVisible = unscoped > 0;
+            }
+
+            ApplyWizardState(all.Count);
         }
 
         private Control BuildLandingCard(CCPCharacter character)
@@ -343,11 +393,15 @@ namespace EveLens.Avalonia.Views.Dialogs
             };
             LoadLandingPortraitAsync(portrait, character);
 
+            // "no designs yet" is a claim we can only make AFTER a fetch — an
+            // unfetched collection shows a neutral counting state instead (#139)
             string stateText = !hasScope
                 ? Loc.Get("Skinr.NeedsAccess")
-                : designs > 0
-                    ? string.Format(Loc.Get("Skinr.LandingDesignsFmt"), designs)
-                    : Loc.Get("Skinr.LandingNoDesigns");
+                : !character.SkinrLicenses.IsFetched
+                    ? Loc.Get("Skinr.LandingCounting")
+                    : designs > 0
+                        ? string.Format(Loc.Get("Skinr.LandingDesignsFmt"), designs)
+                        : Loc.Get("Skinr.LandingNoDesigns");
             IBrush? stateBrush = !hasScope
                 ? (IBrush?)Resources["SkinrAccentBrush"]
                 : designs > 0
@@ -413,6 +467,200 @@ namespace EveLens.Avalonia.Views.Dialogs
                     image.Source = bitmap;
             }
             catch { }
+        }
+
+        // --- first-run wizard ----------------------------------------------------
+
+        private enum WizardStep { None, Intro, Access, Renderer }
+
+        private WizardStep _wizardStep = WizardStep.None;
+        private bool _wizardDone;
+
+        /// <summary>Applies the wizard step to the landing chrome. Runs at the end
+        /// of every BuildLandingGrid, so grant events re-evaluate the same truth.</summary>
+        private void ApplyWizardState(int rosterCount)
+        {
+            bool wizard = _wizardStep != WizardStep.None;
+            WizardStepper.IsVisible = wizard;
+            WizardNav.IsVisible = wizard;
+            WizardRendererPanel.IsVisible = _wizardStep == WizardStep.Renderer;
+            SetRailLocked(wizard);
+
+            if (!wizard)
+            {
+                LandingIntro.IsVisible = false;
+                LandingGrid.IsVisible = true;
+                LandingNeedsGrid.IsVisible = true;
+                // Chooser mode always shows the grant row — it is the only route to
+                // adding a character or granting the scope, and the wizard's own
+                // step-scoped hiding must not survive the wizard.
+                LandingGrantRow.IsVisible = true;
+                LandingTitleText.Text = Loc.Get("Skinr.LandingTitle");
+                LandingSubText.Text = Loc.Get("Skinr.LandingSub");
+                return;
+            }
+
+            bool access = _wizardStep == WizardStep.Access;
+            LandingIntro.IsVisible = _wizardStep == WizardStep.Intro;
+            LandingGrid.IsVisible = access;
+            LandingNeedsGrid.IsVisible = access;
+            LandingAccessHeader.IsVisible = LandingAccessHeader.IsVisible && access;
+            LandingNeedsHeader.IsVisible = LandingNeedsHeader.IsVisible && access;
+            LandingSearchPill.IsVisible = access && rosterCount > 8;
+            LandingGrantRow.IsVisible = access;
+
+            HighlightWizardPill(WizardPill1, _wizardStep == WizardStep.Intro);
+            HighlightWizardPill(WizardPill2, access);
+            HighlightWizardPill(WizardPill3, _wizardStep == WizardStep.Renderer);
+            WizardBackButton.IsVisible = _wizardStep != WizardStep.Intro;
+            WizardNextButton.Content = Loc.Get(_wizardStep == WizardStep.Renderer
+                ? "Skinr.WizardFinish" : "Skinr.WizardNext");
+
+            switch (_wizardStep)
+            {
+                case WizardStep.Intro:
+                    LandingTitleText.Text = Loc.Get("Skinr.RenderPlaceholderTitle");
+                    LandingSubText.Text = Loc.Get("Skinr.LandingIntroSub");
+                    break;
+                case WizardStep.Access:
+                    LandingTitleText.Text = Loc.Get("Skinr.WizardStep2");
+                    LandingSubText.Text = Loc.Get("Skinr.LandingAuthPrompt");
+                    break;
+                case WizardStep.Renderer:
+                    LandingTitleText.Text = Loc.Get("Skinr.WizardStep3");
+                    LandingSubText.Text = Loc.Get("Skinr.WizardRendererSub");
+                    break;
+            }
+        }
+
+        private void HighlightWizardPill(Border pill, bool active)
+        {
+            pill.Background = (IBrush?)Resources[active ? "SkinrAccentDimBrush" : "SkinrPillBrush"];
+            if (pill.Child is TextBlock label)
+                label.Foreground = (IBrush?)Resources[active ? "SkinrTextBrush" : "SkinrTextSecBrush"];
+        }
+
+        private void OnWizardBack(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            _wizardStep = _wizardStep switch
+            {
+                WizardStep.Renderer => WizardStep.Access,
+                WizardStep.Access => WizardStep.Intro,
+                _ => _wizardStep,
+            };
+            BuildLandingGrid();
+        }
+
+        private void OnWizardNext(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            switch (_wizardStep)
+            {
+                case WizardStep.Intro:
+                    _wizardStep = WizardStep.Access;
+                    BuildLandingGrid();
+                    break;
+                case WizardStep.Access:
+                    _wizardStep = WizardStep.Renderer;
+                    BuildLandingGrid();
+                    PrepareWizardRendererStep();
+                    break;
+                case WizardStep.Renderer:
+                    FinishWizard();
+                    break;
+            }
+        }
+
+        /// <summary>The wizard's exit: chooser mode, rail unlocked — and the Hub
+        /// pill pulses so "the studio is open" is SEEN, not inferred.</summary>
+        private void FinishWizard()
+        {
+            _wizardStep = WizardStep.None;
+            _wizardDone = true;
+            BuildLandingGrid();
+            PulseRailHubAsync();
+        }
+
+        private void SetRailLocked(bool locked)
+        {
+            RailCollection.Opacity = locked ? 0.35 : 1.0;
+            RailCollection.IsHitTestVisible = !locked;
+            RailHub.Opacity = locked ? 0.35 : 1.0;
+            RailHub.IsHitTestVisible = !locked;
+        }
+
+        private async void PulseRailHubAsync()
+        {
+            try
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    RailHub.Background = (IBrush?)Resources["SkinrAccentDimBrush"];
+                    RailHubGlyph.Foreground = (IBrush?)Resources["SkinrAccentBrush"];
+                    await System.Threading.Tasks.Task.Delay(300);
+                    RailHub.Background = Brushes.Transparent;
+                    RailHubGlyph.Foreground = (IBrush?)Resources["SkinrTextDimBrush"];
+                    await System.Threading.Tasks.Task.Delay(220);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: rail pulse failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>Arms wizard step 3: a renderer that's already running reports
+        /// ready; otherwise the verified release facts and the Install button.</summary>
+        private async void PrepareWizardRendererStep()
+        {
+            try
+            {
+                if (_render.IsAvailable)
+                {
+                    WizardRendererStatus.Text = Loc.Get("Skinr.WizardRendererReady");
+                    WizardInstallButton.IsVisible = false;
+                    return;
+                }
+                WizardInstallButton.IsVisible = true;
+                WizardInstallButton.IsEnabled = true;
+                WizardRendererStatus.Text = Loc.Get("Skinr.RuntimeChecking");
+                _runtimeRelease ??= await SkinrRuntimeInstaller.GetLatestAsync();
+                WizardRendererStatus.Text = _runtimeRelease == null
+                    ? Loc.Get("Skinr.RuntimeUnreachable")
+                    : string.Format(Loc.Get("Skinr.RuntimeVerifiedFmt"),
+                        _runtimeRelease.Version,
+                        _runtimeRelease.SizeBytes / (1024.0 * 1024.0));
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrViewer: wizard renderer step failed: {ex.Message}");
+            }
+        }
+
+        private async void OnWizardInstall(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            try
+            {
+                WizardInstallButton.IsEnabled = false;
+                bool ok = await RunRuntimeInstallAsync(s => WizardRendererStatus.Text = s);
+                if (ok)
+                {
+                    WizardRendererStatus.Text = Loc.Get("Skinr.WizardRendererReady");
+                    WizardInstallButton.IsVisible = false;
+                    // The stage's own offer is now moot
+                    RuntimeInstallPanel.IsVisible = false;
+                    if (_hub.Data.SelectedRecipe != null)
+                        await _render.LoadRecipeAsync(_hub.Data.SelectedRecipe);
+                }
+                else
+                    WizardInstallButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"SkinrViewer: wizard install failed: {ex.Message}");
+                WizardRendererStatus.Text = ex.Message;
+                WizardInstallButton.IsEnabled = true;
+            }
         }
 
         /// <summary>
@@ -619,12 +867,40 @@ namespace EveLens.Avalonia.Views.Dialogs
                 await dialog.ShowDialog(this);
                 if (!dialog.CharacterImported)
                     return;
+
+                // The freshly granted characters' counts must not wait for the
+                // scheduler's next SKINR pass (up to an hour): fetch them now, into
+                // the monitored collection — the landing's live-update subscription
+                // flips their cards from "checking" to a real count as each lands.
+                foreach (string name in dialog.ImportedCharacterNames)
+                {
+                    var imported = AppServices.Characters.OfType<CCPCharacter>()
+                        .FirstOrDefault(c => string.Equals(c.Name, name,
+                            StringComparison.OrdinalIgnoreCase));
+                    if (imported != null)
+                        _ = SkinrViewerViewModel.RefreshMonitoredAsync(imported);
+                }
+
+                if (LandingPane.IsVisible)
+                {
+                    // Granting FROM the chooser keeps the chooser: the card moves up
+                    // into the have-access group and the user still picks whose
+                    // collection to open. Navigating away mid-choice read as the
+                    // page vanishing (#139 follow-up).
+                    string? current = CharacterCombo.SelectedIndex >= 0 &&
+                        CharacterCombo.Tag is List<Character> chars &&
+                        CharacterCombo.SelectedIndex < chars.Count
+                            ? chars[CharacterCombo.SelectedIndex].Name : null;
+                    RebuildCharacterPicker(current, allowNone: current == null);
+                    BuildLandingGrid();
+                    return;
+                }
+
                 // Scopes changed: rebuild the picker so the access markers update, and
                 // land on the character who just granted access — re-authing character X
                 // while the window silently stayed on character A read as "not working"
                 // (Issue #139). Replacing ItemsSource resets the selection, so setting
                 // the index fires OnCharacterChanged, which runs the scope check.
-                HideLanding();
                 RebuildCharacterPicker(dialog.ImportedCharacterNames.LastOrDefault());
             }
             catch (Exception ex)
@@ -655,27 +931,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                 RuntimeInstallDesc.IsVisible = true;
                 RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeChecking");
 
-                var release = _runtimeRelease ?? await SkinrRuntimeInstaller.GetLatestAsync();
-                if (release == null)
-                {
-                    RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeUnreachable");
-                    RuntimeInstallButton.IsEnabled = true;
-                    return;
-                }
-
-                RuntimeInstallDesc.Text = string.Format(
-                    Loc.Get("Skinr.RuntimeDownloadingFmt"), release.Version,
-                    release.SizeBytes / (1024.0 * 1024.0));
-                var progress = new Progress<double>(fraction => ReportDownload(
-                    Loc.Get("Skinr.RuntimeTitle"), fraction));
-                await SkinrRuntimeInstaller.InstallAsync(release, progress);
-
-                RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeStarting");
-                // Reinitialize, not Initialize: on the UPDATE path a healthy host
-                // (and the converter it discovered) is already running and must be
-                // replaced, not kept.
-                await _render.ReinitializeAsync();
-                if (_render.IsAvailable)
+                bool ok = await RunRuntimeInstallAsync(s => RuntimeInstallDesc.Text = s);
+                if (ok)
                 {
                     RuntimeInstallPanel.IsVisible = false;
                     RenderTitle.Text = Loc.Get("Skinr.RenderPlaceholderTitle");
@@ -685,15 +942,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                         await _render.LoadRecipeAsync(_hub.Data.SelectedRecipe);
                 }
                 else
-                {
-                    // The friendly sentence for the user; the discovery report is
-                    // developer material and goes to the trace.
-                    RuntimeInstallDesc.Text = Loc.Get("Skinr.RuntimeFailed");
-                    AppServices.TraceService?.Trace(
-                        "SkinrViewer: runtime installed but unavailable: " +
-                        _render.UnavailableReason);
                     RuntimeInstallButton.IsEnabled = true;
-                }
             }
             catch (Exception ex)
             {
@@ -702,6 +951,45 @@ namespace EveLens.Avalonia.Views.Dialogs
                 RuntimeInstallDesc.Text = ex.Message;
                 RuntimeInstallButton.IsEnabled = true;
             }
+        }
+
+        /// <summary>The install pipeline both offer surfaces (stage panel and
+        /// first-run wizard) share: fetch the release, download with progress,
+        /// verify (hash → pinned-key signature → per-file hashes), install, and
+        /// reboot the renderer. Phase text goes through <paramref name="report"/>;
+        /// returns whether the renderer came up.</summary>
+        private async System.Threading.Tasks.Task<bool> RunRuntimeInstallAsync(Action<string> report)
+        {
+            var release = _runtimeRelease ?? await SkinrRuntimeInstaller.GetLatestAsync();
+            if (release == null)
+            {
+                report(Loc.Get("Skinr.RuntimeUnreachable"));
+                return false;
+            }
+            _runtimeRelease = release;
+
+            report(string.Format(
+                Loc.Get("Skinr.RuntimeDownloadingFmt"), release.Version,
+                release.SizeBytes / (1024.0 * 1024.0)));
+            var progress = new Progress<double>(fraction => ReportDownload(
+                Loc.Get("Skinr.RuntimeTitle"), fraction));
+            await SkinrRuntimeInstaller.InstallAsync(release, progress);
+
+            report(Loc.Get("Skinr.RuntimeStarting"));
+            // Reinitialize, not Initialize: on the UPDATE path a healthy host
+            // (and the converter it discovered) is already running and must be
+            // replaced, not kept.
+            await _render.ReinitializeAsync();
+            if (!_render.IsAvailable)
+            {
+                // The friendly sentence for the user; the discovery report is
+                // developer material and goes to the trace.
+                report(Loc.Get("Skinr.RuntimeFailed"));
+                AppServices.TraceService?.Trace(
+                    "SkinrViewer: runtime installed but unavailable: " +
+                    _render.UnavailableReason);
+            }
+            return _render.IsAvailable;
         }
 
         // --- Paragon Hub pane ----------------------------------------------------
@@ -717,6 +1005,11 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void OnRailCollection(object? sender, PointerPressedEventArgs e)
         {
+            // The rail unlocks when the first-run wizard finishes (also covered by
+            // IsHitTestVisible, but the state machine should not rely on hit-testing)
+            if (_wizardStep != WizardStep.None)
+                return;
+
             // Already on Collection: the second click is the way BACK to the landing —
             // the character chooser stays reachable without a dedicated button.
             if (!MarketPane.IsVisible && !LandingPane.IsVisible)
@@ -738,6 +1031,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private void OnRailHub(object? sender, PointerPressedEventArgs e)
         {
+            if (_wizardStep != WizardStep.None)
+                return;
             _marketDetail = false;
             ShowMarket(true);
         }
@@ -1251,6 +1546,12 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 if (character != null)
                 {
+                    // Every path into a character leaves the landing — the top-right
+                    // picker used to load the collection BEHIND the still-opaque
+                    // landing pane, which read as "nothing happened" (#139)
+                    if (LandingPane.IsVisible)
+                        HideLanding();
+
                     // Every explicit choice is remembered — next open skips the landing
                     Settings.UI.SkinrLastCharacterId = character.CharacterID;
                     Settings.Save();
@@ -1273,6 +1574,19 @@ namespace EveLens.Avalonia.Views.Dialogs
                 finally
                 {
                     LoadingOverlay.IsVisible = false;
+                }
+
+                // The stage shows a ship, never a text wall: opening a collection
+                // puts its first design up immediately ("nope, not this page").
+                // With no renderer installed this is also what surfaces the
+                // runtime offer without waiting for a click. Skipped when the
+                // current selection already belongs to this collection, so
+                // re-picking the same character never re-renders.
+                if (character != null && _hub.Designs.Count > 0 &&
+                    !_hub.Designs.Any(d => d.SkinrId == _selectedSkinrId))
+                {
+                    _lastCollectionSkinrId = _hub.Designs[0].SkinrId;
+                    OnDesignTilePressed(_hub.Designs[0].SkinrId);
                 }
             }
             catch (Exception ex)
@@ -1315,6 +1629,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // is still building cannot interleave two builds in the engine.
                 await _render.LoadRecipeAsync(_hub.Data.SelectedRecipe);
                 _thumbArmed = _selectedSkinrId == skinrId;
+
+                // No recipe (fetch failed) or no renderer (nothing will ever draw
+                // it): end the wait so the placeholder — including the runtime
+                // offer — owns the stage instead of an eternal spinner.
+                if ((_hub.Data.SelectedRecipe == null || !_render.IsAvailable) &&
+                    _selectedSkinrId == skinrId)
+                    EndStageWait();
 
                 // The welcome sweep — CCP's studio rotates a freshly landed ship into place,
                 // and so do we. Fire-and-forget: any user gesture cancels it mid-flight.
@@ -1401,9 +1722,17 @@ namespace EveLens.Avalonia.Views.Dialogs
             if (designs.Count == 0 &&
                 _hub.Data.State == SkinrViewerViewModel.ViewState.Loaded)
             {
+                // Two different empties: a search that excluded everything says so;
+                // a character who owns nothing gets told THAT, by name, with the Hub
+                // as the way forward. "No designs match" right after granting access
+                // read as a bug — the user never searched anything (#139 follow-up).
+                bool ownsNone = _hub.Data.Licenses.Count == 0;
                 DesignStrip.Children.Add(new TextBlock
                 {
-                    Text = Loc.Get("Skinr.DesignsEmpty"),
+                    Text = ownsNone
+                        ? string.Format(Loc.Get("Skinr.CollectionEmptyFmt"),
+                            _hub.Data.SelectedCharacter?.Name)
+                        : Loc.Get("Skinr.DesignsEmpty"),
                     FontSize = FontScaleService.Small,
                     Foreground = (IBrush?)Resources["SkinrTextDimBrush"],
                     VerticalAlignment = VerticalAlignment.Center,
@@ -1457,7 +1786,27 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 _hub.Environment = preset;
                 HighlightEnvironment();
-                await _render.SetEnvironmentAsync(preset);
+
+                // Every switch narrates itself (#139) — env swaps have no design id
+                // for the frame gate to key on, so this overlay is closed by the
+                // awaited call itself, not by ShowFrame.
+                LoadingOverlayText.Text = Loc.Get("Skinr.StatusRendering");
+                LoadingOverlayBar.IsIndeterminate = true;
+                _overlayFromDownload = false;
+                LoadingOverlay.Background = RenderImage.IsVisible
+                    ? Brushes.Transparent
+                    : (IBrush?)Resources["SkinrBgBrush"];
+                LoadingOverlay.IsVisible = true;
+                try
+                {
+                    await _render.SetEnvironmentAsync(preset);
+                }
+                finally
+                {
+                    // A design swap in flight keeps its own overlay; only end ours
+                    if (!_stageWaiting)
+                        LoadingOverlay.IsVisible = false;
+                }
             }
             catch (Exception ex)
             {
@@ -1509,6 +1858,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             // lore paragraph all live in the details panel.
             DesignNameText.Text = string.IsNullOrEmpty(recipe.Name)
                 ? recipe.Id : recipe.Name;
+            CollectionCountText.Text = string.Format(
+                Loc.Get("Skinr.CollectionCountFmt"), _hub.Data.Licenses.Count);
             RefreshDetailsPanel();
 
             var hull = _hub.Hull;
@@ -1787,8 +2138,13 @@ namespace EveLens.Avalonia.Views.Dialogs
         /// </summary>
         private void ShowFrame(SkinrFrame frame)
         {
-            // The first frame ends the wait — a visible ship IS the progress report
-            if (_stageWaiting || LoadingOverlay.IsVisible)
+            // The first frame OF THE REQUESTED DESIGN ends the wait. Settled frames of
+            // the PREVIOUS design keep arriving right after a swap click (the same race
+            // CaptureThumbnailIfDue guards) — ending the wait on any frame made the swap
+            // loader flash off instantly, so it only ever survived on a cold stage where
+            // no frames were streaming yet (#139). And only the design-swap wait is ours
+            // to end: character-load and download overlays are closed by their owners.
+            if (_stageWaiting && _render.LoadedSkinrId == _selectedSkinrId)
                 EndStageWait();
 
             var size = new PixelSize(frame.Width, frame.Height);
@@ -1811,7 +2167,9 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             RenderImage.Source = null;   // force Avalonia to re-read the same bitmap instance
             RenderImage.Source = _surface;
-            RenderImage.Opacity = 1.0;   // fades up through the opacity transition
+            if (!_stageWaiting)
+                RenderImage.Opacity = 1.0;   // fades up through the opacity transition;
+                                             // stale frames mid-swap keep the dim
             RenderImage.IsVisible = true;
             RenderPlaceholder.IsVisible = false;
             HintStrip.IsVisible = true;
