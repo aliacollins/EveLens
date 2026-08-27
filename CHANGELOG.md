@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0-beta.11] - 2026-08-27
+
 ### Fixed
 
 - **Doctrine Designer: scrolling the skill column no longer desyncs the rows** -- The frozen skill column quietly accepted the mouse wheel on its own, so scrolling with the cursor over skill names moved them out of step with the training times. All three panes of the comparison table now mirror each other in both directions, whichever one the wheel lands on (#137).
