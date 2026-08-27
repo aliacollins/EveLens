@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-27</date>
+      <version>1.5.0.12</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.12
+
+Overview account badge no longer clips at large font scales]]></message>
+    </release>
+    <release>
+      <date>2026-08-27</date>
       <version>1.5.0.11</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -92,16 +102,6 @@ Beta 4: Mac SKINR shows honest renderer-coming state on every path]]></message>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
       <message><![CDATA[EveLens 1.5.0-beta.3
-
-Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime updates in place]]></message>
-    </release>
-    <release>
-      <date>2026-08-26</date>
-      <version>1.5.0.1</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.1
 
 Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime updates in place]]></message>
     </release>
