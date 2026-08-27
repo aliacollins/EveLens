@@ -106,12 +106,60 @@ namespace EveLens.Common.ViewModels
                     .Select(l => new SkinrLicenseEntry(l))
                     .OrderByDescending(l => l.Activated)
                     .ToList();
+
+                // Write the live answer through to the monitored collection the
+                // landing cards read, so both views share one truth and the count
+                // is warm for the next open (odon, #139).
+                if (character is CCPCharacter ccp)
+                    WriteThroughMonitored(ccp, result.Result);
+
                 SetState(ViewState.Loaded);
             }
             catch (Exception ex)
             {
                 ErrorMessage = ex.Message;
                 SetState(ViewState.Error);
+            }
+        }
+
+        /// <summary>
+        /// Imports a live inventory into the monitored collection the landing reads,
+        /// persists it, and announces the change — the same shape as the orchestrator's
+        /// OnSkinrLicensesUpdated, marshaled the same way.
+        /// </summary>
+        private static void WriteThroughMonitored(CCPCharacter ccp, EsiSkinrInventory inventory)
+        {
+            AppServices.Dispatcher?.Post(() =>
+            {
+                ccp.SkinrLicenses.Import(inventory);
+                _ = AppServices.CharacterDataCache.SaveAsync(ccp.CharacterID, "skinr_licenses", inventory);
+                AppServices.EventAggregator?.Publish(new Events.CharacterSkinrUpdatedEvent(ccp));
+            });
+        }
+
+        /// <summary>
+        /// Fetches a character's inventory straight into the monitored collection,
+        /// without touching this VM's selection state. Used right after a scope grant
+        /// so the landing card shows a real count in seconds instead of waiting for
+        /// the scheduler's next SKINR pass (up to an hour). Failures are silent —
+        /// the monitor remains the authority and will supply the count on its cadence.
+        /// </summary>
+        public static async Task RefreshMonitoredAsync(CCPCharacter character)
+        {
+            try
+            {
+                var key = FindSkinrKey(character);
+                if (key == null)
+                    return;
+                var result = await EsiSkinrService.GetCharacterSkinrsAsync(
+                    character.CharacterID, key.AccessToken).ConfigureAwait(false);
+                if (!result.HasError && result.Result != null)
+                    WriteThroughMonitored(character, result.Result);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"SkinrViewer: post-grant inventory refresh failed: {ex.Message}");
             }
         }
 

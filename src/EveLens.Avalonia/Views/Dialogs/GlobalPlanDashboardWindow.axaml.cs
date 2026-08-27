@@ -202,12 +202,35 @@ namespace EveLens.Avalonia.Views.Dialogs
                 BuildComparisonRow(row);
         }
 
-        /// <summary>Mirrors the body's scroll offsets into the frozen header row and
-        /// skill column, so they track without owning scrollbars of their own.</summary>
+        // The frozen panes hide their scrollbars but still accept the mouse wheel
+        // (Hidden != Disabled), so mirroring must run both ways: wheel over the skill
+        // column or header row drives the body, and vice versa. The guard stops the
+        // handlers from feeding each other (odon, #137 follow-up round 2).
+        private bool _syncingScroll;
+
         private void OnBodyScrollChanged(object? sender, ScrollChangedEventArgs e)
         {
+            if (_syncingScroll) return;
+            _syncingScroll = true;
             HeaderScroller.Offset = new Vector(BodyScroller.Offset.X, 0);
             SkillColScroller.Offset = new Vector(0, BodyScroller.Offset.Y);
+            _syncingScroll = false;
+        }
+
+        private void OnSkillColScrollChanged(object? sender, ScrollChangedEventArgs e)
+        {
+            if (_syncingScroll) return;
+            _syncingScroll = true;
+            BodyScroller.Offset = new Vector(BodyScroller.Offset.X, SkillColScroller.Offset.Y);
+            _syncingScroll = false;
+        }
+
+        private void OnHeaderScrollChanged(object? sender, ScrollChangedEventArgs e)
+        {
+            if (_syncingScroll) return;
+            _syncingScroll = true;
+            BodyScroller.Offset = new Vector(HeaderScroller.Offset.X, BodyScroller.Offset.Y);
+            _syncingScroll = false;
         }
 
         private void BuildSummaryCards()
