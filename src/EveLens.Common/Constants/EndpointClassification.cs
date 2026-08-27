@@ -37,6 +37,29 @@ namespace EveLens.Common.Constants
         public static bool IsCore(ESIAPICharacterMethods method) => CoreEndpoints.Contains(method);
 
         /// <summary>
+        /// Endpoints whose opt-in is the OAuth scope grant itself. These have no
+        /// character-monitor tab (the only writer of EnabledEndpoints), so gating
+        /// them on EnabledEndpoints would leave them permanently skipped. They cost
+        /// nothing for characters without the scope: the fetch closure's
+        /// FindAPIKeyWithAccess check already returns null and skips the request.
+        /// </summary>
+        public static readonly HashSet<ESIAPICharacterMethods> ScopeActivatedEndpoints = new()
+        {
+            ESIAPICharacterMethods.SkinrLicenses,
+            ESIAPICharacterMethods.SkinrComponents,
+        };
+
+        /// <summary>
+        /// Central fetch gate for the ESI scheduler: core and scope-activated
+        /// endpoints always fetch; everything else requires the user to have
+        /// enabled it (by opening its character-monitor tab).
+        /// </summary>
+        public static bool IsFetchAllowed(ESIAPICharacterMethods method, ICollection<string> enabledEndpoints) =>
+            CoreEndpoints.Contains(method) ||
+            ScopeActivatedEndpoints.Contains(method) ||
+            enabledEndpoints.Contains(method.ToString());
+
+        /// <summary>
         /// Maps Avalonia tab names to their corresponding ESI endpoint methods.
         /// </summary>
         public static readonly Dictionary<string, ESIAPICharacterMethods> TabToEndpoint = new()

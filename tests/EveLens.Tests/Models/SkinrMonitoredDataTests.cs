@@ -99,6 +99,31 @@ namespace EveLens.Tests.Models
             collection.Should().BeEmpty();
         }
 
+        // Regression for #139: "no designs yet" was shown for characters whose
+        // collection simply hadn't been fetched — an unfetched collection must be
+        // distinguishable from a fetched-and-empty one.
+        [Fact]
+        public void LicenseCollection_IsFetched_OnlyAfterImport()
+        {
+            var collection = new SkinrLicenseCollection();
+            collection.IsFetched.Should().BeFalse("nothing has been imported yet");
+
+            // Even an EMPTY import is an answer — "owns zero designs" is now a fact
+            collection.Import(new EsiSkinrInventory());
+            collection.IsFetched.Should().BeTrue();
+            collection.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void ComponentCollection_IsFetched_OnlyAfterImport()
+        {
+            var collection = new SkinrComponentCollection();
+            collection.IsFetched.Should().BeFalse();
+
+            collection.Import(new EsiSkinrComponentInventory());
+            collection.IsFetched.Should().BeTrue();
+        }
+
         [Fact]
         public void ComponentCollection_Import_MapsRunsVariants()
         {

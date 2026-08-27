@@ -88,17 +88,20 @@
                     <!-- Comparison table with frozen panes: the skill column and the
                          header row stay on screen while the character cells scroll
                          both ways (odon, #137 follow-up). The body scroller owns the
-                         scrollbars; header and skill column mirror its offsets. -->
+                         scrollbars; all three scrollers mirror offsets both ways, since
+                         Hidden scrollbars still accept the mouse wheel. -->
                     <Grid Margin="12,4" RowDefinitions="Auto,*" ColumnDefinitions="Auto,*">
                         <Grid x:Name="FrozenCorner" Grid.Row="0" Grid.Column="0" />
                         <ScrollViewer x:Name="HeaderScroller" Grid.Row="0" Grid.Column="1"
                                       HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Disabled">
+                                      VerticalScrollBarVisibility="Disabled"
+                                      ScrollChanged="OnHeaderScrollChanged">
                             <StackPanel x:Name="HeaderStrip" Orientation="Horizontal" />
                         </ScrollViewer>
                         <ScrollViewer x:Name="SkillColScroller" Grid.Row="1" Grid.Column="0"
                                       VerticalScrollBarVisibility="Hidden"
-                                      HorizontalScrollBarVisibility="Disabled">
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      ScrollChanged="OnSkillColScrollChanged">
                             <StackPanel x:Name="SkillColumn" Spacing="1" />
                         </ScrollViewer>
                         <ScrollViewer x:Name="BodyScroller" Grid.Row="1" Grid.Column="1"

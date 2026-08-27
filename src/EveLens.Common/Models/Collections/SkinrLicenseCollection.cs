@@ -22,6 +22,13 @@ namespace EveLens.Common.Models.Collections
         }
 
         /// <summary>
+        /// True once an inventory has been imported (from ESI or the on-disk cache).
+        /// Distinguishes "owns zero designs" from "never fetched" — consumers must
+        /// not present an unfetched collection as an empty one.
+        /// </summary>
+        public bool IsFetched { get; private set; }
+
+        /// <summary>
         /// Imports the API inventory, replacing the previous state.
         /// </summary>
         /// <param name="src">The serializable inventory from the API.</param>
@@ -32,6 +39,7 @@ namespace EveLens.Common.Models.Collections
             {
                 Items.Add(new SkinrLicense(license));
             }
+            IsFetched = true;
         }
     }
 }

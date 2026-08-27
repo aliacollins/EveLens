@@ -66,7 +66,11 @@
                                        Foreground="{StaticResource SkinrTextSecBrush}" />
                         </StackPanel>
                     </Border>
+                    <!-- Background must be Transparent, never absent: a null-background
+                         Border is hit-test transparent, which shrank the click target
+                         to the glyph alone until ShowMarket first assigned a brush (#139) -->
                     <Border x:Name="RailHub" Margin="8,0" Padding="0,10" CornerRadius="10"
+                            Background="Transparent"
                             Cursor="Hand" PointerPressed="OnRailHub"
                             ToolTip.Tip="{loc:T Skinr.HubTitle}">
                         <StackPanel Spacing="4">
@@ -465,6 +469,12 @@
                          tier, coatings and the rest live in the details panel. Actions
                          and hints sit at the right edge of the same row. -->
                     <Grid x:Name="DesignCard" IsVisible="False" Margin="18,14,18,0">
+                        <!-- Collection size, left edge — the answer to "how many do
+                             I own?" lives with the collection, not in a tooltip -->
+                        <TextBlock x:Name="CollectionCountText"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}" />
                         <TextBlock x:Name="DesignNameText" FontWeight="Bold"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{StaticResource SkinrTextBrush}" />
@@ -714,27 +724,131 @@
                 </Border>
 
                 <!-- ===== Landing: whose collection? Shown on first open (no remembered
-                     character) and on demand; card grid only lists characters whose
-                     monitored SKINR data says they own designs. Search reveals everyone.
-                     One centered block (title, search, cards, grant) — nothing docked to
-                     the far edges, nothing showing through: the pane is fully opaque so
-                     the stage's welcome placeholder cannot ghost underneath. -->
+                     character) and on demand; every character with SKINR access is a
+                     card, the rest follow dimmed as their own grant-access entry.
+                     While NO character has access (true first run), the landing leads
+                     with the intro: what SKINR is, then the authenticate ask, then the
+                     cards. One centered block (title, search, cards, grant) — nothing
+                     docked to the far edges, nothing showing through: the pane is fully
+                     opaque so the stage's welcome placeholder cannot ghost underneath. -->
                 <Border x:Name="LandingPane" IsVisible="False"
                         Background="{StaticResource SkinrBgBrush}">
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                                   VerticalScrollBarVisibility="Auto">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
                                     Spacing="6" Margin="32,26" MaxWidth="880">
-                            <TextBlock Text="{loc:T Skinr.LandingTitle}" FontWeight="Bold"
+                            <TextBlock x:Name="LandingTitleText"
+                                       Text="{loc:T Skinr.LandingTitle}" FontWeight="Bold"
                                        FontSize="{DynamicResource EveFontTitle}"
                                        Foreground="{StaticResource SkinrTextBrush}"
                                        HorizontalAlignment="Center" />
-                            <TextBlock Text="{loc:T Skinr.LandingSub}"
+                            <TextBlock x:Name="LandingSubText"
+                                       Text="{loc:T Skinr.LandingSub}"
                                        FontSize="{DynamicResource EveFontBody}"
                                        Foreground="{StaticResource SkinrTextSecBrush}"
                                        HorizontalAlignment="Center" TextAlignment="Center" />
 
-                            <Border Width="420" Height="34"
+                            <!-- First-run stepper: three beats — meet SKINR, grant
+                                 access, the 3D renderer. Pills mark where you are. -->
+                            <StackPanel x:Name="WizardStepper" IsVisible="False"
+                                        Orientation="Horizontal" Spacing="8"
+                                        HorizontalAlignment="Center" Margin="0,14,0,2">
+                                <Border x:Name="WizardPill1" CornerRadius="12" Padding="12,4"
+                                        Background="{StaticResource SkinrAccentDimBrush}">
+                                    <TextBlock Text="{loc:T Skinr.WizardStep1}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextBrush}" />
+                                </Border>
+                                <Border x:Name="WizardPill2" CornerRadius="12" Padding="12,4"
+                                        Background="{StaticResource SkinrPillBrush}">
+                                    <TextBlock Text="{loc:T Skinr.WizardStep2}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                </Border>
+                                <Border x:Name="WizardPill3" CornerRadius="12" Padding="12,4"
+                                        Background="{StaticResource SkinrPillBrush}">
+                                    <TextBlock Text="{loc:T Skinr.WizardStep3}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                </Border>
+                            </StackPanel>
+
+                            <!-- First-run intro: shown only while zero characters have
+                                 the SKINR scope. Introduce the studio, then ask for the
+                                 permission, then the cards below carry the grant flow. -->
+                            <StackPanel x:Name="LandingIntro" IsVisible="False" Spacing="12"
+                                        Margin="0,16,0,4" MaxWidth="640">
+                                <Grid ColumnDefinitions="36,*">
+                                    <TextBlock Text="◇" FontSize="{DynamicResource EveFontTitle}"
+                                               Foreground="{StaticResource SkinrAccentBrush}" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:T Skinr.WelcomeCollectionTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextBrush}" />
+                                        <TextBlock Text="{loc:T Skinr.WelcomeCollectionDesc}"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="36,*">
+                                    <TextBlock Text="◆" FontSize="{DynamicResource EveFontTitle}"
+                                               Foreground="{StaticResource SkinrAccentBrush}" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:T Skinr.WelcomeHubTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextBrush}" />
+                                        <TextBlock Text="{loc:T Skinr.WelcomeHubDesc}"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="36,*">
+                                    <TextBlock Text="✦" FontSize="{DynamicResource EveFontTitle}"
+                                               Foreground="{StaticResource SkinrAccentBrush}" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:T Skinr.WelcomeStageTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextBrush}" />
+                                        <TextBlock Text="{loc:T Skinr.WelcomeStageDesc}"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Wizard step 3: the renderer, offered — never demanded.
+                                 Status carries version/size/verification; Finish works
+                                 with or without the install. -->
+                            <StackPanel x:Name="WizardRendererPanel" IsVisible="False"
+                                        Spacing="10" Margin="0,16,0,4" MaxWidth="560"
+                                        HorizontalAlignment="Center">
+                                <TextBlock x:Name="WizardRendererStatus"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                                <Button x:Name="WizardInstallButton"
+                                        Content="{loc:T Skinr.RuntimeInstall}"
+                                        HorizontalAlignment="Center" Padding="16,6"
+                                        CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Background="{StaticResource SkinrAccentDimBrush}"
+                                        Foreground="{StaticResource SkinrTextBrush}"
+                                        Click="OnWizardInstall" />
+                                <TextBlock Text="{loc:T Skinr.WizardRendererOptional}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <Border x:Name="LandingSearchPill" Width="420" Height="34"
                                     Background="{StaticResource SkinrPillBrush}"
                                     CornerRadius="17" Margin="0,14,0,4">
                                 <TextBox x:Name="LandingSearchBox" Background="Transparent"
@@ -746,10 +860,29 @@
                                          TextChanged="OnLandingSearchChanged" />
                             </Border>
 
+                            <!-- Two sections, access-grouped: the cards that open a
+                                 collection first, the cards that START the grant flow
+                                 below. A fresh grant moves its card up WITHOUT leaving
+                                 this page — the user keeps choosing. -->
+                            <TextBlock x:Name="LandingAccessHeader" IsVisible="False"
+                                       Text="{loc:T Skinr.LandingGroupAccess}"
+                                       FontWeight="SemiBold"
+                                       FontSize="{DynamicResource EveFontBody}"
+                                       Foreground="{StaticResource SkinrAccentBrush}"
+                                       HorizontalAlignment="Center" Margin="0,10,0,0" />
                             <WrapPanel x:Name="LandingGrid" HorizontalAlignment="Center"
-                                       MaxWidth="760" Margin="0,10" />
+                                       MaxWidth="760" Margin="0,4" />
+                            <TextBlock x:Name="LandingNeedsHeader" IsVisible="False"
+                                       Text="{loc:T Skinr.LandingGroupNeeds}"
+                                       FontWeight="SemiBold"
+                                       FontSize="{DynamicResource EveFontBody}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}"
+                                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+                            <WrapPanel x:Name="LandingNeedsGrid" HorizontalAlignment="Center"
+                                       MaxWidth="760" Margin="0,4" />
 
-                            <StackPanel Orientation="Horizontal" Spacing="10"
+                            <StackPanel x:Name="LandingGrantRow" Orientation="Horizontal"
+                                        Spacing="10"
                                         HorizontalAlignment="Center" Margin="0,8,0,0">
                                 <TextBlock x:Name="LandingGrantText"
                                            FontSize="{DynamicResource EveFontBody}"
@@ -760,6 +893,28 @@
                                         FontSize="{DynamicResource EveFontBody}"
                                         Content="{loc:T Skinr.LandingGrantBtn}"
                                         Click="OnScopeUpdate" />
+                            </StackPanel>
+
+                            <!-- Wizard navigation: Back / Next (Finish on the last
+                                 step). Always usable — the wizard informs, it never
+                                 traps. -->
+                            <StackPanel x:Name="WizardNav" IsVisible="False"
+                                        Orientation="Horizontal" Spacing="10"
+                                        HorizontalAlignment="Center" Margin="0,16,0,0">
+                                <Button x:Name="WizardBackButton"
+                                        Content="{loc:T Skinr.WizardBack}"
+                                        Padding="16,6" CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Background="{StaticResource SkinrPillBrush}"
+                                        Foreground="{StaticResource SkinrTextSecBrush}"
+                                        Click="OnWizardBack" />
+                                <Button x:Name="WizardNextButton"
+                                        Content="{loc:T Skinr.WizardNext}"
+                                        Padding="20,6" CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Background="{StaticResource SkinrAccentDimBrush}"
+                                        Foreground="{StaticResource SkinrTextBrush}"
+                                        Click="OnWizardNext" />
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
