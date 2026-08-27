@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Omega/Alpha badge on overview cards no longer clips at large font sizes** -- The badge's column was sized to the portrait's pixel width, which the badge text outgrows the moment the font scale passes 110%. The column now follows its content, so the badge fits at every scale and in every language (#72).
+
 ## [1.5.0-beta.11] - 2026-08-27
 
 ### Fixed
