@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-27</date>
+      <version>1.5.0.11</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.11
+
+SKINR first-run walkthrough, live collection data, loader everywhere; app-wide scrollbar fix]]></message>
+    </release>
+    <release>
+      <date>2026-08-27</date>
       <version>1.5.0.10</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime upda
       <message><![CDATA[EveLens 1.5.0-beta.1
 
 Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime updates in place]]></message>
-    </release>
-    <release>
-      <date>2026-08-26</date>
-      <version>1.5.0.2</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.2
-
-Beta 2: SKINR studio public debut, Plan Editor rebuilt, global remap optimization, per-account Skill Farm economics, community fixes]]></message>
     </release>
   </releases>
   <datafiles>
