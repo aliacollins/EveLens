@@ -892,7 +892,11 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // Add Omega/Alpha badge below portrait
             portraitContainer.Children.Add(badge);
 
-            var cardGrid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("68,*") };
+            // Auto, not a fixed 68: the column's natural floor is the 56px portrait +
+            // 12px margin (identical at default scale), but the badge under it renders
+            // "Ω Omega" at a user-chosen font scale, and a column sized to the portrait
+            // alone clips the badge the moment text outgrows it (#72).
+            var cardGrid = new Grid { ColumnDefinitions = ColumnDefinitions.Parse("Auto,*") };
             Grid.SetColumn(portraitContainer, 0);
             Grid.SetColumn(infoPanel, 1);
             cardGrid.Children.Add(portraitContainer);
