@@ -198,8 +198,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             BuildSummaryCards();
             BuildComparisonHeader();
 
-            foreach (var row in _vm.ComparisonRows)
-                BuildComparisonRow(row);
+            var visibleCharacters = _vm.VisibleCharacterIndices;
+            foreach (var row in _vm.VisibleRows)
+                BuildComparisonRow(row, visibleCharacters);
         }
 
         // The frozen panes hide their scrollbars but still accept the mouse wheel
@@ -288,6 +289,21 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Foreground = FindBrush("EveTextDisabledBrush") ?? Brushes.Gray,
                 });
 
+                // The injector / SP-bundle number: how many points this character
+                // is short of the whole doctrine (odon's ask).
+                if (pct < 100)
+                {
+                    long missingSp = _vm.GetCharacterMissingSp(i);
+                    if (missingSp > 0)
+                        cardStack.Children.Add(new TextBlock
+                        {
+                            Text = string.Format(Loc.Get("Doctrine.MissingSpFmt"),
+                                FormatSp(missingSp)),
+                            FontSize = FontScaleService.Caption,
+                            Foreground = FindBrush("EveTextSecondaryBrush") ?? Brushes.Gray,
+                        });
+                }
+
                 if (pct < 100)
                 {
                     var capturedChar = character;
@@ -358,6 +374,15 @@ namespace EveLens.Avalonia.Views.Dialogs
         private const double HeaderHeight = 28;
         private const double RowHeight = 31;   // 30 + the 1px StackPanel spacing
 
+        /// <summary>"1,234,567" reads as noise at badge size; "1.23M SP" reads as an
+        /// injector count. Full precision stays one tooltip away in the table.</summary>
+        private static string FormatSp(long sp) => sp switch
+        {
+            >= 1_000_000 => $"{sp / 1_000_000.0:0.##}M",
+            >= 1_000 => $"{sp / 1_000.0:0.#}K",
+            _ => sp.ToString("N0"),
+        };
+
         private void BuildComparisonHeader()
         {
             FrozenCorner.ColumnDefinitions = ColumnDefinitions.Parse(
@@ -367,8 +392,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             FrozenCorner.Children.Add(MakeHeaderCell("LVL", 1, HorizontalAlignment.Center));
             FrozenCorner.Children.Add(MakeHeaderCell("R", 2, HorizontalAlignment.Center));
 
-            foreach (var character in _vm.SubscribedCharacters)
+            foreach (int i in _vm.VisibleCharacterIndices)
             {
+                var character = _vm.SubscribedCharacters[i];
                 // Full name, not the first word — alts often share a firstname and became
                 // indistinguishable (Issue #137). Trim to the column, tooltip carries the rest.
                 var cell = MakeHeaderCell(character.Name, 0, HorizontalAlignment.Center);
@@ -380,7 +406,8 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
         }
 
-        private void BuildComparisonRow(SkillComparisonRow row)
+        private void BuildComparisonRow(SkillComparisonRow row,
+            IReadOnlyList<int> visibleCharacters)
         {
             // Left quadrant: the frozen skill identity
             var left = new Grid
@@ -411,8 +438,11 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Orientation = Orientation.Horizontal,
                 Height = RowHeight - 1,
             };
-            foreach (var entry in row.CharacterEntries)
+            foreach (int charIndex in visibleCharacters)
             {
+                if (charIndex >= row.CharacterEntries.Count)
+                    continue;
+                var entry = row.CharacterEntries[charIndex];
                 IBrush? fg;
                 string text;
 
@@ -438,6 +468,14 @@ namespace EveLens.Avalonia.Views.Dialogs
                 cells.Children.Add(cell);
             }
             BodyRows.Children.Add(cells);
+        }
+
+        private void OnOnlyMissingToggled(object? sender, RoutedEventArgs e)
+        {
+            if (_vm.ShowOnlyMissing == (OnlyMissingToggle.IsChecked == true))
+                return;
+            _vm.ShowOnlyMissing = OnlyMissingToggle.IsChecked == true;
+            RebuildUI();
         }
 
         #endregion

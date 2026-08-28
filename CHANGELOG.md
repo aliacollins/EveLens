@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Doctrine Designer: "Show only missing"** -- One toggle collapses the comparison to the characters with at least one missing skill and the skills missing on at least one of them -- the "who still needs what" view, without the sea of green checkmarks. (odon)
+- **Doctrine Designer: missing SP on character badges** -- Characters who aren't fully trained now show how many skill points they're short of the whole doctrine, so sizing an injector or SP-bundle purchase doesn't need a calculator. (odon)
+
 ### Fixed
+
+- **Supercapitals no longer clip through the Hangar environment** -- The bay the Hangar renders is a normal station interior, and just like in the game, a titan doesn't fit in one. The Hangar pill now declines supercapital hulls with an explanation (a Keepstar-scale bay is planned); if a super arrives while the hangar is showing, the stage returns to Studio.
 
 - **The Paragon Hub no longer freezes EveLens while it works** -- Opening the Hub used to build a card for every one of ~3,400 market designs at once, then rebuild all of them every few hundred milliseconds while designs were being identified (one ESI answer per 150 ms, each one triggering a full rebuild) -- and since the whole app shares one UI thread, EveLens itself went unresponsive for minutes. The grid is now virtualized (only the cards on screen exist), status-line updates no longer touch the grid at all, and a freshly rendered thumbnail slots into its one card in place (#139).
 - **The stage's loading card stays off the Paragon Hub** -- Opening the Hub while a collection was still loading painted "Preparing N ship parts..." over the marketplace, narrating a stage the user couldn't see. The overlay now belongs to the stage alone and comes back only if you return mid-load.

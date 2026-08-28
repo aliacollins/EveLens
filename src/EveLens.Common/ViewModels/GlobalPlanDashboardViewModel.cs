@@ -102,6 +102,10 @@ namespace EveLens.Common.ViewModels
                         charEntry.TrainingTime = character.GetTrainingTime(skill, entry.Level);
                         charEntry.SpPerHour = (int)Math.Round(character.GetBaseSPPerHour(skill));
                         charEntry.Status = SkillTrainingStatus.NeedsTraining;
+                        // What an injector/SP bundle would have to cover for this cell.
+                        charEntry.MissingSp = Math.Max(0,
+                            skill.GetPointsRequiredForLevel(entry.Level) -
+                            character.GetSkillPoints(skill));
                     }
 
                     row.CharacterEntries.Add(charEntry);
@@ -447,6 +451,60 @@ namespace EveLens.Common.ViewModels
             return total;
         }
 
+        /// <summary>
+        /// The "Show only missing" toggle (odon's ask): the comparison collapses to
+        /// characters with at least one missing skill and skills missing on at least
+        /// one of THOSE characters. Rows and columns filter against each other in
+        /// that order — a skill only "fully trained" among hidden characters stays
+        /// hidden with them.
+        /// </summary>
+        public bool ShowOnlyMissing { get; set; }
+
+        /// <summary>Original indices of the characters the table should show.</summary>
+        public IReadOnlyList<int> VisibleCharacterIndices =>
+            ShowOnlyMissing
+                ? FilterMissing(_comparisonRows, _subscribedCharacters.Count).Characters
+                : Enumerable.Range(0, _subscribedCharacters.Count).ToList();
+
+        /// <summary>The rows the table should show, honoring the missing-only toggle.</summary>
+        public IReadOnlyList<SkillComparisonRow> VisibleRows =>
+            ShowOnlyMissing
+                ? FilterMissing(_comparisonRows, _subscribedCharacters.Count).Rows
+                : _comparisonRows;
+
+        /// <summary>The pure half of the toggle, testable without a character roster:
+        /// characters with at least one missing skill, and rows missing on at least
+        /// one of THOSE characters (a skill "missing" only among hidden characters
+        /// hides with them).</summary>
+        internal static (IReadOnlyList<int> Characters, IReadOnlyList<SkillComparisonRow> Rows)
+            FilterMissing(IReadOnlyList<SkillComparisonRow> rows, int characterCount)
+        {
+            static bool Missing(SkillComparisonRow row, int i) =>
+                i < row.CharacterEntries.Count &&
+                row.CharacterEntries[i].Status == SkillTrainingStatus.NeedsTraining;
+
+            var characters = Enumerable.Range(0, characterCount)
+                .Where(i => rows.Any(row => Missing(row, i)))
+                .ToList();
+            var visibleRows = rows
+                .Where(row => characters.Any(i => Missing(row, i)))
+                .ToList();
+            return (characters, visibleRows);
+        }
+
+        /// <summary>Total SP a character is short of the doctrine — the injector /
+        /// SP-bundle number for the summary badge.</summary>
+        public long GetCharacterMissingSp(int characterIndex)
+        {
+            long total = 0;
+            foreach (var row in _comparisonRows)
+            {
+                if (characterIndex < row.CharacterEntries.Count)
+                    total += row.CharacterEntries[characterIndex].MissingSp;
+            }
+            return total;
+        }
+
         public int GetCharacterTrainedCount(int characterIndex)
         {
             return _comparisonRows.Count(row =>
@@ -473,6 +531,9 @@ namespace EveLens.Common.ViewModels
         public int TargetLevel { get; set; }
         public TimeSpan TrainingTime { get; set; }
         public int SpPerHour { get; set; }
+
+        /// <summary>SP still needed to reach the target level; 0 when trained.</summary>
+        public long MissingSp { get; set; }
         public SkillTrainingStatus Status { get; set; }
     }
 

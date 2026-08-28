@@ -2102,8 +2102,30 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         // --- overlays ------------------------------------------------------------
 
+        /// <summary>
+        /// Enables/disables the Hangar pill for the staged hull. Supercapitals get
+        /// a tooltip and, if they arrive while the hangar is showing, an automatic
+        /// retreat to Studio — never a titan clipping through the bay's architecture.
+        /// </summary>
+        private void ApplyHangarGate()
+        {
+            bool fits = _hub.HullFitsHangar;
+            foreach (Control child in EnvSwitcher.Children)
+            {
+                if (child is not Button button ||
+                    button.Tag is not SkinrEnvironmentPreset preset ||
+                    preset != SkinrEnvironmentPreset.Hangar)
+                    continue;
+                button.IsEnabled = fits;
+                ToolTip.SetTip(button, fits ? null : Loc.Get("Skinr.HangarTooBig"));
+            }
+            if (!fits && _hub.Environment == SkinrEnvironmentPreset.Hangar)
+                _ = OnEnvironmentPicked(SkinrEnvironmentPreset.Studio);
+        }
+
         private void RefreshDesignCard()
         {
+            ApplyHangarGate();
             var recipe = _hub.Data.SelectedRecipe;
             DesignCard.IsVisible = recipe != null;
             // Photo Op assembles the user's OWN ships around their own primary — the
