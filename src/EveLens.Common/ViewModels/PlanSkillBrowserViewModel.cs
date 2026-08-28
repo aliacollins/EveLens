@@ -373,9 +373,12 @@ namespace EveLens.Common.ViewModels
 
             if (!string.IsNullOrEmpty(filter))
             {
+                // Descriptions participate so "powergrid" finds every skill whose text
+                // mentions it, not just skills named after it (Discussion #116).
                 filtered = filtered.Where(s =>
                     s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-                    s.StaticSkill.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+                    s.StaticSkill.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    s.StaticSkill.Description.Contains(filter, StringComparison.OrdinalIgnoreCase));
             }
 
             if (attributeFilter != null)

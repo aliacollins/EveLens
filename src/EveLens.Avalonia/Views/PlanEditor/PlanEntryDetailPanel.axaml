@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+             xmlns:pe="using:EveLens.Avalonia.Views.PlanEditor"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanEntryDetailPanel">
     <Border x:Name="DetailBorder" Background="{StaticResource EveBackgroundMediumBrush}"
             CornerRadius="6" Padding="12" IsVisible="False">
@@ -37,7 +38,7 @@
                        Foreground="{StaticResource EveAccentPrimaryBrush}" Margin="0,4,0,2" />
             <ItemsControl x:Name="PrereqList">
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="pe:PrereqDisplayItem">
                         <StackPanel Orientation="Horizontal" Spacing="6" Margin="8,2">
                             <TextBlock Text="{Binding StatusIcon}" FontSize="{DynamicResource EveFontBody}" />
                             <TextBlock Text="{Binding Text}" FontSize="{DynamicResource EveFontBody}"
@@ -54,7 +55,7 @@
             <TextBox x:Name="NotesTextBox"
                      AcceptsReturn="True" TextWrapping="Wrap"
                      MinHeight="60" MaxHeight="120"
-                     Watermark="{loc:T PlanEditor.AddNote}"
+                     PlaceholderText="{loc:T PlanEditor.AddNote}"
                      FontSize="{DynamicResource EveFontBody}"
                      Background="{StaticResource EveBackgroundDarkestBrush}"
                      Foreground="{StaticResource EveTextPrimaryBrush}"

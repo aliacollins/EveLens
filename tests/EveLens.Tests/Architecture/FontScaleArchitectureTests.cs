@@ -99,6 +99,23 @@ namespace EveLens.Tests.Architecture
         }
 
         [Fact]
+        public void OverviewCard_PortraitColumn_SizesToContent()
+        {
+            // The account-status badge ("Ω Omega") sits under the portrait and renders
+            // at a user-chosen font scale. A column fixed to the portrait's pixel width
+            // clips the badge the moment text outgrows it (#72) — the column must be
+            // Auto so it follows its widest child at every scale and in every language.
+            var file = Path.Combine(ViewsDir, "CharacterMonitor", "CharacterOverviewView.axaml.cs");
+            if (!File.Exists(file))
+                return;
+
+            var content = File.ReadAllText(file);
+            Regex.IsMatch(content, @"ColumnDefinitions\.Parse\(""\d+,").Should().BeFalse(
+                "the overview card's portrait column must be Auto-sized, not a fixed pixel " +
+                "width — fixed widths clip the scaled account badge (#72)");
+        }
+
+        [Fact]
         public void AllPalettes_DefineFontResources()
         {
             var palettesDir = Path.Combine(ThemesDir, "Palettes");

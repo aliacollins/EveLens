@@ -51,7 +51,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 FontWeight = FontWeight.Bold,
                 Foreground = FindBrush("EveAccentPrimaryBrush")
             });
-            var ver = AppServices.FileVersionInfo?.ProductVersion ?? "";
+            var ver = AppServices.AppVersion.ProductVersion ?? "";
             headerPanel.Children.Add(new TextBlock
             {
                 Text = $"Here's what's new in EveLens {ver}",
@@ -164,6 +164,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 var changelogPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "CHANGELOG.md");
+                if (!File.Exists(changelogPath))
+                    changelogPath = EveLens.Common.Data.Datafile
+                        .FindInstallResource("CHANGELOG.md") ?? changelogPath;
 
                 if (!File.Exists(changelogPath))
                     return Array.Empty<ReleaseSection>();
@@ -181,7 +184,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             // Strategy: try to match current version to a changelog section.
             // If no match found, use [Unreleased] (we're on a dev/beta branch).
-            var version = AppServices.FileVersionInfo?.ProductVersion ?? "";
+            var version = AppServices.AppVersion.ProductVersion ?? "";
             var versionBase = version.Split('-')[0]; // "1.3.0-beta.3" -> "1.3.0"
             bool isPreRelease = version.Contains("alpha") || version.Contains("beta");
 

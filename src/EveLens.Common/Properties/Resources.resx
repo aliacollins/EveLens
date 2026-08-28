@@ -127,116 +127,17 @@
   <data name="XmlToHtmlXslt" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Serialization\Exportation\output-html.xslt;System.String, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
-  <data name="KeyGold16" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\APIKeyFull16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="KeyGrey16" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\APIKeyLimited16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="KeyWrong32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\APIKeyWrong.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Bug" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\bee.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Collapse" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Collapse_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="CrossBlack" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\cross-black.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="CrossGray" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\cross-gray.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Deadspace" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Overlay icons\Deadspace.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Error16" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Error16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Expand" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Expand_large.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Faction" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Overlay icons\Faction.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Information16" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Information16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Magnifier" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Magnifier.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Officer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Overlay icons\Officer.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Storyline" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Overlay icons\Storyline.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="T2" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Overlay icons\T2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="T3" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Overlay icons\T3.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Throbber" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Throbber.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Warning16" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Warning16.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="NotificationRefTypes" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Serialization\NotificationRefTypes.xml;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
   </data>
-  <data name="DefaultAllianceImage32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\DefaultAllianceImage32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="DefaultCharacterImage32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\DefaultCharacterImage32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="DefaultCorporationImage32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\DefaultCorporationImage32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="DatafilesXSLT" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\..\EveLens.Data\Serialization\Datafiles\datafile-transform.xslt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
-  <data name="AccountWide32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\AccountWide32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="SettingsXSLT" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Serialization\Settings\settings-transform.xslt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
   <data name="Flags" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Serialization\Flags.xml;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;windows-1253</value>
-  </data>
-  <data name="EveLens" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Icons\EveLens.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="BadStanding" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\standingIconBad.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ExcellentStanding" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\standingIconExcelent.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="GoodStanding" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\standingIconGood.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="NeutralStanding" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\standingIconNeutral.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="TerribleStanding" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\standingIconTerrible.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Watch" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Watch.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Medal32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Medal32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="Copy" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Images\Copy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ContextMenuPointer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Cursors\ContextMenuPointer.cur;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="RefTypes" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Serialization\RefTypes.xml;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
@@ -352,6 +253,12 @@ If you changed your password, you must log in again using File &gt; Add Characte
   </data>
   <data name="ErrorResearchPoints" xml:space="preserve">
     <value>Error querying research points for {0}.</value>
+  </data>
+  <data name="ErrorSkinrLicenses" xml:space="preserve">
+    <value>Error querying SKINR designs for {0}.</value>
+  </data>
+  <data name="ErrorSkinrComponents" xml:space="preserve">
+    <value>Error querying SKINR components for {0}.</value>
   </data>
   <data name="ErrorShip" xml:space="preserve">
     <value>Error querying the current ship of {0}.</value>

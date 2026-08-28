@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:shared="clr-namespace:EveLens.Avalonia.Views.Shared"
+             xmlns:cm="using:EveLens.Avalonia.Views.CharacterMonitor"
              x:Class="EveLens.Avalonia.Views.CharacterMonitor.CharacterSkillQueueView">
     <DockPanel>
         <!-- Status bar (bottom) -->
@@ -33,7 +34,7 @@
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate x:DataType="cm:QueueDisplayEntry">
                         <Border Padding="12,6,12,6"
                                 Background="{Binding RowBackground}"
                                 BorderBrush="{StaticResource EveBorderBrush}"

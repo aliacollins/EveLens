@@ -1,0 +1,970 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+        x:Class="EveLens.Avalonia.Views.Dialogs.SkinrViewerWindow"
+        Title="{loc:T Skinr.Title}"
+        Width="1360" Height="860"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        Background="#0C0E15"
+        CanResize="True">
+
+    <!-- SKINR Hub: a deliberate sub-brand inside EveLens. The violet accent and the
+         near-black navy are local to this window on purpose - the Hub is the app's
+         creative-marketplace space and reads as its own room, while fonts stay on the
+         shared DynamicResource tiers so the global font scale still applies. -->
+    <Window.Resources>
+        <SolidColorBrush x:Key="SkinrBgBrush" Color="#0C0E15" />
+        <SolidColorBrush x:Key="SkinrRailBrush" Color="#090B11" />
+        <SolidColorBrush x:Key="SkinrPanelBrush" Color="#131623" />
+        <SolidColorBrush x:Key="SkinrPillBrush" Color="#1A1D2B" />
+        <SolidColorBrush x:Key="SkinrAccentBrush" Color="#8B7DF2" />
+        <SolidColorBrush x:Key="SkinrAccentDimBrush" Color="#4A4380" />
+        <SolidColorBrush x:Key="SkinrTextBrush" Color="#F2F3F8" />
+        <SolidColorBrush x:Key="SkinrTextSecBrush" Color="#9CA1B4" />
+        <SolidColorBrush x:Key="SkinrTextDimBrush" Color="#5E6376" />
+        <SolidColorBrush x:Key="SkinrTierBrush" Color="#E8B54D" />
+        <SolidColorBrush x:Key="SkinrBorderBrush" Color="#232738" />
+    </Window.Resources>
+
+    <Window.Styles>
+        <!-- Loading pulse for carousel tiles still waiting on their captured thumbnail. -->
+        <Style Selector="TextBlock.shimmer">
+            <Style.Animations>
+                <Animation Duration="0:0:1.6" IterationCount="INFINITE">
+                    <KeyFrame Cue="0%"><Setter Property="Opacity" Value="0.30" /></KeyFrame>
+                    <KeyFrame Cue="50%"><Setter Property="Opacity" Value="0.85" /></KeyFrame>
+                    <KeyFrame Cue="100%"><Setter Property="Opacity" Value="0.30" /></KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="Auto,*">
+
+        <!-- ===== Left rail ===== -->
+        <Border x:Name="LeftRail" Grid.Column="0" Width="64"
+                Background="{StaticResource SkinrRailBrush}"
+                BorderBrush="{StaticResource SkinrBorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="✦" Margin="0,18,0,26"
+                           FontSize="{DynamicResource EveFontTitle}"
+                           Foreground="{StaticResource SkinrAccentBrush}"
+                           HorizontalAlignment="Center" />
+                <StackPanel Spacing="4">
+                    <Border x:Name="RailCollection" Background="{StaticResource SkinrPillBrush}"
+                            CornerRadius="10" Margin="8,0" Padding="0,10"
+                            Cursor="Hand" PointerPressed="OnRailCollection">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="RailCollectionGlyph" Text="❖"
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontHeading}"
+                                       Foreground="{StaticResource SkinrAccentBrush}" />
+                            <TextBlock Text="{loc:T Skinr.RailCollection}"
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontTiny}"
+                                       Foreground="{StaticResource SkinrTextSecBrush}" />
+                        </StackPanel>
+                    </Border>
+                    <!-- Background must be Transparent, never absent: a null-background
+                         Border is hit-test transparent, which shrank the click target
+                         to the glyph alone until ShowMarket first assigned a brush (#139) -->
+                    <Border x:Name="RailHub" Margin="8,0" Padding="0,10" CornerRadius="10"
+                            Background="Transparent"
+                            Cursor="Hand" PointerPressed="OnRailHub"
+                            ToolTip.Tip="{loc:T Skinr.HubTitle}">
+                        <StackPanel Spacing="4">
+                            <TextBlock x:Name="RailHubGlyph" Text="◈" HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontHeading}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                            <TextBlock Text="{loc:T Skinr.RailHub}"
+                                       HorizontalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontTiny}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== Stage column ===== -->
+        <DockPanel Grid.Column="1">
+
+            <!-- Top bar -->
+            <Border x:Name="TopBar" DockPanel.Dock="Top" Height="56"
+                    Background="{StaticResource SkinrBgBrush}"
+                    BorderBrush="{StaticResource SkinrBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="Auto,*,Auto" Margin="18,0">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{loc:T Skinr.HubWordmark}" FontWeight="Bold"
+                                   FontSize="{DynamicResource EveFontHeading}"
+                                   Foreground="{StaticResource SkinrTextBrush}" />
+                        <TextBlock Text="{loc:T Skinr.HubWordmarkSub}"
+                                   FontSize="{DynamicResource EveFontHeading}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}" />
+                    </StackPanel>
+
+                    <!-- Search pill (designs) — hidden while the landing is up: the
+                         landing carries its own character search, and two search boxes
+                         at once read as a bug -->
+                    <Border Grid.Column="1" x:Name="SearchPill" MaxWidth="520" Height="34"
+                            Margin="24,0"
+                            Background="{StaticResource SkinrPillBrush}" CornerRadius="17"
+                            VerticalAlignment="Center">
+                        <DockPanel Margin="14,0">
+                            <TextBlock DockPanel.Dock="Left" Text="&#xEA6D;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon" VerticalAlignment="Center"
+                                       FontSize="{DynamicResource EveFontSubheading}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}"
+                                       Margin="0,0,8,0" />
+                            <TextBox x:Name="SearchBox" Background="Transparent"
+                                     BorderThickness="0" VerticalContentAlignment="Center"
+                                     FontSize="{DynamicResource EveFontBody}"
+                                     Foreground="{StaticResource SkinrTextBrush}"
+                                     Watermark="{loc:T Skinr.SearchPlaceholder}"
+                                     TextChanged="OnSearchChanged" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Character picker — dressed as a SKINR pill, not a bare themed
+                         combo; the placeholder tells first-timers what it's FOR -->
+                    <ComboBox Grid.Column="2" x:Name="CharacterCombo" MinWidth="190"
+                              VerticalAlignment="Center" Height="34"
+                              Background="{StaticResource SkinrPillBrush}"
+                              BorderThickness="0" CornerRadius="17" Padding="14,0"
+                              FontSize="{DynamicResource EveFontBody}"
+                              PlaceholderText="{loc:T Skinr.PickCharacter}"
+                              PlaceholderForeground="{StaticResource SkinrTextDimBrush}"
+                              SelectionChanged="OnCharacterChanged" />
+                </Grid>
+            </Border>
+
+            <!-- ===== The stage: full-bleed render, chrome floating over it ===== -->
+            <Panel>
+                <!-- Render surface fills the stage -->
+                <Panel x:Name="RenderSurface"
+                       SizeChanged="OnRenderSurfaceSizeChanged"
+                       PointerPressed="OnRenderPointerPressed"
+                       PointerMoved="OnRenderPointerMoved"
+                       PointerReleased="OnRenderPointerReleased"
+                       PointerWheelChanged="OnRenderPointerWheel"
+                       DoubleTapped="OnRenderDoubleTapped"
+                       Background="{StaticResource SkinrBgBrush}">
+                    <Image x:Name="RenderImage" IsVisible="False" Stretch="Uniform"
+                           RenderOptions.BitmapInterpolationMode="HighQuality">
+                        <Image.Transitions>
+                            <Transitions>
+                                <!-- Design swaps dim the old ship and fade the new one up;
+                                     during a build this reads as a crossfade instead of a
+                                     stale frame that suddenly pops. -->
+                                <DoubleTransition Property="Opacity" Duration="0:0:0.28" />
+                            </Transitions>
+                        </Image.Transitions>
+                    </Image>
+                </Panel>
+
+                <!-- Center state overlays (placeholder / scope / loading / error) -->
+                <!-- Scrolls as a WHOLE: welcome rows + offer + expander can exceed
+                     the stage on small windows, and content sliding under the
+                     carousel band with no scrollbar reads as broken (measured
+                     twice). Bottom margin tracks the band's real height from
+                     code-behind. Null background keeps it hit-transparent, so the
+                     orbit drag underneath is untouched when the placeholder hides. -->
+                <ScrollViewer x:Name="PlaceholderScroller"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto"
+                              IsHitTestVisible="{Binding IsVisible, ElementName=RenderPlaceholder}">
+                <StackPanel x:Name="RenderPlaceholder" VerticalAlignment="Center"
+                            HorizontalAlignment="Center" Spacing="10" MaxWidth="560">
+                    <TextBlock x:Name="RenderTitle" Text="{loc:T Skinr.RenderPlaceholderTitle}"
+                               FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                               Foreground="{StaticResource SkinrAccentBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock x:Name="RenderDesc" Text="{loc:T Skinr.RenderPlaceholderDesc}"
+                               FontSize="{DynamicResource EveFontBody}"
+                               Foreground="{StaticResource SkinrTextSecBrush}"
+                               HorizontalAlignment="Center" TextAlignment="Center"
+                               TextWrapping="Wrap" />
+
+                    <!-- First-screen orientation: what Collection is, what the Hub is,
+                         what the stage can do — a welcome, not a state report. -->
+                    <StackPanel x:Name="WelcomeGuide" Spacing="12" Margin="0,14,0,0">
+                        <Grid ColumnDefinitions="36,*">
+                            <TextBlock Text="◇" FontSize="{DynamicResource EveFontTitle}"
+                                       Foreground="{StaticResource SkinrAccentBrush}" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="{loc:T Skinr.WelcomeCollectionTitle}"
+                                           FontWeight="SemiBold"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextBrush}" />
+                                <TextBlock Text="{loc:T Skinr.WelcomeCollectionDesc}"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="36,*">
+                            <TextBlock Text="◆" FontSize="{DynamicResource EveFontTitle}"
+                                       Foreground="{StaticResource SkinrAccentBrush}" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="{loc:T Skinr.WelcomeHubTitle}"
+                                           FontWeight="SemiBold"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextBrush}" />
+                                <TextBlock Text="{loc:T Skinr.WelcomeHubDesc}"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </StackPanel>
+                        </Grid>
+                        <Grid ColumnDefinitions="36,*">
+                            <TextBlock Text="✦" FontSize="{DynamicResource EveFontTitle}"
+                                       Foreground="{StaticResource SkinrAccentBrush}" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                                <TextBlock Text="{loc:T Skinr.WelcomeStageTitle}"
+                                           FontWeight="SemiBold"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextBrush}" />
+                                <TextBlock Text="{loc:T Skinr.WelcomeStageDesc}"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- The Rendering Runtime add-on: the friendly facts up front
+                         (name, size, "verified"), one Install button — and every
+                         technical/legal detail behind "Why is this a separate
+                         download?", where a technically concerned user expects it. -->
+                    <StackPanel x:Name="RuntimeInstallPanel" IsVisible="False" Spacing="8"
+                                Margin="0,12,0,0">
+                        <!-- Status line during install; empty until the flow starts. -->
+                        <TextBlock x:Name="RuntimeInstallDesc" IsVisible="False"
+                                   FontSize="{DynamicResource EveFontBody}"
+                                   Foreground="{StaticResource SkinrTextSecBrush}"
+                                   HorizontalAlignment="Center" TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <TextBlock x:Name="RuntimeVerifiedText" IsVisible="False"
+                                   FontSize="{DynamicResource EveFontSmall}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}"
+                                   HorizontalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" Spacing="10"
+                                    HorizontalAlignment="Center" Margin="0,4,0,0">
+                            <Button x:Name="RuntimeInstallButton"
+                                    Content="{loc:T Skinr.RuntimeInstall}"
+                                    Padding="18,8" CornerRadius="14"
+                                    Background="{StaticResource SkinrAccentDimBrush}"
+                                    Foreground="{StaticResource SkinrTextBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    Click="OnRuntimeInstall" />
+                            <Button Content="{loc:T Skinr.RuntimeNotNow}"
+                                    Padding="16,8" CornerRadius="14"
+                                    Foreground="{StaticResource SkinrTextSecBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    Click="OnRuntimeNotNow" />
+                        </StackPanel>
+                        <Button Content="{loc:T Skinr.RuntimeWhy}"
+                                HorizontalAlignment="Center" Padding="6,2"
+                                Background="Transparent"
+                                Foreground="{StaticResource SkinrTextDimBrush}"
+                                FontSize="{DynamicResource EveFontCaption}"
+                                Click="OnRuntimeWhy" />
+                        <!-- Scrolls: the expander opens over a stage whose bottom is
+                             the carousel band, and clipped text with no scrollbar
+                             reads as a broken page (measured on a 1080p window). -->
+                        <ScrollViewer x:Name="RuntimeWhyPanel" IsVisible="False"
+                                      MaxHeight="170" MaxWidth="520"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="6">
+                                <!-- One plain sentence answers the question; the
+                                     boundaries + license live in a caption and the
+                                     verifiable facts in the block below it. -->
+                                <TextBlock Text="{loc:T Skinr.RuntimeWhyBody}"
+                                           FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center" />
+                                <SelectableTextBlock x:Name="RuntimeDetailsText" IsVisible="False"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           FontFamily="Consolas,Menlo,monospace"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           HorizontalAlignment="Center" TextAlignment="Left"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </StackPanel>
+                </StackPanel>
+                </ScrollViewer>
+                <!-- A recoverable state gets a BUTTON, not directions to a menu:
+                     "Update permissions" runs the exact re-auth flow in place. -->
+                <StackPanel x:Name="ScopeMissingPanel" IsVisible="False" Spacing="10"
+                            VerticalAlignment="Center" HorizontalAlignment="Center"
+                            MaxWidth="460">
+                    <TextBlock x:Name="ScopeMissingTitleText"
+                               Text="{loc:T Skinr.ScopeMissingTitle}"
+                               FontSize="{DynamicResource EveFontSubheading}"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource SkinrTextBrush}"
+                               TextWrapping="Wrap" HorizontalAlignment="Center" />
+                    <TextBlock Text="{loc:T Skinr.ScopeMissingDesc}"
+                               FontSize="{DynamicResource EveFontBody}"
+                               Foreground="{StaticResource SkinrTextSecBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" />
+                    <StackPanel Orientation="Horizontal" Spacing="10"
+                                HorizontalAlignment="Center" Margin="0,6,0,0">
+                        <Button Content="{loc:T Skinr.ScopeUpdate}" Padding="16,7"
+                                CornerRadius="14"
+                                Background="{StaticResource SkinrAccentDimBrush}"
+                                Foreground="{StaticResource SkinrTextBrush}"
+                                FontSize="{DynamicResource EveFontSmall}"
+                                Click="OnScopeUpdate" />
+                        <Button Content="{loc:T Skinr.ScopeContinue}" Padding="16,7"
+                                CornerRadius="14"
+                                Foreground="{StaticResource SkinrTextSecBrush}"
+                                FontSize="{DynamicResource EveFontSmall}"
+                                Click="OnScopeContinue" />
+                    </StackPanel>
+                </StackPanel>
+                <TextBlock x:Name="LoadingText" IsVisible="False" Text="{loc:T Skinr.Loading}"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource SkinrTextSecBrush}"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+                <TextBlock x:Name="ErrorText" IsVisible="False"
+                           FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveErrorRedBrush}"
+                           TextWrapping="Wrap" MaxWidth="480"
+                           VerticalAlignment="Center" HorizontalAlignment="Center" />
+
+                <!-- Hull identity: the name alone, centered — ship type, description and
+                     every other detail live in the right-hand panel by request. -->
+                <TextBlock x:Name="HullNameText" IsVisible="False" FontWeight="Bold"
+                           Margin="0,18,0,0" HorizontalAlignment="Center"
+                           VerticalAlignment="Top" IsHitTestVisible="False"
+                           Foreground="{StaticResource SkinrTextBrush}" />
+
+                <!-- Hub detail mode: a market card opened this design — the way back to
+                     the discovery grid, pinned over the stage's top-left. -->
+                <Button x:Name="MarketBackButton" IsVisible="False"
+                        Content="{loc:T Skinr.HubBack}" Padding="12,5" CornerRadius="14"
+                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="20,16,0,0"
+                        Background="{StaticResource SkinrPillBrush}"
+                        Foreground="{StaticResource SkinrTextBrush}"
+                        FontSize="{DynamicResource EveFontSmall}"
+                        Click="OnMarketBack" />
+
+                <!-- Stage buttons, top-right: photo mode beside render settings -->
+                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right"
+                            VerticalAlignment="Top" Margin="0,16,20,0">
+                    <Button x:Name="PhotoOpButton" Padding="10,6" CornerRadius="14"
+                            IsVisible="False"
+                            Background="{StaticResource SkinrPillBrush}"
+                            Foreground="{StaticResource SkinrTextSecBrush}"
+                            FontSize="{DynamicResource EveFontSmall}"
+                            ToolTip.Tip="{loc:T Skinr.PhotoOp}"
+                            Content="&#xEAD9;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon">
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedRight"
+                                    Opening="OnPhotoOpOpening">
+                                <StackPanel Spacing="8" MinWidth="260" MaxWidth="300">
+                                    <TextBlock Text="{loc:T Skinr.PhotoOp}"
+                                               FontWeight="SemiBold"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextBrush}" />
+                                    <TextBlock Text="{loc:T Skinr.PhotoOpHint}"
+                                               TextWrapping="Wrap"
+                                               FontSize="{DynamicResource EveFontCaption}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <TextBlock Text="{loc:T Skinr.PhotoOpFormation}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <ComboBox x:Name="PhotoOpFormationCombo"
+                                              HorizontalAlignment="Stretch"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              SelectionChanged="OnPhotoOpFormationChanged" />
+                                    <ScrollViewer MaxHeight="240"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel x:Name="PhotoOpList" Spacing="4" />
+                                    </ScrollViewer>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button x:Name="PhotoOpAssembleButton"
+                                                Content="{loc:T Skinr.PhotoOpAssemble}"
+                                                Padding="12,4" CornerRadius="12"
+                                                FontSize="{DynamicResource EveFontSmall}"
+                                                Background="{StaticResource SkinrAccentDimBrush}"
+                                                Foreground="{StaticResource SkinrTextBrush}"
+                                                Click="OnPhotoOpAssemble" />
+                                        <Button x:Name="PhotoOpDisbandButton"
+                                                Content="{loc:T Skinr.PhotoOpDisband}"
+                                                Padding="12,4" CornerRadius="12"
+                                                IsEnabled="False"
+                                                FontSize="{DynamicResource EveFontSmall}"
+                                                Click="OnPhotoOpDisband" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="PhotoOpStatus" IsVisible="False"
+                                               TextWrapping="Wrap"
+                                               FontSize="{DynamicResource EveFontCaption}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Button x:Name="PhotoButton" Padding="10,6" CornerRadius="14"
+                            Background="{StaticResource SkinrPillBrush}"
+                            Foreground="{StaticResource SkinrTextSecBrush}"
+                            FontSize="{DynamicResource EveFontSmall}"
+                            ToolTip.Tip="{loc:T Skinr.PhotoMode}"
+                            Click="OnPhotoModeToggle" Content="&#xEADA;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon" />
+                    <Button x:Name="SettingsButton" Padding="10,6" CornerRadius="14"
+                            Background="{StaticResource SkinrPillBrush}"
+                            Foreground="{StaticResource SkinrTextSecBrush}"
+                            FontSize="{DynamicResource EveFontSmall}"
+                            ToolTip.Tip="{loc:T Skinr.RenderSettings}"
+                            Content="&#xEB51;" FontFamily="avares://EveLens/Assets/Fonts/codicon.ttf#codicon">
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedRight">
+                                <StackPanel Spacing="8" MinWidth="240">
+                                    <TextBlock Text="{loc:T Skinr.Quality}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <ComboBox x:Name="QualityCombo" HorizontalAlignment="Stretch"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              SelectionChanged="OnQualityChanged" />
+                                    <TextBlock Text="{loc:T Skinr.Resolution}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    <ComboBox x:Name="ResolutionCombo" HorizontalAlignment="Stretch"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              SelectionChanged="OnResolutionChanged" />
+                                    <Button Content="{loc:T Skinr.ResetView}" Click="OnResetView"
+                                            HorizontalAlignment="Stretch" Padding="10,4"
+                                            CornerRadius="12"
+                                            FontSize="{DynamicResource EveFontSmall}" />
+                                    <CheckBox x:Name="CdnToggle"
+                                              Content="{loc:T Skinr.HubCdnToggle}"
+                                              FontSize="{DynamicResource EveFontSmall}"
+                                              IsCheckedChanged="OnCdnToggled" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+
+                <!-- ===== Bottom band, floating over the render on a gradient scrim.
+                     Back-to-overlay by request: the docked version protected the hull
+                     from overlap but flattened the whole window into page-with-footer.
+                     The scrim + a ONE-ROW card keeps the cinematic full-bleed while
+                     covering a fraction of what the old stacked card did. ===== -->
+                <StackPanel x:Name="BottomBand" VerticalAlignment="Bottom" Spacing="2">
+                    <StackPanel.Background>
+                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%">
+                            <GradientStop Offset="0" Color="#000C0E15" />
+                            <GradientStop Offset="0.45" Color="#C80C0E15" />
+                            <GradientStop Offset="1" Color="#F20C0E15" />
+                        </LinearGradientBrush>
+                    </StackPanel.Background>
+
+                    <!-- Design title card: ONLY the name in the center (by request) —
+                         tier, coatings and the rest live in the details panel. Actions
+                         and hints sit at the right edge of the same row. -->
+                    <Grid x:Name="DesignCard" IsVisible="False" Margin="18,14,18,0">
+                        <!-- Collection size, left edge — the answer to "how many do
+                             I own?" lives with the collection, not in a tooltip -->
+                        <TextBlock x:Name="CollectionCountText"
+                                   HorizontalAlignment="Left" VerticalAlignment="Center"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}" />
+                        <TextBlock x:Name="DesignNameText" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="{StaticResource SkinrTextBrush}" />
+                        <StackPanel Orientation="Horizontal" Spacing="12"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <StackPanel x:Name="HintStrip" IsVisible="False"
+                                        Orientation="Horizontal" Spacing="14"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="{loc:T Skinr.HintRotate}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}" />
+                                <TextBlock Text="{loc:T Skinr.HintZoom}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}" />
+                                <TextBlock Text="{loc:T Skinr.HintReset}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}" />
+                            </StackPanel>
+                            <Button Content="{loc:T Skinr.Compare}" Padding="12,4"
+                                    CornerRadius="14" IsEnabled="False"
+                                    VerticalAlignment="Center"
+                                    ToolTip.Tip="{loc:T Skinr.ComingSoon}"
+                                    Background="{StaticResource SkinrAccentDimBrush}"
+                                    Foreground="{StaticResource SkinrTextBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}" />
+                            <Button x:Name="ViewDetailsButton"
+                                    Content="{loc:T Skinr.ViewDetails}"
+                                    Padding="12,4" CornerRadius="14"
+                                    VerticalAlignment="Center"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    Foreground="{StaticResource SkinrTextBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    Click="OnViewDetails" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Design carousel: the user's COLLECTION, and only that. Hidden in
+                         Hub detail mode so market designs never appear to sit among
+                         owned ones — the two navigations must not mix. -->
+                    <ScrollViewer x:Name="CarouselScroller"
+                                  HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled"
+                                  Margin="18,4,18,0">
+                        <StackPanel x:Name="DesignStrip" Orientation="Horizontal" Spacing="8"
+                                    Margin="0,2" />
+                    </ScrollViewer>
+
+                    <!-- Environment switcher -->
+                    <Border HorizontalAlignment="Center"
+                            Margin="0,4,0,10" Background="{StaticResource SkinrPillBrush}"
+                            CornerRadius="18" Padding="6,4">
+                        <StackPanel x:Name="EnvSwitcher" Orientation="Horizontal" Spacing="4" />
+                    </Border>
+
+                    <!-- CCP legal notice: this window renders CCP's copyrighted ship art
+                         wholesale — the attribution lives where the art does. -->
+                    <TextBlock Text="{loc:T Skinr.CcpNotice}"
+                               HorizontalAlignment="Center" Margin="18,0,18,6"
+                               TextWrapping="Wrap" TextAlignment="Center"
+                               FontSize="{DynamicResource EveFontCaption}"
+                               Foreground="{StaticResource SkinrTextDimBrush}" />
+                </StackPanel>
+
+                <!-- Download / render status, unobtrusive -->
+                <!-- ===== Details panel, docked right over the stage: hull stats from the
+                     SDE, the design's attributes, share + favorite. The mock this follows
+                     is a label/value ledger — every row is a Grid of dim label and
+                     right-aligned value, sections split by hairlines. ===== -->
+                <Border x:Name="DetailsPanel" IsVisible="False" Width="272"
+                        HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                        Background="#F00D0F17"
+                        BorderBrush="{StaticResource SkinrBorderBrush}"
+                        BorderThickness="1,0,0,0" Padding="18,14">
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                            <Button DockPanel.Dock="Right" Content="✕" Padding="6,2"
+                                    Background="Transparent"
+                                    Foreground="{StaticResource SkinrTextDimBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    Click="OnDetailsClose" />
+                            <TextBlock x:Name="PanelHullName" FontWeight="Bold"
+                                       FontSize="{DynamicResource EveFontTitle}"
+                                       Foreground="{StaticResource SkinrTextBrush}"
+                                       VerticalAlignment="Center" />
+                        </DockPanel>
+
+                        <!-- share / favorite pinned to the panel foot -->
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
+                                    Spacing="10" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button x:Name="ShareButton" Content="⇪" Padding="10,4"
+                                    CornerRadius="12"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    Foreground="{StaticResource SkinrTextSecBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    ToolTip.Tip="{loc:T Skinr.Share}"
+                                    Click="OnShare" />
+                            <Button x:Name="FavoriteButton" Content="♡" Padding="10,4"
+                                    CornerRadius="12"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    Foreground="{StaticResource SkinrTextSecBrush}"
+                                    FontSize="{DynamicResource EveFontSmall}"
+                                    ToolTip.Tip="{loc:T Skinr.Favorite}"
+                                    Click="OnFavorite" />
+                        </StackPanel>
+
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel Spacing="0">
+                                <TextBlock x:Name="PanelHullSub"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           Margin="0,0,0,12" />
+                                <!-- hull stat rows land here -->
+                                <StackPanel x:Name="PanelHullStats" Spacing="9" />
+                                <Border Height="1" Margin="0,14"
+                                        Background="{StaticResource SkinrBorderBrush}" />
+                                <!-- design attribute rows land here -->
+                                <StackPanel x:Name="PanelDesignStats" Spacing="9" />
+                                <Border Height="1" Margin="0,14"
+                                        Background="{StaticResource SkinrBorderBrush}" />
+                                <!-- composition rows: coatings, patterns, licenses -->
+                                <StackPanel x:Name="PanelCompositionStats" Spacing="9" />
+                                <Border Height="1" Margin="0,14"
+                                        Background="{StaticResource SkinrBorderBrush}" />
+                                <!-- the hull's lore paragraph, displaced from the stage -->
+                                <TextBlock x:Name="PanelHullDesc"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
+                                           TextWrapping="Wrap" Margin="0,0,0,10" />
+                                <TextBlock x:Name="PanelNotes" IsVisible="False"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource EveWarningYellowBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <!-- ===== Paragon Hub discovery pane: covers the stage while browsing.
+                     Phase 1 of the marketplace — the public listing feed grouped per
+                     design, ship-first filter, cards that open straight into the
+                     viewer. Price history and recommendations arrive with the
+                     collector phases. ===== -->
+                <Border x:Name="MarketPane" IsVisible="False" Background="#FA0C0E15">
+                    <DockPanel Margin="26,18,26,12">
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,14">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                        Spacing="10" VerticalAlignment="Center">
+                                <Border Background="{StaticResource SkinrPillBrush}"
+                                        CornerRadius="14" Height="30" MinWidth="220">
+                                    <DockPanel Margin="12,0">
+                                        <TextBlock DockPanel.Dock="Left" Text="⌕"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextDimBrush}"
+                                                   Margin="0,0,8,0" />
+                                        <TextBox x:Name="MarketSearchBox" Background="Transparent"
+                                                 BorderThickness="0"
+                                                 VerticalContentAlignment="Center"
+                                                 FontSize="{DynamicResource EveFontSmall}"
+                                                 Foreground="{StaticResource SkinrTextBrush}"
+                                                 Watermark="{loc:T Skinr.SearchPlaceholder}"
+                                                 TextChanged="OnMarketSearchChanged" />
+                                    </DockPanel>
+                                </Border>
+                            </StackPanel>
+                            <StackPanel Spacing="3">
+                                <TextBlock x:Name="MarketTitle" Text="{loc:T Skinr.HubTitle}"
+                                           FontWeight="Bold"
+                                           FontSize="{DynamicResource EveFontTitle}"
+                                           Foreground="{StaticResource SkinrAccentBrush}" />
+                                <TextBlock x:Name="MarketStats"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </StackPanel>
+                        </DockPanel>
+                        <!-- One-time consent for the preview shelf: the app never talks
+                             to a non-CCP server without a remembered, revisitable yes. -->
+                        <Border x:Name="CdnBanner" DockPanel.Dock="Top" IsVisible="False"
+                                Background="{StaticResource SkinrPillBrush}"
+                                CornerRadius="10" Padding="14,10" Margin="0,0,0,12">
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                            Spacing="8" VerticalAlignment="Center"
+                                            Margin="12,0,0,0">
+                                    <Button Content="{loc:T Skinr.HubCdnEnable}"
+                                            Padding="12,4" CornerRadius="12"
+                                            Background="{StaticResource SkinrAccentDimBrush}"
+                                            Foreground="{StaticResource SkinrTextBrush}"
+                                            FontSize="{DynamicResource EveFontSmall}"
+                                            Click="OnCdnEnable" />
+                                    <Button Content="{loc:T Skinr.HubCdnNo}"
+                                            Padding="12,4" CornerRadius="12"
+                                            Background="Transparent"
+                                            Foreground="{StaticResource SkinrTextSecBrush}"
+                                            FontSize="{DynamicResource EveFontSmall}"
+                                            Click="OnCdnDecline" />
+                                </StackPanel>
+                                <TextBlock Text="{loc:T Skinr.HubCdnAsk}" TextWrapping="Wrap"
+                                           VerticalAlignment="Center"
+                                           FontSize="{DynamicResource EveFontSmall}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}" />
+                            </DockPanel>
+                        </Border>
+                        <TextBlock x:Name="MarketStatus" DockPanel.Dock="Top" IsVisible="False"
+                                   Margin="0,30,0,0" HorizontalAlignment="Center"
+                                   FontSize="{DynamicResource EveFontBody}"
+                                   Foreground="{StaticResource SkinrTextSecBrush}"
+                                   TextWrapping="Wrap" />
+                        <!-- The market tree: class → faction → ship with design counts,
+                             the way EVE's own market browses. Clicking a node scopes
+                             the card grid on the right. -->
+                        <Border DockPanel.Dock="Left" Width="250" Margin="0,0,16,0"
+                                Background="{StaticResource SkinrPanelBrush}"
+                                CornerRadius="8"
+                                BorderBrush="{StaticResource SkinrBorderBrush}"
+                                BorderThickness="1" Padding="4">
+                            <TreeView x:Name="MarketTree" Background="Transparent"
+                                      FontSize="{DynamicResource EveFontSmall}"
+                                      SelectionChanged="OnMarketTreeSelection" />
+                        </Border>
+                        <!-- Class·faction sections, cards sorted ship-then-name.
+                             A virtualizing ListBox of row items (header rows + fixed-width
+                             card rows): only visible rows materialize controls, so a grid
+                             of thousands of designs rebuilds in milliseconds and scrolls
+                             without carrying the whole catalog in the visual tree. The
+                             bare ContentPresenter theme strips every ListBoxItem behavior
+                             — rows are layout, not selectable items. -->
+                        <ListBox x:Name="MarketList" Background="Transparent"
+                                 BorderThickness="0" Padding="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerTheme>
+                                <ControlTheme TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Template">
+                                        <ControlTemplate>
+                                            <ContentPresenter Content="{TemplateBinding Content}"
+                                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                        </ControlTemplate>
+                                    </Setter>
+                                </ControlTheme>
+                            </ListBox.ItemContainerTheme>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <Border x:Name="StatusPill" HorizontalAlignment="Left"
+                        VerticalAlignment="Bottom"
+                        Margin="18,0,0,10" Background="{StaticResource SkinrPillBrush}"
+                        CornerRadius="10" Padding="10,4" Opacity="0.9">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock x:Name="RenderStatusText" Text="{loc:T Skinr.StatusIdle}"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrTextDimBrush}"
+                                   VerticalAlignment="Center" />
+                        <ProgressBar x:Name="DownloadProgress" IsVisible="False" Width="120"
+                                     Minimum="0" Maximum="100" Height="6"
+                                     VerticalAlignment="Center" />
+                        <TextBlock x:Name="SpinCounterText" IsVisible="False"
+                                   FontSize="{DynamicResource EveFontCaption}"
+                                   Foreground="{StaticResource SkinrAccentBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== Landing: whose collection? Shown on first open (no remembered
+                     character) and on demand; every character with SKINR access is a
+                     card, the rest follow dimmed as their own grant-access entry.
+                     While NO character has access (true first run), the landing leads
+                     with the intro: what SKINR is, then the authenticate ask, then the
+                     cards. One centered block (title, search, cards, grant) — nothing
+                     docked to the far edges, nothing showing through: the pane is fully
+                     opaque so the stage's welcome placeholder cannot ghost underneath. -->
+                <Border x:Name="LandingPane" IsVisible="False"
+                        Background="{StaticResource SkinrBgBrush}">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Spacing="6" Margin="32,26" MaxWidth="880">
+                            <TextBlock x:Name="LandingTitleText"
+                                       Text="{loc:T Skinr.LandingTitle}" FontWeight="Bold"
+                                       FontSize="{DynamicResource EveFontTitle}"
+                                       Foreground="{StaticResource SkinrTextBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock x:Name="LandingSubText"
+                                       Text="{loc:T Skinr.LandingSub}"
+                                       FontSize="{DynamicResource EveFontBody}"
+                                       Foreground="{StaticResource SkinrTextSecBrush}"
+                                       HorizontalAlignment="Center" TextAlignment="Center" />
+
+                            <!-- First-run stepper: three beats — meet SKINR, grant
+                                 access, the 3D renderer. Pills mark where you are. -->
+                            <StackPanel x:Name="WizardStepper" IsVisible="False"
+                                        Orientation="Horizontal" Spacing="8"
+                                        HorizontalAlignment="Center" Margin="0,14,0,2">
+                                <Border x:Name="WizardPill1" CornerRadius="12" Padding="12,4"
+                                        Background="{StaticResource SkinrAccentDimBrush}">
+                                    <TextBlock Text="{loc:T Skinr.WizardStep1}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextBrush}" />
+                                </Border>
+                                <Border x:Name="WizardPill2" CornerRadius="12" Padding="12,4"
+                                        Background="{StaticResource SkinrPillBrush}">
+                                    <TextBlock Text="{loc:T Skinr.WizardStep2}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                </Border>
+                                <Border x:Name="WizardPill3" CornerRadius="12" Padding="12,4"
+                                        Background="{StaticResource SkinrPillBrush}">
+                                    <TextBlock Text="{loc:T Skinr.WizardStep3}"
+                                               FontSize="{DynamicResource EveFontSmall}"
+                                               Foreground="{StaticResource SkinrTextSecBrush}" />
+                                </Border>
+                            </StackPanel>
+
+                            <!-- First-run intro: shown only while zero characters have
+                                 the SKINR scope. Introduce the studio, then ask for the
+                                 permission, then the cards below carry the grant flow. -->
+                            <StackPanel x:Name="LandingIntro" IsVisible="False" Spacing="12"
+                                        Margin="0,16,0,4" MaxWidth="640">
+                                <Grid ColumnDefinitions="36,*">
+                                    <TextBlock Text="◇" FontSize="{DynamicResource EveFontTitle}"
+                                               Foreground="{StaticResource SkinrAccentBrush}" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:T Skinr.WelcomeCollectionTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextBrush}" />
+                                        <TextBlock Text="{loc:T Skinr.WelcomeCollectionDesc}"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="36,*">
+                                    <TextBlock Text="◆" FontSize="{DynamicResource EveFontTitle}"
+                                               Foreground="{StaticResource SkinrAccentBrush}" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:T Skinr.WelcomeHubTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextBrush}" />
+                                        <TextBlock Text="{loc:T Skinr.WelcomeHubDesc}"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Grid ColumnDefinitions="36,*">
+                                    <TextBlock Text="✦" FontSize="{DynamicResource EveFontTitle}"
+                                               Foreground="{StaticResource SkinrAccentBrush}" />
+                                    <StackPanel Grid.Column="1" Spacing="2">
+                                        <TextBlock Text="{loc:T Skinr.WelcomeStageTitle}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   Foreground="{StaticResource SkinrTextBrush}" />
+                                        <TextBlock Text="{loc:T Skinr.WelcomeStageDesc}"
+                                                   FontSize="{DynamicResource EveFontBody}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource SkinrTextSecBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- Wizard step 3: the renderer, offered — never demanded.
+                                 Status carries version/size/verification; Finish works
+                                 with or without the install. -->
+                            <StackPanel x:Name="WizardRendererPanel" IsVisible="False"
+                                        Spacing="10" Margin="0,16,0,4" MaxWidth="560"
+                                        HorizontalAlignment="Center">
+                                <TextBlock x:Name="WizardRendererStatus"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextSecBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                                <Button x:Name="WizardInstallButton"
+                                        Content="{loc:T Skinr.RuntimeInstall}"
+                                        HorizontalAlignment="Center" Padding="16,6"
+                                        CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Background="{StaticResource SkinrAccentDimBrush}"
+                                        Foreground="{StaticResource SkinrTextBrush}"
+                                        Click="OnWizardInstall" />
+                                <TextBlock Text="{loc:T Skinr.WizardRendererOptional}"
+                                           FontSize="{DynamicResource EveFontCaption}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
+                                           TextWrapping="Wrap" TextAlignment="Center"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+
+                            <Border x:Name="LandingSearchPill" Width="420" Height="34"
+                                    Background="{StaticResource SkinrPillBrush}"
+                                    CornerRadius="17" Margin="0,14,0,4">
+                                <TextBox x:Name="LandingSearchBox" Background="Transparent"
+                                         BorderThickness="0" VerticalContentAlignment="Center"
+                                         Margin="14,0"
+                                         FontSize="{DynamicResource EveFontBody}"
+                                         Foreground="{StaticResource SkinrTextBrush}"
+                                         Watermark="{loc:T Skinr.LandingSearch}"
+                                         TextChanged="OnLandingSearchChanged" />
+                            </Border>
+
+                            <!-- Two sections, access-grouped: the cards that open a
+                                 collection first, the cards that START the grant flow
+                                 below. A fresh grant moves its card up WITHOUT leaving
+                                 this page — the user keeps choosing. -->
+                            <TextBlock x:Name="LandingAccessHeader" IsVisible="False"
+                                       Text="{loc:T Skinr.LandingGroupAccess}"
+                                       FontWeight="SemiBold"
+                                       FontSize="{DynamicResource EveFontBody}"
+                                       Foreground="{StaticResource SkinrAccentBrush}"
+                                       HorizontalAlignment="Center" Margin="0,10,0,0" />
+                            <WrapPanel x:Name="LandingGrid" HorizontalAlignment="Center"
+                                       MaxWidth="760" Margin="0,4" />
+                            <TextBlock x:Name="LandingNeedsHeader" IsVisible="False"
+                                       Text="{loc:T Skinr.LandingGroupNeeds}"
+                                       FontWeight="SemiBold"
+                                       FontSize="{DynamicResource EveFontBody}"
+                                       Foreground="{StaticResource SkinrTextDimBrush}"
+                                       HorizontalAlignment="Center" Margin="0,12,0,0" />
+                            <WrapPanel x:Name="LandingNeedsGrid" HorizontalAlignment="Center"
+                                       MaxWidth="760" Margin="0,4" />
+
+                            <StackPanel x:Name="LandingGrantRow" Orientation="Horizontal"
+                                        Spacing="10"
+                                        HorizontalAlignment="Center" Margin="0,8,0,0">
+                                <TextBlock x:Name="LandingGrantText"
+                                           FontSize="{DynamicResource EveFontBody}"
+                                           Foreground="{StaticResource SkinrTextDimBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="LandingGrantButton" Padding="12,5"
+                                        CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Content="{loc:T Skinr.LandingGrantBtn}"
+                                        Click="OnScopeUpdate" />
+                            </StackPanel>
+
+                            <!-- Wizard navigation: Back / Next (Finish on the last
+                                 step). Always usable — the wizard informs, it never
+                                 traps. -->
+                            <StackPanel x:Name="WizardNav" IsVisible="False"
+                                        Orientation="Horizontal" Spacing="10"
+                                        HorizontalAlignment="Center" Margin="0,16,0,0">
+                                <Button x:Name="WizardBackButton"
+                                        Content="{loc:T Skinr.WizardBack}"
+                                        Padding="16,6" CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Background="{StaticResource SkinrPillBrush}"
+                                        Foreground="{StaticResource SkinrTextSecBrush}"
+                                        Click="OnWizardBack" />
+                                <Button x:Name="WizardNextButton"
+                                        Content="{loc:T Skinr.WizardNext}"
+                                        Padding="20,6" CornerRadius="14"
+                                        FontSize="{DynamicResource EveFontBody}"
+                                        Background="{StaticResource SkinrAccentDimBrush}"
+                                        Foreground="{StaticResource SkinrTextBrush}"
+                                        Click="OnWizardNext" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Centered loading overlay: a collection load is a real wait (ESI +
+                     thumbnails), and the bottom-left status pill was invisible as the
+                     only signal (Issue #139). Fully opaque: it only ever shows over an
+                     EMPTY stage, and the welcome guide ghosting through a translucent
+                     scrim read as an overlap bug. -->
+                <!-- Two postures, one control: over an EMPTY stage the outer border is
+                     opaque (nothing may ghost through); during a design swap it goes
+                     transparent and only the inner card floats over the dimmed ship.
+                     Hit-transparent throughout — orbiting is never blocked. -->
+                <Border x:Name="LoadingOverlay" IsVisible="False" IsHitTestVisible="False"
+                        Background="{StaticResource SkinrBgBrush}">
+                    <Border Background="{StaticResource SkinrPillBrush}" CornerRadius="12"
+                            Padding="26,18" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Opacity="0.96">
+                        <StackPanel Spacing="12">
+                            <ProgressBar x:Name="LoadingOverlayBar" IsIndeterminate="True"
+                                         Minimum="0" Maximum="100" Width="220" Height="6" />
+                            <TextBlock x:Name="LoadingOverlayText"
+                                       FontSize="{DynamicResource EveFontSubheading}"
+                                       Foreground="{StaticResource SkinrTextSecBrush}"
+                                       HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Border>
+            </Panel>
+        </DockPanel>
+    </Grid>
+</Window>

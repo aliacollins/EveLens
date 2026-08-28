@@ -57,7 +57,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             ScopeTitle.Text = Loc.Get("ListView.ScopeNotAuthorized");
             ScopeSubtext.Text = Loc.Get("ListView.ScopeNotAuthorizedDesc");
             HideInactiveToggle.Content = Loc.Get("ListView.HideInactive");
-            FilterBox.Watermark = Loc.Get("ListView.SearchContracts");
+            FilterBox.PlaceholderText = Loc.Get("ListView.SearchContracts");
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)

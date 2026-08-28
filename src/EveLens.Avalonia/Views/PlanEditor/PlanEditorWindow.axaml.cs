@@ -46,7 +46,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             ShipsTab.Content = Loc.Get("PlanEditor.ShipsTab");
             ItemsTab.Content = Loc.Get("PlanEditor.ItemsTab");
             BlueprintsTab.Content = Loc.Get("PlanEditor.BlueprintsTab");
-            SearchBox.Watermark = Loc.Get("PlanEditor.SearchSkills");
+            SearchBox.PlaceholderText = Loc.Get("PlanEditor.SearchSkills");
             ClearPlanBtn.Content = Loc.Get("PlanEditor.ClearPlan");
             ImportFitBtn.Content = Loc.Get("PlanEditor.ImportFit") + " ▾";
             ExportBtn.Content = Loc.Get("PlanEditor.Export") + " ▾";
@@ -483,14 +483,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 string line = rawLine.Trim();
                 if (string.IsNullOrEmpty(line)) continue;
 
-                // Find the last space — everything after is the level number
+                // Find the last space — everything after is the level token. Both
+                // spellings are accepted: the game copies "Amarr Titan V", players
+                // type "Amarr Titan 5" (user report).
                 int lastSpace = line.LastIndexOf(' ');
                 if (lastSpace < 0) continue;
 
                 string levelStr = line.Substring(lastSpace + 1);
                 string skillName = line.Substring(0, lastSpace).Trim();
 
-                if (!int.TryParse(levelStr, out int level) || level < 1 || level > 5)
+                if (!SkillLevelText.TryParse(levelStr, out int level))
                     continue;
 
                 matched++;

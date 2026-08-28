@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-28</date>
+      <version>1.5.0.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.0</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.0/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0
+
+1.5.0 stable: SKINR Studio, Paragon Hub, Doctrine Designer round two, first-class macOS, .NET 10]]></message>
+    </release>
+    <release>
       <date>2026-08-10</date>
       <version>1.4.0.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.4.0</url>

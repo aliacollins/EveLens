@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:EveLens.Avalonia.Views.CharacterMonitor"
         xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+        xmlns:vm="using:EveLens.Avalonia.ViewModels"
         x:Class="EveLens.Avalonia.Views.MainWindow"
         Title="EveLens"
         Icon="avares://EveLens/Properties/EveLens.ico"
@@ -14,8 +15,6 @@
                 <MenuItem x:Name="AddCharMenuItem" Header="_Add Character" />
                 <MenuItem x:Name="CreateBlankCharMenuItem" Header="Create _Blank Character" />
                 <MenuItem x:Name="ManageCharsMenuItem" Header="_Manage Characters" />
-                <Separator />
-                <MenuItem x:Name="ManageGroupsMenuItem" Header="Manage _Groups" />
                 <Separator />
                 <MenuItem x:Name="RestoreSettingsMenuItem" Header="_Restore Settings" />
                 <MenuItem x:Name="SaveSettingsMenuItem" Header="_Save Settings" />
@@ -38,6 +37,7 @@
                 <MenuItem x:Name="PlanetaryDashMenuItem" Header="_Planetary Dashboard" />
                 <MenuItem x:Name="GlobalPlanMenuItem" Header="_Doctrine Designer" InputGesture="Ctrl+G" />
                 <MenuItem x:Name="SkillConstellationMenuItem" Header="Skill _Visualization" />
+                <MenuItem x:Name="SkinrViewerMenuItem" Header="_SKINR Viewer (Experimental)" />
                 <Separator />
                 <MenuItem x:Name="ClearCacheMenuItem" Header="C_lear Cache" />
             </MenuItem>
@@ -153,7 +153,7 @@
                         </Panel>
                     </Button>
                     <Popup x:Name="ActivityPopup" IsOpen="False"
-                           PlacementMode="AnchorAndGravity"
+                           Placement="AnchorAndGravity"
                            PlacementAnchor="TopRight"
                            PlacementGravity="TopLeft"
                            PlacementTarget="{Binding #NotificationBellBtn}"
@@ -196,7 +196,7 @@
                                     <ItemsControl x:Name="ActivityItems" Margin="0,0,0,8"
                                                   HorizontalAlignment="Stretch">
                                         <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
+                                            <DataTemplate x:DataType="vm:ActivityDisplayEntry">
                                                 <Border Padding="12,6"
                                                         BorderBrush="{StaticResource EveBorderBrush}"
                                                         BorderThickness="0,0,0,1">

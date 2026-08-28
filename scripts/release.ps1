@@ -24,7 +24,10 @@
 param(
     [string]$Version,
     [string]$Channel,
-    [switch]$DryRun
+    [switch]$DryRun,
+    # Deliberately ship an UNSIGNED mac build (no Developer ID signing, no
+    # notarization). The default is signed + notarized via scripts/release/sign-macos.ps1.
+    [switch]$UnsignedMac
 )
 
 $ErrorActionPreference = 'Stop'
@@ -65,13 +68,18 @@ if (-not $cert) {
 }
 Write-Host "  [OK] Certificate: $($cert.Subject)" -ForegroundColor Green
 
+# vpk version is PINNED and must match the Velopack PackageReference in the app.
+# "install if missing" let the tool silently drift (0.0.1298 stayed installed while
+# the app library moved to 1.2.0); the packer ships Update.exe, so they must pair.
+$RequiredVpkVersion = "1.2.0"
 $vpkPath = "$env:USERPROFILE\.dotnet\tools\vpk.exe"
-if (-not (Test-Path $vpkPath)) {
-    Write-Host "  [..] Installing vpk..." -ForegroundColor Yellow
-    dotnet tool install -g vpk
-    $vpkPath = "$env:USERPROFILE\.dotnet\tools\vpk.exe"
+$vpkInstalled = dotnet tool list -g | Select-String "^vpk\s+(\S+)" | ForEach-Object { $_.Matches[0].Groups[1].Value }
+if ($vpkInstalled -ne $RequiredVpkVersion) {
+    Write-Host "  [..] Installing vpk $RequiredVpkVersion (found: $vpkInstalled)..." -ForegroundColor Yellow
+    dotnet tool update -g vpk --version $RequiredVpkVersion
+    if ($LASTEXITCODE -ne 0) { throw "vpk $RequiredVpkVersion install failed." }
 }
-Write-Host "  [OK] vpk" -ForegroundColor Green
+Write-Host "  [OK] vpk $RequiredVpkVersion" -ForegroundColor Green
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     Write-Error "GitHub CLI (gh) not found."
@@ -147,9 +155,18 @@ try {
         if (Test-Path $plat.Dir) { Remove-Item $plat.Dir -Recurse -Force }
 
         $ErrorActionPreference = 'Continue'
+        # macOS publishes single-file: rcodesign cannot seal loose .NET dlls
+        # inside Contents/MacOS (apple-platform-rs #192), and Apple's bundle
+        # rules want only Mach-O code there anyway. One apphost + dylibs signs
+        # and notarizes cleanly.
+        $extra = @()
+        if ($plat.Rid -eq 'osx-arm64') {
+            $extra = @('-p:PublishSingleFile=true',
+                       '-p:IncludeNativeLibrariesForSelfExtract=false')
+        }
         dotnet publish $MainProject `
             -c Release -r $plat.Rid --self-contained `
-            -o $plat.Dir -p:Version=$Version 2>&1 | ForEach-Object { $_ }
+            -o $plat.Dir -p:Version=$Version @extra 2>&1 | ForEach-Object { $_ }
         $ErrorActionPreference = 'Stop'
 
         if ($LASTEXITCODE -ne 0) { throw "Build failed for $($plat.Rid)." }
@@ -212,70 +229,41 @@ try {
     $appBundleZip = "releases/EveLens-${Channel}-osx-arm64.app.zip"
     if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
 
-    $wslPublishDir = "/mnt/d/evemon-main/publish/osx-arm64"
-    $wslReleasesDir = "/mnt/d/evemon-main/releases"
-    $wslIconsDir = "/mnt/d/evemon-main/installer/icons"
-    $wslScript = @"
-#!/bin/bash
-set -e
-
-APP_DIR="/tmp/EveLens.app"
-rm -rf "`$APP_DIR"
-mkdir -p "`$APP_DIR/Contents/MacOS"
-mkdir -p "`$APP_DIR/Contents/Resources"
-
-# Copy published files preserving structure
-cp -r $wslPublishDir/* "`$APP_DIR/Contents/MacOS/"
-
-# Set executable permission on the main binary
-chmod +x "`$APP_DIR/Contents/MacOS/EveLens"
-
-# Copy icon into Resources
-cp "$wslIconsDir/evelens.icns" "`$APP_DIR/Contents/Resources/evelens.icns"
-
-# Create Info.plist
-cat > "`$APP_DIR/Contents/Info.plist" << 'PLIST'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleName</key>
-  <string>EveLens</string>
-  <key>CFBundleDisplayName</key>
-  <string>EveLens</string>
-  <key>CFBundleIdentifier</key>
-  <string>dev.evelens.app</string>
-  <key>CFBundleVersion</key>
-  <string>$Version</string>
-  <key>CFBundleShortVersionString</key>
-  <string>$Version</string>
-  <key>CFBundleExecutable</key>
-  <string>EveLens</string>
-  <key>CFBundleIconFile</key>
-  <string>evelens</string>
-  <key>CFBundlePackageType</key>
-  <string>APPL</string>
-  <key>NSHighResolutionCapable</key>
-  <true/>
-</dict>
-</plist>
-PLIST
-
-# Zip with Unix permissions preserved (use cd to get clean paths)
-cd /tmp
-zip -r -y "$wslReleasesDir/EveLens-${Channel}-osx-arm64.app.zip" EveLens.app
-rm -rf "`$APP_DIR"
-echo "=== macOS .app bundle created ==="
-"@
-
-    # Write with Unix line endings and no BOM for WSL/bash compatibility
-    $wslScript = $wslScript -replace "`r`n", "`n"
-    [System.IO.File]::WriteAllText("$ProjectRoot/scripts/make-macapp.sh", $wslScript, (New-Object System.Text.UTF8Encoding $false))
+    # make-macapp.sh is a real source file taking (channel, version) as arguments.
+    # It used to be GENERATED here with the version baked in, which dirtied the
+    # working tree on every release and broke the next promote. Never regenerate it.
     $ErrorActionPreference = 'Continue'
-    wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh 2>&1 | ForEach-Object { $_ }
+    wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh $Channel $Version 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'
 
-    if (Test-Path $appBundleZip) {
+    $appBundle = "publish/macapp/EveLens.app"
+    $macChannel = "$Channel-osx"
+    if (Test-Path $appBundle) {
+        # Velopack-enable the bundle BEFORE signing so the signature covers
+        # UpdateMac and the sq.version manifest — with these inside, the mac
+        # app self-updates in place exactly like the Windows install.
+        py -3.12 (Join-Path $PSScriptRoot 'release/velopack-macos.py') inject `
+            $appBundle $Version $macChannel
+        if ($LASTEXITCODE -ne 0) { throw "velopack-macos inject failed." }
+        if ($UnsignedMac) {
+            Write-Warning "Shipping UNSIGNED mac build (-UnsignedMac)."
+        } else {
+            # Developer ID sign + notarize + staple, all from Windows (rcodesign +
+            # the DPAPI vault). A notarization failure fails the release: Gatekeeper
+            # regression is worse than a late release.
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass `
+                -File (Join-Path $PSScriptRoot 'release/sign-macos.ps1') `
+                -AppBundle $appBundle
+            if ($LASTEXITCODE -ne 0) { throw "macOS signing/notarization failed." }
+        }
+        py -3.12 (Join-Path $PSScriptRoot 'release/zip-macapp.py') $appBundle $appBundleZip 'EveLens.app'
+        if ($LASTEXITCODE -ne 0) { throw "zip-macapp failed." }
+        # The Velopack feed: full nupkg (carrying the SIGNED app) + the
+        # releases.{channel}-osx.json the in-app GithubSource reads. Both must
+        # ride the same GitHub release as each other.
+        py -3.12 (Join-Path $PSScriptRoot 'release/velopack-macos.py') pack `
+            $appBundle $Version $macChannel 'releases'
+        if ($LASTEXITCODE -ne 0) { throw "velopack-macos pack failed." }
         Write-Host "  macOS .app bundle created." -ForegroundColor Green
     } else {
         Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."
@@ -328,6 +316,18 @@ if (Test-Path $appBundleZip) {
     $allFiles += $file.FullName
 }
 
+# macOS Velopack feed (in-place auto-update): full nupkg + channel feed json
+foreach ($macVeloFile in @(
+        "releases/EveLens-${Version}-${Channel}-osx-full.nupkg",
+        "releases/releases.${Channel}-osx.json")) {
+    if (Test-Path $macVeloFile) {
+        $file = Get-Item $macVeloFile
+        $sizeMB = [math]::Round($file.Length / 1MB, 1)
+        Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+        $allFiles += $file.FullName
+    }
+}
+
 # ── Upload ──
 if ($DryRun) {
     Write-Host "`n=== DRY RUN -- skipping upload ===" -ForegroundColor Yellow
@@ -365,6 +365,18 @@ else {
     if (-not $notes) { $notes = "See CHANGELOG.md for details." }
     $notesFile = Join-Path $ProjectRoot "release-notes.md"
     Set-Content $notesFile $notes -Encoding UTF8
+
+    # ALPHA IS LOCAL-ONLY (Alia, 2026-08-19): alpha builds are for internal testing
+    # on this machine and must NEVER be published to GitHub. Beta is the first
+    # public channel. Artifacts stay in releases/ for local install.
+    if ($Channel -eq 'alpha') {
+        Write-Host "`n=== Alpha is local-only -- skipping GitHub upload ===" -ForegroundColor Yellow
+        Write-Host "  Artifacts ready for local install:" -ForegroundColor Green
+        foreach ($f in $allFiles) { Write-Host "    $f" -ForegroundColor Gray }
+        Remove-Item $notesFile -ErrorAction SilentlyContinue
+        Pop-Location
+        exit 0
+    }
 
     Write-Host "`n=== Uploading to GitHub Release ===" -ForegroundColor Cyan
 

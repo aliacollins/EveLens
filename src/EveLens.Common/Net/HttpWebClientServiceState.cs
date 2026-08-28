@@ -51,8 +51,8 @@ namespace EveLens.Common.Net
                 var architecture = Environment.Is64BitOperatingSystem
                     ? "x64"
                     : "x86";
-                var productName = AppServices.FileVersionInfo.ProductName;
-                var version = AppServices.FileVersionInfo.FileVersion;
+                var productName = AppServices.AppVersion.ProductName;
+                var version = AppServices.AppVersion.FileVersion;
 
                 // Build user agent per ESI best practices
                 // Format: AppName/Version (contact info) (OS info)

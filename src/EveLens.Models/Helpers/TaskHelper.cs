@@ -18,7 +18,7 @@ namespace EveLens.Common.Helpers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <remarks>
-        /// Updated for .NET 8 compatibility - BeginInvoke/EndInvoke not supported in .NET Core.
+        /// Updated for .NET 10 compatibility - BeginInvoke/EndInvoke not supported in .NET Core.
         /// Uses Task.Run as a replacement.
         /// </remarks>
         public static Task RunIOBoundTaskAsync(Action action,
@@ -57,7 +57,7 @@ namespace EveLens.Common.Helpers
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
         /// <remarks>
-        /// Updated for .NET 8 compatibility - BeginInvoke/EndInvoke not supported in .NET Core.
+        /// Updated for .NET 10 compatibility - BeginInvoke/EndInvoke not supported in .NET Core.
         /// Uses Task.Run as a replacement.
         /// </remarks>
         public static Task<TResult> RunIOBoundTaskAsync<TResult>(Func<TResult> function,

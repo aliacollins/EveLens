@@ -94,23 +94,29 @@ namespace EveLens.Common.ViewModels
         /// <summary>
         /// Tries to set the priority of the given entries. Returns false if a conflict arises.
         /// </summary>
+        /// <remarks>
+        /// The model API rebuilds the plan from the enumeration it's handed, so it must be
+        /// given the plan's OWN order — passing the sorted display plan (the WinForms-era
+        /// convention) would silently persist a transient sort into the manual order.
+        /// </remarks>
         public bool TrySetPriority(IEnumerable<PlanEntry> entries, int priority)
         {
-            if (_plan == null || _displayPlan == null || entries == null)
+            if (_plan == null || entries == null)
                 return false;
 
-            return _plan.TrySetPriority(_displayPlan, entries, priority);
+            return _plan.TrySetPriority(new PlanScratchpad(_plan.Character, _plan), entries, priority);
         }
 
         /// <summary>
-        /// Sets the priority of the given entries, fixing conflicts automatically.
+        /// Sets the priority of the given entries, fixing conflicts automatically
+        /// (prerequisites are pulled along so the plan stays consistent).
         /// </summary>
         public void SetPriority(IEnumerable<PlanEntry> entries, int priority)
         {
-            if (_plan == null || _displayPlan == null || entries == null)
+            if (_plan == null || entries == null)
                 return;
 
-            _plan.SetPriority(_displayPlan, entries, priority);
+            _plan.SetPriority(_plan.ToList(), entries, priority);
         }
 
         /// <summary>

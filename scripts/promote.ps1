@@ -32,6 +32,13 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$Message,
 
+    # Explicit version override. The computed next-version depends on reading the
+    # target branch's SharedAssemblyInfo, and a failed/stale read has twice stamped
+    # a colliding version (2026-06-03, 2026-08-26). When the right answer is known,
+    # say it outright: promote.ps1 beta -Version 1.5.0-beta.3
+    [Parameter(Mandatory=$false)]
+    [string]$Version,
+
     [switch]$SkipBuild,
     [switch]$DryRun
 )
@@ -112,10 +119,24 @@ function Get-NextVersion {
     $targetVersion = Get-BranchVersion $targetBranch
     $targetBuild = 0
 
+    # A null read means the fetch or show failed (stale lock file, network, etc.).
+    # NEVER proceed on a guess — a silently-assumed build counter stamps a version
+    # that collides with an existing release (bit us 2026-06-03 and 2026-08-19).
+    if (-not $targetVersion) {
+        throw ("Could not read SharedAssemblyInfo.cs from '$targetBranch'. " +
+            "Check 'git fetch' health (stale .git/refs/**/*.lock?) and retry.")
+    }
+
     if ($targetVersion) {
         try {
             $tv = Parse-Version $targetVersion
-            if ($tv.Channel -eq $TargetChannel) {
+            # Only inherit the target branch's build counter when it belongs to the
+            # SAME version line. A new major/minor/patch starts its own count at 1 —
+            # otherwise the first 1.5.0 alpha after 1.4.0-alpha.6 would be alpha.7.
+            if ($tv.Channel -eq $TargetChannel -and
+                $tv.Major -eq $v.Major -and
+                $tv.Minor -eq $v.Minor -and
+                $tv.Patch -eq $v.Patch) {
                 $targetBuild = $tv.Build
             }
         } catch { }
@@ -220,9 +241,10 @@ All notable changes to EveLens will be documented in this file.
             $newSection = "## [Unreleased]`n`n## [$Version] - $date`n$unreleasedContent"
             $content = $content -replace '## \[Unreleased\][\s\S]*?(?=\r?\n## \[|$)', $newSection
         } else {
-            # Add entry to Unreleased
-            $entry = "- $Message"
-            $content = $content -replace '(## \[Unreleased\]\r?\n)', "`$1$entry`n"
+            # Alpha/beta: leave the changelog alone. The changelog is human-curated
+            # (Keep a Changelog categories); the promote -Message belongs in the
+            # commit only. Injecting it here put raw one-liners at the top of every
+            # release's notes (shipped that way in 1.5.0-beta.1 -- never again).
         }
     }
 
@@ -600,7 +622,16 @@ function Test-GitHubRelease {
 function Invoke-Promote {
     $currentBranch = Get-CurrentBranch
     $currentVersion = Get-CurrentVersion
-    $nextVersion = Get-NextVersion $currentVersion $Channel
+    $nextVersion = if ($Version) {
+        # Sanity: the override must parse and belong to the target channel.
+        $pv = Parse-Version $Version
+        if ($pv.Channel -ne $Channel -and -not ($Channel -eq "stable" -and $pv.Channel -eq "stable")) {
+            throw "-Version '$Version' does not belong to channel '$Channel'."
+        }
+        $Version
+    } else {
+        Get-NextVersion $currentVersion $Channel
+    }
 
     Write-Host ""
     Write-Host "============================================" -ForegroundColor White

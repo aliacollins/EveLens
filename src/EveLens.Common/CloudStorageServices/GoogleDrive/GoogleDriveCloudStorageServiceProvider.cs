@@ -111,8 +111,6 @@ namespace EveLens.Common.CloudStorageServices.GoogleDrive
         /// <value>
         /// The logo.
         /// </value>
-        public override object? Logo => CloudStorageServiceResources.GoogleDriveLogo;
-
         #endregion
 
 
@@ -427,7 +425,7 @@ namespace EveLens.Common.CloudStorageServices.GoogleDrive
             var initializer = new BaseClientService.Initializer
             {
                 HttpClientInitializer = s_credential,
-                ApplicationName = AppServices.FileVersionInfo.ProductName,
+                ApplicationName = AppServices.AppVersion.ProductName,
             };
 
             return new DriveService(initializer);

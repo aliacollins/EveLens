@@ -31,6 +31,12 @@ namespace EveLens.Avalonia.Services
         /// <summary>Current scale factor (1.0 = 100%).</summary>
         private static double s_factor = 1.0;
 
+        /// <summary>
+        /// The raw scale factor, for layout that must grow with the text it contains
+        /// (e.g. overview card dimensions — fixed-size cards clip text above 110%, Issue #72).
+        /// </summary>
+        public static double Factor => s_factor;
+
         /// <summary>Gets the current Tiny font size.</summary>
         public static double Tiny => Math.Round(BaseTiny * s_factor);
 

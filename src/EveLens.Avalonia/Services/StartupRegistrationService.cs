@@ -25,8 +25,7 @@ namespace EveLens.Avalonia.Services
 
         /// <summary>True when the current OS supports startup registration.</summary>
         public static bool IsSupported =>
-            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-            RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+            OperatingSystem.IsWindows() || OperatingSystem.IsLinux();
 
         /// <summary>
         /// Brings the OS registration in line with the setting. Called at startup and when
@@ -36,9 +35,11 @@ namespace EveLens.Avalonia.Services
         {
             try
             {
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                // OperatingSystem.* guards (not RuntimeInformation) so the CA1416
+                // platform-compatibility analyzer can verify the call flow
+                if (OperatingSystem.IsWindows())
                     SyncWindows(runAtStartup);
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                else if (OperatingSystem.IsLinux())
                     SyncLinux(runAtStartup);
             }
             catch (Exception ex)
@@ -71,6 +72,7 @@ namespace EveLens.Avalonia.Services
             return processPath;
         }
 
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
         private static void SyncWindows(bool runAtStartup)
         {
             using var runKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(

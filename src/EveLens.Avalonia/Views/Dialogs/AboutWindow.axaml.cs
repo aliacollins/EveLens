@@ -79,7 +79,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             try
             {
-                var fvi = AppServices.FileVersionInfo;
+                var fvi = AppServices.AppVersion;
                 string version = AppServices.IsDebugBuild
                     ? $"{fvi.FileVersion} (Debug)"
                     : fvi.ProductVersion ?? fvi.FileVersion ?? "Unknown";
@@ -89,6 +89,10 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 VersionText.Text = "v1.0.0";
             }
+
+            // Derived from the running runtime so it can never drift from reality again
+            // (the .NET 8 -> 10 migration found this hardcoded in four places)
+            RuntimeText.Text = $".NET {Environment.Version.Major} . Avalonia";
         }
 
         private void BuildTabs()
@@ -185,7 +189,7 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // Build Tools
             AddSectionHeader(stack, "BUILD TOOLS", 16);
-            foreach (var tool in new[] { ".NET 8.0 - Runtime", "Avalonia UI - Cross-platform", "Claude Code - AI Tool (Anthropic)" })
+            foreach (var tool in new[] { $".NET {Environment.Version.Major}.{Environment.Version.Minor} - Runtime", "Avalonia UI - Cross-platform", "Claude Code - AI Tool (Anthropic)" })
             {
                 stack.Children.Add(new TextBlock
                 {

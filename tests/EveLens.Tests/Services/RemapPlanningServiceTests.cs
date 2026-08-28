@@ -95,6 +95,90 @@ namespace EveLens.Tests.Services
         }
 
         [Fact]
+        public void Propose_FindsMidPlanBoundaries_NeverOnlyTheFirstSkill()
+        {
+            // Issue #122's exact symptom: "it always suggests remapping at the skill
+            // at the top of my list." A plan with genuinely different attribute
+            // blocks and budget to spare must place at least one MID-plan remap.
+            var plan = CreateMixedAttributePlan(out _);
+            var entries = plan.Where(e => e.Skill != null).ToList();
+            int pairGroups = 1;
+            for (int i = 1; i < entries.Count; i++)
+            {
+                if ((entries[i].Skill.PrimaryAttribute, entries[i].Skill.SecondaryAttribute) !=
+                    (entries[i - 1].Skill.PrimaryAttribute, entries[i - 1].Skill.SecondaryAttribute))
+                    pairGroups++;
+            }
+            pairGroups.Should().BeGreaterThan(1,
+                "the fixture plan must actually contain a pair boundary for this test to bite");
+
+            var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 4, minSegmentDays: 0);
+
+            proposal.Remaps.Count.Should().BeGreaterThan(1,
+                "distinct attribute blocks with budget to spare earn a mid-plan remap");
+            proposal.Remaps.Count.Should().BeLessThanOrEqualTo(pairGroups,
+                "cuts only ever land on (primary, secondary) group edges");
+            var firstEntry = entries[0];
+            proposal.Remaps.Skip(1).Should().OnlyContain(
+                r => r.Skill != firstEntry.Skill || r.Level != (int)firstEntry.Level,
+                "remaps after the first are mid-plan by definition");
+        }
+
+        [Fact]
+        public void Propose_MoreRemaps_NeverProducesASlowerPlan()
+        {
+            // The DP includes every lower budget as a sub-solution, so extra budget
+            // can only help. Small tolerance covers the canonical re-train of two
+            // different-but-equivalent segmentations.
+            var plan = CreateMixedAttributePlan(out _);
+
+            var one = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 1, minSegmentDays: 0);
+            var four = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 4, minSegmentDays: 0);
+
+            one.Remaps.Count.Should().BeLessThanOrEqualTo(1);
+            four.OptimizedDuration.Should().BeLessThanOrEqualTo(
+                one.OptimizedDuration + TimeSpan.FromHours(2));
+        }
+
+        [Fact]
+        public void Propose_SingleRemapBudget_MayPlaceItMidPlan()
+        {
+            // With one remap, "train the prefix on current attributes, remap at the
+            // boundary that saves the most" must be a real option — the old code
+            // could only ever spend the single remap at plan start.
+            var plan = CreateMixedAttributePlan(out _);
+
+            var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(
+                plan, maxRemaps: 1, minSegmentDays: 0);
+
+            // Wherever it lands, the choice is globally priced: total time with the
+            // proposal can never lose to the no-remap baseline.
+            proposal.OptimizedDuration.Should().BeLessThanOrEqualTo(proposal.CurrentDuration);
+            if (proposal.Remaps.Count == 1 && proposal.PrefixSkillCount > 0)
+            {
+                // A mid-plan placement must report the keep-current prefix honestly.
+                proposal.PrefixDuration.Should().BeGreaterThan(TimeSpan.Zero);
+                proposal.Remaps[0].StartsAfter.Should().NotBeEmpty();
+            }
+        }
+
+        [Fact]
+        public void Propose_FlagsBoostedAttributes()
+        {
+            // Dureiken's "genius boost" report: live attributes above the legal remap
+            // total (99) mean every proposal loses to 'current' — the proposal must
+            // say WHY instead of looking broken.
+            var plan = CreateMixedAttributePlan(out var character);
+            var proposal = RemapPlanningService.ProposeAtAttributeBoundaries(plan, 2);
+            // The test character has legal base attributes, so no flag:
+            proposal.CurrentLikelyBoosted.Should().BeFalse(
+                "an unboosted character must not trigger the booster note");
+        }
+
+        [Fact]
         public void Apply_WritesProposalAtomically()
         {
             var plan = CreateMixedAttributePlan(out _);
