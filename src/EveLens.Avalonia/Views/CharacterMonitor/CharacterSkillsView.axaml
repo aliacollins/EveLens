@@ -32,7 +32,7 @@
                                 Background="Transparent" BorderThickness="0"
                                 Padding="8,4" CornerRadius="0,14,14,0"
                                 Click="OnClearFilter" IsVisible="False" />
-                        <TextBox x:Name="FilterBox" Watermark="Search skills..."
+                        <TextBox x:Name="FilterBox" PlaceholderText="Search skills..."
                                  FontSize="{DynamicResource EveFontBody}" Padding="10,5"
                                  Background="Transparent" BorderThickness="0"
                                  TextChanged="OnFilterChanged" />

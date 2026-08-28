@@ -314,8 +314,11 @@ namespace EveLens.XmlGenerator.Providers
             {
                 Console.WriteLine("Failed");
                 Console.WriteLine(@"Reason: {0}", ex.Message);
-                Console.Write(@"Press any key to exit.");
-                Console.ReadLine();
+                if (!Console.IsInputRedirected)
+                {
+                    Console.Write(@"Press any key to exit.");
+                    Console.ReadLine();
+                }
                 Environment.Exit(-1);
             }
 
@@ -335,8 +338,11 @@ namespace EveLens.XmlGenerator.Providers
 
             Console.WriteLine();
             Console.WriteLine(@"Can not find connection string with name: {0}", connectionName);
-            Console.Write(@"Press any key to exit.");
-            Console.ReadLine();
+            if (!Console.IsInputRedirected)
+            {
+                Console.Write(@"Press any key to exit.");
+                Console.ReadLine();
+            }
             Environment.Exit(-1);
             return null;
         }

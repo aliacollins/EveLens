@@ -5,7 +5,6 @@
 
 using System;
 using System.Configuration;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -83,8 +82,6 @@ namespace EveLens.Common.CloudStorageServices.Dropbox
         /// <value>
         /// The logo.
         /// </value>
-        public override Image Logo => CloudStorageServiceResources.DropboxLogo;
-
         #endregion
 
 

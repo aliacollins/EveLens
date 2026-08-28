@@ -255,3 +255,7 @@ docs/
 
 # Generated code graph (regenerate with scripts/codegraph.ps1)
 .codegraph/
+
+# Proprietary render runtime (separate product, never part of the GPL codebase).
+# Lives in its own private repo; EveLens only ships the open protocol client.
+tools/skinr-pipeline/

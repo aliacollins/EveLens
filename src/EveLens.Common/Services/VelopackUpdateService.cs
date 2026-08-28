@@ -28,13 +28,27 @@ namespace EveLens.Common.Services
         private readonly IDispatcher? _dispatcher;
         private CancellationTokenSource? _cts;
         private VelopackUpdateInfo? _pendingUpdate;
+        private GitHubReleaseInfo? _pendingGitHub;
         private bool _disposed;
 
         /// <summary>Whether the Velopack VelopackUpdateManager reports this is an installed app (not portable/dev).</summary>
         public bool IsInstalled => _manager.IsInstalled;
 
-        /// <summary>The current app version as reported by Velopack.</summary>
-        public string? CurrentVersion => _manager.CurrentVersion?.ToString();
+        /// <summary>The current app version: Velopack's when installed through it,
+        /// otherwise the informational version (which carries the -beta/-alpha
+        /// channel; the numeric file version does not and misclassifies builds).</summary>
+        public string? CurrentVersion => _manager.CurrentVersion?.ToString()
+            ?? AppServices.AppVersion.ProductVersion;
+
+        /// <summary>
+        /// The hand-packaged platforms: the macOS .app and Linux archives are not
+        /// Velopack installs, so Velopack sits inert there. Updates on these
+        /// platforms mean "tell the user and open the release page" — an archive
+        /// cannot swap itself in place — via <see cref="GitHubReleaseChecker"/>.
+        /// </summary>
+        public bool UsesGitHubFallback =>
+            !_manager.IsInstalled &&
+            (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux());
 
         /// <summary>The update channel this build belongs to (derived from version).</summary>
         public string Channel => CurrentVersion?.Contains("-alpha") == true ? "alpha"
@@ -51,14 +65,20 @@ namespace EveLens.Common.Services
             _ => TimeSpan.FromHours(6)
         };
 
-        /// <summary>Whether an update has been downloaded and is ready to apply.</summary>
-        public bool IsUpdateReady => _pendingUpdate != null;
+        /// <summary>Whether an update is pending (downloaded, or found on GitHub).</summary>
+        public bool IsUpdateReady => _pendingUpdate != null || _pendingGitHub != null;
 
         /// <summary>Version string of the pending update, or null.</summary>
-        public string? PendingVersion => _pendingUpdate?.TargetFullRelease?.Version?.ToString();
+        public string? PendingVersion => _pendingUpdate?.TargetFullRelease?.Version?.ToString()
+            ?? _pendingGitHub?.Version;
 
         /// <summary>Release notes (markdown) for the pending update, from the GitHub Release body.</summary>
-        public string? PendingReleaseNotes => _pendingUpdate?.TargetFullRelease?.NotesMarkdown;
+        public string? PendingReleaseNotes => _pendingUpdate?.TargetFullRelease?.NotesMarkdown
+            ?? _pendingGitHub?.NotesMarkdown;
+
+        /// <summary>Release page for a GitHub-fallback update, or null on Velopack
+        /// installs (which download and apply themselves).</summary>
+        public string? PendingUrl => _pendingGitHub?.Url;
 
         public VelopackUpdateService(
             IEventAggregator? eventAggregator = null,
@@ -76,7 +96,7 @@ namespace EveLens.Common.Services
         /// </summary>
         public void StartBackgroundChecks()
         {
-            if (_disposed || !_manager.IsInstalled)
+            if (_disposed || (!_manager.IsInstalled && !UsesGitHubFallback))
                 return;
 
             _cts = new CancellationTokenSource();
@@ -92,8 +112,25 @@ namespace EveLens.Common.Services
             {
                 if (!_manager.IsInstalled)
                 {
-                    AppServices.TraceService?.Trace("VelopackUpdate: Not installed (dev mode), skipping check");
-                    return false;
+                    if (!UsesGitHubFallback)
+                    {
+                        AppServices.TraceService?.Trace(
+                            "VelopackUpdate: Not installed (dev mode), skipping check");
+                        return false;
+                    }
+                    GitHubReleaseInfo? gh = await GitHubReleaseChecker
+                        .CheckAsync(CurrentVersion).ConfigureAwait(false);
+                    if (gh == null)
+                    {
+                        AppServices.TraceService?.Trace(
+                            "VelopackUpdate: GitHub check — no newer release");
+                        return false;
+                    }
+                    AppServices.TraceService?.Trace(
+                        $"VelopackUpdate: GitHub release available: {gh.Version}");
+                    _pendingGitHub = gh;
+                    PublishGitHubUpdateAvailable(gh);
+                    return true;
                 }
 
                 AppServices.TraceService?.Trace("VelopackUpdate: Checking for updates...");
@@ -209,6 +246,24 @@ namespace EveLens.Common.Services
             {
                 AppServices.TraceService?.Trace($"VelopackUpdate: Background loop error: {ex.Message}");
             }
+        }
+
+        private void PublishGitHubUpdateAvailable(GitHubReleaseInfo info)
+        {
+            var notification = new Notifications.NotificationEventArgs(
+                null, Notifications.NotificationCategory.QueryingError)
+            {
+                // An archive cannot swap itself in place, so the honest promise
+                // is a download, not a restart.
+                Description =
+                    $"EveLens {info.Version} is available. Help > Check for Updates to download.",
+                Behaviour = Notifications.NotificationBehaviour.Overwrite,
+                Priority = Notifications.NotificationPriority.Information
+            };
+            if (_dispatcher != null)
+                _dispatcher.Post(() => AppServices.Notifications?.Notify(notification));
+            else
+                AppServices.Notifications?.Notify(notification);
         }
 
         private void PublishUpdateAvailable(VelopackUpdateInfo info)

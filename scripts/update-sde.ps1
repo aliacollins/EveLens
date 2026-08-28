@@ -48,7 +48,8 @@ $YamlDir = Join-Path $SdeFilesDir "yaml_extracted"
 $YamlToSqliteDir = Join-Path $ToolsDir "YamlToSqlite"
 $XmlGeneratorDir = Join-Path $ToolsDir "XmlGenerator"
 $SqlitePath = Join-Path $ToolsDir "sqlite-latest.sqlite"
-$ResourcesDir = Join-Path $RepoRoot "src" "EveLens.Common" "Resources"
+# PS 5.1: Join-Path takes exactly two positional args (multi-arg form is PS7+)
+$ResourcesDir = Join-Path $RepoRoot (Join-Path "src" (Join-Path "EveLens.Common" "Resources"))
 $VersionFile = Join-Path $ResourcesDir "sde-version.json"
 
 # Default to the latest known SDE URL if none provided

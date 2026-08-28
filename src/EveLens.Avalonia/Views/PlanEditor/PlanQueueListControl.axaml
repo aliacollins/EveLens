@@ -15,9 +15,9 @@
             <WrapPanel x:Name="LegendPanel" Orientation="Horizontal" Margin="0,4,0,0" />
         </StackPanel>
 
-        <!-- Column headers: SKILL | TIME | R | PRI | SEC | SP/HR | LEVEL -->
+        <!-- Column headers: SKILL | TIME | R | PRI | SEC | SP/HR | PRIO | LEVEL -->
         <Grid x:Name="HeaderRow" DockPanel.Dock="Top"
-              ColumnDefinitions="*,100,40,75,75,55,60"
+              ColumnDefinitions="*,100,40,75,75,55,45,60"
               Margin="18,0,8,0" Height="24">
             <TextBlock x:Name="HeaderSkill" Grid.Column="0" Text="{loc:T Plan.Skill}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
@@ -37,7 +37,11 @@
             <TextBlock x:Name="HeaderSphr" Grid.Column="5" Text="{loc:T Plan.SPPerHour}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock x:Name="HeaderLevel" Grid.Column="6" Text="{loc:T Plan.Level}" FontSize="{DynamicResource EveFontCaption}"
+            <TextBlock x:Name="HeaderPrio" Grid.Column="6" Text="{loc:T Plan.PriorityHeader}" FontSize="{DynamicResource EveFontCaption}"
+                       Foreground="{StaticResource EveTextDisabledBrush}"
+                       ToolTip.Tip="{loc:T PlanEditor.PriorityHeaderTip}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock x:Name="HeaderLevel" Grid.Column="7" Text="{loc:T Plan.Level}" FontSize="{DynamicResource EveFontCaption}"
                        Foreground="{StaticResource EveTextDisabledBrush}"
                        HorizontalAlignment="Right" VerticalAlignment="Center" />
         </Grid>

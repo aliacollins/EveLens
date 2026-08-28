@@ -207,6 +207,15 @@ namespace EveLens.Common.Events
         public CharacterResearchPointsUpdatedEvent(Character character) : base(character) { }
     }
 
+    /// <summary>
+    /// Published when a character's SKINR design or component licenses have been updated
+    /// from ESI. One event covers both routes; consumers read the collections they need.
+    /// </summary>
+    public sealed class CharacterSkinrUpdatedEvent : CharacterEventBase
+    {
+        public CharacterSkinrUpdatedEvent(Character character) : base(character) { }
+    }
+
     public sealed class CharacterEVEMailMessagesUpdatedEvent : CharacterEventBase
     {
         public CharacterEVEMailMessagesUpdatedEvent(Character character) : base(character) { }

@@ -71,6 +71,7 @@ namespace EveLens.Common.Models
             // Update name and metadata
             Name = serial.Name;
             Description = serial.Description ?? string.Empty;
+            OptimizedForClone = serial.OptimizedFor;
             SortingPreferences = serial.SortingPreferences;
             LastActivity = serial.LastActivity;
 
@@ -130,7 +131,8 @@ namespace EveLens.Common.Models
                 Name = Name,
                 Description = Description,
                 LastActivity = LastActivity,
-                SortingPreferences = SortingPreferences
+                SortingPreferences = SortingPreferences,
+                OptimizedFor = OptimizedForClone
             };
 
             Character character = Character as Character;

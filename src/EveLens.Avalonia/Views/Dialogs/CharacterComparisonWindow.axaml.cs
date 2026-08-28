@@ -65,8 +65,16 @@ namespace EveLens.Avalonia.Views.Dialogs
             BuildCharacterPicker();
             UpdateStatus();
 
+            // Keep the frozen header column-aligned while scrolling sideways (#93)
+            ComparisonScroller.ScrollChanged += OnComparisonScrollChanged;
+
             _fontScaleSub = AppServices.EventAggregator?.Subscribe<Common.Events.FontScaleChangedEvent>(
                 _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(RefreshAll));
+        }
+
+        private void OnComparisonScrollChanged(object? sender, ScrollChangedEventArgs e)
+        {
+            HeaderScroller.Offset = new Vector(ComparisonScroller.Offset.X, 0);
         }
 
         protected override void OnClosed(EventArgs e)
@@ -170,7 +178,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             if (sender is not Button btn) return;
 
-            var allChars = AppServices.Characters.Where(c => c.Monitored).ToList();
+            // Alphabetical, not added-order — finding a character in a long list was
+            // the pain point behind Discussion #105.
+            var allChars = AppServices.Characters.Where(c => c.Monitored)
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToList();
             var selectedIds = _vm.SelectedCharacters.Select(c => c.CharacterID).ToHashSet();
 
             var flyout = new Flyout { Placement = PlacementMode.BottomEdgeAlignedLeft };
@@ -223,14 +234,17 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 EmptyState.IsVisible = true;
                 ComparisonScroller.IsVisible = false;
+                HeaderScroller.IsVisible = false;
                 return;
             }
 
             EmptyState.IsVisible = false;
             ComparisonScroller.IsVisible = true;
 
-            // Sticky header row
-            ComparisonPanel.Children.Add(BuildHeaderRow());
+            // Frozen header row (Discussion #93): lives above the vertical scroller,
+            // horizontally synced with it via OnComparisonScrollChanged.
+            HeaderScroller.Content = BuildHeaderRow();
+            HeaderScroller.IsVisible = true;
 
             // Skill groups
             foreach (var group in _vm.Groups)
@@ -428,6 +442,115 @@ namespace EveLens.Avalonia.Views.Dialogs
             _vm.TextFilter = "";
             BuildComparisonGrid();
             UpdateStatus();
+        }
+
+        // ── Saved comparison sets (Discussion #105) ──
+
+        private void OnSaveSetClick(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+            if (_vm.SelectedCharacters.Count == 0) return;
+
+            var nameBox = new TextBox
+            {
+                PlaceholderText = Loc.Get("CharCompare.SetNamePlaceholder"),
+                FontSize = FontScaleService.Body,
+                MinWidth = 180
+            };
+            var saveBtn = new Button
+            {
+                Content = Loc.Get("Action.Save"),
+                FontSize = FontScaleService.Small,
+                Padding = new Thickness(10, 4),
+                CornerRadius = new CornerRadius(10),
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+            var panel = new StackPanel { Spacing = 6, MinWidth = 200 };
+            panel.Children.Add(nameBox);
+            panel.Children.Add(saveBtn);
+
+            var flyout = new Flyout { Content = panel, Placement = PlacementMode.BottomEdgeAlignedLeft };
+            void Save()
+            {
+                if (_vm.SaveCurrentSet(nameBox.Text ?? string.Empty))
+                {
+                    flyout.Hide();
+                    UpdateStatus();
+                }
+            }
+            saveBtn.Click += (_, _) => Save();
+            nameBox.KeyDown += (_, args) => { if (args.Key == Key.Enter) Save(); };
+            flyout.ShowAt(btn);
+            nameBox.Focus();
+        }
+
+        private void OnLoadSetClick(object? sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn) return;
+
+            var sets = _vm.SavedSets;
+            var flyout = new Flyout { Placement = PlacementMode.BottomEdgeAlignedLeft };
+            var panel = new StackPanel { Spacing = 1, MinWidth = 200 };
+
+            if (sets.Count == 0)
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = Loc.Get("CharCompare.NoSavedSets"),
+                    FontSize = FontScaleService.Small,
+                    Foreground = FindBrush("EveTextDisabledBrush"),
+                    Margin = new Thickness(8, 4)
+                });
+            }
+
+            foreach (var set in sets)
+            {
+                var capturedSet = set;
+                var row = new DockPanel();
+
+                var deleteBtn = new Button
+                {
+                    Content = "✕",
+                    FontSize = FontScaleService.Tiny,
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Foreground = FindBrush("EveErrorRedBrush"),
+                    Padding = new Thickness(6, 2),
+                    Cursor = new Cursor(StandardCursorType.Hand),
+                    [DockPanel.DockProperty] = Dock.Right,
+                    [ToolTip.TipProperty] = Loc.Get("Action.Delete")
+                };
+                deleteBtn.Click += (_, _) =>
+                {
+                    _vm.DeleteSet(capturedSet);
+                    flyout.Hide();
+                };
+
+                var loadBtn = new Button
+                {
+                    Content = $"{capturedSet.Name} ({capturedSet.CharacterIDs.Count})",
+                    FontSize = FontScaleService.Body,
+                    Background = Brushes.Transparent,
+                    BorderThickness = new Thickness(0),
+                    Padding = new Thickness(8, 4),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Cursor = new Cursor(StandardCursorType.Hand)
+                };
+                loadBtn.Click += (_, _) =>
+                {
+                    flyout.Hide();
+                    _vm.LoadSet(capturedSet, AppServices.Characters.Where(c => c.Monitored));
+                    RefreshAll();
+                };
+
+                row.Children.Add(deleteBtn);
+                row.Children.Add(loadBtn);
+                panel.Children.Add(row);
+            }
+
+            flyout.Content = panel;
+            flyout.ShowAt(btn);
         }
 
         private void OnDifferencesToggled(object? sender, RoutedEventArgs e)

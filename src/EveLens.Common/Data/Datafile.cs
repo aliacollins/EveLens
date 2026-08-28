@@ -72,10 +72,41 @@ namespace EveLens.Common.Data
         /// If both exist, compares MD5 to ensure cached version is up to date.
         /// This ensures that when EveLens is updated, new datafiles replace old cached ones.
         /// </remarks>
+        /// <summary>
+        /// The bundled-resources directories, in preference order: the exe-adjacent
+        /// "Resources" (Windows/Linux layout, and the dev tree), then the bundle-level
+        /// "../Resources" — the macOS .app layout, where Contents/MacOS may contain
+        /// only executable code so the bundle can be code-signed and notarized.
+        /// </summary>
+        public static IEnumerable<string> InstallResourceDirectories()
+        {
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            yield return Path.Combine(baseDir, "Resources");
+            string bundle = Path.GetFullPath(Path.Combine(baseDir, "..", "Resources"));
+            if (!string.Equals(bundle, Path.Combine(baseDir, "Resources"),
+                    StringComparison.OrdinalIgnoreCase))
+                yield return bundle;
+        }
+
+        /// <summary>The first bundled-resources directory containing the file, or null.</summary>
+        public static string? FindInstallResource(string fileName)
+        {
+            foreach (string dir in InstallResourceDirectories())
+            {
+                string path = Path.Combine(dir, fileName);
+                if (File.Exists(path))
+                    return path;
+            }
+            return null;
+        }
+
         public static string GetDatafilesDirectory()
         {
-            string installDir = $"{AppDomain.CurrentDomain.BaseDirectory}Resources";
-            if (Directory.Exists(installDir)) return installDir;
+            foreach (string dir in InstallResourceDirectories())
+            {
+                if (Directory.Exists(dir))
+                    return dir;
+            }
 
             return AppServices.ApplicationPaths.DataDirectory ??
                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EveLens");
@@ -89,8 +120,9 @@ namespace EveLens.Common.Data
             // Path in %APPDATA% folder
             string cachedFilePath = $"{evelensDataDir}{Path.DirectorySeparatorChar}{filename}";
 
-            // Path in installation directory ("Resources" subdirectory)
-            string installFilePath = $"{AppDomain.CurrentDomain.BaseDirectory}Resources{Path.DirectorySeparatorChar}{filename}";
+            // Path in installation directory ("Resources" subdirectory, either layout)
+            string installFilePath = FindInstallResource(filename) ??
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", filename);
 
             bool cachedExists = File.Exists(cachedFilePath);
             bool installExists = File.Exists(installFilePath);

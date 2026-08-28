@@ -9,6 +9,7 @@ using System.Linq;
 using EveLens.Common.Data;
 using EveLens.Common.Helpers;
 using EveLens.Common.Models;
+using EveLens.Common.Serialization.Settings;
 using EveLens.Common.Services;
 using EveLens.Common.SettingsObjects;
 
@@ -101,6 +102,10 @@ namespace EveLens.Common.ViewModels
                         charEntry.TrainingTime = character.GetTrainingTime(skill, entry.Level);
                         charEntry.SpPerHour = (int)Math.Round(character.GetBaseSPPerHour(skill));
                         charEntry.Status = SkillTrainingStatus.NeedsTraining;
+                        // What an injector/SP bundle would have to cover for this cell.
+                        charEntry.MissingSp = Math.Max(0,
+                            skill.GetPointsRequiredForLevel(entry.Level) -
+                            character.GetSkillPoints(skill));
                     }
 
                     row.CharacterEntries.Add(charEntry);
@@ -238,6 +243,102 @@ namespace EveLens.Common.ViewModels
             BuildComparisonRows();
         }
 
+        /// <summary>
+        /// Creates a template straight from an exported plan file (.emp/plan .xml), so alliance
+        /// doctrines can be imported without routing them through a character's plan first
+        /// (Issue #137). Entries resolve by skill ID with a name fallback for older exports.
+        /// Returns null when no entry resolves to a known skill.
+        /// </summary>
+        public GlobalPlanTemplate? CreateFromPlanFile(SerializablePlan serial)
+        {
+            var template = new GlobalPlanTemplate
+            {
+                Name = string.IsNullOrWhiteSpace(serial.Name) ? "Imported Doctrine" : serial.Name,
+            };
+
+            foreach (var entry in serial.Entries)
+            {
+                var skill = StaticSkills.GetSkillByID(entry.ID)
+                    ?? (entry.SkillName == null ? null : StaticSkills.GetSkillByName(entry.SkillName));
+                if (skill == null) continue;
+
+                if (!template.Entries.Any(e => e.SkillID == skill.ID && e.Level == (int)entry.Level))
+                {
+                    template.Entries.Add(new GlobalPlanTemplateEntry
+                    {
+                        SkillID = skill.ID,
+                        SkillName = skill.Name,
+                        Level = (int)entry.Level
+                    });
+                }
+            }
+
+            if (template.Entries.Count == 0)
+                return null;
+
+            _templates.Add(template);
+            Settings.GlobalPlanTemplates.Add(template);
+            Settings.Save();
+            return template;
+        }
+
+        /// <summary>
+        /// Creates a template from pasted skill-list text — one "Skill Name 3" or
+        /// "Skill Name III" per line, the format doctrine pings are shared in (#137
+        /// follow-up). Unrecognized lines are skipped; returns null when fewer than
+        /// half the non-empty lines parse (that's not a skill list, that's a paste
+        /// accident) or when nothing resolves.
+        /// </summary>
+        public GlobalPlanTemplate? CreateFromSkillLines(string name, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var template = new GlobalPlanTemplate
+            {
+                Name = string.IsNullOrWhiteSpace(name) ? "Imported Doctrine" : name.Trim(),
+            };
+
+            int considered = 0, parsed = 0;
+            foreach (var rawLine in lines)
+            {
+                string line = rawLine.Trim();
+                if (line.Length == 0) continue;
+                considered++;
+
+                int lastSpace = line.LastIndexOf(' ');
+                if (lastSpace < 0) continue;
+                if (!SkillLevelText.TryParse(line.Substring(lastSpace + 1), out int level))
+                    continue;
+
+                var skill = StaticSkills.GetSkillByName(line.Substring(0, lastSpace).Trim());
+                if (skill == null) continue;
+                parsed++;
+
+                for (int lvl = 1; lvl <= level; lvl++)
+                {
+                    if (!template.Entries.Any(e => e.SkillID == skill.ID && e.Level == lvl))
+                    {
+                        template.Entries.Add(new GlobalPlanTemplateEntry
+                        {
+                            SkillID = skill.ID,
+                            SkillName = skill.Name,
+                            Level = lvl
+                        });
+                    }
+                }
+            }
+
+            if (parsed == 0 || parsed < considered / 2)
+                return null;
+
+            _templates.Add(template);
+            Settings.GlobalPlanTemplates.Add(template);
+            Settings.Save();
+            return template;
+        }
+
         public GlobalPlanTemplate CreateFromPlan(Plan plan)
         {
             var template = new GlobalPlanTemplate
@@ -277,6 +378,32 @@ namespace EveLens.Common.ViewModels
             Settings.Save();
             ResolveSubscribedCharacters();
             BuildComparisonRows();
+        }
+
+        /// <summary>
+        /// Subscribes a whole set of characters at once (e.g. an Overview group — Issue #137).
+        /// One save and one comparison rebuild regardless of how many were added.
+        /// Returns the number of characters actually added.
+        /// </summary>
+        public int SubscribeCharacters(IEnumerable<Character> characters)
+        {
+            if (_selectedTemplate == null) return 0;
+
+            int added = 0;
+            foreach (var character in characters)
+            {
+                if (_selectedTemplate.SubscribedCharacterGuids.Contains(character.Guid)) continue;
+                _selectedTemplate.SubscribedCharacterGuids.Add(character.Guid);
+                added++;
+            }
+
+            if (added > 0)
+            {
+                Settings.Save();
+                ResolveSubscribedCharacters();
+                BuildComparisonRows();
+            }
+            return added;
         }
 
         public void UnsubscribeCharacter(Character character)
@@ -324,6 +451,60 @@ namespace EveLens.Common.ViewModels
             return total;
         }
 
+        /// <summary>
+        /// The "Show only missing" toggle (odon's ask): the comparison collapses to
+        /// characters with at least one missing skill and skills missing on at least
+        /// one of THOSE characters. Rows and columns filter against each other in
+        /// that order — a skill only "fully trained" among hidden characters stays
+        /// hidden with them.
+        /// </summary>
+        public bool ShowOnlyMissing { get; set; }
+
+        /// <summary>Original indices of the characters the table should show.</summary>
+        public IReadOnlyList<int> VisibleCharacterIndices =>
+            ShowOnlyMissing
+                ? FilterMissing(_comparisonRows, _subscribedCharacters.Count).Characters
+                : Enumerable.Range(0, _subscribedCharacters.Count).ToList();
+
+        /// <summary>The rows the table should show, honoring the missing-only toggle.</summary>
+        public IReadOnlyList<SkillComparisonRow> VisibleRows =>
+            ShowOnlyMissing
+                ? FilterMissing(_comparisonRows, _subscribedCharacters.Count).Rows
+                : _comparisonRows;
+
+        /// <summary>The pure half of the toggle, testable without a character roster:
+        /// characters with at least one missing skill, and rows missing on at least
+        /// one of THOSE characters (a skill "missing" only among hidden characters
+        /// hides with them).</summary>
+        internal static (IReadOnlyList<int> Characters, IReadOnlyList<SkillComparisonRow> Rows)
+            FilterMissing(IReadOnlyList<SkillComparisonRow> rows, int characterCount)
+        {
+            static bool Missing(SkillComparisonRow row, int i) =>
+                i < row.CharacterEntries.Count &&
+                row.CharacterEntries[i].Status == SkillTrainingStatus.NeedsTraining;
+
+            var characters = Enumerable.Range(0, characterCount)
+                .Where(i => rows.Any(row => Missing(row, i)))
+                .ToList();
+            var visibleRows = rows
+                .Where(row => characters.Any(i => Missing(row, i)))
+                .ToList();
+            return (characters, visibleRows);
+        }
+
+        /// <summary>Total SP a character is short of the doctrine — the injector /
+        /// SP-bundle number for the summary badge.</summary>
+        public long GetCharacterMissingSp(int characterIndex)
+        {
+            long total = 0;
+            foreach (var row in _comparisonRows)
+            {
+                if (characterIndex < row.CharacterEntries.Count)
+                    total += row.CharacterEntries[characterIndex].MissingSp;
+            }
+            return total;
+        }
+
         public int GetCharacterTrainedCount(int characterIndex)
         {
             return _comparisonRows.Count(row =>
@@ -350,6 +531,9 @@ namespace EveLens.Common.ViewModels
         public int TargetLevel { get; set; }
         public TimeSpan TrainingTime { get; set; }
         public int SpPerHour { get; set; }
+
+        /// <summary>SP still needed to reach the target level; 0 when trained.</summary>
+        public long MissingSp { get; set; }
         public SkillTrainingStatus Status { get; set; }
     }
 

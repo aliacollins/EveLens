@@ -4,50 +4,68 @@
              xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
              x:Class="EveLens.Avalonia.Views.PlanEditor.PlanUnifiedView">
     <DockPanel>
-        <!-- Compact stats header -->
-        <Border DockPanel.Dock="Top" Padding="10,5"
-                Background="{StaticResource EveBackgroundMediumBrush}"
-                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+        <!-- Toolbar row: the plan's ACTIONS, left-aligned under the tabs where
+             the hand already is (they were stranded on the far right). -->
+        <Border DockPanel.Dock="Top" Padding="14,6"
+                Background="{StaticResource EveBackgroundMediumBrush}">
             <DockPanel>
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="10"
-                            VerticalAlignment="Center">
-                    <TextBlock x:Name="SkillCountText" FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="|" FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}" />
-                    <TextBlock x:Name="TrainingTimeText" FontSize="{DynamicResource EveFontSmall}" FontWeight="SemiBold"
-                               Foreground="{StaticResource EveAccentPrimaryBrush}" />
-                    <TextBlock Text="|" FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}" />
-                    <TextBlock x:Name="FinishDateText" FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                    <TextBlock Text="|" FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}" />
-                    <TextBlock x:Name="InjectorText" FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveSuccessGreenBrush}" />
-                    <TextBlock Text="|" FontSize="{DynamicResource EveFontSmall}" Foreground="{StaticResource EveTextDisabledBrush}" />
-                    <TextBlock x:Name="TotalSpText" FontSize="{DynamicResource EveFontSmall}"
-                               Foreground="{StaticResource EveTextSecondaryBrush}" />
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                    <ToggleButton x:Name="SidebarToggle" Content="☰" IsChecked="True"
-                                  FontSize="{DynamicResource EveFontSmall}" Padding="6,2" CornerRadius="8"
-                                  Click="OnSidebarToggle" ToolTip.Tip="{loc:T PlanEditor.ToggleSidebar}" />
-                    <Button x:Name="AddSkillsBtn" Content="{loc:T PlanEditor.AddSkills}" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                <ToggleButton x:Name="SidebarToggle" DockPanel.Dock="Right" Content="☰" IsChecked="True"
+                              FontSize="{DynamicResource EveFontSmall}" Padding="6,2" CornerRadius="8"
+                              Click="OnSidebarToggle" ToolTip.Tip="{loc:T PlanEditor.ToggleSidebar}" />
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <Button x:Name="AddSkillsBtn" Content="{loc:T PlanEditor.AddSkills}" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                             CornerRadius="8" Click="OnAddSkills" />
-                    <Button x:Name="CopyPlanBtn" Content="{loc:T PlanEditor.CopyPlan}" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="CopyPlanBtn" Content="{loc:T PlanEditor.CopyPlan}" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                             CornerRadius="8" Click="OnCopyClick" />
-                    <Button x:Name="GroupByAttrBtn" Content="{loc:T Plan.GroupByAttr}" FontSize="{DynamicResource EveFontCaption}" Padding="6,2"
+                    <Button x:Name="GroupByAttrBtn" Content="{loc:T Plan.GroupByAttr}" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
                             CornerRadius="8" Click="OnGroupByAttribute"
                             ToolTip.Tip="{loc:T PlanEditor.GroupByAttrTip}" />
+                    <Button x:Name="GroupByPriorityBtn" Content="{loc:T Plan.GroupByPriority}" FontSize="{DynamicResource EveFontSmall}" Padding="10,3"
+                            CornerRadius="8" Click="OnGroupByPriority"
+                            ToolTip.Tip="{loc:T PlanEditor.GroupByPriorityTip}" />
                 </StackPanel>
             </DockPanel>
+        </Border>
+
+        <!-- Stats band: total time leads (white — green is reserved for the WIN,
+             the optimization verdict), then what/when. -->
+        <Border DockPanel.Dock="Top" Padding="14,8"
+                Background="{StaticResource EveBackgroundMediumBrush}"
+                BorderBrush="{StaticResource EveBorderBrush}" BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                <TextBlock x:Name="TrainingTimeText" FontWeight="Bold"
+                           Foreground="{StaticResource EveTextPrimaryBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="SkillCountText" FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="FinishDateText" FontSize="{DynamicResource EveFontBody}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+                <!-- Live optimization verdict, with the clone it was computed for.
+                     Click opens the optimizer. Async off the UI thread. -->
+                <Button x:Name="OptimizedBadge" IsVisible="False"
+                        Background="Transparent" BorderThickness="0"
+                        Padding="6,2" CornerRadius="8"
+                        FontSize="{DynamicResource EveFontBody}"
+                        Click="OnOptimizedBadgeClick" />
+                <TextBlock x:Name="InjectorText" FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{StaticResource EveSuccessGreenBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock x:Name="TotalSpText" FontSize="{DynamicResource EveFontSmall}"
+                           Foreground="{StaticResource EveTextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+            </StackPanel>
         </Border>
 
         <!-- Main content: skill list + gap + left-sticking sidebar -->
         <Grid ColumnDefinitions="*,8,Auto">
             <!-- Column 0: Skill list area -->
             <DockPanel Grid.Column="0">
-                <!-- Timeline bar at top (6px, proportional segments) -->
+                <!-- Plan composition strip (6px, proportional segments) -->
                 <Border DockPanel.Dock="Top" Height="6"
-                        Background="{StaticResource EveBackgroundDarkestBrush}">
+                        Background="{StaticResource EveBackgroundDarkestBrush}"
+                        ToolTip.Tip="{loc:T PlanEditor.PlanComposition}">
                     <StackPanel x:Name="TimelineBar" Orientation="Horizontal" />
                 </Border>
 

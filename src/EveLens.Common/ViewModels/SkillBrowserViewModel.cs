@@ -217,8 +217,11 @@ namespace EveLens.Common.ViewModels
             var filtered = showAll ? _allSkills : _allSkills.Where(s => s.IsKnown);
 
             if (!string.IsNullOrEmpty(filter))
+                // Descriptions participate so "powergrid" finds every skill whose text
+                // mentions it, not just skills named after it (Discussion #116).
                 filtered = filtered.Where(s =>
-                    s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+                    s.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                    s.Description.Contains(filter, StringComparison.OrdinalIgnoreCase));
 
             VisibleSkills = filtered.ToList();
         }
@@ -239,6 +242,8 @@ namespace EveLens.Common.ViewModels
         public string RankText => $"(Rank {Rank})";
         public string SPText => IsKnown ? $"{SkillPoints:N0} SP" : "";
 
+        internal string Description { get; }
+
         public SkillBrowserSkillEntry(Skill skill)
         {
             Name = skill.LocalizedName;
@@ -247,6 +252,7 @@ namespace EveLens.Common.ViewModels
             Rank = skill.Rank;
             IsKnown = skill.IsKnown;
             IsTraining = skill.IsTraining;
+            Description = skill.Description;
         }
     }
 }

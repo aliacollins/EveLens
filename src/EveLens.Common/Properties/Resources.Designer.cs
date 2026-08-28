@@ -65,35 +65,8 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap AccountWide32 {
-            get {
-                object obj = ResourceManager.GetObject("AccountWide32", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap BadStanding {
-            get {
-                object obj = ResourceManager.GetObject("BadStanding", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Bug {
-            get {
-                object obj = ResourceManager.GetObject("Bug", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;!DOCTYPE html&gt;
@@ -141,15 +114,6 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Collapse {
-            get {
-                object obj = ResourceManager.GetObject("Collapse", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
@@ -161,35 +125,8 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Copy {
-            get {
-                object obj = ResourceManager.GetObject("Copy", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap CrossBlack {
-            get {
-                object obj = ResourceManager.GetObject("CrossBlack", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap CrossGray {
-            get {
-                object obj = ResourceManager.GetObject("CrossGray", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
@@ -213,55 +150,10 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Deadspace {
-            get {
-                object obj = ResourceManager.GetObject("Deadspace", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap DefaultAllianceImage32 {
-            get {
-                object obj = ResourceManager.GetObject("DefaultAllianceImage32", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap DefaultCharacterImage32 {
-            get {
-                object obj = ResourceManager.GetObject("DefaultCharacterImage32", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap DefaultCorporationImage32 {
-            get {
-                object obj = ResourceManager.GetObject("DefaultCorporationImage32", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Error16 {
-            get {
-                object obj = ResourceManager.GetObject("Error16", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to Error querying the wallet balance for {0}..
@@ -578,6 +470,24 @@ namespace EveLens.Common.Properties {
                 return ResourceManager.GetString("ErrorResearchPoints", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Error querying SKINR designs for {0}..
+        /// </summary>
+        public static string ErrorSkinrLicenses {
+            get {
+                return ResourceManager.GetString("ErrorSkinrLicenses", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Error querying SKINR components for {0}..
+        /// </summary>
+        public static string ErrorSkinrComponents {
+            get {
+                return ResourceManager.GetString("ErrorSkinrComponents", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Error querying the current ship of {0}..
@@ -696,45 +606,9 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        public static System.Drawing.Icon EveLens {
-            get {
-                object obj = ResourceManager.GetObject("EveLens", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap ExcellentStanding {
-            get {
-                object obj = ResourceManager.GetObject("ExcellentStanding", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Expand {
-            get {
-                object obj = ResourceManager.GetObject("Expand", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Faction {
-            get {
-                object obj = ResourceManager.GetObject("Faction", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot;?&gt;
@@ -752,75 +626,12 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap GoodStanding {
-            get {
-                object obj = ResourceManager.GetObject("GoodStanding", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Information16 {
-            get {
-                object obj = ResourceManager.GetObject("Information16", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap KeyGold16 {
-            get {
-                object obj = ResourceManager.GetObject("KeyGold16", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap KeyGrey16 {
-            get {
-                object obj = ResourceManager.GetObject("KeyGrey16", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap KeyWrong32 {
-            get {
-                object obj = ResourceManager.GetObject("KeyWrong32", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Magnifier {
-            get {
-                object obj = ResourceManager.GetObject("Magnifier", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Medal32 {
-            get {
-                object obj = ResourceManager.GetObject("Medal32", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to This account expires in {0}: {1}..
@@ -858,15 +669,6 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap NeutralStanding {
-            get {
-                object obj = ResourceManager.GetObject("NeutralStanding", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot;?&gt;
@@ -883,15 +685,6 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Officer {
-            get {
-                object obj = ResourceManager.GetObject("Officer", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&apos;1.0&apos; encoding=&apos;UTF-8&apos;?&gt;
@@ -966,75 +759,12 @@ namespace EveLens.Common.Properties {
             }
         }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Storyline {
-            get {
-                object obj = ResourceManager.GetObject("Storyline", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap T2 {
-            get {
-                object obj = ResourceManager.GetObject("T2", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap T3 {
-            get {
-                object obj = ResourceManager.GetObject("T3", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap TerribleStanding {
-            get {
-                object obj = ResourceManager.GetObject("TerribleStanding", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Throbber {
-            get {
-                object obj = ResourceManager.GetObject("Throbber", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Warning16 {
-            get {
-                object obj = ResourceManager.GetObject("Warning16", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        public static System.Drawing.Bitmap Watch {
-            get {
-                object obj = ResourceManager.GetObject("Watch", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
         
         /// <summary>
         ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;

@@ -41,7 +41,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             FilterUntrainedBtn.Content = Loc.Get("PlanEditor.Untrained");
             CollapseBtn.Content = Loc.Get("PlanEditor.Collapse");
             ExpandBtn.Content = Loc.Get("PlanEditor.Expand");
-            FilterBox.Watermark = Loc.Get("PlanEditor.SearchSkills");
+            FilterBox.PlaceholderText = Loc.Get("PlanEditor.SearchSkills");
             RankLabel.Text = Loc.Get("PlanEditor.Rank");
             PrimaryLabel.Text = Loc.Get("PlanEditor.Primary");
             SecondaryLabel.Text = Loc.Get("PlanEditor.Secondary");

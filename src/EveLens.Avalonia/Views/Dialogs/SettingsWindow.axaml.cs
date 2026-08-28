@@ -62,7 +62,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             SaveButton.Content = Loc.Get("Action.Save");
 
             // Search watermark
-            SearchBox.Watermark = Loc.Get("Settings.SearchWatermark");
+            SearchBox.PlaceholderText = Loc.Get("Settings.SearchWatermark");
 
             // Sidebar categories
             NavAppearanceTitle.Text = Loc.Get("Settings.Appearance");
@@ -91,8 +91,6 @@ namespace EveLens.Avalonia.Views.Dialogs
             LanguageDesc.Text = Loc.Get("Settings.LanguageDesc");
             GameNamesLabel.Text = Loc.Get("Settings.GameNames");
             GameNamesDesc.Text = Loc.Get("Settings.GameNamesDesc");
-            SafeForWorkLabel.Text = Loc.Get("Settings.SafeForWork");
-            SafeForWorkDesc.Text = Loc.Get("Settings.SafeForWorkDesc");
             CustomBrowserLabel.Text = Loc.Get("Settings.CustomBrowser");
             CustomBrowserDesc.Text = Loc.Get("Settings.CustomBrowserDesc");
             OpenDataDirButton.Content = Loc.Get("Settings.OpenDataDir");
@@ -236,7 +234,6 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             // --- Appearance ---
             PopulateThemeCombo();
-            SafeForWorkToggle.IsChecked = _settings.UI.SafeForWork;
             PopulateBrowserCombo();
             FontScaleSlider.Value = _settings.UI.FontScalePercent;
             FontScaleLabel.Text = $"{_settings.UI.FontScalePercent}%";
@@ -1077,7 +1074,6 @@ namespace EveLens.Avalonia.Views.Dialogs
         private void CollectSettings()
         {
             // Appearance
-            _settings.UI.SafeForWork = SafeForWorkToggle.IsChecked == true;
             if (BrowserCombo.SelectedItem is ComboBoxItem selectedBrowser)
                 _settings.UI.CustomBrowserPath = selectedBrowser.Tag?.ToString() ?? string.Empty;
             else

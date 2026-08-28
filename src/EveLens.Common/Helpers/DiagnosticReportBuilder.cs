@@ -379,7 +379,7 @@ namespace EveLens.Common.Helpers
             string version;
             try
             {
-                version = AppServices.FileVersionInfo?.FileVersion ?? "(unknown)";
+                version = AppServices.AppVersion.FileVersion ?? "(unknown)";
             }
             catch
             {
@@ -422,7 +422,7 @@ namespace EveLens.Common.Helpers
             try
             {
                 report.Append("EveLens Version: ").AppendLine(
-                    AppServices.FileVersionInfo.FileVersion);
+                    AppServices.AppVersion.FileVersion);
             }
             catch
             {

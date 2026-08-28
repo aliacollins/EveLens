@@ -207,7 +207,7 @@ namespace EveLens.Common.Net
         private static async Task<HttpResponseMessage> GetHttpResponseAsync(
             HttpRequestMessage request)
         {
-            // Don't dispose the client - it's a shared instance in .NET 8
+            // Don't dispose the client - it's a shared instance in .NET 10
             var client = HttpWebClientService.GetHttpClient();
             using (var cts = new System.Threading.CancellationTokenSource(s_timeout))
             {
@@ -250,6 +250,12 @@ namespace EveLens.Common.Net
                 headers.IfModifiedSince = param.IfModifiedSince;
             headers.Pragma.TryParseAdd("no-cache");
             headers.UserAgent.TryParseAdd(HttpWebClientServiceState.UserAgent);
+            // Free-form headers (e.g. X-Compatibility-Date for date-versioned ESI)
+            if (param.CustomHeaders != null)
+            {
+                foreach (var pair in param.CustomHeaders)
+                    headers.TryAddWithoutValidation(pair.Key, pair.Value);
+            }
             // Encoding support
             if (param.AcceptEncoded)
                 headers.AcceptEncoding.ParseAdd("gzip,deflate;q=0.8");

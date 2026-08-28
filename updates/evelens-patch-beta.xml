@@ -6,94 +6,104 @@
 <evelens>
   <releases>
     <release>
-      <date>2026-08-10</date>
-      <version>1.4.0.7</version>
+      <date>2026-08-28</date>
+      <version>1.5.0.13</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.7
+      <message><![CDATA[EveLens 1.5.0-beta.13
 
-1.4.1 corrective: full 1.4.0 content train plus promote-script content verification]]></message>
+Hub performance overhaul, signed+notarized macOS builds, Doctrine missing-skills view]]></message>
     </release>
     <release>
-      <date>2026-08-10</date>
-      <version>1.4.0.6</version>
+      <date>2026-08-27</date>
+      <version>1.5.0.12</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.6
+      <message><![CDATA[EveLens 1.5.0-beta.12
 
-1.4.0-beta.5: community fix train, SDE 3458726, Attribute Optimizer, EVE Accuracy Suite, auto-update opt-in]]></message>
+Overview account badge no longer clips at large font scales]]></message>
     </release>
     <release>
-      <date>2026-06-15</date>
-      <version>1.4.0.5</version>
+      <date>2026-08-27</date>
+      <version>1.5.0.11</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.5
+      <message><![CDATA[EveLens 1.5.0-beta.11
 
-Non-Windows stability: crash backstop, GDI+ default-image fix, SSO token error classification (#94), MailKit CVE]]></message>
+SKINR first-run walkthrough, live collection data, loader everywhere; app-wide scrollbar fix]]></message>
     </release>
     <release>
-      <date>2026-06-04</date>
-      <version>1.4.0.4</version>
+      <date>2026-08-27</date>
+      <version>1.5.0.10</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.4
+      <message><![CDATA[EveLens 1.5.0-beta.10
 
-i18n architecture: data-file UI strings, LanguageRegistry, {loc:T} markup, .LocalizedName fixes everywhere, market-group SDE names; ~300 strings migrated]]></message>
+SKINR landing + monitored SKINR data, priority feature, Doctrine clipboard/frozen panes, SDE 3480926 (#135 #136 #137 #139)]]></message>
     </release>
     <release>
-      <date>2026-06-03</date>
-      <version>1.4.0.3</version>
+      <date>2026-08-26</date>
+      <version>1.5.0.9</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.3
+      <message><![CDATA[EveLens 1.5.0-beta.9
 
-Korean (ko) language support: 464 UI strings + 50K SDE names (Discussion #79)]]></message>
+Plan editor order fix, priority submenu, Doctrine Designer improvements (#135 #136 #137)]]></message>
     </release>
     <release>
-      <date>2026-06-03</date>
-      <version>1.4.0.2</version>
+      <date>2026-08-26</date>
+      <version>1.5.0.8</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.2
+      <message><![CDATA[EveLens 1.5.0-beta.8
 
-Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)]]></message>
+Beta 8: overview sort/reorder controls appear when the second character arrives]]></message>
     </release>
     <release>
-      <date>2026-06-03</date>
-      <version>1.4.0.1</version>
+      <date>2026-08-26</date>
+      <version>1.5.0.7</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.1
+      <message><![CDATA[EveLens 1.5.0-beta.7
 
-Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)]]></message>
+Beta 7: status strip speaks one human sentence, never file paths]]></message>
     </release>
     <release>
-      <date>2026-06-03</date>
-      <version>1.4.0.1</version>
+      <date>2026-08-26</date>
+      <version>1.5.0.6</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.4.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.4.0-beta.1
+      <message><![CDATA[EveLens 1.5.0-beta.6
 
-Beta feedback fixes: plan delete (#80), PI idle/product/layout (#66), hide-maxed filter (#71)]]></message>
+Beta 6: SKINR card art decodes once -- fixes the Mac marketplace hang]]></message>
     </release>
     <release>
-      <date>2026-05-10</date>
-      <version>1.3.0.1</version>
+      <date>2026-08-26</date>
+      <version>1.5.0.5</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.3.0.exe</autopatchurl>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
       <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.3.0-beta.1
+      <message><![CDATA[EveLens 1.5.0-beta.5
 
-Skill Farm configurable base SP, What's New dialog, Code Graph system]]></message>
+Beta 5: Mac SKINR usable without the renderer; macOS/Linux update checks]]></message>
+    </release>
+    <release>
+      <date>2026-08-26</date>
+      <version>1.5.0.4</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.4
+
+Beta 4: Mac SKINR shows honest renderer-coming state on every path]]></message>
     </release>
   </releases>
   <datafiles>

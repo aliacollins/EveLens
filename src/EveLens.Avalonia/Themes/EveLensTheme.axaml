@@ -326,11 +326,19 @@
     <!-- ScrollViewer -->
     <Style Selector="ScrollViewer">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="AllowAutoHide" Value="False" />
     </Style>
 
-    <!-- Modern thin scrollbar — visible at rest, brighter on hover -->
+    <!-- Modern thin scrollbar — visible at rest, brighter on hover.
+         Width/Height must stay scoped per orientation: an unscoped Width
+         squashes horizontal bars into a 10px nub (odon, #137).
+         AllowAutoHide must be off or Fluent hides the whole bar until
+         hover and "visible at rest" never happens (odon, #137). -->
     <Style Selector="ScrollBar">
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="AllowAutoHide" Value="False" />
+    </Style>
+    <Style Selector="ScrollBar:vertical">
         <Setter Property="Width" Value="10" />
         <Setter Property="MinWidth" Value="10" />
     </Style>

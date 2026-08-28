@@ -631,10 +631,10 @@ namespace EveLens.Avalonia.Controls
                 using var paint = new SKPaint { IsAntialias = true };
                 using var textPaint = new SKPaint
                 {
-                    IsAntialias = true,
-                    TextSize = 8,
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Normal)
+                    IsAntialias = true
                 };
+                using var textFont = new SKFont(
+                    SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Normal) ?? SKTypeface.Default, 8);
 
                 foreach (var node in _nodes)
                 {
@@ -765,19 +765,18 @@ namespace EveLens.Avalonia.Controls
                     {
                         if (isHov || isSel)
                         {
-                            textPaint.TextSize = 10;
-                            textPaint.Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold);
+                            textFont.Size = 10;
+                            textFont.Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default;
                         }
                         else
                         {
-                            textPaint.TextSize = 8;
-                            textPaint.Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Normal);
+                            textFont.Size = 8;
+                            textFont.Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Normal) ?? SKTypeface.Default;
                         }
 
                         float labelOp = (isHov || isSel || isMatch) ? 1f : 0.6f;
                         textPaint.Color = SKColors.White.WithAlpha((byte)(labelOp * opacity * 255));
-                        textPaint.TextAlign = SKTextAlign.Center;
-                        canvas.DrawText(node.Name, node.X, node.Y + size + 14, textPaint);
+                        canvas.DrawText(node.Name, node.X, node.Y + size + 14, SKTextAlign.Center, textFont, textPaint);
 
                         // Level pips for interactive nodes
                         if (isHov || isSel || isTraining)
@@ -803,11 +802,10 @@ namespace EveLens.Avalonia.Controls
             {
                 using var paint = new SKPaint
                 {
-                    IsAntialias = true,
-                    TextSize = 11,
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold),
-                    TextAlign = SKTextAlign.Center
+                    IsAntialias = true
                 };
+                using var font = new SKFont(
+                    SKTypeface.FromFamilyName("Segoe UI", SKFontStyle.Bold) ?? SKTypeface.Default, 11);
 
                 foreach (var group in _groups)
                 {
@@ -817,7 +815,7 @@ namespace EveLens.Avalonia.Controls
                     float op = _highlightGroup == group.Name ? 1f
                         : HasActiveContext ? 0.12f : 0.4f;
                     paint.Color = group.Color.WithAlpha((byte)(op * 255));
-                    canvas.DrawText(group.Name.ToUpperInvariant(), cx, minY - 35, paint);
+                    canvas.DrawText(group.Name.ToUpperInvariant(), cx, minY - 35, SKTextAlign.Center, font, paint);
                 }
             }
 

@@ -4,14 +4,14 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/aliacollins/evelens?label=latest)](https://github.com/aliacollins/evelens/releases)
 [![GPL licensed](https://img.shields.io/badge/license-GPL%20v2-blue.svg)]()
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-purple.svg)]()
+[![.NET 10](https://img.shields.io/badge/.NET-10.0-purple.svg)]()
 [![Cross-Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-brightgreen.svg)]()
 
 ---
 
 ## EveLens 1.4.1
 
-EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 8** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
+EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 10** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
 
 This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 2,100+ tests -- including an EVE Accuracy Suite checked against in-game values -- and support for **100+ characters** out of the box.
 
@@ -25,12 +25,12 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
-| **Windows (Installer)** | `EveLens-stable-Setup.exe` | None -- installs .NET 8 automatically |
-| **Windows (Portable)** | `EveLens-stable-Portable.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Windows (Installer)** | `EveLens-stable-Setup.exe` | None -- .NET runtime is bundled |
+| **Windows (Portable)** | `EveLens-stable-Portable.zip` | None -- .NET runtime is bundled |
 | **Linux (AppImage)** | `EveLens-*-linux-x86_64.AppImage` | None -- single file, just run |
-| **Linux (Portable)** | `EveLens-*-linux-x64.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **Linux (Portable)** | `EveLens-*-linux-x64.zip` | None -- .NET runtime is bundled |
 | **macOS (App)** | `EveLens-*-osx-arm64.app.zip` | None -- extract and run |
-| **macOS (Portable)** | `EveLens-*-osx-arm64.zip` | [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) |
+| **macOS (Portable)** | `EveLens-*-osx-arm64.zip` | None -- .NET runtime is bundled |
 
 The Windows installer is **code-signed** by a verified Certum certificate.
 
@@ -60,7 +60,7 @@ chmod +x evelens/EveLens
 ./evelens/EveLens
 ```
 
-Requires [.NET 8.0 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) installed.
+No separate .NET runtime install needed -- releases are self-contained.
 
 ### macOS (Apple Silicon)
 
@@ -205,7 +205,19 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.4.0
+## What's New in 1.5.0
+
+- **The SKINR Studio** -- your SKIN designs on your ships, rendered in real 3D by EVE's own engine; five environments, Photo Op fleet shots, one-time 3D engine download (community preview images without it)
+- **Paragon Hub browser** -- every marketplace design as a real render, side by side, with instant pre-resolved identities and preview images
+- **Doctrine Designer round two** -- import from files/clipboard/plans, add whole groups, "Show only missing", missing-SP badges, aligned card columns with frozen panes
+- **Skill priorities** -- visible on every plan row, "Group by Priority" milestone bands
+- **Overview rework** -- drag-to-group, sort and density controls, group totals, saved comparisons
+- **macOS first class** -- signed, notarized, and self-updating in place; Linux gets update checks too
+- **.NET 10** and EVE static data build 3480926
+
+Full details: [CHANGELOG.md](CHANGELOG.md)
+
+## What Was New in 1.4.0
 
 ### Planning & Training
 - **Skill Planning** -- Multi-tab plan editor with drag-to-reorder, attribute group headers, prerequisite validation, and specific error messages
@@ -220,24 +232,19 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 - **20+ data tabs** -- Skills, Queue, Clones, Assets, Market Orders, Contracts, Industry, Wallet, Mail, Notifications, Kills, PI, Research, Standings, and more
 - **Skill Constellation** -- GPU-accelerated interactive visualization of EVE's skill tree
 
-### Quality of Life
-- **"What's New" dialog** -- Shows release notes on first launch after update
-- **Chinese language (简体中文)** -- Full UI + 50K SDE translations
-- **Variable font scaling** -- 80-150% with live preview
-- **6 dark themes** -- Dark Space, Caldari Blue, Amarr Gold, Minmatar Rust, Gallente Green, Midnight
-- **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+G, and more
-- **CSV export** -- Export skills and training queue
-- **Privacy mode** -- For streamers and screenshots
-- **Custom browser setting** -- Choose which browser opens for ESI auth
+---
 
-### Infrastructure
-- **100+ character support** -- Smart batch scheduling, per-character circuit breakers, staggered ESI polling
-- **Cross-platform** -- Windows (signed installer), Linux (AppImage), macOS (Apple Silicon .app)
-- **Auto-update** -- Velopack delta downloads, background checks
-- **ESI scope control** -- Choose what data EveLens can access (Full, Standard, Skill Planner Only, or custom)
-- **Smart ESI error handling** -- Per-endpoint health state machine, automatic recovery, no error spam
+## Features Being Tested
 
-Full changelog: [CHANGELOG.md](CHANGELOG.md)
+- Skill Farm: configurable SP base per character
+- "What's New" dialog on update
+- Code Graph system for AI-assisted development
+
+## Alpha Changelog (Cumulative)
+
+- Skill Farm Dashboard: per-character configurable SP floor (click Base column)
+- What's New dialog: shown once per version after update, reads from CHANGELOG.md
+- Code Graph: living dependency map with validation and Claude skill integration
 
 ---
 

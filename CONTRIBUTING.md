@@ -1,6 +1,6 @@
 # Contributing to EveLens
 
-EveLens is an open source character monitoring and skill planning tool for EVE Online. It's built on .NET 8 with Avalonia UI, runs on Windows, macOS, and Linux, and is licensed under GPL v2.
+EveLens is an open source character monitoring and skill planning tool for EVE Online. It's built on .NET 10 with Avalonia UI, runs on Windows, macOS, and Linux, and is licensed under GPL v2.
 
 This guide will help you get started if you want to contribute.
 
@@ -25,7 +25,7 @@ If you're running 10+ characters, your bug reports are especially valuable -- th
 
 ### Prerequisites
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - A C# IDE -- [Visual Studio 2022](https://visualstudio.microsoft.com/), [JetBrains Rider](https://www.jetbrains.com/rider/), or [VS Code](https://code.visualstudio.com/) with the C# Dev Kit extension
 - Git
 - An EVE Online account with ESI access (for testing authenticated features)

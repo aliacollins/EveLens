@@ -447,7 +447,7 @@ namespace EveLens.Common.ExternalCalendar
             var initializer = new BaseClientService.Initializer
             {
                 HttpClientInitializer = s_credential,
-                ApplicationName = AppServices.FileVersionInfo.ProductName,
+                ApplicationName = AppServices.AppVersion.ProductName,
             };
 
             return new CalendarService(initializer);
