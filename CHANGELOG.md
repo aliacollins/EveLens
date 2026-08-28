@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0-beta.13] - 2026-08-28
+
 ### Added
 
 - **Doctrine Designer: "Show only missing"** -- One toggle collapses the comparison to the characters with at least one missing skill and the skills missing on at least one of them -- the "who still needs what" view, without the sea of green checkmarks. (odon)
