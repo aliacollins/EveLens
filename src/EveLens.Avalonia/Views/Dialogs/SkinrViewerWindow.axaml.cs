@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -89,7 +91,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             PopulateQualities();
             PopulateResolutions();
             BuildEnvironmentSwitcher();
+            InitMarketList();
 
+            _market.CommunityCatalog = () => _hubPrefs.CommunityPreviews == true;
             _hub.Data.StateChanged += () => Dispatcher.UIThread.Post(RefreshFromViewModel);
             _hub.CarouselChanged += () => Dispatcher.UIThread.Post(RefreshCarousel);
             _render.FrameReady += frame => Dispatcher.UIThread.Post(() => ShowFrame(frame));
@@ -108,7 +112,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 if (_stageWaiting && !_overlayFromDownload)
                 {
                     LoadingOverlayText.Text = shown;
-                    LoadingOverlay.IsVisible = true;
+                    LoadingOverlay.IsVisible = !MarketPane.IsVisible;
                     // The render VM reports failures as status text (it never throws
                     // across the event boundary); a failure ends the wait.
                     if (text != null &&
@@ -1064,6 +1068,14 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ? "SkinrTextDimBrush" : "SkinrAccentBrush"];
             RailHubGlyph.Foreground = (IBrush?)Resources[hubContext
                 ? "SkinrAccentBrush" : "SkinrTextDimBrush"];
+            // The loading overlay narrates the STAGE (ship parts, geometry, frames).
+            // With the market grid on top it narrated something the user can't see —
+            // a cold start showed "Preparing 63 ship parts…" painted over the Hub.
+            // Hide it with the market; restore it when the stage comes back mid-load.
+            if (market)
+                LoadingOverlay.IsVisible = false;
+            else if (_stageWaiting)
+                LoadingOverlay.IsVisible = true;
             if (!market)
                 return;
 
@@ -1081,7 +1093,8 @@ namespace EveLens.Avalonia.Views.Dialogs
                 _ = _market.LoadAsync();
             CdnBanner.IsVisible = _hubPrefs.CommunityPreviews == null;
             EnsurePrerenderer();
-            RefreshMarket();
+            RefreshMarketHeader();
+            RebuildMarketGrid();
         }
 
         // --- community previews consent ------------------------------------------
@@ -1107,6 +1120,15 @@ namespace EveLens.Avalonia.Views.Dialogs
             CdnToggle.IsChecked = enabled;
             _suppressCdnToggle = false;
             CdnBanner.IsVisible = false;
+            if (enabled)
+            {
+                // The shelf may now answer cards this session already marked missed.
+                lock (_shelfMissed)
+                {
+                    _shelfMissed.Clear();
+                }
+                _ = _market.ApplyCatalogAsync();
+            }
         }
 
         /// <summary>
@@ -1130,14 +1152,20 @@ namespace EveLens.Avalonia.Views.Dialogs
                 // shelf can fill cards — the sidecar must not be attempted.
                 canRenderLocally: () => SkinrRuntimeInstaller.InstalledRoot() != null &&
                                         _render.IsAvailable);
-            _prerenderer.ThumbnailCaptured += (_, path) =>
+            _prerenderer.ThumbnailCaptured += (id, path) =>
                 Dispatcher.UIThread.Post(() =>
                 {
                     _cardBitmaps.Invalidate(path);
-                    QueueMarketRefresh();
+                    TrySwapCardThumb(id, path);
+                    if (MarketPane.IsVisible)
+                        RefreshMarketHeader();
                 });
             _prerenderer.StateChanged += () =>
-                Dispatcher.UIThread.Post(QueueMarketRefresh);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (MarketPane.IsVisible)
+                        RefreshMarketHeader();
+                });
             _prerenderer.Start();
         }
 
@@ -1149,8 +1177,10 @@ namespace EveLens.Avalonia.Views.Dialogs
             DispatcherTimer.RunOnce(() =>
             {
                 _marketRefreshPending = false;
-                if (MarketPane.IsVisible)
-                    RefreshMarket();
+                if (!MarketPane.IsVisible)
+                    return;
+                RefreshMarketHeader();
+                MaybeRebuildMarketGrid();
             }, MarketRefreshDebounce);
         }
 
@@ -1159,6 +1189,80 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         /// <summary>One tree node's scope: class, class+faction, or an exact hull.</summary>
         private sealed record MarketNode(string Key, string Class, string Faction, int TypeId);
+
+        /// <summary>A section label row in the virtualized market list.</summary>
+        private sealed record MarketHeaderRow(string Label);
+
+        /// <summary>One visual row of market cards (chunked to the pane's width).</summary>
+        private sealed record MarketCardRow(IReadOnlyList<SkinrMarketEntry> Entries);
+
+        // The grid rebuilds only when its structure changed: immediately for a scope
+        // or search change (the user is waiting), coalesced while the identify walk
+        // streams recipes in (one ESI answer per 150 ms must not mean five full
+        // rebuilds per second — that walk is what made the Hub unusable, #139).
+        private string _marketScopeSig = string.Empty;
+        private string _marketDataSig = string.Empty;
+        private DateTime _marketGridBuiltUtc = DateTime.MinValue;
+        private bool _marketGridChurnQueued;
+        private static readonly TimeSpan MarketGridChurnInterval = TimeSpan.FromSeconds(2);
+
+        // Live thumb hosts by design id, so a captured render swaps into the one card
+        // it belongs to instead of rebuilding the grid. Entries go stale when rows
+        // virtualize away — the Tag check at swap time makes stale hosts harmless.
+        private readonly Dictionary<string, Border> _cardThumbHosts = new(StringComparer.OrdinalIgnoreCase);
+
+        // Card geometry: Width 208 + right margin 12. Recomputed from the list's
+        // actual bounds so the chunking follows the window.
+        private const double MarketCardSlotWidth = 220.0;
+        private int _marketCardsPerRow = 4;
+
+        private int MarketCardsPerRowNow()
+        {
+            double width = MarketList.Bounds.Width;
+            if (width < 1)
+                width = MarketPane.Bounds.Width - 300;   // pre-layout estimate
+            return Math.Max(1, (int)(width / MarketCardSlotWidth));
+        }
+
+        private void InitMarketList()
+        {
+            MarketList.ItemTemplate =
+                new global::Avalonia.Controls.Templates.FuncDataTemplate<object>(
+                    (item, _) => item switch
+                    {
+                        MarketHeaderRow header => new TextBlock
+                        {
+                            Text = header.Label,
+                            FontWeight = FontWeight.SemiBold,
+                            FontSize = FontScaleService.Small,
+                            Foreground = (IBrush?)Resources["SkinrAccentBrush"],
+                            Margin = new Thickness(0, 8, 0, 4)
+                        },
+                        MarketCardRow row => BuildMarketCardRow(row),
+                        _ => new Panel()
+                    },
+                    supportsRecycling: false);
+
+            MarketList.PropertyChanged += (_, e) =>
+            {
+                if (e.Property != BoundsProperty || !MarketPane.IsVisible)
+                    return;
+                int perRow = MarketCardsPerRowNow();
+                if (perRow != _marketCardsPerRow)
+                {
+                    _marketCardsPerRow = perRow;
+                    RebuildMarketGrid();
+                }
+            };
+        }
+
+        private Control BuildMarketCardRow(MarketCardRow row)
+        {
+            var panel = new StackPanel { Orientation = global::Avalonia.Layout.Orientation.Horizontal };
+            foreach (SkinrMarketEntry entry in row.Entries)
+                panel.Children.Add(BuildMarketCard(entry));
+            return panel;
+        }
 
         private string _marketTreeSig = string.Empty;
         private bool _marketTreeRebuilding;
@@ -1299,7 +1403,13 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ? string.Empty : item.LocalizedName;
         }
 
-        private void RefreshMarket()
+        /// <summary>
+        /// The cheap half of a market refresh: title, stats line, status text. Safe
+        /// to run on every data whisper — the expensive grid rebuild is gated
+        /// separately, because "the render label changed" must never cost a
+        /// thousand-card rebuild (#139: the Hub froze the whole app).
+        /// </summary>
+        private void RefreshMarketHeader()
         {
             var entries = _market.Entries;
 
@@ -1316,9 +1426,11 @@ namespace EveLens.Avalonia.Views.Dialogs
 
             string stats = string.Format(Loc.Get("Skinr.HubStats"),
                 entries.Count, _market.TotalListings);
-            int unresolved = _market.UnresolvedCount;
-            if (unresolved > 0)
-                stats += " · " + string.Format(Loc.Get("Skinr.HubResolvingFmt"), unresolved);
+            // "identifying" counts entries with no identity from ANY source; with
+            // the hub catalog on this is zero and the recipe walk stays invisible.
+            int unidentified = _market.UnidentifiedCount;
+            if (unidentified > 0)
+                stats += " · " + string.Format(Loc.Get("Skinr.HubResolvingFmt"), unidentified);
             if (_prerenderer?.CurrentLabel is { } rendering)
                 stats += " · " + string.Format(Loc.Get("Skinr.HubRenderingFmt"), rendering);
             MarketStats.Text = stats;
@@ -1342,12 +1454,76 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 MarketStatus.IsVisible = false;
             }
+        }
+
+        private string MarketScopeSignature() =>
+            $"{_market.SearchText}{_market.GroupFilter}" +
+            $"{_market.FactionFilter}{_market.ShipTypeFilter}";
+
+        private string MarketDataSignature(IReadOnlyList<SkinrMarketEntry> entries)
+        {
+            int identified = 0;
+            foreach (SkinrMarketEntry entry in entries)
+            {
+                if (entry.IsIdentified)
+                    identified++;
+            }
+            return $"{entries.Count}{identified}" +
+                   $"{_market.TotalListings}{_market.HasLoaded}";
+        }
+
+        /// <summary>
+        /// Rebuilds the grid only when its structure changed: immediately for a scope
+        /// or search change (the user is waiting on it), coalesced to
+        /// <see cref="MarketGridChurnInterval"/> while background walks stream data in.
+        /// </summary>
+        private void MaybeRebuildMarketGrid()
+        {
+            string scopeSig = MarketScopeSignature();
+            if (scopeSig != _marketScopeSig)
+            {
+                RebuildMarketGrid();
+                return;
+            }
+            string dataSig = MarketDataSignature(_market.Entries);
+            if (dataSig == _marketDataSig)
+                return;
+            TimeSpan since = DateTime.UtcNow - _marketGridBuiltUtc;
+            if (since >= MarketGridChurnInterval)
+            {
+                RebuildMarketGrid();
+                return;
+            }
+            if (_marketGridChurnQueued)
+                return;
+            _marketGridChurnQueued = true;
+            DispatcherTimer.RunOnce(() =>
+            {
+                _marketGridChurnQueued = false;
+                if (MarketPane.IsVisible)
+                    MaybeRebuildMarketGrid();
+            }, MarketGridChurnInterval - since);
+        }
+
+        /// <summary>
+        /// Recomputes the row list and hands it to the virtualized market list. Rows
+        /// are data records — cards materialize only when scrolled into view, so this
+        /// is milliseconds even for the full unfiltered catalog.
+        /// </summary>
+        private void RebuildMarketGrid()
+        {
+            _marketGridBuiltUtc = DateTime.UtcNow;
+            _marketScopeSig = MarketScopeSignature();
+            var entries = _market.Entries;
+            _marketDataSig = MarketDataSignature(entries);
+            _cardThumbHosts.Clear();
 
             RefreshMarketTree();
+            _marketCardsPerRow = MarketCardsPerRowNow();
 
             // Ship class → faction → hull → name, the way a capsuleer thinks about
-            // hulls ("Shuttles · Amarr"). "…" is the recipes still identifying.
-            MarketSections.Children.Clear();
+            // hulls ("Shuttles · Amarr"). "…" is the designs still identifying.
+            var rows = new List<object>();
             foreach ((string group, string faction, IReadOnlyList<SkinrMarketEntry> designs)
                 in _market.Sections())
             {
@@ -1361,18 +1537,96 @@ namespace EveLens.Avalonia.Views.Dialogs
                     label = string.IsNullOrEmpty(faction)
                         ? group.ToUpperInvariant()
                         : $"{group.ToUpperInvariant()} · {faction}";
-                MarketSections.Children.Add(new TextBlock
+                rows.Add(new MarketHeaderRow(label));
+                for (int start = 0; start < designs.Count; start += _marketCardsPerRow)
                 {
-                    Text = label,
-                    FontWeight = FontWeight.SemiBold,
-                    FontSize = FontScaleService.Small,
-                    Foreground = (IBrush?)Resources["SkinrAccentBrush"],
-                    Margin = new Thickness(0, 8, 0, 4)
+                    int count = Math.Min(_marketCardsPerRow, designs.Count - start);
+                    var chunk = new SkinrMarketEntry[count];
+                    for (int k = 0; k < count; k++)
+                        chunk[k] = designs[start + k];
+                    rows.Add(new MarketCardRow(chunk));
+                }
+            }
+
+            // An ItemsSource swap resets scroll; put the reader back where they were
+            // (approximately — churn adds rows above, and exact is not worth chasing).
+            var offset = MarketList.Scroll?.Offset;
+            MarketList.ItemsSource = rows;
+            if (offset is { Y: > 0 } o)
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (MarketList.Scroll is { } scroll)
+                        scroll.Offset = o;
+                }, DispatcherPriority.Loaded);
+        }
+
+        /// <summary>
+        /// Swaps a freshly cached thumbnail into the one card it belongs to, in
+        /// place — the alternative was rebuilding the grid per arrival, which at
+        /// shelf download speed meant rebuilding it continuously. The Tag check makes
+        /// hosts that virtualized away (or got reused) harmless.
+        /// </summary>
+        private void TrySwapCardThumb(string skinrId, string path)
+        {
+            if (!_cardThumbHosts.TryGetValue(skinrId, out Border? host))
+                return;
+            if (!string.Equals(host.Tag as string, skinrId, StringComparison.OrdinalIgnoreCase))
+            {
+                _cardThumbHosts.Remove(skinrId);
+                return;
+            }
+            Bitmap? decoded = _cardBitmaps.GetFile(path);
+            if (decoded != null)
+                host.Child = new Image { Source = decoded, Stretch = Stretch.UniformToFill };
+        }
+
+        // The community shelf, pulled the way a website pulls images: each visible
+        // card with no local thumbnail asks for its PNG, a handful in parallel,
+        // completely outside the GPU prerenderer's one-at-a-time pacing. Misses are
+        // remembered per session so re-realized cards don't re-ask the server.
+        private static readonly SemaphoreSlim s_shelfGate = new(6);
+        private readonly HashSet<string> _shelfMissed = new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _shelfInFlight = new(StringComparer.OrdinalIgnoreCase);
+
+        private async Task FillCardFromShelfAsync(string skinrId)
+        {
+            try
+            {
+                lock (_shelfMissed)
+                {
+                    if (_shelfMissed.Contains(skinrId) || !_shelfInFlight.Add(skinrId))
+                        return;
+                }
+                string? path;
+                await s_shelfGate.WaitAsync().ConfigureAwait(false);
+                try
+                {
+                    path = _hub.Thumbnails.TryGetPath(skinrId)
+                        ?? await SkinrThumbnailCdn.TryFetchAsync(skinrId, _hub.Thumbnails)
+                            .ConfigureAwait(false);
+                }
+                finally
+                {
+                    s_shelfGate.Release();
+                }
+                lock (_shelfMissed)
+                {
+                    _shelfInFlight.Remove(skinrId);
+                    if (path == null)
+                        _shelfMissed.Add(skinrId);
+                }
+                if (path == null)
+                    return;
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _cardBitmaps.Invalidate(path);
+                    TrySwapCardThumb(skinrId, path);
                 });
-                var wrap = new WrapPanel();
-                foreach (SkinrMarketEntry entry in designs)
-                    wrap.Children.Add(BuildMarketCard(entry));
-                MarketSections.Children.Add(wrap);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace(
+                    $"Skinr shelf: {skinrId} fetch failed: {ex.Message}");
             }
         }
 
@@ -1400,6 +1654,9 @@ namespace EveLens.Avalonia.Views.Dialogs
                 Height = 120,
                 Background = (IBrush?)Resources["SkinrPillBrush"]
             };
+            thumbHost.Tag = entry.SkinrId;
+            _cardThumbHosts[entry.SkinrId] = thumbHost;
+
             string? thumb = _hub.Thumbnails.TryGetPath(entry.SkinrId);
             if (thumb != null)
             {
@@ -1445,6 +1702,10 @@ namespace EveLens.Avalonia.Views.Dialogs
                     LoadHullRender(hullImage, entry.ShipTypeId);
                 }
                 thumbHost.Child = placeholder;
+                // The community shelf fills this card the way a website would -- a
+                // parallel image GET, not a turn in the GPU queue.
+                if (_hubPrefs.CommunityPreviews == true)
+                    _ = FillCardFromShelfAsync(entry.SkinrId);
             }
             layout.Children.Add(thumbHost);
 
@@ -1616,7 +1877,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     : (IBrush?)Resources["SkinrBgBrush"];
                 LoadingOverlayBar.IsIndeterminate = true;
                 LoadingOverlayText.Text = Loc.Get("Skinr.StatusRendering");
-                LoadingOverlay.IsVisible = true;
+                LoadingOverlay.IsVisible = !MarketPane.IsVisible;
 
                 await _hub.Data.SelectDesignAsync(skinrId);
                 RefreshDesignCard();

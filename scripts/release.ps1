@@ -24,7 +24,10 @@
 param(
     [string]$Version,
     [string]$Channel,
-    [switch]$DryRun
+    [switch]$DryRun,
+    # Deliberately ship an UNSIGNED mac build (no Developer ID signing, no
+    # notarization). The default is signed + notarized via scripts/release/sign-macos.ps1.
+    [switch]$UnsignedMac
 )
 
 $ErrorActionPreference = 'Stop'
@@ -152,9 +155,18 @@ try {
         if (Test-Path $plat.Dir) { Remove-Item $plat.Dir -Recurse -Force }
 
         $ErrorActionPreference = 'Continue'
+        # macOS publishes single-file: rcodesign cannot seal loose .NET dlls
+        # inside Contents/MacOS (apple-platform-rs #192), and Apple's bundle
+        # rules want only Mach-O code there anyway. One apphost + dylibs signs
+        # and notarizes cleanly.
+        $extra = @()
+        if ($plat.Rid -eq 'osx-arm64') {
+            $extra = @('-p:PublishSingleFile=true',
+                       '-p:IncludeNativeLibrariesForSelfExtract=false')
+        }
         dotnet publish $MainProject `
             -c Release -r $plat.Rid --self-contained `
-            -o $plat.Dir -p:Version=$Version 2>&1 | ForEach-Object { $_ }
+            -o $plat.Dir -p:Version=$Version @extra 2>&1 | ForEach-Object { $_ }
         $ErrorActionPreference = 'Stop'
 
         if ($LASTEXITCODE -ne 0) { throw "Build failed for $($plat.Rid)." }
@@ -224,7 +236,21 @@ try {
     wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh $Channel $Version 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'
 
-    if (Test-Path $appBundleZip) {
+    $appBundle = "publish/macapp/EveLens.app"
+    if (Test-Path $appBundle) {
+        if ($UnsignedMac) {
+            Write-Warning "Shipping UNSIGNED mac build (-UnsignedMac)."
+        } else {
+            # Developer ID sign + notarize + staple, all from Windows (rcodesign +
+            # the DPAPI vault). A notarization failure fails the release: Gatekeeper
+            # regression is worse than a late release.
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass `
+                -File (Join-Path $PSScriptRoot 'release/sign-macos.ps1') `
+                -AppBundle $appBundle
+            if ($LASTEXITCODE -ne 0) { throw "macOS signing/notarization failed." }
+        }
+        py -3.12 (Join-Path $PSScriptRoot 'release/zip-macapp.py') $appBundle $appBundleZip 'EveLens.app'
+        if ($LASTEXITCODE -ne 0) { throw "zip-macapp failed." }
         Write-Host "  macOS .app bundle created." -ForegroundColor Green
     } else {
         Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."

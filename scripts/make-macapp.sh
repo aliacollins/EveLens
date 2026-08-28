@@ -16,8 +16,16 @@ rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
 mkdir -p "$APP_DIR/Contents/Resources"
 
-# Copy published files preserving structure
-cp -r "$PUBLISH_DIR"/* "$APP_DIR/Contents/MacOS/"
+# Apple-conformant layout: Contents/MacOS holds ONLY executable code (the
+# single-file apphost + native dylibs) so the bundle can be code-signed and
+# notarized -- non-Mach-O files inside MacOS/ fall under Apple's "nested code"
+# resource rules and break the signature seal. Everything else (datafiles,
+# changelog) lives in Contents/Resources, where EveLens's resource resolution
+# (Datafile.InstallResourceDirectories) knows to look.
+cp "$PUBLISH_DIR/EveLens" "$APP_DIR/Contents/MacOS/"
+cp "$PUBLISH_DIR"/*.dylib "$APP_DIR/Contents/MacOS/"
+cp -r "$PUBLISH_DIR/Resources/." "$APP_DIR/Contents/Resources/"
+[ -f "/mnt/d/evemon-main/CHANGELOG.md" ] && cp "/mnt/d/evemon-main/CHANGELOG.md" "$APP_DIR/Contents/Resources/"
 
 # Set executable permission on the main binary
 chmod +x "$APP_DIR/Contents/MacOS/EveLens"
@@ -53,8 +61,12 @@ cat > "$APP_DIR/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
-# Zip with Unix permissions preserved (use cd to get clean paths)
-cd /tmp
-zip -r -y "$RELEASES_DIR/EveLens-${CHANNEL}-osx-arm64.app.zip" EveLens.app
+# Hand the bundle to release.ps1 at a Windows-visible path: signing
+# (rcodesign, Windows side) and zipping (zip-macapp.py assigns unix modes by
+# rule) both happen there now. Zipping here would bake in a signature-less app.
+OUT_DIR="/mnt/d/evemon-main/publish/macapp"
+rm -rf "$OUT_DIR"
+mkdir -p "$OUT_DIR"
+cp -r "$APP_DIR" "$OUT_DIR/EveLens.app"
 rm -rf "$APP_DIR"
-echo "=== macOS .app bundle created ==="
+echo "=== macOS .app bundle created at $OUT_DIR/EveLens.app ==="

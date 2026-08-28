@@ -6,6 +6,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Serialization.Hub;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
 using FluentAssertions;
@@ -190,6 +191,123 @@ namespace EveLens.Tests.ViewModels
             SkinrMarketViewModel.Matches(entry, "crimson").Should().BeTrue();
             SkinrMarketViewModel.Matches(entry, "CRIMSON").Should().BeTrue();
             SkinrMarketViewModel.Matches(entry, "azure").Should().BeFalse();
+        }
+
+        // --- hub catalog identity (#139: the per-client identify walk) -------------
+
+        private static HubDesignInfo CatalogInfo(
+            string id, string name = "Moon Knight", string creator = "Randejo",
+            int tier = 8) => new()
+        {
+            Id = id,
+            Name = name,
+            Hull = "Charon",
+            Klass = "Freighter",
+            Faction = "Caldari",
+            Creator = creator,
+            Tier = tier
+        };
+
+        [Fact]
+        public void CatalogIdentity_FillsNameTierCreator_UntilRecipeArrives()
+        {
+            var entry = new SkinrMarketEntry("abc123def456789");
+            entry.IsIdentified.Should().BeFalse();
+            entry.DisplayName.Should().StartWith("abc123def456");
+
+            entry.SetCatalog(CatalogInfo("abc123def456789"), 20185);
+
+            entry.IsIdentified.Should().BeTrue();
+            entry.DisplayName.Should().Be("Moon Knight");
+            entry.TierLevel.Should().Be(8);
+            entry.CreatorName.Should().Be("Randejo");
+            entry.ShipTypeId.Should().Be(20185);   // the resolved hull drives filters/tree
+        }
+
+        [Fact]
+        public void CatalogIdentity_RecipeWins_WhenBothPresent()
+        {
+            var entry = new SkinrMarketEntry("abc");
+            entry.SetCatalog(CatalogInfo("abc", name: "Catalog Name", tier: 3), 20185);
+            entry.Recipe = new EsiSkinrRecipe
+            {
+                Id = "abc",
+                Name = "Recipe Name",
+                Tier = new EsiSkinrTier { Level = 9 }
+            };
+
+            entry.DisplayName.Should().Be("Recipe Name");
+            entry.TierLevel.Should().Be(9);
+        }
+
+        [Fact]
+        public void ApplyCatalog_StampsOnlyCatalogLessEntries()
+        {
+            var stamped = new SkinrMarketEntry("known");
+            var already = new SkinrMarketEntry("already");
+            var original = CatalogInfo("already", name: "Original");
+            already.SetCatalog(original, 20185);
+            var missing = new SkinrMarketEntry("missing");
+
+            var catalog = new Dictionary<string, HubDesignInfo>
+            {
+                ["known"] = CatalogInfo("known"),
+                ["already"] = CatalogInfo("already", name: "Replacement"),
+            };
+            SkinrMarketViewModel.ApplyCatalog(
+                new[] { stamped, already, missing }, catalog);
+
+            stamped.Catalog.Should().NotBeNull();
+            already.Catalog.Should().BeSameAs(original);
+            missing.Catalog.Should().BeNull();
+        }
+
+        [Fact]
+        public void BuildSections_CatalogIdentifiedEntries_AreNotPending()
+        {
+            var identified = new SkinrMarketEntry("a");
+            identified.SetCatalog(CatalogInfo("a"), 20185);
+            var pending = new SkinrMarketEntry("b");
+
+            var sections = SkinrMarketViewModel.BuildSections(
+                new[] { identified, pending },
+                e => e.Catalog?.Klass ?? string.Empty,
+                e => e.Catalog?.Faction ?? string.Empty,
+                e => e.Catalog?.Hull ?? string.Empty);
+
+            sections.Should().HaveCount(2);
+            sections[0].Group.Should().Be("Freighter");
+            sections[0].Designs.Should().ContainSingle(d => d.SkinrId == "a");
+            sections[^1].Group.Should().Be("…");
+            sections[^1].Designs.Should().ContainSingle(d => d.SkinrId == "b");
+        }
+
+        [Fact]
+        public void HubCatalog_Parse_ReadsTheCollectorShape()
+        {
+            const string json = """
+            {"generated":"2026-08-27T00:00:00Z","designs":[
+              {"id":"abc","name":"In the Flow","hull":"Cerberus","klass":"Heavy Assault Cruiser",
+               "faction":"Caldari","creator":"Raspe","tier":8,"plex":420,"listings":2},
+              {"id":"","name":"junk without id"}
+            ]}
+            """;
+
+            var map = SkinrHubCatalog.Parse(json);
+
+            map.Should().NotBeNull();
+            map!.Should().HaveCount(1);
+            map["abc"].Name.Should().Be("In the Flow");
+            map["abc"].Klass.Should().Be("Heavy Assault Cruiser");
+            map["abc"].Tier.Should().Be(8);
+        }
+
+        [Fact]
+        public void HubCatalog_Parse_RefusesJunk()
+        {
+            SkinrHubCatalog.Parse("not json").Should().BeNull();
+            SkinrHubCatalog.Parse("{}").Should().BeNull();
+            SkinrHubCatalog.Parse("{\"designs\":[]}").Should().BeNull();
         }
     }
 }

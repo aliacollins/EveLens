@@ -164,6 +164,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             {
                 var changelogPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "CHANGELOG.md");
+                if (!File.Exists(changelogPath))
+                    changelogPath = EveLens.Common.Data.Datafile
+                        .FindInstallResource("CHANGELOG.md") ?? changelogPath;
 
                 if (!File.Exists(changelogPath))
                     return Array.Empty<ReleaseSection>();

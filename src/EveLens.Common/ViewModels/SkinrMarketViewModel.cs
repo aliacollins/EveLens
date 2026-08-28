@@ -15,6 +15,7 @@ using EveLens.Common.Data;
 using EveLens.Common.Enumerations;
 using EveLens.Common.Models;
 using EveLens.Common.Serialization.Esi;
+using EveLens.Common.Serialization.Hub;
 using EveLens.Common.Service;
 using EveLens.Common.Services;
 
@@ -49,6 +50,58 @@ namespace EveLens.Common.ViewModels
 
         /// <summary>Fires on the loading thread whenever entries or their recipes change.</summary>
         public event Action? MarketChanged;
+
+        /// <summary>
+        /// Consent gate for the hub catalog — the same remembered community-previews
+        /// choice that gates the thumbnail shelf (one yes covers "talk to the EveLens
+        /// hub"). Null or false means the catalog is never fetched and identification
+        /// falls back to the client-side ESI recipe walk.
+        /// </summary>
+        public Func<bool>? CommunityCatalog { get; set; }
+
+        /// <summary>
+        /// Fetches the hub catalog and stamps identity onto current entries — called
+        /// from LoadAsync, and again if the user grants consent with the pane open.
+        /// Safe to call repeatedly; a null catalog is a no-op.
+        /// </summary>
+        public async Task ApplyCatalogAsync()
+        {
+            if (CommunityCatalog?.Invoke() != true)
+                return;
+            var catalog = await SkinrHubCatalog.TryGetAsync().ConfigureAwait(false);
+            if (catalog == null)
+                return;
+            lock (_entries)
+            {
+                ApplyCatalog(_entries, catalog);
+            }
+            MarketChanged?.Invoke();
+        }
+
+        /// <summary>The stamping half, pure and testable: entries the catalog knows
+        /// gain identity; entries already stamped are left alone. Hull names resolve
+        /// to type ids here — once per unique hull, on the loading thread — because
+        /// GetItemByName is a linear SDE scan and the UI thread must never pay it.</summary>
+        internal static void ApplyCatalog(
+            IEnumerable<SkinrMarketEntry> entries,
+            IReadOnlyDictionary<string, HubDesignInfo> catalog)
+        {
+            var hullIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (SkinrMarketEntry entry in entries)
+            {
+                if (entry.Catalog != null ||
+                    !catalog.TryGetValue(entry.SkinrId, out HubDesignInfo? info))
+                    continue;
+                string hull = info!.Hull ?? string.Empty;
+                if (!hullIds.TryGetValue(hull, out int typeId))
+                {
+                    Item? item = hull.Length == 0 ? null : StaticItems.GetItemByName(hull);
+                    typeId = item == null || item == Item.UnknownItem ? 0 : item.ID;
+                    hullIds[hull] = typeId;
+                }
+                entry.SetCatalog(info, typeId);
+            }
+        }
 
         /// <summary>True while the listing feed itself is loading (not the recipe walk).</summary>
         public bool IsLoading { get; private set; }
@@ -190,6 +243,11 @@ namespace EveLens.Common.ViewModels
                 TotalListings = listings.Count;
                 HasLoaded = true;
 
+                // One GET identifies (nearly) everything before the first paint; the
+                // recipe walk below then only warms full recipes for rendering
+                // instead of being the thing the whole grid waits on (#139).
+                await ApplyCatalogAsync().ConfigureAwait(false);
+
                 _recipeWalk?.Cancel();
                 _recipeWalk = new CancellationTokenSource();
                 _ = WalkRecipesAsync(_recipeWalk.Token);
@@ -274,7 +332,7 @@ namespace EveLens.Common.ViewModels
             var pending = new List<SkinrMarketEntry>();
             foreach (SkinrMarketEntry entry in entries)
             {
-                if (entry.Recipe != null)
+                if (entry.IsIdentified)
                     resolved.Add(entry);
                 else
                     pending.Add(entry);
@@ -298,6 +356,20 @@ namespace EveLens.Common.ViewModels
             if (pending.Count > 0)
                 sections.Add(("…", string.Empty, pending));
             return sections;
+        }
+
+        /// <summary>Entries with no identity from ANY source (recipe or catalog) —
+        /// the count the pane's "identifying N designs…" label reports. With the hub
+        /// catalog on, this is zero from the first paint and the label never shows.</summary>
+        public int UnidentifiedCount
+        {
+            get
+            {
+                lock (_entries)
+                {
+                    return _entries.Count(e => !e.IsIdentified);
+                }
+            }
         }
 
         /// <summary>Entries still waiting on their recipe — surfaced so the pane can say
@@ -461,7 +533,7 @@ namespace EveLens.Common.ViewModels
             List<SkinrMarketEntry> resolved;
             lock (_entries)
             {
-                resolved = _entries.Where(e => e.Recipe != null).ToList();
+                resolved = _entries.Where(e => e.IsIdentified).ToList();
             }
             return resolved
                 .GroupBy(e => e.ClassName)
@@ -531,13 +603,37 @@ namespace EveLens.Common.ViewModels
         /// <summary>Set when the recipe route errored — the walk moves on.</summary>
         public bool RecipeFailed { get; internal set; }
 
+        /// <summary>The hub catalog's pre-resolved identity for this design, when the
+        /// community catalog is enabled and knows it. The recipe, once fetched, always
+        /// wins — the catalog is a head start, not an authority.</summary>
+        public HubDesignInfo? Catalog { get; private set; }
+
+        // The catalog names the hull ("Cerberus"); ApplyCatalog resolves that back
+        // to a type id (once per unique hull, off the UI thread) so ship filters,
+        // tree hull nodes and stock hull art all work before any recipe arrives.
+        private int _catalogTypeId;
+
+        internal void SetCatalog(HubDesignInfo info, int shipTypeId)
+        {
+            Catalog = info;
+            _catalogTypeId = shipTypeId;
+        }
+
+        /// <summary>True once anything (recipe or catalog) can say what this design
+        /// IS — the section test. Unidentified entries wait in the "…" tail.</summary>
+        public bool IsIdentified => Recipe != null || Catalog != null;
+
         public string DisplayName => !string.IsNullOrEmpty(Recipe?.Name)
             ? Recipe!.Name
-            : SkinrId.Length > 12 ? SkinrId[..12] + "…" : SkinrId;
+            : !string.IsNullOrEmpty(Catalog?.Name)
+                ? Catalog!.Name
+                : SkinrId.Length > 12 ? SkinrId[..12] + "…" : SkinrId;
 
-        public int ShipTypeId => Recipe?.ShipTypeId ?? 0;
+        public int ShipTypeId => Recipe?.ShipTypeId > 0
+            ? Recipe!.ShipTypeId
+            : _catalogTypeId;
 
-        public int TierLevel => Recipe?.Tier?.Level ?? 0;
+        public int TierLevel => Recipe?.Tier?.Level ?? Catalog?.Tier ?? 0;
 
         public string HullName
         {
@@ -590,10 +686,13 @@ namespace EveLens.Common.ViewModels
             get
             {
                 long id = Recipe?.CreatorId ?? 0;
-                if (id <= 0)
-                    return string.Empty;
-                string name = EveIDToName.GetIDToName(id);
-                return name == EveLensConstants.UnknownText ? string.Empty : name;
+                if (id > 0)
+                {
+                    string name = EveIDToName.GetIDToName(id);
+                    if (name != EveLensConstants.UnknownText)
+                        return name;
+                }
+                return Catalog?.Creator ?? string.Empty;
             }
         }
     }

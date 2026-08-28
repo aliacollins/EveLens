@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Paragon Hub no longer freezes EveLens while it works** -- Opening the Hub used to build a card for every one of ~3,400 market designs at once, then rebuild all of them every few hundred milliseconds while designs were being identified (one ESI answer per 150 ms, each one triggering a full rebuild) -- and since the whole app shares one UI thread, EveLens itself went unresponsive for minutes. The grid is now virtualized (only the cards on screen exist), status-line updates no longer touch the grid at all, and a freshly rendered thumbnail slots into its one card in place (#139).
+- **The stage's loading card stays off the Paragon Hub** -- Opening the Hub while a collection was still loading painted "Preparing N ship parts..." over the marketplace, narrating a stage the user couldn't see. The overlay now belongs to the stage alone and comes back only if you return mid-load.
+
+### Changed
+
+- **The macOS app is now code-signed and notarized** -- Apple's Gatekeeper opens EveLens with a double-click instead of a "damaged or unidentified developer" warning. The build also became a single-file bundle (one executable plus native libraries), which is what makes a valid signature possible; datafiles moved to the bundle's Resources folder where macOS expects them.
+- **The Hub identifies every design in one request** -- Instead of each install walking ESI recipes one-by-one to learn which ship each market design belongs to ("identifying 2,550 designs..." for minutes), the Hub now fetches the EveLens hub's pre-resolved catalog in a single request: names, hulls, classes, factions, creators and tiers arrive before the first paint. Covered by the same community-previews consent as the thumbnail shelf; declining it keeps the old client-side walk.
+- **Community preview images load like a website now** -- Cards pull their ready-made thumbnails from the shelf a handful at a time in parallel, instead of waiting in the GPU renderer's one-at-a-time queue behind designs that actually need rendering. A full grid fills in seconds; the local renderer only works on designs the shelf doesn't have.
+
 ## [1.5.0-beta.12] - 2026-08-27
 
 ### Fixed
