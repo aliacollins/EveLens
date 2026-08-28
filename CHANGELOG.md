@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-08-28
 - **Carbon & Trinity, now in EveLens** -- CCP's open-sourced game engine renders everything in the new SKINR Studio: your designs in 3D, Photo Op fleet portraits, and the entire Paragon Hub marketplace as real renders
 - **macOS, first class** -- code-signed, notarized, and self-updating in place; no more Gatekeeper warnings, no more manual downloads
 - **.NET 10 and Avalonia 12** -- the whole app moved to the newest runtime and UI framework, on all three platforms
@@ -19,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Solved: macOS updates that download but never install.** The root cause of the "version never changes" reports: when EveLens is placed in Applications without a Finder drag (Terminal move, unzip in place, or run straight from Downloads), macOS Gatekeeper silently runs a read-only mirror of the app -- App Translocation -- and the updater's final swap is refused every time, invisibly, after the app has already exited. EveLens now detects this state at startup and offers a one-click repair (moves itself properly into Applications, clears the quarantine flag, relaunches); the Download & Restart button also refuses honestly with an explanation instead of pretending to succeed. New installs avoid the trap entirely via the .dmg.
 
 - An update that fails to install now says so, and why, instead of quietly leaving you on the old version. Previously a failed download or a refused install just reset the Download & Restart button, so an update that never happened looked exactly like one that did -- the report you would have had to send us contained no more information than "the version didn't change". Velopack's own account of the update now goes into the EveLens trace log alongside everything else, which matters most on macOS, where the app replaces itself in place and the only visible evidence was the version number. Because these updater messages contain file paths and a per-install identifier, the OS account name and any GUIDs are scrubbed from them before they reach the trace log or the error dialog -- nothing personal ends up in what you share with us.
-
 ## [1.5.0] - 2026-08-28
 
 **The SKINR update -- the biggest release in EveLens history**, packed with new features, engineering overhauls, and community-driven fixes. The headline: EveLens now renders your actual SKIN designs on your actual ships, in real 3D, using **CCP's own Carbon Engine and Trinity graphics engine** -- the same renderer EVE Online itself uses, which CCP open-sourced under MIT. A game engine, running inside a character tool. Around it, the four biggest changes EveLens has ever shipped at once:

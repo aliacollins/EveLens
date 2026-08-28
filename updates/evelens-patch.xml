@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-28</date>
+      <version>1.5.1.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.1</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.1/EveLens-install-1.5.1.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.1
+
+macOS: DMG installer, translocation self-heal, update diagnostics]]></message>
+    </release>
+    <release>
+      <date>2026-08-28</date>
       <version>1.5.0.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.0</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.0/EveLens-install-1.5.0.exe</autopatchurl>
