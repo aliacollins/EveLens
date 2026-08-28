@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-28</date>
+      <version>1.5.0.19</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.19
+
+macOS translocation self-heal, honest update pre-flight, DMG installer]]></message>
+    </release>
+    <release>
+      <date>2026-08-28</date>
       <version>1.5.0.18</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ SKINR first-run walkthrough, live collection data, loader everywhere; app-wide s
       <message><![CDATA[EveLens 1.5.0-beta.10
 
 SKINR landing + monitored SKINR data, priority feature, Doctrine clipboard/frozen panes, SDE 3480926 (#135 #136 #137 #139)]]></message>
-    </release>
-    <release>
-      <date>2026-08-26</date>
-      <version>1.5.0.9</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.9
-
-Plan editor order fix, priority submenu, Doctrine Designer improvements (#135 #136 #137)]]></message>
     </release>
   </releases>
   <datafiles>
