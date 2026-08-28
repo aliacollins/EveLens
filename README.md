@@ -23,16 +23,15 @@ It runs natively on **Windows, Linux, and macOS** (signed and notarized), built 
 
 **[Download EveLens](https://github.com/aliacollins/evelens/releases/latest)**
 
-| Platform | Format | Requirements |
-|----------|--------|-------------|
-| **Windows (Installer)** | `EveLens-stable-Setup.exe` | None -- .NET runtime is bundled |
-| **Windows (Portable)** | `EveLens-stable-Portable.zip` | None -- .NET runtime is bundled |
-| **Linux (AppImage)** | `EveLens-*-linux-x86_64.AppImage` | None -- single file, just run |
-| **Linux (Portable)** | `EveLens-*-linux-x64.zip` | None -- .NET runtime is bundled |
-| **macOS (App)** | `EveLens-*-osx-arm64.app.zip` | None -- extract and run |
-| **macOS (Portable)** | `EveLens-*-osx-arm64.zip` | None -- .NET runtime is bundled |
+One download per platform -- everything is self-contained, no .NET runtime install needed:
 
-The Windows installer is **code-signed** by a verified Certum certificate.
+| Platform | Format |
+|----------|--------|
+| **Windows** | `EveLens-stable-Setup.exe` -- installer with shortcuts and auto-updates |
+| **macOS (Apple Silicon)** | `EveLens-*-osx-arm64.dmg` -- drag to Applications |
+| **Linux** | `EveLens-*-linux-x86_64.AppImage` -- single file, just run |
+
+The Windows installer is **code-signed** by a verified Certum certificate; the macOS app and disk image are **signed and notarized by Apple**.
 
 ---
 
@@ -42,7 +41,7 @@ The Windows installer is **code-signed** by a verified Certum certificate.
 
 Download and run `EveLens-stable-Setup.exe`. The installer handles everything -- .NET runtime, shortcuts, auto-updates. The binary is code-signed, so Windows SmartScreen won't block it.
 
-### Linux (AppImage -- Recommended)
+### Linux (AppImage)
 
 ```bash
 # Download the AppImage from the release page, then:
@@ -52,24 +51,15 @@ chmod +x EveLens-*-linux-x86_64.AppImage
 
 That's it. Single file, no install, no dependencies. Works on Ubuntu, Fedora, Arch, and most distros.
 
-### Linux (Portable)
-
-```bash
-unzip EveLens-*-linux-x64.zip -d evelens
-chmod +x evelens/EveLens
-./evelens/EveLens
-```
-
-No separate .NET runtime install needed -- releases are self-contained.
-
 ### macOS (Apple Silicon)
 
-1. Download `EveLens-*-osx-arm64.app.zip` from the release page
-2. Extract the zip -- you'll get `EveLens.app`
-3. Drag `EveLens.app` to your Applications folder (or run it from anywhere -- it's portable)
-4. Double-click to open. That's it.
+1. Download `EveLens-*-osx-arm64.dmg` from the release page
+2. Open it and drag **EveLens** onto the **Applications** shortcut
+3. Launch EveLens from Applications. That's it.
 
-**EveLens is code-signed and notarized by Apple** as of 1.5.0 -- Gatekeeper opens it like any Mac app. No Terminal, no `xattr`, no right-click workarounds. And the app **updates itself in place** from here on: Check for Updates downloads the new version, swaps the .app wherever you keep it, and relaunches.
+**EveLens is code-signed and notarized by Apple** -- Gatekeeper opens it like any Mac app. No Terminal, no `xattr`, no right-click workarounds. And the app **updates itself in place**: Check for Updates downloads the new version, swaps the .app, and relaunches.
+
+The drag-to-Applications step matters more than it looks: it is how macOS knows you installed the app on purpose, which is what allows self-updating to work. (Installing by Terminal or unzip used to break updates silently -- 1.5.1 detects and repairs that state automatically.)
 
 > **Coming from EVEMon?** We recommend a fresh start. EveLens is a complete rewrite -- your EVE characters are tied to your ESI tokens, not your old settings. Add your characters through the ESI login and you're good to go.
 
@@ -177,7 +167,15 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.5.0
+## What's New in 1.5.1
+
+- **macOS .dmg installer** -- drag to Applications like every Mac app; signed and notarized. Now the one macOS download.
+- **Solved: mac updates that downloaded but never installed** -- apps placed in Applications without a Finder drag were silently running from a read-only Gatekeeper copy (App Translocation) where updates can never apply. EveLens now detects this at startup and repairs it with one click.
+- **Updates fail loudly now** -- a failed download or install says so, with the reason, instead of quietly leaving you on the old version.
+
+Full details: [CHANGELOG.md](CHANGELOG.md)
+
+## What Was New in 1.5.0
 
 - **The SKINR Studio** -- your SKIN designs on your ships, rendered in real 3D by EVE's own engine; five environments, Photo Op fleet shots, one-time 3D engine download (community preview images without it)
 - **Paragon Hub browser** -- every marketplace design as a real render, side by side, with instant pre-resolved identities and preview images
@@ -186,20 +184,6 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 - **Overview rework** -- drag-to-group, sort and density controls, group totals, saved comparisons
 - **macOS first class** -- signed, notarized, and self-updating in place; Linux gets update checks too
 - **.NET 10** and EVE static data build 3480926
-
-Full details: [CHANGELOG.md](CHANGELOG.md)
-
-## What Was New in 1.4.0
-
-- **Doctrine Designer** -- create shared skill templates, assign characters, compare training times, generate personal plans (Ctrl+G)
-- **Chinese language (简体中文)** -- full UI + 50K SDE translations with CCP official game terms
-- **CSV export** -- export skills and queue from the Skills and Queue tabs
-- **Skill Farm sort** -- click column headers to sort, "Add All Eligible" for batch adding
-- **Plan editor overhaul** -- whole-row drag (no grip dots), scroll offset fix, attribute group headers, specific prereq error messages
-- **macOS fixes** -- Cmd+W closes plan windows, menu title fixed, Unicode font fallback
-- **Windows icon fix** -- taskbar icon no longer reverts to default
-- **Attribute optimizer** -- "Reset to Current" and manual adjustments now produce correct results
-- **Website download links** -- no longer 404 between releases
 
 Full details: [CHANGELOG.md](CHANGELOG.md)
 
@@ -223,6 +207,7 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **[1.5.1](https://github.com/aliacollins/EveLens/releases/tag/v1.5.1)** | August 28, 2026 | macOS .dmg installer, App Translocation self-heal (fixes silently-failing mac updates), loud update failures with PII-scrubbed updater log |
 | **[1.5.0](https://github.com/aliacollins/EveLens/releases/tag/v1.5.0)** | August 28, 2026 | The SKINR Studio (CCP's Carbon/Trinity engine in EveLens), Paragon Hub browser, Photo Op, macOS signed + self-updating, .NET 10 + Avalonia 12, Doctrine Designer round two, Plan Editor rebuild |
 | **[1.4.1](https://github.com/aliacollins/EveLens/releases/tag/v1.4.1)** | August 10, 2026 | Korean language, PI overhaul, community fix train, SDE 3458726 |
 | **[1.3.0](https://github.com/aliacollins/EveLens/releases/tag/v1.3.0)** | May 10, 2026 | Doctrine Designer, Chinese language, CSV export, Skill Farm sort, plan editor overhaul |

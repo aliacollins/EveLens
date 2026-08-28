@@ -218,16 +218,12 @@ try {
         Write-Warning "AppImage creation failed -- zip will be uploaded instead."
     }
 
-    # ── macOS: .app bundle + raw zip ──
+    # ── macOS: .app bundle → DMG ──
+    # One human-facing mac download: the DMG. The raw osx zip and .app.zip used
+    # to ship alongside it, which meant three mac files on every release page —
+    # and the zips invite exactly the Terminal-install habits that cause
+    # Gatekeeper App Translocation. Velopack machinery (nupkg + feed) still rides.
     Write-Host "`n=== Creating macOS .app bundle ===" -ForegroundColor Cyan
-    $macZip = $OtherPlatforms[1].Zip
-    if (Test-Path $macZip) { Remove-Item $macZip -Force }
-    Compress-Archive -Path "$($OtherPlatforms[1].Dir)/*" -DestinationPath $macZip
-    Write-Host "  Zipped osx-arm64." -ForegroundColor Green
-
-    # Build .app bundle via WSL to preserve Unix permissions and executable bit
-    $appBundleZip = "releases/EveLens-${Channel}-osx-arm64.app.zip"
-    if (Test-Path $appBundleZip) { Remove-Item $appBundleZip -Force }
 
     # make-macapp.sh is a real source file taking (channel, version) as arguments.
     # It used to be GENERATED here with the version baked in, which dirtied the
@@ -256,8 +252,6 @@ try {
                 -AppBundle $appBundle
             if ($LASTEXITCODE -ne 0) { throw "macOS signing/notarization failed." }
         }
-        py -3.12 (Join-Path $PSScriptRoot 'release/zip-macapp.py') $appBundle $appBundleZip 'EveLens.app'
-        if ($LASTEXITCODE -ne 0) { throw "zip-macapp failed." }
         # The Velopack feed: full nupkg (carrying the SIGNED app) + the
         # releases.{channel}-osx.json the in-app GithubSource reads. Both must
         # ride the same GitHub release as each other.
@@ -289,7 +283,7 @@ try {
             Write-Warning "DMG creation failed -- release continues without it (zip still ships)."
         }
     } else {
-        Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."
+        Write-Warning "macOS .app bundle creation failed -- this release ships without macOS artifacts."
     }
 }
 finally {
@@ -302,44 +296,31 @@ finally {
 Write-Host "`n=== Artifacts ===" -ForegroundColor Cyan
 $allFiles = @()
 
-# Windows (Velopack, signed)
-Get-ChildItem $WinPlatform.Out | ForEach-Object {
+# Windows (Velopack, signed). Portable.zip is a vpk byproduct we don't ship:
+# one human download per platform (Setup.exe), no parallel archive flavors.
+Get-ChildItem $WinPlatform.Out |
+    Where-Object { $_.Name -notlike '*-Portable.zip' } | ForEach-Object {
     $sizeMB = [math]::Round($_.Length / 1MB, 1)
     Write-Host "  $($_.Name) ($sizeMB MB) (signed)" -ForegroundColor Green
     $allFiles += $_.FullName
 }
 
-# Linux zip
-$file = Get-Item $OtherPlatforms[0].Zip
-$sizeMB = [math]::Round($file.Length / 1MB, 1)
-Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
-$allFiles += $file.FullName
-
-# Linux AppImage (if created)
+# Linux AppImage (the one Linux download; the raw zip ships only as a
+# fallback when AppImage creation failed, so Linux is never left with nothing)
 $appImageFile = "releases/EveLens-${Channel}-linux-x86_64.AppImage"
 if (Test-Path $appImageFile) {
     $file = Get-Item $appImageFile
     $sizeMB = [math]::Round($file.Length / 1MB, 1)
     Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
     $allFiles += $file.FullName
-}
-
-# macOS zip
-$file = Get-Item $OtherPlatforms[1].Zip
-$sizeMB = [math]::Round($file.Length / 1MB, 1)
-Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
-$allFiles += $file.FullName
-
-# macOS .app bundle
-$appBundleZip = "releases/EveLens-${Channel}-osx-arm64.app.zip"
-if (Test-Path $appBundleZip) {
-    $file = Get-Item $appBundleZip
+} elseif (Test-Path $OtherPlatforms[0].Zip) {
+    $file = Get-Item $OtherPlatforms[0].Zip
     $sizeMB = [math]::Round($file.Length / 1MB, 1)
-    Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+    Write-Host "  $($file.Name) ($sizeMB MB) (AppImage fallback)" -ForegroundColor Yellow
     $allFiles += $file.FullName
 }
 
-# macOS .dmg installer (the recommended download — Finder drag-install
+# macOS .dmg installer (the one macOS download — Finder drag-install
 # prevents Gatekeeper App Translocation)
 $dmgArtifact = "releases/EveLens-${Channel}-osx-arm64.dmg"
 if (Test-Path $dmgArtifact) {
