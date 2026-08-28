@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-28</date>
+      <version>1.5.0.15</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.15
+
+macOS signing entitlements fix; Velopack update-path verification]]></message>
+    </release>
+    <release>
+      <date>2026-08-28</date>
       <version>1.5.0.14</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Beta 7: status strip speaks one human sentence, never file paths]]></message>
       <message><![CDATA[EveLens 1.5.0-beta.6
 
 Beta 6: SKINR card art decodes once -- fixes the Mac marketplace hang]]></message>
-    </release>
-    <release>
-      <date>2026-08-26</date>
-      <version>1.5.0.5</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.5
-
-Beta 5: Mac SKINR usable without the renderer; macOS/Linux update checks]]></message>
     </release>
   </releases>
   <datafiles>
