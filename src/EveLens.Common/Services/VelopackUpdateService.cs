@@ -6,6 +6,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using EveLens.Common.Extensions;
 using EveLens.Core.Interfaces;
 using Velopack.Sources;
 using VelopackUpdateManager = Velopack.UpdateManager;
@@ -24,6 +25,7 @@ namespace EveLens.Common.Services
         private static readonly TimeSpan InitialDelay = TimeSpan.FromSeconds(15);
 
         private readonly VelopackUpdateManager _manager;
+        private readonly VelopackTraceLogger _velopackLog = AppServices.VelopackLogger;
         private readonly IEventAggregator? _eventAggregator;
         private readonly IDispatcher? _dispatcher;
         private CancellationTokenSource? _cts;
@@ -88,8 +90,27 @@ namespace EveLens.Common.Services
             _dispatcher = dispatcher;
 
             var source = new GithubSource(GitHubRepoUrl, null, prerelease: true);
+
             _manager = new VelopackUpdateManager(source);
+
+            // Velopack routes its logging through the locator the startup hook
+            // installed. Attach there if that hook did not run (tests, dev builds) so
+            // the account of an update is never silently discarded — that missing
+            // account is what made a failed macOS in-place update undiagnosable.
+            if (!Velopack.Locators.VelopackLocator.IsCurrentSet)
+                AppServices.TraceService?.Trace(
+                    "VelopackUpdate: no Velopack locator installed — update logging unavailable");
         }
+
+        /// <summary>
+        /// Why the last download or apply failed, or null if nothing has failed.
+        /// Shown to the user rather than swallowed, so an update that cannot install
+        /// says so instead of leaving the app quietly on the old version.
+        /// </summary>
+        public string? LastError { get; private set; }
+
+        /// <summary>The retained tail of Velopack's own log, for failure reports.</summary>
+        public string UpdateLogTail() => _velopackLog.RecentLog();
 
         /// <summary>
         /// Starts the background update check loop. Call once at app startup.
@@ -163,10 +184,14 @@ namespace EveLens.Common.Services
         public async Task<bool> DownloadUpdateAsync(Action<int>? progress = null)
         {
             if (_pendingUpdate == null)
+            {
+                LastError = "No update has been found to download.";
                 return false;
+            }
 
             try
             {
+                LastError = null;
                 AppServices.TraceService?.Trace(
                     $"VelopackUpdate: Downloading {_pendingUpdate.TargetFullRelease?.Version}...");
 
@@ -177,7 +202,12 @@ namespace EveLens.Common.Services
             }
             catch (Exception ex)
             {
-                AppServices.TraceService?.Trace($"VelopackUpdate: Download failed: {ex.Message}");
+                // Redacted: exception messages and stack traces carry absolute paths
+                // (and thus the OS account name), and both this trace line and LastError
+                // end up in places users share — the trace log and the failure dialog.
+                LastError = ex.Message.RedactUserName();
+                AppServices.TraceService?.Trace(
+                    $"VelopackUpdate: Download failed: {ex.ToString().RedactUserName()}");
                 return false;
             }
         }
@@ -185,13 +215,37 @@ namespace EveLens.Common.Services
         /// <summary>
         /// Applies the downloaded update and restarts the app.
         /// </summary>
-        public void ApplyAndRestart()
+        /// <returns>
+        /// Never returns on success — Velopack hands off to the updater and exits the
+        /// process. A return of false therefore means the handoff itself failed, and
+        /// <see cref="LastError"/> says why.
+        /// </returns>
+        public bool ApplyAndRestart()
         {
             if (_pendingUpdate?.TargetFullRelease == null)
-                return;
+            {
+                LastError = "No downloaded update is ready to apply.";
+                return false;
+            }
 
-            AppServices.TraceService?.Trace("VelopackUpdate: Applying update and restarting...");
-            _manager.ApplyUpdatesAndRestart(_pendingUpdate.TargetFullRelease);
+            try
+            {
+                LastError = null;
+                AppServices.TraceService?.Trace("VelopackUpdate: Applying update and restarting...");
+                _manager.ApplyUpdatesAndRestart(_pendingUpdate.TargetFullRelease);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Reaching here means the updater never took over: it could not be
+                // launched, or refused the package. Silence here is what left macOS
+                // users staring at an unchanged version number. LastProblem is already
+                // redacted by VelopackTraceLogger; the raw exception is not.
+                LastError = _velopackLog.LastProblem ?? ex.Message.RedactUserName();
+                AppServices.TraceService?.Trace(
+                    $"VelopackUpdate: Apply failed: {ex.ToString().RedactUserName()}");
+                return false;
+            }
         }
 
         /// <summary>

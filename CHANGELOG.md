@@ -5,6 +5,70 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- An update that fails to install now says so, and why, instead of quietly leaving you on the old version. Previously a failed download or a refused install just reset the Download & Restart button, so an update that never happened looked exactly like one that did -- the report you would have had to send us contained no more information than "the version didn't change". Velopack's own account of the update now goes into the EveLens trace log alongside everything else, which matters most on macOS, where the app replaces itself in place and the only visible evidence was the version number. Because these updater messages contain file paths, the OS account name is scrubbed from them before they reach the trace log or the error dialog -- nothing personal ends up in what you share with us.
+
+## [1.5.0] - 2026-08-28
+
+**The SKINR update -- the biggest release in EveLens history**, packed with new features, engineering overhauls, and community-driven fixes. The headline: EveLens now renders your actual SKIN designs on your actual ships, in real 3D, using **CCP's own Carbon Engine and Trinity graphics engine** -- the same renderer EVE Online itself uses, which CCP open-sourced under MIT. A game engine, running inside a character tool. Around it, the four biggest changes EveLens has ever shipped at once:
+
+- **Carbon & Trinity, now in EveLens** -- CCP's open-sourced game engine renders everything in the new SKINR Studio: your designs in 3D, Photo Op fleet portraits, and the entire Paragon Hub marketplace as real renders
+- **macOS, first class** -- code-signed, notarized, and self-updating in place; no more Gatekeeper warnings, no more manual downloads
+- **.NET 10 and Avalonia 12** -- the whole app moved to the newest runtime and UI framework, on all three platforms
+- **Doctrine Designer, round two** -- a full fleet-readiness workbench, built with the community issue by issue
+
+Everything below shipped and hardened across seventeen betas.
+
+### The SKINR Studio
+
+- **Your designs, in real 3D** -- rendered by Trinity, the engine New Eden runs on, so every nanocoating, every reflection, every running light is exactly what the game shows. The same hull, camera and lighting for every design: you judge the SKIN, not the screenshot. Five environments: CCP's own studio, a real station hangar, cycling nebulas, hard sunlight, and a beauty pass. (Supercapitals skip the hangar -- a titan doesn't fit in a station bay, in the game or here.)
+- **The Paragon Hub, browsable** -- every design on EVE's SKIN marketplace as a real render, side by side. Ship, class, faction, creator and tier arrive instantly, and ready-made preview images fill the grid in seconds. One opt-in consent covers both.
+- **Photo Op** -- assemble your own ships into a fleet formation around your primary and frame the shot: your Rifter escorted by your own battleships, every hull wearing its own SKIN. The screenshot you always wanted the game to take.
+- **A one-time engine download** -- the 3D renderer is a separate add-on you install once; without it, everything still works through community preview images.
+- **A first-run walkthrough** -- the studio introduces itself: what it is, the one ESI permission it needs, and the optional renderer.
+
+### macOS
+
+- **Signed and notarized** -- Gatekeeper opens EveLens with a double-click.
+- **Self-updating** -- Check for Updates offers Download & Restart; the .app swaps in place wherever you keep it and relaunches on the new version. Linux gets background update checks too.
+
+### Doctrine Designer
+
+- **Import from anywhere** -- alliance .emp/.xml files, clipboard doctrine pings ("Skill Name V", roman or numeric), or any character's existing plan.
+- **Whole groups at once** -- one click subscribes every member of an Overview group.
+- **"Show only missing"** -- collapses the comparison to who still needs what, without the sea of green checkmarks.
+- **A way out** -- every character card has a remove button now; doctrines used to be a one-way door.
+- **Missing SP on every badge** -- the injector math, done: each character shows the skill points they're short of the whole doctrine.
+- **An aligned comparison** -- each character's summary card IS its column header now; cards, names and checkmarks scroll as one system, with frozen panes both ways.
+
+### The Plan Editor, rebuilt
+
+- **A schedule, not a spreadsheet** -- plans group into attribute segments with real header rows, gold "REMAP BEFORE" dividers mark exactly where each scheduled remap lands, and the header leads with total training time and a live optimization badge that re-judges itself whenever you reorder skills.
+- **Direct manipulation** -- click a level pip to retarget a skill, drag to reorder, select a skill for an inspector with prerequisites, what it unlocks, and a locate-in-plan jump.
+- **The Attribute Optimizer got honest** -- remaps are placed globally against your whole remap budget (including "no remap at all" when one saves nothing), a proposed-schedule timeline explains WHY each remap lands where it does, and an active booster is called out instead of reading as bad values.
+- **Skill priorities, made real** -- every plan row shows its priority, "Group by Priority" turns long plans into milestone bands, and prerequisites always stay ahead of the skills that need them.
+
+### Also in this release
+
+- **Overview, reworked** -- drag characters onto each other to form groups, sort and density controls, group totals at a glance, saved character comparisons, cards that scale with your font size.
+- **Skill search looks inside descriptions** -- find skills by what they do, not just what they're called.
+- **EVE static data build 3480926** (August 2026) -- all game data regenerated from CCP's Static Data Export.
+
+### Fixed
+
+- The Paragon Hub no longer freezes the app while it identifies designs; grids are virtualized and thumbnails slot in one card at a time.
+- Supercapitals no longer clip through the Hangar environment -- titans and supercarriers simply don't offer it, like the game itself.
+- Doctrine comparison ticks stay under their character to the last column, and scrollbars are visible at rest app-wide.
+- Skill Planner keeps your hand-made order, roman-numeral skill lists import, and Change Priority actually responds.
+- Dozens more community-reported fixes across the betas.
+
+### Thank you
+
+1.5.0 was shaped issue by issue with the people who use it: @odon (the Doctrine Designer's round two and the SKINR feedback that drove a dozen fixes), @Mordano (skill priorities and plan ordering), @jackmurray (who pushed for the .NET 10 move), @shawndibble (the Attribute Optimizer's remap-placement bug), @Dureiken (booster-aware optimization), @Kickunio and @Agge65 (the Overview's grouping and badge fixes), and everyone who filed, tested, and re-tested across seventeen betas. o7
+
 ## [1.5.0-beta.17] - 2026-08-28
 
 ### Fixed

@@ -15,6 +15,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Themes.Fluent;
 using EveLens.Common;
+using EveLens.Common.Services;
 using Velopack;
 using EveLens.Avalonia.Services;
 namespace EveLens.Avalonia
@@ -29,7 +30,10 @@ namespace EveLens.Avalonia
         {
             // Velopack startup hook — handles install/uninstall/update lifecycle events.
             // Must be the FIRST thing in Main() before any other code runs.
-            VelopackApp.Build().Run();
+            // The logger matters on macOS in particular: this hook is what runs in the
+            // freshly swapped-in app, so it is the only place that can testify whether
+            // an in-place update actually took effect.
+            VelopackApp.Build().SetLogger(AppServices.VelopackLogger).Run();
 
             // Install the process-wide exception backstop as early as possible, so any
             // exception on a background thread or unobserved Task is logged instead of
