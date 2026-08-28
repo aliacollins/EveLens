@@ -5,6 +5,12 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0-beta.15] - 2026-08-28
+
+### Fixed
+
+- **macOS: the app really opens now** -- beta.14's launch fix was correct but never got to run: the signed app died even earlier, inside the .NET runtime bootstrap ("Failed to create CoreCLR"). Notarization requires Apple's hardened runtime, and the hardened runtime forbids the JIT memory .NET needs unless the app is signed with the allow-jit entitlement -- which our Windows-side signing tool silently dropped when signing the bundle. The signing now attaches the entitlements and refuses to produce a build without them. (beta.14's macOS download was replaced in place with a corrected build the same day.)
+
 ## [1.5.0-beta.14] - 2026-08-28
 
 ### Changed
