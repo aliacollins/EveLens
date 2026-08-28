@@ -5,6 +5,12 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0-beta.16] - 2026-08-28
+
+### Added
+
+- **macOS: in-place auto-updates** -- the Mac app now updates itself the way the Windows app does: it checks in the background, and "Check for Updates" offers Download & Restart instead of a link to the download page. The update swaps the .app bundle in place (wherever you keep it -- Applications or Downloads both work) and relaunches. This build is the last one Mac users need to download by hand; from the next release onward the updater takes over.
+
 ## [1.5.0-beta.15] - 2026-08-28
 
 ### Fixed
