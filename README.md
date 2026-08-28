@@ -9,11 +9,11 @@
 
 ---
 
-## EveLens 1.4.1
+## What is EveLens?
 
-EveLens is a complete, ground-up rewrite of EVEMon -- the character planner EVE pilots relied on for nearly 20 years. What was once a Windows-only desktop app locked to legacy frameworks is now a modern, cross-platform tool built on **.NET 10** and **Avalonia UI**, running natively on **Windows, Linux, and macOS**.
+EveLens is a free, open-source **skill planner and character tracker for EVE Online** -- the modern successor to EVEMon, the tool EVE pilots relied on for nearly twenty years. It plans skill training, optimizes attribute remaps, monitors every character you own (100+ supported), compares fleets against doctrines, and -- as of 1.5.0 -- renders your **SKIN designs on your own ships in real 3D**, powered by **CCP's own Carbon Engine and Trinity graphics engine**, open-sourced by CCP and now running inside EveLens.
 
-This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 34,000 lines of modern code, with 2,100+ tests -- including an EVE Accuracy Suite checked against in-game values -- and support for **100+ characters** out of the box.
+It runs natively on **Windows, Linux, and macOS** (signed and notarized), built on **.NET 10** and **Avalonia 12**, backed by 2,400+ automated tests. Your data comes straight from CCP's ESI API with scopes you choose; nothing leaves your machine without an explicit opt-in.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -21,7 +21,7 @@ This isn't a patch or a fork update. It's 114,000 lines of WinForms reduced to 3
 
 ## Download
 
-**[Download EveLens 1.4.1](https://github.com/aliacollins/evelens/releases/latest)**
+**[Download EveLens](https://github.com/aliacollins/evelens/releases/latest)**
 
 | Platform | Format | Requirements |
 |----------|--------|-------------|
@@ -66,37 +66,19 @@ No separate .NET runtime install needed -- releases are self-contained.
 
 1. Download `EveLens-*-osx-arm64.app.zip` from the release page
 2. Extract the zip -- you'll get `EveLens.app`
-3. Drag `EveLens.app` to your Applications folder
-4. **First launch -- important:** macOS blocks unsigned apps. Open Terminal and run:
+3. Drag `EveLens.app` to your Applications folder (or run it from anywhere -- it's portable)
+4. Double-click to open. That's it.
 
-```bash
-# Navigate to where you extracted EveLens.app, then run:
-xattr -cr EveLens.app
-```
-
-This removes the macOS quarantine flag. Double-click to open normally after this.
-
-> **Why is this needed?** EveLens is code-signed on Windows but not yet on macOS (Apple requires a separate $99/year developer certificate). Without a macOS signature, Gatekeeper reports the app as "broken" rather than "unsigned", so the usual right-click Open workaround doesn't work. The `xattr -cr` command is the reliable fix. The app is safe -- it's open source and you can verify the code yourself.
-
-### macOS (Portable)
-
-```bash
-unzip EveLens-*-osx-arm64.zip -d evelens
-cd evelens
-
-# Remove quarantine and set executable permission
-xattr -cr .
-chmod +x EveLens
-
-# Run
-./EveLens
-```
+**EveLens is code-signed and notarized by Apple** as of 1.5.0 -- Gatekeeper opens it like any Mac app. No Terminal, no `xattr`, no right-click workarounds. And the app **updates itself in place** from here on: Check for Updates downloads the new version, swaps the .app wherever you keep it, and relaunches.
 
 > **Coming from EVEMon?** We recommend a fresh start. EveLens is a complete rewrite -- your EVE characters are tied to your ESI tokens, not your old settings. Add your characters through the ESI login and you're good to go.
 
 ---
 
 ## What You Get
+
+### The SKINR Studio (NEW in 1.5.0)
+The engine that renders New Eden now renders inside EveLens. **CCP open-sourced their Carbon Engine and Trinity graphics engine under MIT -- EveLens runs them**, so your SKIN designs appear on your actual ships with the exact nanocoatings, reflections and lighting the game shows: not screenshots, not mockups, the real renderer. Judge every design in CCP's studio, a live station hangar, deep space nebulas, hard sunlight, or a beauty pass. Assemble **Photo Op** fleet portraits from your own ships. Browse the entire **Paragon Hub marketplace** as real renders, side by side, same camera and lighting for every design. The 3D engine is a one-time optional download; community preview images cover you without it.
 
 ### Cross-Platform -- Finally
 EveLens runs natively on Windows, Linux, and macOS from a single codebase. System tray, notifications, clipboard, and dialogs all use native platform APIs. Same features, same UI, same updates on every platform. No Wine, no workarounds.
@@ -129,22 +111,13 @@ Multi-tab plan editor with integrated Skills, Ships, Items, and Blueprint browse
 ### Smart ESI Error Handling
 Per-endpoint health state machine that tracks ESI reliability per character. Transient errors are silently retried. Persistent failures get one activity log entry, not a hundred. Recovery is automatic. No more error spam filling your notification bell.
 
-### Attribute Optimizer (NEW in 1.4.1)
-Remap planning in its own window: one remap for the whole plan, or auto-placed remaps at attribute-focus boundaries like classic EVEMon. Preview every remap's position and attribute spread before applying -- atomically, with an Omega/Alpha what-if toggle. Applied remaps show in the plan sidebar with one-click removal.
-
-### Korean Language Support (NEW in 1.4.1)
-Full Korean (한국어) localization -- 464 UI strings translated by community member Last Bin, plus 50,000+ official SDE names. A Game Names setting controls whether item names show translated or in English (the Korean community default, per translator feedback).
-
-### Auto-Update, Opt-In (NEW in 1.4.1)
-Downloaded updates can install silently when you close the app. EveLens asks once on first launch; the choice is changeable anytime in Settings. Run at Startup launches quietly to the system tray on login (Windows/Linux).
-
-### Doctrine Designer
+### Doctrine Designer (NEW in 1.3.0)
 Create shared skill templates for fleet doctrines, assign multiple characters, and compare training times side-by-side. Import from existing plans, see who can fly what, and generate personal training plans for each character with one click. Perfect for FCs managing fleet comps across 30+ characters.
 
-### Chinese Language Support
+### Chinese Language Support (NEW in 1.3.0)
 Full Simplified Chinese (简体中文) localization with 300+ translated UI strings and 50,000+ CCP official SDE translations for skills, ships, items, and blueprints. Language picker in Settings → Appearance with auto-restart. Game terms use CCP's official Chinese translations.
 
-### CSV Export
+### CSV Export (NEW in 1.3.0)
 Export your full skill list or training queue to CSV files for spreadsheets, fleet planning, or sharing with corpmates.
 
 ### Character Skill Comparison
@@ -176,9 +149,8 @@ A clock icon in the status bar shows how many of your characters need training a
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| **Stable** | Recommended for daily use(you are here) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
-| Beta | Pre-release testing | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
-| Alpha | Bleeding edge, experimental features | [Alpha Releases](https://github.com/aliacollins/evelens/releases) |
+| **Stable** | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| Beta | Early access to what ships next | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
 
 ---
 
@@ -219,32 +191,31 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 ## What Was New in 1.4.0
 
-### Planning & Training
-- **Skill Planning** -- Multi-tab plan editor with drag-to-reorder, attribute group headers, prerequisite validation, and specific error messages
-- **Doctrine Designer** -- Shared skill templates, multi-character comparison, one-click personal plan generation (Ctrl+G)
-- **Attribute Optimizer** -- Find optimal attribute remaps for any plan with accurate training time calculations
-- **Plan import/export** -- Supports .emp, .txt, EVE game clipboard, and CSV export
+- **Doctrine Designer** -- create shared skill templates, assign characters, compare training times, generate personal plans (Ctrl+G)
+- **Chinese language (简体中文)** -- full UI + 50K SDE translations with CCP official game terms
+- **CSV export** -- export skills and queue from the Skills and Queue tabs
+- **Skill Farm sort** -- click column headers to sort, "Add All Eligible" for batch adding
+- **Plan editor overhaul** -- whole-row drag (no grip dots), scroll offset fix, attribute group headers, specific prereq error messages
+- **macOS fixes** -- Cmd+W closes plan windows, menu title fixed, Unicode font fallback
+- **Windows icon fix** -- taskbar icon no longer reverts to default
+- **Attribute optimizer** -- "Reset to Current" and manual adjustments now produce correct results
+- **Website download links** -- no longer 404 between releases
 
-### Monitoring & Intelligence
-- **Skill Farm Dashboard** -- Full economics for extraction characters: Jita pricing, per-character tax, configurable SP base per character, monthly profit projections, Omega sustainability analysis
-- **Queue Health Monitor** -- Status bar clock icon showing training urgency across all characters
-- **Character Skill Comparison** -- Compare up to 10 characters side-by-side with level blocks
-- **20+ data tabs** -- Skills, Queue, Clones, Assets, Market Orders, Contracts, Industry, Wallet, Mail, Notifications, Kills, PI, Research, Standings, and more
-- **Skill Constellation** -- GPU-accelerated interactive visualization of EVE's skill tree
+Full details: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
-## Features Being Tested
+## Frequently Asked Questions
 
-- Skill Farm: configurable SP base per character
-- "What's New" dialog on update
-- Code Graph system for AI-assisted development
+**Is EveLens free?** Yes -- free and open source under GPL v2, no donations accepted. The optional 3D render engine is also free.
 
-## Alpha Changelog (Cumulative)
+**Is it safe to log in with?** EveLens uses CCP's official ESI API with OAuth -- it never sees your password, and you choose exactly which data scopes it may read. Everything stays on your machine unless you explicitly opt in to community features.
 
-- Skill Farm Dashboard: per-character configurable SP floor (click Base column)
-- What's New dialog: shown once per version after update, reads from CHANGELOG.md
-- Code Graph: living dependency map with validation and Claude skill integration
+**Does it work on Mac?** Yes, natively on Apple Silicon -- code-signed, notarized, and self-updating as of 1.5.0. Linux (AppImage) and Windows too, from one codebase.
+
+**Can it replace EVEMon?** That's the point. EveLens is a ground-up rewrite of EVEMon for modern .NET -- same lineage, same license, built for today's ESI and 100+ characters. Add your characters through ESI login and you're home.
+
+**How does the 3D SKIN rendering work?** CCP open-sourced their Carbon Engine and Trinity graphics engine under MIT; EveLens runs that engine locally with the game's own art assets from CCP's CDN, so what you see is what the game renders.
 
 ---
 
@@ -252,8 +223,9 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **[1.4.1](https://github.com/aliacollins/EveLens/releases/tag/v1.4.1)** | August 10, 2026 | Korean language, Attribute Optimizer, auto-update opt-in, run at startup, SDE 3458726, EVE Accuracy Suite, PI/SSO/queue fixes |
-| **[1.3.0](https://github.com/aliacollins/EveLens/releases/tag/v1.3.0)** | May 10, 2026 | Doctrine Designer, Chinese language, Skill Farm configurable base SP, What's New dialog, CSV export, plan editor overhaul, macOS/Linux fixes |
+| **[1.5.0](https://github.com/aliacollins/EveLens/releases/tag/v1.5.0)** | August 28, 2026 | The SKINR Studio (CCP's Carbon/Trinity engine in EveLens), Paragon Hub browser, Photo Op, macOS signed + self-updating, .NET 10 + Avalonia 12, Doctrine Designer round two, Plan Editor rebuild |
+| **[1.4.1](https://github.com/aliacollins/EveLens/releases/tag/v1.4.1)** | August 10, 2026 | Korean language, PI overhaul, community fix train, SDE 3458726 |
+| **[1.3.0](https://github.com/aliacollins/EveLens/releases/tag/v1.3.0)** | May 10, 2026 | Doctrine Designer, Chinese language, CSV export, Skill Farm sort, plan editor overhaul |
 | **[1.2.1](https://github.com/aliacollins/EveLens/releases/tag/v1.2.1)** | April 9, 2026 | Fix plan training time calculation |
 | **[1.2.0](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)** | April 5, 2026 | Plan Editor drag-reorder, Skill Farm Dashboard, plan import fix, keyboard shortcuts, queue health cards |
 | **[1.1.0](https://github.com/aliacollins/EveLens/releases/tag/v1.1.0)** | March 29, 2026 | Character Skill Comparison, variable font scaling, queue health monitor, ESI token fix, add character UX, group management redesign |
