@@ -7,6 +7,16 @@
   <releases>
     <release>
       <date>2026-08-28</date>
+      <version>1.5.0.17</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.17
+
+Doctrine comparison alignment rework (odon #137)]]></message>
+    </release>
+    <release>
+      <date>2026-08-28</date>
       <version>1.5.0.16</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
       <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
@@ -94,16 +104,6 @@ Plan editor order fix, priority submenu, Doctrine Designer improvements (#135 #1
       <message><![CDATA[EveLens 1.5.0-beta.8
 
 Beta 8: overview sort/reorder controls appear when the second character arrives]]></message>
-    </release>
-    <release>
-      <date>2026-08-26</date>
-      <version>1.5.0.7</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.7
-
-Beta 7: status strip speaks one human sentence, never file paths]]></message>
     </release>
   </releases>
   <datafiles>

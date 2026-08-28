@@ -5,6 +5,16 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0-beta.17] - 2026-08-28
+
+### Fixed
+
+- **Doctrine Designer: columns stopped drifting** -- the header row's character cells carried a few pixels of margin the body cells didn't, so with many characters the checkmarks slid further out from under their names with every column to the right. (odon)
+
+### Changed
+
+- **Doctrine Designer: the character cards ARE the columns now** -- the summary cards (portrait, time remaining, missing SP, Create Plan) sit directly on top of their own skill columns and scroll with them, instead of floating in a separate strip above the table. One aligned system: card, name, and every tick below share the same column edge by construction.
+
 ## [1.5.0-beta.16] - 2026-08-28
 
 ### Added
