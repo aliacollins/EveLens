@@ -259,6 +259,15 @@ namespace EveLens.Common.Services
         internal static void SetAppVersion(IAppVersionInfo info) => s_appVersion = new(() => info);
 
         /// <summary>
+        /// Gets the macOS install-health service: detects Gatekeeper App Translocation
+        /// (which makes every in-place update fail on a read-only mount) and repairs it.
+        /// Reports a healthy install on other platforms.
+        /// </summary>
+        public static IMacInstallService MacInstall => s_macInstall.Value;
+        private static Lazy<IMacInstallService> s_macInstall = new(() => new MacInstallService());
+        internal static void SetMacInstall(IMacInstallService svc) => s_macInstall = new(() => svc);
+
+        /// <summary>
         /// Gets the product name with version string.
         /// </summary>
         public static string ProductNameWithVersion => EveLensClient.ProductNameWithVersion;
@@ -563,6 +572,7 @@ namespace EveLens.Common.Services
                 new EndpointHealthTracker(EventAggregator, Dispatcher));
             s_healthNotifySub = new Lazy<HealthNotificationSubscriber>(() =>
                 new HealthNotificationSubscriber(EventAggregator));
+            s_macInstall = new Lazy<IMacInstallService>(() => new MacInstallService());
             s_privacyMask = PrivacyCategories.None;
         }
 

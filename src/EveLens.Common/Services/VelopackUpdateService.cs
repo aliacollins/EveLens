@@ -24,7 +24,10 @@ namespace EveLens.Common.Services
         private const string GitHubRepoUrl = "https://github.com/aliacollins/evelens";
         private static readonly TimeSpan InitialDelay = TimeSpan.FromSeconds(15);
 
-        private readonly VelopackUpdateManager _manager;
+        // Lazy because the UpdateManager constructor demands VelopackLocator.Current,
+        // which only exists once the startup hook has run — constructing this service
+        // (in tests, or before the hook) must not depend on that global being set.
+        private readonly Lazy<VelopackUpdateManager> _manager;
         private readonly VelopackTraceLogger _velopackLog = AppServices.VelopackLogger;
         private readonly IEventAggregator? _eventAggregator;
         private readonly IDispatcher? _dispatcher;
@@ -34,12 +37,12 @@ namespace EveLens.Common.Services
         private bool _disposed;
 
         /// <summary>Whether the Velopack VelopackUpdateManager reports this is an installed app (not portable/dev).</summary>
-        public bool IsInstalled => _manager.IsInstalled;
+        public bool IsInstalled => _manager.Value.IsInstalled;
 
         /// <summary>The current app version: Velopack's when installed through it,
         /// otherwise the informational version (which carries the -beta/-alpha
         /// channel; the numeric file version does not and misclassifies builds).</summary>
-        public string? CurrentVersion => _manager.CurrentVersion?.ToString()
+        public string? CurrentVersion => _manager.Value.CurrentVersion?.ToString()
             ?? AppServices.AppVersion.ProductVersion;
 
         /// <summary>
@@ -49,7 +52,7 @@ namespace EveLens.Common.Services
         /// cannot swap itself in place — via <see cref="GitHubReleaseChecker"/>.
         /// </summary>
         public bool UsesGitHubFallback =>
-            !_manager.IsInstalled &&
+            !_manager.Value.IsInstalled &&
             (OperatingSystem.IsMacOS() || OperatingSystem.IsLinux());
 
         /// <summary>The update channel this build belongs to (derived from version).</summary>
@@ -91,7 +94,8 @@ namespace EveLens.Common.Services
 
             var source = new GithubSource(GitHubRepoUrl, null, prerelease: true);
 
-            _manager = new VelopackUpdateManager(source);
+            _manager = new Lazy<VelopackUpdateManager>(
+                () => new VelopackUpdateManager(source));
 
             // Velopack routes its logging through the locator the startup hook
             // installed. Attach there if that hook did not run (tests, dev builds) so
@@ -117,7 +121,7 @@ namespace EveLens.Common.Services
         /// </summary>
         public void StartBackgroundChecks()
         {
-            if (_disposed || (!_manager.IsInstalled && !UsesGitHubFallback))
+            if (_disposed || (!_manager.Value.IsInstalled && !UsesGitHubFallback))
                 return;
 
             _cts = new CancellationTokenSource();
@@ -131,7 +135,7 @@ namespace EveLens.Common.Services
         {
             try
             {
-                if (!_manager.IsInstalled)
+                if (!_manager.Value.IsInstalled)
                 {
                     if (!UsesGitHubFallback)
                     {
@@ -155,7 +159,7 @@ namespace EveLens.Common.Services
                 }
 
                 AppServices.TraceService?.Trace("VelopackUpdate: Checking for updates...");
-                var info = await _manager.CheckForUpdatesAsync().ConfigureAwait(false);
+                var info = await _manager.Value.CheckForUpdatesAsync().ConfigureAwait(false);
 
                 if (info != null)
                 {
@@ -195,7 +199,7 @@ namespace EveLens.Common.Services
                 AppServices.TraceService?.Trace(
                     $"VelopackUpdate: Downloading {_pendingUpdate.TargetFullRelease?.Version}...");
 
-                await _manager.DownloadUpdatesAsync(_pendingUpdate, progress).ConfigureAwait(false);
+                await _manager.Value.DownloadUpdatesAsync(_pendingUpdate, progress).ConfigureAwait(false);
 
                 AppServices.TraceService?.Trace("VelopackUpdate: Download complete");
                 return true;
@@ -222,6 +226,19 @@ namespace EveLens.Common.Services
         /// </returns>
         public bool ApplyAndRestart()
         {
+            // Pre-flight: a translocated app runs from a read-only Gatekeeper mount, so
+            // the apply is doomed — and it fails inside the spawned updater AFTER this
+            // process has exited, where no catch block can ever see it. The only honest
+            // move is to refuse up front. The downloaded package stays staged: Velopack
+            // auto-applies it at next launch once the install is healed.
+            if (AppServices.MacInstall.IsTranslocated)
+            {
+                LastError = Loc.Get("MacInstall.UpdateRefused");
+                AppServices.TraceService?.Trace(
+                    "VelopackUpdate: refused apply — app is running from an App Translocation mount");
+                return false;
+            }
+
             if (_pendingUpdate?.TargetFullRelease == null)
             {
                 LastError = "No downloaded update is ready to apply.";
@@ -232,7 +249,7 @@ namespace EveLens.Common.Services
             {
                 LastError = null;
                 AppServices.TraceService?.Trace("VelopackUpdate: Applying update and restarting...");
-                _manager.ApplyUpdatesAndRestart(_pendingUpdate.TargetFullRelease);
+                _manager.Value.ApplyUpdatesAndRestart(_pendingUpdate.TargetFullRelease);
                 return true;
             }
             catch (Exception ex)
@@ -257,7 +274,7 @@ namespace EveLens.Common.Services
                 return;
 
             AppServices.TraceService?.Trace("VelopackUpdate: Will apply update on exit");
-            _manager.WaitExitThenApplyUpdates(_pendingUpdate.TargetFullRelease, silent: true);
+            _manager.Value.WaitExitThenApplyUpdates(_pendingUpdate.TargetFullRelease, silent: true);
         }
 
         private async Task BackgroundCheckLoop(CancellationToken ct)
