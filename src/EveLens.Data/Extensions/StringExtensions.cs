@@ -23,6 +23,14 @@ namespace EveLens.Common.Extensions
             @"\d{1,3}\.){3}\d{1,3}\])|(([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,6}))$");
         private static readonly Regex s_removePath = new Regex(@"[a-zA-Z]+:\\.*\\(?=EveLens)",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        // The username runs to the next backslash when the path continues (usernames
+        // may contain spaces there), otherwise to the next space/quote/line end.
+        private static readonly Regex s_windowsUserName = new Regex(
+            @"(?<=[a-zA-Z]:\\Users\\)(?:[^\\\r\n]*?(?=\\)|[^\\\s'""]+)",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex s_unixUserName = new Regex(
+            @"(?<=/(?:Users|home)/)[^/\s""']+",
+            RegexOptions.Compiled);
         private static readonly Regex s_unicode = new Regex(@"\\u(?<Value>[a-zA-Z0-9]{4})",
             RegexOptions.Compiled);
         private static readonly Regex s_upperText = new Regex("\\B([A-Z])",
@@ -35,6 +43,44 @@ namespace EveLens.Common.Extensions
         /// <returns></returns>
         public static string RemoveProjectLocalPath(this string text) => s_removePath.Replace(
             text, string.Empty);
+
+        /// <summary>
+        /// Redacts the OS account name from the text: the username segment of home
+        /// directory paths (<c>C:\Users\name\...</c>, <c>/Users/name/...</c>,
+        /// <c>/home/name/...</c>) and any bare occurrence of the current OS username.
+        /// </summary>
+        /// <remarks>
+        /// Third-party libraries (Velopack in particular) log absolute paths, and those
+        /// lines end up in the trace log — which users paste into GitHub issues — and on
+        /// the TCP diagnostic stream. The OS account name is PII; scrub it once at the
+        /// point the text enters our logging, so every downstream copy is already clean.
+        /// </remarks>
+        /// <param name="text">The text to redact.</param>
+        /// <returns>The text with usernames replaced by <c>[REDACTED]</c>.</returns>
+        public static string RedactUserName(this string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            text = s_windowsUserName.Replace(text, "[REDACTED]");
+            text = s_unixUserName.Replace(text, "[REDACTED]");
+
+            try
+            {
+                // Belt and braces for messages that name the account outside a path
+                // (e.g. elevation prompts). Skip very short usernames — replacing a
+                // two-letter name would mangle ordinary words containing it.
+                string userName = Environment.UserName;
+                if (!string.IsNullOrEmpty(userName) && userName.Length >= 3)
+                    text = text.Replace(userName, "[REDACTED]");
+            }
+            catch
+            {
+                // Environment may throw in sandboxed contexts
+            }
+
+            return text;
+        }
 
         /// <summary>
         /// Converts a string that has been HTML-encoded for HTTP transmission into a decoded

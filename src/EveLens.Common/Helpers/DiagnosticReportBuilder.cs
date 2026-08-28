@@ -307,6 +307,10 @@ namespace EveLens.Common.Helpers
             // UNC paths: \\server\ -> \\[REDACTED]\
             text = s_uncPath.Replace(text, @"\\[REDACTED]\");
 
+            // macOS/Linux home paths (/Users/name/, /home/name/) and Windows paths
+            // without a trailing separator — the regex above misses both.
+            text = text.RedactUserName();
+
             // Machine name and Windows username
             try
             {
