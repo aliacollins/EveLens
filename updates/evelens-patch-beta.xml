@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-28</date>
+      <version>1.5.0.13</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.0-beta.13
+
+Hub performance overhaul, signed+notarized macOS builds, Doctrine missing-skills view]]></message>
+    </release>
+    <release>
       <date>2026-08-27</date>
       <version>1.5.0.12</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
@@ -94,16 +104,6 @@ Beta 5: Mac SKINR usable without the renderer; macOS/Linux update checks]]></mes
       <message><![CDATA[EveLens 1.5.0-beta.4
 
 Beta 4: Mac SKINR shows honest renderer-coming state on every path]]></message>
-    </release>
-    <release>
-      <date>2026-08-26</date>
-      <version>1.5.0.3</version>
-      <url>https://github.com/aliacollins/evelens/releases/tag/beta</url>
-      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/beta/EveLens-install-1.5.0.exe</autopatchurl>
-      <autopatchargs>/SILENT</autopatchargs>
-      <message><![CDATA[EveLens 1.5.0-beta.3
-
-Beta 3: SKINR geometry converter ships inside Render Runtime 1.0.3; runtime updates in place]]></message>
     </release>
   </releases>
   <datafiles>
