@@ -265,6 +265,29 @@ try {
             $appBundle $Version $macChannel 'releases'
         if ($LASTEXITCODE -ne 0) { throw "velopack-macos pack failed." }
         Write-Host "  macOS .app bundle created." -ForegroundColor Green
+
+        # DMG installer, built from the SIGNED bundle. The Finder drag-install a
+        # DMG invites is what prevents Gatekeeper App Translocation — the failure
+        # mode where a zip-installed app runs from a read-only mirror and updates
+        # can never apply (the 1.5.0 "version never changes" incident).
+        Write-Host "`n=== Creating macOS .dmg installer ===" -ForegroundColor Cyan
+        $ErrorActionPreference = 'Continue'
+        wsl bash /mnt/d/evemon-main/scripts/make-dmg.sh $Channel $Version 2>&1 | ForEach-Object { $_ }
+        $ErrorActionPreference = 'Stop'
+        $dmgPath = "releases/EveLens-${Channel}-osx-arm64.dmg"
+        if (Test-Path $dmgPath) {
+            if ($UnsignedMac) {
+                Write-Warning "Shipping UNSIGNED mac DMG (-UnsignedMac)."
+            } else {
+                & powershell.exe -NoProfile -ExecutionPolicy Bypass `
+                    -File (Join-Path $PSScriptRoot 'release/sign-macos.ps1') `
+                    -AppBundle $dmgPath -Dmg
+                if ($LASTEXITCODE -ne 0) { throw "DMG signing/notarization failed." }
+            }
+            Write-Host "  macOS .dmg installer created." -ForegroundColor Green
+        } else {
+            Write-Warning "DMG creation failed -- release continues without it (zip still ships)."
+        }
     } else {
         Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."
     }
@@ -313,6 +336,16 @@ if (Test-Path $appBundleZip) {
     $file = Get-Item $appBundleZip
     $sizeMB = [math]::Round($file.Length / 1MB, 1)
     Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+    $allFiles += $file.FullName
+}
+
+# macOS .dmg installer (the recommended download — Finder drag-install
+# prevents Gatekeeper App Translocation)
+$dmgArtifact = "releases/EveLens-${Channel}-osx-arm64.dmg"
+if (Test-Path $dmgArtifact) {
+    $file = Get-Item $dmgArtifact
+    $sizeMB = [math]::Round($file.Length / 1MB, 1)
+    Write-Host "  $($file.Name) ($sizeMB MB) (signed)" -ForegroundColor Green
     $allFiles += $file.FullName
 }
 

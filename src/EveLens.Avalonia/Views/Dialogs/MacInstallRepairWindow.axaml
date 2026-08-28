@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+        x:Class="EveLens.Avalonia.Views.Dialogs.MacInstallRepairWindow"
+        Title="{loc:T MacInstall.Title}"
+        Width="500" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        CanResize="False">
+
+    <StackPanel Margin="24,20" Spacing="14">
+
+        <TextBlock Text="{loc:T MacInstall.Heading}"
+                   FontSize="{DynamicResource EveFontTitle}" FontWeight="SemiBold"
+                   Foreground="{StaticResource EveWarningYellowBrush}" />
+
+        <TextBlock x:Name="BodyText" Text="{loc:T MacInstall.Body}"
+                   FontSize="{DynamicResource EveFontBody}"
+                   Foreground="{StaticResource EveTextSecondaryBrush}"
+                   TextWrapping="Wrap" LineHeight="20" />
+
+        <StackPanel Orientation="Horizontal" Spacing="8"
+                    HorizontalAlignment="Right" Margin="0,6,0,0">
+            <Button x:Name="NotNowButton" Content="{loc:T MacInstall.NotNow}"
+                    FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12" />
+            <Button x:Name="FixButton" Content="{loc:T MacInstall.Fix}"
+                    FontSize="{DynamicResource EveFontBody}" Padding="16,6" CornerRadius="12"
+                    Background="{StaticResource EveAccentPrimaryBrush}"
+                    Foreground="#FF1A1A2E" FontWeight="SemiBold" />
+        </StackPanel>
+
+    </StackPanel>
+</Window>
