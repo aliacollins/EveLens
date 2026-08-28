@@ -149,7 +149,7 @@ A clock icon in the status bar shows how many of your characters need training a
 
 | Channel | Use Case | Download |
 |---------|----------|----------|
-| **Stable** | Recommended for daily use | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
+| **Stable** | Recommended for daily use(you are here) | [Latest Release](https://github.com/aliacollins/evelens/releases/latest) |
 | Beta | Early access to what ships next | [Beta Releases](https://github.com/aliacollins/evelens/releases) |
 
 ---
