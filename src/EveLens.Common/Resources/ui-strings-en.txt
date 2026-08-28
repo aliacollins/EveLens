@@ -1113,3 +1113,6 @@ Skinr.PhotoShort = Photo
 Skinr.SettingsShort = Settings
 PlanEditor.BookBadge = BOOK
 PlanEditor.RemapStale = remap no longer matches this block, review optimization
+Skinr.HangarTooBig = Supercapitals don’t fit this hangar — a Keepstar-scale bay is coming in a future update
+Doctrine.ShowOnlyMissing = Show only missing
+Doctrine.MissingSpFmt = {0} SP missing

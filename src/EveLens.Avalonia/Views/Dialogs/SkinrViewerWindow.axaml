@@ -696,11 +696,31 @@
                                       FontSize="{DynamicResource EveFontSmall}"
                                       SelectionChanged="OnMarketTreeSelection" />
                         </Border>
-                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                                      VerticalScrollBarVisibility="Auto">
-                            <!-- Class·faction sections, cards sorted ship-then-name. -->
-                            <StackPanel x:Name="MarketSections" Spacing="6" />
-                        </ScrollViewer>
+                        <!-- Class·faction sections, cards sorted ship-then-name.
+                             A virtualizing ListBox of row items (header rows + fixed-width
+                             card rows): only visible rows materialize controls, so a grid
+                             of thousands of designs rebuilds in milliseconds and scrolls
+                             without carrying the whole catalog in the visual tree. The
+                             bare ContentPresenter theme strips every ListBoxItem behavior
+                             — rows are layout, not selectable items. -->
+                        <ListBox x:Name="MarketList" Background="Transparent"
+                                 BorderThickness="0" Padding="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerTheme>
+                                <ControlTheme TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="Margin" Value="0" />
+                                    <Setter Property="Focusable" Value="False" />
+                                    <Setter Property="Background" Value="Transparent" />
+                                    <Setter Property="Template">
+                                        <ControlTemplate>
+                                            <ContentPresenter Content="{TemplateBinding Content}"
+                                                              ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                        </ControlTemplate>
+                                    </Setter>
+                                </ControlTheme>
+                            </ListBox.ItemContainerTheme>
+                        </ListBox>
                     </DockPanel>
                 </Border>
 
