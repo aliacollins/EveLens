@@ -237,7 +237,14 @@ try {
     $ErrorActionPreference = 'Stop'
 
     $appBundle = "publish/macapp/EveLens.app"
+    $macChannel = "$Channel-osx"
     if (Test-Path $appBundle) {
+        # Velopack-enable the bundle BEFORE signing so the signature covers
+        # UpdateMac and the sq.version manifest — with these inside, the mac
+        # app self-updates in place exactly like the Windows install.
+        py -3.12 (Join-Path $PSScriptRoot 'release/velopack-macos.py') inject `
+            $appBundle $Version $macChannel
+        if ($LASTEXITCODE -ne 0) { throw "velopack-macos inject failed." }
         if ($UnsignedMac) {
             Write-Warning "Shipping UNSIGNED mac build (-UnsignedMac)."
         } else {
@@ -251,6 +258,12 @@ try {
         }
         py -3.12 (Join-Path $PSScriptRoot 'release/zip-macapp.py') $appBundle $appBundleZip 'EveLens.app'
         if ($LASTEXITCODE -ne 0) { throw "zip-macapp failed." }
+        # The Velopack feed: full nupkg (carrying the SIGNED app) + the
+        # releases.{channel}-osx.json the in-app GithubSource reads. Both must
+        # ride the same GitHub release as each other.
+        py -3.12 (Join-Path $PSScriptRoot 'release/velopack-macos.py') pack `
+            $appBundle $Version $macChannel 'releases'
+        if ($LASTEXITCODE -ne 0) { throw "velopack-macos pack failed." }
         Write-Host "  macOS .app bundle created." -ForegroundColor Green
     } else {
         Write-Warning "macOS .app bundle creation failed -- raw zip will be uploaded instead."
@@ -301,6 +314,18 @@ if (Test-Path $appBundleZip) {
     $sizeMB = [math]::Round($file.Length / 1MB, 1)
     Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
     $allFiles += $file.FullName
+}
+
+# macOS Velopack feed (in-place auto-update): full nupkg + channel feed json
+foreach ($macVeloFile in @(
+        "releases/EveLens-${Version}-${Channel}-osx-full.nupkg",
+        "releases/releases.${Channel}-osx.json")) {
+    if (Test-Path $macVeloFile) {
+        $file = Get-Item $macVeloFile
+        $sizeMB = [math]::Round($file.Length / 1MB, 1)
+        Write-Host "  $($file.Name) ($sizeMB MB)" -ForegroundColor Green
+        $allFiles += $file.FullName
+    }
 }
 
 # ── Upload ──
