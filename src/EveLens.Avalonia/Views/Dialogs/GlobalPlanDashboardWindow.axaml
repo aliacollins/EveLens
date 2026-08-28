@@ -72,6 +72,10 @@
                                 <Button x:Name="ApplyAllBtn" Content="{loc:T Doctrine.CreatePlansForAll}"
                                         Padding="10,4" CornerRadius="12"
                                         FontSize="{DynamicResource EveFontBody}" />
+                                <ToggleButton x:Name="OnlyMissingToggle" Content="{loc:T Doctrine.ShowOnlyMissing}"
+                                              Padding="10,4" CornerRadius="12"
+                                              FontSize="{DynamicResource EveFontBody}"
+                                              IsCheckedChanged="OnOnlyMissingToggled" />
                             </StackPanel>
                             <TextBlock x:Name="TemplateTitle" Text="{loc:T Doctrine.NoTemplateSelected}"
                                        FontSize="{DynamicResource EveFontHeading}"

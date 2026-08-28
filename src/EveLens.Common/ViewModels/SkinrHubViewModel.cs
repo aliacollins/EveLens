@@ -115,6 +115,23 @@ namespace EveLens.Common.ViewModels
         // --- hull identity overlay --------------------------------------------
 
         /// <summary>The selected design's hull, or null before a recipe is loaded.</summary>
+        /// <summary>
+        /// True when the staged hull fits the hangar bay the Hangar environment
+        /// renders. The bay is a normal station interior (Jita 4-4's), and just like
+        /// in the game, supercapitals don't dock in those — a titan clips through
+        /// the architecture (user-reported). Gates the Hangar preset until a
+        /// Keepstar-scale bay ships. GroupName is the datafile's English group,
+        /// stable across UI languages.
+        /// </summary>
+        public bool HullFitsHangar
+        {
+            get
+            {
+                string group = Hull?.GroupName ?? string.Empty;
+                return group is not ("Titan" or "Supercarrier");
+            }
+        }
+
         public Item? Hull
         {
             get

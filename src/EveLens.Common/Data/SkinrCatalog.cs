@@ -155,7 +155,8 @@ namespace EveLens.Common.Data
             if (!string.IsNullOrEmpty(datafiles))
                 yield return Path.Combine(datafiles, DatafileName);
 
-            yield return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", DatafileName);
+            foreach (string dir in Datafile.InstallResourceDirectories())
+                yield return Path.Combine(dir, DatafileName);
 
             string? appData = null;
             try { appData = AppServices.ApplicationPaths?.DataDirectory; } catch { /* ditto */ }

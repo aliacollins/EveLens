@@ -253,5 +253,71 @@ namespace EveLens.Tests.ViewModels
             template.Entries.Should().NotBeNull().And.BeEmpty();
             template.SubscribedCharacterGuids.Should().NotBeNull().And.BeEmpty();
         }
+
+        // --- "Show only missing" filter (odon's ask, beta.13) -------------------
+
+        private static SkillComparisonRow Row(string name, params SkillTrainingStatus[] statuses) =>
+            new()
+            {
+                SkillName = name,
+                CharacterEntries = statuses
+                    .Select(st => new CharacterSkillEntry { Status = st })
+                    .ToList(),
+            };
+
+        [Fact]
+        public void FilterMissing_HidesAllTrainedCharacters_AndFullyTrainedRows()
+        {
+            const SkillTrainingStatus T = SkillTrainingStatus.AlreadyTrained;
+            const SkillTrainingStatus M = SkillTrainingStatus.NeedsTraining;
+            var rows = new List<SkillComparisonRow>
+            {
+                Row("Everyone has it", T, T, T),
+                Row("Char 1 missing", T, M, T),
+                Row("Chars 0+1 missing", M, M, T),
+            };
+
+            var (characters, visible) =
+                GlobalPlanDashboardViewModel.FilterMissing(rows, 3);
+
+            // Character 2 is all-trained and disappears; 0 and 1 stay.
+            characters.Should().Equal(0, 1);
+            // The fully trained row disappears; the other two stay.
+            visible.Select(r => r.SkillName).Should().Equal(
+                "Char 1 missing", "Chars 0+1 missing");
+        }
+
+        [Fact]
+        public void FilterMissing_RowMissingOnlyAmongHiddenCharacters_HidesWithThem()
+        {
+            const SkillTrainingStatus T = SkillTrainingStatus.AlreadyTrained;
+            const SkillTrainingStatus M = SkillTrainingStatus.NeedsTraining;
+            // Character 1 is fully trained; the shared row must vanish with them.
+            var rows = new List<SkillComparisonRow>
+            {
+                Row("Only char 0 missing", M, T),
+                Row("Everyone has it", T, T),
+            };
+
+            var (characters, visible) =
+                GlobalPlanDashboardViewModel.FilterMissing(rows, 2);
+
+            characters.Should().Equal(0);
+            visible.Should().ContainSingle().Which.SkillName.Should().Be("Only char 0 missing");
+        }
+
+        [Fact]
+        public void FilterMissing_EverythingTrained_EmptiesTheTable()
+        {
+            const SkillTrainingStatus T = SkillTrainingStatus.AlreadyTrained;
+            var rows = new List<SkillComparisonRow> { Row("Done", T, T) };
+
+            var (characters, visible) =
+                GlobalPlanDashboardViewModel.FilterMissing(rows, 2);
+
+            characters.Should().BeEmpty();
+            visible.Should().BeEmpty();
+        }
+
     }
 }

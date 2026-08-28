@@ -111,7 +111,8 @@ namespace EveLens.Common.Data
             try { candidates.Add(Path.Combine(Datafile.GetDatafilesDirectory(), fileName)); }
             catch { }
 
-            candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", fileName));
+            foreach (string dir in Datafile.InstallResourceDirectories())
+                candidates.Add(Path.Combine(dir, fileName));
 
             try
             {
