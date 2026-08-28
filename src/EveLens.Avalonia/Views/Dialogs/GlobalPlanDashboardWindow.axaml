@@ -85,15 +85,14 @@
                         </DockPanel>
                     </Border>
 
-                    <!-- Summary cards -->
-                    <WrapPanel x:Name="SummaryCards" DockPanel.Dock="Top"
-                               Orientation="Horizontal" Margin="12,8,12,4" />
-
                     <!-- Comparison table with frozen panes: the skill column and the
                          header row stay on screen while the character cells scroll
-                         both ways (odon, #137 follow-up). The body scroller owns the
-                         scrollbars; all three scrollers mirror offsets both ways, since
-                         Hidden scrollbars still accept the mouse wheel. -->
+                         both ways (odon, #137 follow-up). The summary cards ARE the
+                         header row — one card per character column, same width as the
+                         cells, so tiles and ticks cannot drift apart. The body
+                         scroller owns the scrollbars; all three scrollers mirror
+                         offsets both ways, since Hidden scrollbars still accept the
+                         mouse wheel. -->
                     <Grid Margin="12,4" RowDefinitions="Auto,*" ColumnDefinitions="Auto,*">
                         <Grid x:Name="FrozenCorner" Grid.Row="0" Grid.Column="0" />
                         <ScrollViewer x:Name="HeaderScroller" Grid.Row="0" Grid.Column="1"

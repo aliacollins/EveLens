@@ -176,7 +176,6 @@ namespace EveLens.Avalonia.Views.Dialogs
             HeaderStrip.Children.Clear();
             SkillColumn.Children.Clear();
             BodyRows.Children.Clear();
-            SummaryCards.Children.Clear();
             ComparisonMessage.IsVisible = false;
 
             if (_vm.SelectedTemplate == null)
@@ -195,7 +194,6 @@ namespace EveLens.Avalonia.Views.Dialogs
                 ComparisonMessage.IsVisible = true;
             }
 
-            BuildSummaryCards();
             BuildComparisonHeader();
 
             var visibleCharacters = _vm.VisibleCharacterIndices;
@@ -234,9 +232,15 @@ namespace EveLens.Avalonia.Views.Dialogs
             _syncingScroll = false;
         }
 
-        private void BuildSummaryCards()
+        /// <summary>
+        /// One character's summary card. These ARE the comparison table's column
+        /// headers: each card is exactly <see cref="CharCellWidth"/> wide with zero
+        /// outer margin, so the card, the ticks and the times below it share one
+        /// column edge by arithmetic (the old separate card strip and name row
+        /// drifted apart — odon, #137 round 3).
+        /// </summary>
+        private Border MakeSummaryCard(int i)
         {
-            for (int i = 0; i < _vm.SubscribedCharacters.Count; i++)
             {
                 var character = _vm.SubscribedCharacters[i];
                 var totalTime = _vm.GetCharacterTotalTime(i);
@@ -247,10 +251,11 @@ namespace EveLens.Avalonia.Views.Dialogs
                 var card = new Border
                 {
                     Background = FindBrush("EveBackgroundMediumBrush") ?? Brushes.Transparent,
-                    CornerRadius = new CornerRadius(6),
-                    Padding = new Thickness(12, 8),
-                    MinWidth = 140,
-                    Margin = new Thickness(0, 0, 6, 6),
+                    Padding = new Thickness(8, 6),
+                    Width = CharCellWidth,
+                    Margin = new Thickness(0),
+                    BorderThickness = new Thickness(0, 0, 1, 0),
+                    BorderBrush = FindBrush("EveBackgroundDarkBrush") ?? Brushes.Black,
                 };
 
                 var portrait = new Image { Width = 24, Height = 24, Stretch = Stretch.UniformToFill };
@@ -267,13 +272,16 @@ namespace EveLens.Avalonia.Views.Dialogs
 
                 var timeStr = FormatTime(totalTime);
                 var cardStack = new StackPanel { Spacing = 1 };
-                cardStack.Children.Add(new TextBlock
+                var nameBlock = new TextBlock
                 {
                     Text = character.Name,
                     FontSize = FontScaleService.Body,
                     FontWeight = FontWeight.SemiBold,
                     Foreground = FindBrush("EveAccentPrimaryBrush") ?? Brushes.Gold,
-                });
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                };
+                ToolTip.SetTip(nameBlock, character.Name);
+                cardStack.Children.Add(nameBlock);
                 cardStack.Children.Add(new TextBlock
                 {
                     Text = pct == 100 ? Loc.Get("Doctrine.AllTrained") : $"{timeStr} {Loc.Get("Status.Remaining")}",
@@ -360,7 +368,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 row.Children.Add(cardStack);
                 card.Child = row;
 
-                SummaryCards.Children.Add(card);
+                return card;
             }
         }
 
@@ -370,8 +378,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         private const double SkillColWidth = 200;
         private const double LevelColWidth = 50;
         private const double RankColWidth = 50;
-        private const double CharCellWidth = 120;
-        private const double HeaderHeight = 28;
+        private const double CharCellWidth = 150;
         private const double RowHeight = 31;   // 30 + the 1px StackPanel spacing
 
         /// <summary>"1,234,567" reads as noise at badge size; "1.23M SP" reads as an
@@ -387,23 +394,25 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             FrozenCorner.ColumnDefinitions = ColumnDefinitions.Parse(
                 $"{SkillColWidth},{LevelColWidth},{RankColWidth}");
-            FrozenCorner.Height = HeaderHeight;
-            FrozenCorner.Children.Add(MakeHeaderCell("SKILL", 0, HorizontalAlignment.Left));
-            FrozenCorner.Children.Add(MakeHeaderCell("LVL", 1, HorizontalAlignment.Center));
-            FrozenCorner.Children.Add(MakeHeaderCell("R", 2, HorizontalAlignment.Center));
+            var skillLbl = MakeHeaderCell("SKILL", 0, HorizontalAlignment.Left);
+            var lvlLbl = MakeHeaderCell("LVL", 1, HorizontalAlignment.Center);
+            var rankLbl = MakeHeaderCell("R", 2, HorizontalAlignment.Center);
+            // The header row is as tall as the summary cards now; the labels sit on
+            // its baseline, where the skill names start.
+            skillLbl.VerticalAlignment = VerticalAlignment.Bottom;
+            lvlLbl.VerticalAlignment = VerticalAlignment.Bottom;
+            rankLbl.VerticalAlignment = VerticalAlignment.Bottom;
+            FrozenCorner.Children.Add(skillLbl);
+            FrozenCorner.Children.Add(lvlLbl);
+            FrozenCorner.Children.Add(rankLbl);
 
+            // The summary cards ARE the column headers: one card per character,
+            // exactly CharCellWidth wide, zero margin — the card, the name, and
+            // every tick below share a column edge by arithmetic, and they all
+            // scroll together (odon, #137: the separate card strip and header row
+            // drifted out of line with the cells).
             foreach (int i in _vm.VisibleCharacterIndices)
-            {
-                var character = _vm.SubscribedCharacters[i];
-                // Full name, not the first word — alts often share a firstname and became
-                // indistinguishable (Issue #137). Trim to the column, tooltip carries the rest.
-                var cell = MakeHeaderCell(character.Name, 0, HorizontalAlignment.Center);
-                cell.TextTrimming = TextTrimming.CharacterEllipsis;
-                cell.Width = CharCellWidth;
-                cell.Height = HeaderHeight;
-                ToolTip.SetTip(cell, character.Name);
-                HeaderStrip.Children.Add(cell);
-            }
+                HeaderStrip.Children.Add(MakeSummaryCard(i));
         }
 
         private void BuildComparisonRow(SkillComparisonRow row,
