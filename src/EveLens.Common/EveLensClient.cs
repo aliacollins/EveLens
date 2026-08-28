@@ -20,6 +20,7 @@ using EveLens.Common.Models;
 using EveLens.Common.Models.Extended;
 using EveLens.Common.Net;
 using EveLens.Common.Services;
+using EveLens.Core.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace EveLens.Common
@@ -209,19 +210,17 @@ namespace EveLens.Common
         #region Version
 
         /// <summary>
-        /// Gets the file version information.
+        /// The app's own identity, read from assembly attributes. Never from a file on
+        /// disk: a single-file publish reports an empty <c>Assembly.Location</c>, and
+        /// asking the filesystem for the version of a file that isn't there threw
+        /// before the first window opened on macOS.
         /// </summary>
-        /// <value>
-        /// The file version.
-        /// </value>
-        public static FileVersionInfo FileVersionInfo
-            => FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly()!.Location);
+        private static readonly IAppVersionInfo s_versionInfo = new AssemblyAppVersionInfo();
 
         /// <summary>
         /// Gets the full version string from AssemblyInformationalVersion (e.g., "5.2.0-alpha.1").
         /// </summary>
-        public static string VersionString
-            => FileVersionInfo.ProductVersion ?? FileVersionInfo.FileVersion ?? "0.0.0";
+        public static string VersionString => s_versionInfo.ProductVersion;
 
         /// <summary>
         /// Gets whether this is an alpha version.
@@ -251,7 +250,7 @@ namespace EveLens.Common
         {
             get
             {
-                string productName = FileVersionInfo.ProductName ?? "EveLens";
+                string productName = s_versionInfo.ProductName;
                 if (IsAlphaVersion)
                     return $"{productName} ALPHA ({VersionString})";
                 if (IsBetaVersion)

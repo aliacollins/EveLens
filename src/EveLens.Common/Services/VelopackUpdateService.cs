@@ -38,7 +38,7 @@ namespace EveLens.Common.Services
         /// otherwise the informational version (which carries the -beta/-alpha
         /// channel; the numeric file version does not and misclassifies builds).</summary>
         public string? CurrentVersion => _manager.CurrentVersion?.ToString()
-            ?? AppServices.FileVersionInfo.ProductVersion;
+            ?? AppServices.AppVersion.ProductVersion;
 
         /// <summary>
         /// The hand-packaged platforms: the macOS .app and Linux archives are not

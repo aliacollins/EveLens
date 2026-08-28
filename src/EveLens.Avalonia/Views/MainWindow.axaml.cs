@@ -799,7 +799,7 @@ namespace EveLens.Avalonia.Views
                 {
                     var svc = AppServices.VelopackUpdate;
                     bool installed = svc?.IsInstalled ?? false;
-                    string version = svc?.CurrentVersion ?? AppServices.FileVersionInfo.FileVersion ?? "dev";
+                    string version = svc?.CurrentVersion ?? AppServices.AppVersion.FileVersion ?? "dev";
                     string channel = svc?.Channel ?? "unknown";
                     string checkInterval = svc?.CheckInterval.TotalHours.ToString("0.#") + "h";
 
@@ -2068,7 +2068,7 @@ namespace EveLens.Avalonia.Views
             try
             {
                 string currentVersion = AppServices.VelopackUpdate?.CurrentVersion
-                    ?? AppServices.FileVersionInfo.FileVersion ?? "Unknown";
+                    ?? AppServices.AppVersion.FileVersion ?? "Unknown";
 
                 // One path for every platform: the service handles Velopack when
                 // installed through it, and the GitHub Releases fallback on the

@@ -249,9 +249,13 @@ namespace EveLens.Common.Services
         public static bool IsBetaVersion => EveLensClient.IsBetaVersion;
 
         /// <summary>
-        /// Gets the file version information for the application.
+        /// Gets the application's name and version, read from assembly metadata.
+        /// Filesystem-free, so it answers correctly in a single-file publish (macOS)
+        /// where there is no on-disk assembly to interrogate.
         /// </summary>
-        public static System.Diagnostics.FileVersionInfo FileVersionInfo => EveLensClient.FileVersionInfo;
+        public static IAppVersionInfo AppVersion => s_appVersion.Value;
+        private static Lazy<IAppVersionInfo> s_appVersion = new(() => new AssemblyAppVersionInfo());
+        internal static void SetAppVersion(IAppVersionInfo info) => s_appVersion = new(() => info);
 
         /// <summary>
         /// Gets the product name with version string.

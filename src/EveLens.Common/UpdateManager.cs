@@ -269,7 +269,7 @@ namespace EveLens.Common
         /// <param name="result">The result.</param>
         private static void ScanUpdateFeed(SerializablePatch result)
         {
-            string? fileVersion = AppServices.FileVersionInfo.FileVersion;
+            string? fileVersion = AppServices.AppVersion.FileVersion;
             if (fileVersion == null)
                 return;
 
