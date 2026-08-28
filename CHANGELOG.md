@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.5.0] - 2026-08-28
 
-**The SKINR update.** EveLens now renders your actual SKIN designs on your actual ships, in real 3D, using **CCP's own Carbon Trinity engine** -- the same renderer EVE Online itself uses, which CCP open-sourced under MIT. A game engine, running inside a character tool. Around it, the four biggest changes EveLens has ever shipped at once:
+**The SKINR update -- the biggest release in EveLens history**, packed with new features, engineering overhauls, and community-driven fixes. The headline: EveLens now renders your actual SKIN designs on your actual ships, in real 3D, using **CCP's own Carbon Engine and Trinity graphics engine** -- the same renderer EVE Online itself uses, which CCP open-sourced under MIT. A game engine, running inside a character tool. Around it, the four biggest changes EveLens has ever shipped at once:
 
 - **Carbon & Trinity, now in EveLens** -- CCP's open-sourced game engine renders everything in the new SKINR Studio: your designs in 3D, Photo Op fleet portraits, and the entire Paragon Hub marketplace as real renders
 - **macOS, first class** -- code-signed, notarized, and self-updating in place; no more Gatekeeper warnings, no more manual downloads
