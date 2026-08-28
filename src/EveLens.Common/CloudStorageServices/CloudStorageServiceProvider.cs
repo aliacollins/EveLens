@@ -574,7 +574,7 @@ namespace EveLens.Common.CloudStorageServices
             if (configFileParentParentDir.Parent == null || !Directory.Exists(configFileParentParentDir.Parent.FullName))
                 return;
 
-            string? productName = AppServices.FileVersionInfo.ProductName;
+            string? productName = AppServices.AppVersion.ProductName;
             foreach (string directory in Directory.GetDirectories(configFileParentParentDir.Parent.FullName)
                 .Where(directory => directory != configFileParentParentDir.FullName &&
                                     productName != null &&

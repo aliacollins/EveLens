@@ -279,7 +279,7 @@ namespace EveLens.Avalonia
 
         private async Task ShowWhatsNewIfNeededAsync()
         {
-            var currentVersion = AppServices.FileVersionInfo?.ProductVersion ?? "";
+            var currentVersion = AppServices.AppVersion.ProductVersion ?? "";
             AppServices.TraceService?.Trace(
                 $"WhatsNew: version='{currentVersion}' lastShown='{Settings.Updates.LastShownWhatsNewVersion}'",
                 printMethod: false);

@@ -36,7 +36,7 @@ namespace EveLens.Common.Services
         {
             get
             {
-                string version = AppServices.FileVersionInfo?.ProductVersion ?? "1.0.0";
+                string version = AppServices.AppVersion.ProductVersion ?? "1.0.0";
                 return $"EveLens {version} | evelens.dev | \u00a9 2026 Alia Collins | GPL v2";
             }
         }

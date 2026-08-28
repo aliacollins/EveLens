@@ -5,7 +5,15 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.5.0-beta.14] - 2026-08-28
+
+### Changed
+
+- **Supercapitals no longer offer a Hangar environment at all** -- beta.13 greyed the Hangar pill out for titans and supercarriers with a "coming later" tooltip; the honest answer is simpler. No station bay is authored at that scale, so for supercapital hulls the pill is now gone entirely -- Studio, Space, Sunlight and Beauty remain -- and every other ship keeps the full set. If a super arrives while the hangar is showing, the stage still returns to Studio on its own.
+
+### Fixed
+
+- **macOS: the app opens again** -- beta.13's macOS build was our first single-file bundle (Apple's notarization rules effectively require it), and a single-file app reports no on-disk location for itself. EveLens read its own version from that location on startup, so it quit before the first window could appear. The version now comes from metadata compiled into the binary, which works in every publish shape on every platform. Windows and Linux were never affected.
 
 ## [1.5.0-beta.13] - 2026-08-28
 

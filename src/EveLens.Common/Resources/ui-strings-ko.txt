@@ -1079,6 +1079,5 @@ Skinr.PhotoShort = 사진
 Skinr.SettingsShort = 설정
 PlanEditor.BookBadge = BOOK
 PlanEditor.RemapStale = 리맵이 이 구간과 더 이상 일치하지 않습니다. 최적화를 검토하세요
-Skinr.HangarTooBig = 슈퍼캐피털은 이 격납고에 들어가지 않습니다 — 킵스타 규모의 격납고가 추후 업데이트로 제공될 예정입니다
 Doctrine.ShowOnlyMissing = 미보유 스킬만 보기
 Doctrine.MissingSpFmt = {0} SP 부족
