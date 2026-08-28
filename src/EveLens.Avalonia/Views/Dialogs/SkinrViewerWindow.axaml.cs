@@ -2103,9 +2103,10 @@ namespace EveLens.Avalonia.Views.Dialogs
         // --- overlays ------------------------------------------------------------
 
         /// <summary>
-        /// Enables/disables the Hangar pill for the staged hull. Supercapitals get
-        /// a tooltip and, if they arrive while the hangar is showing, an automatic
-        /// retreat to Studio — never a titan clipping through the bay's architecture.
+        /// Shows/hides the Hangar pill for the staged hull. Supercapitals have no
+        /// hangar look at all — the pill disappears rather than sit disabled — and
+        /// if one arrives while the hangar is showing, the view retreats to Studio,
+        /// never a titan clipping through the bay's architecture.
         /// </summary>
         private void ApplyHangarGate()
         {
@@ -2116,8 +2117,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     button.Tag is not SkinrEnvironmentPreset preset ||
                     preset != SkinrEnvironmentPreset.Hangar)
                     continue;
-                button.IsEnabled = fits;
-                ToolTip.SetTip(button, fits ? null : Loc.Get("Skinr.HangarTooBig"));
+                button.IsVisible = fits;
             }
             if (!fits && _hub.Environment == SkinrEnvironmentPreset.Hangar)
                 _ = OnEnvironmentPicked(SkinrEnvironmentPreset.Studio);

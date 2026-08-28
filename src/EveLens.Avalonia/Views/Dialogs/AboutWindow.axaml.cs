@@ -79,7 +79,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         {
             try
             {
-                var fvi = AppServices.FileVersionInfo;
+                var fvi = AppServices.AppVersion;
                 string version = AppServices.IsDebugBuild
                     ? $"{fvi.FileVersion} (Debug)"
                     : fvi.ProductVersion ?? fvi.FileVersion ?? "Unknown";

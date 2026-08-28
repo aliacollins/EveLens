@@ -47,7 +47,7 @@ namespace EveLens.Common.Services
 
         public string DataDirectory => EveLensClient.EveLensDataDir;
 
-        public string FileVersion => EveLensClient.FileVersionInfo?.FileVersion ?? "0.0.0.0";
+        public string FileVersion => AppServices.AppVersion.FileVersion ?? "0.0.0.0";
 
         public bool IsClosed => AppServices.Closed;
     }

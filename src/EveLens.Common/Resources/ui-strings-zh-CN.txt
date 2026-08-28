@@ -1079,6 +1079,5 @@ Skinr.PhotoShort = 拍照
 Skinr.SettingsShort = 设置
 PlanEditor.BookBadge = 书
 PlanEditor.RemapStale = 重映射已不匹配此区段，请查看优化方案
-Skinr.HangarTooBig = 超级旗舰无法停入此机库 — 希望之堡级机库将在未来更新中推出
 Doctrine.ShowOnlyMissing = 仅显示缺少的技能
 Doctrine.MissingSpFmt = 缺少 {0} SP

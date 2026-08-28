@@ -46,7 +46,7 @@ namespace EveLens.Common.Service
                 string version;
                 try
                 {
-                    version = AppServices.FileVersionInfo?.FileVersion ?? "(unknown)";
+                    version = AppServices.AppVersion.FileVersion ?? "(unknown)";
                 }
                 catch
                 {
