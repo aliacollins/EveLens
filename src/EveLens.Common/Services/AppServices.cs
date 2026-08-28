@@ -42,6 +42,7 @@ namespace EveLens.Common.Services
         private static Lazy<CharacterFactory> s_characterFactory = new(() => new CharacterFactory(
             CharacterRepository, EventAggregator, EveLensClientCharacterServices.Instance));
         private static Lazy<ITraceService> s_traceService = new(() => new TraceService());
+        private static readonly Lazy<VelopackTraceLogger> s_velopackLogger = new(() => new VelopackTraceLogger());
         private static Lazy<IApplicationPaths> s_applicationPaths = new(() => new ApplicationPathsAdapter());
         private static Lazy<INameResolver> s_nameResolver = new(() => new NameResolverAdapter());
         private static Lazy<IStationResolver> s_stationResolver = new(() => new StationResolverAdapter());
@@ -326,6 +327,14 @@ namespace EveLens.Common.Services
         /// Gets the trace service for diagnostic logging.
         /// </summary>
         public static ITraceService TraceService => s_traceService.Value;
+
+        /// <summary>
+        /// Gets the sink that carries Velopack's own account of an update into the
+        /// EveLens trace log. Shared deliberately: the startup hook installs it before
+        /// any service exists, and <see cref="VelopackUpdateService"/> reads the same
+        /// instance to report why an update could not be applied.
+        /// </summary>
+        public static VelopackTraceLogger VelopackLogger => s_velopackLogger.Value;
 
         /// <summary>
         /// Gets the application paths service.

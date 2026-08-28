@@ -2124,17 +2124,25 @@ namespace EveLens.Avalonia.Views
                             downloadBtn.IsEnabled = false;
                             downloadBtn.Content = "Downloading...";
                             bool downloaded = await (AppServices.VelopackUpdate?.DownloadUpdateAsync() ?? Task.FromResult(false));
-                            if (downloaded)
-                                AppServices.VelopackUpdate?.ApplyAndRestart();
-                            else
-                            {
-                                downloadBtn.Content = "Download & Restart";
-                                downloadBtn.IsEnabled = true;
-                            }
+
+                            // On success Velopack replaces the app and exits the
+                            // process, so nothing below this runs. Anything that does
+                            // run is a failure the user deserves to see — silently
+                            // resetting the button is how an update that never
+                            // installed looked identical to one that did.
+                            bool applied = downloaded &&
+                                (AppServices.VelopackUpdate?.ApplyAndRestart() ?? false);
+
+                            if (!downloaded || !applied)
+                                ShowUpdateFailure(updateDialog, downloaded);
+
+                            downloadBtn.Content = "Download & Restart";
+                            downloadBtn.IsEnabled = true;
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine($"Download error: {ex}");
+                            AppServices.TraceService?.Trace($"Update install error: {ex}");
+                            ShowUpdateFailure(updateDialog, downloaded: false);
                             downloadBtn.Content = "Download & Restart";
                             downloadBtn.IsEnabled = true;
                         }
@@ -2226,6 +2234,102 @@ namespace EveLens.Avalonia.Views
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error checking for updates: {ex}");
+            }
+        }
+
+        /// <summary>
+        /// Tells the user an update could not be installed, and why. An update that
+        /// fails must never look like one that succeeded: before this, a failed
+        /// download or a refused install just reset the button, leaving the app on the
+        /// old version with no explanation anywhere the user could reach.
+        /// </summary>
+        private async void ShowUpdateFailure(Window owner, bool downloaded)
+        {
+            try
+            {
+                string reason = AppServices.VelopackUpdate?.LastError
+                    ?? "The update could not be installed.";
+                string stage = downloaded
+                    ? "EveLens downloaded the update but could not install it."
+                    : "EveLens could not download the update.";
+
+                var panel = new StackPanel { Margin = new Thickness(20), Spacing = 10 };
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "Update not installed",
+                    FontSize = FontScaleService.Subheading,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = FindStripBrush("EveErrorRedBrush", Brushes.IndianRed),
+                });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"{stage} You are still running the previous version.",
+                    FontSize = FontScaleService.Body,
+                    TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                    Foreground = FindStripBrush("EveTextPrimaryBrush", Brushes.White),
+                });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = reason,
+                    FontSize = FontScaleService.Body,
+                    TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                    Foreground = FindStripBrush("EveTextSecondaryBrush", Brushes.Gray),
+                });
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "You can always install the latest version by hand from the "
+                         + "releases page. If this keeps happening, please report it — "
+                         + "the details are in the EveLens trace log.",
+                    FontSize = FontScaleService.Body,
+                    TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                    Foreground = FindStripBrush("EveTextDisabledBrush", Brushes.DimGray),
+                });
+
+                var releasesBtn = new Button
+                {
+                    Content = "Open Releases Page",
+                    FontSize = FontScaleService.Body,
+                    Padding = new Thickness(12, 5),
+                    CornerRadius = new CornerRadius(12),
+                };
+                var closeBtn = new Button
+                {
+                    Content = "Close",
+                    FontSize = FontScaleService.Body,
+                    Padding = new Thickness(12, 5),
+                    CornerRadius = new CornerRadius(12),
+                };
+                panel.Children.Add(new StackPanel
+                {
+                    Orientation = global::Avalonia.Layout.Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Spacing = 8,
+                    Children = { closeBtn, releasesBtn }
+                });
+
+                var dialog = new Window
+                {
+                    Title = "Update Not Installed",
+                    Width = 480, Height = 300,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Content = panel,
+                };
+                releasesBtn.Click += (_, _) =>
+                {
+                    try
+                    {
+                        Util.OpenURL(new Uri(
+                            "https://github.com/aliacollins/evelens/releases/latest"));
+                    }
+                    catch { }
+                };
+                closeBtn.Click += (_, _) => dialog.Close();
+
+                await dialog.ShowDialog(owner);
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"ShowUpdateFailure error: {ex}");
             }
         }
 

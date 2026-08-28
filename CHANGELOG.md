@@ -5,6 +5,12 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- An update that fails to install now says so, and why, instead of quietly leaving you on the old version. Previously a failed download or a refused install just reset the Download & Restart button, so an update that never happened looked exactly like one that did -- the report you would have had to send us contained no more information than "the version didn't change". Velopack's own account of the update now goes into the EveLens trace log alongside everything else, which matters most on macOS, where the app replaces itself in place and the only visible evidence was the version number. Because these updater messages contain file paths, the OS account name is scrubbed from them before they reach the trace log or the error dialog -- nothing personal ends up in what you share with us.
+
 ## [1.5.0] - 2026-08-28
 
 **The SKINR update -- the biggest release in EveLens history**, packed with new features, engineering overhauls, and community-driven fixes. The headline: EveLens now renders your actual SKIN designs on your actual ships, in real 3D, using **CCP's own Carbon Engine and Trinity graphics engine** -- the same renderer EVE Online itself uses, which CCP open-sourced under MIT. A game engine, running inside a character tool. Around it, the four biggest changes EveLens has ever shipped at once:
