@@ -54,13 +54,22 @@ dd if=/dev/zero of="$IMG" bs=1M count="$IMG_MB" status=none
 mkfs.hfsplus -v "EveLens" "$IMG" > /dev/null
 
 # Populate without mounting: the userspace tool writes the catalog directly.
-hfsplus "$IMG" addall "$STAGE"
+hfsplus "$IMG" addall "$STAGE" > /dev/null
 # The drag-and-drop target -- this symlink IS the installer UI.
 hfsplus "$IMG" symlink "Applications" /Applications
 
-# Verify the essentials made it in before wrapping.
-hfsplus "$IMG" ls /EveLens.app/Contents/MacOS | grep -q EveLens || {
-    echo "make-dmg: populated image is missing the app binary" >&2
+# addall stores every file as 644 regardless of the staged mode -- an .app with
+# a non-executable main binary mounts fine and then greets the user with
+# "EveLens cannot be opened" (found the hard way on the first real-Mac test).
+# Restore the executable bit through the tool's own chmod.
+for f in "$STAGE/EveLens.app/Contents/MacOS/"*; do
+    hfsplus "$IMG" chmod 755 "/EveLens.app/Contents/MacOS/$(basename "$f")" > /dev/null
+done
+
+# Verify before wrapping: the binary must exist AND be stored executable.
+hfsplus "$IMG" ls /EveLens.app/Contents/MacOS | grep -q '^100755 .* EveLens$' || {
+    echo "make-dmg: app binary missing or not executable inside the image" >&2
+    hfsplus "$IMG" ls /EveLens.app/Contents/MacOS >&2
     exit 1
 }
 
