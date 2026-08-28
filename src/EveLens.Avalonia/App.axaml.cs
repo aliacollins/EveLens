@@ -228,6 +228,10 @@ namespace EveLens.Avalonia
                     try
                     {
                         AppServices.TraceService?.Trace("Startup dialogs: begin", printMethod: false);
+                        // Broken install outranks everything: while translocated, no
+                        // update can ever install, so offer the repair before any
+                        // other dialog gets a word in.
+                        await ShowMacInstallRepairIfNeededAsync();
                         await ShowWhatsNewIfNeededAsync();
                         // One-time auto-update opt-in ask (Discussion #100) — after What's New
                         // closes; the stored answer prevents any repeat ask.
@@ -304,6 +308,23 @@ namespace EveLens.Avalonia
                 await window.ShowDialog(mainWindow);
             else
                 window.Show();
+        }
+
+        private async Task ShowMacInstallRepairIfNeededAsync()
+        {
+            // Gatekeeper App Translocation: the app is running from a read-only mirror
+            // and can never update itself. The check is pure (path inspection), so it
+            // is safely false on every other platform and on healthy mac installs.
+            if (!AppServices.MacInstall.IsTranslocated)
+                return;
+
+            AppServices.TraceService?.Trace(
+                "MacInstall: running translocated — offering repair", printMethod: false);
+            var window = new Views.Dialogs.MacInstallRepairWindow();
+            var mainWindow = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (mainWindow != null && mainWindow.IsVisible)
+                await window.ShowDialog(mainWindow);
+            // No visible owner (quiet start) — defer to the next normal launch.
         }
 
         private async Task ShowAutoUpdateOptInIfNeededAsync()

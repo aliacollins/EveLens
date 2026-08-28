@@ -213,6 +213,22 @@ namespace EveLens.Tests.Services
         }
 
         [Fact]
+        public void RedactsGuidsBecauseTheStagingUserIdIsAPersistentIdentifier()
+        {
+            var (logger, traced) = NewLogger();
+
+            // Real line shape from Velopack: this GUID persists for the life of the
+            // install, so any log containing it links every future paste to one machine.
+            logger.Log(VelopackLogLevel.Information,
+                "Loaded existing staging userId: c95be2d1-c17f-4a23-abf4-5d10cb377ca6 " +
+                "from /Users/alia/Library/Caches/velopack/EveLens/packages/.betaId", null);
+
+            traced.Should().ContainSingle().Which.Should()
+                .NotContain("c95be2d1").And.Contain("[GUID]")
+                .And.NotContain("alia");
+        }
+
+        [Fact]
         public void RecentLogTailIsRedacted()
         {
             var (logger, _) = NewLogger();

@@ -34,6 +34,14 @@ namespace EveLens.Common.Services
         /// <summary>How many recent lines to retain for error reporting in the UI.</summary>
         private const int RetainedLines = 20;
 
+        // Velopack logs its staging user id ("Loaded existing staging userId: <guid>"),
+        // a GUID that persists for the lifetime of the install — a durable identifier
+        // linking every pasted log back to one machine. No GUID in an updater log has
+        // diagnostic value to us, so all of them are scrubbed.
+        private static readonly System.Text.RegularExpressions.Regex s_guid = new(
+            @"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
         private readonly object _sync = new();
         private readonly Queue<string> _recent = new();
 
@@ -61,7 +69,7 @@ namespace EveLens.Common.Services
             // the OS account name. Scrub once here, at the single point of entry, so the
             // trace file, the TCP diagnostic stream, the retained tail and the failure
             // dialog all inherit the redaction.
-            text = text.RedactUserName();
+            text = s_guid.Replace(text.RedactUserName(), "[GUID]");
 
             string line = $"Velopack [{logLevel}] {text}";
 
