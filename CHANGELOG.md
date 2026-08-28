@@ -5,6 +5,32 @@ All notable changes to EveLens will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-28
+
+The biggest EveLens release yet: the SKINR Studio brings real 3D ship rendering into a character tool, the Doctrine Designer grows into a full fleet-readiness workbench, macOS becomes a first-class platform with signing and self-updates, and the whole app now runs on .NET 10. Everything below shipped and hardened across seventeen betas.
+
+### Added
+
+- **The SKINR Studio** -- see your actual SKIN designs on your actual ships, rendered in real 3D by EVE's own engine: the same hull, camera and lighting for every design. Five environments (CCP's studio, a real station hangar, cycling nebulas, sunlight, beauty), Photo Op fleet assembly, and a first-run walkthrough. The 3D engine is a separate one-time download; without it, everything still works through community preview images.
+- **The Paragon Hub, browsable** -- every design on EVE's SKIN marketplace as a real render, judged side by side. Design identities (ship, class, faction, creator, tier) arrive pre-resolved in one request, and ready-made preview images load like a website instead of waiting on a local renderer. Both covered by one opt-in consent.
+- **Doctrine Designer, round two** -- import doctrines from files, clipboard pings, or existing plans; add whole Overview groups at once; see who still needs what with "Show only missing"; every character badge shows the skill points they're short (your injector math, done). The comparison table grew frozen panes, and each character's summary card now IS its column header, so names, cards and checkmarks stay in one aligned system.
+- **Skill priorities, made real** -- every plan row shows its priority, "Group by Priority" turns long plans into milestone bands, and prerequisites always stay ahead of the skills that need them.
+- **Overview, reworked** -- drag characters onto each other to form groups, sort and density controls, group totals at a glance, saved character comparisons, and cards that scale with your font size.
+- **macOS, first class** -- the app is code-signed and notarized (no more Gatekeeper warnings), and it updates itself in place: Check for Updates offers Download & Restart, the .app swaps wherever you keep it, and it relaunches on the new version. Linux gets background update checks too.
+
+### Changed
+
+- **EveLens now runs on .NET 10** with the latest Avalonia UI.
+- **EVE static data build 3480926** (August 2026) -- all game data regenerated from CCP's Static Data Export.
+
+### Fixed
+
+- The Paragon Hub no longer freezes the app while it identifies designs; grids are virtualized and thumbnails slot in one card at a time.
+- Supercapitals no longer clip through the Hangar environment -- titans and supercarriers simply don't offer it, like the game itself.
+- Doctrine comparison ticks stay under their character to the last column; the frozen panes scroll in sync whichever pane the mouse wheel lands on; scrollbars are visible at rest app-wide.
+- Skill Planner keeps your hand-made order, roman-numeral skill lists import ("Amarr Titan V"), and Change Priority actually responds.
+- Dozens of community-reported fixes across the betas -- thank you odon, Fastburn, AnszaKalltiern, Agge65 and everyone on the tracker.
+
 ## [1.5.0-beta.17] - 2026-08-28
 
 ### Fixed

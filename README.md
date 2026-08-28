@@ -196,7 +196,19 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.4.0
+## What's New in 1.5.0
+
+- **The SKINR Studio** -- your SKIN designs on your ships, rendered in real 3D by EVE's own engine; five environments, Photo Op fleet shots, one-time 3D engine download (community preview images without it)
+- **Paragon Hub browser** -- every marketplace design as a real render, side by side, with instant pre-resolved identities and preview images
+- **Doctrine Designer round two** -- import from files/clipboard/plans, add whole groups, "Show only missing", missing-SP badges, aligned card columns with frozen panes
+- **Skill priorities** -- visible on every plan row, "Group by Priority" milestone bands
+- **Overview rework** -- drag-to-group, sort and density controls, group totals, saved comparisons
+- **macOS first class** -- signed, notarized, and self-updating in place; Linux gets update checks too
+- **.NET 10** and EVE static data build 3480926
+
+Full details: [CHANGELOG.md](CHANGELOG.md)
+
+## What Was New in 1.4.0
 
 - **Doctrine Designer** -- create shared skill templates, assign characters, compare training times, generate personal plans (Ctrl+G)
 - **Chinese language (简体中文)** -- full UI + 50K SDE translations with CCP official game terms
@@ -209,15 +221,6 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 - **Website download links** -- no longer 404 between releases
 
 Full details: [CHANGELOG.md](CHANGELOG.md)
-
-## What Was New in 1.2.0
-
-- **Drag-to-reorder in Plan Editor** -- grab, multi-select, drag groups with real-time prerequisite validation
-- **Skill Farm Dashboard** -- full economics for extraction characters: Jita pricing, tax, profit projections, Omega sustainability
-- **Plan import/export overhaul** -- supports .emp, .txt, and EVE game clipboard format
-- **Keyboard shortcuts** -- Ctrl+Q, Ctrl+W, Ctrl+N, Ctrl+M, Ctrl+, and more
-
-Full details: [1.2.0 Release Notes](https://github.com/aliacollins/EveLens/releases/tag/v1.2.0)
 
 ---
 
