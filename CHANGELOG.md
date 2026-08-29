@@ -7,10 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-08-29
 ### Fixed
 
 - The About window's License page now lists the 3D render pipeline's third-party components (Carbon Trinity, CarbonEngineJS runtime-resource, Node.js) with their licenses -- previously these appeared only in the license files inside the render runtime bundle.
-
 ## [1.5.1] - 2026-08-28
 
 ### Added

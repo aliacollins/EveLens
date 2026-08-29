@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-08-29</date>
+      <version>1.5.2.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.2</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.2/EveLens-install-1.5.2.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.2
+
+Open Source Credits in About, ACKNOWLEDGEMENTS.md]]></message>
+    </release>
+    <release>
       <date>2026-08-28</date>
       <version>1.5.1.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.1</url>
