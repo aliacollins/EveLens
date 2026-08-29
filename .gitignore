@@ -252,6 +252,7 @@ docs/
 !README.md
 !CHANGELOG.md
 !CONTRIBUTING.md
+!ACKNOWLEDGEMENTS.md
 
 # Generated code graph (regenerate with scripts/codegraph.ps1)
 .codegraph/

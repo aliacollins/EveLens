@@ -219,3 +219,5 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 ## License
 
 GPL v2 -- See [LICENSE](src/EveLens.Common/Resources/License/gpl.txt)
+
+EveLens stands on other people's work -- see [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for the full credits, from EVEMon's original authors to the engines behind the 3D render pipeline.

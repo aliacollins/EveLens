@@ -393,6 +393,56 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
             stack.Children.Add(attrStack);
 
+            // Render pipeline credits — the optional 3D renderer builds on other
+            // people's engines, and their names belong where users actually look,
+            // not only in the license files shipped inside the runtime bundle.
+            AddSectionHeader(stack, "OPEN SOURCE CREDITS");
+            var renderStack = new StackPanel { Spacing = 6, Margin = new Thickness(0, 0, 0, 16) };
+            renderStack.Children.Add(new TextBlock
+            {
+                Text = "The optional 3D render runtime is built on:",
+                FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush,
+                TextWrapping = TextWrapping.Wrap,
+            });
+            var renderCredits = new (string name, string desc, string url)[]
+            {
+                ("Carbon Engine & Trinity",
+                 "CCP Games' game engine and renderer, open-sourced under MIT (2026). " +
+                 "Every ship you see is drawn by the engine New Eden runs on.",
+                 "https://github.com/ccpgames"),
+                ("CarbonEngineJS — runtime-resource",
+                 "T'amber's gr2 → cmf geometry bridge (MIT). Years of EVE rendering " +
+                 "research distilled into the converter that lets Trinity read the ships. " +
+                 "It saved this project months.",
+                 "https://www.npmjs.com/package/@carbonenginejs/runtime-resource"),
+                ("Node.js",
+                 "Hosts the geometry converter in an isolated, sandboxed process (MIT).",
+                 "https://nodejs.org"),
+            };
+            foreach (var (name, desc, url) in renderCredits)
+            {
+                var credit = new StackPanel { Spacing = 1, Margin = new Thickness(0, 4, 0, 0) };
+                AddLinkButton(credit, name, url);
+                credit.Children.Add(new TextBlock
+                {
+                    Text = desc, FontSize = FontScaleService.Body,
+                    Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
+                    LineHeight = 18,
+                });
+                renderStack.Children.Add(credit);
+            }
+            renderStack.Children.Add(new TextBlock
+            {
+                Text = "EveLens itself is built with .NET, Avalonia UI, SkiaSharp, Velopack " +
+                       "and CommunityToolkit.Mvvm. Full license texts and notices ship inside " +
+                       "the render runtime (THIRD-PARTY-LICENSES.md and per-package NOTICE files).",
+                FontSize = FontScaleService.Caption, Foreground = _textDisabledBrush,
+                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
+            });
+            AddLinkButton(renderStack, "Full acknowledgements",
+                BuildInfo.Repository + "/blob/main/ACKNOWLEDGEMENTS.md");
+            stack.Children.Add(renderStack);
+
             // Copyright
             stack.Children.Add(new TextBlock
             {
