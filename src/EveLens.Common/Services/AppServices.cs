@@ -49,7 +49,6 @@ namespace EveLens.Common.Services
         private static Lazy<IFlagResolver> s_flagResolver = new(() => new FlagResolverAdapter());
         private static Lazy<Core.Interfaces.IImageService> s_imageService = new(() => new ImageServiceAdapter());
         private static Lazy<INotificationTypeResolver> s_notificationTypeResolver = new(() => new NotificationTypeResolverAdapter());
-        private static Lazy<ISkinrRecipeResolver> s_skinrRecipeResolver = new(() => new SkinrRecipeResolver());
         private static Lazy<IResourceProvider> s_resourceProvider = new(() => new ResourceProviderAdapter());
         private static Lazy<GlobalNotificationCollection> s_notifications = new(() => EveLensClient.Notifications);
         private static Lazy<GlobalCharacterCollection> s_characters = new(() => EveLensClient.Characters);
@@ -351,13 +350,6 @@ namespace EveLens.Common.Services
         public static IApplicationPaths ApplicationPaths => s_applicationPaths.Value;
 
         /// <summary>
-        /// Gets the SKINR recipe resolver, which joins ESI's ID-only SKINR routes to the SDE
-        /// catalog. First access loads <c>skinr-catalog.json.gz</c> from disk, so it stays
-        /// lazy — a session that never opens a SKINR view never pays for it.
-        /// </summary>
-        public static ISkinrRecipeResolver SkinrRecipeResolver => s_skinrRecipeResolver.Value;
-
-        /// <summary>
         /// Gets the name resolver for EVE entity ID to name lookups.
         /// </summary>
         public static INameResolver NameResolver => s_nameResolver.Value;
@@ -403,7 +395,6 @@ namespace EveLens.Common.Services
         internal static void SetStationResolver(IStationResolver resolver) => s_stationResolver = new Lazy<IStationResolver>(() => resolver);
         internal static void SetFlagResolver(IFlagResolver resolver) => s_flagResolver = new Lazy<IFlagResolver>(() => resolver);
         internal static void SetImageService(Core.Interfaces.IImageService svc) => s_imageService = new Lazy<Core.Interfaces.IImageService>(() => svc);
-        internal static void SetSkinrRecipeResolver(ISkinrRecipeResolver resolver) => s_skinrRecipeResolver = new Lazy<ISkinrRecipeResolver>(() => resolver);
         internal static void SetNotificationTypeResolver(INotificationTypeResolver resolver) => s_notificationTypeResolver = new Lazy<INotificationTypeResolver>(() => resolver);
         internal static void SetResourceProvider(IResourceProvider provider) => s_resourceProvider = new Lazy<IResourceProvider>(() => provider);
         internal static void SetNotifications(GlobalNotificationCollection notifications) => s_notifications = new Lazy<GlobalNotificationCollection>(() => notifications);
@@ -548,7 +539,6 @@ namespace EveLens.Common.Services
             s_flagResolver = new Lazy<IFlagResolver>(() => new FlagResolverAdapter());
             s_imageService = new Lazy<Core.Interfaces.IImageService>(() => new ImageServiceAdapter());
             s_notificationTypeResolver = new Lazy<INotificationTypeResolver>(() => new NotificationTypeResolverAdapter());
-            s_skinrRecipeResolver = new Lazy<ISkinrRecipeResolver>(() => new SkinrRecipeResolver());
             s_resourceProvider = new Lazy<IResourceProvider>(() => new ResourceProviderAdapter());
             s_notifications = new Lazy<GlobalNotificationCollection>(() => EveLensClient.Notifications);
             s_characters = new Lazy<GlobalCharacterCollection>(() => EveLensClient.Characters);
