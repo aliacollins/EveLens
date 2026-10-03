@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-10-03
 ### Removed
 
 - The SKINR Studio has been taken out of EveLens for now, together with the Paragon Hub browser, Photo Op and the SKINR collection. EveLens no longer requests the cosmetics ESI scope.
@@ -15,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - About > Open Source Credits now lists the libraries EveLens is built with, and ACKNOWLEDGEMENTS.md matches it.
-
 ## [1.5.2] - 2026-08-29
 ### Fixed
 

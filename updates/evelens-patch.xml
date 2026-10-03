@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-10-03</date>
+      <version>1.5.3.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.3</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.3/EveLens-install-1.5.3.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.3
+
+SKINR Studio taken out of EveLens for now]]></message>
+    </release>
+    <release>
       <date>2026-08-29</date>
       <version>1.5.2.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.2</url>
