@@ -379,9 +379,6 @@ namespace EveLens.Tests.Architecture
                 "PlanEntryDetailViewModel",
                 // SkillBrowserViewModel replaced by SkillOverlayViewModel in CharacterSkillsView
                 "SkillBrowserViewModel",
-                // Data half of the SKINR Hub, composed by SkinrHubViewModel (which the
-                // SkinrViewerWindow holds directly)
-                "SkinrViewerViewModel",
             };
 
             var vmTypes = GetAllViewModelTypes().ToList();

@@ -472,24 +472,6 @@ namespace EveLens.Common.Properties {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Error querying SKINR designs for {0}..
-        /// </summary>
-        public static string ErrorSkinrLicenses {
-            get {
-                return ResourceManager.GetString("ErrorSkinrLicenses", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Error querying SKINR components for {0}..
-        /// </summary>
-        public static string ErrorSkinrComponents {
-            get {
-                return ResourceManager.GetString("ErrorSkinrComponents", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Error querying the current ship of {0}..
         /// </summary>
         public static string ErrorShip {

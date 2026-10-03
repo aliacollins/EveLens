@@ -9,34 +9,33 @@ EveLens stands on other people's work. This file names it.
   (peterhaneve/evemon). EveLens is a direct descendant of that codebase and
   would not exist without it.
 
-## The 3D render pipeline
-
-The optional SKINR Studio renderer is built on:
-
-- **Carbon Engine & Trinity** — CCP Games' game engine and renderer, released
-  as open source under the MIT license (2026). Every ship EveLens renders is
-  drawn by the engine EVE Online itself runs on.
-
-- **CarbonEngineJS — `runtime-resource`** by **T'amber** (Caldari Prime Pony
-  Club), MIT. The gr2 → cmf geometry bridge: most ship geometry on CCP's CDN is
-  in a licensed middleware format the open engine release cannot read, and this
-  package — the product of years of independent EVE rendering research — is what
-  converts it into geometry Trinity understands. It ships in the render runtime
-  with its LICENSE, NOTICE, and per-format notices intact, and it saved this
-  project months. https://www.npmjs.com/package/@carbonenginejs/runtime-resource
-
-- **Node.js** — hosts the geometry converter in an isolated, sandboxed
-  process (MIT).
-
-Full license texts for the runtime ship inside it: `THIRD-PARTY-LICENSES.md`
-at the runtime root, plus per-package `LICENSE`/`NOTICE` files alongside the code.
-
 ## The application
 
-EveLens itself (GPL v2) is built with **.NET** and **Avalonia UI**, renders
-images with **SkiaSharp**, updates itself with **Velopack**, and is tested with
-**xUnit**, **FluentAssertions**, and **NSubstitute**. UI infrastructure uses
-**CommunityToolkit.Mvvm**.
+EveLens itself (GPL v2) is built with:
+
+- **.NET** -- runtime and base libraries (MIT)
+- **Avalonia UI** -- cross-platform UI framework (MIT)
+- **SkiaSharp** -- image rendering (MIT)
+- **Velopack** -- installer and auto-updates (MIT)
+- **.NET Community Toolkit** -- MVVM infrastructure (MIT)
+- **DesktopNotifications** -- native desktop notifications (MIT)
+- **MailKit** -- email notifications (MIT)
+- **YamlDotNet** -- YAML parsing (MIT)
+- **Google APIs Client Library for .NET** -- Google Calendar and Drive integration (Apache 2.0)
+
+It is tested with **xUnit**, **FluentAssertions**, and **NSubstitute**.
+
+## Earlier releases
+
+EveLens 1.5.0 to 1.5.2 included an optional SKINR 3D renderer, since removed. It
+was built on:
+
+- **Carbon Engine & Trinity** -- CCP Games' game engine and renderer, open source
+  under the MIT license.
+- **CarbonEngineJS -- `runtime-resource`** by **T'amber** (Caldari Prime Pony
+  Club), MIT -- the gr2 to cmf geometry converter.
+  https://www.npmjs.com/package/@carbonenginejs/runtime-resource
+- **Node.js** (MIT) -- hosted the geometry converter.
 
 ## The community
 

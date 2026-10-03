@@ -78,8 +78,7 @@ namespace EveLens.Common.Net
 
         /// <summary>
         /// Additional request headers with no dedicated property, e.g. the
-        /// X-Compatibility-Date header required by date-versioned ESI routes
-        /// (the post-2026 versioning scheme — SKINR routes were the first).
+        /// X-Compatibility-Date header required by date-versioned ESI routes.
         /// Null when no extra headers are needed.
         /// </summary>
         public IDictionary<string, string> CustomHeaders { get; set; }

@@ -393,33 +393,22 @@ namespace EveLens.Avalonia.Views.Dialogs
             }
             stack.Children.Add(attrStack);
 
-            // Render pipeline credits — the optional 3D renderer builds on other
-            // people's engines, and their names belong where users actually look,
-            // not only in the license files shipped inside the runtime bundle.
             AddSectionHeader(stack, "OPEN SOURCE CREDITS");
-            var renderStack = new StackPanel { Spacing = 6, Margin = new Thickness(0, 0, 0, 16) };
-            renderStack.Children.Add(new TextBlock
+            var creditsStack = new StackPanel { Spacing = 6, Margin = new Thickness(0, 0, 0, 16) };
+            var credits = new (string name, string desc, string url)[]
             {
-                Text = "The optional 3D render runtime is built on:",
-                FontSize = FontScaleService.Body, Foreground = _textSecondaryBrush,
-                TextWrapping = TextWrapping.Wrap,
-            });
-            var renderCredits = new (string name, string desc, string url)[]
-            {
-                ("Carbon Engine & Trinity",
-                 "CCP Games' game engine and renderer, open-sourced under MIT (2026). " +
-                 "Every ship you see is drawn by the engine New Eden runs on.",
-                 "https://github.com/ccpgames"),
-                ("CarbonEngineJS — runtime-resource",
-                 "T'amber's gr2 → cmf geometry bridge (MIT). Years of EVE rendering " +
-                 "research distilled into the converter that lets Trinity read the ships. " +
-                 "It saved this project months.",
-                 "https://www.npmjs.com/package/@carbonenginejs/runtime-resource"),
-                ("Node.js",
-                 "Hosts the geometry converter in an isolated, sandboxed process (MIT).",
-                 "https://nodejs.org"),
+                (".NET", "Runtime and base libraries (MIT).", "https://github.com/dotnet/runtime"),
+                ("Avalonia UI", "Cross-platform UI framework (MIT).", "https://github.com/AvaloniaUI/Avalonia"),
+                ("SkiaSharp", "Image rendering (MIT).", "https://github.com/mono/SkiaSharp"),
+                ("Velopack", "Installer and auto-updates (MIT).", "https://github.com/velopack/velopack"),
+                (".NET Community Toolkit", "MVVM infrastructure (MIT).", "https://github.com/CommunityToolkit/dotnet"),
+                ("DesktopNotifications", "Native desktop notifications (MIT).", "https://github.com/pr8x/DesktopNotifications"),
+                ("MailKit", "Email notifications (MIT).", "https://github.com/jstedfast/MailKit"),
+                ("YamlDotNet", "YAML parsing (MIT).", "https://github.com/aaubry/YamlDotNet"),
+                ("Google APIs Client Library", "Google Calendar and Drive integration (Apache 2.0).",
+                 "https://github.com/googleapis/google-api-dotnet-client"),
             };
-            foreach (var (name, desc, url) in renderCredits)
+            foreach (var (name, desc, url) in credits)
             {
                 var credit = new StackPanel { Spacing = 1, Margin = new Thickness(0, 4, 0, 0) };
                 AddLinkButton(credit, name, url);
@@ -429,19 +418,11 @@ namespace EveLens.Avalonia.Views.Dialogs
                     Foreground = _textSecondaryBrush, TextWrapping = TextWrapping.Wrap,
                     LineHeight = 18,
                 });
-                renderStack.Children.Add(credit);
+                creditsStack.Children.Add(credit);
             }
-            renderStack.Children.Add(new TextBlock
-            {
-                Text = "EveLens itself is built with .NET, Avalonia UI, SkiaSharp, Velopack " +
-                       "and CommunityToolkit.Mvvm. Full license texts and notices ship inside " +
-                       "the render runtime (THIRD-PARTY-LICENSES.md and per-package NOTICE files).",
-                FontSize = FontScaleService.Caption, Foreground = _textDisabledBrush,
-                TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 6, 0, 0),
-            });
-            AddLinkButton(renderStack, "Full acknowledgements",
+            AddLinkButton(creditsStack, "Full acknowledgements",
                 BuildInfo.Repository + "/blob/main/ACKNOWLEDGEMENTS.md");
-            stack.Children.Add(renderStack);
+            stack.Children.Add(creditsStack);
 
             // Copyright
             stack.Children.Add(new TextBlock

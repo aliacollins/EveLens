@@ -11,7 +11,7 @@
 
 ## What is EveLens?
 
-EveLens is a free, open-source **skill planner and character tracker for EVE Online** -- the modern successor to EVEMon, the tool EVE pilots relied on for nearly twenty years. It plans skill training, optimizes attribute remaps, monitors every character you own (100+ supported), compares fleets against doctrines, and -- as of 1.5.0 -- renders your **SKIN designs on your own ships in real 3D**, powered by **CCP's own Carbon Engine and Trinity graphics engine**, open-sourced by CCP and now running inside EveLens.
+EveLens is a free, open-source **skill planner and character tracker for EVE Online** -- the modern successor to EVEMon, the tool EVE pilots relied on for nearly twenty years. It plans skill training, optimizes attribute remaps, monitors every character you own (100+ supported), and compares fleets against doctrines.
 
 It runs natively on **Windows, Linux, and macOS** (signed and notarized), built on **.NET 10** and **Avalonia 12**, backed by 2,400+ automated tests. Your data comes straight from CCP's ESI API with scopes you choose; nothing leaves your machine without an explicit opt-in.
 
@@ -66,9 +66,6 @@ The drag-to-Applications step matters more than it looks: it is how macOS knows 
 ---
 
 ## What You Get
-
-### The SKINR Studio (NEW in 1.5.0)
-The engine that renders New Eden now renders inside EveLens. **CCP open-sourced their Carbon Engine and Trinity graphics engine under MIT -- EveLens runs them**, so your SKIN designs appear on your actual ships with the exact nanocoatings, reflections and lighting the game shows: not screenshots, not mockups, the real renderer. Judge every design in CCP's studio, a live station hangar, deep space nebulas, hard sunlight, or a beauty pass. Assemble **Photo Op** fleet portraits from your own ships. Browse the entire **Paragon Hub marketplace** as real renders, side by side, same camera and lighting for every design. The 3D engine is a one-time optional download; community preview images cover you without it.
 
 ### Cross-Platform -- Finally
 EveLens runs natively on Windows, Linux, and macOS from a single codebase. System tray, notifications, clipboard, and dialogs all use native platform APIs. Same features, same UI, same updates on every platform. No Wine, no workarounds.
@@ -177,8 +174,6 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 ## What Was New in 1.5.0
 
-- **The SKINR Studio** -- your SKIN designs on your ships, rendered in real 3D by EVE's own engine; five environments, Photo Op fleet shots, one-time 3D engine download (community preview images without it)
-- **Paragon Hub browser** -- every marketplace design as a real render, side by side, with instant pre-resolved identities and preview images
 - **Doctrine Designer round two** -- import from files/clipboard/plans, add whole groups, "Show only missing", missing-SP badges, aligned card columns with frozen panes
 - **Skill priorities** -- visible on every plan row, "Group by Priority" milestone bands
 - **Overview rework** -- drag-to-group, sort and density controls, group totals, saved comparisons
@@ -191,15 +186,13 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 ## Frequently Asked Questions
 
-**Is EveLens free?** Yes -- free and open source under GPL v2, no donations accepted. The optional 3D render engine is also free.
+**Is EveLens free?** Yes -- free and open source under GPL v2, no donations accepted.
 
 **Is it safe to log in with?** EveLens uses CCP's official ESI API with OAuth -- it never sees your password, and you choose exactly which data scopes it may read. Everything stays on your machine unless you explicitly opt in to community features.
 
 **Does it work on Mac?** Yes, natively on Apple Silicon -- code-signed, notarized, and self-updating as of 1.5.0. Linux (AppImage) and Windows too, from one codebase.
 
 **Can it replace EVEMon?** That's the point. EveLens is a ground-up rewrite of EVEMon for modern .NET -- same lineage, same license, built for today's ESI and 100+ characters. Add your characters through ESI login and you're home.
-
-**How does the 3D SKIN rendering work?** CCP open-sourced their Carbon Engine and Trinity graphics engine under MIT; EveLens runs that engine locally with the game's own art assets from CCP's CDN, so what you see is what the game renders.
 
 ---
 
@@ -220,4 +213,4 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 GPL v2 -- See [LICENSE](src/EveLens.Common/Resources/License/gpl.txt)
 
-EveLens stands on other people's work -- see [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for the full credits, from EVEMon's original authors to the engines behind the 3D render pipeline.
+EveLens stands on other people's work -- see [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for the full credits, from EVEMon's original authors to the libraries it is built with.

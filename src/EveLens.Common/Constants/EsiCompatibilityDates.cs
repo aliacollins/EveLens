@@ -13,22 +13,14 @@ namespace EveLens.Common.Constants
     /// The X-Compatibility-Date each compatibility-routed ESI method was written against.
     /// </summary>
     /// <remarks>
-    /// CCP's newer routes (the SKINR family is the first EveLens consumes) are versioned by
-    /// date header instead of a /vN path prefix. The date is a per-DTO contract: bump an
+    /// CCP's newer routes are versioned by date header instead of a /vN path prefix. The date is a per-DTO contract: bump an
     /// entry ONLY together with re-verifying every DTO that method deserializes against the
     /// spec for the new date. Methods absent from this table are path-versioned and send no
     /// header.
     /// </remarks>
     public static class EsiCompatibilityDates
     {
-        /// <summary>The date the SKINR DTO family was verified against.</summary>
-        public const string Skinr = "2026-08-18";
-
-        private static readonly Dictionary<Enum, string> s_dates = new()
-        {
-            { ESIAPICharacterMethods.SkinrLicenses, Skinr },
-            { ESIAPICharacterMethods.SkinrComponents, Skinr },
-        };
+        private static readonly Dictionary<Enum, string> s_dates = new();
 
         /// <summary>
         /// The compatibility date for the given ESI method, or null when the method is
