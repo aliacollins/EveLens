@@ -182,6 +182,10 @@ namespace EveLens.Avalonia
             timer.Start();
             AppServices.TraceService?.Trace("Avalonia.App.Bootstrap - tick timer started", printMethod: false);
 
+            // Phase 9b: Remove files left on disk by the SKINR viewer
+            _ = Task.Run(() => new SkinrLeftoverCleanup(
+                AppServices.ApplicationPaths.DataDirectory, AppServices.TraceService).Run());
+
             // Phase 10: Create and show main window.
             // Quiet autostart: the desktop lifetime auto-shows MainWindow right after this
             // method returns, so we defer the assignment to a posted job (which runs after
