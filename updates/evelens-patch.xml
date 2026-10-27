@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-10-27</date>
+      <version>1.5.4.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.4</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.4/EveLens-install-1.5.4.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.4
+
+Character groups from the card menu]]></message>
+    </release>
+    <release>
       <date>2026-10-03</date>
       <version>1.5.3.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.3</url>
