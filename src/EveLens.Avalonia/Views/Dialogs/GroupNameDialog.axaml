@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:EveLens.Avalonia.Markup"
+        x:Class="EveLens.Avalonia.Views.Dialogs.GroupNameDialog"
+        Title="{loc:T Overview.NewGroupTitle}"
+        Width="340" SizeToContent="Height"
+        WindowStartupLocation="CenterOwner"
+        Icon="avares://EveLens/Properties/EveLens.ico"
+        CanResize="False">
+
+    <StackPanel Margin="16" Spacing="10">
+        <TextBlock Text="{loc:T Overview.NewGroupTitle}"
+                   FontSize="{DynamicResource EveFontTitle}" FontWeight="Bold"
+                   Foreground="{StaticResource EveAccentPrimaryBrush}" />
+        <TextBox x:Name="NameBox" Watermark="{loc:T Overview.GroupNameWatermark}"
+                 FontSize="{DynamicResource EveFontBody}" />
+        <TextBlock x:Name="ProblemText" IsVisible="False" TextWrapping="Wrap"
+                   FontSize="{DynamicResource EveFontSmall}"
+                   Foreground="{StaticResource EveErrorRedBrush}" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="CancelButton" Content="{loc:T Action.Cancel}"
+                    FontSize="{DynamicResource EveFontBody}" Padding="10,5" CornerRadius="12" />
+            <Button x:Name="CreateButton" Content="{loc:T Overview.CreateGroup}" IsEnabled="False"
+                    FontSize="{DynamicResource EveFontBody}" Padding="10,5" CornerRadius="12"
+                    Background="{StaticResource EveAccentPrimaryBrush}" Foreground="#FF1A1A2E" />
+        </StackPanel>
+    </StackPanel>
+</Window>

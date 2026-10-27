@@ -82,6 +82,49 @@ namespace EveLens.Tests.Helpers
             CharacterGroupMutator.AddToGroup(groups, "Mains", A).Should().BeFalse();
         }
 
+        /// <summary>
+        /// A new group is created only after the pilot names it,
+        /// so the name rules are checked before anything is built.
+        /// </summary>
+        [Theory]
+        [InlineData("", "Overview.GroupNameRequired")]
+        [InlineData("   ", "Overview.GroupNameRequired")]
+        [InlineData("mains", "Overview.GroupNameTaken")]
+        [InlineData(" Mains ", "Overview.GroupNameTaken")]
+        [InlineData("ungrouped", "Overview.GroupNameTaken")]
+        [InlineData("Miners", null)]
+        public void GroupNameProblem_ExplainsWhyANameCantBeUsed(string name, string? expected)
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Mains", A) };
+            CharacterGroupMutator.GroupNameProblem(groups, name).Should().Be(expected);
+        }
+
+        [Fact]
+        public void GroupNameProblem_LetsARenamedGroupKeepItsOwnName()
+        {
+            var mains = Group("Mains", A);
+            var groups = new List<CharacterGroupSettings> { mains, Group("Alts", B) };
+            CharacterGroupMutator.GroupNameProblem(groups, "MAINS", except: mains).Should().BeNull();
+            CharacterGroupMutator.GroupNameProblem(groups, "alts", except: mains).Should().Be("Overview.GroupNameTaken");
+        }
+
+        [Fact]
+        public void RenameGroup_CannotTakeTheUngroupedSectionName()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Mains", A) };
+            CharacterGroupMutator.RenameGroup(groups, "Mains", "Ungrouped").Should().BeFalse(
+                "a group called Ungrouped would be mistaken for the ungrouped section");
+            groups[0].Name.Should().Be("Mains");
+        }
+
+        [Fact]
+        public void CreateGroup_WithAValidatedName_UsesItExactly()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Mains", A) };
+            CharacterGroupMutator.GroupNameProblem(groups, "Haulers").Should().BeNull();
+            CharacterGroupMutator.CreateGroup(groups, new[] { B }, "Haulers").Name.Should().Be("Haulers");
+        }
+
         [Fact]
         public void RenameGroup_Renames_AndRejectsDuplicatesOrBlank()
         {
@@ -126,6 +169,74 @@ namespace EveLens.Tests.Helpers
 
             groups.Should().ContainSingle().Which.Name.Should().Be("Pair");
             groups[0].CharacterGuids.Should().Equal(B);
+        }
+
+        [Fact]
+        public void RemoveFromAllGroups_ReportsWhetherCharacterWasGrouped()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Pair", A, B) };
+
+            CharacterGroupMutator.RemoveFromAllGroups(groups, C).Should().BeFalse();
+            groups.Single().CharacterGuids.Should().Equal(A, B);
+
+            CharacterGroupMutator.RemoveFromAllGroups(groups, A).Should().BeTrue();
+            groups.Single().CharacterGuids.Should().Equal(B);
+        }
+
+        [Fact]
+        public void CreateGroup_UsesCallerSuppliedBaseName()
+        {
+            var groups = new List<CharacterGroupSettings>();
+
+            var created = CharacterGroupMutator.CreateGroup(groups, new[] { A }, "Nuevo grupo");
+
+            created.Name.Should().Be("Nuevo grupo");
+        }
+
+        [Fact]
+        public void CreateGroup_NumbersCallerSuppliedBaseName_WhenTaken()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("Nuevo grupo", C) };
+
+            var second = CharacterGroupMutator.CreateGroup(groups, new[] { A }, "Nuevo grupo");
+            var third = CharacterGroupMutator.CreateGroup(groups, new[] { B }, "Nuevo grupo");
+
+            second.Name.Should().Be("Nuevo grupo 2");
+            third.Name.Should().Be("Nuevo grupo 3");
+        }
+
+        [Fact]
+        public void CreateGroup_NumbersBaseName_CaseInsensitively()
+        {
+            var groups = new List<CharacterGroupSettings> { Group("nuevo GRUPO", C) };
+
+            CharacterGroupMutator.CreateGroup(groups, new[] { A }, "Nuevo grupo")
+                .Name.Should().Be("Nuevo grupo 2");
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void CreateGroup_BlankBaseName_FallsBackToDefault(string? baseName)
+        {
+            var groups = new List<CharacterGroupSettings>();
+
+            CharacterGroupMutator.CreateGroup(groups, new[] { A }, baseName)
+                .Name.Should().Be(CharacterGroupMutator.DefaultGroupName);
+        }
+
+        [Fact]
+        public void CreateGroup_SingleMember_FromExistingGroup_MovesIt()
+        {
+            // The card menu's "New group..." path: one character, possibly grouped.
+            var groups = new List<CharacterGroupSettings> { Group("Mains", A, B) };
+
+            var created = CharacterGroupMutator.CreateGroup(groups, new[] { A }, "New Group");
+
+            created.CharacterGuids.Should().Equal(A);
+            groups.Single(g => g.Name == "Mains").CharacterGuids.Should().Equal(B);
+            groups.Should().HaveCount(2);
         }
     }
 }
