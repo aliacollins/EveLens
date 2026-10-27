@@ -643,16 +643,25 @@ Overview.SortSP = By skill points
 Overview.SortTraining = Needs attention
 Overview.DensityCompact = Compact
 Overview.DensityComfortable = Comfortable
-Overview.ReorderNeedsCustom = Switch sorting to Custom order to rearrange cards manually
 Overview.MenuRename = Rename
 Overview.MenuMoveLeft = Move left
 Overview.MenuMoveRight = Move right
 Overview.MenuDeleteGroup = Delete group (characters stay)
 Overview.HeaderTip = Click to collapse or expand. Double-click to rename. Right-click for more.
-Overview.GestureTip = Tip: drag a card onto another card to create a group, onto a group to add it, or out of a group to remove it. Right-click a group name to rename, reorder, or delete.
+Overview.GestureTip = 팁: 캐릭터를 우클릭하면 그룹에 추가할 수 있습니다. 그룹 이름을 우클릭하면 이름 변경, 순서 변경, 삭제가 가능합니다. "Reorder" 모드에서는 카드를 드래그해 그룹 간에 옮길 수도 있습니다.
 Overview.GotIt = Got it
 Overview.ReorderHint = Drag to reorder. Drop a card ON another to group them. Drag out of a group to remove. Click Done when finished.
 Overview.DragHint = Drop on a card to group
+Overview.ReorderSwitchesToCustom = 정렬을 사용자 지정 순서로 전환하여 카드를 드래그해 재배치하거나 그룹으로 묶을 수 있습니다
+Overview.MenuAddToGroup = 그룹에 추가
+Overview.MenuNewGroup = 새 그룹...
+Overview.NewGroupTitle = 새 그룹
+Overview.GroupNameWatermark = 그룹 이름 (예: 채굴)
+Overview.CreateGroup = 만들기
+Overview.GroupNameRequired = 그룹 이름을 입력하세요.
+Overview.GroupNameTaken = 이미 사용 중인 이름입니다.
+Overview.MenuRemoveFromGroup = 그룹에서 제거
+Overview.MenuDeleteCharacter = 캐릭터 삭제...
 
 # Main Window — privacy flyout
 Privacy.ButtonTip = Privacy mode — hide sensitive values for screenshots
