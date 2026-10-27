@@ -100,11 +100,6 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         // Drag-to-group state (drop a card onto a card/folder to group — iOS style)
         private Button? _groupDropTarget;
 
-        // Group created from a card's "New group..." menu item: its header opens in
-        // inline-rename mode once the rebuilt tree reaches it (LoadData replaces
-        // every control, so the request must outlive the rebuild).
-
-
         public CharacterOverviewView()
         {
             InitializeComponent();
@@ -1771,9 +1766,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 });
             }
 
-            // Manual reorder only makes sense when the user owns the order, so
-            // Reorder switches the sort to Custom (OverviewReorderPolicy) rather
-            // than sitting disabled and hiding the grouping gestures.
+            // Entering Reorder switches the sort to Custom (OverviewReorderPolicy).
             var sortMode = Settings.UI.OverviewSort;
             if (OverviewReorderPolicy.ShouldSwitchToCustom(sortMode, enteringReorder: !_reorderMode))
                 ToolTip.SetTip(_reorderToggleBtn, Loc.Get("Overview.ReorderSwitchesToCustom"));
@@ -1838,8 +1831,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // One-time gesture tip (ConfirmedTips-backed): bridges the gap between
             // invisible gestures and discoverability. "Got it" dismisses forever;
             // header tooltips remain as the standing reminder.
-            // "-v2": the tip now leads with the card right-click menu, so pilots who
-            // dismissed the drag-only wording see the new path once.
+            // The tip shows once per id; dismissals are stored by id.
             const string gestureTipId = "overview-gestures-v2";
             if (!Settings.UI.ConfirmedTips.Contains(gestureTipId))
             {
