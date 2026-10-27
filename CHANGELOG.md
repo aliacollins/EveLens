@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.4] - 2026-10-27
+### Changed
+
+- Character groups on the Overview can now be created and changed from a character card's right-click menu: "Add to group" offers "New group..." plus every existing group, and "Remove from group" appears for grouped characters. This works in any sort mode.
+- The Reorder button is always available. Clicking it while the Overview is sorted by name, skill points or attention switches to your saved Custom order (nothing is overwritten). Picking an automatic sort while reordering ends Reorder mode.
+- Creating a group -- from "New group..." or by dropping one card on another in Reorder mode -- first asks for its name. Nothing is created if you cancel, and a name already in use (or "Ungrouped") is refused with a short message. The card's "Delete Character..." item is now translated.
+- The one-time Overview tip now points to the right-click menu. Pilots who dismissed the old tip see the new one once.
 ## [1.5.3] - 2026-10-03
 ### Removed
 

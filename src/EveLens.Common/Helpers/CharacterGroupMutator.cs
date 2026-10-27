@@ -19,18 +19,48 @@ namespace EveLens.Common.Helpers
     public static class CharacterGroupMutator
     {
         /// <summary>
+        /// Fallback base name when the caller supplies none (or a blank one).
+        /// </summary>
+        public const string DefaultGroupName = "New Group";
+
+        /// <summary>
+        /// The overview's section key for characters in no group. Reserved: a real group
+        /// with this name would be mistaken for that section.
+        /// </summary>
+        public const string UngroupedSection = "Ungrouped";
+
+        /// <summary>
+        /// Why <paramref name="name"/> can't name a group (a <c>Loc</c> key), or null when it can.
+        /// <paramref name="except"/> is the group being renamed, which may keep its own name.
+        /// </summary>
+        public static string? GroupNameProblem(
+            IEnumerable<CharacterGroupSettings> groups, string? name, CharacterGroupSettings? except = null)
+        {
+            name = name?.Trim() ?? string.Empty;
+            if (name.Length == 0)
+                return "Overview.GroupNameRequired";
+            if (string.Equals(name, UngroupedSection, StringComparison.OrdinalIgnoreCase)
+                || groups.Any(g => g != except && string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)))
+                return "Overview.GroupNameTaken";
+            return null;
+        }
+
+        /// <summary>
         /// Creates a new group containing <paramref name="members"/>, removing them
-        /// from any group they were in. The name is "New Group", numbered when taken.
+        /// from any group they were in. The name is <paramref name="baseName"/>
+        /// (the caller passes the localized "New Group"; blank falls back to
+        /// <see cref="DefaultGroupName"/>), numbered when taken.
         /// Returns the created group (already added to <paramref name="groups"/>).
         /// </summary>
         public static CharacterGroupSettings CreateGroup(
-            IList<CharacterGroupSettings> groups, IEnumerable<Guid> members)
+            IList<CharacterGroupSettings> groups, IEnumerable<Guid> members, string? baseName = null)
         {
             var memberList = members.Distinct().ToList();
 
-            string name = "New Group";
+            string root = string.IsNullOrWhiteSpace(baseName) ? DefaultGroupName : baseName.Trim();
+            string name = root;
             for (int i = 2; groups.Any(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)); i++)
-                name = $"New Group {i}";
+                name = $"{root} {i}";
 
             foreach (var guid in memberList)
                 RemoveFromAllGroups(groups, guid);
@@ -62,36 +92,35 @@ namespace EveLens.Common.Helpers
         /// <summary>
         /// Removes a character from every group (it becomes ungrouped). Groups left
         /// empty are deleted — an empty folder has no reason to exist.
+        /// Returns true when the character was in at least one group.
         /// </summary>
-        public static void RemoveFromAllGroups(
+        public static bool RemoveFromAllGroups(
             IList<CharacterGroupSettings> groups, Guid character)
         {
+            bool removed = false;
             foreach (var group in groups.ToList())
             {
-                group.CharacterGuids.Remove(character);
+                removed |= group.CharacterGuids.Remove(character);
                 if (group.CharacterGuids.Count == 0)
                     groups.Remove(group);
             }
+            return removed;
         }
 
         /// <summary>
-        /// Renames a group. Fails (false) on a blank name or a name already used by
-        /// another group (case-insensitive) — the overview identifies groups by name.
+        /// Renames a group. Fails (false) on a blank, reserved or already-used name
+        /// (case-insensitive; see <see cref="GroupNameProblem"/>) — the overview identifies groups by name.
         /// </summary>
         public static bool RenameGroup(
             IList<CharacterGroupSettings> groups, string oldName, string newName)
         {
             newName = newName?.Trim() ?? string.Empty;
-            if (newName.Length == 0)
-                return false;
-
             var group = groups.FirstOrDefault(g => string.Equals(g.Name, oldName, StringComparison.Ordinal));
             if (group == null)
                 return false;
             if (string.Equals(oldName, newName, StringComparison.Ordinal))
                 return true;
-            if (groups.Any(g => g != group &&
-                    string.Equals(g.Name, newName, StringComparison.OrdinalIgnoreCase)))
+            if (GroupNameProblem(groups, newName, except: group) != null)
                 return false;
 
             group.Name = newName;

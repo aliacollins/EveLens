@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
@@ -98,6 +99,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         // Drag-to-group state (drop a card onto a card/folder to group — iOS style)
         private Button? _groupDropTarget;
+
+        // Group created from a card's "New group..." menu item: its header opens in
+        // inline-rename mode once the rebuilt tree reaches it (LoadData replaces
+        // every control, so the request must outlive the rebuild).
 
 
         public CharacterOverviewView()
@@ -266,7 +271,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     {
                         if (sortMode == Common.Enumerations.UISettings.OverviewSortMode.Custom)
                             ungrouped = SortByUngroupedOrder(ungrouped);
-                        AddSection("Ungrouped", ungrouped);
+                        AddSection(CharacterGroupMutator.UngroupedSection, ungrouped);
                     }
 
                     // Ghost "add character" card rides at the end of the last
@@ -288,7 +293,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     characters = Settings.UI.OverviewSort == Common.Enumerations.UISettings.OverviewSortMode.Custom
                         ? SortByUngroupedOrder(characters)
                         : OverviewSortHelper.Sort(characters, Settings.UI.OverviewSort);
-                    var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true, groupName: "Ungrouped");
+                    var wrap = BuildCardWrapPanel(characters, ref cardIndex, includeGhostCard: true, groupName: CharacterGroupMutator.UngroupedSection);
                     OverviewPanel.Children.Add(wrap);
                 }
 
@@ -433,7 +438,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // chip), so the toggle must relayout. The toggle is DEFERRED ~260ms so a
             // double-click (inline rename) can cancel it — otherwise click #1's
             // rebuild destroys the header before click #2 lands.
-            bool isRealGroup = groupName != "Ungrouped";
+            bool isRealGroup = groupName != CharacterGroupMutator.UngroupedSection;
             DispatcherTimer? pendingToggle = null;
             divider.PointerPressed += (_, e) =>
             {
@@ -494,6 +499,33 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             section.Children.Add(divider);
             section.Children.Add(wrap);
             host.Children.Add(section);
+        }
+
+        /// <summary>
+        /// Asks for the new group's name first; nothing is created when the pilot cancels.
+        /// </summary>
+        private async Task CreateNamedGroupAsync(IReadOnlyList<Guid> members)
+        {
+            try
+            {
+                if (TopLevel.GetTopLevel(this) is not Window owner)
+                    return;
+                var dialog = new GroupNameDialog(
+                    name => CharacterGroupMutator.GroupNameProblem(Settings.CharacterGroups, name));
+                string? name = await dialog.ShowDialog<string?>(owner);
+                // Re-checked: groups may have changed while the dialog was open.
+                if (name == null || CharacterGroupMutator.GroupNameProblem(Settings.CharacterGroups, name) != null)
+                    return;
+                MutateGroups(g =>
+                {
+                    CharacterGroupMutator.CreateGroup(g, members, name);
+                    return true;
+                });
+            }
+            catch (Exception ex)
+            {
+                AppServices.TraceService?.Trace($"CharacterOverviewView: create group failed: {ex}");
+            }
         }
 
         /// <summary>
@@ -1042,14 +1074,62 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 }
             }
 
-            // Context menu
-            var deleteItem = new MenuItem { Header = "Delete Character...", Tag = character };
-            deleteItem.Click += OnDeleteCharacter;
-            btn.ContextMenu = new ContextMenu { Items = { deleteItem } };
+            btn.ContextMenu = BuildCharacterCardMenu(character);
 
             btn.Click += OnCharacterCardClick;
 
             return btn;
+        }
+
+        /// <summary>
+        /// Card right-click menu: the discoverable, any-sort-mode path to grouping
+        /// (drag-to-group needs Reorder mode). Contents come from
+        /// <see cref="CharacterGroupMenuModel"/>; this only builds the MenuItems.
+        /// </summary>
+        private ContextMenu BuildCharacterCardMenu(Character character)
+        {
+            var model = CharacterGroupMenuModel.Build(Settings.CharacterGroups, character.Guid);
+            Guid guid = character.Guid;
+
+            var addToGroup = new MenuItem { Header = Loc.Get("Overview.MenuAddToGroup") };
+            var newGroup = new MenuItem { Header = Loc.Get("Overview.MenuNewGroup") };
+            newGroup.Click += (_, _) => _ = CreateNamedGroupAsync(new[] { guid });
+            addToGroup.Items.Add(newGroup);
+
+            if (model.Groups.Count > 0)
+            {
+                addToGroup.Items.Add(new Separator());
+                foreach (var entry in model.Groups)
+                {
+                    string target = entry.Name;
+                    var item = new MenuItem
+                    {
+                        Header = target,
+                        ToggleType = MenuItemToggleType.CheckBox,
+                        IsChecked = entry.IsCurrent,
+                        IsEnabled = !entry.IsCurrent
+                    };
+                    if (!entry.IsCurrent)
+                        item.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.AddToGroup(g, target, guid));
+                    addToGroup.Items.Add(item);
+                }
+            }
+
+            var menu = new ContextMenu();
+            menu.Items.Add(addToGroup);
+
+            if (model.CanRemoveFromGroup)
+            {
+                var remove = new MenuItem { Header = Loc.Get("Overview.MenuRemoveFromGroup") };
+                remove.Click += (_, _) => MutateGroups(g => CharacterGroupMutator.RemoveFromAllGroups(g, guid));
+                menu.Items.Add(remove);
+            }
+
+            menu.Items.Add(new Separator());
+            var deleteItem = new MenuItem { Header = Loc.Get("Overview.MenuDeleteCharacter"), Tag = character };
+            deleteItem.Click += OnDeleteCharacter;
+            menu.Items.Add(deleteItem);
+            return menu;
         }
 
         private (IBrush dotColor, bool isFetching) GetEsiStatus(Character character)
@@ -1691,12 +1771,12 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 });
             }
 
-            // Manual reorder only makes sense when the user owns the order
+            // Manual reorder only makes sense when the user owns the order, so
+            // Reorder switches the sort to Custom (OverviewReorderPolicy) rather
+            // than sitting disabled and hiding the grouping gestures.
             var sortMode = Settings.UI.OverviewSort;
-            bool customOrder = sortMode == Common.Enumerations.UISettings.OverviewSortMode.Custom;
-            _reorderToggleBtn.IsEnabled = customOrder;
-            if (!customOrder)
-                ToolTip.SetTip(_reorderToggleBtn, Loc.Get("Overview.ReorderNeedsCustom"));
+            if (OverviewReorderPolicy.ShouldSwitchToCustom(sortMode, enteringReorder: !_reorderMode))
+                ToolTip.SetTip(_reorderToggleBtn, Loc.Get("Overview.ReorderSwitchesToCustom"));
 
             // Sort mode dropdown (Issue #72 rework / Discussion #46)
             var sortCombo = new ComboBox
@@ -1720,6 +1800,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var chosen = (Common.Enumerations.UISettings.OverviewSortMode)Math.Max(0, sortCombo.SelectedIndex);
                 if (chosen == Settings.UI.OverviewSort) return;
                 Settings.UI.OverviewSort = chosen;
+                _reorderMode = OverviewReorderPolicy.StaysInReorderMode(_reorderMode, chosen);
                 Settings.Save();
                 LoadData();
             };
@@ -1757,7 +1838,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // One-time gesture tip (ConfirmedTips-backed): bridges the gap between
             // invisible gestures and discoverability. "Got it" dismisses forever;
             // header tooltips remain as the standing reminder.
-            const string gestureTipId = "overview-gestures";
+            // "-v2": the tip now leads with the card right-click menu, so pilots who
+            // dismissed the drag-only wording see the new path once.
+            const string gestureTipId = "overview-gestures-v2";
             if (!Settings.UI.ConfirmedTips.Contains(gestureTipId))
             {
                 var tipText = new TextBlock
@@ -1801,8 +1884,16 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private void OnReorderToggle(object? sender, RoutedEventArgs e)
         {
-            _reorderMode = !_reorderMode;
-            LoadData();
+            bool entering = !_reorderMode;
+            if (OverviewReorderPolicy.ShouldSwitchToCustom(Settings.UI.OverviewSort, entering))
+            {
+                // Non-destructive: shows the saved custom order again; neither
+                // UngroupedCharacterOrder nor any group's order is rewritten.
+                Settings.UI.OverviewSort = Common.Enumerations.UISettings.OverviewSortMode.Custom;
+                Settings.Save();
+            }
+            _reorderMode = entering;
+            LoadData(); // rebuilds the toolbar, so the sort dropdown shows Custom
         }
 
         private static List<Character> SortByUngroupedOrder(List<Character> characters)
@@ -2182,8 +2273,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         /// <summary>
         /// Commits the group gesture: dropping on a folder or a grouped character
-        /// joins that group; dropping on an ungrouped character creates a new group
-        /// of the two. Mutations live in CharacterGroupMutator (tested).
+        /// joins that group; dropping on an ungrouped character asks for a name and then
+        /// creates a group of the two. Mutations live in CharacterGroupMutator (tested).
         /// </summary>
         private void PerformGroupDrop()
         {
@@ -2209,9 +2300,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 }
                 else
                 {
-                    CharacterGroupMutator.CreateGroup(
-                        Settings.CharacterGroups, new[] { target.Guid, dragged.Guid });
-                    changed = true;
+                    // A new group exists only once the pilot has named it.
+                    _ = CreateNamedGroupAsync(new[] { target.Guid, dragged.Guid });
                 }
             }
 
@@ -2331,7 +2421,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             if (_dragGroupName == null || _dragSourcePanel == null) return;
 
-            if (_dragGroupName == "Ungrouped")
+            if (_dragGroupName == CharacterGroupMutator.UngroupedSection)
             {
                 // Reorder in UngroupedCharacterOrder
                 var characters = GetCharactersFromPanel(_dragSourcePanel);
