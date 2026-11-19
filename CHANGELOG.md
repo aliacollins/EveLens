@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Fixed
+
+- A character's header (Located In, Docked At, balance, skill points, corporation and the rest) no longer freezes after you leave the character's page. Previously, once you went back to the Overview or another character, the header kept showing old values -- often the location from when the app started -- until EveLens was restarted, even though the Overview showed the new system (Issue #164).
+
 
 ## [1.5.4] - 2026-10-27
 ### Changed
