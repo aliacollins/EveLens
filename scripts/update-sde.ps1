@@ -25,6 +25,9 @@
     Skip download and extraction, just run YamlToSqlite + XmlGenerator
     on the existing yaml_extracted/ directory.
 
+.PARAMETER SkipConvert
+    Skip YamlToSqlite and use the existing tools/sqlite-latest.sqlite.
+
 .EXAMPLE
     .\scripts\update-sde.ps1
     .\scripts\update-sde.ps1 -Url "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3261822-yaml.zip"
@@ -37,7 +40,8 @@ param(
     [string]$Url = "",
     [string]$LocalZip = "",
     [switch]$SkipBuild,
-    [switch]$SkipDownload
+    [switch]$SkipDownload,
+    [switch]$SkipConvert
 )
 
 $ErrorActionPreference = "Stop"
@@ -54,7 +58,7 @@ $VersionFile = Join-Path $ResourcesDir "sde-version.json"
 
 # Default to the latest known SDE URL if none provided
 if (-not $Url -and -not $LocalZip -and -not $SkipDownload) {
-    $Url = "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3328718-yaml.zip"
+    $Url = "https://developers.eveonline.com/static-data/tranquility/eve-online-static-data-3714173-yaml.zip"
 }
 
 function Write-Step($step, $message) {
@@ -125,6 +129,10 @@ Write-Host "=========================================" -ForegroundColor White
 
 if (-not $SkipDownload) {
     Write-Step "1/6" "Download SDE"
+
+    if (-not (Test-Path $SdeFilesDir)) {
+        New-Item -ItemType Directory -Path $SdeFilesDir | Out-Null
+    }
 
     $zipPath = ""
     if ($LocalZip) {
@@ -198,12 +206,29 @@ if (-not $SkipDownload) {
     }
 }
 
-$buildNum = Get-BuildNumber ($Url + $LocalZip)
+# The build number comes from the extracted data itself, so the stamp names the data
+# the datafiles were generated from.
+$sdeInfoFile = Join-Path $YamlDir "_sde.yaml"
+$buildNum = "unknown"
+if (Test-Path $sdeInfoFile) {
+    $match = Select-String -Path $sdeInfoFile -Pattern "buildNumber:\s*(\d+)" | Select-Object -First 1
+    if ($match) { $buildNum = $match.Matches[0].Groups[1].Value }
+}
+if ($buildNum -eq "unknown") {
+    $buildNum = Get-BuildNumber ($Url + $LocalZip)
+}
 
 # ────────────────────────────────────────────────────────────
 # STEP 3: YAML → SQLite
 # ────────────────────────────────────────────────────────────
 
+if ($SkipConvert) {
+    Write-Step "3/6" "Convert YAML to SQLite - SKIPPED"
+    if (-not (Test-Path $SqlitePath)) {
+        Write-Error "SQLite database not found: $SqlitePath. Cannot skip conversion."
+        exit 1
+    }
+} else {
 Write-Step "3/6" "Convert YAML to SQLite (YamlToSqlite)"
 
 # Snapshot old DB size for diff
@@ -226,6 +251,7 @@ try {
 } finally {
     Pop-Location
 }
+}
 
 # ────────────────────────────────────────────────────────────
 # STEP 4: SQLite → Compressed XML Datafiles
@@ -241,7 +267,9 @@ Get-ChildItem -Path $ResourcesDir -Filter "*.xml.gzip" -ErrorAction SilentlyCont
 
 Push-Location $XmlGeneratorDir
 try {
-    Write-Info "Running: dotnet run"
+    # XmlGenerator reads the database named by this variable.
+    $env:EVELENS_SDE_SQLITE = $SqlitePath
+    Write-Info "Running: dotnet run (database: $SqlitePath)"
     $output = & dotnet run 2>&1
     if ($LASTEXITCODE -ne 0) {
         Write-Host ($output -join "`n") -ForegroundColor Red
@@ -290,7 +318,7 @@ foreach ($file in ($newDatafiles.Keys | Sort-Object)) {
 Write-Step "6/6" "Version Stamp"
 
 $versionInfo = @{
-    sdeBuild = $buildNum
+    sdeBuild = $(if ($buildNum -match '^\d+$') { [int]$buildNum } else { $buildNum })
     generatedUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     generator = "update-sde.ps1"
     datafiles = @{}

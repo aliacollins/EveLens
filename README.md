@@ -178,7 +178,7 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 - **Skill priorities** -- visible on every plan row, "Group by Priority" milestone bands
 - **Overview rework** -- drag-to-group, sort and density controls, group totals, saved comparisons
 - **macOS first class** -- signed, notarized, and self-updating in place; Linux gets update checks too
-- **.NET 10** and EVE static data build 3480926
+- **.NET 10** and EVE static data build 3714173
 
 Full details: [CHANGELOG.md](CHANGELOG.md)
 
