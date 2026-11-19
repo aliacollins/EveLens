@@ -151,7 +151,7 @@ namespace EveLens.Common.ViewModels
 
                 if (entry.ImplantLevel == 0 && entry.IsTraining)
                     alerts.Add(new FarmAlert(character.Name, FarmAlertType.NoImplants,
-                        $"No learning implants. Training at {entry.SpPerHour:N0} SP/hr instead of ~2,700 SP/hr."));
+                        $"No learning implants. Training at {entry.SpPerHour:N0} SP/hr instead of ~{SkillFarmEconomics.MaxSkillPointsPerHour.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} SP/hr."));
 
                 if (entry.ImplantLevel > 0 && entry.ImplantLevel < 5 && entry.IsTraining)
                     alerts.Add(new FarmAlert(character.Name, FarmAlertType.SuboptimalImplants,

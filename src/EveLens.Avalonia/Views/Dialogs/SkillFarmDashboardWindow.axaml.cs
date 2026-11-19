@@ -189,71 +189,55 @@ namespace EveLens.Avalonia.Views.Dialogs
                 $"PLEX: {FormatIsk(_vm.PlexPrice)}",
                 FindBrush("EveAccentPrimaryBrush")));
 
-            // ── MONTHLY ECONOMICS ──
-            // Calculate ongoing monthly costs and revenue based on actual SP/hr.
-            // Omega is a per-ACCOUNT cost (issue #124): an account holds up to
-            // CharactersPerAccount farm characters, the extra slots training on MCT
-            // certificates (485 PLEX/month each in the NES) rather than more Omega.
             int farmCharacters = _vm.TotalCharacters;
-            int perAccount = Math.Clamp(
-                Settings.UI.SkillFarm.CharactersPerAccount, 1, 3);
-            // Explicit account labels win: characters sharing a label share one
-            // Omega. The unlabeled remainder packs by the per-account divisor.
             var farmByGuid = Settings.UI.SkillFarm.FarmCharacters
                 .GroupBy(f => f.CharacterGuid)
-                .ToDictionary(g => g.Key, g => (g.First().AccountLabel ?? "").Trim());
-            var labels = _vm.Entries
-                .Select(en => farmByGuid.TryGetValue(en.Character.Guid, out var l) ? l : "")
-                .ToList();
-            int labeledAccounts = labels.Where(l => l.Length > 0)
-                .Distinct(StringComparer.OrdinalIgnoreCase).Count();
-            int unlabeled = labels.Count(l => l.Length == 0);
-            int farmAccounts = labeledAccounts +
-                (unlabeled == 0 ? 0 : (unlabeled + perAccount - 1) / perAccount);
-            int mctSlots = Math.Max(0, farmCharacters - farmAccounts);
+                .ToDictionary(g => g.Key, g => g.First().AccountLabel ?? "");
             double totalSpPerHour = _vm.Entries.Sum(e => e.SpPerHour);
-
-            // If all paused, estimate potential with +5 implants (2700 SP/hr per char)
-            bool allPaused = totalSpPerHour == 0 && farmCharacters > 0;
-            double estimatedSpPerHour = allPaused ? farmCharacters * 2700.0 : totalSpPerHour;
-            double monthlySpTotal = estimatedSpPerHour * 24 * 30;
-            double monthlyExtractions = monthlySpTotal / SkillInjectors.SkillPointsPerLargeExtraction;
-            const double OmegaPlex = 500.0, MctPlex = 485.0;
-            double omegaCostPerMonth =
-                (farmAccounts * OmegaPlex + mctSlots * MctPlex) * _vm.PlexPrice;
-
-            double bestTaxRateForMonthly = bestSellerTaxRate;
-            double monthlyRevenue = monthlyExtractions * _vm.InjectorPrice * (1 - bestTaxRateForMonthly);
-            double monthlyExtractorCost = monthlyExtractions * _vm.ExtractorPrice;
-            double monthlyNet = monthlyRevenue - monthlyExtractorCost - omegaCostPerMonth;
-            double omegaSavings = omegaCostPerMonth > 0
-                ? (monthlyRevenue - monthlyExtractorCost) : 0;
+            SkillFarmMonthly monthly = SkillFarmEconomics.Monthly(new SkillFarmMonthlyInput
+            {
+                FarmCharacters = farmCharacters,
+                AccountLabels = _vm.Entries
+                    .Select(en => farmByGuid.TryGetValue(en.Character.Guid, out var l) ? l : "")
+                    .ToList(),
+                CharactersPerAccount = Settings.UI.SkillFarm.CharactersPerAccount,
+                SkillPointsPerHour = totalSpPerHour,
+                PlexPrice = _vm.PlexPrice,
+                InjectorPrice = _vm.InjectorPrice,
+                ExtractorPrice = _vm.ExtractorPrice,
+                SalesTaxRate = bestSellerTaxRate,
+            });
 
             if (_vm.PricesLoaded && farmCharacters > 0)
             {
+                var invariant = System.Globalization.CultureInfo.InvariantCulture;
+                string omegaPlex = SkillFarmEconomics.OmegaPlexPerMonth.ToString("N0", invariant);
+                string mctPlex = SkillFarmEconomics.MctPlexPerMonth.ToString("N0", invariant);
+                string maxRate = SkillFarmEconomics.MaxSkillPointsPerHour.ToString("N0", invariant);
+
                 SummaryPanel.Children.Add(BuildStatCard(
-                    $"{monthlyExtractions:N0}/mo",
+                    $"{monthly.Extractions:N0}/mo",
                     "Monthly Injectors",
-                    allPaused
-                        ? $"estimated at 2,700 SP/hr each"
+                    monthly.IsEstimated
+                        ? $"estimated at {maxRate} SP/hr each"
                         : $"{totalSpPerHour:N0} SP/hr total",
                     FindBrush("EveAccentPrimaryBrush")));
 
                 SummaryPanel.Children.Add(BuildStatCard(
-                    FormatIsk(omegaCostPerMonth),
+                    FormatIsk(monthly.SubscriptionCost),
                     "Monthly Omega + MCT",
-                    mctSlots > 0
-                        ? $"{farmAccounts} acct × 500 + {mctSlots} MCT × 485 PLEX"
-                        : $"{farmAccounts} acct × 500 PLEX",
+                    monthly.MctSlots > 0
+                        ? $"{monthly.FarmAccounts} acct × {omegaPlex} + {monthly.MctSlots} MCT × {mctPlex} PLEX"
+                        : $"{monthly.FarmAccounts} acct × {omegaPlex} PLEX",
                     FindBrush("EveErrorRedBrush")));
 
                 SummaryPanel.Children.Add(BuildStatCard(
-                    FormatIsk(monthlyNet),
-                    monthlyNet >= 0 ? "Monthly Profit" : "Monthly Cost",
-                    monthlyNet < 0
-                        ? $"saves {FormatIsk(omegaSavings)} vs full price"
+                    FormatIsk(monthly.Net),
+                    monthly.Net >= 0 ? "Monthly Profit" : "Monthly Cost",
+                    monthly.Net < 0
+                        ? $"saves {FormatIsk(monthly.SubscriptionSavings)} vs full price"
                         : "after Omega + extractors",
-                    monthlyNet >= 0
+                    monthly.Net >= 0
                         ? FindBrush("EveSuccessGreenBrush")
                         : FindBrush("EveWarningYellowBrush")));
             }
