@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Helpers;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -574,7 +575,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             _ => "?",
         };
 
-        private static string FormatTime(TimeSpan t) =>
-            t.TotalDays >= 1 ? $"{(int)t.TotalDays}d {t.Hours}h" : $"{(int)t.TotalHours}h {t.Minutes}m";
+        private static string FormatTime(TimeSpan t)
+            => TimeFormatHelper.Format(t, DurationStyle.Compact);
     }
 }

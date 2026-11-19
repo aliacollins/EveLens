@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+
+- Durations under one hour in the attribute optimizer and in remap section headers read "45m" instead of "0h 45m".
+
 ### Fixed
 
 - The attribute optimizer now recommends a remap while an attribute booster is active. The booster bonus is counted for your current attributes and for every remap it considers (#159, #162).

@@ -615,12 +615,7 @@ namespace EveLens.Avalonia.Views
             }
             else if (character.ActiveTraining is { } skill)
             {
-                var remaining = skill.RemainingTime;
-                string timeStr = remaining.TotalHours >= 24
-                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
-                    : remaining.TotalHours >= 1
-                        ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
-                        : $"{remaining.Minutes}m {remaining.Seconds}s";
+                string timeStr = TimeFormatHelper.Format(skill.RemainingTime, DurationStyle.CompactSeconds);
                 parts.Add($"{trainingLabel}: {skill.SkillName} {skill.Level} ({timeStr})");
             }
             else

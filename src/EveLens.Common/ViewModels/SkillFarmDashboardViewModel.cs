@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -373,12 +374,7 @@ namespace EveLens.Common.ViewModels
         public string ImplantText => ImplantLevel > 0 ? $"+{ImplantLevel}" : "none";
 
         private static string FormatTimeSpan(TimeSpan ts)
-        {
-            if (ts <= TimeSpan.Zero) return "NOW";
-            if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}d {ts.Hours}h";
-            if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
-            return $"{ts.Minutes}m";
-        }
+            => TimeFormatHelper.Format(ts, DurationStyle.Compact, "NOW");
     }
 
     /// <summary>An alert about a farm character needing attention.</summary>

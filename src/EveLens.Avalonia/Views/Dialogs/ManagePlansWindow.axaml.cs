@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -241,11 +242,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         }
 
         private static string FormatTime(TimeSpan ts)
-        {
-            if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}d {ts.Hours}h {ts.Minutes}m";
-            if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
-            return $"{ts.Minutes}m {ts.Seconds}s";
-        }
+            => TimeFormatHelper.Format(ts, DurationStyle.FullSeconds);
 
         private async Task<string?> ShowNameInputDialog(string title, string defaultName,
             Plan? excludeFromCheck = null)

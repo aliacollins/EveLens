@@ -608,12 +608,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         }
 
         private static string FormatTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return Loc.Get("PlanEditor.Done");
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Full, Loc.Get("PlanEditor.Done"));
 
         protected override void OnKeyDown(KeyEventArgs e)
         {

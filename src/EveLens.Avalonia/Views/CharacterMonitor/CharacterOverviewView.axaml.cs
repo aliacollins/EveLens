@@ -1505,12 +1505,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
             if (character.ActiveTraining is { } skill)
             {
-                var remaining = skill.RemainingTime;
-                string timeStr = remaining.TotalHours >= 24
-                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
-                    : remaining.TotalHours >= 1
-                        ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
-                        : $"{remaining.Minutes}m {remaining.Seconds}s";
+                string timeStr = TimeFormatHelper.Format(skill.RemainingTime, DurationStyle.CompactSeconds);
                 textBlock.Text = $"{Loc.Get("Status.Training")}: {skill.SkillName} {skill.Level} ({timeStr})";
                 textBlock.Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow;
             }
