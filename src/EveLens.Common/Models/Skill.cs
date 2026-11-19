@@ -356,8 +356,7 @@ namespace EveLens.Common.Models
             get
             {
                 CCPCharacter ccpCharacter = Character as CCPCharacter;
-                return ccpCharacter != null && ccpCharacter.IsTraining && ccpCharacter.CurrentlyTrainingSkill != null &&
-                       ccpCharacter.CurrentlyTrainingSkill.Skill == this;
+                return ccpCharacter?.ActiveTraining?.Skill == this;
             }
         }
 

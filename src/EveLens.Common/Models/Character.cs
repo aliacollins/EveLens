@@ -620,6 +620,11 @@ namespace EveLens.Common.Models
         /// </summary>
         public virtual QueuedSkill? CurrentlyTrainingSkill => null;
 
+        /// <summary>
+        /// Gets the skill being trained right now; null when nothing is training.
+        /// </summary>
+        public virtual QueuedSkill? ActiveTraining => null;
+
         #endregion
 
 

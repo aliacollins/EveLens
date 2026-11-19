@@ -238,10 +238,9 @@ namespace EveLens.Common.ViewModels
             AccountStatus = _character.EffectiveCharacterStatus.ToString();
             AvailableRemaps = _character.AvailableReMaps;
 
-            if (_character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
+            if (_character.ActiveTraining is { } skill)
             {
                 IsTraining = true;
-                var skill = ccp.CurrentlyTrainingSkill;
                 string timeStr = TimeFormatHelper.FormatRemaining(skill.RemainingTime);
                 TrainingSkillText = $"{skill.SkillName} {skill.Level} ({timeStr})";
             }

@@ -362,6 +362,11 @@ namespace EveLens.Common.Models
         public override QueuedSkill? CurrentlyTrainingSkill => SkillQueue?.CurrentlyTraining;
 
         /// <summary>
+        /// Gets the skill being trained right now; null when the queue is paused or empty.
+        /// </summary>
+        public override QueuedSkill? ActiveTraining => IsTraining ? CurrentlyTrainingSkill : null;
+
+        /// <summary>
         /// Gets the time from the given UTC time until the skill queue ends; zero or
         /// negative when it has ended.
         /// </summary>
@@ -371,7 +376,7 @@ namespace EveLens.Common.Models
         /// Grades the skill queue at the given UTC time.
         /// </summary>
         public QueueHealth QueueHealthAt(DateTime utcNow)
-            => Helpers.SkillQueueHealth.Evaluate(IsTraining && CurrentlyTrainingSkill != null,
+            => Helpers.SkillQueueHealth.Evaluate(ActiveTraining != null,
                 QueueRemainingAt(utcNow));
 
         /// <summary>

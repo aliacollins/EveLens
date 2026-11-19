@@ -44,6 +44,7 @@ namespace EveLens.Tests.Helpers
             var character = PlanTestFixture.CreateTestCharacter();
 
             character.QueueHealthAt(DateTime.UtcNow).Should().Be(QueueHealth.NotTraining);
+            character.ActiveTraining.Should().BeNull();
         }
     }
 }

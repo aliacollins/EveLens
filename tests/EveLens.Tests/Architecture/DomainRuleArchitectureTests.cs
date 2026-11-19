@@ -24,6 +24,7 @@ namespace EveLens.Tests.Architecture
         {
             ("LastReMapTimed", "Character.RemapAvailability"),
             ("AvailableReMaps", "Character.RemapAvailability"),
+            ("CurrentlyTrainingSkill != null", "Character.ActiveTraining"),
         };
 
         [Fact]

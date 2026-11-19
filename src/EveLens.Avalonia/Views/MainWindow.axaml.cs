@@ -613,9 +613,8 @@ namespace EveLens.Avalonia.Views
             {
                 parts.Add($"{trainingLabel}: {PrivacyHelper.Mask}");
             }
-            else if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
+            else if (character.ActiveTraining is { } skill)
             {
-                var skill = ccp.CurrentlyTrainingSkill;
                 var remaining = skill.RemainingTime;
                 string timeStr = remaining.TotalHours >= 24
                     ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
