@@ -362,6 +362,19 @@ namespace EveLens.Common.Models
         public override QueuedSkill? CurrentlyTrainingSkill => SkillQueue?.CurrentlyTraining;
 
         /// <summary>
+        /// Gets the time from the given UTC time until the skill queue ends; zero or
+        /// negative when it has ended.
+        /// </summary>
+        public TimeSpan QueueRemainingAt(DateTime utcNow) => SkillQueue.EndTime - utcNow;
+
+        /// <summary>
+        /// Grades the skill queue at the given UTC time.
+        /// </summary>
+        public QueueHealth QueueHealthAt(DateTime utcNow)
+            => Helpers.SkillQueueHealth.Evaluate(IsTraining && CurrentlyTrainingSkill != null,
+                QueueRemainingAt(utcNow));
+
+        /// <summary>
         /// Gets a value indicating whether the character has insufficient balance to complete its buy orders.
         /// </summary>
         /// <value>
