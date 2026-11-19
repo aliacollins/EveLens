@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Skill Farm "Per Extraction" card uses the best seller's sales tax.
 - The attribute optimizer's finish date and a selected skill's "Completes" date are in EVE time, matching the plan header and the time card.
 - Doctrine Designer: each row shows the training time and missing SP for its own level, so a pilot's total and missing SP count every skill point once.
+- A paused skill queue no longer lowers a skill's points below what the skills list reported.
+- After a queued level finishes, a skill's level, active level and points are the same whether the skills list or the skill queue arrives first. The Skill Browser and Character Comparison show the finished level.
+- A finished level followed by another level of the same skill in training now raises the skill's active level.
 
 ## [1.5.4] - 2026-10-27
 ### Changed

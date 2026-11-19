@@ -45,9 +45,15 @@ namespace EveLens.Common.Models
                 StartTime = startTimeWhenPaused;
                 if (Skill != null)
                 {
+                    // The level starts from the highest of the skill's points, this entry's
+                    // start (when it trains the skill's next level or a lower one) and the
+                    // end of the level below.
+                    long reached = Skill.SkillPoints;
                     if (serial.Level <= Skill.Level + 1)
-                        Skill.SkillPoints = StartSP;
-                    startTimeWhenPaused += Skill.GetLeftTrainingTimeForLevelOnly(Level);
+                        reached = Math.Max(reached, StartSP);
+                    long from = Math.Max(reached, Skill.StaticData.GetPointsRequiredForLevel(Level - 1));
+                    long left = Math.Max(0, Skill.StaticData.GetPointsRequiredForLevel(Level) - from);
+                    startTimeWhenPaused += Skill.GetTimeSpanForPoints(left);
                 }
                 EndTime = startTimeWhenPaused;
             }

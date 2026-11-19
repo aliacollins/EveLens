@@ -930,53 +930,37 @@ namespace EveLens.Common.Models
             DateTime uselessDate = DateTime.UtcNow;
             FreeSkillPoints = skills.UnallocatedSP;
 
-            // Keep track of the current skill queue's completed skills, as ESI does not
-            // transfer them to the skills list until you login
-            var dict = new Dictionary<long, SerializableQueuedSkill>();
-            if (queue != null)
-                foreach (var queuedSkill in queue.CreateSkillQueue())
-                {
-                    // If the skill is completed or currently training, we need it later to
-                    // copy the progress over to the imported skills
-                    if (queuedSkill.IsCompleted || queuedSkill.IsTraining)
-                    {
-                        if (!dict.ContainsKey(queuedSkill.ID))
-                            dict.Add(queuedSkill.ID, queuedSkill);
-                        else
-                            dict[queuedSkill.ID] = queuedSkill;
-                    }
-                }
-            // Convert skills to EVE format
+            // The skills are imported as reported, then raised by what the skill queue shows:
+            // ESI lists a level the queue has finished only after the character logs in.
             foreach (var skill in skills.Skills)
             {
-                // Check if the skill is in the queue, and completed at a higher level or has
-                // higher current SP
-                if (dict.ContainsKey(skill.ID))
-                {
-                    var queuedSkill = dict[skill.ID];
-                    if (queuedSkill.IsCompleted)
-                    {
-                        // The active level could be less than the skill level if the character
-                        // finished an omega skill level (e.g. Repair Systems V) and then went
-                        // alpha without logging in. However, the alternative is to leave
-                        // ActiveLevel too low which breaks omega detection 100%
-                        skill.ActiveLevel = Math.Max(skill.ActiveLevel, queuedSkill.Level);
-                        // Queued skill is completed, so make sure the imported skill is
-                        // updated
-                        skill.Level = Math.Max(skill.Level, queuedSkill.Level);
-                        skill.Skillpoints = Math.Max(skill.Skillpoints, queuedSkill.EndSP);
-                    }
-                    else if (queuedSkill.IsTraining)
-                    {
-                        // Queued skill is currently training - use QueuedSkill class to
-                        // calculate the CurrentSP of the skill
-                        var tempSkill = new QueuedSkill(this, queuedSkill, ref uselessDate);
-                        skill.Skillpoints = Math.Max(skill.Skillpoints, tempSkill.CurrentSP);
-                    }
-                }
                 newSkills.AddLast(skill.ToXMLItem());
             }
             Skills.Import(newSkills, true);
+
+            if (queue != null)
+            {
+                foreach (SerializableQueuedSkill queuedSkill in queue.CreateSkillQueue())
+                {
+                    Skill skill = Skills[queuedSkill.ID];
+                    if (skill == null)
+                        continue;
+
+                    if (queuedSkill.IsCompleted)
+                    {
+                        skill.ApplyCompletedQueueEntry(queuedSkill.Level, queuedSkill.EndSP);
+                    }
+                    else if (queuedSkill.IsTraining)
+                    {
+                        var entry = new QueuedSkill(this, queuedSkill, ref uselessDate);
+                        skill.ApplyTrainingQueueEntry(queuedSkill.Level, entry.CurrentSP);
+                    }
+                    else if (queuedSkill.IsPaused)
+                    {
+                        skill.ApplyPausedQueueEntry(queuedSkill.Level, queuedSkill.StartSP);
+                    }
+                }
+            }
 
             UpdateMasteries();
         }
