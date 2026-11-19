@@ -66,6 +66,14 @@ namespace EveLens.Common.ViewModels
             _comparisonRows = new List<SkillComparisonRow>();
             if (_selectedTemplate == null) return;
 
+            var templateLevels = _selectedTemplate.Entries
+                .Select(templateEntry => (Skill: StaticSkills.GetSkillByID(templateEntry.SkillID), templateEntry.Level))
+                .Where(item => item.Skill != null)
+                .ToList();
+            var missingByCharacter = _subscribedCharacters
+                .Select(subscribed => SkillLevelRequirements.SkillPointsPerLevel(subscribed, templateLevels))
+                .ToList();
+
             foreach (var entry in _selectedTemplate.Entries)
             {
                 var skill = StaticSkills.GetSkillByID(entry.SkillID);
@@ -82,8 +90,9 @@ namespace EveLens.Common.ViewModels
                     CharacterEntries = new List<CharacterSkillEntry>()
                 };
 
-                foreach (var character in _subscribedCharacters)
+                for (int characterIndex = 0; characterIndex < _subscribedCharacters.Count; characterIndex++)
                 {
+                    var character = _subscribedCharacters[characterIndex];
                     long currentLevel = character.GetSkillLevel(skill);
                     var charEntry = new CharacterSkillEntry
                     {
@@ -99,13 +108,11 @@ namespace EveLens.Common.ViewModels
                     }
                     else
                     {
-                        charEntry.TrainingTime = character.GetTrainingTime(skill, entry.Level);
+                        long missingSp = missingByCharacter[characterIndex][(skill.ID, entry.Level)];
+                        charEntry.TrainingTime = character.GetTimeSpanForPoints(skill, missingSp);
                         charEntry.SpPerHour = (int)Math.Round(character.GetBaseSPPerHour(skill));
                         charEntry.Status = SkillTrainingStatus.NeedsTraining;
-                        // What an injector/SP bundle would have to cover for this cell.
-                        charEntry.MissingSp = Math.Max(0,
-                            skill.GetPointsRequiredForLevel(entry.Level) -
-                            character.GetSkillPoints(skill));
+                        charEntry.MissingSp = missingSp;
                     }
 
                     row.CharacterEntries.Add(charEntry);
