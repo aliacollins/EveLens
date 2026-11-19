@@ -300,6 +300,14 @@ namespace EveLens.Common.Models
         public DateTime LastReMapTimed { get; private set; }
 
         /// <summary>
+        /// Gets the remaps the character can spend.
+        /// </summary>
+        public RemapAvailability RemapAvailability => new(AvailableReMaps,
+            LastReMapTimed == DateTime.MinValue
+                ? null
+                : LastReMapTimed.AddDays(EveConstants.TimedRemapCooldownDays));
+
+        /// <summary>
         /// Gets the remote station date.
         /// </summary>
         public DateTime RemoteStationDate { get; private set; }
@@ -850,7 +858,7 @@ namespace EveLens.Common.Models
             // Remap info
             DateTime lastRespec = DateTime.MinValue, nextRespec = attribs.RemapCooldownDate;
             if (nextRespec > DateTime.MinValue)
-                lastRespec = nextRespec.Subtract(TimeSpan.FromDays(365.0));
+                lastRespec = nextRespec.Subtract(TimeSpan.FromDays(EveConstants.TimedRemapCooldownDays));
             LastReMapTimed = lastRespec;
             AvailableReMaps = attribs.BonusRemaps;
             LastReMapDate = attribs.LastRemap;

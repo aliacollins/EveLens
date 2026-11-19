@@ -13,6 +13,11 @@ namespace EveLens.Common.Constants
         public const int MaxImplantPoints = 5;
 
         /// <summary>
+        /// Days between two timed neural remaps.
+        /// </summary>
+        public const int TimedRemapCooldownDays = 365;
+
+        /// <summary>
         /// Maximum base attribute points (CharacterBaseAttributePoints + MaxRemappablePointsPerAttribute).
         /// </summary>
         public const int MaxBaseAttributePoints = 27;

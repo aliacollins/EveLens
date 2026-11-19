@@ -114,9 +114,9 @@ namespace EveLens.Avalonia.Views.Dialogs
             _targetPlan = targetPlan;
             _character = character;
 
-            int available = character.AvailableReMaps;
-            bool timedAvailable = character.LastReMapTimed == DateTime.MinValue
-                || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
+            RemapAvailability remaps = character.RemapAvailability;
+            int available = remaps.BonusRemaps;
+            bool timedAvailable = remaps.IsTimedAvailableAt(DateTime.UtcNow);
             int budget = available + (timedAvailable ? 1 : 0);
             RemapsChipText.Text = string.Format(Loc.Get("Optimizer.RemapsAvailFmt"),
                 budget, timedAvailable ? 1 : 0, available);
@@ -177,10 +177,8 @@ namespace EveLens.Avalonia.Views.Dialogs
 
         private int MaxRemapBudget()
         {
-            if (_character == null) return 1;
-            bool timedAvailable = _character.LastReMapTimed == DateTime.MinValue
-                || DateTime.UtcNow >= _character.LastReMapTimed.AddDays(365);
-            return Math.Max(1, _character.AvailableReMaps + (timedAvailable ? 1 : 0));
+            return (_character?.RemapAvailability ?? RemapAvailability.TimedOnly)
+                .PlanningBudgetAt(DateTime.UtcNow);
         }
 
         private void RenderProposal(RemapPlanningService.RemapProposal proposal)

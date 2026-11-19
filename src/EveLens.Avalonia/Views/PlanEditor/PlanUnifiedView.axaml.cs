@@ -267,17 +267,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         IBrush? availBrush = null;
                         if (character is Character charModel)
                         {
-                            bool canRemap = charModel.AvailableReMaps > 0
-                                || charModel.LastReMapTimed == DateTime.MinValue
-                                || DateTime.UtcNow >= charModel.LastReMapTimed.AddDays(365);
-                            if (canRemap)
+                            DateTime remapNow = DateTime.UtcNow;
+                            RemapAvailability remapState = charModel.RemapAvailability;
+                            if (remapState.CanRemapAt(remapNow))
                             {
                                 availText = Loc.Get("Plan.RemapAvailable");
                                 availBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
                             }
                             else
                             {
-                                int daysUntil = (int)(charModel.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
+                                int daysUntil = remapState.DaysUntilTimedRemap(remapNow);
                                 availText = string.Format(Loc.Get("Plan.RemapInDays"), daysUntil);
                                 availBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
                             }
@@ -2172,10 +2171,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (character != null)
             {
                 int used = _viewModel.Plan?.Count(e => e.Remapping != null) ?? 0;
-                bool timedAvail = character.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
                 int available = Math.Max(0,
-                    character.AvailableReMaps + (timedAvail ? 1 : 0) - used);
+                    character.RemapAvailability.AvailableAt(DateTime.UtcNow) - used);
                 string remapLine = used == 0
                     ? string.Format(Loc.Get("PlanEditor.RemapsNoneFmt"), available)
                     : available == 0
@@ -2200,10 +2197,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 AddThinDivider(Loc.Get("PlanEditor.Remap"));
 
-                int bonusRemaps = character.AvailableReMaps;
-                bool canRemapNow = bonusRemaps > 0
-                    || character.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
+                DateTime remapNow = DateTime.UtcNow;
+                RemapAvailability remapState = character.RemapAvailability;
+                int bonusRemaps = remapState.BonusRemaps;
+                bool canRemapNow = remapState.CanRemapAt(remapNow);
 
                 var remapLine = new StackPanel
                 {
@@ -2222,7 +2219,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 }
                 else
                 {
-                    int daysUntil = (int)(character.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
+                    int daysUntil = remapState.DaysUntilTimedRemap(remapNow);
                     remapLine.Children.Add(new TextBlock
                     {
                         Text = $"\u23F0 {Loc.Get("PlanEditor.NextIn")} {daysUntil}d",
@@ -3072,9 +3069,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 await System.Threading.Tasks.Task.Delay(700);
                 if (version != _badgeVersion) return;
 
-                bool timedAvailable = character.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
-                int budget = Math.Max(1, character.AvailableReMaps + (timedAvailable ? 1 : 0));
+                int budget = character.RemapAvailability.PlanningBudgetAt(DateTime.UtcNow);
                 BasePlan analysisPlan = _viewModel.DisplayPlan != null
                     ? _viewModel.DisplayPlan : _viewModel.Plan;
                 // Judge the plan in the terms it was optimized FOR: an Omega
