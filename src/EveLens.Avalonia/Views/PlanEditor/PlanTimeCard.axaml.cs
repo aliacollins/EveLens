@@ -23,7 +23,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             if (trainingTime > TimeSpan.Zero)
             {
-                DateTime completionDate = DateTime.UtcNow + trainingTime;
+                DateTime completionDate = PlanSchedule.CompletionDate(DateTime.UtcNow, trainingTime);
                 CompletionText.Text = $"Finishes {completionDate:yyyy-MM-dd HH:mm} EVE";
             }
             else

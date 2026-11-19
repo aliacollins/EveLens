@@ -27,6 +27,13 @@ namespace EveLens.Tests.Architecture
             ("CurrentlyTrainingSkill != null", "Character.ActiveTraining"),
         };
 
+        /// <summary>Code the UI may not contain, and the model member it calls instead.</summary>
+        private static readonly (string Snippet, string Owner)[] s_ownedSnippets =
+        {
+            ("DateTime.Now +", "PlanSchedule.CompletionDate"),
+            ("DateTime.UtcNow +", "PlanSchedule.CompletionDate"),
+        };
+
         [Fact]
         public void UiProject_DoesNotReadRawMembersOfOwnedRules()
         {
@@ -49,6 +56,12 @@ namespace EveLens.Tests.Architecture
                     {
                         if (lines[i].Contains("." + rawMember, StringComparison.Ordinal))
                             violations.Add($"{relative}:{i + 1} reads {rawMember}; use {owner}");
+                    }
+
+                    foreach (var (snippet, owner) in s_ownedSnippets)
+                    {
+                        if (lines[i].Contains(snippet, StringComparison.Ordinal))
+                            violations.Add($"{relative}:{i + 1} contains '{snippet}'; use {owner}");
                     }
                 }
             }

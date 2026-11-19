@@ -1583,7 +1583,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     through += items[i].TrainingTime;
                 SidebarContent.Children.Add(SidebarKeyValue(
                     Loc.Get("PlanEditor.Completes"),
-                    (DateTime.Now + through).ToString("MMM d, yyyy"), null));
+                    PlanSchedule.CompletionDate(DateTime.UtcNow, through).ToString("MMM d, yyyy"), null));
             }
             if (character != null)
             {
@@ -2131,7 +2131,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Finish date
             if (stats.TrainingTime > TimeSpan.Zero)
             {
-                var finishDate = DateTime.UtcNow + stats.TrainingTime;
+                var finishDate = PlanSchedule.CompletionDate(DateTime.UtcNow, stats.TrainingTime);
                 heroStack.Children.Add(new TextBlock
                 {
                     Text = $"{Loc.Get("PlanEditor.Finishes")} {finishDate:MMM d, yyyy}",
@@ -3020,7 +3020,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             if (stats.TrainingTime > TimeSpan.Zero)
             {
-                var finishDate = DateTime.UtcNow + stats.TrainingTime;
+                var finishDate = PlanSchedule.CompletionDate(DateTime.UtcNow, stats.TrainingTime);
                 FinishDateText.Text = $"{Loc.Get("PlanEditor.Finishes")} {finishDate:yyyy-MM-dd}";
             }
             else

@@ -213,7 +213,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 HeadlineRow.Children.Add(Text("|", DimBrush, FontScaleService.Body));
                 HeadlineRow.Children.Add(Text(
                     string.Format(Loc.Get("Optimizer.FinishFmt"),
-                        DateTime.Now + proposal.OptimizedDuration),
+                        PlanSchedule.CompletionDate(DateTime.UtcNow, proposal.OptimizedDuration)),
                     DimBrush, FontScaleService.Body));
             }
 
