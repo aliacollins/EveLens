@@ -3285,17 +3285,17 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private async void CopyPlanToClipboard()
         {
-            if (_viewModel?.Plan == null) return;
-
-            // Game-compatible format: "Skill Name N" per line (numeric levels)
-            var sb = new System.Text.StringBuilder();
-            foreach (var entry in _viewModel.Plan)
+            try
             {
-                sb.AppendLine($"{entry.Skill.Name} {entry.Level}");
-            }
+                if (_viewModel?.Plan == null) return;
 
-            if (AppServices.ClipboardService != null)
-                await AppServices.ClipboardService.SetTextAsync(sb.ToString());
+                if (AppServices.ClipboardService != null)
+                    await AppServices.ClipboardService.SetTextAsync(_viewModel.ExportAsGameText());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
+            }
         }
 
         #endregion
