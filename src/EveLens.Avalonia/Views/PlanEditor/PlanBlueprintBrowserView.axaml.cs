@@ -209,7 +209,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             RefreshTreeList();
             UpdateDetailPanel();
 
-            if (this.VisualRoot is PlanEditorWindow window)
+            if (PlanEditorWindow.For(this) is { } window)
                 window.UpdateStatusBar();
         }
     }

@@ -598,6 +598,13 @@ namespace EveLens.Avalonia.Views.PlanEditor
             UpdateStatusBar();
         }
 
+        /// <summary>
+        /// Gets the plan editor window the given control sits in; null when it sits elsewhere
+        /// or is not attached.
+        /// </summary>
+        internal static PlanEditorWindow? For(global::Avalonia.Visual control)
+            => GetTopLevel(control) as PlanEditorWindow;
+
         internal void UpdateStatusBar()
         {
             if (_viewModel == null) return;

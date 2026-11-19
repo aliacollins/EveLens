@@ -32,6 +32,7 @@ namespace EveLens.Tests.Architecture
         {
             ("DateTime.Now +", "PlanSchedule.CompletionDate"),
             ("DateTime.UtcNow +", "PlanSchedule.CompletionDate"),
+            ("VisualRoot is ", "TopLevel.GetTopLevel"),
         };
 
         [Fact]

@@ -91,6 +91,17 @@ namespace EveLens.Common.Services
         public static bool IsWorthwhile(TimeSpan timeSaved) => timeSaved > WorthwhileSaving;
 
         /// <summary>
+        /// True when the entries trained under a remap's spread would finish sooner under
+        /// another spread by more than <see cref="WorthwhileSaving"/>.
+        /// </summary>
+        /// <param name="plan">The plan the entries belong to.</param>
+        /// <param name="entries">The entries trained under the spread.</param>
+        /// <param name="spread">The remappable points per attribute.</param>
+        public static bool IsSpreadOutdated(BasePlan plan, IEnumerable<PlanEntry> entries,
+            IReadOnlyDictionary<EveAttribute, long> spread)
+            => IsWorthwhile(RemapPlanningService.SavingOverSpread(plan, entries, spread));
+
+        /// <summary>
         /// Works out the advice for the plan with at most one remap. The plan is not modified.
         /// </summary>
         /// <param name="plan">The plan, in the order it trains.</param>

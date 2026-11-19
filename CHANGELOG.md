@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After a queued level finishes, a skill's level, active level and points are the same whether the skills list or the skill queue arrives first. The Skill Browser and Character Comparison show the finished level.
 - A finished level followed by another level of the same skill in training now raises the skill's active level.
 - The character header (Located In, Docked At, corporation, balance and the other header fields) keeps updating after you switch to another tab and come back. Thanks to Fastburn for the report and the diagnosis (Issue #164).
+- Plan editor: "+ Add Skills" opens the Skills tab.
+- Plan editor: the status bar updates after remaps are applied and after Plan to fly, Plan to use, Plan skills and planning a skill level.
+- Plan editor: a remap section shows "remap no longer matches this block" only when its skills would finish more than 12 hours sooner under other attributes. Sections that mix attribute pairs are no longer flagged right after optimizing.
 
 ### Security
 

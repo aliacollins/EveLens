@@ -195,17 +195,17 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         [EveAttribute.Memory] = remap[EveAttribute.Memory],
                         [EveAttribute.Charisma] = remap[EveAttribute.Charisma],
                     };
-                    // The reorder-staleness contract: a remap is a promise about
-                    // what FOLLOWS it. When manual moves change the block so its
-                    // dominant pair no longer matches the spread's top two, the
-                    // divider says so in amber instead of silently presiding over
-                    // the wrong skills — and the fix is one click away in the
-                    // stats-band verdict.
-                    var top2 = spread.OrderByDescending(kv => kv.Value)
-                        .Take(2).Select(kv => kv.Key).ToHashSet();
-                    var dominant = DominantPair(i);
-                    bool stale = dominant.Item1 != EveAttribute.None &&
-                        !(top2.Contains(dominant.Item1) && top2.Contains(dominant.Item2));
+                    // The divider turns amber when the skills that follow the remap would
+                    // finish worthwhile-sooner under another spread.
+                    var block = new List<PlanEntry>();
+                    for (int j = i; j < _viewModel.Items.Count; j++)
+                    {
+                        if (j > i && _viewModel.Items[j].Entry.Remapping != null)
+                            break;
+                        block.Add(_viewModel.Items[j].Entry);
+                    }
+                    bool stale = _viewModel.Plan != null
+                        && RemapAdvisor.IsSpreadOutdated(_viewModel.Plan, block, spread);
                     Color accent = stale
                         ? Color.Parse("#FFE07B39") : Color.Parse("#FFE6A817");
                     string label = "◆ " + string.Format(

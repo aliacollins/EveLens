@@ -3155,7 +3155,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnAddSkills(object? sender, RoutedEventArgs e)
         {
-            if (this.VisualRoot is PlanEditorWindow window)
+            if (PlanEditorWindow.For(this) is { } window)
             {
                 window.SwitchToSkillBrowser();
             }
@@ -3488,7 +3488,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void UpdateParentStatusBar()
         {
-            if (this.VisualRoot is PlanEditorWindow window)
+            if (PlanEditorWindow.For(this) is { } window)
                 window.UpdateStatusBar();
         }
 
