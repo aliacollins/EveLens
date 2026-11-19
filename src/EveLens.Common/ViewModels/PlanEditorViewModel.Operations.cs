@@ -162,6 +162,15 @@ namespace EveLens.Common.ViewModels
         #region Export and Plan Creation
 
         /// <summary>
+        /// Builds the game-compatible clipboard text for the whole plan, in the order shown
+        /// in the editor (Issue #160). Returns an empty string when no plan is loaded.
+        /// </summary>
+        public string ExportAsGameText()
+        {
+            return _plan == null ? string.Empty : PlanGameTextExporter.Export(_plan);
+        }
+
+        /// <summary>
         /// Exports the given entries as text using the specified export settings.
         /// </summary>
         public string ExportSelectedAsText(IEnumerable<PlanEntry> entries, PlanExportSettings settings)

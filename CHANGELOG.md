@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- "Copy Plan" and Export > "Copy to Clipboard" in the plan editor now copy skills in the order shown, including group-by-priority and column sorting, the same as Save to File (Issue #160)
+
 ## [1.5.4] - 2026-10-27
 ### Changed
 

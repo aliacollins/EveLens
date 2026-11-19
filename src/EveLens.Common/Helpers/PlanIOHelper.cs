@@ -47,9 +47,7 @@ namespace EveLens.Common.Helpers
 
             settings.ThrowIfNull(nameof(settings));
 
-            PlanScratchpad plan = new PlanScratchpad(planToExport.Character, planToExport);
-            plan.Sort(planToExport.SortingPreferences);
-            plan.UpdateStatistics();
+            PlanScratchpad plan = PlanScratchpad.CreateInDisplayOrder(planToExport);
 
             StringBuilder builder = new StringBuilder();
             Character character = (Character)plan.Character;
