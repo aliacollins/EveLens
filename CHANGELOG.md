@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The attribute optimizer now recommends a remap while an attribute booster is active. The booster bonus is counted for your current attributes and for every remap it considers (#159, #162).
 - Remap points and the manual attribute editor show your remappable points only; an active booster no longer inflates them.
 - Base attributes correct themselves when implant data arrives after attribute data.
+- Copy to Clipboard and Copy Skill Plan now list skills in the order shown in the plan editor, including priority grouping and column sorting, the same as Save to File (#160).
+- Exporting selected skills keeps the plan editor's order.
 
 ## [1.5.4] - 2026-10-27
 ### Changed
