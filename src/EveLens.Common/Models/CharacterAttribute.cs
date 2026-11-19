@@ -42,9 +42,14 @@ namespace EveLens.Common.Models
         public long ImplantBonus => m_character.CurrentImplants[m_attrib].Bonus;
 
         /// <summary>
+        /// Gets the bonus added on top of the base value and the implant bonus.
+        /// </summary>
+        public long TemporaryBonus { get; internal set; }
+
+        /// <summary>
         /// Gets the effective attribute value.
         /// </summary>
-        public long EffectiveValue => Base + ImplantBonus;
+        public long EffectiveValue => Base + ImplantBonus + TemporaryBonus;
 
         /// <summary>
         /// Gets a string representation with the provided format. The following parameters are accepted :
