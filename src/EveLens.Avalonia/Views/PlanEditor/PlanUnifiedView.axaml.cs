@@ -3089,7 +3089,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // unable to explain the difference.
                 string clone = cloneOverride?.ToString()
                     ?? character.EffectiveCharacterStatus.ToString();
-                if (proposal.TimeSaved > TimeSpan.FromHours(12))
+                if (RemapAdvisor.IsWorthwhile(proposal.TimeSaved))
                 {
                     OptimizedBadge.Content = string.Format(
                         Loc.Get("PlanEditor.CouldSaveCloneFmt"),

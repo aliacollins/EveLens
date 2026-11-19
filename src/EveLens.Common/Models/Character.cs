@@ -300,6 +300,13 @@ namespace EveLens.Common.Models
         public DateTime LastReMapTimed { get; private set; }
 
         /// <summary>
+        /// Gets a value indicating whether the attributes are a legal remap allocation plus
+        /// implants and a uniform temporary bonus. False until attribute data is imported,
+        /// and while the attribute and implant data disagree.
+        /// </summary>
+        public bool AttributesAreConsistent { get; private set; }
+
+        /// <summary>
         /// Gets the remaps the character can spend.
         /// </summary>
         public RemapAvailability RemapAvailability => new(AvailableReMaps,
@@ -900,6 +907,7 @@ namespace EveLens.Common.Models
         private void SetAttributes(long[] withoutImplants)
         {
             AttributeDecomposition split = AttributeDecomposition.FromObserved(withoutImplants);
+            AttributesAreConsistent = split.IsSupported;
             for (int i = 0; i < m_attributes.Length; i++)
             {
                 m_attributes[i].Base = split.Allocation[i];
