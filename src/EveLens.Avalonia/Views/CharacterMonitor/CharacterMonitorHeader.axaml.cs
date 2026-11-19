@@ -30,8 +30,13 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private static string[] OverrideLabels => new[] { Loc.Get("Header.AutoDetect"), Loc.Get("Header.AlphaOverride"), Loc.Get("Header.OmegaOverride") };
 
+        // The character currently shown. Kept across detach/reattach: MainWindow caches one
+        // CharacterMonitorView per character and re-shows it with the same DataContext, so
+        // OnDataContextChanged does not fire again when the view comes back (Issue #164).
         private ObservableCharacter? _observable;
         private IDisposable? _privacySub;
+        private bool _isAttached;
+        private bool _isListening;
 
         public CharacterMonitorHeader()
         {
@@ -48,16 +53,30 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDataContextChanged(e);
             try
             {
-                if (_observable != null)
-                    _observable.PropertyChanged -= OnObservableChanged;
+                StopListening();
+                _observable = null;
 
                 if (DataContext is ObservableCharacter oc && oc.CharacterID > 0)
                 {
                     _observable = oc;
 
+                    // Race/Bloodline (static — set once per character)
+                    var c = oc.Character;
+                    bool hasRace = !string.IsNullOrEmpty(c.Race)
+                                   && !c.Race.Equals("(unset)", StringComparison.OrdinalIgnoreCase);
+                    RaceText.Text = hasRace ? $"{c.Gender} - {c.Race} - {c.Bloodline}" : "";
+                    RaceText.IsVisible = hasRace;
+
+                    // Start listening before the portrait await so a slow or failed image
+                    // fetch can never leave the header without live updates.
+                    if (_isAttached)
+                        StartListening();
+                    else
+                        RefreshDisplay(oc);
+
                     // Portrait
                     var image = await ImageService.GetCharacterImageAsync(oc.CharacterID);
-                    if (image != null)
+                    if (image != null && ReferenceEquals(_observable, oc))
                     {
                         var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
                             image, typeof(Bitmap), null, CultureInfo.InvariantCulture);
@@ -67,29 +86,50 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                             PortraitImage.Source = bitmap;
                         }
                     }
-
-                    // Race/Bloodline (static — set once)
-                    var c = oc.Character;
-                    bool hasRace = !string.IsNullOrEmpty(c.Race)
-                                   && !c.Race.Equals("(unset)", StringComparison.OrdinalIgnoreCase);
-                    RaceText.Text = hasRace ? $"{c.Gender} - {c.Race} - {c.Bloodline}" : "";
-                    RaceText.IsVisible = hasRace;
-
-                    RefreshDisplay(oc);
-                    oc.PropertyChanged += OnObservableChanged;
-
-                    _privacySub?.Dispose();
-                    _privacySub = AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
-                        _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            if (_observable != null) RefreshDisplay(_observable);
-                        }));
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading header: {ex}");
             }
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            _isAttached = true;
+            StartListening();
+        }
+
+        /// <summary>
+        /// Subscribes to the current character's changes and privacy toggles, then redraws
+        /// from current data so a re-shown cached view catches up on anything it missed.
+        /// </summary>
+        private void StartListening()
+        {
+            var oc = _observable;
+            if (oc == null || _isListening) return;
+
+            oc.PropertyChanged += OnObservableChanged;
+            _privacySub = AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (_observable != null) RefreshDisplay(_observable);
+                }));
+            _isListening = true;
+
+            RefreshDisplay(oc);
+        }
+
+        private void StopListening()
+        {
+            if (!_isListening) return;
+
+            if (_observable != null)
+                _observable.PropertyChanged -= OnObservableChanged;
+            _privacySub?.Dispose();
+            _privacySub = null;
+            _isListening = false;
         }
 
         private void OnObservableChanged(object? sender, PropertyChangedEventArgs e)
@@ -202,13 +242,10 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
-            _privacySub?.Dispose();
-            _privacySub = null;
-            if (_observable != null)
-            {
-                _observable.PropertyChanged -= OnObservableChanged;
-                _observable = null;
-            }
+            _isAttached = false;
+            // Stop listening but keep _observable: the cached view may be re-shown with the
+            // same DataContext, and OnAttachedToVisualTree resumes from it (Issue #164).
+            StopListening();
         }
     }
 }
