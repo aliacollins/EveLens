@@ -25,9 +25,6 @@ namespace EveLens.Common.ViewModels
     /// </summary>
     public sealed class SkillFarmDashboardViewModel : IDisposable
     {
-        private const long SpPerLargeExtraction = 500_000;
-        private const long SpPerSmallExtraction = 100_000;
-        private const long MinimumSPForExtraction = 5_000_000;
 
         private List<FarmCharacterEntry> _entries = new();
         private List<FarmAlert> _alerts = new();
@@ -182,9 +179,9 @@ namespace EveLens.Common.ViewModels
         private FarmCharacterEntry BuildEntry(Character character, SkillFarmCharacterSettings settings)
         {
             long currentSP = character.SkillPoints;
-            long threshold = Math.Max(settings.ExtractionThreshold, MinimumSPForExtraction);
+            long threshold = Math.Max(settings.ExtractionThreshold, SkillInjectors.MinimumSkillPointsToExtract);
             long extractableSP = Math.Max(0, currentSP - threshold);
-            int largeExtractions = (int)(extractableSP / SpPerLargeExtraction);
+            int largeExtractions = (int)(extractableSP / SkillInjectors.SkillPointsPerLargeExtraction);
 
             // SP/hour from current training
             double spPerHour = 0;
@@ -201,7 +198,7 @@ namespace EveLens.Common.ViewModels
             TimeSpan timeToNext = TimeSpan.Zero;
             if (largeExtractions == 0 && spPerHour > 0)
             {
-                long spNeeded = threshold + SpPerLargeExtraction - currentSP;
+                long spNeeded = threshold + SkillInjectors.SkillPointsPerLargeExtraction - currentSP;
                 if (spNeeded > 0)
                     timeToNext = TimeSpan.FromHours(spNeeded / spPerHour);
             }
@@ -294,7 +291,7 @@ namespace EveLens.Common.ViewModels
 
             foreach (var character in allChars)
             {
-                if (character.SkillPoints < MinimumSPForExtraction) continue;
+                if (character.SkillPoints < SkillInjectors.MinimumSkillPointsToExtract) continue;
                 if (settings.FarmCharacters.Any(f => f.CharacterGuid == character.Guid)) continue;
 
                 settings.FarmCharacters.Add(new SkillFarmCharacterSettings
@@ -342,7 +339,7 @@ namespace EveLens.Common.ViewModels
             var charSettings = settings.FarmCharacters.FirstOrDefault(f => f.CharacterGuid == character.Guid);
             if (charSettings == null) return;
 
-            charSettings.ExtractionThreshold = Math.Max(thresholdSP, MinimumSPForExtraction);
+            charSettings.ExtractionThreshold = Math.Max(thresholdSP, SkillInjectors.MinimumSkillPointsToExtract);
             Settings.Save();
         }
 

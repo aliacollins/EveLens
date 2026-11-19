@@ -3037,7 +3037,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             long missingSP = stats.TotalSkillPoints;
             if (missingSP > 0 && characterSP > 0)
             {
-                int spPerInjector = GetSpPerInjector(characterSP);
+                int spPerInjector = SkillInjectors.SkillPointsPerLargeInjector(characterSP);
                 int injectorCount = (int)Math.Ceiling((double)missingSP / spPerInjector);
                 double costBillions = injectorCount * 0.9;
                 InjectorText.Text = $"~{injectorCount} {Loc.Get("PlanEditor.Injectors")} (~{costBillions:F1}B {Loc.Get("Eve.ISK")})";
@@ -3115,14 +3115,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnOptimizedBadgeClick(object? sender, RoutedEventArgs e) =>
             OpenOptimizeWindow();
-
-        private static int GetSpPerInjector(long characterSP) => characterSP switch
-        {
-            < 5_000_000 => 500_000,
-            < 50_000_000 => 400_000,
-            < 80_000_000 => 300_000,
-            _ => 150_000
-        };
 
         private static string FormatSP(long sp)
         {

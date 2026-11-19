@@ -217,7 +217,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             bool allPaused = totalSpPerHour == 0 && farmCharacters > 0;
             double estimatedSpPerHour = allPaused ? farmCharacters * 2700.0 : totalSpPerHour;
             double monthlySpTotal = estimatedSpPerHour * 24 * 30;
-            double monthlyExtractions = monthlySpTotal / 500_000;
+            double monthlyExtractions = monthlySpTotal / SkillInjectors.SkillPointsPerLargeExtraction;
             const double OmegaPlex = 500.0, MctPlex = 485.0;
             double omegaCostPerMonth =
                 (farmAccounts * OmegaPlex + mctSlots * MctPlex) * _vm.PlexPrice;
@@ -563,7 +563,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             string baseText = entry.ExtractionThreshold >= 1_000_000
                 ? $"{entry.ExtractionThreshold / 1_000_000.0:N1}M"
                 : $"{entry.ExtractionThreshold / 1_000.0:N0}K";
-            bool isCustomBase = entry.ExtractionThreshold > 5_000_000;
+            bool isCustomBase = entry.ExtractionThreshold > SkillInjectors.MinimumSkillPointsToExtract;
             var baseBtn = new Button
             {
                 Content = baseText,
@@ -754,7 +754,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                 foreach (var character in available.OrderByDescending(c => c.SkillPoints))
                 {
                     var capturedChar = character;
-                    bool extractable = character.SkillPoints >= 5_000_000; // CCP hard minimum
+                    bool extractable = character.SkillPoints >= SkillInjectors.MinimumSkillPointsToExtract;
                     string spText = character.SkillPoints >= 1_000_000
                         ? $"{character.SkillPoints / 1_000_000.0:N1}M SP"
                         : $"{character.SkillPoints / 1_000.0:N0}K SP";
