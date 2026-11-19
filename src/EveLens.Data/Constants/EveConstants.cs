@@ -30,7 +30,17 @@ namespace EveLens.Common.Constants
 
         public const int DowntimeHour = 11;
         public const int DowntimeDuration = 30;
-        public const float TransactionTaxBase = 0.05f;
+
+        /// <summary>
+        /// Market sales tax in percent of the sale price at Accounting level 0.
+        /// </summary>
+        public const double SalesTaxBasePercent = 7.5;
+
+        /// <summary>
+        /// Fraction of the base sales tax removed by each Accounting level.
+        /// </summary>
+        public const double SalesTaxReductionPerAccountingLevel = 0.11;
+
         public const float BrokerFeeBase = 0.05f;
         public const int MaxSkillsInQueue = 50;
         public const int MaxAlphaSkillTraining = 5000000;

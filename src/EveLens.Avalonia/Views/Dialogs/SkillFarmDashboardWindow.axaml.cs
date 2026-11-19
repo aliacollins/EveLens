@@ -135,11 +135,6 @@ namespace EveLens.Avalonia.Views.Dialogs
             double extractorCost = totalInj * _vm.ExtractorPrice;
             double injectorRevenue = totalInj * _vm.InjectorPrice;
             double netProfit = _vm.TotalRevenueToday;
-            double profitPerExtract = _vm.InjectorPrice > 0
-                ? _vm.InjectorPrice - _vm.ExtractorPrice
-                    - (_vm.InjectorPrice * 0.02) // ~2% tax at Accounting V
-                : 0;
-
             SummaryPanel.Children.Add(BuildStatCard(
                 $"{totalInj}", "Injectors",
                 $"{_vm.ReadyCount} ready \u00B7 {_vm.PausedCount} paused",
@@ -161,6 +156,13 @@ namespace EveLens.Avalonia.Views.Dialogs
             var bestSeller = _vm.Entries
                 .OrderBy(e => e.SalesTaxPercent)
                 .FirstOrDefault();
+
+            double bestSellerTaxRate = bestSeller != null
+                ? bestSeller.SalesTaxPercent / 100.0
+                : MarketTax.SalesTaxRate(0);
+            double profitPerExtract = _vm.InjectorPrice > 0
+                ? _vm.InjectorPrice * (1 - bestSellerTaxRate) - _vm.ExtractorPrice
+                : 0;
 
             string netDetail = "after tax";
             double displayNet = netProfit;
@@ -220,8 +222,7 @@ namespace EveLens.Avalonia.Views.Dialogs
             double omegaCostPerMonth =
                 (farmAccounts * OmegaPlex + mctSlots * MctPlex) * _vm.PlexPrice;
 
-            double bestTaxRateForMonthly = bestSeller != null
-                ? bestSeller.SalesTaxPercent / 100.0 : 0.075;
+            double bestTaxRateForMonthly = bestSellerTaxRate;
             double monthlyRevenue = monthlyExtractions * _vm.InjectorPrice * (1 - bestTaxRateForMonthly);
             double monthlyExtractorCost = monthlyExtractions * _vm.ExtractorPrice;
             double monthlyNet = monthlyRevenue - monthlyExtractorCost - omegaCostPerMonth;

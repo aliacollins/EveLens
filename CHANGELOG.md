@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Base attributes correct themselves when implant data arrives after attribute data.
 - Copy to Clipboard and Copy Skill Plan now list skills in the order shown in the plan editor, including priority grouping and column sorting, the same as Save to File (#160).
 - Exporting selected skills keeps the plan editor's order.
+- Skill Farm sales tax now follows the Accounting skill: 7.5% at level 0, reduced by 11% of that per level (3.375% at level V). Net revenue, the best-seller pick and the monthly figures use it.
+- The Skill Farm "Per Extraction" card uses the best seller's sales tax.
 
 ## [1.5.4] - 2026-10-27
 ### Changed

@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EveLens.Common.Constants;
+using EveLens.Common.Helpers;
 using EveLens.Common.Data;
 using EveLens.Common.MarketPricer;
 using EveLens.Common.Models;
@@ -27,10 +28,6 @@ namespace EveLens.Common.ViewModels
         private const long SpPerLargeExtraction = 500_000;
         private const long SpPerSmallExtraction = 100_000;
         private const long MinimumSPForExtraction = 5_000_000;
-
-        // Accounting skill: reduces sales tax from 7.5% by 1.1% per level
-        private const double BaseSalesTaxPercent = 7.5;
-        private const double SalesTaxReductionPerLevel = 1.1;
 
         private List<FarmCharacterEntry> _entries = new();
         private List<FarmAlert> _alerts = new();
@@ -218,8 +215,8 @@ namespace EveLens.Common.ViewModels
             if (accountingSkill != null && accountingSkill.IsKnown)
                 accountingLevel = accountingSkill.LastConfirmedLvl;
 
-            double salesTaxPercent = BaseSalesTaxPercent - (SalesTaxReductionPerLevel * accountingLevel);
-            double salesTaxRate = salesTaxPercent / 100.0;
+            double salesTaxPercent = MarketTax.SalesTaxPercent(accountingLevel);
+            double salesTaxRate = MarketTax.SalesTaxRate(accountingLevel);
 
             // Revenue per extraction
             double grossRevenue = InjectorPrice;
