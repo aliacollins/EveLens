@@ -115,12 +115,22 @@ Write-Host "  [OK] Version: $Version" -ForegroundColor Green
 $releaseTag = "v$Version"
 
 # ── Source ──
-# Tracked files must match HEAD, and nothing untracked may sit in the folders the build
-# compiles or runs. A dry run reports the same findings as warnings.
+# Tracked files must match HEAD, and nothing untracked or ignored may sit where the build
+# compiles or imports it. A dry run reports the same findings as warnings.
 $dirty = @(git status --porcelain --untracked-files=no)
 $stray = @(git status --porcelain --untracked-files=all -- src tests/EveLens.Tests scripts installer |
     Where-Object { $_.StartsWith('??') })
-$sourceProblems = @($dirty) + @($stray)
+$ignored = @(git ls-files --others --ignored --exclude-standard -- src tests/EveLens.Tests scripts installer |
+    Where-Object {
+        $_ -notmatch '(^|/)(bin|obj)/' -and
+        -not $_.StartsWith('scripts/release/') -and
+        -not $_.StartsWith('scripts/.tools/')
+    } | ForEach-Object { "!! $_" })
+$rootBuildFiles = @(Get-ChildItem -LiteralPath $ProjectRoot -File -Force |
+    Where-Object { $_.Name -like 'Directory.*' -or $_.Extension -in '.rsp', '.props', '.targets' } |
+    Where-Object { -not (git ls-files -- $_.Name) } |
+    ForEach-Object { "?? $($_.Name)" })
+$sourceProblems = @($dirty) + @($stray) + @($ignored) + @($rootBuildFiles)
 if ($sourceProblems.Count -gt 0) {
     $sourceProblems | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
     if ($DryRun) {
@@ -133,29 +143,30 @@ if ($sourceProblems.Count -gt 0) {
     Write-Host "  [OK] Working tree matches HEAD" -ForegroundColor Green
 }
 
-# A published build comes from a commit that exists on the remote.
+# A published build comes from the tip of its channel branch on origin.
 $headCommit = git rev-parse HEAD
 if ($Channel -ne 'alpha' -and -not $DryRun) {
-    git fetch origin --quiet
+    $channelBranch = if ($Channel -eq 'stable') { 'main' } else { $Channel }
+    git fetch origin --prune --quiet
     if ($LASTEXITCODE -ne 0) { Write-Error "git fetch failed."; exit 1 }
-    $remoteBranches = @(git branch -r --contains $headCommit)
-    if ($remoteBranches.Count -eq 0) {
-        Write-Error "Commit $headCommit is not on the remote."
+    $remoteCommit = git rev-parse --verify --quiet "refs/remotes/origin/$channelBranch"
+    if ($headCommit -ne $remoteCommit) {
+        Write-Error "HEAD ($headCommit) is not the tip of origin/$channelBranch ($remoteCommit). Check out $channelBranch and pull."
         exit 1
     }
-    Write-Host "  [OK] Commit $($headCommit.Substring(0, 9)) is on the remote" -ForegroundColor Green
+    Write-Host "  [OK] HEAD is the tip of origin/$channelBranch" -ForegroundColor Green
 }
 
 # ── Dependencies ──
-$vulnReport = dotnet list $MainProject package --vulnerable --include-transitive | Out-String
+# The JSON report carries a "vulnerabilities" array only for packages that have one.
+$vulnReport = dotnet list $MainProject package --vulnerable --include-transitive --format json | Out-String
 if ($LASTEXITCODE -ne 0) { Write-Error "Dependency vulnerability check could not run."; exit 1 }
-if ($vulnReport -match 'has the following vulnerable packages') {
+if ($vulnReport -match '"vulnerabilities"') {
     Write-Host $vulnReport
     Write-Error "A dependency has a known vulnerability."
     exit 1
 }
 Write-Host "  [OK] No known vulnerable dependencies" -ForegroundColor Green
-Write-Host "`n  Releasing: $AppName $Version ($Channel)" -ForegroundColor Magenta
 
 # ── Parse version for assembly stamping ──
 if ($Version -match '^(\d+)\.(\d+)\.(\d+)(?:-([a-z]+)\.?(\d+))?$') {

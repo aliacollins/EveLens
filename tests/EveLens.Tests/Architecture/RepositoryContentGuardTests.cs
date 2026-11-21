@@ -8,7 +8,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using FluentAssertions;
 using Xunit;
 
@@ -136,14 +139,37 @@ namespace EveLens.Tests.Architecture
             ".plist", ".desktop", ".xslt", ".resx", ".settings", ".svg", ".example",
         };
 
-        private static readonly Regex s_packageReference = new(
-            "<Package(?:Reference|Version|Download)\\s[^>]*?(?:Include|Update)\\s*=\\s*\"([^\"]+)\"",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly HashSet<string> s_allowedSdks = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Microsoft.NET.Sdk",
+        };
+
+        private static readonly HashSet<string> s_buildFileExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".csproj", ".vbproj", ".fsproj", ".proj", ".projitems", ".shproj", ".props", ".targets",
+            ".sln", ".slnx", ".slnf", ".rsp", ".user", ".pubxml",
+        };
+
+        private static readonly HashSet<string> s_buildFileNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "nuget.config", "global.json", "package.json", "package-lock.json", "packages.lock.json",
+            "dotnet-tools.json",
+        };
 
         private static readonly Regex s_storedCredential = new(
             "\"(?:RefreshToken|AccessToken|SSOClientSecret|ClientSecret|refresh_token|access_token|client_secret)\"" +
-            "\\s*:\\s*\"(?!your-)[^\"]{8,}\"",
-            RegexOptions.Compiled);
+            "\\s*:\\s*\"(?!your-)[^\"]{8,}\"" +
+            "|\\b(?:refreshToken|accessToken|ssoClientSecret|clientSecret)\\s*=\\s*\"(?!your-)[^\"]{8,}\"",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        [Fact]
+        public void Tracked_file_list_is_read_inside_a_git_checkout()
+        {
+            if (!IsGitCheckout())
+                return;
+
+            s_tracked.Value.Should().Contain("EveLens.sln");
+        }
 
         [Fact]
         public void No_executable_archive_or_key_file_is_tracked()
@@ -204,21 +230,71 @@ namespace EveLens.Tests.Architecture
         public void Every_referenced_package_is_on_the_package_list()
         {
             var offenders = new List<string>();
-            foreach (var path in s_tracked.Value.Where(IsBuildFile))
+            foreach (var path in s_tracked.Value.Where(IsMsBuildFile))
             {
                 var fullPath = Path.Combine(ProjectRoot, path);
                 if (!File.Exists(fullPath))
                     continue;
 
-                foreach (Match match in s_packageReference.Matches(File.ReadAllText(fullPath)))
+                foreach (var package in ReferencedPackages(File.ReadAllText(fullPath)))
                 {
-                    var package = match.Groups[1].Value;
                     if (!s_allowedPackages.Contains(package))
                         offenders.Add($"{path}: {package}");
                 }
             }
 
             offenders.Should().BeEmpty("a new package is added to the package list in this test");
+        }
+
+        [Fact]
+        public void Every_referenced_sdk_is_on_the_sdk_list()
+        {
+            var offenders = new List<string>();
+            foreach (var path in s_tracked.Value.Where(IsMsBuildFile))
+            {
+                var fullPath = Path.Combine(ProjectRoot, path);
+                if (!File.Exists(fullPath))
+                    continue;
+
+                foreach (var sdk in ReferencedSdks(File.ReadAllText(fullPath)))
+                {
+                    if (!s_allowedSdks.Contains(sdk))
+                        offenders.Add($"{path}: {sdk}");
+                }
+            }
+
+            var globalJson = Path.Combine(ProjectRoot, "global.json");
+            if (File.Exists(globalJson))
+            {
+                using var document = JsonDocument.Parse(File.ReadAllText(globalJson));
+                if (document.RootElement.TryGetProperty("msbuild-sdks", out _))
+                    offenders.Add("global.json: msbuild-sdks");
+            }
+
+            offenders.Should().BeEmpty("a new build SDK is added to the SDK list in this test");
+        }
+
+        [Theory]
+        [InlineData("<Project><ItemGroup><PackageReference Include=\"Evil\" Version=\"1\" /></ItemGroup></Project>")]
+        [InlineData("<Project><ItemGroup><PackageReference Include='Evil' Version='1' /></ItemGroup></Project>")]
+        [InlineData("<Project><ItemGroup><PackageReference Condition=\"1 &gt; 0\" Include=\"Evil\" /></ItemGroup></Project>")]
+        [InlineData("<Project><ItemGroup><PackageReference Update=\"Evil\" Version=\"1\" /></ItemGroup></Project>")]
+        [InlineData("<Project><ItemGroup><GlobalPackageReference Include=\"Evil\" Version=\"1\" /></ItemGroup></Project>")]
+        [InlineData("<Project><ItemGroup><PackageDownload Include=\"Evil\" Version=\"[1]\" /></ItemGroup></Project>")]
+        [InlineData("<Project xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\"><ItemGroup><PackageReference Include=\"Evil\" /></ItemGroup></Project>")]
+        public void Package_references_are_found_in_every_form(string project)
+        {
+            ReferencedPackages(project).Should().Equal("Evil");
+        }
+
+        [Theory]
+        [InlineData("<Project Sdk=\"Evil.Sdk/1.0\" />", "Evil.Sdk")]
+        [InlineData("<Project Sdk=\"Microsoft.NET.Sdk;Evil.Sdk\" />", "Microsoft.NET.Sdk,Evil.Sdk")]
+        [InlineData("<Project><Sdk Name=\"Evil.Sdk\" Version=\"1.0\" /></Project>", "Evil.Sdk")]
+        [InlineData("<Project><Import Project=\"x.props\" Sdk=\"Evil.Sdk\" /></Project>", "Evil.Sdk")]
+        public void Sdk_references_are_found_in_every_form(string project, string expected)
+        {
+            ReferencedSdks(project).Should().Equal(expected.Split(','));
         }
 
         [Fact]
@@ -268,6 +344,10 @@ namespace EveLens.Tests.Architecture
         [InlineData("{ \"RefreshToken\": \"3E/abcdefghijklmnop==\" }", true)]
         [InlineData("{ \"SSOClientSecret\": \"abcdefghijklmnop\" }", true)]
         [InlineData("{ \"ClientSecret\": \"your-client-secret-here\" }", false)]
+        [InlineData("{ \"refreshToken\": \"3E/abcdefghijklmnop==\" }", true)]
+        [InlineData("{ \"ssoClientSecret\": \"abcdefghijklmnop\" }", true)]
+        [InlineData("<esiKey id=\"1\" refreshToken=\"3E/abcdefghijklmnop==\" />", true)]
+        [InlineData("<settings clientSecret=\"abcdefghijklmnop\" />", true)]
         [InlineData("{ \"RefreshToken\": \"\" }", false)]
         [InlineData("{ \"Name\": \"A long character name\" }", false)]
         public void Stored_credentials_are_recognised(string text, bool expected)
@@ -283,21 +363,49 @@ namespace EveLens.Tests.Architecture
             return Path.GetExtension(path).Length == 0 && StartsWithShebang(Path.Combine(ProjectRoot, path));
         }
 
-        private static bool IsBuildFile(string path)
+        private static bool IsBuildFile(string path) =>
+            s_buildFileExtensions.Contains(Path.GetExtension(path))
+            || s_buildFileNames.Contains(Path.GetFileName(path));
+
+        private static bool IsMsBuildFile(string path)
         {
-            var name = Path.GetFileName(path);
             var extension = Path.GetExtension(path);
-            return extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase)
-                || extension.Equals(".props", StringComparison.OrdinalIgnoreCase)
-                || extension.Equals(".targets", StringComparison.OrdinalIgnoreCase)
-                || extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
-                || extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase)
-                || extension.Equals(".rsp", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("nuget.config", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("global.json", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("package.json", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("package-lock.json", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("packages.lock.json", StringComparison.OrdinalIgnoreCase);
+            return s_buildFileExtensions.Contains(extension)
+                && !extension.Equals(".rsp", StringComparison.OrdinalIgnoreCase)
+                && !extension.StartsWith(".sln", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static List<string> ReferencedPackages(string projectXml) =>
+            XDocument.Parse(projectXml).Descendants()
+                .Where(element =>
+                    element.Name.LocalName.EndsWith("PackageReference", StringComparison.OrdinalIgnoreCase)
+                    || element.Name.LocalName.Equals("PackageVersion", StringComparison.OrdinalIgnoreCase)
+                    || element.Name.LocalName.Equals("PackageDownload", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(element => element.Attributes()
+                    .Where(attribute =>
+                        attribute.Name.LocalName.Equals("Include", StringComparison.OrdinalIgnoreCase)
+                        || attribute.Name.LocalName.Equals("Update", StringComparison.OrdinalIgnoreCase)))
+                .SelectMany(attribute => attribute.Value.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                .Select(name => name.Trim())
+                .ToList();
+
+        private static List<string> ReferencedSdks(string projectXml)
+        {
+            var document = XDocument.Parse(projectXml);
+            var fromAttributes = document.Descendants()
+                .Where(element => !element.Name.LocalName.Equals("Sdk", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(element => element.Attributes()
+                    .Where(attribute => attribute.Name.LocalName.Equals("Sdk", StringComparison.OrdinalIgnoreCase)))
+                .SelectMany(attribute => attribute.Value.Split(';', StringSplitOptions.RemoveEmptyEntries));
+            var fromElements = document.Descendants()
+                .Where(element => element.Name.LocalName.Equals("Sdk", StringComparison.OrdinalIgnoreCase))
+                .Select(element => element.Attributes()
+                    .FirstOrDefault(attribute => attribute.Name.LocalName.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                    ?.Value ?? string.Empty);
+
+            return fromAttributes.Concat(fromElements)
+                .Select(sdk => sdk.Split('/')[0].Trim())
+                .ToList();
         }
 
         private static bool IsDataOrConfig(string path)
@@ -350,7 +458,7 @@ namespace EveLens.Tests.Architecture
 
         private static IReadOnlyList<string> LoadTrackedFiles()
         {
-            if (!Directory.Exists(Path.Combine(ProjectRoot, ".git")) && !File.Exists(Path.Combine(ProjectRoot, ".git")))
+            if (!IsGitCheckout())
                 return Array.Empty<string>();
 
             try
@@ -359,12 +467,14 @@ namespace EveLens.Tests.Architecture
                 {
                     WorkingDirectory = ProjectRoot,
                     RedirectStandardOutput = true,
+                    StandardOutputEncoding = Encoding.UTF8,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                 };
                 startInfo.ArgumentList.Add("-c");
                 startInfo.ArgumentList.Add("core.quotepath=off");
                 startInfo.ArgumentList.Add("ls-files");
+                startInfo.ArgumentList.Add("-z");
 
                 using var process = Process.Start(startInfo);
                 if (process == null)
@@ -376,9 +486,7 @@ namespace EveLens.Tests.Architecture
                     return Array.Empty<string>();
 
                 return output
-                    .Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(line => line.Trim())
-                    .Where(line => line.Length > 0)
+                    .Split('\0', StringSplitOptions.RemoveEmptyEntries)
                     .ToList();
             }
             catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
@@ -386,6 +494,9 @@ namespace EveLens.Tests.Architecture
                 return Array.Empty<string>();
             }
         }
+
+        private static bool IsGitCheckout() =>
+            Directory.Exists(Path.Combine(ProjectRoot, ".git")) || File.Exists(Path.Combine(ProjectRoot, ".git"));
 
         private static string FindProjectRoot()
         {
