@@ -2,7 +2,7 @@
 
 EveLens is an open source character monitoring and skill planning tool for EVE Online. It runs on Windows, macOS and Linux.
 
-The source is open under GPL v2. Code contributions are not accepted: every line in EveLens is written by the maintainer, and pull requests can only be opened by the maintainer. There are still several ways to help, and they are all credited.
+The source is open under GPL v2. Bug reports, diagnoses, ideas, translations and pull requests are all welcome, and all credited.
 
 ---
 
@@ -19,9 +19,25 @@ If you run 10 or more characters, your reports are especially useful.
 
 ## Diagnose a Bug
 
-If you have read the source and found the cause of a problem, describe it in the issue: which behaviour is wrong, where it comes from, and how you confirmed it. The fix is then written and tested by the maintainer, and you are credited for the diagnosis.
+If you have read the source and found the cause of a problem, describe it in the issue: which behaviour is wrong, where it comes from, and how you confirmed it. You are credited for the diagnosis.
 
-Please describe the cause in words. Patches, diffs and code attachments are not applied.
+## Send a Pull Request
+
+Pull requests are welcome. EveLens handles ESI tokens for many characters, so every pull request goes through a security review before it can be merged, and that takes time. These rules keep the review possible:
+
+- **Open an issue first** for anything larger than a small fix, so the approach is agreed before you write it.
+- **One change per pull request.** Keep it small: a few files, a few hundred lines at most.
+- **Source and tests only.** A pull request may change `.cs` and `.axaml` files under `src/` and `tests/EveLens.Tests/`, and add a line to `CHANGELOG.md`.
+- **Not accepted in a pull request:** project and build files, scripts, tools, packages or package versions, data files, images, fonts, binaries, and the tests under `tests/EveLens.Tests/Architecture/`. If your change needs one of these, say so in the issue and the maintainer makes that part.
+- **Say so up front** if the change adds or alters network access, file access, running other programs, token or credential handling, or updating. Those changes need agreement in an issue before any code.
+- **Add tests** for the behaviour you change.
+- **Do not force-push after review has started.** Add new commits instead.
+
+What to expect:
+
+- A pull request may be merged as it is, merged with follow-up changes by the maintainer, or re-written by the maintainer from your idea. In every case you are credited by name.
+- A pull request that breaks the rules above is closed with a note on what to change.
+- Pull requests are merged by the maintainer from the reviewed commit. Your authorship is kept on the commit.
 
 ## Suggest a Feature
 
@@ -39,7 +55,7 @@ Do not open a public issue. See [SECURITY.md](SECURITY.md).
 
 ## Credit
 
-Everyone whose report, diagnosis, idea or translation ends up in a release is thanked by name in the release notes.
+Everyone whose report, diagnosis, idea, translation or code ends up in a release is thanked by name in the release notes.
 
 ---
 
