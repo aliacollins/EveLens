@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+
+- System.Security.Cryptography.Pkcs is updated to 10.0.15.
+- Every release includes a SHA256SUMS.txt file listing the SHA-256 checksum of each download.
+- Packages are restored only from nuget.org.
+
+### Removed
+
+- The unused legacy installer builder and its bundled NSIS programs are removed from the source tree.
+
 
 ## [1.5.4] - 2026-10-27
 ### Changed

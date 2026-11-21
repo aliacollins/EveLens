@@ -113,6 +113,48 @@ if (-not $Version) {
 Write-Host "  [OK] Version: $Version" -ForegroundColor Green
 
 $releaseTag = "v$Version"
+
+# ── Source ──
+# Tracked files must match HEAD, and nothing untracked may sit in the folders the build
+# compiles or runs. A dry run reports the same findings as warnings.
+$dirty = @(git status --porcelain --untracked-files=no)
+$stray = @(git status --porcelain --untracked-files=all -- src tests/EveLens.Tests scripts installer |
+    Where-Object { $_.StartsWith('??') })
+$sourceProblems = @($dirty) + @($stray)
+if ($sourceProblems.Count -gt 0) {
+    $sourceProblems | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
+    if ($DryRun) {
+        Write-Warning "Working tree differs from HEAD (dry run continues)."
+    } else {
+        Write-Error "Working tree differs from HEAD. Commit or remove the files listed above."
+        exit 1
+    }
+} else {
+    Write-Host "  [OK] Working tree matches HEAD" -ForegroundColor Green
+}
+
+# A published build comes from a commit that exists on the remote.
+$headCommit = git rev-parse HEAD
+if ($Channel -ne 'alpha' -and -not $DryRun) {
+    git fetch origin --quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "git fetch failed."; exit 1 }
+    $remoteBranches = @(git branch -r --contains $headCommit)
+    if ($remoteBranches.Count -eq 0) {
+        Write-Error "Commit $headCommit is not on the remote."
+        exit 1
+    }
+    Write-Host "  [OK] Commit $($headCommit.Substring(0, 9)) is on the remote" -ForegroundColor Green
+}
+
+# ── Dependencies ──
+$vulnReport = dotnet list $MainProject package --vulnerable --include-transitive | Out-String
+if ($LASTEXITCODE -ne 0) { Write-Error "Dependency vulnerability check could not run."; exit 1 }
+if ($vulnReport -match 'has the following vulnerable packages') {
+    Write-Host $vulnReport
+    Write-Error "A dependency has a known vulnerability."
+    exit 1
+}
+Write-Host "  [OK] No known vulnerable dependencies" -ForegroundColor Green
 Write-Host "`n  Releasing: $AppName $Version ($Channel)" -ForegroundColor Magenta
 
 # ── Parse version for assembly stamping ──
@@ -341,6 +383,16 @@ foreach ($macVeloFile in @(
         $allFiles += $file.FullName
     }
 }
+
+# ── Checksums ──
+# One line per artifact: lowercase SHA-256, two spaces, file name.
+$checksumFile = Join-Path $ProjectRoot "releases/SHA256SUMS.txt"
+$checksumLines = $allFiles | ForEach-Object {
+    "$((Get-FileHash -Algorithm SHA256 -LiteralPath $_).Hash.ToLowerInvariant())  $(Split-Path -Leaf $_)"
+}
+[System.IO.File]::WriteAllText($checksumFile, (($checksumLines -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding($false)))
+Write-Host "  SHA256SUMS.txt ($($allFiles.Count) files, commit $($headCommit.Substring(0, 9)))" -ForegroundColor Green
+$allFiles += $checksumFile
 
 # ── Upload ──
 if ($DryRun) {
