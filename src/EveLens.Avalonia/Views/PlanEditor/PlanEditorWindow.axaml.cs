@@ -172,9 +172,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 try
                 {
                     if (_viewModel?.Plan == null) return;
-                    string text = PlanIOHelper.ExportAsSkillList(_viewModel.Plan);
                     if (AppServices.ClipboardService != null)
-                        await AppServices.ClipboardService.SetTextAsync(text);
+                        await AppServices.ClipboardService.SetTextAsync(_viewModel.ExportAsGameText());
                     Title = $"Plan Editor — Copied {_viewModel.Plan.Count()} skills";
                 }
                 catch (Exception ex)

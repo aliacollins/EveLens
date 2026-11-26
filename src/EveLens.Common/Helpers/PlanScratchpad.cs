@@ -59,6 +59,21 @@ namespace EveLens.Common.Helpers
             AddRange(entries);
         }
 
+        /// <summary>
+        /// Creates a copy of the plan in the order the user sees it in the editor: the plan's
+        /// own sorting preferences (column sort and group-by-priority) applied, statistics updated.
+        /// </summary>
+        /// <param name="plan">The plan to copy. Its order is not changed.</param>
+        public static PlanScratchpad CreateInDisplayOrder(Plan plan)
+        {
+            plan.ThrowIfNull(nameof(plan));
+
+            PlanScratchpad scratchpad = new PlanScratchpad(plan.Character, plan);
+            scratchpad.Sort(plan.SortingPreferences);
+            scratchpad.UpdateStatistics();
+            return scratchpad;
+        }
+
 
         #region Event firing and suppression
 

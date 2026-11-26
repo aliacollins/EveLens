@@ -94,7 +94,7 @@ namespace EveLens.Tests.Regression
             using var viewModel = new PlanEditorViewModel(new EventAggregator()) { Plan = plan };
 
             List<string> displayOrder = OrderKeys(viewModel.DisplayPlan!);
-            List<string> clipboardOrder = OrderKeys(PlanIOHelper.ExportAsSkillList(plan));
+            List<string> clipboardOrder = OrderKeys(PlanGameTextExporter.Export(plan));
             List<string> fileOrder = OrderKeys(PlanIOHelper.ExportAsText(plan, NamesOnlySettings()));
 
             displayOrder.Should().Equal("CPU Management|1", "Spaceship Command|1", "Navigation|1", "Navigation|2");
@@ -108,7 +108,7 @@ namespace EveLens.Tests.Regression
             Plan plan = CreatePrioritisedPlan(out _);
             plan.SortingPreferences.GroupByPriority = true;
 
-            string clipboard = PlanIOHelper.ExportAsSkillList(plan);
+            string clipboard = PlanGameTextExporter.Export(plan);
 
             Lines(clipboard).Should().Equal("CPU Management 1", "Spaceship Command 1", "Navigation 1", "Navigation 2");
         }
@@ -121,7 +121,7 @@ namespace EveLens.Tests.Regression
             List<string> storedBefore = StoredIdentity(plan);
             List<PlanEntry> instancesBefore = plan.ToList();
 
-            PlanIOHelper.ExportAsSkillList(plan);
+            PlanGameTextExporter.Export(plan);
             PlanIOHelper.ExportAsText(plan, NamesOnlySettings());
 
             StoredIdentity(plan).Should().Equal(storedBefore);
@@ -141,7 +141,7 @@ namespace EveLens.Tests.Regression
 
             List<string> displayOrder = OrderKeys(viewModel.DisplayPlan!);
 
-            OrderKeys(PlanIOHelper.ExportAsSkillList(plan)).Should().Equal(displayOrder);
+            OrderKeys(PlanGameTextExporter.Export(plan)).Should().Equal(displayOrder);
             OrderKeys(PlanIOHelper.ExportAsText(plan, NamesOnlySettings())).Should().Equal(displayOrder);
         }
 
@@ -175,7 +175,7 @@ namespace EveLens.Tests.Regression
             Plan plan = CreatePrioritisedPlan(out _);
             List<string> storedOrder = OrderKeys(plan);
 
-            OrderKeys(PlanIOHelper.ExportAsSkillList(plan)).Should().Equal(storedOrder);
+            OrderKeys(PlanGameTextExporter.Export(plan)).Should().Equal(storedOrder);
             OrderKeys(PlanIOHelper.ExportAsText(plan, NamesOnlySettings())).Should().Equal(storedOrder);
             storedOrder.Should().Equal("Navigation|1", "Navigation|2", "CPU Management|1", "Spaceship Command|1");
         }
@@ -186,8 +186,8 @@ namespace EveLens.Tests.Regression
             Plan plan = CreatePrioritisedPlan(out _);
             plan.SortingPreferences.GroupByPriority = true;
 
-            string first = PlanIOHelper.ExportAsSkillList(plan);
-            string second = PlanIOHelper.ExportAsSkillList(plan);
+            string first = PlanGameTextExporter.Export(plan);
+            string second = PlanGameTextExporter.Export(plan);
 
             second.Should().Be(first);
         }
@@ -208,7 +208,7 @@ namespace EveLens.Tests.Regression
             {
                 File.Exists(path).Should().BeTrue($"{path} should exist");
                 string content = File.ReadAllText(path);
-                content.Should().Contain("PlanIOHelper.ExportAsSkillList");
+                content.Should().Contain("_viewModel.ExportAsGameText()");
                 content.Should().NotContain("{entry.Skill.Name} {entry.Level}");
             }
         }
