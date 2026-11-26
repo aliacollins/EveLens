@@ -4,7 +4,6 @@
 // Licensed under GPL v2 — see LICENSE for details
 
 using System;
-using System.ComponentModel;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -18,6 +17,7 @@ using EveLens.Common.Models;
 using EveLens.Common.Service;
 using EveLens.Common.Services;
 using EveLens.Common.ViewModels;
+using EveLens.Common.ViewModels.Binding;
 
 namespace EveLens.Avalonia.Views.CharacterMonitor
 {
@@ -30,12 +30,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
 
         private static string[] OverrideLabels => new[] { Loc.Get("Header.AutoDetect"), Loc.Get("Header.AlphaOverride"), Loc.Get("Header.OmegaOverride") };
 
-        private ObservableCharacter? _observable;
+        private readonly AttachedSourceSubscription<ObservableCharacter> _characterChanges;
         private IDisposable? _privacySub;
 
         public CharacterMonitorHeader()
         {
             InitializeComponent();
+
+            _characterChanges = new AttachedSourceSubscription<ObservableCharacter>(
+                oc => global::Avalonia.Threading.Dispatcher.UIThread.Post(() => RefreshDisplay(oc)));
 
             // Wire flyout menu items
             AutoDetectItem.Click += (_, _) => SetAccountOverride(0);
@@ -48,13 +51,11 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDataContextChanged(e);
             try
             {
-                if (_observable != null)
-                    _observable.PropertyChanged -= OnObservableChanged;
+                var oc = DataContext is ObservableCharacter { CharacterID: > 0 } candidate ? candidate : null;
+                _characterChanges.SetSource(oc);
 
-                if (DataContext is ObservableCharacter oc && oc.CharacterID > 0)
+                if (oc != null)
                 {
-                    _observable = oc;
-
                     // Portrait
                     var image = await ImageService.GetCharacterImageAsync(oc.CharacterID);
                     if (image != null)
@@ -75,15 +76,8 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     RaceText.Text = hasRace ? $"{c.Gender} - {c.Race} - {c.Bloodline}" : "";
                     RaceText.IsVisible = hasRace;
 
-                    RefreshDisplay(oc);
-                    oc.PropertyChanged += OnObservableChanged;
-
-                    _privacySub?.Dispose();
-                    _privacySub = AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
-                        _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                        {
-                            if (_observable != null) RefreshDisplay(_observable);
-                        }));
+                    if (ReferenceEquals(_characterChanges.Source, oc))
+                        RefreshDisplay(oc);
                 }
             }
             catch (Exception ex)
@@ -92,10 +86,15 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             }
         }
 
-        private void OnObservableChanged(object? sender, PropertyChangedEventArgs e)
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
-            if (sender is ObservableCharacter oc)
-                global::Avalonia.Threading.Dispatcher.UIThread.Post(() => RefreshDisplay(oc));
+            base.OnAttachedToVisualTree(e);
+            _characterChanges.Attach();
+            _privacySub ??= AppServices.EventAggregator?.Subscribe<PrivacyModeChangedEvent>(
+                _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    if (_characterChanges.Source is { } current) RefreshDisplay(current);
+                }));
         }
 
         private void RefreshDisplay(ObservableCharacter oc)
@@ -189,9 +188,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
         {
             try
             {
-                if (_observable == null) return;
-                _observable.Character.AccountStatusSettings = (AccountStatusMode)index;
-                RefreshDisplay(_observable);
+                if (_characterChanges.Source is not { } current) return;
+                current.Character.AccountStatusSettings = (AccountStatusMode)index;
+                RefreshDisplay(current);
             }
             catch (Exception ex)
             {
@@ -204,11 +203,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             base.OnDetachedFromVisualTree(e);
             _privacySub?.Dispose();
             _privacySub = null;
-            if (_observable != null)
-            {
-                _observable.PropertyChanged -= OnObservableChanged;
-                _observable = null;
-            }
+            _characterChanges.Detach();
         }
     }
 }

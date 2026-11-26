@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - The unused legacy installer builder and its bundled NSIS programs are removed from the source tree.
+### Fixed
+
+- The character header (Located In, Docked At, corporation, balance and the other header fields) keeps updating after you switch to another tab and come back. Thanks to Fastburn for the report and the diagnosis (Issue #164).
 
 
 ## [1.5.4] - 2026-10-27
