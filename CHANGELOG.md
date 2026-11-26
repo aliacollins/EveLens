@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 
+- Game data updated to CCP's Static Data Export build 3714173 (November 18, 2026): 53,927 item types (+1,064), 5,111 blueprints (+54) and 589 skills, including Synchronization Rigging and Hybrid Drone Specialization. Korean and Simplified Chinese names are regenerated from the same build.
 - Durations under one hour in the attribute optimizer and in remap section headers read "45m" instead of "0h 45m".
 
 ### Fixed

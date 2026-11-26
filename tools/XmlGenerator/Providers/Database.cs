@@ -332,9 +332,12 @@ namespace EveLens.XmlGenerator.Providers
         /// <returns></returns>
         private static SqliteConnection GetConnection(string connectionName)
         {
-            ConnectionStringSettings connectionStringSetting = ConfigurationManager.ConnectionStrings[connectionName];
-            if (connectionStringSetting != null)
-                return new SqliteConnection(connectionStringSetting.ConnectionString);
+            string connectionString = SdeDatabaseLocation.ConnectionString;
+            if (connectionString != null)
+            {
+                Console.WriteLine(connectionString);
+                return new SqliteConnection(connectionString);
+            }
 
             Console.WriteLine();
             Console.WriteLine(@"Can not find connection string with name: {0}", connectionName);

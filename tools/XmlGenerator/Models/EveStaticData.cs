@@ -23,15 +23,8 @@ namespace EveLens.XmlGenerator.Models
                 // Read connection string from App.config
                 if (string.IsNullOrEmpty(_connectionString))
                 {
-                    var connectionStringSetting = ConfigurationManager.ConnectionStrings["EveStaticData"];
-                    if (connectionStringSetting != null)
-                    {
-                        _connectionString = connectionStringSetting.ConnectionString;
-                    }
-                    else
-                    {
-                        _connectionString = "Data Source=..\\..\\..\\..\\sqlite-latest.sqlite";
-                    }
+                    _connectionString = Providers.SdeDatabaseLocation.ConnectionString
+                        ?? "Data Source=..\\..\\..\\..\\sqlite-latest.sqlite";
                 }
                 optionsBuilder.UseSqlite(_connectionString);
             }
