@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Game data updated to CCP's Static Data Export build 3714173 (November 18, 2026): 53,927 item types (+1,064), 5,111 blueprints (+54) and 589 skills, including Synchronization Rigging and Hybrid Drone Specialization. Korean and Simplified Chinese names are regenerated from the same build.
 - Durations under one hour in the attribute optimizer and in remap section headers read "45m" instead of "0h 45m".
 
+### Removed
+
+- The unused legacy installer builder and its bundled NSIS programs are removed from the source tree.
+
 ### Fixed
 
 - The attribute optimizer now recommends a remap while an attribute booster is active. The booster bonus is counted for your current attributes and for every remap it considers. Thanks to aminomancer and keramond for the reports (#159, #162).
@@ -35,10 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System.Security.Cryptography.Pkcs is updated to 10.0.15.
 - Every release includes a SHA256SUMS.txt file listing the SHA-256 checksum of each download.
 - Packages are restored only from nuget.org.
-
-### Removed
-
-- The unused legacy installer builder and its bundled NSIS programs are removed from the source tree.
 
 ## [1.5.4] - 2026-10-27
 ### Changed

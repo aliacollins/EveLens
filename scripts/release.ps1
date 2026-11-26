@@ -114,6 +114,14 @@ Write-Host "  [OK] Version: $Version" -ForegroundColor Green
 
 $releaseTag = "v$Version"
 
+# ── Checkout ──
+# The Linux and macOS packaging steps read and write /mnt/d/evemon-main.
+$wslRoot = '/mnt/' + $ProjectRoot.Substring(0, 1).ToLowerInvariant() + ($ProjectRoot.Substring(2) -replace '\\', '/')
+if ($wslRoot -ne '/mnt/d/evemon-main') {
+    Write-Error "release.ps1 packages from /mnt/d/evemon-main, but it is running in $ProjectRoot."
+    exit 1
+}
+
 # ── Source ──
 # Tracked files must match HEAD, and nothing untracked or ignored may sit where the build
 # compiles or imports it. A dry run reports the same findings as warnings.
@@ -281,6 +289,11 @@ try {
     # make-macapp.sh is a real source file taking (channel, version) as arguments.
     # It used to be GENERATED here with the version baked in, which dirtied the
     # working tree on every release and broke the next promote. Never regenerate it.
+    # Earlier macOS outputs are removed so a failed step cannot leave an old build in the upload list.
+    foreach ($staleMac in @("publish/macapp", "releases/EveLens-${Channel}-osx-arm64.dmg",
+            "releases/releases.${Channel}-osx.json", "releases/EveLens-${Version}-${Channel}-osx-full.nupkg")) {
+        if (Test-Path $staleMac) { Remove-Item $staleMac -Recurse -Force }
+    }
     $ErrorActionPreference = 'Continue'
     wsl bash /mnt/d/evemon-main/scripts/make-macapp.sh $Channel $Version 2>&1 | ForEach-Object { $_ }
     $ErrorActionPreference = 'Stop'

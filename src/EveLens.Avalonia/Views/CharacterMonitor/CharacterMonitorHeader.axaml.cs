@@ -58,6 +58,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 {
                     // Portrait
                     var image = await ImageService.GetCharacterImageAsync(oc.CharacterID);
+                    if (!ReferenceEquals(_characterChanges.Source, oc))
+                        return;
+
                     if (image != null)
                     {
                         var converted = DrawingImageToAvaloniaConverter.Instance.Convert(
@@ -76,8 +79,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                     RaceText.Text = hasRace ? $"{c.Gender} - {c.Race} - {c.Bloodline}" : "";
                     RaceText.IsVisible = hasRace;
 
-                    if (ReferenceEquals(_characterChanges.Source, oc))
-                        RefreshDisplay(oc);
+                    RefreshDisplay(oc);
                 }
             }
             catch (Exception ex)
