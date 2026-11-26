@@ -13,10 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- The attribute optimizer now recommends a remap while an attribute booster is active. The booster bonus is counted for your current attributes and for every remap it considers (#159, #162).
+- The attribute optimizer now recommends a remap while an attribute booster is active. The booster bonus is counted for your current attributes and for every remap it considers. Thanks to aminomancer and keramond for the reports (#159, #162).
 - Remap points and the manual attribute editor show your remappable points only; an active booster no longer inflates them.
 - Base attributes correct themselves when implant data arrives after attribute data.
-- Copy to Clipboard and Copy Skill Plan now list skills in the order shown in the plan editor, including priority grouping and column sorting, the same as Save to File (#160).
+- Copy to Clipboard and Copy Skill Plan now list skills in the order shown in the plan editor, including priority grouping and column sorting, the same as Save to File. Thanks to Rykka-Stormheart for the report and to Fastburn for the pull request (#160).
 - Exporting selected skills keeps the plan editor's order.
 - Skill Farm sales tax now follows the Accounting skill: 7.5% at level 0, reduced by 11% of that per level (3.375% at level V). Net revenue, the best-seller pick and the monthly figures use it.
 - The Skill Farm "Per Extraction" card uses the best seller's sales tax.
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A paused skill queue no longer lowers a skill's points below what the skills list reported.
 - After a queued level finishes, a skill's level, active level and points are the same whether the skills list or the skill queue arrives first. The Skill Browser and Character Comparison show the finished level.
 - A finished level followed by another level of the same skill in training now raises the skill's active level.
-- The character header (Located In, Docked At, corporation, balance and the other header fields) keeps updating after you switch to another tab and come back. Thanks to Fastburn for the report and the diagnosis (Issue #164).
+- The character header (Located In, Docked At, corporation, balance and the other header fields) keeps updating after you switch to another tab and come back. Thanks to Fastburn for the report, the diagnosis and the pull request (#164).
 - Plan editor: "+ Add Skills" opens the Skills tab.
 - Plan editor: the status bar updates after remaps are applied and after Plan to fly, Plan to use, Plan skills and planning a skill level.
 - Plan editor: a remap section shows "remap no longer matches this block" only when its skills would finish more than 12 hours sooner under other attributes. Sections that mix attribute pairs are no longer flagged right after optimizing.
