@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -107,13 +109,7 @@ namespace EveLens.Common.ViewModels
                     return "ALL IDLE";
                 if (TimeUntilFirstIdle <= TimeSpan.Zero && TotalExtractorCount > 0)
                     return "Expired";
-                if (TimeUntilFirstIdle.TotalDays >= 1)
-                    return $"{(int)TimeUntilFirstIdle.TotalDays}d {TimeUntilFirstIdle.Hours}h";
-                if (TimeUntilFirstIdle.TotalHours >= 1)
-                    return $"{(int)TimeUntilFirstIdle.TotalHours}h {TimeUntilFirstIdle.Minutes}m";
-                if (TimeUntilFirstIdle > TimeSpan.Zero)
-                    return $"{TimeUntilFirstIdle.Minutes}m";
-                return "--";
+                return TimeFormatHelper.Format(TimeUntilFirstIdle, DurationStyle.Compact, "--");
             }
         }
 

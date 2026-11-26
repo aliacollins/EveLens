@@ -46,6 +46,8 @@ param(
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
+# Every git command below acts on the checkout this script lives in.
+Set-Location $RepoRoot
 
 # Colors for output
 function Write-Step { param($msg) Write-Host "`n>> $msg" -ForegroundColor Cyan }
@@ -462,7 +464,8 @@ function Invoke-GitCommit {
     param([string]$Message)
 
     if (-not $DryRun) {
-        git add -A
+        # Stages only the files a promotion edits.
+        git add -u -- SharedAssemblyInfo.cs CHANGELOG.md README.md updates
         if ($LASTEXITCODE -ne 0) { throw "git add failed (exit code $LASTEXITCODE)" }
         git commit -m $Message
         if ($LASTEXITCODE -ne 0) { throw "git commit failed (exit code $LASTEXITCODE)" }
@@ -666,10 +669,11 @@ function Invoke-Promote {
     Write-Success "Message: $Message"
 
     # Check working tree
-    $uncommitted = Get-UncommittedChanges
-    if ($uncommitted) {
-        Write-Warning "Uncommitted changes detected - they will be included in this promotion"
-        Write-Info $uncommitted
+    $uncommitted = @(git status --porcelain --untracked-files=no)
+    if ($uncommitted.Count -gt 0) {
+        $uncommitted | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
+        Write-Error "Uncommitted changes. Commit them before promoting."
+        exit 1
     }
 
     # Verify build
@@ -727,15 +731,12 @@ function Invoke-Promote {
         Write-Step "Phase 2: Preparing promote branch from $targetBranch..."
 
         try {
-            # Commit any uncommitted changes on source branch first
+            # Tracked files must be committed before promoting. Untracked files are left alone.
             if (-not $DryRun) {
-                $uncommitted = Get-UncommittedChanges
-                if ($uncommitted) {
-                    git add -A
-                    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-                    git commit -m "Pre-promote: include uncommitted changes on $currentBranch"
-                    if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
-                    Write-Success "Committed uncommitted changes on $currentBranch"
+                $uncommitted = @(git status --porcelain --untracked-files=no)
+                if ($uncommitted.Count -gt 0) {
+                    $uncommitted | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
+                    throw "Uncommitted changes on $currentBranch. Commit them before promoting."
                 }
             }
 
@@ -745,6 +746,7 @@ function Invoke-Promote {
             if (-not $DryRun) {
                 # Create promote branch from target, merge source into it
                 git fetch origin "refs/heads/${targetBranch}:refs/remotes/origin/${targetBranch}" 2>$null
+                if ($LASTEXITCODE -ne 0) { throw "git fetch of $targetBranch failed" }
                 git checkout -B $promoteBranch "origin/$targetBranch"
                 if ($LASTEXITCODE -ne 0) { throw "git checkout promote branch from $targetBranch failed" }
 

@@ -74,7 +74,7 @@ git push origin feature/my-feature
 - **Branch naming:** `feature/`, `fix/`, or `experimental/` prefix required
 - **Branch from `alpha`** — alpha is always the development baseline
 - **Delete branches after merge** — keep the branch list clean
-- **Pushing to alpha/beta/main triggers GitHub Actions** — builds, tests, and releases automatically
+- **Pushing does not build or release anything** — there are no GitHub Actions workflows; run `scripts/release.ps1` after promoting
 
 ## Build & Test Commands
 
@@ -148,10 +148,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Cat
 
 **Rules:**
 - Write entries in the `[Unreleased]` section as you work
-- On release, the CI pipeline moves `[Unreleased]` entries into the new version section
+- On release, `[Unreleased]` entries move into the new version section
 - Write for humans, not machines — explain *what changed and why*, not *which files*
 - One entry per user-visible change, not per commit
-- GitHub Actions uses the changelog section as release notes in the update dialog
+- `release.ps1` uses the changelog section as the release notes shown in the update dialog
 
 **Example:**
 ```markdown
@@ -260,7 +260,7 @@ MVVM infrastructure using CommunityToolkit.Mvvm. ViewModels live in `EveLens.Com
 - `Lists/AssetsListViewModel`, `MarketOrdersListViewModel`, `ContractsListViewModel`, `IndustryJobsListViewModel`, `WalletJournalListViewModel`, `WalletTransactionsListViewModel`, `MailMessagesListViewModel`, `NotificationsListViewModel`, `KillLogListViewModel`, `PlanetaryListViewModel`, `ResearchPointsListViewModel`
 - `MainWindowViewModel`, `CharacterMonitorBodyViewModel`, `PlanEditorViewModel`, `SettingsFormViewModel`
 
-**Binding helpers** (`ViewModels/Binding/`): `PropertyBinding`, `ListViewBindingHelper`, `CompositeDisposable`, `ActionDisposable`
+**Binding helpers** (`ViewModels/Binding/`): `PropertyBinding`, `ListViewBindingHelper`, `CompositeDisposable`, `ActionDisposable`, `AttachedSourceSubscription` (keeps a view subscribed to its source across detach and attach)
 
 **Migration status: COMPLETE.** All 11 list controls fully delegate filter/sort/group to their VMs. Old pipeline methods (`IsTextMatching`, `UpdateSort`, `UpdateContentByGroup`) deleted from all controls. `PlanEditorViewModel` wired in `PlanWindow`, `SettingsFormViewModel` wired in `SettingsForm`. Architecture tests enforce VM-to-control pairing, old method removal, and GroupedItems contract guarantees.
 
@@ -321,7 +321,7 @@ Tests that mutate `AppServices` shared state use `[Collection("AppServices")]` t
 | `Settings/` | Round-trip, migration detection, loader paths |
 | `Regression/` | Crash prevention, data integrity, GitHub issue reproductions |
 | `Serialization/` | ESI DTOs, character DTOs, settings DTOs |
-| `Architecture/` | Assembly boundary validation (no circular deps) |
+| `Architecture/` | Assembly boundary validation (no circular deps); `RepositoryContentGuardTests` pins tracked scripts, data files, build files and packages to explicit lists |
 
 ## Versioning
 
@@ -629,6 +629,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/install-hooks.p
 - **.NET 10 Avalonia** cross-platform application (Windows, Linux, macOS)
 - **ESI API** for EVE Online data (OAuth2)
 - Settings location: `%APPDATA%\EveLens\`
-- **Version:** 1.3.0-beta.3
-- **Tests:** 2,140 passing
-- **SDE:** Build 3480926, Aug 26 2026
+- **Version:** 1.5.5
+- **Tests:** 2,520 passing
+- **SDE:** Build 3714173, Nov 18 2026

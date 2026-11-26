@@ -352,7 +352,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             UpdateDetailPanel();
 
             // Update status bar in parent window
-            if (this.VisualRoot is PlanEditorWindow window)
+            if (PlanEditorWindow.For(this) is { } window)
             {
                 window.UpdateStatusBar();
             }

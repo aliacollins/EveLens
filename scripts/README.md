@@ -21,6 +21,7 @@
 - Increments the version in `SharedAssemblyInfo.cs`
 - Updates `CHANGELOG.md` and `updates/patch-*.xml`
 - Merges and pushes via pull request (branch protection applies)
+- Stops when tracked files have uncommitted changes; untracked files are never committed
 
 ### Build, sign, and publish a release
 ```powershell
@@ -31,6 +32,9 @@
   `EveLens-{channel}-Setup.exe` and update packages (delta + full)
 - Windows signing requires SimplySign Desktop running
 - macOS `.app` and Linux AppImage come from `make-macapp.sh` / `make-appimage.sh`
+- Stops when the working tree differs from the commit, when a beta or stable build is not
+  at the tip of its branch on GitHub, or when a dependency has a known vulnerability
+- Writes `SHA256SUMS.txt` for the release files
 - Uploads artifacts to the GitHub release
 
 **Must be run after promoting** -- pushing code alone does not create a release.

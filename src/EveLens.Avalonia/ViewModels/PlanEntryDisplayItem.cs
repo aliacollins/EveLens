@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Helpers;
 using System;
 using Avalonia.Media;
 using EveLens.Common.Enumerations;
@@ -168,12 +169,7 @@ namespace EveLens.Avalonia.ViewModels
         }
 
         private static string FormatTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return "Done";
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Full, "Done");
 
         private static IBrush MapAttributeBrush(EveAttribute attr)
         {

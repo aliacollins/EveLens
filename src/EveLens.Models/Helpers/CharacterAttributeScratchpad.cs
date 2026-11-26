@@ -20,6 +20,7 @@ namespace EveLens.Common.Helpers
 
         private long m_base;
         private long m_implantBonus;
+        private long m_temporaryBonus;
 
         /// <summary>
         /// Constructor from a character attribute.
@@ -39,6 +40,7 @@ namespace EveLens.Common.Helpers
         {
             m_base = baseAttribute;
             m_implantBonus = implantBonus;
+            m_temporaryBonus = 0;
             UpdateEffectiveAttribute();
         }
 
@@ -50,6 +52,7 @@ namespace EveLens.Common.Helpers
         {
             m_base = src.Base;
             m_implantBonus = src.ImplantBonus;
+            m_temporaryBonus = src.TemporaryBonus;
             UpdateEffectiveAttribute();
         }
 
@@ -58,7 +61,7 @@ namespace EveLens.Common.Helpers
         /// </summary>
         internal void UpdateEffectiveAttribute()
         {
-            EffectiveValue = m_base + m_implantBonus;
+            EffectiveValue = m_base + m_implantBonus + m_temporaryBonus;
         }
 
         /// <summary>
@@ -83,6 +86,19 @@ namespace EveLens.Common.Helpers
             set
             {
                 m_implantBonus = value;
+                UpdateEffectiveAttribute();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the bonus added on top of the base value and the implant bonus.
+        /// </summary>
+        public long TemporaryBonus
+        {
+            get { return m_temporaryBonus; }
+            set
+            {
+                m_temporaryBonus = value;
                 UpdateEffectiveAttribute();
             }
         }
@@ -116,6 +132,7 @@ namespace EveLens.Common.Helpers
             format = format.Replace("%b", m_base.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%i", ImplantBonus.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%r", (m_base - EveConstants.CharacterBaseAttributePoints).ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%t", TemporaryBonus.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%e", EffectiveValue.ToString("0", CultureConstants.DefaultCulture));
             return format;
         }

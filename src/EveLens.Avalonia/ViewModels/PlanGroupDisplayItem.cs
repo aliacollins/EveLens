@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -67,11 +69,6 @@ namespace EveLens.Avalonia.ViewModels
         }
 
         private static string FormatTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return "";
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Compact, "");
     }
 }
