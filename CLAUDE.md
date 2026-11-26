@@ -630,5 +630,5 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/install-hooks.p
 - **ESI API** for EVE Online data (OAuth2)
 - Settings location: `%APPDATA%\EveLens\`
 - **Version:** 1.5.5
-- **Tests:** 2,517 passing
+- **Tests:** 2,520 passing
 - **SDE:** Build 3714173, Nov 18 2026
