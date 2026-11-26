@@ -20,9 +20,8 @@ using Xunit;
 namespace EveLens.Tests.ViewModels
 {
     /// <summary>
-    /// Issue #160: "Copy Plan" and Export > "Copy to Clipboard" ignored the plan's sort and
-    /// group-by-priority, copying the raw stored order, while Save to File honoured them.
-    /// The clipboard text must follow the same order the user sees in the editor.
+    /// The clipboard text of "Copy Plan" and Export > "Copy to Clipboard" follows the order
+    /// shown in the editor: the plan's sort and group-by-priority, the same as Save to File.
     /// </summary>
     [Collection("StaticData")]
     public class PlanEditorGameTextExportTests

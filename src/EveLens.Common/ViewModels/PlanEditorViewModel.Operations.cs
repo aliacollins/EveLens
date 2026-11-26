@@ -163,7 +163,7 @@ namespace EveLens.Common.ViewModels
 
         /// <summary>
         /// Builds the game-compatible clipboard text for the whole plan, in the order shown
-        /// in the editor (Issue #160). Returns an empty string when no plan is loaded.
+        /// in the editor. Returns an empty string when no plan is loaded.
         /// </summary>
         public string ExportAsGameText()
         {

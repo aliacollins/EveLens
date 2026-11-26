@@ -62,9 +62,8 @@ namespace EveLens.Common.Helpers
         /// <summary>
         /// Creates a copy of the plan in the order the user sees it in the editor: the plan's
         /// own sorting preferences (column sort and group-by-priority) applied, statistics updated.
-        /// Every export path uses this so file and clipboard output can never disagree (Issue #160).
         /// </summary>
-        /// <param name="plan">The plan to copy. It is not modified.</param>
+        /// <param name="plan">The plan to copy. Its order is not changed.</param>
         public static PlanScratchpad CreateInDisplayOrder(Plan plan)
         {
             plan.ThrowIfNull(nameof(plan));

@@ -17,7 +17,7 @@ namespace EveLens.Common.Helpers
     {
         /// <summary>
         /// Exports the plan in display order (sort and group-by-priority applied), matching
-        /// Save to File. The plan itself is not modified.
+        /// Save to File. The plan's order is not changed.
         /// </summary>
         public static string Export(Plan plan)
         {

@@ -43,5 +43,10 @@ Features and fixes throughout EveLens trace back to GitHub issues, translations,
 and testing from EVE players — credited per release in [CHANGELOG.md](CHANGELOG.md)
 and in the release notes.
 
+Code contributors:
+
+- **Fastburn** -- plan editor clipboard export order, and the diagnosis behind the
+  character header refresh fix.
+
 EVE Online, and all related logos and assets, are the intellectual property of
 CCP hf. EveLens is not affiliated with or endorsed by CCP Games.
