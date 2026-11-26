@@ -113,7 +113,60 @@ if (-not $Version) {
 Write-Host "  [OK] Version: $Version" -ForegroundColor Green
 
 $releaseTag = "v$Version"
-Write-Host "`n  Releasing: $AppName $Version ($Channel)" -ForegroundColor Magenta
+
+# ── Source ──
+# Tracked files must match HEAD, and nothing untracked or ignored may sit where the build
+# compiles or imports it. A dry run reports the same findings as warnings.
+$dirty = @(git status --porcelain --untracked-files=no)
+$stray = @(git status --porcelain --untracked-files=all -- src tests/EveLens.Tests scripts installer |
+    Where-Object { $_.StartsWith('??') })
+$ignored = @(git ls-files --others --ignored --exclude-standard -- src tests/EveLens.Tests scripts installer |
+    Where-Object {
+        $_ -notmatch '(^|/)(bin|obj)/' -and
+        -not $_.StartsWith('scripts/release/') -and
+        -not $_.StartsWith('scripts/.tools/')
+    } | ForEach-Object { "!! $_" })
+$rootBuildFiles = @(Get-ChildItem -LiteralPath $ProjectRoot -File -Force |
+    Where-Object { $_.Name -like 'Directory.*' -or $_.Extension -in '.rsp', '.props', '.targets' } |
+    Where-Object { -not (git ls-files -- $_.Name) } |
+    ForEach-Object { "?? $($_.Name)" })
+$sourceProblems = @($dirty) + @($stray) + @($ignored) + @($rootBuildFiles)
+if ($sourceProblems.Count -gt 0) {
+    $sourceProblems | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
+    if ($DryRun) {
+        Write-Warning "Working tree differs from HEAD (dry run continues)."
+    } else {
+        Write-Error "Working tree differs from HEAD. Commit or remove the files listed above."
+        exit 1
+    }
+} else {
+    Write-Host "  [OK] Working tree matches HEAD" -ForegroundColor Green
+}
+
+# A published build comes from the tip of its channel branch on origin.
+$headCommit = git rev-parse HEAD
+if ($Channel -ne 'alpha' -and -not $DryRun) {
+    $channelBranch = if ($Channel -eq 'stable') { 'main' } else { $Channel }
+    git fetch origin --prune --quiet
+    if ($LASTEXITCODE -ne 0) { Write-Error "git fetch failed."; exit 1 }
+    $remoteCommit = git rev-parse --verify --quiet "refs/remotes/origin/$channelBranch"
+    if ($headCommit -ne $remoteCommit) {
+        Write-Error "HEAD ($headCommit) is not the tip of origin/$channelBranch ($remoteCommit). Check out $channelBranch and pull."
+        exit 1
+    }
+    Write-Host "  [OK] HEAD is the tip of origin/$channelBranch" -ForegroundColor Green
+}
+
+# ── Dependencies ──
+# The JSON report carries a "vulnerabilities" array only for packages that have one.
+$vulnReport = dotnet list $MainProject package --vulnerable --include-transitive --format json | Out-String
+if ($LASTEXITCODE -ne 0) { Write-Error "Dependency vulnerability check could not run."; exit 1 }
+if ($vulnReport -match '"vulnerabilities"') {
+    Write-Host $vulnReport
+    Write-Error "A dependency has a known vulnerability."
+    exit 1
+}
+Write-Host "  [OK] No known vulnerable dependencies" -ForegroundColor Green
 
 # ── Parse version for assembly stamping ──
 if ($Version -match '^(\d+)\.(\d+)\.(\d+)(?:-([a-z]+)\.?(\d+))?$') {
@@ -341,6 +394,16 @@ foreach ($macVeloFile in @(
         $allFiles += $file.FullName
     }
 }
+
+# ── Checksums ──
+# One line per artifact: lowercase SHA-256, two spaces, file name.
+$checksumFile = Join-Path $ProjectRoot "releases/SHA256SUMS.txt"
+$checksumLines = $allFiles | ForEach-Object {
+    "$((Get-FileHash -Algorithm SHA256 -LiteralPath $_).Hash.ToLowerInvariant())  $(Split-Path -Leaf $_)"
+}
+[System.IO.File]::WriteAllText($checksumFile, (($checksumLines -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding($false)))
+Write-Host "  SHA256SUMS.txt ($($allFiles.Count) files, commit $($headCommit.Substring(0, 9)))" -ForegroundColor Green
+$allFiles += $checksumFile
 
 # ── Upload ──
 if ($DryRun) {

@@ -462,7 +462,8 @@ function Invoke-GitCommit {
     param([string]$Message)
 
     if (-not $DryRun) {
-        git add -A
+        # Stages changes to tracked files only; untracked files are never committed.
+        git add -u
         if ($LASTEXITCODE -ne 0) { throw "git add failed (exit code $LASTEXITCODE)" }
         git commit -m $Message
         if ($LASTEXITCODE -ne 0) { throw "git commit failed (exit code $LASTEXITCODE)" }
@@ -727,15 +728,12 @@ function Invoke-Promote {
         Write-Step "Phase 2: Preparing promote branch from $targetBranch..."
 
         try {
-            # Commit any uncommitted changes on source branch first
+            # Tracked files must be committed before promoting. Untracked files are left alone.
             if (-not $DryRun) {
-                $uncommitted = Get-UncommittedChanges
-                if ($uncommitted) {
-                    git add -A
-                    if ($LASTEXITCODE -ne 0) { throw "git add failed" }
-                    git commit -m "Pre-promote: include uncommitted changes on $currentBranch"
-                    if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
-                    Write-Success "Committed uncommitted changes on $currentBranch"
+                $uncommitted = @(git status --porcelain --untracked-files=no)
+                if ($uncommitted.Count -gt 0) {
+                    $uncommitted | ForEach-Object { Write-Host "    $_" -ForegroundColor Yellow }
+                    throw "Uncommitted changes on $currentBranch. Commit them before promoting."
                 }
             }
 
