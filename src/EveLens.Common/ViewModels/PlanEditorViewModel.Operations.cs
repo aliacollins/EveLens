@@ -177,6 +177,19 @@ namespace EveLens.Common.ViewModels
             IPlanOperation operation = exportPlan.TryAddSet(entries, "Exported from " + _plan.Name);
             operation.Perform();
 
+            // The export is ordered by the export plan's own sorting preferences and entry
+            // priorities, so both are copied from the source plan.
+            exportPlan.SortingPreferences.Criteria = _plan.SortingPreferences.Criteria;
+            exportPlan.SortingPreferences.Order = _plan.SortingPreferences.Order;
+            exportPlan.SortingPreferences.GroupByPriority = _plan.SortingPreferences.GroupByPriority;
+            exportPlan.ChosenImplantSet = _plan.ChosenImplantSet;
+            foreach (PlanEntry exported in exportPlan)
+            {
+                PlanEntry? source = _plan.GetEntry(exported.Skill, exported.Level);
+                if (source != null)
+                    exported.Priority = source.Priority;
+            }
+
             return PlanIOHelper.ExportAsText(exportPlan, settings);
         }
 

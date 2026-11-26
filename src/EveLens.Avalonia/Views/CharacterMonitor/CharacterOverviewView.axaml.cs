@@ -1417,21 +1417,21 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (character is not CCPCharacter ccp)
                 return (null, "");
 
-            if (!ccp.IsTraining || ccp.CurrentlyTrainingSkill == null)
-                return (new SolidColorBrush(Color.Parse("#707080")), Loc.Get("Status.Paused"));
-
-            var remaining = ccp.SkillQueue.EndTime - DateTime.UtcNow;
-
-            if (remaining.TotalHours <= 0)
-                return (new SolidColorBrush(Color.Parse("#B71C1C")), "Empty");
-
-            if (remaining.TotalHours < 24)
-                return (Application.Current?.FindResource("EveErrorRedBrush") as IBrush, $"{(int)remaining.TotalHours}h left");
-
-            if (remaining.TotalDays < 5)
-                return (Application.Current?.FindResource("EveWarningYellowBrush") as IBrush, $"{(int)remaining.TotalDays}d left");
-
-            return (Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush, $"{(int)remaining.TotalDays}d left");
+            DateTime now = DateTime.UtcNow;
+            TimeSpan remaining = ccp.QueueRemainingAt(now);
+            return ccp.QueueHealthAt(now) switch
+            {
+                QueueHealth.NotTraining =>
+                    (new SolidColorBrush(Color.Parse("#707080")), Loc.Get("Status.Paused")),
+                QueueHealth.Empty =>
+                    (new SolidColorBrush(Color.Parse("#B71C1C")), "Empty"),
+                QueueHealth.Critical =>
+                    (Application.Current?.FindResource("EveErrorRedBrush") as IBrush, $"{(int)remaining.TotalHours}h left"),
+                QueueHealth.Warning =>
+                    (Application.Current?.FindResource("EveWarningYellowBrush") as IBrush, $"{(int)remaining.TotalDays}d left"),
+                _ =>
+                    (Application.Current?.FindResource("EveSuccessGreenBrush") as IBrush, $"{(int)remaining.TotalDays}d left"),
+            };
         }
 
         /// <summary>
@@ -1481,45 +1481,17 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             if (character is not CCPCharacter ccp)
                 return (null, null);
 
-            // Not training at all
-            if (!ccp.IsTraining || ccp.CurrentlyTrainingSkill == null)
+            string state = ccp.QueueHealthAt(DateTime.UtcNow) switch
             {
-                return (
-                    Application.Current?.FindResource("EveQueuePausedTint") as IBrush,
-                    Application.Current?.FindResource("EveQueuePausedBorder") as IBrush);
-            }
-
-            var queueEnd = ccp.SkillQueue.EndTime;
-            var remaining = queueEnd - DateTime.UtcNow;
-
-            if (remaining.TotalHours <= 0)
-            {
-                // Queue empty
-                return (
-                    Application.Current?.FindResource("EveQueueEmptyTint") as IBrush,
-                    Application.Current?.FindResource("EveQueueEmptyBorder") as IBrush);
-            }
-
-            if (remaining.TotalHours < 24)
-            {
-                // Critical — less than 24 hours
-                return (
-                    Application.Current?.FindResource("EveQueueCriticalTint") as IBrush,
-                    Application.Current?.FindResource("EveQueueCriticalBorder") as IBrush);
-            }
-
-            if (remaining.TotalDays < 5)
-            {
-                // Warning — less than 5 days
-                return (
-                    Application.Current?.FindResource("EveQueueWarningTint") as IBrush,
-                    Application.Current?.FindResource("EveQueueWarningBorder") as IBrush);
-            }
-
-            // Healthy — subtle green tint (>5 days)
+                QueueHealth.NotTraining => "Paused",
+                QueueHealth.Empty => "Empty",
+                QueueHealth.Critical => "Critical",
+                QueueHealth.Warning => "Warning",
+                _ => "Healthy",
+            };
             return (
-                Application.Current?.FindResource("EveQueueHealthyTint") as IBrush,
-                Application.Current?.FindResource("EveQueueHealthyBorder") as IBrush);
+                Application.Current?.FindResource($"EveQueue{state}Tint") as IBrush,
+                Application.Current?.FindResource($"EveQueue{state}Border") as IBrush);
         }
 
         private static void UpdateTrainingText(TextBlock textBlock, Character character)
@@ -1531,15 +1503,9 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 return;
             }
 
-            if (character is CCPCharacter ccp && ccp.IsTraining && ccp.CurrentlyTrainingSkill != null)
+            if (character.ActiveTraining is { } skill)
             {
-                var skill = ccp.CurrentlyTrainingSkill;
-                var remaining = skill.RemainingTime;
-                string timeStr = remaining.TotalHours >= 24
-                    ? $"{(int)remaining.TotalDays}d {remaining.Hours}h"
-                    : remaining.TotalHours >= 1
-                        ? $"{(int)remaining.TotalHours}h {remaining.Minutes}m"
-                        : $"{remaining.Minutes}m {remaining.Seconds}s";
+                string timeStr = TimeFormatHelper.Format(skill.RemainingTime, DurationStyle.CompactSeconds);
                 textBlock.Text = $"{Loc.Get("Status.Training")}: {skill.SkillName} {skill.Level} ({timeStr})";
                 textBlock.Foreground = (IBrush?)Application.Current?.FindResource("EveWarningYellowBrush") ?? Brushes.Yellow;
             }

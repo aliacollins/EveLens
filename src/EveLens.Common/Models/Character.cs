@@ -40,6 +40,7 @@ namespace EveLens.Common.Models
 
         // Attributes
         private readonly CharacterAttribute[] m_attributes = new CharacterAttribute[5];
+        private long[]? m_reportedAttributes;
 
         // Skill Point Caching
         private DateTime m_skillPointTotalUpdated = DateTime.MinValue;
@@ -297,6 +298,21 @@ namespace EveLens.Common.Models
         /// Gets the last remap timed.
         /// </summary>
         public DateTime LastReMapTimed { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the attributes are a legal remap allocation plus
+        /// implants and a uniform temporary bonus. False until attribute data is imported,
+        /// and while the attribute and implant data disagree.
+        /// </summary>
+        public bool AttributesAreConsistent { get; private set; }
+
+        /// <summary>
+        /// Gets the remaps the character can spend.
+        /// </summary>
+        public RemapAvailability RemapAvailability => new(AvailableReMaps,
+            LastReMapTimed == DateTime.MinValue
+                ? null
+                : LastReMapTimed.AddDays(EveConstants.TimedRemapCooldownDays));
 
         /// <summary>
         /// Gets the remote station date.
@@ -604,6 +620,11 @@ namespace EveLens.Common.Models
         /// </summary>
         public virtual QueuedSkill? CurrentlyTrainingSkill => null;
 
+        /// <summary>
+        /// Gets the skill being trained right now; null when nothing is training.
+        /// </summary>
+        public virtual QueuedSkill? ActiveTraining => null;
+
         #endregion
 
 
@@ -708,11 +729,11 @@ namespace EveLens.Common.Models
             serial.EmploymentHistory.AddRange(EmploymentHistory.Export());
 
             // Attributes
-            serial.Attributes.Intelligence = Intelligence.Base;
-            serial.Attributes.Perception = Perception.Base;
-            serial.Attributes.Willpower = Willpower.Base;
-            serial.Attributes.Charisma = Charisma.Base;
-            serial.Attributes.Memory = Memory.Base;
+            serial.Attributes.Intelligence = Intelligence.Base + Intelligence.TemporaryBonus;
+            serial.Attributes.Perception = Perception.Base + Perception.TemporaryBonus;
+            serial.Attributes.Willpower = Willpower.Base + Willpower.TemporaryBonus;
+            serial.Attributes.Charisma = Charisma.Base + Charisma.TemporaryBonus;
+            serial.Attributes.Memory = Memory.Base + Memory.TemporaryBonus;
 
             // Implants sets
             serial.ImplantSets = ImplantSets.Export();
@@ -849,28 +870,54 @@ namespace EveLens.Common.Models
             // Remap info
             DateTime lastRespec = DateTime.MinValue, nextRespec = attribs.RemapCooldownDate;
             if (nextRespec > DateTime.MinValue)
-                lastRespec = nextRespec.Subtract(TimeSpan.FromDays(365.0));
+                lastRespec = nextRespec.Subtract(TimeSpan.FromDays(EveConstants.TimedRemapCooldownDays));
             LastReMapTimed = lastRespec;
             AvailableReMaps = attribs.BonusRemaps;
             LastReMapDate = attribs.LastRemap;
 
-            SetAttribute(EveAttribute.Intelligence, attribs.Intelligence);
-            SetAttribute(EveAttribute.Perception, attribs.Perception);
-            SetAttribute(EveAttribute.Willpower, attribs.Willpower);
-            SetAttribute(EveAttribute.Charisma, attribs.Charisma);
-            SetAttribute(EveAttribute.Memory, attribs.Memory);
+            var reported = new long[m_attributes.Length];
+            reported[(int)EveAttribute.Intelligence] = attribs.Intelligence;
+            reported[(int)EveAttribute.Perception] = attribs.Perception;
+            reported[(int)EveAttribute.Willpower] = attribs.Willpower;
+            reported[(int)EveAttribute.Charisma] = attribs.Charisma;
+            reported[(int)EveAttribute.Memory] = attribs.Memory;
+            m_reportedAttributes = reported;
+            ApplyReportedAttributes();
         }
 
         /// <summary>
-        /// Sets the base attribute value from ESI.
-        /// ESI returns base + implant, so subtract the implant bonus.
+        /// Derives the attributes from the totals ESI reported and the current implants.
+        /// ESI totals include the implant bonuses, so those are subtracted first.
+        /// Does nothing until ESI has reported attributes.
         /// </summary>
-        /// <param name="attribute">The attribute to set.</param>
-        /// <param name="value">The value reported by Attributes ESI call.</param>
-        private void SetAttribute(EveAttribute attribute, int value)
+        private void ApplyReportedAttributes()
         {
-            int implantBonus = (int)(CurrentImplants[attribute]?.Bonus ?? 0);
-            m_attributes[(int)attribute].Base = value - implantBonus;
+            if (m_reportedAttributes == null)
+                return;
+
+            var withoutImplants = new long[m_attributes.Length];
+            for (int i = 0; i < m_attributes.Length; i++)
+            {
+                long implantBonus = CurrentImplants[(EveAttribute)i]?.Bonus ?? 0;
+                withoutImplants[i] = m_reportedAttributes[i] - implantBonus;
+            }
+            SetAttributes(withoutImplants);
+        }
+
+        /// <summary>
+        /// Sets the base value and the temporary bonus of every attribute.
+        /// </summary>
+        /// <param name="withoutImplants">The attribute values with implant bonuses removed,
+        /// indexed by <see cref="EveAttribute"/>.</param>
+        private void SetAttributes(long[] withoutImplants)
+        {
+            AttributeDecomposition split = AttributeDecomposition.FromObserved(withoutImplants);
+            AttributesAreConsistent = split.IsSupported;
+            for (int i = 0; i < m_attributes.Length; i++)
+            {
+                m_attributes[i].Base = split.Allocation[i];
+                m_attributes[i].TemporaryBonus = split.TemporaryBonus;
+            }
         }
 
         /// <summary>
@@ -883,53 +930,37 @@ namespace EveLens.Common.Models
             DateTime uselessDate = DateTime.UtcNow;
             FreeSkillPoints = skills.UnallocatedSP;
 
-            // Keep track of the current skill queue's completed skills, as ESI does not
-            // transfer them to the skills list until you login
-            var dict = new Dictionary<long, SerializableQueuedSkill>();
-            if (queue != null)
-                foreach (var queuedSkill in queue.CreateSkillQueue())
-                {
-                    // If the skill is completed or currently training, we need it later to
-                    // copy the progress over to the imported skills
-                    if (queuedSkill.IsCompleted || queuedSkill.IsTraining)
-                    {
-                        if (!dict.ContainsKey(queuedSkill.ID))
-                            dict.Add(queuedSkill.ID, queuedSkill);
-                        else
-                            dict[queuedSkill.ID] = queuedSkill;
-                    }
-                }
-            // Convert skills to EVE format
+            // The skills are imported as reported, then raised by what the skill queue shows:
+            // ESI lists a level the queue has finished only after the character logs in.
             foreach (var skill in skills.Skills)
             {
-                // Check if the skill is in the queue, and completed at a higher level or has
-                // higher current SP
-                if (dict.ContainsKey(skill.ID))
-                {
-                    var queuedSkill = dict[skill.ID];
-                    if (queuedSkill.IsCompleted)
-                    {
-                        // The active level could be less than the skill level if the character
-                        // finished an omega skill level (e.g. Repair Systems V) and then went
-                        // alpha without logging in. However, the alternative is to leave
-                        // ActiveLevel too low which breaks omega detection 100%
-                        skill.ActiveLevel = Math.Max(skill.ActiveLevel, queuedSkill.Level);
-                        // Queued skill is completed, so make sure the imported skill is
-                        // updated
-                        skill.Level = Math.Max(skill.Level, queuedSkill.Level);
-                        skill.Skillpoints = Math.Max(skill.Skillpoints, queuedSkill.EndSP);
-                    }
-                    else if (queuedSkill.IsTraining)
-                    {
-                        // Queued skill is currently training - use QueuedSkill class to
-                        // calculate the CurrentSP of the skill
-                        var tempSkill = new QueuedSkill(this, queuedSkill, ref uselessDate);
-                        skill.Skillpoints = Math.Max(skill.Skillpoints, tempSkill.CurrentSP);
-                    }
-                }
                 newSkills.AddLast(skill.ToXMLItem());
             }
             Skills.Import(newSkills, true);
+
+            if (queue != null)
+            {
+                foreach (SerializableQueuedSkill queuedSkill in queue.CreateSkillQueue())
+                {
+                    Skill skill = Skills[queuedSkill.ID];
+                    if (skill == null)
+                        continue;
+
+                    if (queuedSkill.IsCompleted)
+                    {
+                        skill.ApplyCompletedQueueEntry(queuedSkill.Level, queuedSkill.EndSP);
+                    }
+                    else if (queuedSkill.IsTraining)
+                    {
+                        var entry = new QueuedSkill(this, queuedSkill, ref uselessDate);
+                        skill.ApplyTrainingQueueEntry(queuedSkill.Level, entry.CurrentSP);
+                    }
+                    else if (queuedSkill.IsPaused)
+                    {
+                        skill.ApplyPausedQueueEntry(queuedSkill.Level, queuedSkill.StartSP);
+                    }
+                }
+            }
 
             UpdateMasteries();
         }
@@ -949,6 +980,7 @@ namespace EveLens.Common.Models
                     Name = StaticItems.GetItemName(implant)
                 });
             CurrentImplants.Import(newImplants);
+            ApplyReportedAttributes();
         }
 
         /// <summary>
@@ -1020,11 +1052,13 @@ namespace EveLens.Common.Models
             }
 
             // Attributes
-            m_attributes[(int)EveAttribute.Intelligence].Base = serial.Attributes.Intelligence;
-            m_attributes[(int)EveAttribute.Perception].Base = serial.Attributes.Perception;
-            m_attributes[(int)EveAttribute.Willpower].Base = serial.Attributes.Willpower;
-            m_attributes[(int)EveAttribute.Charisma].Base = serial.Attributes.Charisma;
-            m_attributes[(int)EveAttribute.Memory].Base = serial.Attributes.Memory;
+            var stored = new long[m_attributes.Length];
+            stored[(int)EveAttribute.Intelligence] = serial.Attributes.Intelligence;
+            stored[(int)EveAttribute.Perception] = serial.Attributes.Perception;
+            stored[(int)EveAttribute.Willpower] = serial.Attributes.Willpower;
+            stored[(int)EveAttribute.Charisma] = serial.Attributes.Charisma;
+            stored[(int)EveAttribute.Memory] = serial.Attributes.Memory;
+            SetAttributes(stored);
 
             // Skills
             Skills.Import(serial.Skills, serial is SerializableAPICharacterSheet);

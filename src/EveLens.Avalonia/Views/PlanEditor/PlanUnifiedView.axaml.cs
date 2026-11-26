@@ -267,17 +267,16 @@ namespace EveLens.Avalonia.Views.PlanEditor
                         IBrush? availBrush = null;
                         if (character is Character charModel)
                         {
-                            bool canRemap = charModel.AvailableReMaps > 0
-                                || charModel.LastReMapTimed == DateTime.MinValue
-                                || DateTime.UtcNow >= charModel.LastReMapTimed.AddDays(365);
-                            if (canRemap)
+                            DateTime remapNow = DateTime.UtcNow;
+                            RemapAvailability remapState = charModel.RemapAvailability;
+                            if (remapState.CanRemapAt(remapNow))
                             {
                                 availText = Loc.Get("Plan.RemapAvailable");
                                 availBrush = new SolidColorBrush(Color.Parse("#FF81C784"));
                             }
                             else
                             {
-                                int daysUntil = (int)(charModel.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
+                                int daysUntil = remapState.DaysUntilTimedRemap(remapNow);
                                 availText = string.Format(Loc.Get("Plan.RemapInDays"), daysUntil);
                                 availBrush = new SolidColorBrush(Color.Parse("#FFFFD54F"));
                             }
@@ -1584,7 +1583,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                     through += items[i].TrainingTime;
                 SidebarContent.Children.Add(SidebarKeyValue(
                     Loc.Get("PlanEditor.Completes"),
-                    (DateTime.Now + through).ToString("MMM d, yyyy"), null));
+                    PlanSchedule.CompletionDate(DateTime.UtcNow, through).ToString("MMM d, yyyy"), null));
             }
             if (character != null)
             {
@@ -2132,7 +2131,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             // Finish date
             if (stats.TrainingTime > TimeSpan.Zero)
             {
-                var finishDate = DateTime.UtcNow + stats.TrainingTime;
+                var finishDate = PlanSchedule.CompletionDate(DateTime.UtcNow, stats.TrainingTime);
                 heroStack.Children.Add(new TextBlock
                 {
                     Text = $"{Loc.Get("PlanEditor.Finishes")} {finishDate:MMM d, yyyy}",
@@ -2172,10 +2171,8 @@ namespace EveLens.Avalonia.Views.PlanEditor
             if (character != null)
             {
                 int used = _viewModel.Plan?.Count(e => e.Remapping != null) ?? 0;
-                bool timedAvail = character.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
                 int available = Math.Max(0,
-                    character.AvailableReMaps + (timedAvail ? 1 : 0) - used);
+                    character.RemapAvailability.AvailableAt(DateTime.UtcNow) - used);
                 string remapLine = used == 0
                     ? string.Format(Loc.Get("PlanEditor.RemapsNoneFmt"), available)
                     : available == 0
@@ -2200,10 +2197,10 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 AddThinDivider(Loc.Get("PlanEditor.Remap"));
 
-                int bonusRemaps = character.AvailableReMaps;
-                bool canRemapNow = bonusRemaps > 0
-                    || character.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
+                DateTime remapNow = DateTime.UtcNow;
+                RemapAvailability remapState = character.RemapAvailability;
+                int bonusRemaps = remapState.BonusRemaps;
+                bool canRemapNow = remapState.CanRemapAt(remapNow);
 
                 var remapLine = new StackPanel
                 {
@@ -2222,7 +2219,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 }
                 else
                 {
-                    int daysUntil = (int)(character.LastReMapTimed.AddDays(365) - DateTime.UtcNow).TotalDays;
+                    int daysUntil = remapState.DaysUntilTimedRemap(remapNow);
                     remapLine.Children.Add(new TextBlock
                     {
                         Text = $"\u23F0 {Loc.Get("PlanEditor.NextIn")} {daysUntil}d",
@@ -2942,11 +2939,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         }
 
         private static string FormatTimeCompact(TimeSpan time)
-        {
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Compact);
 
         private void OnRerunOptimization(object? sender, RoutedEventArgs e)
         {
@@ -3027,7 +3020,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
             if (stats.TrainingTime > TimeSpan.Zero)
             {
-                var finishDate = DateTime.UtcNow + stats.TrainingTime;
+                var finishDate = PlanSchedule.CompletionDate(DateTime.UtcNow, stats.TrainingTime);
                 FinishDateText.Text = $"{Loc.Get("PlanEditor.Finishes")} {finishDate:yyyy-MM-dd}";
             }
             else
@@ -3040,7 +3033,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             long missingSP = stats.TotalSkillPoints;
             if (missingSP > 0 && characterSP > 0)
             {
-                int spPerInjector = GetSpPerInjector(characterSP);
+                int spPerInjector = SkillInjectors.SkillPointsPerLargeInjector(characterSP);
                 int injectorCount = (int)Math.Ceiling((double)missingSP / spPerInjector);
                 double costBillions = injectorCount * 0.9;
                 InjectorText.Text = $"~{injectorCount} {Loc.Get("PlanEditor.Injectors")} (~{costBillions:F1}B {Loc.Get("Eve.ISK")})";
@@ -3072,9 +3065,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 await System.Threading.Tasks.Task.Delay(700);
                 if (version != _badgeVersion) return;
 
-                bool timedAvailable = character.LastReMapTimed == DateTime.MinValue
-                    || DateTime.UtcNow >= character.LastReMapTimed.AddDays(365);
-                int budget = Math.Max(1, character.AvailableReMaps + (timedAvailable ? 1 : 0));
+                int budget = character.RemapAvailability.PlanningBudgetAt(DateTime.UtcNow);
                 BasePlan analysisPlan = _viewModel.DisplayPlan != null
                     ? _viewModel.DisplayPlan : _viewModel.Plan;
                 // Judge the plan in the terms it was optimized FOR: an Omega
@@ -3094,7 +3085,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 // unable to explain the difference.
                 string clone = cloneOverride?.ToString()
                     ?? character.EffectiveCharacterStatus.ToString();
-                if (proposal.TimeSaved > TimeSpan.FromHours(12))
+                if (RemapAdvisor.IsWorthwhile(proposal.TimeSaved))
                 {
                     OptimizedBadge.Content = string.Format(
                         Loc.Get("PlanEditor.CouldSaveCloneFmt"),
@@ -3120,14 +3111,6 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private void OnOptimizedBadgeClick(object? sender, RoutedEventArgs e) =>
             OpenOptimizeWindow();
-
-        private static int GetSpPerInjector(long characterSP) => characterSP switch
-        {
-            < 5_000_000 => 500_000,
-            < 50_000_000 => 400_000,
-            < 80_000_000 => 300_000,
-            _ => 150_000
-        };
 
         private static string FormatSP(long sp)
         {
@@ -3285,17 +3268,18 @@ namespace EveLens.Avalonia.Views.PlanEditor
 
         private async void CopyPlanToClipboard()
         {
-            if (_viewModel?.Plan == null) return;
-
-            // Game-compatible format: "Skill Name N" per line (numeric levels)
-            var sb = new System.Text.StringBuilder();
-            foreach (var entry in _viewModel.Plan)
+            try
             {
-                sb.AppendLine($"{entry.Skill.Name} {entry.Level}");
-            }
+                if (_viewModel?.Plan == null) return;
 
-            if (AppServices.ClipboardService != null)
-                await AppServices.ClipboardService.SetTextAsync(sb.ToString());
+                string text = PlanIOHelper.ExportAsSkillList(_viewModel.Plan);
+                if (AppServices.ClipboardService != null)
+                    await AppServices.ClipboardService.SetTextAsync(text);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Copy failed: {ex.Message}");
+            }
         }
 
         #endregion
@@ -3509,12 +3493,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         }
 
         private static string FormatTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return Loc.Get("PlanEditor.Done");
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Full, Loc.Get("PlanEditor.Done"));
 
         private static string RomanNumeral(int level) => level switch
         {

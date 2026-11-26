@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Helpers;
 using System;
 using EveLens.Common.Data;
 using EveLens.Common.Enumerations;
@@ -65,18 +66,7 @@ namespace EveLens.Common.ViewModels
         /// <summary>
         /// Formatted training time for display.
         /// </summary>
-        public string TimeText
-        {
-            get
-            {
-                var ts = TrainingTime;
-                if (ts.TotalDays >= 1)
-                    return $"{(int)ts.TotalDays}d {ts.Hours}h";
-                if (ts.TotalHours >= 1)
-                    return $"{(int)ts.TotalHours}h {ts.Minutes}m";
-                return $"{ts.Minutes}m {ts.Seconds}s";
-            }
-        }
+        public string TimeText => TimeFormatHelper.Format(TrainingTime, DurationStyle.CompactSeconds);
     }
 
     /// <summary>

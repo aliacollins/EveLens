@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -232,14 +234,7 @@ namespace EveLens.Common.ViewModels
                     return "IDLE";
                 if (Health == ColonyHealthStatus.NoExtractors)
                     return "Factories only";
-                if (TimeUntilIdle <= TimeSpan.Zero)
-                    return "Expired";
-
-                if (TimeUntilIdle.TotalDays >= 1)
-                    return $"{(int)TimeUntilIdle.TotalDays}d {TimeUntilIdle.Hours}h";
-                if (TimeUntilIdle.TotalHours >= 1)
-                    return $"{(int)TimeUntilIdle.TotalHours}h {TimeUntilIdle.Minutes}m";
-                return $"{TimeUntilIdle.Minutes}m";
+                return TimeFormatHelper.Format(TimeUntilIdle, DurationStyle.Compact, "Expired");
             }
         }
 

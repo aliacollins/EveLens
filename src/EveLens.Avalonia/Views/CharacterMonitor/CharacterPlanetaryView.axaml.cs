@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
 using System;
 using System.Linq;
 using Avalonia;
@@ -538,10 +539,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
             // Timer stat (hero)
             var timeUntilIdle = analysis.TimeUntilFirstIdle;
             string timerDisplay = analysis.Health == ColonyHealthStatus.Idle ? "IDLE"
-                : timeUntilIdle <= TimeSpan.Zero ? "Expired"
-                : timeUntilIdle.TotalDays >= 1 ? $"{(int)timeUntilIdle.TotalDays}d {timeUntilIdle.Hours}h"
-                : timeUntilIdle.TotalHours >= 1 ? $"{(int)timeUntilIdle.TotalHours}h {timeUntilIdle.Minutes}m"
-                : $"{timeUntilIdle.Minutes}m";
+                : TimeFormatHelper.Format(timeUntilIdle, DurationStyle.Compact, "Expired");
 
             DetailStatsPanel.Children.Add(BuildDetailStat("Time Left", timerDisplay, healthBrush));
             DetailStatsPanel.Children.Add(BuildDetailStat("Status", analysis.Health.ToString(), healthBrush));

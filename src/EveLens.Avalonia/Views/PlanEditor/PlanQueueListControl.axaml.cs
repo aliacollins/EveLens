@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -424,9 +425,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 count++;
                 total += _viewModel.Items[i].TrainingTime;
             }
-            string dur = total.TotalDays >= 1
-                ? $"{(int)total.TotalDays}d {total.Hours}h"
-                : $"{(int)total.TotalHours}h {total.Minutes}m";
+            string dur = TimeFormatHelper.Format(total, DurationStyle.Compact);
             return $" · {count} {Loc.Get("PlanEditor.Skills")} · {dur}";
         }
 

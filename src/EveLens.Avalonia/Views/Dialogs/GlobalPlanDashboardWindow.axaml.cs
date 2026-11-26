@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -1009,12 +1011,7 @@ namespace EveLens.Avalonia.Views.Dialogs
         }
 
         private static string FormatTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return "Done";
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Compact, "Done");
 
         private IBrush? FindBrush(string key)
         {

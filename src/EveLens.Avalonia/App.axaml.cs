@@ -509,7 +509,7 @@ namespace EveLens.Avalonia
 
             var trainingChars = characters
                 .OfType<CCPCharacter>()
-                .Where(c => c.IsTraining && c.CurrentlyTrainingSkill != null)
+                .Where(c => c.ActiveTraining != null)
                 .ToList();
 
             if (trainingChars.Count == 0)

@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -183,9 +184,7 @@ namespace EveLens.Avalonia.Views.Dialogs
                     : (Brushes.Orange, new SolidColorBrush(Color.FromArgb(15, 255, 165, 0)));
 
                 string timeText = alert.health == ColonyHealthStatus.Idle ? "IDLE"
-                    : alert.timeLeft.TotalDays >= 1 ? $"{(int)alert.timeLeft.TotalDays}d {alert.timeLeft.Hours}h"
-                    : alert.timeLeft.TotalHours >= 1 ? $"{(int)alert.timeLeft.TotalHours}h {alert.timeLeft.Minutes}m"
-                    : $"{alert.timeLeft.Minutes}m";
+                    : TimeFormatHelper.Format(alert.timeLeft, DurationStyle.Compact);
 
                 var row = new Border
                 {

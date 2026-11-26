@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
+using EveLens.Common.Helpers;
 using System;
 using System.Linq;
 using Avalonia;
@@ -110,13 +112,7 @@ namespace EveLens.Avalonia.Views.CharacterMonitor
                 var remaining = endTime - DateTime.UtcNow;
                 if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
 
-                string countdown;
-                if (remaining.TotalDays >= 1)
-                    countdown = $"{(int)remaining.TotalDays}d {remaining.Hours}h {remaining.Minutes}m";
-                else if (remaining.TotalHours >= 1)
-                    countdown = $"{(int)remaining.TotalHours}h {remaining.Minutes}m";
-                else
-                    countdown = $"{remaining.Minutes}m {remaining.Seconds}s";
+                string countdown = TimeFormatHelper.Format(remaining, DurationStyle.FullSeconds);
 
                 statusParts.Add($"{Loc.Get("Queue.EndsIn")}: {countdown}");
                 statusParts.Add($"{Loc.Get("Queue.EndsOn")}: {endTime:ddd dd MMM HH:mm} EVE");

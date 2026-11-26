@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using EveLens.Common.Constants;
+using EveLens.Common.Helpers;
 using EveLens.Common.Data;
 using EveLens.Common.MarketPricer;
 using EveLens.Common.Models;
@@ -24,13 +26,6 @@ namespace EveLens.Common.ViewModels
     /// </summary>
     public sealed class SkillFarmDashboardViewModel : IDisposable
     {
-        private const long SpPerLargeExtraction = 500_000;
-        private const long SpPerSmallExtraction = 100_000;
-        private const long MinimumSPForExtraction = 5_000_000;
-
-        // Accounting skill: reduces sales tax from 7.5% by 1.1% per level
-        private const double BaseSalesTaxPercent = 7.5;
-        private const double SalesTaxReductionPerLevel = 1.1;
 
         private List<FarmCharacterEntry> _entries = new();
         private List<FarmAlert> _alerts = new();
@@ -156,7 +151,7 @@ namespace EveLens.Common.ViewModels
 
                 if (entry.ImplantLevel == 0 && entry.IsTraining)
                     alerts.Add(new FarmAlert(character.Name, FarmAlertType.NoImplants,
-                        $"No learning implants. Training at {entry.SpPerHour:N0} SP/hr instead of ~2,700 SP/hr."));
+                        $"No learning implants. Training at {entry.SpPerHour:N0} SP/hr instead of ~{SkillFarmEconomics.MaxSkillPointsPerHour.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)} SP/hr."));
 
                 if (entry.ImplantLevel > 0 && entry.ImplantLevel < 5 && entry.IsTraining)
                     alerts.Add(new FarmAlert(character.Name, FarmAlertType.SuboptimalImplants,
@@ -185,9 +180,9 @@ namespace EveLens.Common.ViewModels
         private FarmCharacterEntry BuildEntry(Character character, SkillFarmCharacterSettings settings)
         {
             long currentSP = character.SkillPoints;
-            long threshold = Math.Max(settings.ExtractionThreshold, MinimumSPForExtraction);
+            long threshold = Math.Max(settings.ExtractionThreshold, SkillInjectors.MinimumSkillPointsToExtract);
             long extractableSP = Math.Max(0, currentSP - threshold);
-            int largeExtractions = (int)(extractableSP / SpPerLargeExtraction);
+            int largeExtractions = (int)(extractableSP / SkillInjectors.SkillPointsPerLargeExtraction);
 
             // SP/hour from current training
             double spPerHour = 0;
@@ -204,7 +199,7 @@ namespace EveLens.Common.ViewModels
             TimeSpan timeToNext = TimeSpan.Zero;
             if (largeExtractions == 0 && spPerHour > 0)
             {
-                long spNeeded = threshold + SpPerLargeExtraction - currentSP;
+                long spNeeded = threshold + SkillInjectors.SkillPointsPerLargeExtraction - currentSP;
                 if (spNeeded > 0)
                     timeToNext = TimeSpan.FromHours(spNeeded / spPerHour);
             }
@@ -218,8 +213,8 @@ namespace EveLens.Common.ViewModels
             if (accountingSkill != null && accountingSkill.IsKnown)
                 accountingLevel = accountingSkill.LastConfirmedLvl;
 
-            double salesTaxPercent = BaseSalesTaxPercent - (SalesTaxReductionPerLevel * accountingLevel);
-            double salesTaxRate = salesTaxPercent / 100.0;
+            double salesTaxPercent = MarketTax.SalesTaxPercent(accountingLevel);
+            double salesTaxRate = MarketTax.SalesTaxRate(accountingLevel);
 
             // Revenue per extraction
             double grossRevenue = InjectorPrice;
@@ -297,7 +292,7 @@ namespace EveLens.Common.ViewModels
 
             foreach (var character in allChars)
             {
-                if (character.SkillPoints < MinimumSPForExtraction) continue;
+                if (character.SkillPoints < SkillInjectors.MinimumSkillPointsToExtract) continue;
                 if (settings.FarmCharacters.Any(f => f.CharacterGuid == character.Guid)) continue;
 
                 settings.FarmCharacters.Add(new SkillFarmCharacterSettings
@@ -345,7 +340,7 @@ namespace EveLens.Common.ViewModels
             var charSettings = settings.FarmCharacters.FirstOrDefault(f => f.CharacterGuid == character.Guid);
             if (charSettings == null) return;
 
-            charSettings.ExtractionThreshold = Math.Max(thresholdSP, MinimumSPForExtraction);
+            charSettings.ExtractionThreshold = Math.Max(thresholdSP, SkillInjectors.MinimumSkillPointsToExtract);
             Settings.Save();
         }
 
@@ -379,12 +374,7 @@ namespace EveLens.Common.ViewModels
         public string ImplantText => ImplantLevel > 0 ? $"+{ImplantLevel}" : "none";
 
         private static string FormatTimeSpan(TimeSpan ts)
-        {
-            if (ts <= TimeSpan.Zero) return "NOW";
-            if (ts.TotalDays >= 1) return $"{(int)ts.TotalDays}d {ts.Hours}h";
-            if (ts.TotalHours >= 1) return $"{(int)ts.TotalHours}h {ts.Minutes}m";
-            return $"{ts.Minutes}m";
-        }
+            => TimeFormatHelper.Format(ts, DurationStyle.Compact, "NOW");
     }
 
     /// <summary>An alert about a farm character needing attention.</summary>

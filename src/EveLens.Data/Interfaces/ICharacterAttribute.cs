@@ -11,6 +11,13 @@ namespace EveLens.Common.Interfaces
     {
         long Base { get; }
         long ImplantBonus { get; }
+
+        /// <summary>
+        /// Gets the bonus added on top of the base value and the implant bonus,
+        /// equal on every attribute and unaffected by a remap.
+        /// </summary>
+        long TemporaryBonus { get; }
+
         long EffectiveValue { get; }
 
         /// <summary>

@@ -172,14 +172,9 @@ namespace EveLens.Avalonia.Views.PlanEditor
                 try
                 {
                     if (_viewModel?.Plan == null) return;
-                    // Game-compatible format: "Skill Name N" per line
-                    var sb = new System.Text.StringBuilder();
-                    foreach (var entry in _viewModel.Plan)
-                    {
-                        sb.AppendLine($"{entry.Skill.Name} {entry.Level}");
-                    }
+                    string text = PlanIOHelper.ExportAsSkillList(_viewModel.Plan);
                     if (AppServices.ClipboardService != null)
-                        await AppServices.ClipboardService.SetTextAsync(sb.ToString());
+                        await AppServices.ClipboardService.SetTextAsync(text);
                     Title = $"Plan Editor — Copied {_viewModel.Plan.Count()} skills";
                 }
                 catch (Exception ex)
@@ -613,12 +608,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         }
 
         private static string FormatTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return Loc.Get("PlanEditor.Done");
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Full, Loc.Get("PlanEditor.Done"));
 
         protected override void OnKeyDown(KeyEventArgs e)
         {

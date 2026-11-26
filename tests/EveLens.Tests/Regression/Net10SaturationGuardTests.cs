@@ -33,6 +33,9 @@ namespace EveLens.Tests.Regression
         // synthetic SkillPointsPerHour = (EndSP - StartSP) / (EndTime - StartTime) is the
         // huge-rate ingredient of the C1 overflow.
         private const int UnknownSkillId = 987654;
+
+        // Navigation, a rank 1 skill present in the datafiles.
+        private const int NavigationId = 3449;
         private const int Level3SP = 8000;
         private const int Level4SP = 45255;
 
@@ -132,10 +135,38 @@ namespace EveLens.Tests.Regression
         [Fact]
         public void ImportMerge_TrainingQueueEntry_NeverInflatesSkillpointsPastEndSP()
         {
-            // Character.Import merges queued progress into imported skills with
-            // Math.Max(skill.Skillpoints, tempSkill.CurrentSP) — the same inverted-guard
-            // shape as C1. With CurrentSP clamped at the root, the merge can never push
-            // a skill past the queue entry's EndSP on any runtime.
+            var now = DateTime.UtcNow;
+            var character = PlanTestFixture.CreateTestCharacter(id: 424243L);
+            var esiQueue = new EsiAPISkillQueue
+            {
+                new EsiSkillQueueListItem
+                {
+                    ID = NavigationId, Level = 4,
+                    StartSP = Level3SP, LevelStartSP = Level3SP, EndSP = Level4SP,
+                    StartTime = now.AddDays(-30), EndTime = now.AddHours(1),
+                },
+            };
+            character.SkillQueue.Import(esiQueue.CreateSkillQueue());
+
+            var esiSkill = new EsiSkillListItem
+            {
+                ID = NavigationId, Level = 3, ActiveLevel = 3, Skillpoints = Level3SP,
+            };
+            var esiSkills = new EsiAPISkills
+            {
+                TotalSP = Level3SP,
+                Skills = new List<EsiSkillListItem> { esiSkill },
+            };
+
+            character.Import(esiSkills, esiQueue);
+
+            character.Skills[NavigationId].SkillPoints.Should().BeInRange(Level3SP, Level4SP);
+            esiSkill.Skillpoints.Should().Be(Level3SP);
+        }
+
+        [Fact]
+        public void ImportMerge_UnknownSkillInTheQueue_LeavesTheReportedSkillsUntouched()
+        {
             var character = CreateCharacterTrainingUnknownSkill();
             var now = DateTime.UtcNow;
 
@@ -160,21 +191,19 @@ namespace EveLens.Tests.Regression
 
             character.Import(esiSkills, esiQueue);
 
-            esiSkill.Skillpoints.Should().BeInRange(Level3SP, Level4SP,
-                "the queue merge must never raise a skill's SP past the queued level's " +
-                "EndSP (NET10-MIGRATION.md finding C2)");
+            esiSkill.Skillpoints.Should().Be(Level3SP);
+            esiSkill.Level.Should().Be(3);
         }
 
         [Fact]
         public void ImportMerge_CompletedQueueEntry_SetsExactlyEndSP()
         {
-            // Completed entries take the explicit EndSP path — pin that it stays exact.
-            var character = CreateCharacterTrainingUnknownSkill();
+            var character = PlanTestFixture.CreateTestCharacter(id: 424244L);
             var now = DateTime.UtcNow;
 
             var esiSkill = new EsiSkillListItem
             {
-                ID = UnknownSkillId, Level = 3, ActiveLevel = 3, Skillpoints = Level3SP,
+                ID = NavigationId, Level = 3, ActiveLevel = 3, Skillpoints = Level3SP,
             };
             var esiSkills = new EsiAPISkills
             {
@@ -185,7 +214,7 @@ namespace EveLens.Tests.Regression
             {
                 new EsiSkillQueueListItem
                 {
-                    ID = UnknownSkillId, Level = 4,
+                    ID = NavigationId, Level = 4,
                     StartSP = Level3SP, LevelStartSP = Level3SP, EndSP = Level4SP,
                     StartTime = now.AddDays(-30), EndTime = now.AddMinutes(-5),
                 },
@@ -193,8 +222,11 @@ namespace EveLens.Tests.Regression
 
             character.Import(esiSkills, esiQueue);
 
-            esiSkill.Skillpoints.Should().Be(Level4SP);
-            esiSkill.Level.Should().Be(4, "a completed queue entry promotes the skill level");
+            Skill skill = character.Skills[NavigationId];
+            skill.SkillPoints.Should().Be(Level4SP);
+            skill.Level.Should().Be(4);
+            esiSkill.Skillpoints.Should().Be(Level3SP);
+            esiSkill.Level.Should().Be(3);
         }
 
         #endregion

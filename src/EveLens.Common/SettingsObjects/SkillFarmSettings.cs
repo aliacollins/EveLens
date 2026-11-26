@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.ObjectModel;
 using System.Xml.Serialization;
@@ -23,7 +24,7 @@ namespace EveLens.Common.SettingsObjects
 
         /// <summary>Minimum SP threshold for extraction (default: 5,000,000).</summary>
         [XmlElement("defaultThreshold")]
-        public long DefaultExtractionThreshold { get; set; } = 5_000_000;
+        public long DefaultExtractionThreshold { get; set; } = SkillInjectors.MinimumSkillPointsToExtract;
 
         /// <summary>
         /// How many farm characters share one account (1–3, default 3). Omega is a
@@ -51,7 +52,7 @@ namespace EveLens.Common.SettingsObjects
 
         /// <summary>SP threshold below which we don't extract (default: 5,000,000).</summary>
         [XmlElement("threshold")]
-        public long ExtractionThreshold { get; set; } = 5_000_000;
+        public long ExtractionThreshold { get; set; } = SkillInjectors.MinimumSkillPointsToExtract;
 
         /// <summary>User notes (e.g., "PI alt", "cyno alt").</summary>
         [XmlElement("notes")]

@@ -192,7 +192,10 @@ namespace EveLens.Common.Models
                     IsPaused = true;
 
                 // Creates the skill queue
-                Items.Add(new QueuedSkill(m_character, serialSkill, ref startTimeWhenPaused));
+                var queuedSkill = new QueuedSkill(m_character, serialSkill, ref startTimeWhenPaused);
+                Items.Add(queuedSkill);
+                if (serialSkill.IsPaused)
+                    queuedSkill.Skill?.ApplyPausedQueueEntry(queuedSkill.Level, queuedSkill.StartSP);
             }
 
             // Update skills with the imported data
