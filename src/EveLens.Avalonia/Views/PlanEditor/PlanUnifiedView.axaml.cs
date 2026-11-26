@@ -3272,13 +3272,12 @@ namespace EveLens.Avalonia.Views.PlanEditor
             {
                 if (_viewModel?.Plan == null) return;
 
-                string text = PlanIOHelper.ExportAsSkillList(_viewModel.Plan);
                 if (AppServices.ClipboardService != null)
-                    await AppServices.ClipboardService.SetTextAsync(text);
+                    await AppServices.ClipboardService.SetTextAsync(_viewModel.ExportAsGameText());
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Copy failed: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Copy failed: {ex.Message}");
             }
         }
 
