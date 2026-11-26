@@ -120,17 +120,107 @@ namespace EveLens.Common.Models
         /// </summary>
         internal void UpdateSkillProgress(QueuedSkill queuedSkill)
         {
-            m_known = true;
+            if (IsUnknownSkill)
+            {
+                // The shared unknown skill takes the entry's values as they are.
+                m_known = true;
+                if (queuedSkill.IsCompleted)
+                {
+                    m_level = Math.Min(queuedSkill.Level, s_maxLevel);
+                    SkillPoints = queuedSkill.EndSP;
+                }
+                else
+                {
+                    m_level = queuedSkill.Level - 1;
+                    SkillPoints = queuedSkill.CurrentSP;
+                }
+                return;
+            }
+
             if (queuedSkill.IsCompleted)
-            {
-                m_level = Math.Min(queuedSkill.Level, s_maxLevel);
-                SkillPoints = queuedSkill.EndSP;
-            }
+                ApplyCompletedQueueEntry(queuedSkill.Level, queuedSkill.EndSP);
             else
-            {
-                m_level = queuedSkill.Level - 1;
-                SkillPoints = queuedSkill.CurrentSP;
-            }
+                SetTrainingProgress(queuedSkill.Level, queuedSkill.CurrentSP);
+        }
+
+        /// <summary>
+        /// Sets the points to the current estimate of the skill queue entry in training, and
+        /// raises the level to the one below the entry's. The points follow the entry in both
+        /// directions; the level is never lowered.
+        /// </summary>
+        /// <param name="level">The level the queue entry is training.</param>
+        /// <param name="currentSkillPoints">The entry's current skill point estimate.</param>
+        private void SetTrainingProgress(long level, long currentSkillPoints)
+        {
+            m_known = true;
+            m_level = Math.Max(m_level, Math.Min(level - 1, s_maxLevel));
+            m_currentSkillPoints = currentSkillPoints;
+        }
+
+        /// <summary>
+        /// Gets true for the single instance that stands in for every skill missing from
+        /// the datafiles.
+        /// </summary>
+        private bool IsUnknownSkill => ReferenceEquals(this, s_unknownSkill);
+
+        /// <summary>
+        /// Raises the skill to a level its skill queue has finished training: the level, the
+        /// confirmed level, the active level and the points all rise to that level's values.
+        /// Nothing is lowered.
+        /// </summary>
+        /// <param name="level">The level the queue entry trained.</param>
+        /// <param name="endSkillPoints">The skill points at the end of that level.</param>
+        internal void ApplyCompletedQueueEntry(long level, long endSkillPoints)
+        {
+            if (IsUnknownSkill)
+                return;
+
+            long reached = Math.Min(level, s_maxLevel);
+            m_known = true;
+            m_level = Math.Max(m_level, reached);
+            LastConfirmedLvl = Math.Max(LastConfirmedLvl, reached);
+            ActiveLevel = Math.Max(ActiveLevel, reached);
+            RaiseSkillPoints(endSkillPoints);
+        }
+
+        /// <summary>
+        /// Raises the skill to what a skill queue entry in training shows: the points rise to
+        /// the entry's current estimate and the level to the one below the entry's.
+        /// Nothing is lowered.
+        /// </summary>
+        /// <param name="level">The level the queue entry is training.</param>
+        /// <param name="currentSkillPoints">The entry's current skill point estimate.</param>
+        internal void ApplyTrainingQueueEntry(long level, long currentSkillPoints)
+        {
+            if (IsUnknownSkill)
+                return;
+
+            m_known = true;
+            m_level = Math.Max(m_level, Math.Min(level - 1, s_maxLevel));
+            RaiseSkillPoints(currentSkillPoints);
+        }
+
+        /// <summary>
+        /// Raises the points to where a paused skill queue entry starts, when that entry
+        /// trains this skill's next level or a lower one. Nothing is lowered.
+        /// </summary>
+        /// <param name="level">The level the queue entry trains.</param>
+        /// <param name="startSkillPoints">The skill points the entry starts from.</param>
+        internal void ApplyPausedQueueEntry(long level, long startSkillPoints)
+        {
+            if (IsUnknownSkill)
+                return;
+
+            if (level <= Level + 1)
+                RaiseSkillPoints(startSkillPoints);
+        }
+
+        /// <summary>
+        /// Sets the stored points to the given amount when that is higher.
+        /// </summary>
+        private void RaiseSkillPoints(long skillPoints)
+        {
+            m_currentSkillPoints = Math.Max(m_currentSkillPoints, skillPoints);
         }
 
         /// <summary>
@@ -356,8 +446,7 @@ namespace EveLens.Common.Models
             get
             {
                 CCPCharacter ccpCharacter = Character as CCPCharacter;
-                return ccpCharacter != null && ccpCharacter.IsTraining && ccpCharacter.CurrentlyTrainingSkill != null &&
-                       ccpCharacter.CurrentlyTrainingSkill.Skill == this;
+                return ccpCharacter?.ActiveTraining?.Skill == this;
             }
         }
 

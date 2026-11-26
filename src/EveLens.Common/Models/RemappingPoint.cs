@@ -189,12 +189,17 @@ namespace EveLens.Common.Models
 
             long bonusDifference = newScratchpad[attrib].Base - oldScratchpad[attrib].Base;
 
+            // The parts always add up to the effective value: a temporary bonus gets its own term.
+            string parts = newScratchpad[attrib].TemporaryBonus != 0
+                ? "(%B + %r + %i + %t)"
+                : "(%B + %r + %i)";
+
             if (bonusDifference == 0)
-                return newScratchpad[attrib].ToString("%N (0) = %e = (%B + %r + %i)");
+                return newScratchpad[attrib].ToString($"%N (0) = %e = {parts}");
 
             return newScratchpad[attrib].ToString(bonusDifference > 0
-                ? $"%N (+{bonusDifference}) = %e = (%B + %r + %i)"
-                : $"%N ({bonusDifference}) = %e = (%B + %r + %i)");
+                ? $"%N (+{bonusDifference}) = %e = {parts}"
+                : $"%N ({bonusDifference}) = %e = {parts}");
         }
 
         /// <summary>

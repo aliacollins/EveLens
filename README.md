@@ -13,7 +13,7 @@
 
 EveLens is a free, open-source **skill planner and character tracker for EVE Online** -- the modern successor to EVEMon, the tool EVE pilots relied on for nearly twenty years. It plans skill training, optimizes attribute remaps, monitors every character you own (100+ supported), and compares fleets against doctrines.
 
-It runs natively on **Windows, Linux, and macOS** (signed and notarized), built on **.NET 10** and **Avalonia 12**, backed by 2,400+ automated tests. Your data comes straight from CCP's ESI API with scopes you choose; nothing leaves your machine without an explicit opt-in.
+It runs natively on **Windows, Linux, and macOS** (signed and notarized), built on **.NET 10** and **Avalonia 12**, backed by 2,500+ automated tests. Your data comes straight from CCP's ESI API with scopes you choose; nothing leaves your machine without an explicit opt-in.
 
 **Website:** [evelens.dev](https://evelens.dev)
 
@@ -31,7 +31,7 @@ One download per platform -- everything is self-contained, no .NET runtime insta
 | **macOS (Apple Silicon)** | `EveLens-*-osx-arm64.dmg` -- drag to Applications |
 | **Linux** | `EveLens-*-linux-x86_64.AppImage` -- single file, just run |
 
-The Windows installer is **code-signed** by a verified Certum certificate; the macOS app and disk image are **signed and notarized by Apple**.
+The Windows installer is **code-signed** by a verified Certum certificate; the macOS app and disk image are **signed and notarized by Apple**. Every release also includes a `SHA256SUMS.txt` file with the SHA-256 checksum of each download.
 
 ---
 
@@ -120,7 +120,7 @@ A clock icon in the status bar shows how many of your characters need training a
 - **Clone tracking** -- jump clone locations, implants, and jump cooldown timer (respects Infomorph Synchronizing skill)
 - **Native OS notifications** -- skill completions via your system's notification center
 - **Activity center** -- bell icon with 200-entry event log, smart noise filtering
-- **Character groups** -- organize characters by purpose with colored tags and custom ordering
+- **Character groups** -- organize characters by purpose from a card's right-click menu, with colored tags and custom ordering
 - **Balance change indicator** -- real-time ISK delta with directional arrows
 - **Auto-update** -- Velopack-powered updates with delta downloads, checks in the background
 - **Data cache** -- near-instant tab loading, limited offline viewing
@@ -141,9 +141,11 @@ A clock icon in the status bar shows how many of your characters need training a
 
 ---
 
-## Report Issues
+## Report Issues and Contribute
 
 Found a bug? Please report it: **[GitHub Issues](https://github.com/aliacollins/evelens/issues)**
+
+Bug reports, diagnoses, ideas, translations and pull requests are welcome -- see [CONTRIBUTING.md](CONTRIBUTING.md). To report a security problem privately, see [SECURITY.md](SECURITY.md).
 
 ---
 
@@ -164,11 +166,15 @@ I'm not accepting donations -- I just want to know if EveLens makes your EVE lif
 
 ---
 
-## What's New in 1.5.1
+## What's New in 1.5.5
 
-- **macOS .dmg installer** -- drag to Applications like every Mac app; signed and notarized. Now the one macOS download.
-- **Solved: mac updates that downloaded but never installed** -- apps placed in Applications without a Finder drag were silently running from a read-only Gatekeeper copy (App Translocation) where updates can never apply. EveLens now detects this at startup and repairs it with one click.
-- **Updates fail loudly now** -- a failed download or install says so, with the reason, instead of quietly leaving you on the old version.
+- **Latest game data** -- CCP's Static Data Export build 3714173 (November 18, 2026): 1,064 new item types, 54 new blueprints and new skills, with Korean and Simplified Chinese names.
+- **Attribute optimizer works with boosters** -- it recommends a remap while an attribute booster is active, and remap points no longer count the booster.
+- **Plan editor** -- Copy to Clipboard and Copy Skill Plan follow the order on screen; "+ Add Skills" opens the Skills tab; the status bar keeps up after planning actions.
+- **Skill Farm** -- sales tax follows your Accounting skill.
+- **Character header** -- Located In, Docked At and the other header fields keep updating after you switch tabs.
+- **Skills and queue** -- skill points and finished levels are consistent with a paused queue and whichever data arrives first.
+- **Release checksums** -- every release includes `SHA256SUMS.txt`.
 
 Full details: [CHANGELOG.md](CHANGELOG.md)
 
@@ -200,6 +206,10 @@ Full details: [CHANGELOG.md](CHANGELOG.md)
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **[1.5.5](https://github.com/aliacollins/EveLens/releases/tag/v1.5.5)** | November 26, 2026 | SDE 3714173, attribute optimizer with boosters, plan editor copy order, Skill Farm sales tax, character header refresh, release checksums |
+| **[1.5.4](https://github.com/aliacollins/EveLens/releases/tag/v1.5.4)** | October 27, 2026 | Overview groups from the card right-click menu, Reorder always available, named groups |
+| **[1.5.3](https://github.com/aliacollins/EveLens/releases/tag/v1.5.3)** | October 3, 2026 | SKINR Studio, Paragon Hub browser and Photo Op removed; Open Source Credits in About |
+| **[1.5.2](https://github.com/aliacollins/EveLens/releases/tag/v1.5.2)** | August 29, 2026 | Third-party licenses listed in About |
 | **[1.5.1](https://github.com/aliacollins/EveLens/releases/tag/v1.5.1)** | August 28, 2026 | macOS .dmg installer, App Translocation self-heal (fixes silently-failing mac updates), loud update failures with PII-scrubbed updater log |
 | **[1.5.0](https://github.com/aliacollins/EveLens/releases/tag/v1.5.0)** | August 28, 2026 | The SKINR Studio (CCP's Carbon/Trinity engine in EveLens), Paragon Hub browser, Photo Op, macOS signed + self-updating, .NET 10 + Avalonia 12, Doctrine Designer round two, Plan Editor rebuild |
 | **[1.4.1](https://github.com/aliacollins/EveLens/releases/tag/v1.4.1)** | August 10, 2026 | Korean language, PI overhaul, community fix train, SDE 3458726 |

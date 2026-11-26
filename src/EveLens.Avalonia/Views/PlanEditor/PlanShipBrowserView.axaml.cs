@@ -406,12 +406,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
         }
 
         private static string FormatTrainingTime(TimeSpan time)
-        {
-            if (time <= TimeSpan.Zero) return "Done";
-            if (time.TotalDays >= 1) return $"{(int)time.TotalDays}d {time.Hours}h {time.Minutes}m";
-            if (time.TotalHours >= 1) return $"{(int)time.TotalHours}h {time.Minutes}m";
-            return $"{(int)time.TotalMinutes}m";
-        }
+            => TimeFormatHelper.Format(time, DurationStyle.Full, "Done");
 
         private void OnPlanToFly(object? sender, RoutedEventArgs e)
         {
@@ -421,7 +416,7 @@ namespace EveLens.Avalonia.Views.PlanEditor
             RefreshTreeList();
             UpdateDetailPanel();
 
-            if (this.VisualRoot is PlanEditorWindow window)
+            if (PlanEditorWindow.For(this) is { } window)
                 window.UpdateStatusBar();
         }
     }

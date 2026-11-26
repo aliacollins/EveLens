@@ -27,6 +27,39 @@ namespace EveLens.Common.Helpers
     public static class PlanIOHelper
     {
         /// <summary>
+        /// Builds a copy of the plan sorted by the plan's own sorting preferences: sort
+        /// criteria, direction and priority grouping. The plan itself keeps its order.
+        /// </summary>
+        /// <param name="planToExport">The plan to order.</param>
+        /// <returns>The sorted copy.</returns>
+        private static PlanScratchpad GetSortedCopy(Plan planToExport)
+        {
+            PlanScratchpad plan = new PlanScratchpad(planToExport.Character, planToExport);
+            plan.Sort(planToExport.SortingPreferences);
+            return plan;
+        }
+
+        /// <summary>
+        /// Exports the plan as a skill list: one <c>"Skill Name N"</c> line per entry with a
+        /// numeric level, in the same order as <see cref="ExportAsText"/>.
+        /// </summary>
+        /// <param name="planToExport">The plan to export.</param>
+        /// <returns>The text representation.</returns>
+        /// <exception cref="System.ArgumentNullException">planToExport</exception>
+        public static string ExportAsSkillList(Plan planToExport)
+        {
+            planToExport.ThrowIfNull(nameof(planToExport));
+
+            StringBuilder builder = new StringBuilder();
+            foreach (PlanEntry entry in GetSortedCopy(planToExport))
+            {
+                builder.AppendLine($"{entry.Skill.Name} {entry.Level}");
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
         /// Exports the plan under a text format.
         /// </summary>
         /// <param name="planToExport">The plan to export.</param>
@@ -47,8 +80,7 @@ namespace EveLens.Common.Helpers
 
             settings.ThrowIfNull(nameof(settings));
 
-            PlanScratchpad plan = new PlanScratchpad(planToExport.Character, planToExport);
-            plan.Sort(planToExport.SortingPreferences);
+            PlanScratchpad plan = GetSortedCopy(planToExport);
             plan.UpdateStatistics();
 
             StringBuilder builder = new StringBuilder();

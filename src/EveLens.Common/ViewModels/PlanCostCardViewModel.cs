@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Helpers;
 using System;
 using EveLens.Core.Interfaces;
 
@@ -126,12 +127,7 @@ namespace EveLens.Common.ViewModels
         /// <summary>
         /// Returns the SP gained per large skill injector based on the character's total SP.
         /// </summary>
-        internal static int GetSpPerInjector(long characterSP) => characterSP switch
-        {
-            < 5_000_000 => 500_000,
-            < 50_000_000 => 400_000,
-            < 80_000_000 => 300_000,
-            _ => 150_000
-        };
+        internal static int GetSpPerInjector(long characterSP)
+            => SkillInjectors.SkillPointsPerLargeInjector(characterSP);
     }
 }

@@ -3,6 +3,8 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Enumerations;
+using EveLens.Common.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -122,10 +124,7 @@ namespace EveLens.Common.ViewModels
             }
             else if (q.IsTraining)
             {
-                var rem = q.RemainingTime;
-                string timeStr = rem.TotalDays >= 1 ? $"{(int)rem.TotalDays}d {rem.Hours}h {rem.Minutes}m"
-                    : rem.TotalHours >= 1 ? $"{(int)rem.TotalHours}h {rem.Minutes}m"
-                    : $"{rem.Minutes}m {rem.Seconds}s";
+                string timeStr = TimeFormatHelper.Format(q.RemainingTime, DurationStyle.FullSeconds);
                 StatusText = "Training";
                 TimeText = $"{timeStr} remaining — ends {q.EndTime:dd MMM HH:mm}";
                 IsQueued = false;

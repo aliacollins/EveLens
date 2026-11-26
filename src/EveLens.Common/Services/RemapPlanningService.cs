@@ -3,6 +3,7 @@
 // Built with Claude Code (Anthropic)
 // Licensed under GPL v2 — see LICENSE for details
 
+using EveLens.Common.Constants;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -436,6 +437,85 @@ namespace EveLens.Common.Services
             };
             proposal.Remaps.AddRange(result);
             return proposal;
+        }
+
+        /// <summary>
+        /// How much sooner the entries would finish under their best legal attribute spread
+        /// than under the given one; zero when the given spread is already the best. Each
+        /// entry counts the skill points of its last statistics update.
+        /// </summary>
+        /// <param name="plan">The plan the entries belong to; its character and chosen
+        /// implant set give the implants, temporary bonus and clone state.</param>
+        /// <param name="entries">The entries trained under the spread.</param>
+        /// <param name="spread">The remappable points per attribute.</param>
+        /// <exception cref="ArgumentNullException">plan, entries or spread</exception>
+        public static TimeSpan SavingOverSpread(BasePlan plan, IEnumerable<PlanEntry> entries,
+            IReadOnlyDictionary<EveAttribute, long> spread)
+        {
+            if (plan == null) throw new ArgumentNullException(nameof(plan));
+            if (entries == null) throw new ArgumentNullException(nameof(entries));
+            if (spread == null) throw new ArgumentNullException(nameof(spread));
+
+            // Skill points per attribute pair, with one skill standing in for each pair.
+            var pairPoints = new Dictionary<(EveAttribute, EveAttribute), double>();
+            var pairSkill = new Dictionary<(EveAttribute, EveAttribute), StaticSkill>();
+            foreach (PlanEntry entry in entries)
+            {
+                if (entry.Skill == null)
+                    continue;
+
+                var key = (entry.Skill.PrimaryAttribute, entry.Skill.SecondaryAttribute);
+                pairPoints[key] = pairPoints.GetValueOrDefault(key) + Math.Max(0, entry.SkillPointsRequired);
+                pairSkill.TryAdd(key, entry.Skill);
+            }
+            if (pairPoints.Count == 0)
+                return TimeSpan.Zero;
+
+            var scratchpad = plan.ChosenImplantSet != null
+                ? new CharacterScratchpad(plan.Character.After(plan.ChosenImplantSet))
+                : new CharacterScratchpad(plan.Character);
+
+            double HoursWith(long intelligence, long perception, long charisma, long willpower, long memory)
+            {
+                scratchpad.Intelligence.Base = intelligence;
+                scratchpad.Perception.Base = perception;
+                scratchpad.Charisma.Base = charisma;
+                scratchpad.Willpower.Base = willpower;
+                scratchpad.Memory.Base = memory;
+                double hours = 0;
+                foreach (var pair in pairPoints)
+                {
+                    double rate = scratchpad.GetBaseSPPerHour(pairSkill[pair.Key]);
+                    if (pair.Value > 0 && rate > 0)
+                        hours += pair.Value / rate;
+                }
+                return hours;
+            }
+
+            long ValueOf(EveAttribute attribute) => spread.TryGetValue(attribute, out long value)
+                ? value
+                : EveConstants.CharacterBaseAttributePoints;
+
+            double given = HoursWith(ValueOf(EveAttribute.Intelligence), ValueOf(EveAttribute.Perception),
+                ValueOf(EveAttribute.Charisma), ValueOf(EveAttribute.Willpower), ValueOf(EveAttribute.Memory));
+
+            const int floor = EveConstants.CharacterBaseAttributePoints;
+            const int perAttribute = EveConstants.MaxRemappablePointsPerAttribute;
+            const int spare = EveConstants.SpareAttributePointsOnRemap;
+            double best = double.MaxValue;
+            for (int i = 0; i <= perAttribute; i++)
+            for (int p = 0; p <= perAttribute && i + p <= spare; p++)
+            for (int c = 0; c <= perAttribute && i + p + c <= spare; c++)
+            for (int w = 0; w <= perAttribute && i + p + c + w <= spare; w++)
+            {
+                int m = spare - i - p - c - w;
+                if (m > perAttribute)
+                    continue;
+
+                best = Math.Min(best, HoursWith(floor + i, floor + p, floor + c, floor + w, floor + m));
+            }
+
+            return given > best ? TimeSpan.FromHours(given - best) : TimeSpan.Zero;
         }
 
         /// <summary>

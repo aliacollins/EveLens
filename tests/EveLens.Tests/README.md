@@ -1,6 +1,6 @@
 # EveLens.Tests
 
-774 tests across 51 files. xUnit 2.9 + FluentAssertions 6.12 + NSubstitute 5.1.
+2,500+ tests. xUnit 2.9 + FluentAssertions 6.12 + NSubstitute 5.1.
 
 ## Running tests
 ```bash
@@ -35,4 +35,6 @@ static `AppServices` state. Defined in `AppServicesTestCollection.cs`.
 - `QueryMonitor/` -- Query monitor behavior and scheduling
 - `Helpers/` -- SettingsFileManager, UpdateBatcher
 - `Net/` -- HttpWebClientService tests
-- `Architecture/` -- Assembly boundary enforcement tests
+- `Architecture/` -- Assembly boundary enforcement tests, and `RepositoryContentGuardTests`:
+  no tracked binaries, archives or stored credentials, and every script, data file, build
+  file and package must be on the lists in that test
