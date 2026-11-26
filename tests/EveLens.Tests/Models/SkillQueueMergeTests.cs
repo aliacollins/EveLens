@@ -164,6 +164,20 @@ namespace EveLens.Tests.Models
             skill.IsTraining.Should().BeTrue();
         }
 
+        [Fact]
+        public void TrainingEntry_BelowTheStoredPoints_SetsTheStoredPointsToItsEstimate()
+        {
+            DateTime now = DateTime.UtcNow;
+            var queue = Queue(new QueueEntry(4, 12000, Level3SP, Level4SP, now.AddHours(-1), now.AddHours(20)));
+
+            Skill skill = SkillsThenQueue(Skills(level: 3, activeLevel: 3, skillPoints: 44000), queue);
+
+            skill.Level.Should().Be(3);
+            skill.SkillPoints.Should().BeInRange(12000, 40000);
+            skill.Export().Skillpoints.Should().BeInRange(12000, 40000);
+            skill.IsTraining.Should().BeTrue();
+        }
+
         [Theory]
         [MemberData(nameof(ArrivalOrders))]
         public void PausedEntry_DoesNotLowerPointsTheSkillsListReported(string order)

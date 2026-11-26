@@ -140,7 +140,21 @@ namespace EveLens.Common.Models
             if (queuedSkill.IsCompleted)
                 ApplyCompletedQueueEntry(queuedSkill.Level, queuedSkill.EndSP);
             else
-                ApplyTrainingQueueEntry(queuedSkill.Level, queuedSkill.CurrentSP);
+                SetTrainingProgress(queuedSkill.Level, queuedSkill.CurrentSP);
+        }
+
+        /// <summary>
+        /// Sets the points to the current estimate of the skill queue entry in training, and
+        /// raises the level to the one below the entry's. The points follow the entry in both
+        /// directions; the level is never lowered.
+        /// </summary>
+        /// <param name="level">The level the queue entry is training.</param>
+        /// <param name="currentSkillPoints">The entry's current skill point estimate.</param>
+        private void SetTrainingProgress(long level, long currentSkillPoints)
+        {
+            m_known = true;
+            m_level = Math.Max(m_level, Math.Min(level - 1, s_maxLevel));
+            m_currentSkillPoints = currentSkillPoints;
         }
 
         /// <summary>

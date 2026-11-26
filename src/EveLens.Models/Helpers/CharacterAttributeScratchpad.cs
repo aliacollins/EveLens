@@ -132,6 +132,7 @@ namespace EveLens.Common.Helpers
             format = format.Replace("%b", m_base.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%i", ImplantBonus.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%r", (m_base - EveConstants.CharacterBaseAttributePoints).ToString(CultureConstants.DefaultCulture));
+            format = format.Replace("%t", TemporaryBonus.ToString(CultureConstants.DefaultCulture));
             format = format.Replace("%e", EffectiveValue.ToString("0", CultureConstants.DefaultCulture));
             return format;
         }

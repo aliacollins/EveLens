@@ -69,6 +69,18 @@ namespace EveLens.Tests.Regression
             return plan;
         }
 
+        [Theory]
+        [InlineData(0, "Charisma (0) = 27 = (17 + 10 + 0)")]
+        [InlineData(3, "Charisma (0) = 30 = (17 + 10 + 0 + 3)")]
+        public void RemapDescription_PartsAddUpToTheEffectiveValue(int bonus, string expected)
+        {
+            var character = CreateCharacter(bonus);
+            var scratchpad = new CharacterScratchpad(character);
+
+            RemappingPoint.GetStringForAttribute(EveAttribute.Charisma, scratchpad, scratchpad)
+                .Should().Be(expected);
+        }
+
         private static int PerceptionImplant(out long bonus)
         {
             var item = StaticItems.GetItemByName("Ocular Filter - Basic");
