@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.5.5] - 2026-11-26
 ### Changed
 
 - Game data updated to CCP's Static Data Export build 3714173 (November 18, 2026): 53,927 item types (+1,064), 5,111 blueprints (+54) and 589 skills, including Synchronization Rigging and Hybrid Drone Specialization. Korean and Simplified Chinese names are regenerated from the same build.
@@ -40,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System.Security.Cryptography.Pkcs is updated to 10.0.15.
 - Every release includes a SHA256SUMS.txt file listing the SHA-256 checksum of each download.
 - Packages are restored only from nuget.org.
-
 ## [1.5.4] - 2026-10-27
 ### Changed
 

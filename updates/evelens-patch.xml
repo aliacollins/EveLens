@@ -6,6 +6,16 @@
 <evelens>
   <releases>
     <release>
+      <date>2026-11-26</date>
+      <version>1.5.5.0</version>
+      <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.5</url>
+      <autopatchurl>https://github.com/aliacollins/evelens/releases/download/v1.5.5/EveLens-install-1.5.5.exe</autopatchurl>
+      <autopatchargs>/SILENT</autopatchargs>
+      <message><![CDATA[EveLens 1.5.5
+
+Game data 3714173, attribute optimizer with boosters, plan editor and skill farm fixes]]></message>
+    </release>
+    <release>
       <date>2026-10-27</date>
       <version>1.5.4.0</version>
       <url>https://github.com/aliacollins/evelens/releases/tag/v1.5.4</url>
